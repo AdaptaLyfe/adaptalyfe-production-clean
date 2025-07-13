@@ -1,0 +1,1 @@
+# adaptalyfe-ios-app
