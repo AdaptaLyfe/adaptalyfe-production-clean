@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptalyfe - Adaptive Life Skills App</title>
+    <meta name="description" content="Independence building app for individuals with neurodevelopmental disabilities. Daily task management, emotional wellness tracking, and AI-powered support.">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Adaptalyfe">
+    <meta name="application-name" content="Adaptalyfe">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAA=">
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav a:hover {
+            color: #8b5cf6;
+        }
+        
+        main {
+            padding: 4rem 0;
+        }
+        
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 4rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #8b5cf6;
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .features {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            margin: 2rem 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .features h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #333;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .app-stores {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        .store-badge {
+            background: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        
+        .store-badge:hover {
+            background: #8b5cf6;
+        }
+        
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        .footer-links {
+            margin: 1rem 0;
+        }
+        
+        .footer-links a {
+            color: #8b5cf6;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .app-stores {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Adaptalyfe</div>
+                <nav class="nav">
+                    <a href="#features">Features</a>
+                    <a href="#about">About</a>
+                    <a href="privacy.html">Privacy</a>
+                    <a href="terms.html">Terms</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <section class="hero">
+                <h1>Grow with Guidance. Thrive with Confidence.</h1>
+                <p>Empowering individuals with neurodevelopmental disabilities to build independence through personalized support and adaptive technology.</p>
+                <a href="#features" class="cta-button">Discover Adaptalyfe</a>
+            </section>
+
+            <section id="features" class="features">
+                <h2>Independence Building Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3>Daily Task Management</h3>
+                        <p>Break down complex tasks into manageable steps with visual guidance and progress tracking.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💝</div>
+                        <h3>Emotional Wellness</h3>
+                        <p>Track mood patterns and access coping strategies designed for neurodivergent minds.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏥</div>
+                        <h3>Medical Management</h3>
+                        <p>Organize medications, appointments, and health information in one secure place.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💰</div>
+                        <h3>Financial Skills</h3>
+                        <p>Learn money management with guided budgeting and bill payment assistance.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>AI Support</h3>
+                        <p>24/7 adaptive assistance that learns your communication style and preferences.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">👨‍👩‍👧‍👦</div>
+                        <h3>Caregiver Network</h3>
+                        <p>Connect with family and support team while maintaining independence and privacy.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="features">
+                <h2>Built for Neurodiversity</h2>
+                <p style="text-align: center; font-size: 1.1rem; margin-bottom: 2rem;">
+                    Adaptalyfe is designed specifically for individuals with autism, ADHD, intellectual disabilities, and other neurodevelopmental conditions. Every feature prioritizes accessibility, clear communication, and respect for individual differences.
+                </p>
+                
+                <div class="app-stores">
+                    <a href="#" class="store-badge">📱 Coming to iOS</a>
+                    <a href="#" class="store-badge">🤖 Coming to Android</a>
+                </div>
+                
+                <p style="text-align: center; margin-top: 2rem; opacity: 0.8;">
+                    <small>HIPAA compliant • Privacy focused • Accessibility first</small>
+                </p>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Adaptalyfe. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+                <a href="mailto:support@adaptalyfeapp.com">Support</a>
+            </div>
+            <p style="margin-top: 1rem; opacity: 0.7;">
+                <small>Empowering independence for the neurodivergent community</small>
+            </p>
+        </div>
+    </footer>
+
+    <!-- PWA Manifest and Service Worker -->
+    <script>
+        // Clean PWA implementation
+        const manifestContent = {
+            "name": "Adaptalyfe",
+            "short_name": "Adaptalyfe",
+            "description": "Independence building app for neurodevelopmental disabilities",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#8b5cf6",
+            "orientation": "portrait-primary",
+            "scope": "/",
+            "icons": [
+                {
+                    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAWdEVYdENyZWF0aW9uIFRpbWUAMDcvMTIvMjUcqzN3AAAC+klEQVR42u3PMQEAAAjAoNu/tCG0Sy1IAUAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEOADEA==",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAAWdEVYdENyZWF0aW9uIFRpbWUAMDcvMTIvMjUcqzN3AAAD2ElEQVR42u3PMQEAAAjAoNu/tCG0Sy1IAUAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEEAAAQQQQAABBBBAAAEEEOADWQoAAA==",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+
+        // Create manifest link
+        const manifestDataUri = 'data:application/json,' + encodeURIComponent(JSON.stringify(manifestContent));
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestDataUri;
+        document.head.appendChild(link);
+
+        // Simple service worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'adaptalyfe-v1';
+                    const urlsToCache = ['/', '/privacy.html', '/terms.html'];
+                    
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('SW registered'))
+                    .catch(() => console.log('SW registration failed'));
+            });
+        }
+
+        // Install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            const installBtn = document.createElement('button');
+            installBtn.textContent = '📱 Install App';
+            installBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#8b5cf6;color:white;padding:12px 16px;border:none;border-radius:8px;font-weight:600;cursor:pointer;z-index:1000;box-shadow:0 4px 12px rgba(139,92,246,0.4);';
+            installBtn.onclick = () => {
+                e.prompt();
+                e.userChoice.then(() => installBtn.remove());
+            };
+            document.body.appendChild(installBtn);
+        });
+    </script>
+</body>
+</html>

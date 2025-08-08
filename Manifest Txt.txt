@@ -1,0 +1,32 @@
+ADAPTALYFE WEB APP MANIFEST
+==========================
+
+App Name: Adaptalyfe
+Short Name: Adaptalyfe
+Description: Adaptive life skills and independence building app for individuals with neurodevelopmental disorders
+Start URL: /
+Display Mode: standalone
+Background Color: #ffffff
+Theme Color: #8b5cf6
+Orientation: portrait-primary
+Scope: /
+
+Categories: health, medical, lifestyle, education
+Language: en-US
+
+Icons Required:
+- 192x192 pixels (PNG format)
+- 512x512 pixels (PNG format)
+
+Features:
+- Progressive Web App (PWA)
+- Offline functionality
+- Mobile app installation
+- Push notifications ready
+- Responsive design
+- Accessibility compliant
+
+Privacy Policy: https://www.adaptalyfe.com/privacy.html
+Terms of Service: https://www.adaptalyfe.com/terms.html
+
+This file contains the manifest information in plain text format for hosting providers that don't support JSON files. The actual manifest is embedded directly in the HTML files using JavaScript.
