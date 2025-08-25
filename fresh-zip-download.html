@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AdaptaLyfe Fresh ZIP Download</title>
+    <style>
+        body { font-family: system-ui; max-width: 900px; margin: 20px auto; padding: 20px; background: #f8fafc; }
+        .container { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        h1 { color: #22c55e; text-align: center; font-size: 3rem; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 1.3rem; }
+        .status-badge { background: #dcfce7; color: #16a34a; padding: 12px 24px; border-radius: 30px; font-size: 1rem; display: inline-block; margin-bottom: 40px; font-weight: 600; letter-spacing: 0.5px; }
+        
+        .download-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin: 40px 0; }
+        .card { background: linear-gradient(145deg, #f8fafc, #f1f5f9); border: 2px solid #e2e8f0; border-radius: 20px; padding: 35px; text-align: center; transition: all 0.4s ease; position: relative; overflow: hidden; }
+        .card:hover { border-color: #22c55e; transform: translateY(-5px); box-shadow: 0 20px 40px rgba(34, 197, 94, 0.2); }
+        .card:before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #22c55e, #3b82f6); }
+        
+        .card h3 { color: #1e293b; margin-bottom: 15px; font-size: 1.6rem; font-weight: 700; }
+        .card p { color: #475569; margin-bottom: 20px; line-height: 1.6; }
+        .size-info { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 12px; padding: 20px; margin: 20px 0; font-weight: 600; color: #16a34a; }
+        
+        .download-btn { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; display: inline-block; margin: 15px 0; font-weight: 600; font-size: 1.1rem; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 0.5px; }
+        .download-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(34, 197, 94, 0.4); }
+        .download-btn.secondary { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .download-btn.secondary:hover { box-shadow: 0 12px 24px rgba(59, 130, 246, 0.4); }
+        
+        .setup-section { background: linear-gradient(135deg, #fef3c7, #fde68a); border: 2px solid #f59e0b; border-radius: 16px; padding: 35px; margin: 40px 0; }
+        .setup-section h3 { color: #92400e; margin-bottom: 20px; font-size: 1.8rem; }
+        .code-block { background: #1e293b; color: #f1f5f9; padding: 20px; border-radius: 12px; font-family: 'Monaco', 'Courier New', monospace; margin: 20px 0; font-size: 1rem; line-height: 1.8; }
+        
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin: 40px 0; }
+        .feature-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 25px; }
+        .feature-box h4 { color: #16a34a; margin-bottom: 15px; font-size: 1.2rem; }
+        .feature-box ul { list-style: none; padding: 0; }
+        .feature-box li { padding: 6px 0; color: #374151; position: relative; padding-left: 20px; }
+        .feature-box li:before { content: "✓"; position: absolute; left: 0; color: #22c55e; font-weight: bold; }
+        
+        .cta-section { background: linear-gradient(135deg, #ddd6fe, #c4b5fd); border-radius: 20px; padding: 40px; text-align: center; margin-top: 40px; }
+        .cta-section h3 { color: #6b21a8; margin-bottom: 15px; font-size: 2rem; }
+        .cta-section p { color: #7c3aed; font-size: 1.2rem; }
+        
+        @media (max-width: 768px) {
+            .download-cards { grid-template-columns: 1fr; }
+            h1 { font-size: 2.2rem; }
+            .container { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AdaptaLyfe</h1>
+        <div class="subtitle">Fresh ZIP Project Download</div>
+        <div style="text-align: center;">
+            <span class="status-badge">Ready for Download</span>
+        </div>
+
+        <div class="download-cards">
+            <div class="card">
+                <h3>Minimal ZIP Package</h3>
+                <p>Essential source code with all core functionality. Perfect for quick setup and development.</p>
+                <div class="size-info">
+                    Size: 469 KB<br>
+                    Contains: React frontend, Express backend, database schemas, mobile config
+                </div>
+                <a href="./adaptalyfe-minimal-20250731-2011.zip" class="download-btn" download>
+                    Download Minimal ZIP
+                </a>
+            </div>
+            
+            <div class="card">
+                <h3>Production ZIP Package</h3>
+                <p>Complete project with all assets, documentation, and mobile app files included.</p>
+                <div class="size-info">
+                    Size: 4.0 GB<br>
+                    Contains: Complete source, assets, mobile files, app store materials, documentation
+                </div>
+                <a href="./adaptalyfe-production-ready-20250731-1658.zip" class="download-btn secondary" download>
+                    Download Complete ZIP
+                </a>
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <h3>Quick Setup Instructions</h3>
+            <p>After extracting any ZIP package:</p>
+            <div class="code-block">
+npm install<br>
+npm run db:push<br>
+npm run dev
+            </div>
+            
+            <h3 style="margin-top: 30px; color: #92400e;">Mobile App Generation</h3>
+            <div class="code-block">
+npm install -g @expo/cli<br>
+eas build --platform android
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-box">
+                <h4>Core Modules</h4>
+                <ul>
+                    <li>Daily task management with rewards</li>
+                    <li>Medical information tracking</li>
+                    <li>Academic planning and support</li>
+                    <li>Financial management with banking</li>
+                    <li>Mood tracking and wellness</li>
+                    <li>Meal planning and recipes</li>
+                </ul>
+            </div>
+            
+            <div class="feature-box">
+                <h4>Advanced Features</h4>
+                <ul>
+                    <li>Caregiver communication dashboard</li>
+                    <li>Safety and emergency features</li>
+                    <li>Voice commands and accessibility</li>
+                    <li>HIPAA-compliant security</li>
+                    <li>Progressive Web App capabilities</li>
+                    <li>Multi-role access control</li>
+                </ul>
+            </div>
+            
+            <div class="feature-box">
+                <h4>Technical Stack</h4>
+                <ul>
+                    <li>React 18 with TypeScript</li>
+                    <li>Express.js backend with PostgreSQL</li>
+                    <li>Drizzle ORM for database management</li>
+                    <li>Tailwind CSS + Radix UI components</li>
+                    <li>Capacitor for mobile deployment</li>
+                    <li>Banking integration with Plaid API</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3>Production Ready</h3>
+            <p>Your AdaptaLyfe neurodevelopmental support application is ready for Google Play Store and Apple App Store submission</p>
+        </div>
+    </div>
+</body>
+</html>

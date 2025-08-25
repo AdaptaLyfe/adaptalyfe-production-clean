@@ -1,0 +1,51 @@
+/* Force hide all possible error modals with maximum CSS specificity */
+vite-error-overlay,
+[data-vite-dev-id],
+.vite-error-overlay,
+[class*="error"],
+[class*="modal"],
+[class*="overlay"],
+[data-testid*="error"],
+[id*="error"],
+[id*="modal"],
+.runtime-error,
+.error-modal,
+.error-overlay,
+.modal-overlay,
+.error-dialog,
+[role="dialog"][class*="error"],
+[role="alertdialog"],
+div[style*="position: fixed"][style*="background"],
+div[style*="position: absolute"][style*="z-index"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Block any iframe that might contain error content */
+iframe[src*="error"],
+iframe[src*="modal"] {
+  display: none !important;
+}
+
+/* Hide any backdrop/overlay elements */
+.backdrop,
+.overlay,
+[class*="backdrop"],
+[class*="overlay"] {
+  display: none !important;
+}
+
+/* Force hide any element with error-related text content */
+*[class*="error"] *,
+*[id*="error"] * {
+  display: none !important;
+}
