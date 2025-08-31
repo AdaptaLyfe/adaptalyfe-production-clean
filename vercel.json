@@ -1,18 +1,21 @@
-{
+
+   {
   "version": 2,
   "name": "adaptalyfe",
+  "buildCommand": "node build.js",
   "builds": [
     {
       "src": "server/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["server/**", "shared/**", "client/**"]
+        "includeFiles": ["server/**", "shared/**", "client/**", "dist/**"]
       }
     },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
+        "buildCommand": "node build.js",
         "distDir": "dist/public"
       }
     }
