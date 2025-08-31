@@ -1,31 +1,32 @@
 {
   "version": 2,
   "name": "adaptalyfe",
+  "buildCommand": "node vercel-build.js",
   "builds": [
     {
-      "src": "server/index.ts",
+      "src": "dist/index.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server/index.ts"
+      "dest": "dist/index.js"
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "server/index.ts"
+      "dest": "dist/index.js"
     }
   ],
   "env": {
     "NODE_ENV": "production"
   },
   "functions": {
-    "server/index.ts": {
+    "dist/index.js": {
       "maxDuration": 30
     }
   }
-}  
+}
