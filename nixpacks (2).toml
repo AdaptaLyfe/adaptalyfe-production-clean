@@ -1,13 +1,8 @@
-[providers]
-node = "18"
-
-[phases.install]
-dependsOn = []
-cmds = ["npm install"]
+[phases.setup]
+nixPkgs = ['nodejs-18_x']
 
 [phases.build]
-dependsOn = ["install"] 
-cmds = ["npm run build"]
+cmds = ['npm install', 'npm run build']
 
 [start]
-cmd = "npm start"
+cmd = 'npm start'
