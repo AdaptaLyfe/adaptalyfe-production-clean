@@ -1,14 +1,14 @@
+[[variables]
+NODE_VERSION = "20.11.0"
+
 [phases.setup]
-nixPkgs = ['nodejs_20', 'npm-9_x']
+nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ['npm ci --legacy-peer-deps']
+cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ['npm run build']
+cmds = ["npm run build"]
 
 [start]
-cmd = 'npm start'
-
-[variables]
-NODE_VERSION = '20.11.0'
+cmd = "npm start"
