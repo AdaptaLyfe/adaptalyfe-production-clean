@@ -1,11 +1,14 @@
 [phases.setup]
-nixPkgs = ['nodejs-18_x', 'npm']
+nixPkgs = ['nodejs_20', 'npm-9_x']
 
 [phases.install]
-cmds = ['npm install --no-package-lock --legacy-peer-deps']
+cmds = ['npm ci --legacy-peer-deps']
 
-[phases.build] 
+[phases.build]
 cmds = ['npm run build']
 
 [start]
 cmd = 'npm start'
+
+[variables]
+NODE_VERSION = '20.11.0'
