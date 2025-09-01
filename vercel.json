@@ -1,13 +1,12 @@
 {
   "version": 2,
   "name": "adaptalyfe",
+  "installCommand": "npm install",
+  "buildCommand": "echo 'Build complete - server only'",
   "builds": [
     {
       "src": "server/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["server/**", "shared/**", "client/**"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
