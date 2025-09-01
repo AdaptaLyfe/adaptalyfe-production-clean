@@ -1,0 +1,12 @@
+{
+  "hosting": {
+    "public": "dist",                 // or your actual build folder
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/api/**",
+        "run": { "serviceId": "adaptalyfe-production-clean", "region": "europe-west1" }
+      },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}
