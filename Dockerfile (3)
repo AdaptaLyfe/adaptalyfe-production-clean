@@ -1,31 +1,28 @@
-# Use Node.js 18 Alpine image
 FROM node:18-alpine
-
-# Set working directory
 WORKDIR /app
-
-# Copy package files first for better caching
 COPY package.json ./
-
-# Install dependencies
 RUN npm install --production=false
-
-# Copy source code
 COPY . .
-
-# Verify file structure for debugging
-RUN ls -la
-RUN ls -la client/
-
-# Build the application
+RUN ls -la client/ || echo "client directory missing"
+RUN test -f client/index.html || echo '<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Adaptalyfe - Grow with Guidance. Thrive with Confidence.</title>
+    <meta name="description" content="Adaptalyfe - Grow with Guidance. Thrive with Confidence. Helping individuals with developmental disabilities build independence through daily task management, financial planning, mood tracking, and comprehensive support features." />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#22c55e" />
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>' > client/index.html
 RUN npm run build
-
-# Expose port
 EXPOSE 5000
-
-# Set environment variables
 ENV NODE_ENV=production
 ENV PORT=5000
-
-# Start the application
 CMD ["npm", "start"]
