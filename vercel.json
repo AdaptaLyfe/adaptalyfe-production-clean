@@ -1,16 +1,5 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/public",
-  "installCommand": "npm install",
-  "functions": {
-    "server/index.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/server"
-    }
-  ]
+  "outputDirectory": "dist/public", 
+  "installCommand": "npm install"
 }
