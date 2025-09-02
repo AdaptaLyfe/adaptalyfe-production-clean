@@ -97,7 +97,82 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Login route moved above - no duplicate needed
+// Add backup route for /api/login (without auth prefix) - duplicate logic
+app.post('/api/login', async (req, res) => {
+  try {
+    // Set CORS headers explicitly on this route
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    console.log('🔄 LOGIN VIA /api/login - Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔄 LOGIN VIA /api/login - Body:', JSON.stringify(req.body, null, 2));
+    
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    // Find user
+    const user = users.find(u => u.username === username || u.email === username);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // For demo purposes, accept any password or check bcrypt
+    const isValidPassword = password === 'password123' || await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Set session
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      subscriptionTier: user.subscriptionTier
+    };
+
+    // Save session before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session error' });
+      }
+      
+      console.log('✅ LOGIN SUCCESS (/api/login) - User:', username, 'Session ID:', req.session.id);
+      
+      // Check if this is a form submission (redirect) or AJAX (JSON response)
+      const isFormSubmission = req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded');
+      
+      if (isFormSubmission) {
+        // Form submission - redirect to dashboard
+        console.log('📄 Form submission detected - redirecting to dashboard');
+        return res.redirect('/dashboard');
+      } else {
+        // AJAX request - return JSON
+        console.log('📡 AJAX request detected - returning JSON response');
+        res.json({
+          success: true,
+          redirect: '/dashboard',
+          message: 'Login successful - redirecting to dashboard',
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            subscriptionTier: user.subscriptionTier
+          }
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Login error (/api/login):', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.post('/api/auth/register', async (req, res) => {
   try {
