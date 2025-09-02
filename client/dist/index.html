@@ -169,6 +169,49 @@
             form.submit();
           };
           document.body.appendChild(nativeBtn);
+          
+          // Add API test button
+          const testBtn = document.createElement('button');
+          testBtn.innerHTML = 'TEST API';
+          testBtn.style.cssText = 'position:fixed;top:60px;left:10px;z-index:9999;background:green;color:white;padding:10px;border:none;cursor:pointer;';
+          testBtn.onclick = async () => {
+            console.log('Testing API endpoints...');
+            
+            // Test health endpoint
+            try {
+              const healthResponse = await fetch('/health');
+              console.log('Health endpoint status:', healthResponse.status);
+              console.log('Health endpoint response:', await healthResponse.json());
+            } catch (error) {
+              console.error('Health endpoint failed:', error);
+            }
+            
+            // Test login endpoint with fetch
+            try {
+              const loginResponse = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  username: 'demo',
+                  password: 'password123'
+                })
+              });
+              console.log('Login endpoint status:', loginResponse.status);
+              console.log('Login endpoint response:', await loginResponse.json());
+              
+              if (loginResponse.ok) {
+                console.log('Login successful, redirecting...');
+                window.location.href = '/dashboard';
+              }
+            } catch (error) {
+              console.error('Login endpoint failed:', error);
+              alert('API Test Failed: ' + error.message);
+            }
+          };
+          document.body.appendChild(testBtn);
         }
       }, 2000);
       
