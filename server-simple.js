@@ -70,6 +70,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Add preflight OPTIONS support for CORS
+app.options('*', cors());
+
 // Authentication routes
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -232,12 +235,20 @@ app.get('/api/demo/tasks', (req, res) => {
   ]);
 });
 
+// Add request logging for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}${req.body ? ' - Body: ' + JSON.stringify(req.body) : ''}`);
+  next();
+});
+
 // Serve static files from client dist
 app.use(express.static('client/dist'));
+app.use(express.static('dist/public'));
 
 // Serve React app for all routes
 app.get('*', (req, res) => {
-  res.sendFile('/app/client/dist/index.html', (err) => {
+  const indexPath = process.env.NODE_ENV === 'production' ? '/app/client/dist/index.html' : './client/dist/index.html';
+  res.sendFile(indexPath, (err) => {
     if (err) {
       res.status(404).send(`
         <!DOCTYPE html>
