@@ -5,6 +5,7 @@ const PORT = process.env.PORT || 8080;
 
 // Basic middleware
 app.use(express.json());
+app.use(express.static('dist/public'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -30,44 +31,30 @@ app.get('/api/demo/tasks', (req, res) => {
   ]);
 });
 
-// Catch-all route
+// Serve React app for all routes
 app.get('*', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Adaptalyfe Medical App</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-      <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-        .status { color: green; }
-        .endpoint { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
-      </style>
-    </head>
-    <body>
-      <h1>🏥 Adaptalyfe Medical App</h1>
-      <p class="status">✅ Service is running successfully!</p>
-      
-      <h3>Available Endpoints:</h3>
-      <div class="endpoint"><strong>GET /health</strong> - Health check</div>
-      <div class="endpoint"><strong>GET /api/demo/users</strong> - Demo users</div>
-      <div class="endpoint"><strong>GET /api/demo/tasks</strong> - Demo tasks</div>
-      
-      <h3>Medical App Features Ready:</h3>
-      <ul>
-        <li>Task Management with Mood Check-ins</li>
-        <li>Medication Tracking & Reminders</li>
-        <li>Sleep & Symptom Tracking</li>
-        <li>Document Management</li>
-        <li>Caregiver Communication System</li>
-        <li>Financial Management Tools</li>
-        <li>Stripe Subscription Payments</li>
-      </ul>
-      
-      <p><em>Comprehensive medical app platform deployed successfully on Render.</em></p>
-    </body>
-    </html>
-  `);
+  res.sendFile('/app/dist/public/index.html', (err) => {
+    if (err) {
+      res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Adaptalyfe Medical App</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+            .status { color: green; }
+          </style>
+        </head>
+        <body>
+          <h1>🏥 Adaptalyfe Medical App</h1>
+          <p class="status">✅ Service running - Frontend loading...</p>
+          <p>The comprehensive medical app is deploying. Refresh in a moment to access all features.</p>
+        </body>
+        </html>
+      `);
+    }
+  });
 });
 
 // Error handling
