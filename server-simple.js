@@ -328,11 +328,65 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
       upcomingAppointments: 2
     },
     quickActions: [
-      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false },
-      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true },
-      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false },
-      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false }
-    ]
+      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false, category: 'wellness' },
+      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true, category: 'health' },
+      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false, category: 'fitness' },
+      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false, category: 'wellness' }
+    ],
+    customization: {
+      theme: 'default',
+      dashboardLayout: 'standard',
+      notifications: true,
+      quickActionsEnabled: true,
+      accessibilityMode: false
+    }
+  });
+});
+
+// User customization endpoints
+app.get('/api/customization', requireAuth, (req, res) => {
+  res.json({
+    theme: 'default',
+    dashboardLayout: 'standard', 
+    notifications: true,
+    quickActionsEnabled: true,
+    accessibilityMode: false,
+    fontSize: 'medium',
+    colorScheme: 'light',
+    compactMode: false
+  });
+});
+
+app.post('/api/customization', requireAuth, (req, res) => {
+  const { theme, dashboardLayout, notifications, quickActionsEnabled, accessibilityMode } = req.body;
+  
+  res.json({
+    success: true,
+    message: 'Customization settings updated',
+    settings: {
+      theme: theme || 'default',
+      dashboardLayout: dashboardLayout || 'standard',
+      notifications: notifications !== false,
+      quickActionsEnabled: quickActionsEnabled !== false,
+      accessibilityMode: accessibilityMode || false
+    }
+  });
+});
+
+// Quick actions endpoints
+app.post('/api/quick-actions/:actionId', requireAuth, (req, res) => {
+  const { actionId } = req.params;
+  const actions = ['mood', 'medication', 'exercise', 'sleep'];
+  
+  if (!actions.includes(actionId)) {
+    return res.status(404).json({ error: 'Action not found' });
+  }
+  
+  res.json({
+    success: true,
+    message: `${actionId} action completed`,
+    actionId,
+    timestamp: new Date().toISOString()
   });
 });
 
