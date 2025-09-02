@@ -11,6 +11,7 @@ Adaptalyfe is a comprehensive mobile-first medical application successfully depl
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Mobile app conversion: Planning React Native mobile app while keeping Render backend as API foundation.
 
 ## System Architecture
 
