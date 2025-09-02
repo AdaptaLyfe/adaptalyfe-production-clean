@@ -257,9 +257,13 @@ app.get('/api/demo/tasks', (req, res) => {
   ]);
 });
 
-// Add request logging for debugging
+// Add enhanced request logging for debugging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}${req.body ? ' - Body: ' + JSON.stringify(req.body) : ''}`);
+  console.log(`📥 ${new Date().toISOString()} - ${req.method} ${req.url}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('📝 Request body:', JSON.stringify(req.body, null, 2));
+  }
+  console.log('🌐 Request headers:', JSON.stringify(req.headers, null, 2));
   next();
 });
 
@@ -303,7 +307,10 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Adaptalyfe Medical App running on port ${PORT}`);
   console.log(`📱 Health check available at /health`);
+  console.log(`🌐 Server accessible at: http://0.0.0.0:${PORT}`);
+  console.log(`🔧 CORS enabled for all origins`);
   console.log(`🩺 Medical app features ready for development`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;

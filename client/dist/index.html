@@ -68,27 +68,51 @@
         }
       };
       
-      // Listen for successful fetch responses to login endpoint
+      // Enhanced fetch debugging with network error handling
       const originalFetch = window.fetch;
       window.fetch = function(...args) {
-        console.log('Fetch intercepted:', args[0]);
+        console.log('🔍 Fetch intercepted:', args[0]);
+        console.log('🔍 Fetch options:', args[1]);
+        
         return originalFetch.apply(this, args).then(response => {
-          console.log('Fetch response:', response.url, response.status, response.ok);
-          if (response.url && response.url.includes('/api/auth/login') && response.ok) {
-            console.log('Login endpoint detected, checking response...');
-            response.clone().json().then(data => {
-              console.log('Login response data:', data);
-              if (data.success) {
-                console.log('Login API success detected, triggering redirect');
-                window.handleLoginSuccess(data);
-              }
-            }).catch(err => {
-              console.error('Error parsing login response:', err);
-            });
+          console.log('✅ Fetch response received:', {
+            url: response.url, 
+            status: response.status, 
+            ok: response.ok,
+            headers: [...response.headers.entries()]
+          });
+          
+          if (response.url && response.url.includes('/api/auth/login')) {
+            console.log('🔐 Login endpoint detected, status:', response.status);
+            if (response.ok) {
+              response.clone().json().then(data => {
+                console.log('📝 Login response data:', data);
+                if (data.success) {
+                  console.log('🚀 Login API success detected, triggering redirect');
+                  window.handleLoginSuccess(data);
+                }
+              }).catch(err => {
+                console.error('❌ Error parsing login response:', err);
+              });
+            } else {
+              console.error('❌ Login API failed with status:', response.status);
+              response.clone().text().then(text => {
+                console.error('❌ Error response body:', text);
+              });
+            }
           }
           return response;
         }).catch(err => {
-          console.error('Fetch error:', err);
+          console.error('❌ FETCH ERROR - Network failure:', err);
+          console.error('❌ URL attempted:', args[0]);
+          console.error('❌ Error type:', err.name);
+          console.error('❌ Error message:', err.message);
+          
+          // Show user-friendly error
+          if (err.message.includes('fetch')) {
+            alert('Network error: Cannot connect to server. Please check your internet connection and try again.');
+          }
+          
           throw err;
         });
       };
