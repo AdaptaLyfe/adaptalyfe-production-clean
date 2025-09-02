@@ -317,7 +317,9 @@ app.get('/api/login', (req, res) => {
 // Dashboard summary endpoint
 app.get('/api/dashboard', requireAuth, (req, res) => {
   const userId = req.session.userId;
-  res.json({
+  console.log('📊 Dashboard API called for user:', req.session.user.username);
+  
+  const dashboardData = {
     user: req.session.user,
     summary: {
       tasksCompleted: 1,
@@ -328,10 +330,10 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
       upcomingAppointments: 2
     },
     quickActions: [
-      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false, category: 'wellness' },
-      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true, category: 'health' },
-      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false, category: 'fitness' },
-      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false, category: 'wellness' }
+      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false, category: 'wellness', description: 'Track your daily mood' },
+      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true, category: 'health', description: 'Complete medication schedule' },
+      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false, category: 'fitness', description: '30 minutes of physical activity' },
+      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false, category: 'wellness', description: 'Record sleep duration and quality' }
     ],
     customization: {
       theme: 'default',
@@ -339,8 +341,17 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
       notifications: true,
       quickActionsEnabled: true,
       accessibilityMode: false
+    },
+    todaysSummary: {
+      date: new Date().toLocaleDateString(),
+      greeting: 'Good evening',
+      currentStreak: 0,
+      todaysProgress: 0
     }
-  });
+  };
+  
+  console.log('📊 Sending dashboard data with', dashboardData.quickActions.length, 'quick actions');
+  res.json(dashboardData);
 });
 
 // User customization endpoints

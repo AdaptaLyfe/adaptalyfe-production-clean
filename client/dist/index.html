@@ -234,6 +234,42 @@
                 dashData.quickActions.forEach((action, i) => {
                   console.log(`Quick Action ${i+1}:`, action);
                 });
+                
+                // Try to render quick actions directly in DOM for testing
+                const quickActionsContainer = document.querySelector('[data-testid="quick-actions"]') || 
+                                            document.querySelector('.quick-actions') ||
+                                            document.querySelector('#quick-actions');
+                                            
+                if (quickActionsContainer) {
+                  console.log('✅ Found quick actions container in DOM');
+                } else {
+                  console.log('❌ No quick actions container found in DOM');
+                  
+                  // Check if we're on dashboard and inject quick actions HTML for testing
+                  if (window.location.pathname === '/dashboard') {
+                    console.log('🔧 Injecting test quick actions HTML...');
+                    const testHTML = `
+                      <div style="background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h3 style="color: #333; margin-bottom: 15px;">Quick Actions (Debug)</h3>
+                        ${dashData.quickActions.map(action => `
+                          <div style="display: inline-block; background: ${action.completed ? '#dcfce7' : '#fef3c7'}; padding: 12px; margin: 8px; border-radius: 6px; border: 1px solid ${action.completed ? '#16a34a' : '#f59e0b'}; cursor: pointer;">
+                            <div style="font-weight: bold; color: #333;">${action.title}</div>
+                            <div style="font-size: 12px; color: #666;">${action.category} • ${action.completed ? '✅ Done' : '⏳ Pending'}</div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    `;
+                    
+                    const quickActionsSection = document.querySelector('h2');
+                    if (quickActionsSection && quickActionsSection.textContent === 'Quick Actions') {
+                      quickActionsSection.insertAdjacentHTML('afterend', testHTML);
+                      console.log('✅ Test quick actions HTML injected');
+                    } else {
+                      document.body.insertAdjacentHTML('beforeend', testHTML);
+                      console.log('✅ Test quick actions HTML added to body');
+                    }
+                  }
+                }
               } else {
                 console.log('❌ No quickActions in response');
               }
