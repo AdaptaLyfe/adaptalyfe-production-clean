@@ -212,6 +212,47 @@
             }
           };
           document.body.appendChild(testBtn);
+          
+          // Add Dashboard Debug Button
+          const dashBtn = document.createElement('button');
+          dashBtn.innerHTML = 'DEBUG DASHBOARD';
+          dashBtn.style.cssText = 'position:fixed;top:110px;left:10px;z-index:9999;background:purple;color:white;padding:10px;border:none;cursor:pointer;';
+          dashBtn.onclick = async () => {
+            console.log('Testing dashboard API...');
+            
+            try {
+              const dashResponse = await fetch('/api/dashboard', {
+                credentials: 'include'
+              });
+              console.log('Dashboard API status:', dashResponse.status);
+              const dashData = await dashResponse.json();
+              console.log('Dashboard API response:', dashData);
+              
+              // Check for quick actions in the response
+              if (dashData.quickActions) {
+                console.log('✅ Quick Actions found in API:', dashData.quickActions.length, 'items');
+                dashData.quickActions.forEach((action, i) => {
+                  console.log(`Quick Action ${i+1}:`, action);
+                });
+              } else {
+                console.log('❌ No quickActions in response');
+              }
+              
+              // Check for customization in the response
+              if (dashData.customization) {
+                console.log('✅ Customization found in API:', dashData.customization);
+              } else {
+                console.log('❌ No customization in response');
+              }
+              
+              alert('Dashboard API Test Complete - Check console for details');
+              
+            } catch (error) {
+              console.error('Dashboard API failed:', error);
+              alert('Dashboard API Test Failed: ' + error.message);
+            }
+          };
+          document.body.appendChild(dashBtn);
         }
       }, 2000);
       
