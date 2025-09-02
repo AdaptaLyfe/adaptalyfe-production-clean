@@ -35,6 +35,55 @@
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       console.log('Mobile detected:', isMobile, 'User agent:', navigator.userAgent);
       
+      // Login redirect fix
+      window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'LOGIN_SUCCESS') {
+          console.log('Login success detected, redirecting to dashboard...');
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 500);
+        }
+      });
+      
+      // Manual login success detection
+      let checkLoginSuccess = setInterval(function() {
+        if (window.location.pathname === '/login' && document.querySelector('[data-login-success]')) {
+          console.log('Manual redirect to dashboard after login success');
+          clearInterval(checkLoginSuccess);
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1000);
+        }
+      }, 500);
+      
+      // Global login success handler for React components
+      window.handleLoginSuccess = function(response) {
+        console.log('Global login success handler triggered', response);
+        if (response && response.success) {
+          const redirectUrl = response.redirect || '/dashboard';
+          console.log('Redirecting to:', redirectUrl);
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 500);
+        }
+      };
+      
+      // Listen for successful fetch responses to login endpoint
+      const originalFetch = window.fetch;
+      window.fetch = function(...args) {
+        return originalFetch.apply(this, args).then(response => {
+          if (response.url && response.url.includes('/api/auth/login') && response.ok) {
+            response.clone().json().then(data => {
+              if (data.success) {
+                console.log('Login API success detected, triggering redirect');
+                window.handleLoginSuccess(data);
+              }
+            }).catch(() => {});
+          }
+          return response;
+        });
+      };
+      
       // Service Worker Registration (commented out for mobile debugging)
       /*
       if ('serviceWorker' in navigator) {

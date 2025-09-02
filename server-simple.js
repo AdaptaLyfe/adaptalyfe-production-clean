@@ -104,9 +104,10 @@ app.post('/api/auth/login', async (req, res) => {
       subscriptionTier: user.subscriptionTier
     };
 
-    // Return user data
+    // Return user data with redirect instruction
     res.json({
       success: true,
+      redirect: '/dashboard',
       user: {
         id: user.id,
         username: user.username,
