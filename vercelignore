@@ -1,5 +1,0 @@
-client/
-vite.config.ts
-public/
-dist/public/
-*.html
