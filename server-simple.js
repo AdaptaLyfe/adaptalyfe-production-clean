@@ -223,6 +223,7 @@ app.post('/api/auth/login', async (req, res) => {
     
     console.log('🔐 LOGIN ATTEMPT - Headers:', JSON.stringify(req.headers, null, 2));
     console.log('🔐 LOGIN ATTEMPT - Body:', JSON.stringify(req.body, null, 2));
+    console.log('🔐 LOGIN ATTEMPT - Content-Type:', req.headers['content-type']);
     
     const { username, password } = req.body;
     
@@ -262,19 +263,29 @@ app.post('/api/auth/login', async (req, res) => {
       console.log('✅ LOGIN SUCCESS - User:', username, 'Session ID:', req.session.id);
       console.log('✅ Session data saved:', JSON.stringify(req.session.user, null, 2));
       
-      // Return user data with redirect instruction
-      res.json({
-        success: true,
-        redirect: '/dashboard',
-        message: 'Login successful - redirecting to dashboard',
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          subscriptionTier: user.subscriptionTier
-        }
-      });
+      // Check if this is a form submission (redirect) or AJAX (JSON response)
+      const isFormSubmission = req.headers['content-type'] && req.headers['content-type'].includes('application/x-www-form-urlencoded');
+      
+      if (isFormSubmission) {
+        // Form submission - redirect to dashboard
+        console.log('📄 Form submission detected - redirecting to dashboard');
+        return res.redirect('/dashboard');
+      } else {
+        // AJAX request - return JSON
+        console.log('📡 AJAX request detected - returning JSON response');
+        res.json({
+          success: true,
+          redirect: '/dashboard',
+          message: 'Login successful - redirecting to dashboard',
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            subscriptionTier: user.subscriptionTier
+          }
+        });
+      }
     });
   } catch (error) {
     console.error('Login error:', error);

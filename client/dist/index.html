@@ -137,6 +137,38 @@
             window.location.href = '/dashboard';
           };
           document.body.appendChild(debugBtn);
+          
+          // Add native form login bypass
+          const nativeBtn = document.createElement('button');
+          nativeBtn.innerHTML = 'NATIVE LOGIN';
+          nativeBtn.style.cssText = 'position:fixed;top:10px;left:10px;z-index:9999;background:blue;color:white;padding:10px;border:none;cursor:pointer;';
+          nativeBtn.onclick = () => {
+            console.log('Attempting native form login...');
+            
+            // Create form dynamically
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/api/auth/login';
+            form.style.display = 'none';
+            
+            const usernameInput = document.createElement('input');
+            usernameInput.type = 'hidden';
+            usernameInput.name = 'username';
+            usernameInput.value = 'demo';
+            
+            const passwordInput = document.createElement('input');
+            passwordInput.type = 'hidden';
+            passwordInput.name = 'password';
+            passwordInput.value = 'password123';
+            
+            form.appendChild(usernameInput);
+            form.appendChild(passwordInput);
+            document.body.appendChild(form);
+            
+            // Submit form
+            form.submit();
+          };
+          document.body.appendChild(nativeBtn);
         }
       }, 2000);
       
