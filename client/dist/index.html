@@ -72,7 +72,15 @@
       const originalFetch = window.fetch;
       window.fetch = function(...args) {
         console.log('🔍 Fetch intercepted:', args[0]);
-        console.log('🔍 Fetch options:', args[1]);
+        
+        // Ensure fetch options include credentials
+        const options = args[1] || {};
+        if (!options.credentials) {
+          options.credentials = 'include';
+        }
+        args[1] = options;
+        
+        console.log('🔍 Fetch options (with credentials):', args[1]);
         
         return originalFetch.apply(this, args).then(response => {
           console.log('✅ Fetch response received:', {
