@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+RUN npx esbuild server/index.ts --platform=node --bundle --format=cjs --outdir=dist
 RUN npm ci --omit=dev
 ENV NODE_ENV=production
 ENV PORT=8080
