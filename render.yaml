@@ -1,10 +1,10 @@
 services:
-  # Backend API Service
+  # Full-stack Web Service (Backend + Frontend)
   - type: web
-    name: adaptalyfe-api
+    name: adaptalyfe-fullstack
     runtime: node
     plan: starter  # Free tier available
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -22,21 +22,6 @@ services:
       - key: OPENAI_API_KEY
         sync: false
     healthCheckPath: /health
-    
-  # Static Site (Frontend)
-  - type: web
-    name: adaptalyfe-frontend
-    runtime: static
-    plan: starter  # Free tier available
-    buildCommand: npm ci && npm run build
-    staticPublishPath: ./client/dist
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://adaptalyfe-api.onrender.com/api/*
-      - type: rewrite
-        source: /*
-        destination: /index.html
 
 # Database
 databases:
