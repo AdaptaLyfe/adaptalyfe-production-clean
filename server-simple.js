@@ -6,12 +6,15 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// CORS configuration
+// CORS configuration - Fixed to resolve API blocking
 app.use(cors({
-  origin: true,
+  origin: true, // Allow all origins to fix CORS blocking
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Set-Cookie'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Basic middleware
@@ -70,8 +73,14 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Add preflight OPTIONS support for CORS
-app.options('*', cors());
+// Enhanced preflight OPTIONS support for CORS
+app.options('*', cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  optionsSuccessStatus: 200
+}));
 
 // Authentication routes
 app.post('/api/auth/login', async (req, res) => {
