@@ -97,66 +97,7 @@ app.options('*', (req, res) => {
   res.status(200).end();
 });
 
-// Authentication routes
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password required' });
-    }
-
-    // Find user
-    const user = users.find(u => u.username === username || u.email === username);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // For demo purposes, accept any password or check bcrypt
-    const isValidPassword = password === 'password123' || await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Set session
-    req.session.userId = user.id;
-    req.session.user = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      subscriptionTier: user.subscriptionTier
-    };
-
-    // Save session before responding
-    req.session.save((err) => {
-      if (err) {
-        console.error('Session save error:', err);
-        return res.status(500).json({ error: 'Session error' });
-      }
-      
-      console.log('✅ LOGIN SUCCESS - User:', username, 'Session ID:', req.session.id);
-      console.log('✅ Session data saved:', JSON.stringify(req.session.user, null, 2));
-      
-      // Return user data with redirect instruction
-      res.json({
-        success: true,
-        redirect: '/dashboard',
-        message: 'Login successful - redirecting to dashboard',
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          subscriptionTier: user.subscriptionTier
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// Login route moved above - no duplicate needed
 
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -272,13 +213,81 @@ app.get('/api/demo/tasks', (req, res) => {
   ]);
 });
 
+// Move authentication routes BEFORE static file serving to ensure CORS headers apply
+// Authentication routes
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    // Set CORS headers explicitly on this route
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    console.log('🔐 LOGIN ATTEMPT - Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('🔐 LOGIN ATTEMPT - Body:', JSON.stringify(req.body, null, 2));
+    
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    // Find user
+    const user = users.find(u => u.username === username || u.email === username);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // For demo purposes, accept any password or check bcrypt
+    const isValidPassword = password === 'password123' || await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Set session
+    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      subscriptionTier: user.subscriptionTier
+    };
+
+    // Save session before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session error' });
+      }
+      
+      console.log('✅ LOGIN SUCCESS - User:', username, 'Session ID:', req.session.id);
+      console.log('✅ Session data saved:', JSON.stringify(req.session.user, null, 2));
+      
+      // Return user data with redirect instruction
+      res.json({
+        success: true,
+        redirect: '/dashboard',
+        message: 'Login successful - redirecting to dashboard',
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Add enhanced request logging for debugging
 app.use((req, res, next) => {
   console.log(`📥 ${new Date().toISOString()} - ${req.method} ${req.url}`);
   if (req.body && Object.keys(req.body).length > 0) {
     console.log('📝 Request body:', JSON.stringify(req.body, null, 2));
   }
-  console.log('🌐 Request headers:', JSON.stringify(req.headers, null, 2));
   next();
 });
 

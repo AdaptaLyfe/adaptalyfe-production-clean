@@ -83,6 +83,7 @@
         console.log('🔍 Fetch options (with credentials):', args[1]);
         
         return originalFetch.apply(this, args).then(response => {
+          console.log('🔍 Raw response object:', response);
           console.log('✅ Fetch response received:', {
             url: response.url, 
             status: response.status, 
