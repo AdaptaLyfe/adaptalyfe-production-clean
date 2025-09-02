@@ -508,6 +508,11 @@ app.use((req, res, next) => {
 app.use(express.static('client/dist'));
 app.use(express.static('dist/public'));
 
+// Serve debug inject script
+app.get('/debug-inject.js', (req, res) => {
+  res.sendFile(path.join(path.resolve('.'), 'client/dist/debug-inject.js'));
+});
+
 // Serve React app for non-API routes only
 app.get('*', (req, res) => {
   // Don't interfere with API routes
