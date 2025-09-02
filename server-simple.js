@@ -43,10 +43,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // Set to false to fix CORS issues temporarily
-    httpOnly: false, // Allow client-side access for debugging
+    secure: false, // Set to false for HTTP in development
+    httpOnly: true, // Secure cookie handling
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none' // Required for cross-origin cookies
+    sameSite: 'lax' // Better compatibility for same-site requests
   }
 }));
 
@@ -280,6 +280,60 @@ app.get('/api/appointments', requireAuth, (req, res) => {
     { id: 1, title: 'Doctor Checkup', date: '2024-09-05', time: '10:00', type: 'medical', userId: req.session.userId },
     { id: 2, title: 'Therapy Session', date: '2024-09-07', time: '14:00', type: 'therapy', userId: req.session.userId }
   ]);
+});
+
+// Subscription management endpoints  
+app.get('/api/subscription', requireAuth, (req, res) => {
+  const user = req.session.user;
+  res.json({
+    tier: user.subscriptionTier,
+    status: 'active',
+    features: user.subscriptionTier === 'premium' ? 
+      ['task_management', 'medication_tracking', 'mood_monitoring', 'caregiver_system', 'document_management', 'financial_tools'] :
+      ['basic_task_management'],
+    billingDate: '2024-10-02',
+    amount: user.subscriptionTier === 'premium' ? 12.99 : 4.99
+  });
+});
+
+// GET /api/login for frontend compatibility
+app.get('/api/login', (req, res) => {
+  if (req.session?.userId) {
+    // Already logged in
+    res.json({ 
+      authenticated: true, 
+      user: req.session.user,
+      redirect: '/dashboard'
+    });
+  } else {
+    // Not authenticated
+    res.json({ 
+      authenticated: false,
+      message: 'Please use POST to login'
+    });
+  }
+});
+
+// Dashboard summary endpoint
+app.get('/api/dashboard', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  res.json({
+    user: req.session.user,
+    summary: {
+      tasksCompleted: 1,
+      totalTasks: 4,
+      progressPercentage: 25,
+      moodAverage: 7,
+      medicationCompliance: 95,
+      upcomingAppointments: 2
+    },
+    quickActions: [
+      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false },
+      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true },
+      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false },
+      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false }
+    ]
+  });
 });
 
 // Demo routes (public)
