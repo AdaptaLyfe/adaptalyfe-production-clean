@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <!-- CSP temporarily disabled for Stripe.js compatibility -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://js.stripe.com https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://fonts.googleapis.com https://fonts.gstatic.com https://api.openai.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://replit.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://api.openai.com ws: wss:; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com;"> -->
+    <title>Adaptalyfe - Grow with Guidance. Thrive with Confidence.</title>
+    <link rel="stylesheet" href="/force-hide-errors.css">
+    <script src="/block-error-modal.js?v=2"></script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="description" content="Adaptalyfe - Grow with Guidance. Thrive with Confidence. Helping individuals with developmental disabilities build independence through daily task management, financial planning, mood tracking, and comprehensive support features." />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#22c55e" />
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Adaptalyfe" />
+    
+    <!-- Mobile Bundle Size Detection -->
+    <script>
+      // Detect mobile and bundle loading issues
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
+      console.log('User agent:', navigator.userAgent);
+      console.log('Connection type:', navigator.connection ? navigator.connection.effectiveType : 'unknown');
+      
+      // Set a timeout for mobile devices - if main app doesn't load in 10 seconds, show fallback
+      if (isMobile) {
+        const timeout = setTimeout(() => {
+          console.log('Main app load timeout on mobile - redirecting to fallback');
+          window.location.href = '/mobile-fallback.html';
+        }, 10000);
+        
+        // Cancel timeout if app loads successfully
+        window.addEventListener('load', () => {
+          clearTimeout(timeout);
+          console.log('Main app loaded successfully on mobile');
+        });
+      }
+      
+      // Global error handler for mobile
+      window.addEventListener('error', function(e) {
+        console.error('JavaScript Error:', e.error, e.filename, e.lineno);
+        if (isMobile) {
+          // Redirect to mobile fallback on error
+          setTimeout(() => {
+            window.location.href = '/mobile-fallback.html';
+          }, 1000);
+        }
+      });
+      
+      // Monitor bundle loading
+      const startTime = performance.now();
+      window.addEventListener('load', () => {
+        const loadTime = performance.now() - startTime;
+        console.log('Page load time:', Math.round(loadTime), 'ms');
+        if (isMobile && loadTime > 8000) {
+          console.log('Slow loading detected on mobile');
+        }
+      });
+    </script>
+    <script type="module" crossorigin src="/assets/index-DWjOOShi.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DuNebGYz.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>

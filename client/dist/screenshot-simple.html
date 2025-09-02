@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adaptalyfe Screenshots</title>
+    <style>
+        body { margin: 0; width: 1290px; height: 2796px; font-family: Arial; background: white; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; text-align: center; }
+        .logo { font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+        .content { padding: 40px; }
+        .card { background: #f8f9fa; border-radius: 15px; padding: 30px; margin-bottom: 20px; border-left: 5px solid #667eea; }
+        .title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }
+        .desc { color: #666; font-size: 16px; }
+        .controls { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; }
+        .btn { display: block; margin: 5px 0; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; width: 120px; }
+        .emergency { position: absolute; top: 250px; right: 40px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 80px; height: 80px; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>📱 Screenshots</h3>
+        <button class="btn" onclick="showView1()">Dashboard</button>
+        <button class="btn" onclick="showView2()">Features</button>
+        <button class="btn" onclick="showView3()">Tasks</button>
+        <button class="btn" onclick="showView4()">Medical</button>
+        <button class="btn" onclick="showView5()">Student</button>
+        <small>1290x2796 pixels<br>Right-click to save</small>
+    </div>
+
+    <div class="header">
+        <div class="logo">Adaptalyfe</div>
+        <h2>Grow with Guidance. Thrive with Confidence.</h2>
+    </div>
+
+    <button class="emergency">🚨</button>
+
+    <div class="content" id="content">
+        <!-- Content will change -->
+    </div>
+
+    <script>
+        function showView1() {
+            document.getElementById('content').innerHTML = `
+                <div class="card"><div class="title">📋 Daily Tasks</div><div class="desc">Complete 3 of 8 tasks today</div></div>
+                <div class="card"><div class="title">💊 Medications</div><div class="desc">Next: Vitamin D at 6:00 PM</div></div>
+                <div class="card"><div class="title">😊 Mood Check</div><div class="desc">How are you feeling today?</div></div>
+                <div class="card"><div class="title">📚 Study Session</div><div class="desc">Math homework due tomorrow</div></div>
+                <div class="card"><div class="title">🏦 Banking</div><div class="desc">Account balance: $1,234.56</div></div>
+                <div class="card"><div class="title">📞 Emergency Contacts</div><div class="desc">Mom, Dad, Dr. Smith</div></div>
+            `;
+        }
+
+        function showView2() {
+            document.getElementById('content').innerHTML = `
+                <div class="card"><div class="title">🎯 Independence Building</div><div class="desc">Step-by-step guidance for daily life skills</div></div>
+                <div class="card"><div class="title">🧠 AdaptAI Assistant</div><div class="desc">24/7 AI support and encouragement</div></div>
+                <div class="card"><div class="title">👥 Caregiver Network</div><div class="desc">Stay connected with your support team</div></div>
+                <div class="card"><div class="title">🛡️ Safety First</div><div class="desc">Emergency features and crisis support</div></div>
+                <div class="card"><div class="title">📊 Progress Tracking</div><div class="desc">Visual progress and achievement system</div></div>
+                <div class="card"><div class="title">🎨 Personalized Experience</div><div class="desc">Customizable interface and preferences</div></div>
+            `;
+        }
+
+        function showView3() {
+            document.getElementById('content').innerHTML = `
+                <div class="card"><div class="title">✅ Brush Teeth</div><div class="desc">Completed this morning</div></div>
+                <div class="card"><div class="title">🍳 Make Breakfast</div><div class="desc">Step-by-step cooking guide</div></div>
+                <div class="card"><div class="title">🧺 Laundry</div><div class="desc">Due today - Visual reminder set</div></div>
+                <div class="card"><div class="title">🛒 Grocery Shopping</div><div class="desc">Shopping list ready: 8 items</div></div>
+                <div class="card"><div class="title">💡 Pay Electric Bill</div><div class="desc">Auto-pay enabled</div></div>
+                <div class="card"><div class="title">🚗 Bus to Work</div><div class="desc">Route 15 at 8:30 AM</div></div>
+            `;
+        }
+
+        function showView4() {
+            document.getElementById('content').innerHTML = `
+                <div class="card"><div class="title">💊 Current Medications</div><div class="desc">5 active prescriptions tracked</div></div>
+                <div class="card"><div class="title">⏰ Medication Reminders</div><div class="desc">Smart notifications with visual cues</div></div>
+                <div class="card"><div class="title">🏥 Upcoming Appointments</div><div class="desc">Dr. Johnson - Jan 15, 2:30 PM</div></div>
+                <div class="card"><div class="title">🩺 Health Conditions</div><div class="desc">ADHD, Autism Spectrum Disorder</div></div>
+                <div class="card"><div class="title">🚨 Emergency Medical Info</div><div class="desc">Allergies, emergency contacts</div></div>
+                <div class="card"><div class="title">📋 Symptom Tracking</div><div class="desc">Daily wellness monitoring</div></div>
+            `;
+        }
+
+        function showView5() {
+            document.getElementById('content').innerHTML = `
+                <div class="card"><div class="title">📚 Class Schedule</div><div class="desc">Math, Science, English - Today</div></div>
+                <div class="card"><div class="title">📝 Assignment Tracker</div><div div class="desc">3 assignments due this week</div></div>
+                <div class="card"><div class="title">🎯 Study Sessions</div><div class="desc">Biology test prep - 2 hours</div></div>
+                <div class="card"><div class="title">🗺️ Campus Navigation</div><div class="desc">Find classrooms and facilities</div></div>
+                <div class="card"><div class="title">👥 Study Groups</div><div class="desc">Connect with peers and tutors</div></div>
+                <div class="card"><div class="title">🎓 Independence Skills</div><div class="desc">Social, academic, life skills progress</div></div>
+            `;
+        }
+
+        // Start with dashboard
+        showView1();
+    </script>
+</body>
+</html>
