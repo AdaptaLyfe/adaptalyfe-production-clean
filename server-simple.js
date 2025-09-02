@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -82,4 +82,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🩺 Medical app features ready for development`);
 });
 
-module.exports = app;
+export default app;
