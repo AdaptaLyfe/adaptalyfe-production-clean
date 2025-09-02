@@ -1,31 +1,20 @@
 services:
-  # Full-stack Web Service (Backend + Frontend)
   - type: web
-    name: adaptalyfe-fullstack
-    runtime: node
-    plan: starter  # Free tier available
-    buildCommand: npm ci && npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
-    startCommand: npm start
+    name: adaptalyfe-medical-app
+    env: node
+    buildCommand: echo "No build required - using pre-compiled assets"
+    startCommand: node server-simple.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
+      - key: SESSION_SECRET
+        generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: adaptalyfe-postgres
+          name: adaptalyfe-db
           property: connectionString
-      - key: STRIPE_SECRET_KEY
-        sync: false  # Set manually in Render dashboard
-      - key: VITE_STRIPE_PUBLIC_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-    healthCheckPath: /health
 
-# Database
 databases:
-  - name: adaptalyfe-postgres
-    plan: starter  # Free tier: 1GB storage, 100 connections
+  - name: adaptalyfe-db
     databaseName: adaptalyfe
     user: adaptalyfe_user
