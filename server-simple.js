@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import bcrypt from 'bcryptjs';
 import cors from 'cors';
+import path from 'path';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -69,14 +70,7 @@ const users = [
   }
 ];
 
-// Auth middleware
-const requireAuth = (req, res, next) => {
-  if (req.session && req.session.userId) {
-    return next();
-  } else {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-};
+// Auth middleware - using enhanced version below
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -228,6 +222,20 @@ app.post('/api/auth/register', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Authentication middleware - Enhanced with debugging
+function requireAuth(req, res, next) {
+  console.log('🔐 Auth check - Session ID:', req.session?.id);
+  console.log('🔐 Auth check - User ID:', req.session?.userId);
+  console.log('🔐 Auth check - User data:', JSON.stringify(req.session?.user, null, 2));
+  
+  if (!req.session?.userId) {
+    console.log('❌ Auth failed - No user session');
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  console.log('✅ Auth passed - User:', req.session.user.username);
+  next();
+}
 
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy((err) => {
@@ -381,11 +389,21 @@ app.use((req, res, next) => {
 app.use(express.static('client/dist'));
 app.use(express.static('dist/public'));
 
-// Serve React app for all routes
+// Serve React app for non-API routes only
 app.get('*', (req, res) => {
-  const indexPath = process.env.NODE_ENV === 'production' ? '/app/client/dist/index.html' : './client/dist/index.html';
+  // Don't interfere with API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+
+  const indexPath = process.env.NODE_ENV === 'production' 
+    ? path.resolve('/app/client/dist/index.html')
+    : path.resolve('./client/dist/index.html');
+    
   res.sendFile(indexPath, (err) => {
     if (err) {
+      console.error('Error serving index.html:', err);
       res.status(404).send(`
         <!DOCTYPE html>
         <html>
