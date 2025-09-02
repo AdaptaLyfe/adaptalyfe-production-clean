@@ -71,18 +71,41 @@
       // Listen for successful fetch responses to login endpoint
       const originalFetch = window.fetch;
       window.fetch = function(...args) {
+        console.log('Fetch intercepted:', args[0]);
         return originalFetch.apply(this, args).then(response => {
+          console.log('Fetch response:', response.url, response.status, response.ok);
           if (response.url && response.url.includes('/api/auth/login') && response.ok) {
+            console.log('Login endpoint detected, checking response...');
             response.clone().json().then(data => {
+              console.log('Login response data:', data);
               if (data.success) {
                 console.log('Login API success detected, triggering redirect');
                 window.handleLoginSuccess(data);
               }
-            }).catch(() => {});
+            }).catch(err => {
+              console.error('Error parsing login response:', err);
+            });
           }
           return response;
+        }).catch(err => {
+          console.error('Fetch error:', err);
+          throw err;
         });
       };
+      
+      // Force redirect button for debugging
+      setTimeout(() => {
+        if (window.location.pathname === '/login') {
+          const debugBtn = document.createElement('button');
+          debugBtn.innerHTML = 'DEBUG: Force Dashboard';
+          debugBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:red;color:white;padding:10px;border:none;cursor:pointer;';
+          debugBtn.onclick = () => {
+            console.log('Force redirect to dashboard');
+            window.location.href = '/dashboard';
+          };
+          document.body.appendChild(debugBtn);
+        }
+      }, 2000);
       
       // Service Worker Registration (commented out for mobile debugging)
       /*

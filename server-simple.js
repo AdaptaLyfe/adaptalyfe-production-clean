@@ -104,17 +104,29 @@ app.post('/api/auth/login', async (req, res) => {
       subscriptionTier: user.subscriptionTier
     };
 
-    // Return user data with redirect instruction
-    res.json({
-      success: true,
-      redirect: '/dashboard',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        subscriptionTier: user.subscriptionTier
+    // Save session before responding
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session error' });
       }
+      
+      console.log('✅ LOGIN SUCCESS - User:', username, 'Session ID:', req.session.id);
+      console.log('✅ Session data saved:', JSON.stringify(req.session.user, null, 2));
+      
+      // Return user data with redirect instruction
+      res.json({
+        success: true,
+        redirect: '/dashboard',
+        message: 'Login successful - redirecting to dashboard',
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier
+        }
+      });
     });
   } catch (error) {
     console.error('Login error:', error);
