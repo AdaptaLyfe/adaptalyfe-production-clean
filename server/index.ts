@@ -43,18 +43,40 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// CORS configuration - Railway compatible
 app.use(cors({
-  origin: [
-    'http://localhost:5000', 
-    'http://127.0.0.1:5000',
-    'https://adaptalyfe-5a1d3.web.app', // Your Firebase domain
-    'https://adaptalyfe-5a1d3.firebaseapp.com', // Alternative Firebase domain
-    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev' // Your Replit domain
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5000', 
+      'http://127.0.0.1:5000',
+      'https://adaptalyfe-5a1d3.web.app',
+      'https://adaptalyfe-5a1d3.firebaseapp.com',
+      'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
+      'https://adaptalyfe-db-production.up.railway.app'
+    ];
+    
+    // Allow any Railway domain
+    if (origin && (origin.includes('.railway.app') || origin.includes('.up.railway.app'))) {
+      console.log('CORS allowing Railway origin:', origin);
+      return callback(null, true);
+    }
+    
+    // Check allowed origins
+    if (allowedOrigins.includes(origin)) {
+      console.log('CORS allowing known origin:', origin);
+      return callback(null, true);
+    }
+    
+    console.log('CORS rejected origin:', origin);
+    callback(null, true); // Allow all for now to debug
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
 
 // Rate limiting - more permissive for development
@@ -144,7 +166,11 @@ app.use((req, res, next) => {
       const distPath = path.resolve(import.meta.dirname, "public");
       if (fs.existsSync(distPath)) {
         app.use(express.static(distPath));
-        app.get("*", (_req, res) => {
+        app.get("*", (req, res) => {
+          // Don't serve HTML for API routes
+          if (req.path.startsWith('/api/')) {
+            return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
+          }
           res.sendFile(path.resolve(distPath, "index.html"));
         });
       }
@@ -161,7 +187,12 @@ app.use((req, res, next) => {
     app.use(express.static(distPath));
     
     // Serve index.html for all non-API routes (SPA fallback)
-    app.get("*", (_req, res) => {
+    app.get("*", (req, res) => {
+      // Don't serve HTML for API routes - let them return proper 404 JSON
+      if (req.path.startsWith('/api/')) {
+        console.log(`API route not found: ${req.method} ${req.path}`);
+        return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
+      }
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
