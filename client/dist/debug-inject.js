@@ -22,51 +22,85 @@ setTimeout(() => {
       if (dashData.quickActions && dashData.quickActions.length > 0) {
         console.log('✅ Found', dashData.quickActions.length, 'quick actions');
         
-        // Create quick actions HTML
+        // Create quick actions HTML matching dashboard design
         const quickActionsHTML = `
-          <div id="injected-quick-actions" style="background: white; padding: 20px; margin: 20px 0; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #22c55e;">
-            <h3 style="color: #16a34a; margin: 0 0 15px 0; font-size: 18px; font-weight: bold;">Quick Actions (Injected)</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
-              ${dashData.quickActions.map(action => `
-                <div onclick="completeQuickAction('${action.id}')" style="
-                  background: linear-gradient(135deg, ${action.completed ? '#dcfce7, #bbf7d0' : '#fef3c7, #fed7aa'}); 
-                  padding: 16px; 
-                  border-radius: 8px; 
-                  border: 2px solid ${action.completed ? '#16a34a' : '#f59e0b'}; 
-                  cursor: pointer;
-                  transition: transform 0.2s;
-                  text-align: center;
-                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                  <div style="font-size: 24px; margin-bottom: 8px;">
-                    ${getActionEmoji(action.icon)}
-                  </div>
-                  <div style="font-weight: bold; color: #333; margin-bottom: 4px; font-size: 16px;">${action.title}</div>
-                  <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${action.description}</div>
-                  <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">
-                    ${action.category} • ${action.completed ? '✅ Completed' : '⏳ Pending'}
-                  </div>
+          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 16px 0;">
+            ${dashData.quickActions.map(action => `
+              <div onclick="completeQuickAction('${action.id}')" style="
+                background: ${action.completed ? 'linear-gradient(135deg, #dcfce7, #bbf7d0)' : 'linear-gradient(135deg, #fef3c7, #fde68a)'};
+                border: 1px solid ${action.completed ? '#16a34a' : '#d97706'};
+                border-radius: 12px;
+                padding: 20px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                position: relative;
+                overflow: hidden;
+              " 
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" 
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)'">
+                <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.9;">
+                  ${getActionEmoji(action.icon)}
                 </div>
-              `).join('')}
-            </div>
+                <div style="font-weight: 600; color: #1f2937; margin-bottom: 6px; font-size: 16px;">
+                  ${action.title}
+                </div>
+                <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">
+                  ${action.description}
+                </div>
+                <div style="
+                  background: ${action.completed ? '#16a34a' : '#d97706'};
+                  color: white;
+                  font-size: 10px;
+                  font-weight: 500;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  padding: 4px 8px;
+                  border-radius: 12px;
+                  display: inline-block;
+                ">
+                  ${action.completed ? '✓ Complete' : '○ Pending'}
+                </div>
+              </div>
+            `).join('')}
           </div>
         `;
         
-        // Find Quick Actions section and inject
-        const quickActionsSection = document.querySelector('h2');
-        if (quickActionsSection && quickActionsSection.textContent.includes('Quick Actions')) {
-          // Remove existing injected content
-          const existing = document.getElementById('injected-quick-actions');
-          if (existing) existing.remove();
-          
-          quickActionsSection.insertAdjacentHTML('afterend', quickActionsHTML);
-          console.log('✅ Quick actions injected after heading');
+        // Find the exact Quick Actions section and inject in the right place
+        const quickActionsHeading = document.querySelector('h2');
+        const todaysSummary = document.querySelector('[class*="summary"]') || document.querySelector('[class*="Summary"]');
+        
+        // Remove existing injected content
+        const existing = document.getElementById('injected-quick-actions');
+        if (existing) existing.remove();
+        
+        if (quickActionsHeading && quickActionsHeading.textContent.includes('Quick Actions')) {
+          // Look for the container that holds Today's Summary and inject alongside it
+          const parentContainer = quickActionsHeading.parentElement;
+          if (parentContainer) {
+            // Create a flex container to hold both Today's Summary and Quick Actions
+            const flexContainer = document.createElement('div');
+            flexContainer.style.cssText = 'display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;';
+            flexContainer.innerHTML = quickActionsHTML;
+            
+            quickActionsHeading.insertAdjacentElement('afterend', flexContainer);
+            console.log('✅ Quick actions injected in proper dashboard location');
+          }
         } else {
-          // Inject at top of body
-          const existing = document.getElementById('injected-quick-actions');
-          if (existing) existing.remove();
-          
-          document.body.insertAdjacentHTML('afterbegin', quickActionsHTML);
-          console.log('✅ Quick actions injected at body start');
+          // Fallback: inject after the greeting section
+          const greetingSection = document.querySelector('[class*="greeting"]') || 
+                                  document.querySelector('.dark') || 
+                                  document.querySelector('h1');
+          if (greetingSection) {
+            greetingSection.insertAdjacentHTML('afterend', `
+              <div style="margin: 20px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: 600;">Quick Actions</h2>
+                ${quickActionsHTML}
+              </div>
+            `);
+            console.log('✅ Quick actions injected after greeting with proper styling');
+          }
         }
         
         // Add completion function to global scope
@@ -110,12 +144,12 @@ setTimeout(() => {
   
 }, 2000);
 
-// Helper function for action icons
+// Helper function for action icons with better medical app icons
 function getActionEmoji(icon) {
   const iconMap = {
-    'mood': '😊',
+    'mood': '😌',
     'pill': '💊', 
-    'activity': '🏃',
+    'activity': '🏃‍♀️',
     'moon': '🌙'
   };
   return iconMap[icon] || '⭐';
