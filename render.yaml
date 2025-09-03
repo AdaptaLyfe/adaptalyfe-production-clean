@@ -1,13 +1,23 @@
 services:
   - type: web
-    name: adaptalyfe-render-fresh
+    name: adaptalyfe-cache-bust
     env: node
     plan: starter
-    buildCommand: npm ci && npm run build && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=adaptalyfe-app.js
-    startCommand: node adaptalyfe-app.js
+    buildCommand: |
+      echo "🚀 Cache-busting build started at $(date)"
+      rm -rf node_modules/.cache dist/ .npm
+      npm ci --cache /tmp/npm-cache-$(date +%s)
+      npm run build
+      cp production-index-cache-bust.html dist/public/index.html
+      echo "📦 Building production server with cache buster"
+      esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=render-app.js
+      echo "✅ Cache-busted build complete - no deep caching possible"
+    startCommand: node render-app.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CACHE_BUSTER
+        value: "2025-09-03-v2"
       - key: DATABASE_URL
         fromDatabase:
           name: adaptalyfe-db

@@ -1,0 +1,80 @@
+Yep—“deep caching” pain on Render is usually a combo of (a) Render’s build/image cache, (b) CDN/browser cache for static files, and (c) a rogue service worker. Here’s a tight, do-this-now checklist that reliably flushes all three layers and keeps it from coming back.
+
+Fix it right now
+
+Clear Render’s build cache and redeploy
+
+In your service → Deploys → ⋯ → Clear build cache & deploy (for Docker services too).
+
+If you use a Dockerfile, add a throwaway ARG to bust layer cache:
+
+ARG CACHE_BUSTER=2025-09-03
+
+
+(Change the value when you need a fresh build.)
+
+Purge client/CDN cache by changing asset URLs
+
+Make sure your build generates hashed filenames (Vite/CRA/Next do this by default).
+
+If you have any non-hashed assets (e.g., /styles.css, /app.js), add a version query:
+
+<link rel="stylesheet" href="/styles.css?v=2025-09-03">
+<script src="/app.js?v=2025-09-03"></script>
+
+
+(Any change to v= forces a fresh fetch.)
+
+Set sane Cache-Control headers
+
+HTML should not be cached; static assets can be long-cached if hashed.
+
+Express/Node example (backend on Render):
+
+import express from "express";
+import path from "path";
+
+const app = express();
+
+// Long cache for hashed assets
+app.use("/assets", express.static("dist/assets", {
+  maxAge: "365d",
+  immutable: true,
+}));
+
+// No cache for HTML shells
+app.get(["/", "/index.html", "/*"], (req, res, next) => {
+  res.set("Cache-Control", "no-store"); // or "no-cache"
+  next();
+}, express.static("dist", { index: "index.html" }));
+
+// APIs should never be cached
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
+
+Kill any Service Worker (common “deep cache” culprit)
+
+In Chrome: DevTools → Application → Service Workers → Unregister.
+
+Also delete site data: Application → Clear storage → Clear site data.
+
+If you used PWA tooling, increment the SW version or temporarily disable registration:
+
+// comment this during debugging
+// navigator.serviceWorker.register('/sw.js');
+
+
+Force-refresh locally
+
+On Chromebook/Chrome: Ctrl+Shift+R (hard reload), or open DevTools → right-click refresh icon → Empty cache and hard reload.
+
+CDN edge gotchas (if using a Static Site on Render)
+
+Ensure your index.html (and any HTML) returns Cache-Control: no-store or no-cache.
+
+Only the fingerprinted /assets/* get max-age=31536000, immutable.
+
+If you can’t configure headers on the platform layer, serve HTML through your app (as above) so you control headers.

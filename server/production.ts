@@ -132,10 +132,33 @@ app.use((req, res, next) => {
     throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
 
-  app.use(express.static(distPath));
+  // Cache-busting static file serving (ChatGPT recommendations)
+  // Long cache for hashed assets (CSS/JS with fingerprints)
+  app.use("/assets", express.static(path.join(distPath, "assets"), {
+    maxAge: "365d",
+    immutable: true,
+    etag: true
+  }));
+
+  // No cache for HTML and other files to prevent deep caching issues
+  app.use(express.static(distPath, {
+    maxAge: 0,
+    etag: false,
+    lastModified: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html') || filePath.endsWith('/')) {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+      }
+    }
+  }));
   
-  // Serve index.html for all non-API routes (SPA fallback)
+  // Serve index.html for all non-API routes (SPA fallback) with no-cache headers
   app.get("*", (_req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 
