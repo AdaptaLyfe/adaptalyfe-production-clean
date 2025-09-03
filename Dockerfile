@@ -1,21 +1,29 @@
-# Use Node.js LTS version
-FROM node:18-alpine
+# Use Node.js official image
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm ci
 
-# Copy server and client files
-COPY server-simple.js ./
-COPY client/ ./client/
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Remove development dependencies to reduce image size
+RUN npm prune --production
 
 # Expose port
-EXPOSE 3000
+EXPOSE 5000
 
-# Start the application
-CMD ["node", "server-simple.js"]
+# Set production environment
+ENV NODE_ENV=production
+
+# Start the application directly
+CMD ["node", "dist/index.js"]

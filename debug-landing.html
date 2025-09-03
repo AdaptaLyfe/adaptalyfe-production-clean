@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Landing Page</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); }
+        .debug { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>AdaptaLyfe Landing Page Debug</h1>
+    
+    <div class="debug">
+        <h3>Authentication Status Test</h3>
+        <p>API Response: <span id="api-result">Loading...</span></p>
+        <p>Expected: "Authentication required" (401)</p>
+    </div>
+    
+    <div class="debug">
+        <h3>Current URL Info</h3>
+        <p>Current Path: <span id="current-path"></span></p>
+        <p>Full URL: <span id="full-url"></span></p>
+    </div>
+    
+    <div class="debug">
+        <h3>What Should Happen</h3>
+        <ul>
+            <li>Server returns 401 "Authentication required" ✓</li>
+            <li>React app loads at root path "/" ✓</li>  
+            <li>Landing page shows with "Empowering Independence" ❌</li>
+            <li>No navigation menu should appear ❌</li>
+        </ul>
+    </div>
+
+    <div class="debug">
+        <h3>Try These Steps</h3>
+        <ol>
+            <li>Open Developer Tools (F12)</li>
+            <li>Go to Application tab → Storage</li>
+            <li>Click "Clear site data"</li>
+            <li>Hard refresh (Ctrl+F5)</li>
+        </ol>
+    </div>
+
+    <script>
+        // Test API authentication
+        fetch('/api/user')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('api-result').innerHTML = 
+                    '<span class="success">' + JSON.stringify(data) + '</span>';
+            })
+            .catch(error => {
+                document.getElementById('api-result').innerHTML = 
+                    '<span class="error">Error: ' + error.message + '</span>';
+            });
+        
+        // Show current URL info
+        document.getElementById('current-path').textContent = window.location.pathname;
+        document.getElementById('full-url').textContent = window.location.href;
+    </script>
+</body>
+</html>

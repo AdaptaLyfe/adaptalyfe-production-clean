@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AdaptaLyfe Debug</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: linear-gradient(135deg, #e0f7fa, #b2ebf2); }
+        .debug { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        button { background: #0ea5e9; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 AdaptaLyfe Authentication Debug</h1>
+    
+    <div class="debug">
+        <h3>Server Authentication Test</h3>
+        <p>API Status: <span id="api-result">Testing...</span></p>
+        <button onclick="testAuth()">Test Authentication</button>
+    </div>
+    
+    <div class="debug">
+        <h3>Browser Info</h3>
+        <p>Current URL: <span id="current-url"></span></p>
+        <p>User Agent: <span id="user-agent"></span></p>
+    </div>
+    
+    <div class="debug">
+        <h3>Clear All Browser Data</h3>
+        <button onclick="clearEverything()">Force Clear All Data</button>
+        <p><small>This will clear cookies, localStorage, sessionStorage, and cache</small></p>
+    </div>
+
+    <script>
+        function testAuth() {
+            document.getElementById('api-result').textContent = 'Testing...';
+            fetch('/api/user', { 
+                method: 'GET',
+                cache: 'no-cache',
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+            .then(response => {
+                if (response.status === 401) {
+                    document.getElementById('api-result').innerHTML = 
+                        '<span class="success">✅ CORRECT: 401 Authentication Required</span>';
+                } else {
+                    return response.json().then(data => {
+                        document.getElementById('api-result').innerHTML = 
+                            '<span class="error">❌ PROBLEM: ' + response.status + ' - ' + JSON.stringify(data) + '</span>';
+                    });
+                }
+            })
+            .catch(error => {
+                document.getElementById('api-result').innerHTML = 
+                    '<span class="error">❌ ERROR: ' + error.message + '</span>';
+            });
+        }
+
+        function clearEverything() {
+            // Clear all possible browser storage
+            if (localStorage) localStorage.clear();
+            if (sessionStorage) sessionStorage.clear();
+            
+            // Clear cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            alert('Browser data cleared! Now refresh the main page.');
+        }
+
+        // Initialize
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        
+        // Auto-test on load
+        testAuth();
+    </script>
+</body>
+</html>

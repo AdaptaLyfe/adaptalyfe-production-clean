@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mobile Builder Pro</string>
+    <string name="title_activity_main">Mobile Builder Pro</string>
+    <string name="package_name">com.mobile.builderpro</string>
+    <string name="custom_url_scheme">com.mobile.builderpro</string>
+</resources>

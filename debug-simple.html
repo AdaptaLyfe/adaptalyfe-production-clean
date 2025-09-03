@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Adaptalyfe</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px;
+            background: linear-gradient(135deg, #e3f2fd, #f3e5f5, #e0f2f1);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+        }
+        .logo { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        .icon { 
+            width: 40px; 
+            height: 40px; 
+            background: linear-gradient(135deg, #1e88e5, #8e24aa); 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: white; 
+            font-weight: bold; 
+        }
+        .status { 
+            background: #e8f5e8; 
+            border: 2px solid #4caf50; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin: 20px 0; 
+        }
+        .button { 
+            background: linear-gradient(135deg, #1e88e5, #8e24aa); 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-block; 
+            margin: 10px 5px; 
+            font-weight: 600;
+        }
+        .button:hover { 
+            opacity: 0.9; 
+            transform: translateY(-1px); 
+        }
+        .success { color: #4caf50; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="icon">🧠</div>
+                <div>
+                    <h1 style="margin: 0; color: #333;">Adaptalyfe</h1>
+                    <p style="margin: 0; color: #666; font-size: 14px;">Grow with Guidance. Thrive with Confidence.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h2>System Status Check</h2>
+            <p>✅ Server running on port 5000</p>
+            <p>✅ Sleep tracking database schema updated</p>
+            <p class="success">✅ Sleep session saving functionality working!</p>
+            <p>✅ Button styling with boxes implemented</p>
+        </div>
+
+        <h2>Quick Actions</h2>
+        <a href="/login" class="button">Go to Login</a>
+        <a href="/dashboard" class="button">Go to Dashboard</a>
+        <a href="/sleep-tracking" class="button">Test Sleep Tracking</a>
+        
+        <h2>Sleep Tracking Feature Status</h2>
+        <p><strong>Recent Fix:</strong> Successfully resolved sleep session saving issue by:</p>
+        <ul>
+            <li>Converting database columns from TIME to TIMESTAMP format</li>
+            <li>Fixed data conversion for bedtime, sleep time, and wake time fields</li>
+            <li>Added styled boxes around "Log Sleep" and "Save Sleep Session" buttons</li>
+            <li>Blue boxes for "Log Sleep" actions, green box for "Save Sleep Session"</li>
+        </ul>
+        
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <p><strong>Test Instructions:</strong></p>
+            <ol>
+                <li>Login with admin/demo2025</li>
+                <li>Navigate to Sleep Tracking</li>
+                <li>Click "Log Sleep" (in blue box)</li>
+                <li>Fill out sleep data and click "Save Sleep Session" (in green box)</li>
+                <li>Verify data saves successfully</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

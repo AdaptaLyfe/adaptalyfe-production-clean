@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptalyfe - Expo Go QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            color: #333;
+        }
+        
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .qr-code {
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+        }
+        
+        .instructions {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .step {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-number {
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        
+        .url-display {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        
+        .download-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8f2ff;
+            border-radius: 10px;
+        }
+        
+        .download-link {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        
+        .download-link:hover {
+            background: #5a67d8;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚀 Adaptalyfe</div>
+        <div class="tagline">Grow with Guidance. Thrive with Confidence.</div>
+        
+        <h2>📱 Mobile App - Expo Go</h2>
+        
+        <div id="qrcode" class="qr-code"></div>
+        
+        <div class="url-display" id="appUrl">
+            Loading QR Code...
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 How to Test Your Mobile App:</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>Download <strong>Expo Go</strong> app from your app store</div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>Open Expo Go and scan the QR code above</div>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>Your Adaptalyfe app will load directly on your phone!</div>
+            </div>
+        </div>
+        
+        <div class="download-section">
+            <h3>📲 Get Expo Go:</h3>
+            <a href="https://apps.apple.com/app/expo-go/id982107779" class="download-link" target="_blank">
+                📱 iOS App Store
+            </a>
+            <a href="https://play.google.com/store/apps/details?id=host.exp.exponent" class="download-link" target="_blank">
+                🤖 Google Play
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-radius: 8px; color: #856404;">
+            <strong>Development Mode</strong><br>
+            Expo Go URL: <strong>Replit Development Server</strong><br>
+            API Connected to: <strong>app.adaptalyfeapp.com</strong>
+        </div>
+    </div>
+
+    <script>
+        // Generate QR Code for Expo Go
+        // Use Replit development URL with Expo server port
+        const expoUrl = "exp://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev:19000";
+        
+        // Display the URL
+        document.getElementById('appUrl').textContent = expoUrl;
+        
+        // Generate QR Code
+        QRCode.toCanvas(document.getElementById('qrcode'), expoUrl, {
+            width: 200,
+            height: 200,
+            colorDark: '#667eea',
+            colorLight: '#ffffff',
+            margin: 2
+        }, function (error) {
+            if (error) {
+                console.error('QR Code generation failed:', error);
+                document.getElementById('qrcode').innerHTML = '<p style="color: red;">QR Code generation failed</p>';
+            }
+        });
+    </script>
+</body>
+</html>

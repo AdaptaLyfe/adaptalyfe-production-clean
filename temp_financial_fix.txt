@@ -1,0 +1,4 @@
+I need to fix the financial.tsx file by:
+1. Changing the API endpoint from "/api/banking/setup-bill-pay" to "/api/banking/bill-payments" 
+2. Including the paymentAmount field from the selected bill
+3. Fixing any syntax issues

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Demo Auth Test</title>
+</head>
+<body>
+    <h1>Demo Authentication Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testUser()">Test User</button>
+    <div id="result"></div>
+
+    <script>
+        async function testLogin() {
+            try {
+                const response = await fetch('/api/demo-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'demo2025'
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                document.getElementById('result').innerHTML = '<h3>Login Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (response.ok) {
+                    // Test user endpoint immediately after login
+                    setTimeout(testUser, 1000);
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<h3>Login Error:</h3><pre>' + error.message + '</pre>';
+            }
+        }
+
+        async function testUser() {
+            try {
+                const response = await fetch('/api/user', {
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                document.getElementById('result').innerHTML += '<h3>User Response:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (response.ok) {
+                    document.getElementById('result').innerHTML += '<h3>Success!</h3><p>Authentication working properly. <a href="/dashboard">Go to Dashboard</a></p>';
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML += '<h3>User Error:</h3><pre>' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* AdaptaLyfe Color Overrides - Modern, Accessible Colors */
+:root {
+  /* Primary brand colors - vibrant green theme */
+  --primary: 142 76% 36%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Accent colors for different modules */
+  --accent: 142 76% 90%;
+  --accent-foreground: 142 76% 20%;
+  
+  /* Secondary colors - calm blue */
+  --secondary: 217 91% 95%;
+  --secondary-foreground: 217 91% 20%;
+  
+  /* Background improvements */
+  --background: 0 0% 100%;
+  --card: 0 0% 100%;
+  --muted: 210 40% 96%;
+  
+  /* Border and input refinements */
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 142 76% 36%;
+  
+  /* Custom module colors */
+  --task-color: 142 76% 36%;
+  --medical-color: 0 84% 60%;
+  --academic-color: 217 91% 60%;
+  --financial-color: 39 85% 59%;
+  --mood-color: 262 83% 58%;
+  --social-color: 330 81% 60%;
+}
+
+.dark {
+  --primary: 142 76% 45%;
+  --accent: 142 76% 25%;
+  --background: 222 84% 5%;
+  --card: 222 84% 5%;
+  --muted: 217 33% 18%;
+  --border: 217 33% 18%;
+  --input: 217 33% 18%;
+}
+
+/* Module-specific color classes */
+.task-module { --module-color: var(--task-color); }
+.medical-module { --module-color: var(--medical-color); }
+.academic-module { --module-color: var(--academic-color); }
+.financial-module { --module-color: var(--financial-color); }
+.mood-module { --module-color: var(--mood-color); }
+.social-module { --module-color: var(--social-color); }

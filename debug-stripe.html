@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stripe Debug Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div id="debug-info"></div>
+    <div id="payment-element"></div>
+    
+    <script>
+        // Test Stripe loading with the actual key
+        const debugDiv = document.getElementById('debug-info');
+        
+        // Check if we can access the environment variable (this won't work in static HTML)
+        debugDiv.innerHTML = `
+            <h3>Stripe Debug Test</h3>
+            <p>Testing direct Stripe initialization...</p>
+        `;
+        
+        // Test with the known key
+        const testKey = 'pk_live_51RkYzqJUhUgzM1cLBLWR7kHt0VFYxDr7G0CwnqMcH77aUDV0DrutudppgIJVhMTWUEFZmcjDVzRE1Pu80Owv3Ns2005JSBt3CB';
+        
+        console.log('Testing Stripe with key:', testKey.substring(0, 20) + '...');
+        
+        try {
+            const stripe = Stripe(testKey);
+            console.log('Stripe initialized successfully:', stripe);
+            debugDiv.innerHTML += '<p style="color: green;">✓ Stripe loaded successfully!</p>';
+            
+            // Test Elements creation
+            const elements = stripe.elements();
+            console.log('Elements created:', elements);
+            debugDiv.innerHTML += '<p style="color: green;">✓ Elements created successfully!</p>';
+            
+        } catch (error) {
+            console.error('Stripe initialization failed:', error);
+            debugDiv.innerHTML += `<p style="color: red;">✗ Stripe failed: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>
