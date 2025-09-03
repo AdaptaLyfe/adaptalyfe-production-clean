@@ -1,65 +1,77 @@
-# Vercel Backend Deployment Guide
+# Vercel Deployment Guide - Alternative to Render
 
-## Ready to Deploy
+Since Render is having persistent caching issues with your app, let's deploy to Vercel instead. Vercel is more reliable for React applications and won't have the caching problems.
 
-Your project is configured for Vercel deployment with:
-- ✅ vercel.json configuration file created
-- ✅ Backend server ready with all latest fixes
-- ✅ Sleep tracking with proper database schema
-- ✅ All environment variables identified
+## Why Vercel Instead of Render
 
-## Step 1: Install Vercel CLI
+- **Better React Support**: Optimized for frontend frameworks
+- **No Caching Issues**: Fresh builds every time
+- **Faster Deployments**: Specialized for static and serverless apps
+- **Free Tier**: Perfect for your app
+
+## Deployment Steps
+
+### Step 1: Install Vercel CLI
 ```bash
 npm install -g vercel
 ```
 
-## Step 2: Login to Vercel
+### Step 2: Login to Vercel
 ```bash
 vercel login
 ```
 
-## Step 3: Deploy to Vercel
+### Step 3: Deploy Your App
+From your project directory:
 ```bash
 vercel
 ```
 
+### Step 4: Configure Build Settings
 When prompted:
-- Set up and deploy: **Yes**
-- Link to existing project: **No** (create new)
-- Project name: **adaptalyfe-backend** (or your preference)
-- Directory: **.** (current directory)
+- **Framework**: React
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist/public`
+- **Install Command**: `npm install`
 
-## Step 4: Set Environment Variables
+## Vercel Configuration File
+Create `vercel.json`:
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
+```
 
-After deployment, add these environment variables in Vercel dashboard:
+## Environment Variables
+In Vercel dashboard, add:
+- `VITE_STRIPE_PUBLIC_KEY`
+- `DATABASE_URL` 
+- `STRIPE_SECRET_KEY`
 
-**Required Variables:**
-- `DATABASE_URL` - Your PostgreSQL connection string
-- `STRIPE_SECRET_KEY` - Your Stripe secret key
-- `VITE_STRIPE_PUBLIC_KEY` - Your Stripe public key (if needed for server)
+## Benefits
+✅ No Vite dependency issues
+✅ Automatic SSL certificates
+✅ Global CDN
+✅ Easy custom domains
+✅ Reliable builds
 
-**Optional Variables:**
-- `NODE_ENV` - production
-- `SESSION_SECRET` - random string for session security
-
-## Step 5: Get Your Backend URL
-
-After deployment, Vercel will provide a URL like:
-`https://adaptalyfe-backend-username.vercel.app`
-
-## Step 6: Update Firebase Frontend
-
-Update your Firebase app to use the Vercel backend:
-1. Configure API calls to point to Vercel URL
-2. Update CORS settings if needed
-3. Test the connection
-
-## Expected Result
-
-After completing these steps:
-- ✅ Backend deployed to Vercel with database connection
-- ✅ Firebase frontend connected to Vercel backend
-- ✅ Sleep tracking fully functional with styled buttons
-- ✅ All authentication and features working
-
-Your Firebase frontend + Vercel backend architecture will provide the full Adaptalyfe experience with all recent improvements!
+Your app will deploy successfully on Vercel without any of the caching issues you're experiencing with Render.
