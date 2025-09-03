@@ -6,7 +6,7 @@ import { Heart, Bell, User as UserIcon, Menu, X, Pill, Stethoscope, GraduationCa
          Phone, BookOpen, Globe, Trophy, Star } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import NotificationCenter from "./notification-center";
-import { AuthUtils } from "../lib/auth";
+import { AuthUtils } from "@/lib/auth";
 import type { User } from "@shared/schema";
 
 export default function Navigation() {

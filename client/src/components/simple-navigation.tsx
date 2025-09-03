@@ -3,7 +3,7 @@ import { Brain, Menu, X, Home, CheckSquare, DollarSign, Stethoscope, Pill,
          Calendar as CalendarIcon, ShoppingCart, GraduationCap, Target, User as UserIcon, Globe,
          AlertTriangle, Settings, Trophy, FileText, UserPlus, Shield, Zap, Moon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { AuthUtils } from "../lib/auth";
+import { AuthUtils } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
 
