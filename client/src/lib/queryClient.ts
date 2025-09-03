@@ -2,10 +2,8 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Inline API configuration to avoid build path issues
 const API_CONFIG = {
-  // Firebase frontend connects to Railway API backend
-  baseURL: (typeof window !== 'undefined' && window.location.hostname.includes('replit.dev')) 
-    ? 'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev' // Your Replit app URL for development
-    : 'https://adaptalyfe-db-production.up.railway.app', // Railway API backend for production
+  // Temporarily use Replit backend until Railway is updated
+  baseURL: 'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
   
   // Enable credentials for cross-origin requests
   credentials: 'include' as RequestCredentials,
