@@ -50,6 +50,25 @@ app.use(session({
   }
 }));
 
+// Available quick actions that users can choose from
+const availableQuickActions = [
+  { id: 'mood', title: 'Log Mood', description: 'Track your daily mood and emotions', icon: '😊', category: 'wellness', color: '#10b981' },
+  { id: 'medication', title: 'Take Medication', description: 'Complete medication schedule', icon: '💊', category: 'health', color: '#3b82f6' },
+  { id: 'exercise', title: 'Exercise', description: '30 minutes of physical activity', icon: '🏃', category: 'fitness', color: '#f59e0b' },
+  { id: 'sleep', title: 'Log Sleep', description: 'Record sleep duration and quality', icon: '🌙', category: 'wellness', color: '#8b5cf6' },
+  { id: 'tasks', title: 'Daily Tasks', description: 'Complete your to-do list', icon: '✅', category: 'productivity', color: '#06b6d4' },
+  { id: 'symptoms', title: 'Track Symptoms', description: 'Record symptoms and triggers', icon: '📝', category: 'health', color: '#ef4444' },
+  { id: 'appointments', title: 'Appointments', description: 'Upcoming medical appointments', icon: '📅', category: 'health', color: '#84cc16' },
+  { id: 'contacts', title: 'Emergency Contacts', description: 'Quick access to important contacts', icon: '📞', category: 'safety', color: '#f97316' },
+  { id: 'documents', title: 'Medical Documents', description: 'Access important documents', icon: '📄', category: 'health', color: '#6366f1' },
+  { id: 'finance', title: 'Financial Tracker', description: 'Track expenses and budget', icon: '💰', category: 'finance', color: '#059669' },
+  { id: 'water', title: 'Water Intake', description: 'Track daily hydration', icon: '💧', category: 'wellness', color: '#0ea5e9' },
+  { id: 'journal', title: 'Daily Journal', description: 'Write thoughts and reflections', icon: '📔', category: 'wellness', color: '#7c3aed' }
+];
+
+// User customization preferences - in real app this would be in database
+const userCustomizations = new Map();
+
 // In-memory user storage (for demo purposes)
 const users = [
   {
@@ -319,22 +338,47 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
   const userId = req.session.userId;
   console.log('📊 Dashboard API called for user:', req.session.user.username);
   
+  // Get user customizations or set defaults
+  if (!userCustomizations.has(userId)) {
+    userCustomizations.set(userId, {
+      selectedQuickActions: ['mood', 'medication', 'exercise', 'sleep'], // Default selection
+      quickActionsLayout: 'grid-4', // grid-2, grid-3, grid-4, list
+      quickActionsPosition: 'top', // top, bottom, sidebar
+      completedActions: new Set() // Track completed actions for today
+    });
+  }
+  
+  const userPrefs = userCustomizations.get(userId);
+  
+  // Build quick actions based on user preferences
+  const quickActions = userPrefs.selectedQuickActions.map(actionId => {
+    const action = availableQuickActions.find(a => a.id === actionId);
+    if (action) {
+      return {
+        ...action,
+        completed: userPrefs.completedActions.has(actionId),
+        timestamp: userPrefs.completedActions.has(actionId) ? new Date().toISOString() : null
+      };
+    }
+    return null;
+  }).filter(Boolean);
+  
   const dashboardData = {
     user: req.session.user,
     summary: {
-      tasksCompleted: 1,
-      totalTasks: 4,
-      progressPercentage: 25,
+      tasksCompleted: userPrefs.completedActions.size,
+      totalTasks: userPrefs.selectedQuickActions.length,
+      progressPercentage: Math.round((userPrefs.completedActions.size / userPrefs.selectedQuickActions.length) * 100),
       moodAverage: 7,
       medicationCompliance: 95,
       upcomingAppointments: 2
     },
-    quickActions: [
-      { id: 'mood', title: 'Log Mood', icon: 'mood', completed: false, category: 'wellness', description: 'Track your daily mood' },
-      { id: 'medication', title: 'Take Medication', icon: 'pill', completed: true, category: 'health', description: 'Complete medication schedule' },
-      { id: 'exercise', title: 'Exercise', icon: 'activity', completed: false, category: 'fitness', description: '30 minutes of physical activity' },
-      { id: 'sleep', title: 'Log Sleep', icon: 'moon', completed: false, category: 'wellness', description: 'Record sleep duration and quality' }
-    ],
+    quickActions,
+    quickActionsConfig: {
+      layout: userPrefs.quickActionsLayout,
+      position: userPrefs.quickActionsPosition,
+      availableActions: availableQuickActions
+    },
     customization: {
       theme: 'default',
       dashboardLayout: 'standard',
@@ -344,15 +388,22 @@ app.get('/api/dashboard', requireAuth, (req, res) => {
     },
     todaysSummary: {
       date: new Date().toLocaleDateString(),
-      greeting: 'Good evening',
+      greeting: getGreeting(),
       currentStreak: 0,
-      todaysProgress: 0
+      todaysProgress: Math.round((userPrefs.completedActions.size / userPrefs.selectedQuickActions.length) * 100)
     }
   };
   
   console.log('📊 Sending dashboard data with', dashboardData.quickActions.length, 'quick actions');
   res.json(dashboardData);
 });
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 // User customization endpoints
 app.get('/api/customization', requireAuth, (req, res) => {
@@ -387,17 +438,95 @@ app.post('/api/customization', requireAuth, (req, res) => {
 // Quick actions endpoints
 app.post('/api/quick-actions/:actionId', requireAuth, (req, res) => {
   const { actionId } = req.params;
-  const actions = ['mood', 'medication', 'exercise', 'sleep'];
+  const userId = req.session.userId;
   
-  if (!actions.includes(actionId)) {
+  const action = availableQuickActions.find(a => a.id === actionId);
+  if (!action) {
     return res.status(404).json({ error: 'Action not found' });
+  }
+  
+  // Update completion status
+  if (!userCustomizations.has(userId)) {
+    userCustomizations.set(userId, {
+      selectedQuickActions: ['mood', 'medication', 'exercise', 'sleep'],
+      quickActionsLayout: 'grid-4',
+      quickActionsPosition: 'top',
+      completedActions: new Set()
+    });
+  }
+  
+  const userPrefs = userCustomizations.get(userId);
+  userPrefs.completedActions.add(actionId);
+  
+  res.json({
+    success: true,
+    message: `${action.title} completed successfully!`,
+    actionId,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Quick actions customization endpoints
+app.get('/api/quick-actions/config', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  
+  if (!userCustomizations.has(userId)) {
+    userCustomizations.set(userId, {
+      selectedQuickActions: ['mood', 'medication', 'exercise', 'sleep'],
+      quickActionsLayout: 'grid-4',
+      quickActionsPosition: 'top',
+      completedActions: new Set()
+    });
+  }
+  
+  const userPrefs = userCustomizations.get(userId);
+  
+  res.json({
+    selectedActions: userPrefs.selectedQuickActions,
+    layout: userPrefs.quickActionsLayout,
+    position: userPrefs.quickActionsPosition,
+    availableActions: availableQuickActions,
+    categories: [...new Set(availableQuickActions.map(a => a.category))]
+  });
+});
+
+app.post('/api/quick-actions/config', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  const { selectedActions, layout, position } = req.body;
+  
+  if (!userCustomizations.has(userId)) {
+    userCustomizations.set(userId, {
+      selectedQuickActions: ['mood', 'medication', 'exercise', 'sleep'],
+      quickActionsLayout: 'grid-4',
+      quickActionsPosition: 'top',
+      completedActions: new Set()
+    });
+  }
+  
+  const userPrefs = userCustomizations.get(userId);
+  
+  if (selectedActions && Array.isArray(selectedActions)) {
+    userPrefs.selectedQuickActions = selectedActions.filter(id => 
+      availableQuickActions.find(a => a.id === id)
+    );
+  }
+  
+  if (layout && ['grid-2', 'grid-3', 'grid-4', 'list'].includes(layout)) {
+    userPrefs.quickActionsLayout = layout;
+  }
+  
+  if (position && ['top', 'bottom', 'sidebar'].includes(position)) {
+    userPrefs.quickActionsPosition = position;
   }
   
   res.json({
     success: true,
-    message: `${actionId} action completed`,
-    actionId,
-    timestamp: new Date().toISOString()
+    message: 'Quick actions configuration updated',
+    config: {
+      selectedActions: userPrefs.selectedQuickActions,
+      layout: userPrefs.quickActionsLayout,
+      position: userPrefs.quickActionsPosition
+    }
   });
 });
 
