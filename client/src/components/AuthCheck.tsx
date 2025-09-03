@@ -12,8 +12,8 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
   
   const { data: user, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/user'],
-    retry: 1,
-    retryDelay: 500
+    retry: 2, // Increase retries for cross-domain requests
+    retryDelay: 1000 // Longer delay for session establishment
   });
 
   useEffect(() => {
@@ -23,10 +23,23 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
       if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
         console.log('AuthCheck: No authenticated user, redirecting to', redirectTo, 'from', currentPath);
         console.log('AuthCheck: Error details:', error);
-        setLocation(redirectTo);
+        
+        // Add a small delay before redirect to handle potential session propagation
+        setTimeout(() => {
+          setLocation(redirectTo);
+        }, 100);
       }
     }
   }, [isLoading, user, error, setLocation, redirectTo]);
+
+  useEffect(() => {
+    // Force a refetch when component mounts to ensure fresh auth state
+    const timer = setTimeout(() => {
+      refetch();
+    }, 200);
+    
+    return () => clearTimeout(timer);
+  }, [refetch]);
 
   if (isLoading) {
     return (

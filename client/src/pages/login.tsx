@@ -35,15 +35,21 @@ export default function Login() {
     setIsSubmitting(true);
     
     try {
-      await apiRequest("POST", "/api/login", {
+      const response = await apiRequest("POST", "/api/login", {
         username: formData.username,
         password: formData.password
       });
+
+      // Get user data to ensure session is properly established
+      const userData = await response.json();
 
       toast({
         title: "Login Successful!",
         description: "Welcome back to Adaptalyfe",
       });
+
+      // Small delay to ensure session cookies are set
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Handle invitation code if provided
       if (formData.invitationCode) {
