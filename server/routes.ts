@@ -196,10 +196,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User login endpoint
+  // User login endpoint - Railway compatible
   app.post("/api/login", async (req, res) => {
     try {
-      console.log("🔐 Login attempt received from:", req.get('origin'), "Body:", req.body);
+      console.log("🔐 LOGIN DEBUG - Method:", req.method);
+      console.log("🔐 LOGIN DEBUG - URL:", req.url);
+      console.log("🔐 LOGIN DEBUG - Headers:", req.headers);
+      console.log("🔐 LOGIN DEBUG - Body:", req.body);
+      console.log("🔐 LOGIN DEBUG - Origin:", req.get('origin'));
+      
       const { username, password } = req.body;
       
       if (!username || !password) {
@@ -221,13 +226,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await new Promise<void>((resolve, reject) => {
         req.session.save((err: any) => {
-          if (err) reject(err);
-          else resolve();
+          if (err) {
+            console.log("❌ Session save error:", err);
+            reject(err);
+          } else {
+            console.log("✅ Session saved successfully");
+            resolve();
+          }
         });
       });
 
       console.log(`✅ User ${user.username} logged in successfully`);
-      res.json({ 
+      const response = { 
         message: "Login successful",
         user: { 
           id: user.id,
@@ -236,10 +246,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           isAdmin: user.isAdmin || false
         }
-      });
+      };
+      console.log("🔐 LOGIN DEBUG - Sending response:", response);
+      res.json(response);
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
+      console.error("❌ Login error:", error);
+      res.status(500).json({ message: "Login failed", error: error.message });
     }
   });
 
