@@ -111,6 +111,29 @@ function getFallbackResponse(message: string): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add health check endpoint for Railway
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "OK", 
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      version: "1.0.0"
+    });
+  });
+
+  // Add debug endpoint for Railway troubleshooting
+  app.get("/api/debug", (req, res) => {
+    res.json({
+      environment: process.env.NODE_ENV,
+      hasDatabase: !!process.env.DATABASE_URL,
+      hasStripe: !!process.env.STRIPE_SECRET_KEY,
+      railwayDomain: req.get('host'),
+      userAgent: req.get('user-agent'),
+      origin: req.get('origin'),
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Configure environment for production readiness
   configureForProduction();
   
