@@ -6,7 +6,7 @@ import { Heart, Bell, User as UserIcon, Menu, X, Pill, Stethoscope, GraduationCa
          Phone, BookOpen, Globe, Trophy, Star } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import NotificationCenter from "./notification-center";
-import { AuthUtils } from "@/lib/auth";
+// AuthUtils inlined to avoid import issues
 import type { User } from "@shared/schema";
 
 export default function Navigation() {
@@ -46,12 +46,18 @@ export default function Navigation() {
               e.preventDefault();
               console.log('Navigation logo clicked - session check');
               
-              if (AuthUtils.isMobileDevice()) {
-                const sessionValid = await AuthUtils.ensureSessionPersistence();
-                if (sessionValid) {
-                  setLocation('/dashboard');
-                } else {
-                  console.warn('Session invalid, redirecting to login');
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+              if (isMobile) {
+                try {
+                  const response = await fetch('/api/user', { credentials: 'include' });
+                  if (response.ok) {
+                    setLocation('/dashboard');
+                  } else {
+                    console.warn('Session invalid, redirecting to login');
+                    setLocation('/login');
+                  }
+                } catch (error) {
+                  console.error('Session check failed:', error);
                   setLocation('/login');
                 }
               } else {
