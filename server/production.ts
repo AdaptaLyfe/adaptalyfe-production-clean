@@ -48,19 +48,19 @@ app.use(cors({
   origin: [
     'http://localhost:5000', 
     'http://127.0.0.1:5000',
-    'https://adaptalyfe-5a1d3.web.app', // Your Firebase domain
-    'https://adaptalyfe-5a1d3.firebaseapp.com', // Alternative Firebase domain
-    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev' // Your Replit domain
+    'https://adaptalyfe-5a1d3.web.app',
+    'https://adaptalyfe-5a1d3.firebaseapp.com',
+    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Rate limiting - more permissive for development
+// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit for development
+  max: 100,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -68,9 +68,10 @@ const limiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login attempts per windowMs
-  message: 'Too many login attempts, please try again later.',
-  skipSuccessfulRequests: true,
+  max: 10, // More restrictive for auth routes
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 app.use(limiter);
@@ -78,9 +79,6 @@ app.use('/api/auth', authLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
-
-// Add audit logging middleware (temporarily disabled for testing)
-// app.use(auditMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -126,56 +124,28 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  const isDevelopment = process.env.NODE_ENV === "development";
-  console.log(`Environment: ${process.env.NODE_ENV}, isDevelopment: ${isDevelopment}`);
+  // Production static file serving
+  console.log("Setting up production static file serving");
+  const distPath = path.resolve(import.meta.dirname, "public");
   
-  if (isDevelopment) {
-    console.log("Setting up Vite development server");
-    try {
-      // Dynamic import to avoid bundling Vite in production
-      const viteModule = await import("./vite.js");
-      await viteModule.setupVite(app, server);
-    } catch (error) {
-      console.error("Failed to load Vite in development:", error);
-      // Fallback to static serving even in development
-      const distPath = path.resolve(import.meta.dirname, "public");
-      if (fs.existsSync(distPath)) {
-        app.use(express.static(distPath));
-        app.get("*", (_req, res) => {
-          res.sendFile(path.resolve(distPath, "index.html"));
-        });
-      }
-    }
-  } else {
-    console.log("Setting up static file serving for production");
-    // Serve static files directly without Vite
-    const distPath = path.resolve(import.meta.dirname, "public");
-    
-    if (!fs.existsSync(distPath)) {
-      throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
-    }
-
-    app.use(express.static(distPath));
-    
-    // Serve index.html for all non-API routes (SPA fallback)
-    app.get("*", (_req, res) => {
-      res.sendFile(path.resolve(distPath, "index.html"));
-    });
+  if (!fs.existsSync(distPath)) {
+    throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  app.use(express.static(distPath));
+  
+  // Serve index.html for all non-API routes (SPA fallback)
+  app.get("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
+
   const port = process.env.PORT || 5000;
   server.listen({
     port: Number(port),
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    console.log(`🚀 AdaptaLyfe server running on port ${port} in ${process.env.NODE_ENV} mode`);
+    console.log(`🚀 AdaptaLyfe server running on port ${port} in PRODUCTION mode`);
     log(`serving on port ${port}`);
     
     // Start the task reminder service

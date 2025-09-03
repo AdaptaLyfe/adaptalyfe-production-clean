@@ -3,8 +3,8 @@ services:
     name: adaptalyfe
     env: node
     plan: starter
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npm run build && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/production.js
+    startCommand: node dist/production.js
     envVars:
       - key: NODE_ENV
         value: production
