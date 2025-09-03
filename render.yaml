@@ -9,10 +9,10 @@ services:
       npm ci --cache /tmp/npm-cache-$(date +%s)
       npm run build
       cp production-index-cache-bust.html dist/public/index.html
-      echo "📦 Building standalone server (no Vite runtime dependencies)"
-      esbuild server/standalone-render.ts --platform=node --packages=external --bundle --format=esm --outfile=standalone-app.js
-      echo "✅ Standalone build complete - zero Vite dependencies"
-    startCommand: node standalone-app.js
+      echo "📦 Building ultra-minimal server (absolute minimum dependencies)"
+      esbuild server/ultra-minimal.ts --platform=node --packages=external --bundle --format=esm --outfile=ultra-app.js
+      echo "✅ Ultra-minimal build complete - testing basic functionality"
+    startCommand: node ultra-app.js
     envVars:
       - key: NODE_ENV
         value: production
