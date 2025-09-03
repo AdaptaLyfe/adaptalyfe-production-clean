@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: adaptalyfe-simple
+    name: adaptalyfe-static
     env: node
     plan: starter
-    buildCommand: cp package-render.json package.json && npm install && vite build && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=server.js
+    buildCommand: npm run build && cp production-index.html dist/public/index.html && cp standalone-server.js server.js
     startCommand: node server.js
     envVars:
       - key: NODE_ENV

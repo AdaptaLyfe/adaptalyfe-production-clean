@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: adaptalyfe-standalone
+    env: node
+    plan: starter
+    buildCommand: npm run build && cp standalone-server.js server.js
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: adaptalyfe-db
+    databaseName: adaptalyfe
+    user: adaptalyfe_user
+    plan: starter
