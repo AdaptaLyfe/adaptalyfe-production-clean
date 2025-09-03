@@ -5,10 +5,33 @@ console.log('🔧 Debug inject script loaded');
 setTimeout(() => {
   console.log('🔧 Starting debug injection...');
   
-  // Add debug button to current page
+  // Add multiple debug buttons for testing different positions
   const debugBtn = document.createElement('button');
   debugBtn.innerHTML = 'INJECT QUICK ACTIONS';
   debugBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:red;color:white;padding:15px;border:none;cursor:pointer;font-weight:bold;border-radius:5px;';
+  
+  // Add DOM inspection button
+  const inspectBtn = document.createElement('button');
+  inspectBtn.innerHTML = 'INSPECT DOM';
+  inspectBtn.style.cssText = 'position:fixed;top:70px;right:10px;z-index:9999;background:blue;color:white;padding:10px;border:none;cursor:pointer;font-weight:bold;border-radius:5px;';
+  inspectBtn.onclick = () => {
+    console.log('=== DOM INSPECTION ===');
+    console.log('All headings:', Array.from(document.querySelectorAll('h1, h2, h3, h4')).map(h => ({
+      tag: h.tagName,
+      text: h.textContent.trim(),
+      element: h
+    })));
+    
+    console.log('Quick Actions related elements:', Array.from(document.querySelectorAll('*')).filter(el => 
+      el.textContent && el.textContent.includes('Quick Actions')
+    ));
+    
+    console.log('Today\'s Summary elements:', Array.from(document.querySelectorAll('*')).filter(el => 
+      el.textContent && el.textContent.includes('Today\'s Summary')
+    ));
+    
+    console.log('Dashboard structure:', document.querySelector('main') || document.querySelector('[class*="dashboard"]') || document.body);
+  };
   debugBtn.onclick = async () => {
     console.log('🔧 Fetching dashboard data...');
     
@@ -52,20 +75,52 @@ setTimeout(() => {
         const existing = document.getElementById('injected-quick-actions');
         if (existing) existing.remove();
         
-        // Find Quick Actions section and inject in the right place - restored working method
-        const quickActionsSection = document.querySelector('h2');
-        if (quickActionsSection && quickActionsSection.textContent === 'Quick Actions') {
-          quickActionsSection.insertAdjacentHTML('afterend', quickActionsHTML);
-          console.log('✅ Quick actions injected after heading');
+        // Find the exact Quick Actions section more precisely
+        const quickActionsHeading = Array.from(document.querySelectorAll('h1, h2, h3')).find(el => 
+          el.textContent && el.textContent.trim() === 'Quick Actions'
+        );
+        
+        if (quickActionsHeading) {
+          // Look for Today's Summary card to replace
+          const todaysSummaryCard = document.querySelector('div').innerText?.includes("Today's Summary");
+          let targetElement = quickActionsHeading.nextElementSibling;
+          
+          // Find the container that should hold the quick actions
+          while (targetElement) {
+            if (targetElement.textContent?.includes("Today's Summary") || 
+                targetElement.textContent?.includes("Daily Progress") ||
+                targetElement.querySelector('[class*="summary"]')) {
+              break;
+            }
+            targetElement = targetElement.nextElementSibling;
+          }
+          
+          if (targetElement) {
+            // Replace the content of the found container
+            targetElement.innerHTML = quickActionsHTML;
+            console.log('✅ Quick actions replaced content in dashboard section');
+          } else {
+            // Create new container in the correct location
+            const container = document.createElement('div');
+            container.innerHTML = quickActionsHTML;
+            container.style.cssText = 'margin: 16px 0;';
+            quickActionsHeading.insertAdjacentElement('afterend', container);
+            console.log('✅ Quick actions inserted after heading');
+          }
         } else {
-          // Fallback: inject at top of body
-          document.body.insertAdjacentHTML('afterbegin', `
-            <div style="background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <h3 style="color: #333; margin-bottom: 15px;">Quick Actions (Working)</h3>
-              ${quickActionsHTML}
-            </div>
-          `);
-          console.log('✅ Quick actions injected at body start');
+          console.log('❌ Could not find Quick Actions heading');
+          // Emergency fallback - find any element with "Quick Actions" text
+          const anyQuickActions = Array.from(document.querySelectorAll('*')).find(el => 
+            el.textContent?.includes('Quick Actions') && el.tagName.match(/H[1-6]/)
+          );
+          
+          if (anyQuickActions) {
+            const container = document.createElement('div');
+            container.innerHTML = quickActionsHTML;
+            container.style.cssText = 'margin: 16px 0;';
+            anyQuickActions.insertAdjacentElement('afterend', container);
+            console.log('✅ Quick actions inserted after found heading');
+          }
         }
         
         // Add completion function to global scope
@@ -105,7 +160,8 @@ setTimeout(() => {
   };
   
   document.body.appendChild(debugBtn);
-  console.log('✅ Debug button added to page');
+  document.body.appendChild(inspectBtn);
+  console.log('✅ Debug buttons added to page');
   
 }, 2000);
 
