@@ -22,85 +22,76 @@ setTimeout(() => {
       if (dashData.quickActions && dashData.quickActions.length > 0) {
         console.log('✅ Found', dashData.quickActions.length, 'quick actions');
         
-        // Create quick actions HTML matching dashboard design
+        // Create compact quick actions matching existing dashboard cards
         const quickActionsHTML = `
-          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 16px 0;">
+          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%;">
             ${dashData.quickActions.map(action => `
               <div onclick="completeQuickAction('${action.id}')" style="
-                background: ${action.completed ? 'linear-gradient(135deg, #dcfce7, #bbf7d0)' : 'linear-gradient(135deg, #fef3c7, #fde68a)'};
-                border: 1px solid ${action.completed ? '#16a34a' : '#d97706'};
-                border-radius: 12px;
-                padding: 20px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 16px;
                 cursor: pointer;
-                transition: all 0.2s ease;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                transition: all 0.15s ease;
+                min-height: 80px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
                 position: relative;
-                overflow: hidden;
               " 
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" 
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(0, 0, 0, 0.1)'">
-                <div style="font-size: 32px; margin-bottom: 12px; opacity: 0.9;">
-                  ${getActionEmoji(action.icon)}
+              onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f1f5f9'" 
+              onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <div style="font-size: 16px;">${getActionIcon(action.icon)}</div>
+                  <div style="font-weight: 500; color: #1e293b; font-size: 14px;">${action.title}</div>
                 </div>
-                <div style="font-weight: 600; color: #1f2937; margin-bottom: 6px; font-size: 16px;">
-                  ${action.title}
-                </div>
-                <div style="font-size: 12px; color: #6b7280; margin-bottom: 12px; line-height: 1.4;">
+                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
                   ${action.description}
                 </div>
-                <div style="
-                  background: ${action.completed ? '#16a34a' : '#d97706'};
-                  color: white;
-                  font-size: 10px;
-                  font-weight: 500;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  padding: 4px 8px;
-                  border-radius: 12px;
-                  display: inline-block;
-                ">
-                  ${action.completed ? '✓ Complete' : '○ Pending'}
+                <div style="position: absolute; top: 12px; right: 12px;">
+                  ${action.completed ? 
+                    '<div style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></div>' : 
+                    '<div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></div>'
+                  }
                 </div>
               </div>
             `).join('')}
           </div>
         `;
         
-        // Find the exact Quick Actions section and inject in the right place
-        const quickActionsHeading = document.querySelector('h2');
-        const todaysSummary = document.querySelector('[class*="summary"]') || document.querySelector('[class*="Summary"]');
-        
         // Remove existing injected content
         const existing = document.getElementById('injected-quick-actions');
         if (existing) existing.remove();
         
-        if (quickActionsHeading && quickActionsHeading.textContent.includes('Quick Actions')) {
-          // Look for the container that holds Today's Summary and inject alongside it
-          const parentContainer = quickActionsHeading.parentElement;
-          if (parentContainer) {
-            // Create a flex container to hold both Today's Summary and Quick Actions
-            const flexContainer = document.createElement('div');
-            flexContainer.style.cssText = 'display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;';
-            flexContainer.innerHTML = quickActionsHTML;
-            
-            quickActionsHeading.insertAdjacentElement('afterend', flexContainer);
-            console.log('✅ Quick actions injected in proper dashboard location');
+        // Find the Quick Actions section and replace the empty content
+        const quickActionsHeading = Array.from(document.querySelectorAll('h2, h3')).find(el => 
+          el.textContent.includes('Quick Actions')
+        );
+        
+        if (quickActionsHeading) {
+          // Look for the container after the heading that might contain Today's Summary
+          let targetContainer = quickActionsHeading.nextElementSibling;
+          
+          // Find the right container - look for one that contains Today's Summary or is empty
+          while (targetContainer && !targetContainer.textContent.includes("Today's Summary") && targetContainer.children.length > 0) {
+            targetContainer = targetContainer.nextElementSibling;
+          }
+          
+          if (targetContainer) {
+            // Replace the content of this container with our quick actions
+            targetContainer.innerHTML = quickActionsHTML;
+            targetContainer.style.cssText = 'margin-top: 16px;';
+            console.log('✅ Quick actions replaced existing content in dashboard section');
+          } else {
+            // Create new container right after the heading
+            const newContainer = document.createElement('div');
+            newContainer.style.cssText = 'margin-top: 16px;';
+            newContainer.innerHTML = quickActionsHTML;
+            quickActionsHeading.insertAdjacentElement('afterend', newContainer);
+            console.log('✅ Quick actions added in new container after heading');
           }
         } else {
-          // Fallback: inject after the greeting section
-          const greetingSection = document.querySelector('[class*="greeting"]') || 
-                                  document.querySelector('.dark') || 
-                                  document.querySelector('h1');
-          if (greetingSection) {
-            greetingSection.insertAdjacentHTML('afterend', `
-              <div style="margin: 20px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 20px; font-weight: 600;">Quick Actions</h2>
-                ${quickActionsHTML}
-              </div>
-            `);
-            console.log('✅ Quick actions injected after greeting with proper styling');
-          }
+          console.log('❌ Could not find Quick Actions heading - using fallback positioning');
         }
         
         // Add completion function to global scope
@@ -144,15 +135,15 @@ setTimeout(() => {
   
 }, 2000);
 
-// Helper function for action icons with better medical app icons
-function getActionEmoji(icon) {
+// Helper function for action icons matching dashboard style
+function getActionIcon(icon) {
   const iconMap = {
-    'mood': '😌',
+    'mood': '😊',
     'pill': '💊', 
-    'activity': '🏃‍♀️',
+    'activity': '🏃',
     'moon': '🌙'
   };
-  return iconMap[icon] || '⭐';
+  return iconMap[icon] || '📋';
 }
 
 console.log('🔧 Debug inject script setup complete');
