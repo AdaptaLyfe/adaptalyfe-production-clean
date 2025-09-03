@@ -1,12 +1,11 @@
 [phases.build]
 cmds = [
   "npm ci",
-  "npm run build",
-  "esbuild server/railway.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/railway.js"
+  "esbuild server/api-only.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/api-server.js"
 ]
 
 [phases.start]
-cmd = "node dist/railway.js"
+cmd = "node dist/api-server.js"
 
 [variables]
 NODE_ENV = "production"
