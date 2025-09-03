@@ -22,76 +22,50 @@ setTimeout(() => {
       if (dashData.quickActions && dashData.quickActions.length > 0) {
         console.log('✅ Found', dashData.quickActions.length, 'quick actions');
         
-        // Create compact quick actions matching existing dashboard cards
+        // Create quick actions HTML - restored working version
         const quickActionsHTML = `
-          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%;">
+          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
             ${dashData.quickActions.map(action => `
               <div onclick="completeQuickAction('${action.id}')" style="
-                background: #f8fafc;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                padding: 16px;
+                background: linear-gradient(135deg, ${action.completed ? '#dcfce7, #bbf7d0' : '#fef3c7, #fed7aa'}); 
+                padding: 16px; 
+                border-radius: 8px; 
+                border: 2px solid ${action.completed ? '#16a34a' : '#f59e0b'}; 
                 cursor: pointer;
-                transition: all 0.15s ease;
-                min-height: 80px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                position: relative;
-              " 
-              onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#f1f5f9'" 
-              onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'">
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                  <div style="font-size: 16px;">${getActionIcon(action.icon)}</div>
-                  <div style="font-weight: 500; color: #1e293b; font-size: 14px;">${action.title}</div>
+                transition: transform 0.2s;
+                text-align: center;
+              " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">
+                  ${getActionIcon(action.icon)}
                 </div>
-                <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">
-                  ${action.description}
-                </div>
-                <div style="position: absolute; top: 12px; right: 12px;">
-                  ${action.completed ? 
-                    '<div style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></div>' : 
-                    '<div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></div>'
-                  }
+                <div style="font-weight: bold; color: #333; margin-bottom: 4px; font-size: 16px;">${action.title}</div>
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${action.description}</div>
+                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">
+                  ${action.category} • ${action.completed ? '✅ Done' : '⏳ Pending'}
                 </div>
               </div>
             `).join('')}
           </div>
         `;
         
-        // Remove existing injected content
+        // Remove existing injected content  
         const existing = document.getElementById('injected-quick-actions');
         if (existing) existing.remove();
         
-        // Find the Quick Actions section and replace the empty content
-        const quickActionsHeading = Array.from(document.querySelectorAll('h2, h3')).find(el => 
-          el.textContent.includes('Quick Actions')
-        );
-        
-        if (quickActionsHeading) {
-          // Look for the container after the heading that might contain Today's Summary
-          let targetContainer = quickActionsHeading.nextElementSibling;
-          
-          // Find the right container - look for one that contains Today's Summary or is empty
-          while (targetContainer && !targetContainer.textContent.includes("Today's Summary") && targetContainer.children.length > 0) {
-            targetContainer = targetContainer.nextElementSibling;
-          }
-          
-          if (targetContainer) {
-            // Replace the content of this container with our quick actions
-            targetContainer.innerHTML = quickActionsHTML;
-            targetContainer.style.cssText = 'margin-top: 16px;';
-            console.log('✅ Quick actions replaced existing content in dashboard section');
-          } else {
-            // Create new container right after the heading
-            const newContainer = document.createElement('div');
-            newContainer.style.cssText = 'margin-top: 16px;';
-            newContainer.innerHTML = quickActionsHTML;
-            quickActionsHeading.insertAdjacentElement('afterend', newContainer);
-            console.log('✅ Quick actions added in new container after heading');
-          }
+        // Find Quick Actions section and inject in the right place - restored working method
+        const quickActionsSection = document.querySelector('h2');
+        if (quickActionsSection && quickActionsSection.textContent === 'Quick Actions') {
+          quickActionsSection.insertAdjacentHTML('afterend', quickActionsHTML);
+          console.log('✅ Quick actions injected after heading');
         } else {
-          console.log('❌ Could not find Quick Actions heading - using fallback positioning');
+          // Fallback: inject at top of body
+          document.body.insertAdjacentHTML('afterbegin', `
+            <div style="background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h3 style="color: #333; margin-bottom: 15px;">Quick Actions (Working)</h3>
+              ${quickActionsHTML}
+            </div>
+          `);
+          console.log('✅ Quick actions injected at body start');
         }
         
         // Add completion function to global scope
