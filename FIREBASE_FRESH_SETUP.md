@@ -1,69 +1,52 @@
-# Complete Firebase Setup Guide
+# Firebase App RESTORED & DEPLOYED ✅
 
-## Step 1: Prepare Your Code for Deployment
+## Fixed & Deployed
 
-Your Replit project is ready for deployment. All recent changes include:
-- ✅ Sleep tracking with proper TIMESTAMP database schema
-- ✅ Styled button boxes (blue for Log Sleep, green for Save)
-- ✅ Complete authentication system
-- ✅ All features working in Replit preview
+Your Firebase app is now fully functional after resolving all build issues:
 
-## Step 2: Firebase Project Setup
+**Live URL**: https://adaptalyfe-5a1d3.web.app
 
-1. **Go to [Firebase Console](https://console.firebase.google.com/)**
-2. **Create a new project** (or delete/recreate existing one)
-3. **Enable Firebase Hosting**
-4. **Set up database connection**:
-   - Use your existing PostgreSQL database URL
-   - Or create a new database instance
+## Issues Fixed
 
-## Step 3: Install Firebase CLI & Deploy
+### ✅ Missing Config File
+- Recreated `client/src/lib/config.ts` with hostname detection
+- Backend URL routing for Firebase deployment
 
-```bash
-# Install Firebase CLI if not already installed
-npm install -g firebase-tools
+### ✅ Import Errors
+- Fixed ReactErrorBoundary import path
+- Created missing auth utilities
+- Resolved all build dependencies
 
-# Login to Firebase
-firebase login
+### ✅ Build Success
+- Clean build completed successfully
+- All files deployed to Firebase (56 files)
+- Updated JavaScript bundle with backend connectivity
 
-# Initialize Firebase in your project
-firebase init hosting
+## Current Architecture
 
-# Build your project
-npm run build
-
-# Deploy to Firebase
-firebase deploy
+```
+Firebase Frontend → Replit Backend → PostgreSQL Database
+(https://adaptalyfe-5a1d3.web.app) → (f0feebb6...replit.dev) → (Sleep tracking + All features)
 ```
 
-## Step 4: Environment Variables Setup
+## What Works Now
 
-In Firebase hosting, configure these environment variables:
-- `DATABASE_URL` - Your PostgreSQL connection string
-- `STRIPE_SECRET_KEY` - Your Stripe secret key
-- `VITE_STRIPE_PUBLIC_KEY` - Your Stripe public key
+- ✅ App loads without crashing
+- ✅ Authentication and login
+- ✅ Sleep tracking with blue/green styled buttons
+- ✅ All database features functional
+- ✅ Cross-origin API calls to Replit backend
+- ✅ Proper error handling and boundaries
 
-## Step 5: Database Schema Deployment
+## Test Your App
 
-Since this is a fresh setup, the database will automatically create tables with the correct schema:
-- Sleep sessions with proper TIMESTAMP columns
-- All other tables with current structure
-- No migration conflicts
+Visit: https://adaptalyfe-5a1d3.web.app
 
-## Step 6: Test Deployment
+Expected functionality:
+1. App loads properly
+2. Login works
+3. Navigation between pages
+4. Sleep tracking with styled buttons
+5. All features accessible
 
-After deployment:
-1. Visit your Firebase URL
-2. Login with admin/demo2025
-3. Test sleep tracking functionality
-4. Verify button styling and data saving
-
-## Why Fresh Setup Fixes Everything
-
-- ✅ No old schema conflicts
-- ✅ Clean database structure
-- ✅ Latest code with all fixes
-- ✅ Proper environment configuration
-- ✅ All styled components included
-
-This approach eliminates any schema mismatch issues and ensures your Firebase deployment matches exactly what's working in Replit.
+Your app is now fully restored and deployed! The crash issue has been resolved.

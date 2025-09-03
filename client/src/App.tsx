@@ -34,7 +34,7 @@ import AuthCheck from "@/components/AuthCheck";
 import AdminCheck from "@/components/AdminCheck";
 
 import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
-import { ReactErrorBoundary } from "@/lib/react-error-boundary";
+import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 
 // Global error handler for Stripe loading issues
