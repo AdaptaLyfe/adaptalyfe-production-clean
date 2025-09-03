@@ -4,15 +4,15 @@ services:
     env: node
     plan: starter
     buildCommand: |
-      echo "🚀 Cache-busting build started at $(date)"
+      echo "🚀 Standalone build started - no Vite dependencies"
       rm -rf node_modules/.cache dist/ .npm
       npm ci --cache /tmp/npm-cache-$(date +%s)
       npm run build
       cp production-index-cache-bust.html dist/public/index.html
-      echo "📦 Building production server with cache buster"
-      esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=render-app.js
-      echo "✅ Cache-busted build complete - no deep caching possible"
-    startCommand: node render-app.js
+      echo "📦 Building standalone server (no Vite runtime dependencies)"
+      esbuild server/standalone-render.ts --platform=node --packages=external --bundle --format=esm --outfile=standalone-app.js
+      echo "✅ Standalone build complete - zero Vite dependencies"
+    startCommand: node standalone-app.js
     envVars:
       - key: NODE_ENV
         value: production
