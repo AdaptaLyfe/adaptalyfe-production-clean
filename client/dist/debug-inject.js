@@ -45,81 +45,47 @@ setTimeout(() => {
       if (dashData.quickActions && dashData.quickActions.length > 0) {
         console.log('✅ Found', dashData.quickActions.length, 'quick actions');
         
-        // Create quick actions HTML - restored working version
+        // Create quick actions matching the exact HTML structure from screenshot
         const quickActionsHTML = `
-          <div id="injected-quick-actions" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-            ${dashData.quickActions.map(action => `
-              <div onclick="completeQuickAction('${action.id}')" style="
-                background: linear-gradient(135deg, ${action.completed ? '#dcfce7, #bbf7d0' : '#fef3c7, #fed7aa'}); 
-                padding: 16px; 
-                border-radius: 8px; 
-                border: 2px solid ${action.completed ? '#16a34a' : '#f59e0b'}; 
-                cursor: pointer;
-                transition: transform 0.2s;
-                text-align: center;
-              " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                <div style="font-size: 24px; margin-bottom: 8px;">
-                  ${getActionIcon(action.icon)}
-                </div>
-                <div style="font-weight: bold; color: #333; margin-bottom: 4px; font-size: 16px;">${action.title}</div>
-                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">${action.description}</div>
-                <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">
-                  ${action.category} • ${action.completed ? '✅ Done' : '⏳ Pending'}
-                </div>
-              </div>
-            `).join('')}
-          </div>
+          ${dashData.quickActions.map(action => `
+            <div class="card" onclick="completeQuickAction('${action.id}')" style="cursor: pointer;">
+              <div class="title">${getActionIcon(action.icon)} ${action.title}</div>
+              <div class="desc">${action.description}</div>
+            </div>
+          `).join('')}
         `;
         
         // Remove existing injected content  
         const existing = document.getElementById('injected-quick-actions');
         if (existing) existing.remove();
         
-        // Find the exact Quick Actions section more precisely
-        const quickActionsHeading = Array.from(document.querySelectorAll('h1, h2, h3')).find(el => 
-          el.textContent && el.textContent.trim() === 'Quick Actions'
-        );
+        // Find the content div that holds all the cards
+        const contentDiv = document.querySelector('div.content') || 
+                          document.querySelector('[class="content"]') ||
+                          document.querySelector('div').classList?.contains('content');
         
-        if (quickActionsHeading) {
-          // Look for Today's Summary card to replace
-          const todaysSummaryCard = document.querySelector('div').innerText?.includes("Today's Summary");
-          let targetElement = quickActionsHeading.nextElementSibling;
-          
-          // Find the container that should hold the quick actions
-          while (targetElement) {
-            if (targetElement.textContent?.includes("Today's Summary") || 
-                targetElement.textContent?.includes("Daily Progress") ||
-                targetElement.querySelector('[class*="summary"]')) {
-              break;
-            }
-            targetElement = targetElement.nextElementSibling;
-          }
-          
-          if (targetElement) {
-            // Replace the content of the found container
-            targetElement.innerHTML = quickActionsHTML;
-            console.log('✅ Quick actions replaced content in dashboard section');
-          } else {
-            // Create new container in the correct location
-            const container = document.createElement('div');
-            container.innerHTML = quickActionsHTML;
-            container.style.cssText = 'margin: 16px 0;';
-            quickActionsHeading.insertAdjacentElement('afterend', container);
-            console.log('✅ Quick actions inserted after heading');
-          }
+        if (contentDiv) {
+          // Add quick action cards directly to the content area
+          contentDiv.insertAdjacentHTML('beforeend', quickActionsHTML);
+          console.log('✅ Quick actions added to content area');
         } else {
-          console.log('❌ Could not find Quick Actions heading');
-          // Emergency fallback - find any element with "Quick Actions" text
-          const anyQuickActions = Array.from(document.querySelectorAll('*')).find(el => 
-            el.textContent?.includes('Quick Actions') && el.tagName.match(/H[1-6]/)
-          );
-          
-          if (anyQuickActions) {
-            const container = document.createElement('div');
-            container.innerHTML = quickActionsHTML;
-            container.style.cssText = 'margin: 16px 0;';
-            anyQuickActions.insertAdjacentElement('afterend', container);
-            console.log('✅ Quick actions inserted after found heading');
+          // Look for existing cards and add quick actions alongside them
+          const existingCards = document.querySelectorAll('.card');
+          if (existingCards.length > 0) {
+            // Insert after the last existing card
+            const lastCard = existingCards[existingCards.length - 1];
+            lastCard.insertAdjacentHTML('afterend', quickActionsHTML);
+            console.log('✅ Quick actions added after existing cards');
+          } else {
+            // Fallback: find any div that contains cards based on the HTML structure
+            const cardContainer = Array.from(document.querySelectorAll('div')).find(div => 
+              div.innerHTML && (div.innerHTML.includes('class="card"') || div.innerHTML.includes('Daily Tasks'))
+            );
+            
+            if (cardContainer) {
+              cardContainer.insertAdjacentHTML('beforeend', quickActionsHTML);
+              console.log('✅ Quick actions added to card container');
+            }
           }
         }
         
