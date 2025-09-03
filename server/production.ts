@@ -50,7 +50,10 @@ app.use(cors({
     'http://127.0.0.1:5000',
     'https://adaptalyfe-5a1d3.web.app',
     'https://adaptalyfe-5a1d3.firebaseapp.com',
-    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev'
+    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
+    'https://adaptalyfe-db-production.up.railway.app',
+    'https://your-app.railway.app',
+    'https://app.adaptalyfeapp.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
