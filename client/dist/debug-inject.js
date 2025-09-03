@@ -45,49 +45,67 @@ setTimeout(() => {
       if (dashData.quickActions && dashData.quickActions.length > 0) {
         console.log('✅ Found', dashData.quickActions.length, 'quick actions');
         
-        // Create quick actions matching the exact HTML structure from screenshot
+        // Create quick actions exactly as they appeared when working perfectly
         const quickActionsHTML = `
-          ${dashData.quickActions.map(action => `
-            <div class="card" onclick="completeQuickAction('${action.id}')" style="cursor: pointer;">
-              <div class="title">${getActionIcon(action.icon)} ${action.title}</div>
-              <div class="desc">${action.description}</div>
+          <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f0f0f0;
+            border-bottom: 2px solid #ddd;
+            z-index: 1000;
+            padding: 10px;
+          ">
+            <div style="color: #16a34a; font-weight: bold; margin-bottom: 10px; text-align: left;">
+              Quick Actions (Injected)
             </div>
-          `).join('')}
+            <div style="
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 10px;
+              max-width: 1200px;
+              margin: 0 auto;
+            ">
+              ${dashData.quickActions.map(action => `
+                <div onclick="completeQuickAction('${action.id}')" style="
+                  background: ${action.completed ? '#dcfce7' : '#fef3c7'};
+                  border: 2px solid ${action.completed ? '#16a34a' : '#f59e0b'};
+                  border-radius: 8px;
+                  padding: 16px;
+                  text-align: center;
+                  cursor: pointer;
+                  transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                  <div style="font-size: 24px; margin-bottom: 8px;">
+                    ${getActionIcon(action.icon)}
+                  </div>
+                  <div style="font-weight: bold; color: #333; font-size: 16px; margin-bottom: 4px;">
+                    ${action.title}
+                  </div>
+                  <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                    ${action.description}
+                  </div>
+                  <div style="font-size: 10px; color: #888; text-transform: uppercase;">
+                    ${action.category} • ${action.completed ? 'COMPLETED' : 'PENDING'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
         `;
         
         // Remove existing injected content  
         const existing = document.getElementById('injected-quick-actions');
         if (existing) existing.remove();
         
-        // Find the content div that holds all the cards
-        const contentDiv = document.querySelector('div.content') || 
-                          document.querySelector('[class="content"]') ||
-                          document.querySelector('div').classList?.contains('content');
+        // Inject at the very top of the page as in the working screenshot
+        document.body.insertAdjacentHTML('afterbegin', quickActionsHTML);
         
-        if (contentDiv) {
-          // Add quick action cards directly to the content area
-          contentDiv.insertAdjacentHTML('beforeend', quickActionsHTML);
-          console.log('✅ Quick actions added to content area');
-        } else {
-          // Look for existing cards and add quick actions alongside them
-          const existingCards = document.querySelectorAll('.card');
-          if (existingCards.length > 0) {
-            // Insert after the last existing card
-            const lastCard = existingCards[existingCards.length - 1];
-            lastCard.insertAdjacentHTML('afterend', quickActionsHTML);
-            console.log('✅ Quick actions added after existing cards');
-          } else {
-            // Fallback: find any div that contains cards based on the HTML structure
-            const cardContainer = Array.from(document.querySelectorAll('div')).find(div => 
-              div.innerHTML && (div.innerHTML.includes('class="card"') || div.innerHTML.includes('Daily Tasks'))
-            );
-            
-            if (cardContainer) {
-              cardContainer.insertAdjacentHTML('beforeend', quickActionsHTML);
-              console.log('✅ Quick actions added to card container');
-            }
-          }
-        }
+        // Add some padding to the body to account for the fixed header
+        document.body.style.paddingTop = '160px';
+        
+        console.log('✅ Quick actions injected at top of page exactly as in working state');
         
         // Add completion function to global scope
         window.completeQuickAction = async (actionId) => {
