@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: adaptalyfe-fresh-deployment
+    env: node
+    plan: starter
+    buildCommand: |
+      echo "🚀 Force fresh build - clearing all caches"
+      rm -rf node_modules package-lock.json dist/
+      npm cache clean --force
+      npm install
+      npm run build
+      echo "📦 Copying production server"
+      cp server/production.ts server-temp.ts
+      esbuild server-temp.ts --platform=node --packages=external --bundle --format=esm --outfile=app-server.js
+      rm server-temp.ts
+      echo "✅ Fresh build complete"
+    startCommand: node app-server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: adaptalyfe-fresh-db
+          property: connectionString
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: VITE_STRIPE_PUBLIC_KEY
+        sync: false
+
+databases:
+  - name: adaptalyfe-fresh-db
+    databaseName: adaptalyfe
+    user: adaptalyfe_user
+    plan: starter
