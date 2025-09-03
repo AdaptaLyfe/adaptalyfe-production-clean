@@ -1,14 +1,12 @@
 [phases.build]
 cmds = [
   "npm ci",
-  "npm run build"
+  "npm run build",
+  "esbuild server/railway.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/railway.js"
 ]
 
 [phases.start]
-cmd = "npm run start"
+cmd = "node dist/railway.js"
 
 [variables]
 NODE_ENV = "production"
-
-[staticAssets]
-"/public" = "./dist/public"
