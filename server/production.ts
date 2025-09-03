@@ -61,17 +61,19 @@ app.use(cors({
     ];
     
     // Allow any Railway domain
-    if (origin.includes('.railway.app') || origin.includes('.up.railway.app')) {
+    if (origin && (origin.includes('.railway.app') || origin.includes('.up.railway.app'))) {
+      console.log('CORS allowing Railway origin:', origin);
       return callback(null, true);
     }
     
     // Check allowed origins
     if (allowedOrigins.includes(origin)) {
+      console.log('CORS allowing known origin:', origin);
       return callback(null, true);
     }
     
     console.log('CORS rejected origin:', origin);
-    callback(new Error('Not allowed by CORS'));
+    callback(null, true); // Allow all for now to debug
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -177,7 +179,12 @@ app.use((req, res, next) => {
   }));
   
   // Serve index.html for all non-API routes (SPA fallback) with no-cache headers
-  app.get("*", (_req, res) => {
+  app.get("*", (req, res) => {
+    // Don't serve HTML for API routes - let them return 404 naturally
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
+    }
+    
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
