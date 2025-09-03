@@ -81,7 +81,8 @@ function SimpleRoute({ component: Component }: { component: React.ComponentType 
 function App() {
   const [location] = useLocation();
   
-  // Initialize subscription enforcement for global use
+  // Initialize subscription enforcement for global use (only if not on auth pages)
+  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
   useSubscriptionEnforcement();
   
   // Completely disable auto demo for production testing

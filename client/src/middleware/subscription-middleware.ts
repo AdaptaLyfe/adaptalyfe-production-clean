@@ -20,11 +20,21 @@ export interface SubscriptionData {
 
 export function useSubscriptionEnforcement() {
   const [location, setLocation] = useLocation();
-  const { data: user } = useQuery<User>({ queryKey: ["/api/user"] });
-  const { data: subscription } = useQuery<SubscriptionData>({ queryKey: ["/api/subscription"] });
+  
+  // Skip enforcement on auth pages
+  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
+  
+  const { data: user } = useQuery<User>({ 
+    queryKey: ["/api/user"],
+    enabled: !isAuthPage 
+  });
+  const { data: subscription } = useQuery<SubscriptionData>({ 
+    queryKey: ["/api/subscription"],
+    enabled: !isAuthPage 
+  });
 
   useEffect(() => {
-    if (!user || !subscription) return;
+    if (isAuthPage || !user || !subscription) return;
 
     // Admin users get full access without restrictions
     const isAdmin = user.accountType === 'admin' || user.username === 'admin' || user.name?.toLowerCase().includes('admin');
