@@ -43,21 +43,40 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// CORS configuration - Railway compatible
 app.use(cors({
-  origin: [
-    'http://localhost:5000', 
-    'http://127.0.0.1:5000',
-    'https://adaptalyfe-5a1d3.web.app',
-    'https://adaptalyfe-5a1d3.firebaseapp.com',
-    'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
-    'https://adaptalyfe-db-production.up.railway.app',
-    'https://your-app.railway.app',
-    'https://app.adaptalyfeapp.com'
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5000', 
+      'http://127.0.0.1:5000',
+      'https://adaptalyfe-5a1d3.web.app',
+      'https://adaptalyfe-5a1d3.firebaseapp.com',
+      'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
+      'https://adaptalyfe-db-production.up.railway.app',
+      'https://your-app.railway.app',
+      'https://app.adaptalyfeapp.com'
+    ];
+    
+    // Allow any Railway domain
+    if (origin.includes('.railway.app') || origin.includes('.up.railway.app')) {
+      return callback(null, true);
+    }
+    
+    // Check allowed origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    console.log('CORS rejected origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
 }));
 
 // Rate limiting

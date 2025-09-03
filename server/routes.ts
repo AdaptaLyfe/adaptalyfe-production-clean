@@ -199,14 +199,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User login endpoint
   app.post("/api/login", async (req, res) => {
     try {
+      console.log("🔐 Login attempt received from:", req.get('origin'), "Body:", req.body);
       const { username, password } = req.body;
       
       if (!username || !password) {
+        console.log("❌ Missing credentials");
         return res.status(400).json({ message: "Username and password are required" });
       }
       
       const user = await storage.getUserByUsername(username);
-      if (!user || user.password !== password) { // In production, compare hashed passwords
+      console.log("👤 User lookup result:", user ? `Found: ${user.username}` : "Not found");
+      
+      if (!user || user.password !== password) {
+        console.log("❌ Invalid credentials for:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -221,13 +226,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
 
+      console.log(`✅ User ${user.username} logged in successfully`);
       res.json({ 
         message: "Login successful",
         user: { 
           id: user.id,
           username: user.username,
           name: user.name,
-          email: user.email
+          email: user.email,
+          isAdmin: user.isAdmin || false
         }
       });
     } catch (error) {
