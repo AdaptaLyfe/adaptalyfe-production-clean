@@ -3,10 +3,22 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cors from "cors";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import { auditMiddleware } from "./audit";
+import path from "path";
+import fs from "fs";
 import { initializeComprehensiveDemo } from "./demo-data";
 import { taskReminderService } from "./task-reminder-service";
+
+// Simple log function 
+function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit", 
+    second: "2-digit",
+    hour12: true,
+  });
+  console.log(`${formattedTime} [${source}] ${message}`);
+}
 
 const app = express();
 
@@ -122,10 +134,24 @@ app.use((req, res, next) => {
   
   if (isDevelopment) {
     console.log("Setting up Vite development server");
+    // Dynamic import to avoid bundling Vite in production
+    const { setupVite } = await import("./vite.js");
     await setupVite(app, server);
   } else {
     console.log("Setting up static file serving for production");
-    serveStatic(app);
+    // Serve static files directly without Vite
+    const distPath = path.resolve(import.meta.dirname, "public");
+    
+    if (!fs.existsSync(distPath)) {
+      throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
+    }
+
+    app.use(express.static(distPath));
+    
+    // Serve index.html for all non-API routes (SPA fallback)
+    app.get("*", (_req, res) => {
+      res.sendFile(path.resolve(distPath, "index.html"));
+    });
   }
 
   // ALWAYS serve the app on port 5000
