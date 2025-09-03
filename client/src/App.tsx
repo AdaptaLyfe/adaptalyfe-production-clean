@@ -79,7 +79,7 @@ function SimpleRoute({ component: Component }: { component: React.ComponentType 
 }
 
 function App() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
   const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
