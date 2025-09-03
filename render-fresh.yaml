@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: adaptalyfe-production
+    name: adaptalyfe-fresh
     env: node
     plan: starter
     buildCommand: npm ci && npm run build && rm -rf dist/index.js && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/production.js
