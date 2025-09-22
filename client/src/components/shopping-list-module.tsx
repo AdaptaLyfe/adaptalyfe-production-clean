@@ -421,7 +421,7 @@ export default function ShoppingListModule() {
                         className={`p-3 rounded-lg border-2 transition-all ${
                           item.isPurchased
                             ? "border-vibrant-green bg-green-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            : "border-gray-200 bg-gray-50 hover:bg-gray-100"
                         }`}
                       >
                         <div className="flex items-center justify-between">
