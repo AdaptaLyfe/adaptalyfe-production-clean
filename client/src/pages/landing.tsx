@@ -192,11 +192,11 @@ export default function Landing() {
                   Start Your Journey <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Link href="/demo">
+              {/* <Link href="/demo">
                 <Button size="lg" variant="outline" className="px-8">
                   Try Demo
                 </Button>
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
@@ -343,7 +343,7 @@ export default function Landing() {
                 <ArrowRight className="w-6 h-6 ml-3" />
               </Button>
             </Link>
-            <Link href="/demo">
+            {/* <Link href="/demo">
               <Button
                 size="lg"
                 variant="outline"
@@ -351,7 +351,7 @@ export default function Landing() {
               >
                 Try Demo First
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </section>
