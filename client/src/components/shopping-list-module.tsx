@@ -96,13 +96,13 @@ export default function ShoppingListModule() {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case "produce": return "bg-vibrant-green text-white";
-      case "dairy": return "bg-bright-blue text-white";
-      case "meat": return "bg-cheerful-pink text-white";
-      case "pantry": return "bg-sunny-orange text-white";
-      case "frozen": return "bg-calm-teal text-white";
-      case "household": return "bg-happy-purple text-white";
-      default: return "bg-gray-500 text-white";
+      case "produce": return "bg-green-600 text-white";
+      case "dairy": return "bg-blue-600 text-white";
+      case "meat": return "bg-pink-600 text-white";
+      case "pantry": return "bg-orange-500 text-white";
+      case "frozen": return "bg-teal-600 text-white";
+      case "household": return "bg-purple-600 text-white";
+      default: return "bg-gray-600 text-white";
     }
   };
 
