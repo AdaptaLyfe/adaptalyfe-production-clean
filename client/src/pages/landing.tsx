@@ -192,13 +192,11 @@ export default function Landing() {
                   Start Your Journey <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              /*{" "}
               <Link href="/demo">
                 <Button size="lg" variant="outline" className="px-8">
                   Try Demo
                 </Button>
               </Link>
-              */
             </div>
           </div>
         </div>
