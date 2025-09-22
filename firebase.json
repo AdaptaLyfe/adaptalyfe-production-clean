@@ -8,6 +8,24 @@
     ],
     "headers": [
       {
+        "source": "**/*.js",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/javascript"
+          }
+        ]
+      },
+      {
+        "source": "**/*.css",
+        "headers": [
+          {
+            "key": "Content-Type", 
+            "value": "text/css"
+          }
+        ]
+      },
+      {
         "source": "**",
         "headers": [
           {
@@ -19,7 +37,7 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "!{/assets/**,/**/*.js,/**/*.css,/**/*.ico,/**/*.png,/**/*.jpg,/**/*.jpeg,/**/*.gif,/**/*.svg}",
         "destination": "/index.html"
       }
     ]
