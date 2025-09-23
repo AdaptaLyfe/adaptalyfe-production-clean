@@ -66,9 +66,23 @@ export const getQueryFn: <T>(options: {
         throw new Error(`${res.status}: ${errorText}`);
       }
 
-      const data = await res.json();
-      console.log("Query response data:", data);
-      return data;
+      // Check if response has content before parsing JSON
+      const text = await res.text();
+      console.log("Raw response text length:", text.length);
+      
+      if (!text || text.trim() === '') {
+        console.log("Empty response, returning null");
+        return null;
+      }
+      
+      try {
+        const data = JSON.parse(text);
+        console.log("Query response data:", data);
+        return data;
+      } catch (parseError) {
+        console.error("JSON parse error. Raw text:", text);
+        throw new Error(`Failed to parse JSON response: ${parseError}`);
+      }
     } catch (error) {
       console.error("Query error:", error);
       throw error;
