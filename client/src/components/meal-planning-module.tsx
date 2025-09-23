@@ -158,9 +158,9 @@ export default function MealPlanningModule() {
                   control={form.control}
                   name="mealType"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem key={`mealType-${field.value}`}>
                       <FormLabel>Meal Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} key={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} key={`select-${field.value}`}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select meal type" />

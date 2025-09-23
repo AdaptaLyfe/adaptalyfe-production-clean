@@ -313,9 +313,9 @@ export default function ShoppingListModule() {
                   control={form.control}
                   name="category"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem key={`category-${field.value}`}>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} key={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} key={`select-${field.value}`}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
