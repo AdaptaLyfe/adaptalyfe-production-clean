@@ -530,13 +530,30 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
 
   const deleteStoreMutation = useMutation({
     mutationFn: async (id: number) => {
+      console.log("Attempting to delete store with ID:", id);
       const response = await fetch(`/api/grocery-stores/${id}`, {
         method: "DELETE",
+        credentials: "include", // Include cookies for authentication
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+      
+      console.log("Delete response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to delete store: ${response.status}`);
+      }
+      
       return response.json();
     },
     onSuccess: () => {
+      console.log("Store deleted successfully, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
+    },
+    onError: (error) => {
+      console.error("Failed to delete store:", error);
     },
   });
 
