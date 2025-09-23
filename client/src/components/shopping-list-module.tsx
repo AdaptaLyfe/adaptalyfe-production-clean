@@ -315,13 +315,13 @@ export default function ShoppingListModule() {
                   render={({ field }) => (
                     <FormItem key={`category-${field.value}`}>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} key={`select-${field.value}`}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent position="popper" avoidCollisions={false}>
                           <SelectItem value="produce">Produce</SelectItem>
                           <SelectItem value="dairy">Dairy</SelectItem>
                           <SelectItem value="meat">Meat & Seafood</SelectItem>
