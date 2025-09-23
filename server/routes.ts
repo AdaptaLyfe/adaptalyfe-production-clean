@@ -1647,18 +1647,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Grocery Stores routes
-  app.get("/api/grocery-stores", async (req, res) => {
+  app.get("/api/grocery-stores", async (req: any, res) => {
     try {
-      const stores = await storage.getGroceryStoresByUser(1);
+      const userId = req.session?.user?.id || 1;
+      const stores = await storage.getGroceryStoresByUser(userId);
       res.json(stores);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch grocery stores" });
     }
   });
 
-  app.post("/api/grocery-stores", async (req, res) => {
+  app.post("/api/grocery-stores", async (req: any, res) => {
     try {
-      const data = { ...req.body, userId: 1 };
+      const userId = req.session?.user?.id || 1;
+      const data = { ...req.body, userId };
       const store = await storage.createGroceryStore(data);
       res.json(store);
     } catch (error) {
@@ -1666,8 +1668,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/grocery-stores/:id", async (req, res) => {
+  app.put("/api/grocery-stores/:id", async (req: any, res) => {
     try {
+      const userId = req.session?.user?.id || 1;
       const storeId = parseInt(req.params.id);
       const store = await storage.updateGroceryStore(storeId, req.body);
       if (!store) {
@@ -1679,8 +1682,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/grocery-stores/:id", async (req, res) => {
+  app.delete("/api/grocery-stores/:id", async (req: any, res) => {
     try {
+      const userId = req.session?.user?.id || 1;
       const storeId = parseInt(req.params.id);
       const success = await storage.deleteGroceryStore(storeId);
       if (!success) {
