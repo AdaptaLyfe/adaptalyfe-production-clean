@@ -3693,12 +3693,12 @@ Provide a helpful, encouraging response:`;
           dataExports: { count: 0, limit: user.subscriptionTier === 'free' ? 0 : null }
         },
         features: {
-          wearableDevices: user.subscriptionTier !== 'free',
-          mealPlanning: user.subscriptionTier !== 'free',
-          medicationManagement: user.subscriptionTier !== 'free',
-          locationSafety: user.subscriptionTier === 'family',
-          advancedAnalytics: user.subscriptionTier === 'family',
-          prioritySupport: user.subscriptionTier !== 'free'
+          wearableDevices: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          mealPlanning: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          medicationManagement: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          locationSafety: user.subscriptionTier === 'family' || trialDaysLeft > 0,
+          advancedAnalytics: user.subscriptionTier === 'family' || trialDaysLeft > 0,
+          prioritySupport: user.subscriptionTier !== 'free' || trialDaysLeft > 0
         }
       };
       
