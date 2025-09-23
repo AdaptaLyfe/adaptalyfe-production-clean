@@ -184,18 +184,40 @@ export default function ShoppingListModule() {
               <Store className="text-blue-600" />
               <span>Your Grocery Stores</span>
             </div>
-            <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Manage Stores
-                </Button>
-              </DialogTrigger>
-              <StoreManagementDialog 
-                stores={groceryStores}
-                onClose={() => setShowStoreDialog(false)}
-              />
-            </Dialog>
+            <div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowStoreDialog(true)}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Manage Stores
+              </Button>
+              {showStoreDialog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoreDialog(false)}>
+                  <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
+                    <div className="sticky top-0 bg-white border-b px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h2 className="text-lg font-semibold">Manage Grocery Stores</h2>
+                          <p className="text-sm text-gray-600">Add your favorite grocery stores for easy online ordering and shopping list management</p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setShowStoreDialog(false)}>
+                          <span className="sr-only">Close</span>
+                          <span className="text-xl">×</span>
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <StoreManagementContent 
+                        stores={groceryStores}
+                        onClose={() => setShowStoreDialog(false)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -471,7 +493,7 @@ interface StoreManagementDialogProps {
   onClose: () => void;
 }
 
-function StoreManagementDialog({ stores, onClose }: StoreManagementDialogProps) {
+function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps) {
   const queryClient = useQueryClient();
   const [editingStore, setEditingStore] = useState<GroceryStore | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -519,15 +541,7 @@ function StoreManagementDialog({ stores, onClose }: StoreManagementDialogProps) 
   });
 
   return (
-    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Manage Grocery Stores</DialogTitle>
-        <DialogDescription>
-          Add your favorite grocery stores for easy online ordering and shopping list management
-        </DialogDescription>
-      </DialogHeader>
-
-      <Tabs defaultValue="stores" className="w-full">
+    <Tabs defaultValue="stores" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="stores">Your Stores</TabsTrigger>
           <TabsTrigger value="add">Add New Store</TabsTrigger>
@@ -595,23 +609,23 @@ function StoreManagementDialog({ stores, onClose }: StoreManagementDialogProps) 
           />
         </TabsContent>
       </Tabs>
-
+      
       {editingStore && (
-        <Dialog open={!!editingStore} onOpenChange={() => setEditingStore(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Store</DialogTitle>
-            </DialogHeader>
-            <StoreForm
-              store={editingStore}
-              onSubmit={(data) => updateStoreMutation.mutate({ id: editingStore.id, ...data })}
-              onCancel={() => setEditingStore(null)}
-              isLoading={updateStoreMutation.isPending}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="mt-6 p-4 border rounded-lg bg-gray-50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Edit Store</h3>
+            <Button variant="ghost" size="sm" onClick={() => setEditingStore(null)}>
+              <span className="text-xl">×</span>
+            </Button>
+          </div>
+          <StoreForm
+            store={editingStore}
+            onSubmit={(data) => updateStoreMutation.mutate({ id: editingStore.id, ...data })}
+            onCancel={() => setEditingStore(null)}
+            isLoading={updateStoreMutation.isPending}
+          />
+        </div>
       )}
-    </DialogContent>
   );
 }
 
