@@ -3671,7 +3671,7 @@ Provide a helpful, encouraging response:`;
       
       // Calculate trial days left for regular users
       const trialEndDate = new Date(user.createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      trialEndDate.setDate(trialEndDate.getDate() + 30); // Extended to 30 days for testing
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
       // Check subscription status
