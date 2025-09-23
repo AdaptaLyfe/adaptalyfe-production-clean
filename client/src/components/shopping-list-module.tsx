@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingCart, Plus, DollarSign, Package, CheckCircle2, Trash2, ExternalLink, Store, Settings, Globe, Phone, MapPin } from "lucide-react";
@@ -313,23 +312,22 @@ export default function ShoppingListModule() {
                   control={form.control}
                   name="category"
                   render={({ field }) => (
-                    <FormItem key={`category-${field.value}`}>
+                    <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent position="popper" avoidCollisions={false}>
-                          <SelectItem value="produce">Produce</SelectItem>
-                          <SelectItem value="dairy">Dairy</SelectItem>
-                          <SelectItem value="meat">Meat & Seafood</SelectItem>
-                          <SelectItem value="pantry">Pantry</SelectItem>
-                          <SelectItem value="frozen">Frozen</SelectItem>
-                          <SelectItem value="household">Household</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <select 
+                          {...field}
+                          className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="">Select category</option>
+                          <option value="produce">Produce</option>
+                          <option value="dairy">Dairy</option>
+                          <option value="meat">Meat & Seafood</option>
+                          <option value="pantry">Pantry</option>
+                          <option value="frozen">Frozen</option>
+                          <option value="household">Household</option>
+                        </select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
