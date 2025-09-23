@@ -26,7 +26,7 @@ export default function MealPlanningModule() {
   const createMealPlanMutation = useMutation({
     mutationFn: async (data: InsertMealPlan) => {
       const response = await apiRequest("POST", "/api/meal-plans", data);
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-plans"] });
@@ -48,7 +48,8 @@ export default function MealPlanningModule() {
 
   const updateCompletionMutation = useMutation({
     mutationFn: async ({ id, isCompleted }: { id: number; isCompleted: boolean }) => {
-      return await apiRequest("PATCH", `/api/meal-plans/${id}/completion`, { isCompleted });
+      const response = await apiRequest("PATCH", `/api/meal-plans/${id}/completion`, { isCompleted });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-plans"] });

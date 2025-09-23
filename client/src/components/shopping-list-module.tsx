@@ -38,7 +38,7 @@ export default function ShoppingListModule() {
   const createItemMutation = useMutation({
     mutationFn: async (data: InsertShoppingList) => {
       const response = await apiRequest("POST", "/api/shopping-lists", data);
-      return response.json();
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists"] });
@@ -61,7 +61,8 @@ export default function ShoppingListModule() {
 
   const updatePurchasedMutation = useMutation({
     mutationFn: async ({ id, isPurchased, actualCost }: { id: number; isPurchased: boolean; actualCost?: number }) => {
-      return await apiRequest("PATCH", `/api/shopping-lists/${id}/purchased`, { isPurchased, actualCost });
+      const response = await apiRequest("PATCH", `/api/shopping-lists/${id}/purchased`, { isPurchased, actualCost });
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists"] });
