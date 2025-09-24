@@ -558,7 +558,8 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
   });
 
   return (
-    <Tabs defaultValue="stores" className="w-full">
+    <>
+      <Tabs defaultValue="stores" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="stores">Your Stores</TabsTrigger>
           <TabsTrigger value="add">Add New Store</TabsTrigger>
@@ -637,12 +638,13 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
           </div>
           <StoreForm
             store={editingStore}
-            onSubmit={(data) => updateStoreMutation.mutate({ id: editingStore.id, ...data })}
+            onSubmit={(data) => updateStoreMutation.mutate({ id: editingStore!.id, ...data })}
             onCancel={() => setEditingStore(null)}
             isLoading={updateStoreMutation.isPending}
           />
         </div>
       )}
+    </>
   );
 }
 
