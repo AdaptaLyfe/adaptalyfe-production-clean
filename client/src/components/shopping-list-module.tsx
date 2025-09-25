@@ -30,9 +30,16 @@ export default function ShoppingListModule() {
     queryKey: ["/api/shopping-lists/active"],
   });
 
-  const { data: groceryStores = [] } = useQuery<GroceryStore[]>({
+  const { data: groceryStores = [], error: storesError } = useQuery<GroceryStore[]>({
     queryKey: ["/api/grocery-stores"],
+    retry: 2,
+    staleTime: 30000,
   });
+
+  // Log any errors for debugging
+  if (storesError) {
+    console.error("Error fetching grocery stores:", storesError);
+  }
 
   const createItemMutation = useMutation({
     mutationFn: async (data: InsertShoppingList) => {
