@@ -482,17 +482,25 @@ export default function ShoppingListModule() {
       {(() => {console.log("🔥 RENDER: showStoreDialog =", showStoreDialog); return null;})()}
       {showStoreDialog && (
         <div 
+          id="store-dialog-overlay"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 9999,
+            backgroundColor: 'rgba(255, 0, 0, 0.8)',
+            zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
+          }}
+          onLoad={() => console.log("🔥 DIALOG OVERLAY LOADED")}
+          ref={(el) => {
+            if (el) {
+              console.log("🔥 DIALOG DOM ELEMENT CREATED:", el);
+              console.log("🔥 DIALOG STYLES:", window.getComputedStyle(el));
+            }
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
