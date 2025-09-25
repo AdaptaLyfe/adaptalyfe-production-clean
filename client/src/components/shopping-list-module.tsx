@@ -197,13 +197,80 @@ export default function ShoppingListModule() {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  console.log("🔥 BEFORE: showStoreDialog =", showStoreDialog);
-                  alert("Button clicked! Dialog should open now...");
-                  setShowStoreDialog(true);
-                  console.log("🔥 AFTER: setShowStoreDialog(true) called");
-                  // Force re-render check
+                  console.log("🔥 BUTTON CLICKED - Using RAW DOM manipulation");
+                  alert("Testing RAW DOM dialog...");
+                  
+                  // Create dialog using raw DOM manipulation
+                  const existingDialog = document.getElementById('raw-store-dialog');
+                  if (existingDialog) {
+                    existingDialog.remove();
+                  }
+                  
+                  const overlay = document.createElement('div');
+                  overlay.id = 'raw-store-dialog';
+                  overlay.innerHTML = `
+                    <div style="
+                      background: white;
+                      border-radius: 8px;
+                      padding: 24px;
+                      max-width: 500px;
+                      width: 90%;
+                      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
+                    ">
+                      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: bold; color: black;">
+                        🔥 RAW DOM - Manage Stores
+                      </h2>
+                      <p style="margin: 0 0 16px 0; color: #666;">
+                        This dialog was created with raw DOM manipulation!
+                      </p>
+                      <button onclick="document.getElementById('raw-store-dialog').remove()" style="
+                        padding: 8px 16px;
+                        background-color: #dc2626;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                      ">
+                        Close RAW Dialog
+                      </button>
+                    </div>
+                  `;
+                  
+                  // Apply styles that are harder to override
+                  Object.assign(overlay.style, {
+                    position: 'fixed',
+                    top: '0',
+                    left: '0',
+                    right: '0',
+                    bottom: '0',
+                    width: '100vw',
+                    height: '100vh',
+                    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+                    zIndex: '999999',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    visibility: 'visible',
+                    opacity: '1',
+                    pointerEvents: 'auto'
+                  });
+                  
+                  // Force style application
+                  overlay.style.setProperty('position', 'fixed', 'important');
+                  overlay.style.setProperty('z-index', '999999', 'important'); 
+                  overlay.style.setProperty('display', 'flex', 'important');
+                  overlay.style.setProperty('visibility', 'visible', 'important');
+                  overlay.style.setProperty('opacity', '1', 'important');
+                  
+                  document.body.appendChild(overlay);
+                  
+                  console.log("🔥 RAW DIALOG CREATED:", overlay);
+                  console.log("🔥 RAW DIALOG COMPUTED STYLES:", window.getComputedStyle(overlay));
+                  
+                  // Check styles after a brief delay
                   setTimeout(() => {
-                    console.log("🔥 STATE CHECK: showStoreDialog should be true now");
+                    console.log("🔥 RAW DIALOG STYLES AFTER DELAY:", window.getComputedStyle(overlay));
                   }, 100);
                 }}
                 data-testid="button-manage-stores"
