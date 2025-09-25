@@ -192,38 +192,31 @@ export default function ShoppingListModule() {
               <span>Your Grocery Stores</span>
             </div>
             <div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowStoreDialog(true)}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Manage Stores
-              </Button>
-              {showStoreDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoreDialog(false)}>
-                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto m-4 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-                    <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manage Grocery Stores</h2>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Add your favorite grocery stores for easy online ordering and shopping list management</p>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => setShowStoreDialog(false)}>
-                          <span className="sr-only">Close</span>
-                          <span className="text-xl">×</span>
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-6 bg-white dark:bg-gray-900">
-                      <StoreManagementContent 
-                        stores={groceryStores}
-                        onClose={() => setShowStoreDialog(false)}
-                      />
-                    </div>
+              <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Stores
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Manage Grocery Stores</DialogTitle>
+                    <DialogDescription>
+                      Add your favorite grocery stores for easy online ordering and shopping list management
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    <StoreManagementContent 
+                      stores={groceryStores}
+                      onClose={() => setShowStoreDialog(false)}
+                    />
                   </div>
-                </div>
-              )}
+                </DialogContent>
+              </Dialog>
             </div>
           </CardTitle>
         </CardHeader>
