@@ -500,12 +500,8 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
 
   const createStoreMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetch("/api/grocery-stores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      return response.json();
+      const response = await apiRequest("POST", "/api/grocery-stores", data);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
@@ -515,12 +511,8 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
 
   const updateStoreMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number } & Partial<GroceryStore>) => {
-      const response = await fetch(`/api/grocery-stores/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      return response.json();
+      const response = await apiRequest("PUT", `/api/grocery-stores/${id}`, data);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
@@ -531,22 +523,8 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
   const deleteStoreMutation = useMutation({
     mutationFn: async (id: number) => {
       console.log("Attempting to delete store with ID:", id);
-      const response = await fetch(`/api/grocery-stores/${id}`, {
-        method: "DELETE",
-        credentials: "include", // Include cookies for authentication
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      console.log("Delete response status:", response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to delete store: ${response.status}`);
-      }
-      
-      return response.json();
+      const response = await apiRequest("DELETE", `/api/grocery-stores/${id}`, null);
+      return response;
     },
     onSuccess: () => {
       console.log("Store deleted successfully, invalidating cache");
