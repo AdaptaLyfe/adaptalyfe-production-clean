@@ -210,24 +210,30 @@ export default function ShoppingListModule() {
               
               {showStoreDialog && (
                 <div 
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+                  style={{ zIndex: 9999 }}
                   onClick={() => {
                     console.log("🔒 Modal backdrop clicked, closing dialog");
                     setShowStoreDialog(false);
                   }}
                 >
                   <div 
-                    className="bg-background border border-border rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto m-4"
+                    className="bg-white border border-gray-300 rounded-lg shadow-2xl w-full max-w-4xl max-h-screen overflow-y-auto m-4"
+                    style={{ 
+                      backgroundColor: 'white',
+                      border: '2px solid #ccc',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log("✅ Modal content clicked, preventing close");
                     }}
                   >
-                    <div className="sticky top-0 bg-background border-b border-border px-6 py-4 rounded-t-lg">
+                    <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h2 className="text-lg font-semibold text-foreground">Manage Grocery Stores</h2>
-                          <p className="text-sm text-muted-foreground">
+                          <h2 className="text-lg font-semibold text-gray-900">Manage Grocery Stores</h2>
+                          <p className="text-sm text-gray-600">
                             Add your favorite grocery stores for easy online ordering and shopping list management
                           </p>
                         </div>
@@ -238,6 +244,7 @@ export default function ShoppingListModule() {
                             console.log("🔒 Close button clicked, closing dialog");
                             setShowStoreDialog(false);
                           }}
+                          style={{ fontSize: '24px', fontWeight: 'bold' }}
                         >
                           <span className="sr-only">Close</span>
                           <span className="text-xl">×</span>
