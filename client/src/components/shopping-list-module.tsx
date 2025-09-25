@@ -195,17 +195,17 @@ export default function ShoppingListModule() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  console.log("🔘 Manage Stores button clicked!");
-                  console.log("🔘 Current showStoreDialog state:", showStoreDialog);
-                  alert("Button clicked! Opening dialog...");
-                  setShowStoreDialog(true);
-                  console.log("🔘 Setting showStoreDialog to true");
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.alert("TEST: Button is working!");
+                  setShowStoreDialog(!showStoreDialog);
                 }}
                 data-testid="button-manage-stores"
+                style={{ background: 'red', color: 'white' }}
               >
                 <Settings className="w-4 h-4 mr-2" />
-                Manage Stores
+                TEST Manage Stores {showStoreDialog ? '(OPEN)' : '(CLOSED)'}
               </Button>
               
               {showStoreDialog && (
