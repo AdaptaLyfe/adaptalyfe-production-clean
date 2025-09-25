@@ -195,13 +195,7 @@ export default function ShoppingListModule() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={(e) => {
-                  console.log("🔵 BUTTON CLICKED - showStoreDialog:", showStoreDialog);
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowStoreDialog(!showStoreDialog);
-                  console.log("🔵 BUTTON CLICKED - setting showStoreDialog to:", !showStoreDialog);
-                }}
+                onClick={() => setShowStoreDialog(true)}
                 data-testid="button-manage-stores"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -216,156 +210,163 @@ export default function ShoppingListModule() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    zIndex: 99999,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    zIndex: 50,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px'
+                    justifyContent: 'center'
                   }}
-                  onClick={() => {
-                    console.log("🔒 Modal backdrop clicked, closing dialog");
-                    setShowStoreDialog(false);
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setShowStoreDialog(false);
+                    }
                   }}
                 >
-                  <div 
-                    style={{
-                      backgroundColor: 'white',
-                      border: '3px solid #333',
-                      borderRadius: '12px',
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-                      width: '90%',
-                      maxWidth: '800px',
-                      maxHeight: '90vh',
-                      overflow: 'auto',
-                      position: 'relative'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      console.log("✅ Modal content clicked, preventing close");
-                    }}
-                  >
-                    <div 
-                      style={{
-                        padding: '24px',
-                        borderBottom: '2px solid #eee',
-                        backgroundColor: 'white'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <h2 style={{ 
-                            fontSize: '24px', 
-                            fontWeight: 'bold', 
-                            color: '#333',
-                            margin: '0 0 8px 0' 
-                          }}>
-                            Manage Grocery Stores
-                          </h2>
-                          <p style={{ 
-                            fontSize: '14px', 
-                            color: '#666',
-                            margin: 0 
-                          }}>
-                            Add your favorite grocery stores for easy online ordering and shopping list management
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            console.log("🔒 Close button clicked, closing dialog");
-                            setShowStoreDialog(false);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            fontSize: '32px',
-                            cursor: 'pointer',
-                            color: '#999',
-                            lineHeight: 1,
-                            padding: '0 8px'
-                          }}
-                        >
-                          ×
-                        </button>
+                  <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    width: 'calc(100% - 32px)',
+                    maxWidth: '800px',
+                    maxHeight: '90vh',
+                    overflow: 'auto',
+                    position: 'relative',
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                  }}>
+                    {/* Header */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      padding: '24px 24px 20px',
+                      borderBottom: '1px solid #e5e7eb'
+                    }}>
+                      <div>
+                        <h2 style={{ 
+                          fontSize: '20px', 
+                          fontWeight: '600', 
+                          margin: '0 0 8px 0',
+                          color: '#111827'
+                        }}>
+                          Manage Grocery Stores
+                        </h2>
+                        <p style={{ 
+                          fontSize: '14px', 
+                          color: '#6b7280',
+                          margin: 0 
+                        }}>
+                          Add your favorite grocery stores for easy online ordering and shopping list management
+                        </p>
                       </div>
+                      <button 
+                        onClick={() => setShowStoreDialog(false)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '24px',
+                          cursor: 'pointer',
+                          color: '#9ca3af',
+                          lineHeight: 1,
+                          padding: '4px'
+                        }}
+                      >
+                        ×
+                      </button>
                     </div>
+
+                    {/* Content */}
                     <div style={{ padding: '24px' }}>
-                      <div style={{ marginBottom: '20px' }}>
+                      {/* Section Header */}
+                      <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '20px'
+                      }}>
+                        <h3 style={{ 
+                          fontSize: '16px', 
+                          fontWeight: '600', 
+                          margin: 0,
+                          color: '#111827'
+                        }}>
+                          Your Stores
+                        </h3>
                         <button 
                           style={{
                             backgroundColor: '#3b82f6',
                             color: 'white',
                             border: 'none',
-                            padding: '12px 24px',
+                            padding: '8px 16px',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '14px',
                             fontWeight: '500'
                           }}
-                          onClick={() => {
-                            console.log("🔒 Add New Store clicked");
-                            // Add new store functionality would go here
-                          }}
                         >
-                          + Add New Store
+                          Add New Store
                         </button>
                       </div>
                       
+                      {/* Store Cards */}
                       <div style={{ display: 'grid', gap: '16px' }}>
                         {groceryStores.map((store) => (
                           <div
                             key={store.id}
                             style={{
-                              padding: '16px',
+                              padding: '20px',
                               borderRadius: '8px',
-                              border: store.isPreferred ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                              backgroundColor: store.isPreferred ? '#eff6ff' : 'white'
+                              border: '1px solid #e5e7eb',
+                              backgroundColor: 'white'
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                               <div style={{ flex: 1 }}>
-                                <h4 style={{ 
-                                  fontSize: '16px', 
-                                  fontWeight: '600', 
-                                  margin: '0 0 4px 0',
-                                  color: '#111827'
-                                }}>
-                                  {store.name}
-                                </h4>
-                                {store.isPreferred && (
-                                  <span style={{
-                                    backgroundColor: '#dbeafe',
-                                    color: '#1e40af',
-                                    padding: '2px 8px',
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    fontWeight: '500'
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                  <h4 style={{ 
+                                    fontSize: '18px', 
+                                    fontWeight: '600', 
+                                    margin: 0,
+                                    color: '#111827'
                                   }}>
-                                    Preferred
-                                  </span>
-                                )}
+                                    {store.name}
+                                  </h4>
+                                  {store.isPreferred && (
+                                    <span style={{
+                                      backgroundColor: '#dbeafe',
+                                      color: '#1e40af',
+                                      padding: '4px 8px',
+                                      borderRadius: '4px',
+                                      fontSize: '12px',
+                                      fontWeight: '500'
+                                    }}>
+                                      Preferred
+                                    </span>
+                                  )}
+                                </div>
+                                
                                 {store.address && (
                                   <div style={{ 
-                                    marginTop: '8px',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    marginBottom: '4px'
                                   }}>
                                     📍 {store.address}
                                   </div>
                                 )}
+                                
                                 {store.phoneNumber && (
                                   <div style={{ 
-                                    marginTop: '4px',
                                     fontSize: '14px',
-                                    color: '#6b7280'
+                                    color: '#6b7280',
+                                    marginBottom: '4px'
                                   }}>
                                     📞 {store.phoneNumber}
                                   </div>
                                 )}
+                                
                                 {store.website && (
                                   <div style={{ 
-                                    marginTop: '4px',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
+                                    marginBottom: '12px'
                                   }}>
                                     <a 
                                       href={store.website} 
@@ -373,45 +374,69 @@ export default function ShoppingListModule() {
                                       rel="noopener noreferrer"
                                       style={{ color: '#3b82f6', textDecoration: 'none' }}
                                     >
-                                      🌐 Visit Website
+                                      🌐 {store.website.replace('https://', '').replace('http://', '')}
                                     </a>
                                   </div>
                                 )}
+                                
+                                {/* Service Tags */}
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                  {store.deliveryAvailable && (
+                                    <span style={{
+                                      backgroundColor: '#f0f9ff',
+                                      color: '#0369a1',
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #0ea5e9'
+                                    }}>
+                                      Delivery
+                                    </span>
+                                  )}
+                                  {store.pickupAvailable && (
+                                    <span style={{
+                                      backgroundColor: '#f0f9ff',
+                                      color: '#0369a1',
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      fontSize: '12px',
+                                      border: '1px solid #0ea5e9'
+                                    }}>
+                                      Pickup
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {/* Action Buttons */}
                               <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
                                 <button 
                                   style={{
-                                    backgroundColor: '#f3f4f6',
+                                    backgroundColor: 'white',
                                     color: '#374151',
                                     border: '1px solid #d1d5db',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
+                                    padding: '8px 16px',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
-                                    fontSize: '12px'
-                                  }}
-                                  onClick={() => {
-                                    console.log("🔒 Edit store clicked:", store.name);
-                                    // Edit functionality would go here
+                                    fontSize: '14px',
+                                    fontWeight: '500'
                                   }}
                                 >
                                   Edit
                                 </button>
                                 <button 
                                   style={{
-                                    backgroundColor: '#fef2f2',
+                                    backgroundColor: 'white',
                                     color: '#dc2626',
                                     border: '1px solid #fecaca',
-                                    padding: '6px 12px',
-                                    borderRadius: '4px',
+                                    padding: '8px 16px',
+                                    borderRadius: '6px',
                                     cursor: 'pointer',
-                                    fontSize: '12px'
-                                  }}
-                                  onClick={() => {
-                                    console.log("🔒 Delete store clicked:", store.name);
-                                    // Delete functionality would go here
+                                    fontSize: '14px',
+                                    fontWeight: '500'
                                   }}
                                 >
-                                  Delete
+                                  🗑️
                                 </button>
                               </div>
                             </div>
