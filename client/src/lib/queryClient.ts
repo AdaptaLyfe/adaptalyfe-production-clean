@@ -71,8 +71,14 @@ export const getQueryFn: <T>(options: {
       console.log("Raw response text length:", text.length);
       
       if (!text || text.trim() === '') {
-        console.log("Empty response, returning null");
-        return null;
+        console.log("Empty response, returning empty array for safe fallback");
+        return [];
+      }
+      
+      // Check if text starts with HTML (error page)
+      if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+        console.error("Received HTML instead of JSON:", text.substring(0, 200));
+        throw new Error(`Server returned HTML error page instead of JSON`);
       }
       
       try {
@@ -80,8 +86,10 @@ export const getQueryFn: <T>(options: {
         console.log("Query response data:", data);
         return data;
       } catch (parseError) {
-        console.error("JSON parse error. Raw text:", text);
-        throw new Error(`Failed to parse JSON response: ${parseError}`);
+        console.error("JSON parse error. Raw text (first 200 chars):", text.substring(0, 200));
+        console.error("Parse error details:", parseError);
+        // Return empty array instead of throwing to prevent crashes
+        return [];
       }
     } catch (error) {
       console.error("Query error:", error);
