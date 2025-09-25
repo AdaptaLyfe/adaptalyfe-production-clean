@@ -202,7 +202,7 @@ export default function ShoppingListModule() {
                   setShowStoreDialog(!showStoreDialog);
                 }}
                 data-testid="button-manage-stores"
-                style={{ background: 'red', color: 'white' }}
+                style={{ background: 'red', color: 'white', border: '3px solid blue' }}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 TEST Manage Stores {showStoreDialog ? '(OPEN)' : '(CLOSED)'}
