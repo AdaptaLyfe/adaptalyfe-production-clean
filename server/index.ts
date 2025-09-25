@@ -64,6 +64,12 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Allow any Replit domain
+    if (origin && (origin.includes('.replit.dev') || origin.includes('.replit.co'))) {
+      console.log('CORS allowing Replit origin:', origin);
+      return callback(null, true);
+    }
+    
     // Check allowed origins
     if (allowedOrigins.includes(origin)) {
       console.log('CORS allowing known origin:', origin);
@@ -75,7 +81,20 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Credentials'
+  ],
+  exposedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  preflightContinue: false,
   optionsSuccessStatus: 200
 }));
 
