@@ -210,48 +210,86 @@ export default function ShoppingListModule() {
               
               {showStoreDialog && (
                 <div 
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-                  style={{ zIndex: 9999 }}
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    zIndex: 99999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px'
+                  }}
                   onClick={() => {
                     console.log("🔒 Modal backdrop clicked, closing dialog");
                     setShowStoreDialog(false);
                   }}
                 >
                   <div 
-                    className="bg-white border border-gray-300 rounded-lg shadow-2xl w-full max-w-4xl max-h-screen overflow-y-auto m-4"
-                    style={{ 
+                    style={{
                       backgroundColor: 'white',
-                      border: '2px solid #ccc',
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                      border: '3px solid #333',
+                      borderRadius: '12px',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
+                      width: '90%',
+                      maxWidth: '800px',
+                      maxHeight: '90vh',
+                      overflow: 'auto',
+                      position: 'relative'
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log("✅ Modal content clicked, preventing close");
                     }}
                   >
-                    <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-lg">
-                      <div className="flex items-center justify-between">
+                    <div 
+                      style={{
+                        padding: '24px',
+                        borderBottom: '2px solid #eee',
+                        backgroundColor: 'white'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div>
-                          <h2 className="text-lg font-semibold text-gray-900">Manage Grocery Stores</h2>
-                          <p className="text-sm text-gray-600">
+                          <h2 style={{ 
+                            fontSize: '24px', 
+                            fontWeight: 'bold', 
+                            color: '#333',
+                            margin: '0 0 8px 0' 
+                          }}>
+                            Manage Grocery Stores
+                          </h2>
+                          <p style={{ 
+                            fontSize: '14px', 
+                            color: '#666',
+                            margin: 0 
+                          }}>
                             Add your favorite grocery stores for easy online ordering and shopping list management
                           </p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <button 
                           onClick={() => {
                             console.log("🔒 Close button clicked, closing dialog");
                             setShowStoreDialog(false);
                           }}
-                          style={{ fontSize: '24px', fontWeight: 'bold' }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '32px',
+                            cursor: 'pointer',
+                            color: '#999',
+                            lineHeight: 1,
+                            padding: '0 8px'
+                          }}
                         >
-                          <span className="sr-only">Close</span>
-                          <span className="text-xl">×</span>
-                        </Button>
+                          ×
+                        </button>
                       </div>
                     </div>
-                    <div className="p-6">
+                    <div style={{ padding: '24px' }}>
                       <StoreManagementContent 
                         stores={groceryStores}
                         onClose={() => {
