@@ -198,6 +198,7 @@ export default function ShoppingListModule() {
                 onClick={() => {
                   console.log("🔘 Manage Stores button clicked!");
                   console.log("🔘 Current showStoreDialog state:", showStoreDialog);
+                  alert("Button clicked! Opening dialog...");
                   setShowStoreDialog(true);
                   console.log("🔘 Setting showStoreDialog to true");
                 }}
