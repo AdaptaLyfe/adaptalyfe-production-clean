@@ -508,7 +508,9 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
   const createStoreMutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await apiRequest("POST", "/api/grocery-stores", data);
-      return response;
+      // Safely parse JSON, return null if empty
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
@@ -519,7 +521,9 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
   const updateStoreMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number } & Partial<GroceryStore>) => {
       const response = await apiRequest("PUT", `/api/grocery-stores/${id}`, data);
-      return response;
+      // Safely parse JSON, return null if empty
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
@@ -531,7 +535,8 @@ function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps)
     mutationFn: async (id: number) => {
       console.log("Attempting to delete store with ID:", id);
       const response = await apiRequest("DELETE", `/api/grocery-stores/${id}`, null);
-      return response;
+      // DELETE operations often return empty responses, don't try to parse JSON
+      return { success: true };
     },
     onSuccess: () => {
       console.log("Store deleted successfully, invalidating cache");
