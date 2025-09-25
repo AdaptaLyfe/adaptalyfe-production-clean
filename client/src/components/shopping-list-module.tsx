@@ -195,14 +195,7 @@ export default function ShoppingListModule() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log("🔘 Manage Stores button clicked! Current state:", showStoreDialog);
-                  console.log("🔘 Event object:", e);
-                  alert("Button clicked! Check console for logs");
-                  setShowStoreDialog(true);
-                }}
+                onClick={() => setShowStoreDialog(true)}
                 data-testid="button-manage-stores"
               >
                 <Settings className="w-4 h-4 mr-2" />
