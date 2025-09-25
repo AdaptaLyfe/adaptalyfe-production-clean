@@ -196,8 +196,14 @@ export default function ShoppingListModule() {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
+                  console.log("🔥 BEFORE: showStoreDialog =", showStoreDialog);
                   alert("Button clicked! Dialog should open now...");
                   setShowStoreDialog(true);
+                  console.log("🔥 AFTER: setShowStoreDialog(true) called");
+                  // Force re-render check
+                  setTimeout(() => {
+                    console.log("🔥 STATE CHECK: showStoreDialog should be true now");
+                  }, 100);
                 }}
                 data-testid="button-manage-stores"
               >
@@ -473,6 +479,7 @@ export default function ShoppingListModule() {
       </Card>
 
       {/* Store Management Dialog */}
+      {(() => {console.log("🔥 RENDER: showStoreDialog =", showStoreDialog); return null;})()}
       {showStoreDialog && (
         <div 
           style={{
