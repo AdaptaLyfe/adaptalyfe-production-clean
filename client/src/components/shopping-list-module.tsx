@@ -483,23 +483,40 @@ export default function ShoppingListModule() {
       {showStoreDialog && (
         <div 
           id="store-dialog-overlay"
+          className="store-dialog-overlay"
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255, 0, 0, 0.8)',
-            zIndex: 99999,
-            display: 'flex',
+            position: 'fixed !important',
+            top: '0 !important',
+            left: '0 !important',
+            right: '0 !important', 
+            bottom: '0 !important',
+            width: '100vw !important',
+            height: '100vh !important',
+            backgroundColor: 'rgba(255, 0, 0, 0.8) !important',
+            zIndex: '99999 !important',
+            display: 'flex !important',
+            visibility: 'visible !important',
+            opacity: '1 !important',
+            pointerEvents: 'auto !important',
             alignItems: 'center',
             justifyContent: 'center'
           }}
-          onLoad={() => console.log("🔥 DIALOG OVERLAY LOADED")}
           ref={(el) => {
             if (el) {
               console.log("🔥 DIALOG DOM ELEMENT CREATED:", el);
               console.log("🔥 DIALOG STYLES:", window.getComputedStyle(el));
+              // Force override any conflicting styles
+              el.style.setProperty('position', 'fixed', 'important');
+              el.style.setProperty('top', '0', 'important');
+              el.style.setProperty('left', '0', 'important');
+              el.style.setProperty('right', '0', 'important');
+              el.style.setProperty('bottom', '0', 'important');
+              el.style.setProperty('z-index', '99999', 'important');
+              el.style.setProperty('display', 'flex', 'important');
+              el.style.setProperty('visibility', 'visible', 'important');
+              el.style.setProperty('opacity', '1', 'important');
+              el.style.setProperty('pointer-events', 'auto', 'important');
+              el.style.setProperty('background-color', 'rgba(255, 0, 0, 0.8)', 'important');
             }
           }}
           onClick={(e) => {
