@@ -192,17 +192,25 @@ export default function ShoppingListModule() {
               <span>Your Grocery Stores</span>
             </div>
             <div>
-              <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
+              <Dialog open={showStoreDialog} onOpenChange={(open) => {
+                console.log("🎯 Dialog state changing from", showStoreDialog, "to", open);
+                setShowStoreDialog(open);
+              }}>
                 <DialogTrigger asChild>
                   <Button 
                     variant="outline" 
                     size="sm"
+                    onClick={() => {
+                      console.log("🔘 Manage Stores button clicked! Current state:", showStoreDialog);
+                      console.log("🔍 Setting dialog state to true");
+                    }}
                   >
                     <Settings className="w-4 h-4 mr-2" />
                     Manage Stores
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="w-full max-w-4xl max-h-[80vh] overflow-y-auto"
+                  onOpenAutoFocus={() => console.log("✅ DialogContent is rendering! Dialog is open:", showStoreDialog)}>
                   <DialogHeader>
                     <DialogTitle>Manage Grocery Stores</DialogTitle>
                     <DialogDescription>
@@ -212,7 +220,10 @@ export default function ShoppingListModule() {
                   <div className="mt-4">
                     <StoreManagementContent 
                       stores={groceryStores}
-                      onClose={() => setShowStoreDialog(false)}
+                      onClose={() => {
+                        console.log("🔒 StoreManagementContent onClose called, closing dialog");
+                        setShowStoreDialog(false);
+                      }}
                     />
                   </div>
                 </DialogContent>
