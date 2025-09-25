@@ -14,7 +14,6 @@ import { formatCurrency } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ShoppingListModule() {
@@ -22,6 +21,8 @@ export default function ShoppingListModule() {
   const { toast } = useToast();
   const [showStoreDialog, setShowStoreDialog] = useState(false);
   const [selectedStore, setSelectedStore] = useState<GroceryStore | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingStore, setEditingStore] = useState<GroceryStore | null>(null);
 
   const { data: shoppingItems, isLoading } = useQuery<ShoppingList[]>({
     queryKey: ["/api/shopping-lists"],
@@ -74,6 +75,26 @@ export default function ShoppingListModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists"] });
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists/active"] });
+    },
+  });
+
+  const deleteStoreMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest("DELETE", `/api/grocery-stores/${id}`, null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
+      toast({
+        title: "Store deleted",
+        description: "The grocery store has been removed successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the store. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -196,83 +217,7 @@ export default function ShoppingListModule() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  console.log("🔥 BUTTON CLICKED - Using RAW DOM manipulation");
-                  alert("Testing RAW DOM dialog...");
-                  
-                  // Create dialog using raw DOM manipulation
-                  const existingDialog = document.getElementById('raw-store-dialog');
-                  if (existingDialog) {
-                    existingDialog.remove();
-                  }
-                  
-                  const overlay = document.createElement('div');
-                  overlay.id = 'raw-store-dialog';
-                  overlay.innerHTML = `
-                    <div style="
-                      background: white;
-                      border-radius: 8px;
-                      padding: 24px;
-                      max-width: 500px;
-                      width: 90%;
-                      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3);
-                    ">
-                      <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: bold; color: black;">
-                        🔥 RAW DOM - Manage Stores
-                      </h2>
-                      <p style="margin: 0 0 16px 0; color: #666;">
-                        This dialog was created with raw DOM manipulation!
-                      </p>
-                      <button onclick="document.getElementById('raw-store-dialog').remove()" style="
-                        padding: 8px 16px;
-                        background-color: #dc2626;
-                        color: white;
-                        border: none;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        font-size: 14px;
-                      ">
-                        Close RAW Dialog
-                      </button>
-                    </div>
-                  `;
-                  
-                  // Apply styles that are harder to override
-                  Object.assign(overlay.style, {
-                    position: 'fixed',
-                    top: '0',
-                    left: '0',
-                    right: '0',
-                    bottom: '0',
-                    width: '100vw',
-                    height: '100vh',
-                    backgroundColor: 'rgba(255, 0, 0, 0.8)',
-                    zIndex: '999999',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    visibility: 'visible',
-                    opacity: '1',
-                    pointerEvents: 'auto'
-                  });
-                  
-                  // Force style application
-                  overlay.style.setProperty('position', 'fixed', 'important');
-                  overlay.style.setProperty('z-index', '999999', 'important'); 
-                  overlay.style.setProperty('display', 'flex', 'important');
-                  overlay.style.setProperty('visibility', 'visible', 'important');
-                  overlay.style.setProperty('opacity', '1', 'important');
-                  
-                  document.body.appendChild(overlay);
-                  
-                  console.log("🔥 RAW DIALOG CREATED:", overlay);
-                  console.log("🔥 RAW DIALOG COMPUTED STYLES:", window.getComputedStyle(overlay));
-                  
-                  // Check styles after a brief delay
-                  setTimeout(() => {
-                    console.log("🔥 RAW DIALOG STYLES AFTER DELAY:", window.getComputedStyle(overlay));
-                  }, 100);
-                }}
+                onClick={() => setShowStoreDialog(true)}
                 data-testid="button-manage-stores"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -546,70 +491,352 @@ export default function ShoppingListModule() {
         </CardContent>
       </Card>
 
-      {/* Store Management Dialog - Rendered via Portal to bypass CSS conflicts */}
-      {(() => {console.log("🔥 RENDER: showStoreDialog =", showStoreDialog); return null;})()}
-      {showStoreDialog && createPortal(
-        <div 
-          id="store-dialog-overlay"
-          style={{
-            position: 'fixed',
-            top: '0',
-            left: '0',
-            right: '0', 
-            bottom: '0',
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(255, 0, 0, 0.8)',
-            zIndex: '99999',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          ref={(el) => {
-            if (el) {
-              console.log("🔥 PORTAL DIALOG CREATED:", el);
-              console.log("🔥 PORTAL DIALOG STYLES:", window.getComputedStyle(el));
-            }
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowStoreDialog(false);
-            }
-          }}
-        >
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px',
-            maxWidth: '500px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'
-          }}>
-            <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold' }}>
-              🔥 Portal Test - Manage Stores
-            </h2>
-            <p style={{ margin: '0 0 16px 0' }}>
-              This dialog is rendered via React Portal to bypass CSS conflicts!
-            </p>
-            <button 
-              onClick={() => setShowStoreDialog(false)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Close Dialog
-            </button>
+      {/* Store Management Dialog */}
+      <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Manage Grocery Stores</DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Add your favourite grocery stores for easy online ordering and shopping list management
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col space-y-6">
+            {/* Header with Add Button */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Your Stores</h3>
+              <Button 
+                onClick={() => setShowAddForm(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-add-new-store"
+              >
+                Add New Store
+              </Button>
+            </div>
+
+            {/* Store List */}
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {groceryStores.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No stores added yet</p>
+                  <p className="text-sm">Click "Add New Store" to get started</p>
+                </div>
+              ) : (
+                groceryStores.map((store) => (
+                  <div key={store.id} className="border rounded-lg p-4 bg-white">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-lg">{store.name}</h4>
+                          {store.isPreferred && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              Preferred
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1 text-sm text-gray-600">
+                          {store.address && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{store.address}</span>
+                            </div>
+                          )}
+                          {store.phoneNumber && (
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-4 h-4" />
+                              <span>{store.phoneNumber}</span>
+                            </div>
+                          )}
+                          {store.website && (
+                            <div className="flex items-center gap-1">
+                              <Globe className="w-4 h-4" />
+                              <a 
+                                href={store.website} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {store.website}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2 mt-3">
+                          {store.deliveryAvailable && (
+                            <Badge variant="outline" className="text-xs">Delivery</Badge>
+                          )}
+                          {store.pickupAvailable && (
+                            <Badge variant="outline" className="text-xs">Pickup</Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingStore(store)}
+                          data-testid={`button-edit-store-${store.id}`}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteStoreMutation.mutate(store.id)}
+                          disabled={deleteStoreMutation.isPending}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          data-testid={`button-delete-store-${store.id}`}
+                        >
+                          🗑️
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>,
-        document.body
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Store Form Dialog */}
+      {showAddForm && (
+        <StoreFormDialog
+          open={showAddForm}
+          onClose={() => setShowAddForm(false)}
+          store={null}
+        />
+      )}
+
+      {/* Edit Store Form Dialog */}
+      {editingStore && (
+        <StoreFormDialog
+          open={!!editingStore}
+          onClose={() => setEditingStore(null)}
+          store={editingStore}
+        />
       )}
     </div>
+  );
+}
+
+// Store Form Dialog Component
+interface StoreFormDialogProps {
+  open: boolean;
+  onClose: () => void;
+  store: GroceryStore | null;
+}
+
+function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const createStoreMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/grocery-stores", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
+      toast({
+        title: "Store added",
+        description: "The grocery store has been added successfully.",
+      });
+      onClose();
+    },
+  });
+
+  const updateStoreMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & any) => {
+      return await apiRequest("PUT", `/api/grocery-stores/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
+      toast({
+        title: "Store updated",
+        description: "The grocery store has been updated successfully.",
+      });
+      onClose();
+    },
+  });
+
+  const form = useForm({
+    defaultValues: {
+      name: store?.name || "",
+      address: store?.address || "",
+      phoneNumber: store?.phoneNumber || "",
+      website: store?.website || "",
+      onlineOrderingUrl: store?.onlineOrderingUrl || "",
+      deliveryAvailable: store?.deliveryAvailable || false,
+      pickupAvailable: store?.pickupAvailable || true,
+      isPreferred: store?.isPreferred || false,
+    },
+  });
+
+  const handleSubmit = (data: any) => {
+    if (store) {
+      updateStoreMutation.mutate({ id: store.id, ...data });
+    } else {
+      createStoreMutation.mutate(data);
+    }
+  };
+
+  const isLoading = createStoreMutation.isPending || updateStoreMutation.isPending;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{store ? "Edit Store" : "Add New Store"}</DialogTitle>
+          <DialogDescription>
+            {store ? "Update store information" : "Add a new grocery store to your list"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Store Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Kroger, Walmart, Target..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 Main St, Anytown, USA" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(555) 123-4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://kroger.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="onlineOrderingUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Online Ordering URL</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://grocery.kroger.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="deliveryAvailable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Delivery Available</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="pickupAvailable"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Pickup Available</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="isPreferred"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Preferred Store</FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? "Saving..." : store ? "Update Store" : "Add Store"}
+              </Button>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
