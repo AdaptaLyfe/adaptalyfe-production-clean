@@ -491,117 +491,134 @@ export default function ShoppingListModule() {
         </CardContent>
       </Card>
 
-      {/* Store Management Dialog */}
-      <Dialog open={showStoreDialog} onOpenChange={setShowStoreDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Manage Grocery Stores</DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Add your favourite grocery stores for easy online ordering and shopping list management
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col space-y-6">
-            {/* Header with Add Button */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Your Stores</h3>
-              <Button 
-                onClick={() => setShowAddForm(true)}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-add-new-store"
-              >
-                Add New Store
-              </Button>
-            </div>
-
-            {/* Store List */}
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {groceryStores.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No stores added yet</p>
-                  <p className="text-sm">Click "Add New Store" to get started</p>
+      {/* Store Management Dialog - Custom Modal */}
+      {showStoreDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Manage Grocery Stores</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Add your favourite grocery stores for easy online ordering and shopping list management
+                  </p>
                 </div>
-              ) : (
-                groceryStores.map((store) => (
-                  <div key={store.id} className="border rounded-lg p-4 bg-white">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-lg">{store.name}</h4>
-                          {store.isPreferred && (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                              Preferred
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-1 text-sm text-gray-600">
-                          {store.address && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
-                              <span>{store.address}</span>
-                            </div>
-                          )}
-                          {store.phoneNumber && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="w-4 h-4" />
-                              <span>{store.phoneNumber}</span>
-                            </div>
-                          )}
-                          {store.website && (
-                            <div className="flex items-center gap-1">
-                              <Globe className="w-4 h-4" />
-                              <a 
-                                href={store.website} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {store.website}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex gap-2 mt-3">
-                          {store.deliveryAvailable && (
-                            <Badge variant="outline" className="text-xs">Delivery</Badge>
-                          )}
-                          {store.pickupAvailable && (
-                            <Badge variant="outline" className="text-xs">Pickup</Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingStore(store)}
-                          data-testid={`button-edit-store-${store.id}`}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deleteStoreMutation.mutate(store.id)}
-                          disabled={deleteStoreMutation.isPending}
-                          className="text-red-600 border-red-200 hover:bg-red-50"
-                          data-testid={`button-delete-store-${store.id}`}
-                        >
-                          🗑️
-                        </Button>
-                      </div>
+                <button
+                  onClick={() => setShowStoreDialog(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  data-testid="button-close-dialog"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="p-6">
+              <div className="flex flex-col space-y-6">
+                {/* Header with Add Button */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Your Stores</h3>
+                  <Button 
+                    onClick={() => setShowAddForm(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-add-new-store"
+                  >
+                    Add New Store
+                  </Button>
+                </div>
+
+                {/* Store List */}
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {groceryStores.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No stores added yet</p>
+                      <p className="text-sm">Click "Add New Store" to get started</p>
                     </div>
-                  </div>
-                ))
-              )}
+                  ) : (
+                    groceryStores.map((store) => (
+                      <div key={store.id} className="border rounded-lg p-4 bg-white">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-lg">{store.name}</h4>
+                              {store.isPreferred && (
+                                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                                  Preferred
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <div className="space-y-1 text-sm text-gray-600">
+                              {store.address && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{store.address}</span>
+                                </div>
+                              )}
+                              {store.phoneNumber && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="w-4 h-4" />
+                                  <span>{store.phoneNumber}</span>
+                                </div>
+                              )}
+                              {store.website && (
+                                <div className="flex items-center gap-1">
+                                  <Globe className="w-4 h-4" />
+                                  <a 
+                                    href={store.website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {store.website}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 mt-3">
+                              {store.deliveryAvailable && (
+                                <Badge variant="outline" className="text-xs">Delivery</Badge>
+                              )}
+                              {store.pickupAvailable && (
+                                <Badge variant="outline" className="text-xs">Pickup</Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingStore(store)}
+                              data-testid={`button-edit-store-${store.id}`}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteStoreMutation.mutate(store.id)}
+                              disabled={deleteStoreMutation.isPending}
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              data-testid={`button-delete-store-${store.id}`}
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Add New Store Form Dialog */}
       {showAddForm && (
@@ -687,17 +704,33 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
   const isLoading = createStoreMutation.isPending || updateStoreMutation.isPending;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{store ? "Edit Store" : "Add New Store"}</DialogTitle>
-          <DialogDescription>
-            {store ? "Update store information" : "Add a new grocery store to your list"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {store ? "Edit Store" : "Add New Store"}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                {store ? "Update store information" : "Add a new grocery store to your list"}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+              data-testid="button-close-form-dialog"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -834,9 +867,10 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                 Cancel
               </Button>
             </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </form>
+          </Form>
+        </div>
+      </div>
+    </div>
   );
 }
