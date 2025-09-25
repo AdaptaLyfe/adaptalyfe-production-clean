@@ -195,12 +195,12 @@ export default function ShoppingListModule() {
               </Button>
               {showStoreDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStoreDialog(false)}>
-                  <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
-                    <div className="sticky top-0 bg-white border-b px-6 py-4">
+                  <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-4xl max-h-[80vh] overflow-y-auto m-4 border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+                    <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h2 className="text-lg font-semibold">Manage Grocery Stores</h2>
-                          <p className="text-sm text-gray-600">Add your favorite grocery stores for easy online ordering and shopping list management</p>
+                          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manage Grocery Stores</h2>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Add your favorite grocery stores for easy online ordering and shopping list management</p>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setShowStoreDialog(false)}>
                           <span className="sr-only">Close</span>
@@ -208,7 +208,7 @@ export default function ShoppingListModule() {
                         </Button>
                       </div>
                     </div>
-                    <div className="p-6">
+                    <div className="p-6 bg-white dark:bg-gray-900">
                       <StoreManagementContent 
                         stores={groceryStores}
                         onClose={() => setShowStoreDialog(false)}
