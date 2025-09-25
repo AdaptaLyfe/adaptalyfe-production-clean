@@ -14,6 +14,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ShoppingListModule() {
@@ -478,45 +479,29 @@ export default function ShoppingListModule() {
         </CardContent>
       </Card>
 
-      {/* Store Management Dialog */}
+      {/* Store Management Dialog - Rendered via Portal to bypass CSS conflicts */}
       {(() => {console.log("🔥 RENDER: showStoreDialog =", showStoreDialog); return null;})()}
-      {showStoreDialog && (
+      {showStoreDialog && createPortal(
         <div 
           id="store-dialog-overlay"
-          className="store-dialog-overlay"
           style={{
-            position: 'fixed !important',
-            top: '0 !important',
-            left: '0 !important',
-            right: '0 !important', 
-            bottom: '0 !important',
-            width: '100vw !important',
-            height: '100vh !important',
-            backgroundColor: 'rgba(255, 0, 0, 0.8) !important',
-            zIndex: '99999 !important',
-            display: 'flex !important',
-            visibility: 'visible !important',
-            opacity: '1 !important',
-            pointerEvents: 'auto !important',
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0', 
+            bottom: '0',
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(255, 0, 0, 0.8)',
+            zIndex: '99999',
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}
           ref={(el) => {
             if (el) {
-              console.log("🔥 DIALOG DOM ELEMENT CREATED:", el);
-              console.log("🔥 DIALOG STYLES:", window.getComputedStyle(el));
-              // Force override any conflicting styles
-              el.style.setProperty('position', 'fixed', 'important');
-              el.style.setProperty('top', '0', 'important');
-              el.style.setProperty('left', '0', 'important');
-              el.style.setProperty('right', '0', 'important');
-              el.style.setProperty('bottom', '0', 'important');
-              el.style.setProperty('z-index', '99999', 'important');
-              el.style.setProperty('display', 'flex', 'important');
-              el.style.setProperty('visibility', 'visible', 'important');
-              el.style.setProperty('opacity', '1', 'important');
-              el.style.setProperty('pointer-events', 'auto', 'important');
-              el.style.setProperty('background-color', 'rgba(255, 0, 0, 0.8)', 'important');
+              console.log("🔥 PORTAL DIALOG CREATED:", el);
+              console.log("🔥 PORTAL DIALOG STYLES:", window.getComputedStyle(el));
             }
           }}
           onClick={(e) => {
@@ -528,542 +513,36 @@ export default function ShoppingListModule() {
           <div style={{
             backgroundColor: 'white',
             borderRadius: '8px',
-            width: 'calc(100% - 32px)',
-            maxWidth: '800px',
+            padding: '24px',
+            maxWidth: '500px',
+            width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
-            position: 'relative',
-            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)'
           }}>
-            {/* Header */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              padding: '24px 24px 20px',
-              borderBottom: '1px solid #e5e7eb'
-            }}>
-              <div>
-                <h2 style={{ 
-                  fontSize: '20px', 
-                  fontWeight: '600', 
-                  margin: '0 0 8px 0',
-                  color: '#111827'
-                }}>
-                  Manage Grocery Stores
-                </h2>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: '#6b7280',
-                  margin: 0 
-                }}>
-                  Add your favorite grocery stores for easy online ordering and shopping list management
-                </p>
-              </div>
-              <button 
-                onClick={() => setShowStoreDialog(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#9ca3af',
-                  lineHeight: 1,
-                  padding: '4px'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Content */}
-            <div style={{ padding: '24px' }}>
-              {/* Section Header */}
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '20px'
-              }}>
-                <h3 style={{ 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  margin: 0,
-                  color: '#111827'
-                }}>
-                  Your Stores
-                </h3>
-                <button 
-                  style={{
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500'
-                  }}
-                >
-                  Add New Store
-                </button>
-              </div>
-              
-              {/* Store Cards */}
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {groceryStores.map((store) => (
-                  <div
-                    key={store.id}
-                    style={{
-                      padding: '20px',
-                      borderRadius: '8px',
-                      border: '1px solid #e5e7eb',
-                      backgroundColor: 'white'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                          <h4 style={{ 
-                            fontSize: '18px', 
-                            fontWeight: '600', 
-                            margin: 0,
-                            color: '#111827'
-                          }}>
-                            {store.name}
-                          </h4>
-                          {store.isPreferred && (
-                            <span style={{
-                              backgroundColor: '#dbeafe',
-                              color: '#1e40af',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: '500'
-                            }}>
-                              Preferred
-                            </span>
-                          )}
-                        </div>
-                        
-                        {store.address && (
-                          <div style={{ 
-                            fontSize: '14px',
-                            color: '#6b7280',
-                            marginBottom: '4px'
-                          }}>
-                            📍 {store.address}
-                          </div>
-                        )}
-                        
-                        {store.phoneNumber && (
-                          <div style={{ 
-                            fontSize: '14px',
-                            color: '#6b7280',
-                            marginBottom: '4px'
-                          }}>
-                            📞 {store.phoneNumber}
-                          </div>
-                        )}
-                        
-                        {store.website && (
-                          <div style={{ 
-                            fontSize: '14px',
-                            marginBottom: '12px'
-                          }}>
-                            <a 
-                              href={store.website} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              style={{ color: '#3b82f6', textDecoration: 'none' }}
-                            >
-                              🌐 {store.website.replace('https://', '').replace('http://', '')}
-                            </a>
-                          </div>
-                        )}
-                        
-                        {/* Service Tags */}
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                          {store.deliveryAvailable && (
-                            <span style={{
-                              backgroundColor: '#f0f9ff',
-                              color: '#0369a1',
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              border: '1px solid #0ea5e9'
-                            }}>
-                              Delivery
-                            </span>
-                          )}
-                          {store.pickupAvailable && (
-                            <span style={{
-                              backgroundColor: '#f0f9ff',
-                              color: '#0369a1',
-                              padding: '2px 8px',
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              border: '1px solid #0ea5e9'
-                            }}>
-                              Pickup
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Action Buttons */}
-                      <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
-                        <button 
-                          style={{
-                            backgroundColor: 'white',
-                            color: '#374151',
-                            border: '1px solid #d1d5db',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          style={{
-                            backgroundColor: 'white',
-                            color: '#dc2626',
-                            border: '1px solid #fecaca',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <h2 style={{ margin: '0 0 16px 0', fontSize: '24px', fontWeight: 'bold' }}>
+              🔥 Portal Test - Manage Stores
+            </h2>
+            <p style={{ margin: '0 0 16px 0' }}>
+              This dialog is rendered via React Portal to bypass CSS conflicts!
+            </p>
+            <button 
+              onClick={() => setShowStoreDialog(false)}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Close Dialog
+            </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
-  );
-}
-
-interface StoreManagementDialogProps {
-  stores: GroceryStore[];
-  onClose: () => void;
-}
-
-function StoreManagementContent({ stores, onClose }: StoreManagementDialogProps) {
-  const queryClient = useQueryClient();
-  const [editingStore, setEditingStore] = useState<GroceryStore | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-
-  const createStoreMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/grocery-stores", data);
-      // Safely parse JSON, return null if empty
-      const text = await response.text();
-      return text ? JSON.parse(text) : null;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
-      setShowAddForm(false);
-    },
-  });
-
-  const updateStoreMutation = useMutation({
-    mutationFn: async ({ id, ...data }: { id: number } & Partial<GroceryStore>) => {
-      const response = await apiRequest("PUT", `/api/grocery-stores/${id}`, data);
-      // Safely parse JSON, return null if empty
-      const text = await response.text();
-      return text ? JSON.parse(text) : null;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
-      setEditingStore(null);
-    },
-  });
-
-  const deleteStoreMutation = useMutation({
-    mutationFn: async (id: number) => {
-      console.log("Attempting to delete store with ID:", id);
-      const response = await apiRequest("DELETE", `/api/grocery-stores/${id}`, null);
-      // DELETE operations often return empty responses, don't try to parse JSON
-      return { success: true };
-    },
-    onSuccess: () => {
-      console.log("Store deleted successfully, invalidating cache");
-      queryClient.invalidateQueries({ queryKey: ["/api/grocery-stores"] });
-    },
-    onError: (error) => {
-      console.error("Failed to delete store:", error);
-    },
-  });
-
-  return (
-    <>
-      <Tabs defaultValue="stores" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="stores">Your Stores</TabsTrigger>
-          <TabsTrigger value="add">Add New Store</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="stores" className="space-y-4">
-          {stores.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No stores added yet</p>
-              <p className="text-sm">Switch to "Add New Store" tab to get started</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {stores.map((store) => (
-                <div key={store.id} className="p-4 border rounded-lg">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{store.name}</h4>
-                        {store.isPreferred && (
-                          <Badge variant="secondary">Preferred</Badge>
-                        )}
-                      </div>
-                      <div className="mt-2 space-y-1 text-sm text-gray-600">
-                        {store.address && <p><MapPin className="w-3 h-3 inline mr-1" />{store.address}</p>}
-                        {store.phoneNumber && <p><Phone className="w-3 h-3 inline mr-1" />{store.phoneNumber}</p>}
-                        {store.website && <p><Globe className="w-3 h-3 inline mr-1" />{store.website}</p>}
-                      </div>
-                      <div className="mt-2 flex gap-2">
-                        {store.deliveryAvailable && <Badge variant="outline" className="text-xs">Delivery</Badge>}
-                        {store.pickupAvailable && <Badge variant="outline" className="text-xs">Pickup</Badge>}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingStore(store)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteStoreMutation.mutate(store.id)}
-                        disabled={deleteStoreMutation.isPending}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="add">
-          <StoreForm
-            store={null}
-            onSubmit={(data) => createStoreMutation.mutate(data)}
-            onCancel={() => setShowAddForm(false)}
-            isLoading={createStoreMutation.isPending}
-          />
-        </TabsContent>
-      </Tabs>
-      
-      {editingStore && (
-        <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Edit Store</h3>
-            <Button variant="ghost" size="sm" onClick={() => setEditingStore(null)}>
-              <span className="text-xl">×</span>
-            </Button>
-          </div>
-          <StoreForm
-            store={editingStore}
-            onSubmit={(data) => updateStoreMutation.mutate({ id: editingStore!.id, ...data })}
-            onCancel={() => setEditingStore(null)}
-            isLoading={updateStoreMutation.isPending}
-          />
-        </div>
-      )}
-    </>
-  );
-}
-
-interface StoreFormProps {
-  store: GroceryStore | null;
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
-  isLoading: boolean;
-}
-
-function StoreForm({ store, onSubmit, onCancel, isLoading }: StoreFormProps) {
-  const form = useForm({
-    defaultValues: {
-      name: store?.name || "",
-      address: store?.address || "",
-      phoneNumber: store?.phoneNumber || "",
-      website: store?.website || "",
-      onlineOrderingUrl: store?.onlineOrderingUrl || "",
-      deliveryAvailable: store?.deliveryAvailable || false,
-      pickupAvailable: store?.pickupAvailable || true,
-      isPreferred: store?.isPreferred || false,
-    },
-  });
-
-  const handleSubmit = (data: any) => {
-    onSubmit(data);
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Store Name *</FormLabel>
-              <FormControl>
-                <Input placeholder="Walmart Supercenter" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input placeholder="123 Main St, City, State 12345" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <FormControl>
-                  <Input placeholder="(555) 123-4567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://walmart.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="onlineOrderingUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Online Ordering URL</FormLabel>
-              <FormControl>
-                <Input placeholder="https://grocery.walmart.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            control={form.control}
-            name="deliveryAvailable"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Delivery Available</FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="pickupAvailable"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Pickup Available</FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isPreferred"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Preferred Store</FormLabel>
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-
-
-
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading ? "Saving..." : store ? "Update Store" : "Add Store"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Form>
   );
 }
