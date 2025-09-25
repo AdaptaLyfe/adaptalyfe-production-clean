@@ -290,13 +290,134 @@ export default function ShoppingListModule() {
                       </div>
                     </div>
                     <div style={{ padding: '24px' }}>
-                      <StoreManagementContent 
-                        stores={groceryStores}
-                        onClose={() => {
-                          console.log("🔒 StoreManagementContent onClose called, closing dialog");
-                          setShowStoreDialog(false);
-                        }}
-                      />
+                      <div style={{ marginBottom: '20px' }}>
+                        <button 
+                          style={{
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px',
+                            fontWeight: '500'
+                          }}
+                          onClick={() => {
+                            console.log("🔒 Add New Store clicked");
+                            // Add new store functionality would go here
+                          }}
+                        >
+                          + Add New Store
+                        </button>
+                      </div>
+                      
+                      <div style={{ display: 'grid', gap: '16px' }}>
+                        {groceryStores.map((store) => (
+                          <div
+                            key={store.id}
+                            style={{
+                              padding: '16px',
+                              borderRadius: '8px',
+                              border: store.isPreferred ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                              backgroundColor: store.isPreferred ? '#eff6ff' : 'white'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <div style={{ flex: 1 }}>
+                                <h4 style={{ 
+                                  fontSize: '16px', 
+                                  fontWeight: '600', 
+                                  margin: '0 0 4px 0',
+                                  color: '#111827'
+                                }}>
+                                  {store.name}
+                                </h4>
+                                {store.isPreferred && (
+                                  <span style={{
+                                    backgroundColor: '#dbeafe',
+                                    color: '#1e40af',
+                                    padding: '2px 8px',
+                                    borderRadius: '12px',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                  }}>
+                                    Preferred
+                                  </span>
+                                )}
+                                {store.address && (
+                                  <div style={{ 
+                                    marginTop: '8px',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                  }}>
+                                    📍 {store.address}
+                                  </div>
+                                )}
+                                {store.phoneNumber && (
+                                  <div style={{ 
+                                    marginTop: '4px',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                  }}>
+                                    📞 {store.phoneNumber}
+                                  </div>
+                                )}
+                                {store.website && (
+                                  <div style={{ 
+                                    marginTop: '4px',
+                                    fontSize: '14px'
+                                  }}>
+                                    <a 
+                                      href={store.website} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      style={{ color: '#3b82f6', textDecoration: 'none' }}
+                                    >
+                                      🌐 Visit Website
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
+                                <button 
+                                  style={{
+                                    backgroundColor: '#f3f4f6',
+                                    color: '#374151',
+                                    border: '1px solid #d1d5db',
+                                    padding: '6px 12px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                  onClick={() => {
+                                    console.log("🔒 Edit store clicked:", store.name);
+                                    // Edit functionality would go here
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button 
+                                  style={{
+                                    backgroundColor: '#fef2f2',
+                                    color: '#dc2626',
+                                    border: '1px solid #fecaca',
+                                    padding: '6px 12px',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                  onClick={() => {
+                                    console.log("🔒 Delete store clicked:", store.name);
+                                    // Delete functionality would go here
+                                  }}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
