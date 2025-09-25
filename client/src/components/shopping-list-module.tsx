@@ -196,9 +196,11 @@ export default function ShoppingListModule() {
                 variant="outline" 
                 size="sm"
                 onClick={(e) => {
+                  console.log("🔵 BUTTON CLICKED - showStoreDialog:", showStoreDialog);
                   e.preventDefault();
                   e.stopPropagation();
                   setShowStoreDialog(!showStoreDialog);
+                  console.log("🔵 BUTTON CLICKED - setting showStoreDialog to:", !showStoreDialog);
                 }}
                 data-testid="button-manage-stores"
               >
