@@ -195,7 +195,10 @@ export default function ShoppingListModule() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setShowStoreDialog(true)}
+                onClick={() => {
+                  alert("Button clicked! Dialog should open now...");
+                  setShowStoreDialog(true);
+                }}
                 data-testid="button-manage-stores"
               >
                 <Settings className="w-4 h-4 mr-2" />
