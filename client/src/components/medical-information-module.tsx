@@ -618,16 +618,17 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select value={conditionStatus} onValueChange={setConditionStatus} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999]">
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="resolved">Resolved</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={conditionStatus} 
+                    onChange={(e) => setConditionStatus(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
@@ -695,17 +696,18 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="severity">Severity</Label>
-                  <Select value={allergySeverity} onValueChange={setAllergySeverity} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select severity" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999]">
-                      <SelectItem value="mild">Mild</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="severe">Severe</SelectItem>
-                      <SelectItem value="life-threatening">Life-threatening</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={allergySeverity} 
+                    onChange={(e) => setAllergySeverity(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select severity</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="life-threatening">Life-threatening</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="reaction">Reaction</Label>
@@ -779,17 +781,18 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="severity">Severity</Label>
-                  <Select value={adverseMedSeverity} onValueChange={setAdverseMedSeverity} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select severity" />
-                    </SelectTrigger>
-                    <SelectContent position="popper" className="z-[9999]">
-                      <SelectItem value="mild">Mild</SelectItem>
-                      <SelectItem value="moderate">Moderate</SelectItem>
-                      <SelectItem value="severe">Severe</SelectItem>
-                      <SelectItem value="life-threatening">Life-threatening</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    value={adverseMedSeverity} 
+                    onChange={(e) => setAdverseMedSeverity(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select severity</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="life-threatening">Life-threatening</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="reactionDate">Reaction Date</Label>

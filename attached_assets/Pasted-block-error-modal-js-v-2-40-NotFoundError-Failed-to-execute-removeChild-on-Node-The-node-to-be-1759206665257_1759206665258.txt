@@ -1,0 +1,41 @@
+block-error-modal.js?v=2:40 NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at TA (index-BluvnUVb.js:40:26081)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+console.error	@	block-error-modal.js?v=2:40
+console.error	@	index-BluvnUVb.js:852
+Zv	@	index-BluvnUVb.js:40
+a.componentDidCatch.n.callback	@	index-BluvnUVb.js:40
+j1	@	index-BluvnUVb.js:38
+O1	@	index-BluvnUVb.js:40
+EA	@	index-BluvnUVb.js:40
+m7	@	index-BluvnUVb.js:40
+y7	@	index-BluvnUVb.js:40
+Eo	@	index-BluvnUVb.js:40
+U1	@	index-BluvnUVb.js:40
+No	@	index-BluvnUVb.js:38
+(anonymous)	@	index-BluvnUVb.js:40
+
+block-error-modal.js?v=2:40 Error Boundary caught an error: NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at TA (index-BluvnUVb.js:40:26081)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787)
+    at TA (index-BluvnUVb.js:40:26536)
+    at ga (index-BluvnUVb.js:40:25787) 
+{componentStack: '\n    at https://adaptalyfe-5a1d3.web.app/assets/in…-5a1d3.web.app/assets/index-BluvnUVb.js:40:93817)'}
+index-BluvnUVb.js:827 Error logged for analytics: 
+{error: "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.", stack: "Error: Failed to execute 'removeChild' on 'Node': …-5a1d3.web.app/assets/index-BluvnUVb.js:40:25787)", componentStack: '\n    at https://adaptalyfe-5a1d3.web.app/assets/in…-5a1d3.web.app/assets/index-BluvnUVb.js:40:93817)'}
+﻿
+
