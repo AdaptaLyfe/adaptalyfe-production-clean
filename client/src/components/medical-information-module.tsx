@@ -304,82 +304,6 @@ export default function MedicalInformationModule() {
             </Button>
           </div>
 
-          {/* Custom Allergy Dialog */}
-          {showAllergyDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
-                    <button
-                      onClick={() => setShowAllergyDialog(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    createAllergy.mutate({
-                      allergen: formData.get("allergen") as string,
-                      severity: formData.get("severity") as string,
-                      reaction: formData.get("reaction") as string,
-                      notes: formData.get("notes") as string,
-                    });
-                    e.currentTarget.reset();
-                    setShowAllergyDialog(false);
-                  }} className="space-y-4">
-                    <div>
-                      <Label htmlFor="allergen">Allergen</Label>
-                      <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" />
-                    </div>
-                    <div>
-                      <Label htmlFor="severity">Severity</Label>
-                      <Select name="severity" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select severity" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[60]">
-                          <SelectItem value="mild">Mild</SelectItem>
-                          <SelectItem value="moderate">Moderate</SelectItem>
-                          <SelectItem value="severe">Severe</SelectItem>
-                          <SelectItem value="life-threatening">Life-threatening</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="reaction">Reaction</Label>
-                      <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" />
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea name="notes" placeholder="Additional information" />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button 
-                        type="submit" 
-                        disabled={createAllergy.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {createAllergy.isPending ? "Adding..." : "Add Allergy"}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowAllergyDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-4">
             {!allergies || allergies.length === 0 ? (
               <Card>
@@ -561,88 +485,6 @@ export default function MedicalInformationModule() {
             </Button>
           </div>
 
-          {/* Custom Adverse Medication Dialog */}
-          {showAdverseMedDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Add Adverse Medication</h2>
-                    <button
-                      onClick={() => setShowAdverseMedDialog(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const reactionDateStr = formData.get("reactionDate") as string;
-                    createAdverseMed.mutate({
-                      medicationName: formData.get("medicationName") as string,
-                      reaction: formData.get("reaction") as string,
-                      severity: formData.get("severity") as string,
-                      reactionDate: reactionDateStr ? reactionDateStr : undefined,
-                      notes: formData.get("notes") as string,
-                    });
-                    e.currentTarget.reset();
-                    setShowAdverseMedDialog(false);
-                  }} className="space-y-4">
-                    <div>
-                      <Label htmlFor="medicationName">Medication Name</Label>
-                      <Input name="medicationName" required placeholder="e.g., Amoxicillin, Aspirin" />
-                    </div>
-                    <div>
-                      <Label htmlFor="reaction">Reaction</Label>
-                      <Input name="reaction" required placeholder="e.g., Rash, nausea, dizziness" />
-                    </div>
-                    <div>
-                      <Label htmlFor="severity">Severity</Label>
-                      <Select name="severity" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select severity" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[60]">
-                          <SelectItem value="mild">Mild</SelectItem>
-                          <SelectItem value="moderate">Moderate</SelectItem>
-                          <SelectItem value="severe">Severe</SelectItem>
-                          <SelectItem value="life-threatening">Life-threatening</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="reactionDate">Reaction Date</Label>
-                      <Input name="reactionDate" type="date" />
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea name="notes" placeholder="Additional information" />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button 
-                        type="submit" 
-                        disabled={createAdverseMed.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {createAdverseMed.isPending ? "Adding..." : "Add Adverse Medication"}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowAdverseMedDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-4">
             {!adverseMeds || adverseMeds.length === 0 ? (
               <Card>
@@ -696,87 +538,6 @@ export default function MedicalInformationModule() {
               Add Contact
             </Button>
           </div>
-
-          {/* Custom Emergency Contact Dialog */}
-          {showContactDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
-                    <button
-                      onClick={() => setShowContactDialog(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    createContact.mutate({
-                      name: formData.get("name") as string,
-                      relationship: formData.get("relationship") as string,
-                      phoneNumber: formData.get("phoneNumber") as string,
-                      email: formData.get("email") as string,
-                      address: formData.get("address") as string,
-                      isPrimary: formData.get("isPrimary") === "on",
-                      notes: formData.get("notes") as string,
-                    });
-                    e.currentTarget.reset();
-                    setShowContactDialog(false);
-                  }} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Name</Label>
-                      <Input name="name" required placeholder="Contact name" />
-                    </div>
-                    <div>
-                      <Label htmlFor="relationship">Relationship</Label>
-                      <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" />
-                    </div>
-                    <div>
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
-                      <Input name="phoneNumber" required placeholder="Phone number" />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input name="email" type="email" placeholder="Email address" />
-                    </div>
-                    <div>
-                      <Label htmlFor="address">Address</Label>
-                      <Textarea name="address" placeholder="Home address" />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" name="isPrimary" className="rounded" />
-                      <Label htmlFor="isPrimary">Primary contact</Label>
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea name="notes" placeholder="Additional information" />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button 
-                        type="submit" 
-                        disabled={createContact.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {createContact.isPending ? "Adding..." : "Add Contact"}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowContactDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className="grid gap-4">
             {!emergencyContacts || emergencyContacts.length === 0 ? (
@@ -836,92 +597,6 @@ export default function MedicalInformationModule() {
             </Button>
           </div>
 
-          {/* Custom Provider Dialog */}
-          {showProviderDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
-                    <button
-                      onClick={() => setShowProviderDialog(false)}
-                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <form onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    createProvider.mutate({
-                      name: formData.get("name") as string,
-                      specialty: formData.get("specialty") as string,
-                      practiceName: formData.get("practiceName") as string,
-                      phoneNumber: formData.get("phoneNumber") as string,
-                      email: formData.get("email") as string,
-                      address: formData.get("address") as string,
-                      isPrimary: formData.get("isPrimary") === "on",
-                      notes: formData.get("notes") as string,
-                    });
-                    e.currentTarget.reset();
-                    setShowProviderDialog(false);
-                  }} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Provider Name</Label>
-                      <Input name="name" required placeholder="Dr. Smith" />
-                    </div>
-                    <div>
-                      <Label htmlFor="specialty">Specialty</Label>
-                      <Input name="specialty" required placeholder="e.g., Family Medicine, Cardiology" />
-                    </div>
-                    <div>
-                      <Label htmlFor="practiceName">Practice Name</Label>
-                      <Input name="practiceName" placeholder="Medical center or clinic name" />
-                    </div>
-                    <div>
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
-                      <Input name="phoneNumber" required placeholder="Office phone number" />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input name="email" type="email" placeholder="Office email" />
-                    </div>
-                    <div>
-                      <Label htmlFor="address">Address</Label>
-                      <Textarea name="address" placeholder="Office address" />
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" name="isPrimary" className="rounded" />
-                      <Label htmlFor="isPrimary">Primary care provider</Label>
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notes</Label>
-                      <Textarea name="notes" placeholder="Additional information" />
-                    </div>
-                    <div className="flex gap-2 pt-4">
-                      <Button 
-                        type="submit" 
-                        disabled={createProvider.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        {createProvider.isPending ? "Adding..." : "Add Provider"}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={() => setShowProviderDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="grid gap-4">
             {!providers || providers.length === 0 ? (
               <Card>
@@ -976,6 +651,333 @@ export default function MedicalInformationModule() {
           <SymptomTracker />
         </TabsContent>
       </Tabs>
+
+      {/* All Custom Dialogs - Rendered Outside Tabs to avoid React portal conflicts */}
+      
+      {/* Allergy Dialog */}
+      {showAllergyDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAllergyDialog(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
+                <button
+                  onClick={() => setShowAllergyDialog(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                createAllergy.mutate({
+                  allergen: formData.get("allergen") as string,
+                  severity: formData.get("severity") as string,
+                  reaction: formData.get("reaction") as string,
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setShowAllergyDialog(false);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="allergen">Allergen</Label>
+                  <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" />
+                </div>
+                <div>
+                  <Label htmlFor="severity">Severity</Label>
+                  <Select name="severity" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select severity" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[60]">
+                      <SelectItem value="mild">Mild</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="severe">Severe</SelectItem>
+                      <SelectItem value="life-threatening">Life-threatening</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="reaction">Reaction</Label>
+                  <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={createAllergy.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createAllergy.isPending ? "Adding..." : "Add Allergy"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowAllergyDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Adverse Medication Dialog */}
+      {showAdverseMedDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAdverseMedDialog(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Add Adverse Medication</h2>
+                <button
+                  onClick={() => setShowAdverseMedDialog(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const reactionDateStr = formData.get("reactionDate") as string;
+                createAdverseMed.mutate({
+                  medicationName: formData.get("medicationName") as string,
+                  reaction: formData.get("reaction") as string,
+                  severity: formData.get("severity") as string,
+                  reactionDate: reactionDateStr ? reactionDateStr : undefined,
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setShowAdverseMedDialog(false);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="medicationName">Medication Name</Label>
+                  <Input name="medicationName" required placeholder="e.g., Amoxicillin, Aspirin" />
+                </div>
+                <div>
+                  <Label htmlFor="reaction">Reaction</Label>
+                  <Input name="reaction" required placeholder="e.g., Rash, nausea, dizziness" />
+                </div>
+                <div>
+                  <Label htmlFor="severity">Severity</Label>
+                  <Select name="severity" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select severity" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[60]">
+                      <SelectItem value="mild">Mild</SelectItem>
+                      <SelectItem value="moderate">Moderate</SelectItem>
+                      <SelectItem value="severe">Severe</SelectItem>
+                      <SelectItem value="life-threatening">Life-threatening</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="reactionDate">Reaction Date</Label>
+                  <Input name="reactionDate" type="date" />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={createAdverseMed.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createAdverseMed.isPending ? "Adding..." : "Add Adverse Medication"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowAdverseMedDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Emergency Contact Dialog */}
+      {showContactDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowContactDialog(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
+                <button
+                  onClick={() => setShowContactDialog(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                createContact.mutate({
+                  name: formData.get("name") as string,
+                  relationship: formData.get("relationship") as string,
+                  phoneNumber: formData.get("phoneNumber") as string,
+                  email: formData.get("email") as string,
+                  address: formData.get("address") as string,
+                  isPrimary: formData.get("isPrimary") === "on",
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setShowContactDialog(false);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input name="name" required placeholder="Contact name" />
+                </div>
+                <div>
+                  <Label htmlFor="relationship">Relationship</Label>
+                  <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" />
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input name="phoneNumber" required placeholder="Phone number" />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input name="email" type="email" placeholder="Email address" />
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea name="address" placeholder="Home address" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" name="isPrimary" className="rounded" />
+                  <Label htmlFor="isPrimary">Primary contact</Label>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={createContact.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createContact.isPending ? "Adding..." : "Add Contact"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowContactDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Provider Dialog */}
+      {showProviderDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowProviderDialog(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
+                <button
+                  onClick={() => setShowProviderDialog(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                createProvider.mutate({
+                  name: formData.get("name") as string,
+                  specialty: formData.get("specialty") as string,
+                  practiceName: formData.get("practiceName") as string,
+                  phoneNumber: formData.get("phoneNumber") as string,
+                  email: formData.get("email") as string,
+                  address: formData.get("address") as string,
+                  isPrimary: formData.get("isPrimary") === "on",
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setShowProviderDialog(false);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Provider Name</Label>
+                  <Input name="name" required placeholder="Dr. Smith" />
+                </div>
+                <div>
+                  <Label htmlFor="specialty">Specialty</Label>
+                  <Input name="specialty" required placeholder="e.g., Family Medicine, Cardiology" />
+                </div>
+                <div>
+                  <Label htmlFor="practiceName">Practice Name</Label>
+                  <Input name="practiceName" placeholder="Medical center or clinic name" />
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input name="phoneNumber" required placeholder="Office phone number" />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input name="email" type="email" placeholder="Office email" />
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea name="address" placeholder="Office address" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" name="isPrimary" className="rounded" />
+                  <Label htmlFor="isPrimary">Primary care provider</Label>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={createProvider.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {createProvider.isPending ? "Adding..." : "Add Provider"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowProviderDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
