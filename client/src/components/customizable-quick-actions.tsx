@@ -14,7 +14,8 @@ import {
   Pill,
   BookOpen,
   Star,
-  GraduationCap
+  GraduationCap,
+  FileText
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -49,17 +50,17 @@ const ALL_ACTIONS = [
   },
   {
     key: "medical",
-    label: "Medical Info & Appointments",
-    description: "Manage health info",
+    label: "Medical Info",
+    description: "Health records",
     icon: Stethoscope,
     route: "/medical",
-    bgColor: "bg-purple-500"
+    bgColor: "bg-pink-500"
   },
   {
     key: "financial",
-    label: "Financial Management",
-    description: "Track finances",
-    icon: DollarSign,
+    label: "Bill Reminders",
+    description: "Manage payments",
+    icon: Calendar,
     route: "/financial",
     bgColor: "bg-blue-500"
   },
@@ -81,11 +82,19 @@ const ALL_ACTIONS = [
   },
   {
     key: "meal-shopping",
-    label: "Meal Shopping",
-    description: "Plan meals",
+    label: "Meals & Shopping",
+    description: "Plan and shop",
     icon: ShoppingCart,
     route: "/meal-shopping",
-    bgColor: "bg-green-500"
+    bgColor: "bg-orange-500"
+  },
+  {
+    key: "personal-documents",
+    label: "Personal Documents",
+    description: "Access important documents",
+    icon: FileText,
+    route: "/personal-documents",
+    bgColor: "bg-blue-400"
   },
   {
     key: "pharmacy",
@@ -126,10 +135,10 @@ export default function CustomizableQuickActions() {
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   
-  // Default visible actions
+  // Default visible actions - only 6 cards
   const [visibleActionKeys, setVisibleActionKeys] = useState([
-    "mood-tracking", "mood-checkin", "daily-tasks", "medical", 
-    "financial", "ai-chat", "caregiver", "meal-shopping"
+    "meal-shopping", "medical", "daily-tasks", 
+    "mood-checkin", "personal-documents", "financial"
   ]);
 
   const visibleActions = visibleActionKeys
@@ -304,24 +313,22 @@ export default function CustomizableQuickActions() {
             </Droppable>
           </DragDropContext>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {visibleActions.map((action) => {
               const Icon = action.icon;
               
               return (
                 <Link key={action.key} href={action.route}>
-                  <div className="flex-shrink-0 w-[140px] bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className="p-4 flex flex-col items-center text-center">
-                      <div className={`w-14 h-14 ${action.bgColor} rounded-lg flex items-center justify-center mb-3`}>
-                        <Icon className="text-white w-7 h-7" />
-                      </div>
-                      <h4 className="font-semibold text-gray-900 text-xs mb-1 leading-tight">
-                        {action.label}
-                      </h4>
-                      <p className="text-[10px] text-gray-600 leading-tight">
-                        {action.description}
-                      </p>
+                  <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 flex flex-col items-center text-center min-h-[140px]">
+                    <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
+                      <Icon className="text-white w-8 h-8" />
                     </div>
+                    <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+                      {action.label}
+                    </h4>
+                    <p className="text-xs text-gray-600 leading-tight">
+                      {action.description}
+                    </p>
                   </div>
                 </Link>
               );
