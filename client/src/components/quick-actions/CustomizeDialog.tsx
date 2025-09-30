@@ -56,11 +56,8 @@ export function CustomizeDialog({
               >
                 <Checkbox 
                   checked={isSelected}
-                  onCheckedChange={(e) => {
-                    e.stopPropagation?.();
-                    toggleAction(action.key);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => toggleAction(action.key)}
+                  onClick={(e: any) => e.stopPropagation()}
                 />
                 <div className={`w-10 h-10 ${action.bgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
                   <Icon className="text-white w-5 h-5" />

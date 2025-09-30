@@ -26,30 +26,53 @@ import { useToast } from "@/hooks/use-toast";
 const STORAGE_KEY_ORDER = "quick-actions-order";
 const STORAGE_KEY_VISIBLE = "quick-actions-visible";
 
+function loadFromStorage(key: string, fallback: string[]): string[] {
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+  }
+  return fallback;
+}
+
 export default function QuickActions() {
   const { toast } = useToast();
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   
-  // Load from localStorage or use defaults
-  const [visibleKeys, setVisibleKeys] = useState<string[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_VISIBLE);
-    return stored ? JSON.parse(stored) : DEFAULT_VISIBLE_KEYS;
-  });
+  const [visibleKeys, setVisibleKeys] = useState<string[]>(() => 
+    loadFromStorage(STORAGE_KEY_VISIBLE, DEFAULT_VISIBLE_KEYS)
+  );
 
-  const [orderedKeys, setOrderedKeys] = useState<string[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY_ORDER);
-    return stored ? JSON.parse(stored) : DEFAULT_VISIBLE_KEYS;
-  });
+  const [orderedKeys, setOrderedKeys] = useState<string[]>(() => 
+    loadFromStorage(STORAGE_KEY_ORDER, DEFAULT_VISIBLE_KEYS)
+  );
 
-  // Persist to localStorage whenever order or visibility changes
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_ORDER, JSON.stringify(orderedKeys));
+    if (orderedKeys && orderedKeys.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY_ORDER, JSON.stringify(orderedKeys));
+      } catch (error) {
+        console.error("Error saving order to localStorage:", error);
+      }
+    }
   }, [orderedKeys]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_VISIBLE, JSON.stringify(visibleKeys));
+    if (visibleKeys && visibleKeys.length > 0) {
+      try {
+        localStorage.setItem(STORAGE_KEY_VISIBLE, JSON.stringify(visibleKeys));
+      } catch (error) {
+        console.error("Error saving visibility to localStorage:", error);
+      }
+    }
   }, [visibleKeys]);
 
   const sensors = useSensors(
@@ -63,10 +86,10 @@ export default function QuickActions() {
     })
   );
 
-  const visibleActions = orderedKeys
-    .filter(key => visibleKeys.includes(key))
+  const visibleActions = (orderedKeys || [])
+    .filter(key => (visibleKeys || []).includes(key))
     .map(key => ALL_QUICK_ACTIONS.find(a => a.key === key))
-    .filter(Boolean) as QuickAction[];
+    .filter((action): action is QuickAction => action !== undefined);
 
   const activeAction = activeId 
     ? ALL_QUICK_ACTIONS.find(a => a.key === activeId) 
@@ -82,8 +105,10 @@ export default function QuickActions() {
 
     if (over && active.id !== over.id) {
       setOrderedKeys((keys) => {
+        if (!keys || keys.length === 0) return keys;
         const oldIndex = keys.indexOf(active.id as string);
         const newIndex = keys.indexOf(over.id as string);
+        if (oldIndex === -1 || newIndex === -1) return keys;
         return arrayMove(keys, oldIndex, newIndex);
       });
     }
@@ -105,12 +130,14 @@ export default function QuickActions() {
   };
 
   const handleVisibilityChange = (newVisibleKeys: string[]) => {
+    if (!Array.isArray(newVisibleKeys)) return;
+    
     setVisibleKeys(newVisibleKeys);
     
-    // Add any newly visible items to the ordered list
-    const newKeys = newVisibleKeys.filter(k => !orderedKeys.includes(k));
+    const currentOrdered = orderedKeys || [];
+    const newKeys = newVisibleKeys.filter(k => !currentOrdered.includes(k));
     if (newKeys.length > 0) {
-      setOrderedKeys([...orderedKeys, ...newKeys]);
+      setOrderedKeys([...currentOrdered, ...newKeys]);
     }
     
     toast({
@@ -118,6 +145,25 @@ export default function QuickActions() {
       description: `${newVisibleKeys.length} actions selected.`,
     });
   };
+
+  if (!visibleActions || visibleActions.length === 0) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+          <CustomizeDialog
+            isOpen={isCustomizeOpen}
+            onOpenChange={setIsCustomizeOpen}
+            visibleKeys={visibleKeys || []}
+            onVisibilityChange={handleVisibilityChange}
+          />
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+          <p className="text-gray-600">No quick actions selected. Click Customize to add some!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
@@ -140,7 +186,7 @@ export default function QuickActions() {
           <CustomizeDialog
             isOpen={isCustomizeOpen}
             onOpenChange={setIsCustomizeOpen}
-            visibleKeys={visibleKeys}
+            visibleKeys={visibleKeys || []}
             onVisibilityChange={handleVisibilityChange}
           />
         </div>
