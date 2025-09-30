@@ -2,8 +2,8 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Inline API configuration to avoid build path issues
 const API_CONFIG = {
-  // Use current Replit backend
-  baseURL: 'https://workspace.barrettrchl.repl.co',
+  // Use correct Replit backend URL from REPLIT_DOMAINS
+  baseURL: 'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
   
   // Enable credentials for cross-origin requests
   credentials: 'include' as RequestCredentials,
