@@ -29,16 +29,25 @@ const STORAGE_KEY_VISIBLE = "quick-actions-visible";
 function loadFromStorage(key: string, fallback: string[]): string[] {
   try {
     const stored = localStorage.getItem(key);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
+    if (!stored) return fallback;
+    
+    const parsed = JSON.parse(stored);
+    
+    // Ensure it's an array with at least one element
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return fallback;
     }
+    
+    // Ensure all elements are strings
+    if (!parsed.every(item => typeof item === 'string')) {
+      return fallback;
+    }
+    
+    return parsed;
   } catch (error) {
     console.error(`Error loading ${key} from localStorage:`, error);
+    return fallback;
   }
-  return fallback;
 }
 
 export default function QuickActions() {
@@ -56,7 +65,7 @@ export default function QuickActions() {
   );
 
   useEffect(() => {
-    if (orderedKeys && orderedKeys.length > 0) {
+    if (Array.isArray(orderedKeys) && orderedKeys.length > 0) {
       try {
         localStorage.setItem(STORAGE_KEY_ORDER, JSON.stringify(orderedKeys));
       } catch (error) {
@@ -66,7 +75,7 @@ export default function QuickActions() {
   }, [orderedKeys]);
 
   useEffect(() => {
-    if (visibleKeys && visibleKeys.length > 0) {
+    if (Array.isArray(visibleKeys) && visibleKeys.length > 0) {
       try {
         localStorage.setItem(STORAGE_KEY_VISIBLE, JSON.stringify(visibleKeys));
       } catch (error) {
@@ -86,10 +95,16 @@ export default function QuickActions() {
     })
   );
 
-  const visibleActions = (orderedKeys || [])
-    .filter(key => (visibleKeys || []).includes(key))
-    .map(key => ALL_QUICK_ACTIONS.find(a => a.key === key))
-    .filter((action): action is QuickAction => action !== undefined);
+  // Build visible actions with maximum safety
+  const visibleActions = (() => {
+    if (!Array.isArray(orderedKeys)) return [];
+    if (!Array.isArray(visibleKeys)) return [];
+    
+    return orderedKeys
+      .filter(key => typeof key === 'string' && visibleKeys.includes(key))
+      .map(key => ALL_QUICK_ACTIONS.find(a => a.key === key))
+      .filter((action): action is QuickAction => action !== undefined);
+  })();
 
   const activeAction = activeId 
     ? ALL_QUICK_ACTIONS.find(a => a.key === activeId) 
@@ -105,7 +120,7 @@ export default function QuickActions() {
 
     if (over && active.id !== over.id) {
       setOrderedKeys((keys) => {
-        if (!keys || keys.length === 0) return keys;
+        if (!Array.isArray(keys) || keys.length === 0) return keys;
         const oldIndex = keys.indexOf(active.id as string);
         const newIndex = keys.indexOf(over.id as string);
         if (oldIndex === -1 || newIndex === -1) return keys;
@@ -134,7 +149,7 @@ export default function QuickActions() {
     
     setVisibleKeys(newVisibleKeys);
     
-    const currentOrdered = orderedKeys || [];
+    const currentOrdered = Array.isArray(orderedKeys) ? orderedKeys : [];
     const newKeys = newVisibleKeys.filter(k => !currentOrdered.includes(k));
     if (newKeys.length > 0) {
       setOrderedKeys([...currentOrdered, ...newKeys]);
@@ -154,7 +169,7 @@ export default function QuickActions() {
           <CustomizeDialog
             isOpen={isCustomizeOpen}
             onOpenChange={setIsCustomizeOpen}
-            visibleKeys={visibleKeys || []}
+            visibleKeys={Array.isArray(visibleKeys) ? visibleKeys : []}
             onVisibilityChange={handleVisibilityChange}
           />
         </div>
@@ -186,7 +201,7 @@ export default function QuickActions() {
           <CustomizeDialog
             isOpen={isCustomizeOpen}
             onOpenChange={setIsCustomizeOpen}
-            visibleKeys={visibleKeys || []}
+            visibleKeys={Array.isArray(visibleKeys) ? visibleKeys : []}
             onVisibilityChange={handleVisibilityChange}
           />
         </div>
