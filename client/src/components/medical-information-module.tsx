@@ -992,6 +992,420 @@ export default function MedicalInformationModule() {
           </div>
         </div>
       )}
+
+      {/* EDIT DIALOGS */}
+      
+      {/* Edit Condition Dialog */}
+      {editingCondition && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Medical Condition</h2>
+                <button
+                  onClick={() => setEditingCondition(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const diagnosedDateStr = formData.get("diagnosedDate") as string;
+                updateCondition.mutate({
+                  id: editingCondition.id,
+                  condition: formData.get("condition") as string,
+                  status: conditionStatus,
+                  diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setConditionStatus("");
+                setEditingCondition(null);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="condition">Condition</Label>
+                  <Input name="condition" required placeholder="e.g., Diabetes, Asthma" defaultValue={editingCondition.condition} />
+                </div>
+                <div>
+                  <Label htmlFor="status">Status</Label>
+                  <select 
+                    value={conditionStatus || editingCondition.status} 
+                    onChange={(e) => setConditionStatus(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
+                  <Input name="diagnosedDate" type="date" defaultValue={editingCondition.diagnosedDate} />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" defaultValue={editingCondition.notes || ""} />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateCondition.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {updateCondition.isPending ? "Updating..." : "Update Condition"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingCondition(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Allergy Dialog */}
+      {editingAllergy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAllergy(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Allergy</h2>
+                <button
+                  onClick={() => setEditingAllergy(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                updateAllergy.mutate({
+                  id: editingAllergy.id,
+                  allergen: formData.get("allergen") as string,
+                  severity: allergySeverity,
+                  reaction: formData.get("reaction") as string,
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setAllergySeverity("");
+                setEditingAllergy(null);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="allergen">Allergen</Label>
+                  <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" defaultValue={editingAllergy.allergen} />
+                </div>
+                <div>
+                  <Label htmlFor="severity">Severity</Label>
+                  <select 
+                    value={allergySeverity || editingAllergy.severity} 
+                    onChange={(e) => setAllergySeverity(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select severity</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="life-threatening">Life-threatening</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="reaction">Reaction</Label>
+                  <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" defaultValue={editingAllergy.reaction || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" defaultValue={editingAllergy.notes || ""} />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateAllergy.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {updateAllergy.isPending ? "Updating..." : "Update Allergy"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingAllergy(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Adverse Medication Dialog */}
+      {editingAdverseMed && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAdverseMed(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Adverse Medication</h2>
+                <button
+                  onClick={() => setEditingAdverseMed(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                const reactionDateStr = formData.get("reactionDate") as string;
+                updateAdverseMed.mutate({
+                  id: editingAdverseMed.id,
+                  medicationName: formData.get("medicationName") as string,
+                  reaction: formData.get("reaction") as string,
+                  severity: adverseMedSeverity,
+                  reactionDate: reactionDateStr ? reactionDateStr : undefined,
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setAdverseMedSeverity("");
+                setEditingAdverseMed(null);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="medicationName">Medication Name</Label>
+                  <Input name="medicationName" required placeholder="e.g., Amoxicillin, Aspirin" defaultValue={editingAdverseMed.medicationName} />
+                </div>
+                <div>
+                  <Label htmlFor="reaction">Reaction</Label>
+                  <Input name="reaction" required placeholder="e.g., Rash, nausea, dizziness" defaultValue={editingAdverseMed.reaction} />
+                </div>
+                <div>
+                  <Label htmlFor="severity">Severity</Label>
+                  <select 
+                    value={adverseMedSeverity || editingAdverseMed.severity} 
+                    onChange={(e) => setAdverseMedSeverity(e.target.value)}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Select severity</option>
+                    <option value="mild">Mild</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="life-threatening">Life-threatening</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="reactionDate">Reaction Date</Label>
+                  <Input name="reactionDate" type="date" defaultValue={editingAdverseMed.reactionDate || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" defaultValue={editingAdverseMed.notes || ""} />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateAdverseMed.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {updateAdverseMed.isPending ? "Updating..." : "Update Adverse Medication"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingAdverseMed(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Emergency Contact Dialog */}
+      {editingContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingContact(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Emergency Contact</h2>
+                <button
+                  onClick={() => setEditingContact(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                updateContact.mutate({
+                  id: editingContact.id,
+                  name: formData.get("name") as string,
+                  relationship: formData.get("relationship") as string,
+                  phoneNumber: formData.get("phoneNumber") as string,
+                  email: formData.get("email") as string,
+                  address: formData.get("address") as string,
+                  isPrimary: formData.get("isPrimary") === "on",
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setEditingContact(null);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input name="name" required placeholder="Contact name" defaultValue={editingContact.name} />
+                </div>
+                <div>
+                  <Label htmlFor="relationship">Relationship</Label>
+                  <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" defaultValue={editingContact.relationship || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input name="phoneNumber" required placeholder="Phone number" defaultValue={editingContact.phoneNumber} />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input name="email" type="email" placeholder="Email address" defaultValue={editingContact.email || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea name="address" placeholder="Home address" defaultValue={editingContact.address || ""} />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" name="isPrimary" className="rounded" defaultChecked={editingContact.isPrimary} />
+                  <Label htmlFor="isPrimary">Primary contact</Label>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" defaultValue={editingContact.notes || ""} />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateContact.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {updateContact.isPending ? "Updating..." : "Update Contact"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingContact(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Provider Dialog */}
+      {editingProvider && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingProvider(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Primary Care Provider</h2>
+                <button
+                  onClick={() => setEditingProvider(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                updateProvider.mutate({
+                  id: editingProvider.id,
+                  name: formData.get("name") as string,
+                  specialty: formData.get("specialty") as string,
+                  practiceName: formData.get("practiceName") as string,
+                  phoneNumber: formData.get("phoneNumber") as string,
+                  email: formData.get("email") as string,
+                  address: formData.get("address") as string,
+                  isPrimary: formData.get("isPrimary") === "on",
+                  notes: formData.get("notes") as string,
+                });
+                e.currentTarget.reset();
+                setEditingProvider(null);
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Provider Name</Label>
+                  <Input name="name" required placeholder="Dr. Smith" defaultValue={editingProvider.name} />
+                </div>
+                <div>
+                  <Label htmlFor="specialty">Specialty</Label>
+                  <Input name="specialty" required placeholder="e.g., Family Medicine, Cardiology" defaultValue={editingProvider.specialty} />
+                </div>
+                <div>
+                  <Label htmlFor="practiceName">Practice Name</Label>
+                  <Input name="practiceName" placeholder="Medical center or clinic name" defaultValue={editingProvider.practiceName || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input name="phoneNumber" required placeholder="Office phone number" defaultValue={editingProvider.phoneNumber} />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input name="email" type="email" placeholder="Office email" defaultValue={editingProvider.email || ""} />
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea name="address" placeholder="Office address" defaultValue={editingProvider.address || ""} />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input type="checkbox" name="isPrimary" className="rounded" defaultChecked={editingProvider.isPrimary} />
+                  <Label htmlFor="isPrimary">Primary care provider</Label>
+                </div>
+                <div>
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea name="notes" placeholder="Additional information" defaultValue={editingProvider.notes || ""} />
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={updateProvider.isPending}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {updateProvider.isPending ? "Updating..." : "Update Provider"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingProvider(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
