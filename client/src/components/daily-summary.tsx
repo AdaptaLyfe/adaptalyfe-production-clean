@@ -7,17 +7,21 @@ import { Link } from "wouter";
 import type { DailyTask, Bill, MoodEntry } from "@shared/schema";
 
 export default function DailySummary() {
-  const { data: tasks = [] } = useQuery<DailyTask[]>({
+  const { data: tasksData } = useQuery<DailyTask[]>({
     queryKey: ["/api/daily-tasks"],
   });
 
-  const { data: bills = [] } = useQuery<Bill[]>({
+  const { data: billsData } = useQuery<Bill[]>({
     queryKey: ["/api/bills"],
   });
 
   const { data: todayMood } = useQuery<MoodEntry>({
     queryKey: ["/api/mood-entries/today"],
   });
+
+  // Ensure we always have arrays, even if API returns null
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
+  const bills = Array.isArray(billsData) ? billsData : [];
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
