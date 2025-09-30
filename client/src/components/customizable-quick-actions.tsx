@@ -54,7 +54,7 @@ export default function CustomizableQuickActions() {
   const [isReorderMode, setIsReorderMode] = useState(false);
 
   // Fetch user preferences
-  const { data: userPreferences, isLoading } = useQuery({
+  const { data: userPreferences, isLoading, error } = useQuery({
     queryKey: ["/api/user-preferences"],
     queryFn: () => apiRequest("GET", "/api/user-preferences").then(res => res.json())
   });
@@ -63,6 +63,14 @@ export default function CustomizableQuickActions() {
   const currentQuickActions = userPreferences?.themeSettings?.quickActions || [
     "mood-tracking", "daily-tasks", "financial", "caregiver"
   ];
+
+  console.log('Quick Actions Debug:', {
+    isLoading,
+    error,
+    userPreferences,
+    currentQuickActions,
+    hasData: !!userPreferences
+  });
 
   // Update user preferences mutation
   const updatePreferencesMutation = useMutation({
