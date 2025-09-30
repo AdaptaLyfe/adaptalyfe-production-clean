@@ -273,12 +273,15 @@ export default function CustomizableQuickActions() {
       )}
       
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="quick-actions">
-          {(provided) => (
+        <Droppable droppableId="quick-actions" direction="horizontal">
+          {(provided, snapshot) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+              style={{
+                minHeight: snapshot.isDraggingOver ? '180px' : 'auto'
+              }}
             >
               {visibleActions.map((action, index) => {
                 const Icon = action.icon;
@@ -297,12 +300,17 @@ export default function CustomizableQuickActions() {
                         {...provided.dragHandleProps}
                         data-testid={`card-quick-action-${action.key}`}
                         onClick={() => handleCardClick(action.route)}
-                        className={`bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center h-full ${
+                        style={{
+                          ...provided.draggableProps.style,
+                          // Ensure card stays visible during drag
+                          opacity: snapshot.isDragging ? 0.5 : 1,
+                        }}
+                        className={`bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center ${
                           isReorderMode 
                             ? 'cursor-move border-2 border-blue-300' 
                             : 'cursor-pointer hover:shadow-xl'
                         } ${
-                          snapshot.isDragging ? 'opacity-75 scale-105 shadow-2xl z-50' : ''
+                          snapshot.isDragging ? 'scale-105 shadow-2xl' : ''
                         }`}
                       >
                         <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
@@ -319,7 +327,7 @@ export default function CustomizableQuickActions() {
                   </Draggable>
                 );
               })}
-              {provided.placeholder}
+              <div style={{ display: 'none' }}>{provided.placeholder}</div>
             </div>
           )}
         </Droppable>
