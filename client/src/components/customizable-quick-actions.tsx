@@ -273,15 +273,18 @@ export default function CustomizableQuickActions() {
       )}
       
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="quick-actions" direction="horizontal">
-          {(provided, snapshot) => (
+        <Droppable droppableId="quick-actions">
+          {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
-              style={{
-                minHeight: snapshot.isDraggingOver ? '180px' : 'auto'
-              }}
+              className={`
+                ${isReorderMode 
+                  ? 'flex flex-wrap' 
+                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
+                } 
+                gap-4
+              `}
             >
               {visibleActions.map((action, index) => {
                 const Icon = action.icon;
@@ -300,18 +303,14 @@ export default function CustomizableQuickActions() {
                         {...provided.dragHandleProps}
                         data-testid={`card-quick-action-${action.key}`}
                         onClick={() => handleCardClick(action.route)}
-                        style={{
-                          ...provided.draggableProps.style,
-                          // Ensure card stays visible during drag
-                          opacity: snapshot.isDragging ? 0.5 : 1,
-                        }}
-                        className={`bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center ${
-                          isReorderMode 
-                            ? 'cursor-move border-2 border-blue-300' 
+                        className={`
+                          bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center
+                          ${isReorderMode 
+                            ? 'cursor-move border-2 border-blue-300 w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]' 
                             : 'cursor-pointer hover:shadow-xl'
-                        } ${
-                          snapshot.isDragging ? 'scale-105 shadow-2xl' : ''
-                        }`}
+                          }
+                          ${snapshot.isDragging ? 'opacity-50 scale-105 shadow-2xl' : ''}
+                        `}
                       >
                         <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
                           <Icon className="text-white w-8 h-8" />
@@ -327,7 +326,7 @@ export default function CustomizableQuickActions() {
                   </Draggable>
                 );
               })}
-              <div style={{ display: 'none' }}>{provided.placeholder}</div>
+              {provided.placeholder}
             </div>
           )}
         </Droppable>
