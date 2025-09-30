@@ -622,7 +622,7 @@ export default function MedicalInformationModule() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent className="z-[60]">
+                    <SelectContent position="popper" className="z-[9999]">
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
                       <SelectItem value="resolved">Resolved</SelectItem>
@@ -699,7 +699,7 @@ export default function MedicalInformationModule() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
-                    <SelectContent className="z-[60]">
+                    <SelectContent position="popper" className="z-[9999]">
                       <SelectItem value="mild">Mild</SelectItem>
                       <SelectItem value="moderate">Moderate</SelectItem>
                       <SelectItem value="severe">Severe</SelectItem>
@@ -783,7 +783,7 @@ export default function MedicalInformationModule() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
-                    <SelectContent className="z-[60]">
+                    <SelectContent position="popper" className="z-[9999]">
                       <SelectItem value="mild">Mild</SelectItem>
                       <SelectItem value="moderate">Moderate</SelectItem>
                       <SelectItem value="severe">Severe</SelectItem>
