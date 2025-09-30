@@ -98,6 +98,11 @@ export default function MedicalInformationModule() {
   const [showAdverseMedDialog, setShowAdverseMedDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showProviderDialog, setShowProviderDialog] = useState(false);
+  
+  // Select field states for forms
+  const [conditionStatus, setConditionStatus] = useState("");
+  const [allergySeverity, setAllergySeverity] = useState("");
+  const [adverseMedSeverity, setAdverseMedSeverity] = useState("");
 
   // Fetch data
   const { data: allergies = [] } = useQuery<Allergy[]>({
@@ -599,11 +604,12 @@ export default function MedicalInformationModule() {
                 const diagnosedDateStr = formData.get("diagnosedDate") as string;
                 createCondition.mutate({
                   condition: formData.get("condition") as string,
-                  status: formData.get("status") as string,
+                  status: conditionStatus,
                   diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
                   notes: formData.get("notes") as string,
                 });
                 e.currentTarget.reset();
+                setConditionStatus("");
                 setShowConditionDialog(false);
               }} className="space-y-4">
                 <div>
@@ -612,7 +618,7 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="status">Status</Label>
-                  <Select name="status" required>
+                  <Select value={conditionStatus} onValueChange={setConditionStatus} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -674,11 +680,12 @@ export default function MedicalInformationModule() {
                 const formData = new FormData(e.currentTarget);
                 createAllergy.mutate({
                   allergen: formData.get("allergen") as string,
-                  severity: formData.get("severity") as string,
+                  severity: allergySeverity,
                   reaction: formData.get("reaction") as string,
                   notes: formData.get("notes") as string,
                 });
                 e.currentTarget.reset();
+                setAllergySeverity("");
                 setShowAllergyDialog(false);
               }} className="space-y-4">
                 <div>
@@ -687,7 +694,7 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="severity">Severity</Label>
-                  <Select name="severity" required>
+                  <Select value={allergySeverity} onValueChange={setAllergySeverity} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
@@ -752,11 +759,12 @@ export default function MedicalInformationModule() {
                 createAdverseMed.mutate({
                   medicationName: formData.get("medicationName") as string,
                   reaction: formData.get("reaction") as string,
-                  severity: formData.get("severity") as string,
+                  severity: adverseMedSeverity,
                   reactionDate: reactionDateStr ? reactionDateStr : undefined,
                   notes: formData.get("notes") as string,
                 });
                 e.currentTarget.reset();
+                setAdverseMedSeverity("");
                 setShowAdverseMedDialog(false);
               }} className="space-y-4">
                 <div>
@@ -769,7 +777,7 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="severity">Severity</Label>
-                  <Select name="severity" required>
+                  <Select value={adverseMedSeverity} onValueChange={setAdverseMedSeverity} required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select severity" />
                     </SelectTrigger>
