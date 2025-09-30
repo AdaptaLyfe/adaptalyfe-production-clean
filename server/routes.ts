@@ -151,8 +151,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: false, // Set to true in production with HTTPS
+      secure: true, // Required for cross-site cookies
       httpOnly: true,
+      sameSite: 'none', // Allow cross-site cookies (Firebase -> Replit)
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));
