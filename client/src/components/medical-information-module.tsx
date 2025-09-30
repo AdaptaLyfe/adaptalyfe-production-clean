@@ -583,8 +583,8 @@ export default function MedicalInformationModule() {
       
       {/* Condition Dialog */}
       {showConditionDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowConditionDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Medical Condition</h2>
@@ -661,14 +661,15 @@ export default function MedicalInformationModule() {
       
       {/* Allergy Dialog */}
       {showAllergyDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAllergyDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
                 <button
                   onClick={() => setShowAllergyDialog(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  data-testid="button-close-allergy-dialog"
                 >
                   ×
                 </button>
@@ -738,14 +739,15 @@ export default function MedicalInformationModule() {
 
       {/* Adverse Medication Dialog */}
       {showAdverseMedDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAdverseMedDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Adverse Medication</h2>
                 <button
                   onClick={() => setShowAdverseMedDialog(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  data-testid="button-close-adverse-dialog"
                 >
                   ×
                 </button>
@@ -821,14 +823,15 @@ export default function MedicalInformationModule() {
 
       {/* Emergency Contact Dialog */}
       {showContactDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowContactDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
                 <button
                   onClick={() => setShowContactDialog(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  data-testid="button-close-contact-dialog"
                 >
                   ×
                 </button>
@@ -902,14 +905,15 @@ export default function MedicalInformationModule() {
 
       {/* Provider Dialog */}
       {showProviderDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowProviderDialog(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
                 <button
                   onClick={() => setShowProviderDialog(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  data-testid="button-close-provider-dialog"
                 >
                   ×
                 </button>
