@@ -860,7 +860,12 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={isLoading} className="flex-1">
+              <Button 
+                type="submit" 
+                disabled={isLoading} 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                data-testid="button-submit-store"
+              >
                 {isLoading ? "Saving..." : store ? "Update Store" : "Add Store"}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
