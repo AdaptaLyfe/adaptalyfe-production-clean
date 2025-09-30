@@ -7,7 +7,9 @@ import {
   DollarSign, 
   MessageSquare,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  GripVertical,
+  Settings
 } from "lucide-react";
 
 export default function CustomizableQuickActions() {
@@ -74,11 +76,13 @@ export default function CustomizableQuickActions() {
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">
-            Modify
+        <div className="flex gap-3">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+            <GripVertical className="w-4 h-4" />
+            Reorder
           </button>
-          <button className="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">
+          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+            <Settings className="w-4 h-4" />
             Customize
           </button>
         </div>
