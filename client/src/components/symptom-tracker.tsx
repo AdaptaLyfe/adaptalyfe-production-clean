@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -145,20 +144,33 @@ export function SymptomTracker() {
           <h3 className="text-lg font-semibold">Symptom Tracker</h3>
           <p className="text-gray-600">Track your symptoms to identify patterns and triggers</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow">
-              <Plus className="w-4 h-4" />
-              Log Symptom
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Log New Symptom</DialogTitle>
-              <DialogDescription>Record details about your symptom to track patterns over time</DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow" data-testid="button-log-symptom">
+          <Plus className="w-4 h-4" />
+          Log Symptom
+        </Button>
+      </div>
+
+      {/* Add Symptom Dialog */}
+      {isAddDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Log New Symptom</h2>
+                  <p className="text-sm text-gray-600 mt-1">Record details about your symptom to track patterns over time</p>
+                </div>
+                <button
+                  onClick={() => setIsAddDialogOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
                   name="symptomName"
@@ -288,19 +300,20 @@ export function SymptomTracker() {
                   )}
                 />
 
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={createMutation.isPending} className="border-2 border-green-400 shadow-md hover:shadow-lg transition-shadow">
-                    {createMutation.isPending ? "Adding..." : "Add Entry"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" disabled={createMutation.isPending} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                      {createMutation.isPending ? "Adding..." : "Add Entry"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!symptomEntries || symptomEntries.length === 0 ? (
         <Card>
@@ -385,15 +398,27 @@ export function SymptomTracker() {
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Symptom Entry</DialogTitle>
-            <DialogDescription>Update the details of this symptom entry</DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      {/* Edit Symptom Dialog */}
+      {editingEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingEntry(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Edit Symptom Entry</h2>
+                  <p className="text-sm text-gray-600 mt-1">Update the details of this symptom entry</p>
+                </div>
+                <button
+                  onClick={() => setEditingEntry(null)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
               <FormField
                 control={editForm.control}
                 name="symptomName"
@@ -485,18 +510,20 @@ export function SymptomTracker() {
                 )}
               />
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setEditingEntry(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? "Updating..." : "Update Entry"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="submit" disabled={updateMutation.isPending} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                      {updateMutation.isPending ? "Updating..." : "Update Entry"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setEditingEntry(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
