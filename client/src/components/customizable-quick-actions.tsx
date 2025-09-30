@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { 
   Smile, 
   CheckSquare, 
@@ -132,6 +132,7 @@ const ALL_ACTIONS = [
 
 export default function CustomizableQuickActions() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   
@@ -175,6 +176,12 @@ export default function CustomizableQuickActions() {
         title: "Changes Saved",
         description: "Your new order has been saved.",
       });
+    }
+  };
+
+  const handleCardClick = (route: string) => {
+    if (!isReorderMode) {
+      setLocation(route);
     }
   };
 
@@ -289,37 +296,24 @@ export default function CustomizableQuickActions() {
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         data-testid={`card-quick-action-${action.key}`}
-                        className={`transition-all ${
+                        onClick={() => handleCardClick(action.route)}
+                        className={`bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center h-full ${
+                          isReorderMode 
+                            ? 'cursor-move border-2 border-blue-300' 
+                            : 'cursor-pointer hover:shadow-xl'
+                        } ${
                           snapshot.isDragging ? 'opacity-75 scale-105 shadow-2xl z-50' : ''
                         }`}
                       >
-                        {isReorderMode ? (
-                          <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-300 cursor-move p-6 flex flex-col items-center text-center h-full">
-                            <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
-                              <Icon className="text-white w-8 h-8" />
-                            </div>
-                            <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
-                              {action.label}
-                            </h4>
-                            <p className="text-xs text-gray-600 leading-tight">
-                              {action.description}
-                            </p>
-                          </div>
-                        ) : (
-                          <Link href={action.route}>
-                            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 flex flex-col items-center text-center h-full">
-                              <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
-                                <Icon className="text-white w-8 h-8" />
-                              </div>
-                              <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
-                                {action.label}
-                              </h4>
-                              <p className="text-xs text-gray-600 leading-tight">
-                                {action.description}
-                              </p>
-                            </div>
-                          </Link>
-                        )}
+                        <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
+                          <Icon className="text-white w-8 h-8" />
+                        </div>
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+                          {action.label}
+                        </h4>
+                        <p className="text-xs text-gray-600 leading-tight">
+                          {action.description}
+                        </p>
                       </div>
                     )}
                   </Draggable>
