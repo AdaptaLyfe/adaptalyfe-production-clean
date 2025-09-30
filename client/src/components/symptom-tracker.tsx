@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -191,20 +190,22 @@ export function SymptomTracker() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Severity (1-10)</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select severity" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
+                      <FormControl>
+                        <select
+                          {...field}
+                          value={field.value?.toString() || ""}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          data-testid="select-severity-add"
+                        >
+                          <option value="" disabled>Select severity</option>
                           {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                            <SelectItem key={num} value={num.toString()}>
+                            <option key={num} value={num.toString()}>
                               {num} - {severityLabels[num as keyof typeof severityLabels]}
-                            </SelectItem>
+                            </option>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -439,20 +440,22 @@ export function SymptomTracker() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Severity (1-10)</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select severity" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
+                    <FormControl>
+                      <select
+                        {...field}
+                        value={field.value?.toString() || ""}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        data-testid="select-severity-edit"
+                      >
+                        <option value="" disabled>Select severity</option>
                         {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
-                          <SelectItem key={num} value={num.toString()}>
+                          <option key={num} value={num.toString()}>
                             {num} - {severityLabels[num as keyof typeof severityLabels]}
-                          </SelectItem>
+                          </option>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </select>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
