@@ -58,10 +58,6 @@ export default function CustomizableQuickActions() {
     "mood-tracking", "daily-tasks", "financial", "caregiver"
   ];
 
-  console.log('🎯 QUICK ACTIONS COMPONENT MOUNTED - BUTTONS SHOULD BE VISIBLE');
-  console.log('Current Quick Actions:', currentQuickActions);
-  console.log('Is Reorder Mode:', isReorderMode);
-
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
@@ -116,14 +112,6 @@ export default function CustomizableQuickActions() {
   // ALWAYS render buttons with defaults - never block on loading
   return (
     <div className="mb-8">
-      {/* DEBUG INFO - DELETE AFTER FIXING */}
-      <div className="bg-yellow-200 border-2 border-yellow-600 p-4 rounded mb-4">
-        <p className="font-bold">DEBUG: Component Mounted ✅</p>
-        <p>Quick Actions Array: {JSON.stringify(currentQuickActions)}</p>
-        <p>Reorder Mode: {isReorderMode ? 'YES' : 'NO'}</p>
-        <p>Array Length: {currentQuickActions.length}</p>
-      </div>
-
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-3xl font-bold text-gray-800 drop-shadow-sm">Quick Actions</h3>
         <div className="flex items-center gap-2">
@@ -362,21 +350,20 @@ export default function CustomizableQuickActions() {
           </Droppable>
         </DragDropContext>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {currentQuickActions.slice(0, 6).map((actionKey: string) => {
             const action = availableActions.find(a => a.key === actionKey);
-            if (!action) {
-              console.log('❌ Action not found for key:', actionKey);
-              return null;
-            }
+            if (!action) return null;
             
-            console.log('✅ Rendering action:', action.key, action.label);
             const IconComponent = action.icon;
             const colors = colorClasses[action.color as keyof typeof colorClasses];
             
             return (
-              <div key={actionKey} onClick={() => window.location.href = action.route} className="cursor-pointer">
-                <div className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 ${colors.border} ${colors.hover} hover:shadow-2xl transition-all duration-300 h-auto flex flex-col items-center space-y-3 w-full`}>
+              <Link key={actionKey} href={action.route}>
+                <Button
+                  variant="outline"
+                  className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 ${colors.border} ${colors.hover} hover:shadow-2xl transition-all duration-300 h-full min-h-[140px] flex flex-col items-center justify-center space-y-3 w-full`}
+                >
                   <div className={`w-14 h-14 bg-gradient-to-br ${colors.bg} rounded-xl flex items-center justify-center shadow-lg`}>
                     <IconComponent className="text-white" size={28} />
                   </div>
@@ -384,8 +371,8 @@ export default function CustomizableQuickActions() {
                     <h4 className="font-bold text-gray-900 text-xs leading-tight">{action.label}</h4>
                     <p className="text-[10px] text-gray-700 font-medium mt-1 leading-tight">{action.description}</p>
                   </div>
-                </div>
-              </div>
+                </Button>
+              </Link>
             );
           })}
         </div>

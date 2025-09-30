@@ -113,16 +113,6 @@ export default function Dashboard() {
 
         </div>
 
-        {/* TEMPORARY TEST - DELETE AFTER CONFIRMING */}
-        <div className="mb-8 p-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl shadow-2xl">
-          <h2 className="text-4xl font-bold text-white text-center mb-4">
-            🚨 FIREBASE UPDATE TEST 🚨
-          </h2>
-          <p className="text-white text-center text-xl">
-            If you see this, Firebase is serving the LATEST code!
-          </p>
-        </div>
-
         <CustomizableQuickActions />
         
         {/* Drag mode indicator */}
