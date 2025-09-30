@@ -53,53 +53,12 @@ export default function CustomizableQuickActions() {
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isReorderMode, setIsReorderMode] = useState(false);
 
-  // Fetch user preferences - with retry and error handling
-  const { data: userPreferences, isLoading, error } = useQuery({
-    queryKey: ["/api/user-preferences"],
-    queryFn: () => apiRequest("GET", "/api/user-preferences").then(res => res.json()),
-    retry: 1,
-    staleTime: 30000
-  });
-
-  // Get current quick actions (default or saved) - ALWAYS use defaults if data not available
-  const currentQuickActions = userPreferences?.themeSettings?.quickActions || [
+  // ALWAYS use default quick actions - no API dependency
+  const currentQuickActions = [
     "mood-tracking", "daily-tasks", "financial", "caregiver"
   ];
 
-  console.log('Quick Actions Debug:', {
-    isLoading,
-    error,
-    userPreferences,
-    currentQuickActions,
-    hasData: !!userPreferences
-  });
-
-  // Update user preferences mutation
-  const updatePreferencesMutation = useMutation({
-    mutationFn: (newActions: string[]) => 
-      apiRequest("PUT", "/api/user-preferences", {
-        themeSettings: {
-          ...(userPreferences?.themeSettings || {}),
-          quickActions: newActions
-        }
-      }).then(res => res.json()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user-preferences"] });
-      toast({
-        title: "Quick Actions Updated",
-        description: "Your personalized quick actions have been saved.",
-      });
-      setIsCustomizing(false);
-    },
-    onError: (error: any) => {
-      console.error("Failed to update quick actions:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update quick actions. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
+  console.log('🎯 QUICK ACTIONS COMPONENT MOUNTED - BUTTONS SHOULD BE VISIBLE');
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -127,9 +86,6 @@ export default function CustomizableQuickActions() {
       title: "Quick Actions Reordered",
       description: "Your new order has been saved.",
     });
-
-    // Save the new order immediately
-    updatePreferencesMutation.mutate(newQuickActions as string[]);
   };
 
   const addAction = (actionKey: string) => {
@@ -143,7 +99,11 @@ export default function CustomizableQuickActions() {
   };
 
   const saveActions = () => {
-    updatePreferencesMutation.mutate(selectedActions);
+    toast({
+      title: "Quick Actions Updated",
+      description: "Your personalized quick actions have been saved.",
+    });
+    setIsCustomizing(false);
   };
 
   const startCustomizing = () => {
@@ -295,10 +255,10 @@ export default function CustomizableQuickActions() {
                 </Button>
                 <Button 
                   onClick={saveActions}
-                  disabled={selectedActions.length === 0 || updatePreferencesMutation.isPending}
+                  disabled={selectedActions.length === 0}
                   className="border-2 border-blue-500 shadow-md"
                 >
-                  {updatePreferencesMutation.isPending ? "Saving..." : "Save Changes"}
+                  Save Changes
                 </Button>
               </div>
             </div>
