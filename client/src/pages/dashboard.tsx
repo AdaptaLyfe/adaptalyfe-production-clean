@@ -6,7 +6,7 @@ import { useDashboardLayout } from "@/hooks/useDashboardLayout";
 import { useMoodRequirement } from "@/hooks/useMoodRequirement";
 import SubscriptionBanner from "@/components/subscription-banner";
 import WelcomeSection from "@/components/welcome-section";
-import CustomizableQuickActions from "@/components/customizable-quick-actions";
+import QuickActions from "@/components/quick-actions/QuickActions";
 import DailyTasksModule from "@/components/daily-tasks-module";
 import FinancialModule from "@/components/financial-module";
 import MoodModule from "@/components/mood-module";
@@ -113,7 +113,7 @@ export default function Dashboard() {
 
         </div>
 
-        <CustomizableQuickActions />
+        <QuickActions />
         
         {/* Drag mode indicator */}
         {isDragMode && (
