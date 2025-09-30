@@ -2,10 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle, Circle, Star, Plus, Clock, Edit3, X } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -331,19 +329,34 @@ export default function DailyTasks() {
       </div>
 
       <div className="mt-8 text-center">
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-vibrant-green hover:bg-green-600 text-black font-bold shadow-lg border border-green-700">
-              <Plus size={20} className="mr-2 text-black" />
-              <span className="text-black font-bold">Add New Task</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Daily Task</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
+        <Button 
+          onClick={() => setIsAddDialogOpen(true)} 
+          className="bg-vibrant-green hover:bg-green-600 text-black font-bold shadow-lg border border-green-700"
+          data-testid="button-add-task"
+        >
+          <Plus size={20} className="mr-2 text-black" />
+          <span className="text-black font-bold">Add New Task</span>
+        </Button>
+      </div>
+
+      {/* Add Task Dialog */}
+      {isAddDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Add New Daily Task</h2>
+                <button
+                  onClick={() => setIsAddDialogOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <Input
                 placeholder="Task title"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
@@ -353,36 +366,36 @@ export default function DailyTasks() {
                 value={newTask.description}
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               />
-              <Select 
-                value={newTask.category} 
-                onValueChange={(value) => setNewTask({ ...newTask, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="personal_care">Personal Care</SelectItem>
-                  <SelectItem value="household">Household</SelectItem>
-                  <SelectItem value="work">Work</SelectItem>
-                  <SelectItem value="health">Health</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Category</label>
+                <select
+                  value={newTask.category}
+                  onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  data-testid="select-category-add"
+                >
+                  <option value="personal_care">Personal Care</option>
+                  <option value="household">Household</option>
+                  <option value="work">Work</option>
+                  <option value="health">Health</option>
+                  <option value="social">Social</option>
+                  <option value="education">Education</option>
+                </select>
+              </div>
               
-              <Select 
-                value={newTask.frequency} 
-                onValueChange={(value) => setNewTask({ ...newTask, frequency: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <select
+                  value={newTask.frequency}
+                  onChange={(e) => setNewTask({ ...newTask, frequency: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  data-testid="select-frequency-add"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
@@ -444,17 +457,29 @@ export default function DailyTasks() {
                 </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
+        </div>
+      )}
 
-        {/* Edit Task Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit Task</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
+      {/* Edit Task Dialog */}
+      {isEditDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-start justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Edit Task</h2>
+                <button
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <Input
                 placeholder="Task title"
                 value={editTask.title}
                 onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
@@ -464,36 +489,36 @@ export default function DailyTasks() {
                 value={editTask.description}
                 onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
               />
-              <Select 
-                value={editTask.category} 
-                onValueChange={(value) => setEditTask({ ...editTask, category: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="personal_care">Personal Care</SelectItem>
-                  <SelectItem value="household">Household</SelectItem>
-                  <SelectItem value="work">Work</SelectItem>
-                  <SelectItem value="health">Health</SelectItem>
-                  <SelectItem value="social">Social</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Category</label>
+                <select
+                  value={editTask.category}
+                  onChange={(e) => setEditTask({ ...editTask, category: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  data-testid="select-category-edit"
+                >
+                  <option value="personal_care">Personal Care</option>
+                  <option value="household">Household</option>
+                  <option value="work">Work</option>
+                  <option value="health">Health</option>
+                  <option value="social">Social</option>
+                  <option value="education">Education</option>
+                </select>
+              </div>
               
-              <Select 
-                value={editTask.frequency} 
-                onValueChange={(value) => setEditTask({ ...editTask, frequency: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <select
+                  value={editTask.frequency}
+                  onChange={(e) => setEditTask({ ...editTask, frequency: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  data-testid="select-frequency-edit"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
@@ -555,9 +580,10 @@ export default function DailyTasks() {
                 </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </div>
+        </div>
+      )}
     </div>
   );
 }
