@@ -59,6 +59,8 @@ export default function CustomizableQuickActions() {
   ];
 
   console.log('🎯 QUICK ACTIONS COMPONENT MOUNTED - BUTTONS SHOULD BE VISIBLE');
+  console.log('Current Quick Actions:', currentQuickActions);
+  console.log('Is Reorder Mode:', isReorderMode);
 
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
@@ -114,6 +116,14 @@ export default function CustomizableQuickActions() {
   // ALWAYS render buttons with defaults - never block on loading
   return (
     <div className="mb-8">
+      {/* DEBUG INFO - DELETE AFTER FIXING */}
+      <div className="bg-yellow-200 border-2 border-yellow-600 p-4 rounded mb-4">
+        <p className="font-bold">DEBUG: Component Mounted ✅</p>
+        <p>Quick Actions Array: {JSON.stringify(currentQuickActions)}</p>
+        <p>Reorder Mode: {isReorderMode ? 'YES' : 'NO'}</p>
+        <p>Array Length: {currentQuickActions.length}</p>
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-3xl font-bold text-gray-800 drop-shadow-sm">Quick Actions</h3>
         <div className="flex items-center gap-2">
