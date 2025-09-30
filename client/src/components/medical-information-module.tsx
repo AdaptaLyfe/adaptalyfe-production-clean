@@ -95,6 +95,10 @@ export default function MedicalInformationModule() {
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
   const [editingProvider, setEditingProvider] = useState<PrimaryCareProvider | null>(null);
   const [showConditionDialog, setShowConditionDialog] = useState(false);
+  const [showAllergyDialog, setShowAllergyDialog] = useState(false);
+  const [showAdverseMedDialog, setShowAdverseMedDialog] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showProviderDialog, setShowProviderDialog] = useState(false);
 
   // Fetch data
   const { data: allergies = [] } = useQuery<Allergy[]>({
@@ -294,61 +298,87 @@ export default function MedicalInformationModule() {
         <TabsContent value="allergies" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Allergies</h3>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Allergy
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Allergy</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  createAllergy.mutate({
-                    allergen: formData.get("allergen") as string,
-                    severity: formData.get("severity") as string,
-                    reaction: formData.get("reaction") as string,
-                    notes: formData.get("notes") as string,
-                  });
-                  e.currentTarget.reset();
-                }} className="space-y-4">
-                  <div>
-                    <Label htmlFor="allergen">Allergen</Label>
-                    <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" />
-                  </div>
-                  <div>
-                    <Label htmlFor="severity">Severity</Label>
-                    <Select name="severity" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select severity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="mild">Mild</SelectItem>
-                        <SelectItem value="moderate">Moderate</SelectItem>
-                        <SelectItem value="severe">Severe</SelectItem>
-                        <SelectItem value="life-threatening">Life-threatening</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="reaction">Reaction</Label>
-                    <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea name="notes" placeholder="Additional information" />
-                  </div>
-                  <Button type="submit" disabled={createAllergy.isPending}>
-                    {createAllergy.isPending ? "Adding..." : "Add Allergy"}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setShowAllergyDialog(true)} data-testid="button-add-allergy">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Allergy
+            </Button>
           </div>
+
+          {/* Custom Allergy Dialog */}
+          {showAllergyDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
+                    <button
+                      onClick={() => setShowAllergyDialog(false)}
+                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    createAllergy.mutate({
+                      allergen: formData.get("allergen") as string,
+                      severity: formData.get("severity") as string,
+                      reaction: formData.get("reaction") as string,
+                      notes: formData.get("notes") as string,
+                    });
+                    e.currentTarget.reset();
+                    setShowAllergyDialog(false);
+                  }} className="space-y-4">
+                    <div>
+                      <Label htmlFor="allergen">Allergen</Label>
+                      <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" />
+                    </div>
+                    <div>
+                      <Label htmlFor="severity">Severity</Label>
+                      <Select name="severity" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select severity" />
+                        </SelectTrigger>
+                        <SelectContent className="z-[60]">
+                          <SelectItem value="mild">Mild</SelectItem>
+                          <SelectItem value="moderate">Moderate</SelectItem>
+                          <SelectItem value="severe">Severe</SelectItem>
+                          <SelectItem value="life-threatening">Life-threatening</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="reaction">Reaction</Label>
+                      <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" />
+                    </div>
+                    <div>
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea name="notes" placeholder="Additional information" />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button 
+                        type="submit" 
+                        disabled={createAllergy.isPending}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {createAllergy.isPending ? "Adding..." : "Add Allergy"}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowAllergyDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4">
             {!allergies || allergies.length === 0 ? (
