@@ -365,17 +365,18 @@ export default function CustomizableQuickActions() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
           {currentQuickActions.slice(0, 6).map((actionKey: string) => {
             const action = availableActions.find(a => a.key === actionKey);
-            if (!action) return null;
+            if (!action) {
+              console.log('❌ Action not found for key:', actionKey);
+              return null;
+            }
             
+            console.log('✅ Rendering action:', action.key, action.label);
             const IconComponent = action.icon;
             const colors = colorClasses[action.color as keyof typeof colorClasses];
             
             return (
-              <Link key={actionKey} href={action.route}>
-                <Button
-                  variant="outline"
-                  className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 ${colors.border} ${colors.hover} hover:shadow-2xl transition-all duration-300 h-auto flex-col space-y-3 w-full`}
-                >
+              <div key={actionKey} onClick={() => window.location.href = action.route} className="cursor-pointer">
+                <div className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-2 ${colors.border} ${colors.hover} hover:shadow-2xl transition-all duration-300 h-auto flex flex-col items-center space-y-3 w-full`}>
                   <div className={`w-14 h-14 bg-gradient-to-br ${colors.bg} rounded-xl flex items-center justify-center shadow-lg`}>
                     <IconComponent className="text-white" size={28} />
                   </div>
@@ -383,8 +384,8 @@ export default function CustomizableQuickActions() {
                     <h4 className="font-bold text-gray-900 text-xs leading-tight">{action.label}</h4>
                     <p className="text-[10px] text-gray-700 font-medium mt-1 leading-tight">{action.description}</p>
                   </div>
-                </Button>
-              </Link>
+                </div>
+              </div>
             );
           })}
         </div>
