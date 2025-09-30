@@ -94,6 +94,7 @@ export default function MedicalInformationModule() {
   const [editingAdverseMed, setEditingAdverseMed] = useState<AdverseMedication | null>(null);
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
   const [editingProvider, setEditingProvider] = useState<PrimaryCareProvider | null>(null);
+  const [showConditionDialog, setShowConditionDialog] = useState(false);
 
   // Fetch data
   const { data: allergies = [] } = useQuery<Allergy[]>({
@@ -394,61 +395,88 @@ export default function MedicalInformationModule() {
         <TabsContent value="conditions" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Medical Conditions</h3>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Condition
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Medical Condition</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const diagnosedDateStr = formData.get("diagnosedDate") as string;
-                  createCondition.mutate({
-                    condition: formData.get("condition") as string,
-                    status: formData.get("status") as string,
-                    diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
-                    notes: formData.get("notes") as string,
-                  });
-                  e.currentTarget.reset();
-                }} className="space-y-4">
-                  <div>
-                    <Label htmlFor="condition">Condition</Label>
-                    <Input name="condition" required placeholder="e.g., Diabetes, Asthma" />
-                  </div>
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select name="status" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
-                    <Input name="diagnosedDate" type="date" />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea name="notes" placeholder="Additional information" />
-                  </div>
-                  <Button type="submit" disabled={createCondition.isPending}>
-                    {createCondition.isPending ? "Adding..." : "Add Condition"}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setShowConditionDialog(true)} data-testid="button-add-condition">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Condition
+            </Button>
           </div>
+
+          {/* Custom Condition Dialog */}
+          {showConditionDialog && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <h2 className="text-xl font-semibold text-gray-900">Add Medical Condition</h2>
+                    <button
+                      onClick={() => setShowConditionDialog(false)}
+                      className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                      data-testid="button-close-condition-dialog"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const diagnosedDateStr = formData.get("diagnosedDate") as string;
+                    createCondition.mutate({
+                      condition: formData.get("condition") as string,
+                      status: formData.get("status") as string,
+                      diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
+                      notes: formData.get("notes") as string,
+                    });
+                    e.currentTarget.reset();
+                    setShowConditionDialog(false);
+                  }} className="space-y-4">
+                    <div>
+                      <Label htmlFor="condition">Condition</Label>
+                      <Input name="condition" required placeholder="e.g., Diabetes, Asthma" />
+                    </div>
+                    <div>
+                      <Label htmlFor="status">Status</Label>
+                      <Select name="status" required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="resolved">Resolved</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
+                      <Input name="diagnosedDate" type="date" />
+                    </div>
+                    <div>
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea name="notes" placeholder="Additional information" />
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button 
+                        type="submit" 
+                        disabled={createCondition.isPending}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {createCondition.isPending ? "Adding..." : "Add Condition"}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowConditionDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="grid gap-4">
             {!conditions || conditions.length === 0 ? (
