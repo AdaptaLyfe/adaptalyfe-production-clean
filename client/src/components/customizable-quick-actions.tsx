@@ -53,13 +53,15 @@ export default function CustomizableQuickActions() {
   const [selectedActions, setSelectedActions] = useState<string[]>([]);
   const [isReorderMode, setIsReorderMode] = useState(false);
 
-  // Fetch user preferences
+  // Fetch user preferences - with retry and error handling
   const { data: userPreferences, isLoading, error } = useQuery({
     queryKey: ["/api/user-preferences"],
-    queryFn: () => apiRequest("GET", "/api/user-preferences").then(res => res.json())
+    queryFn: () => apiRequest("GET", "/api/user-preferences").then(res => res.json()),
+    retry: 1,
+    staleTime: 30000
   });
 
-  // Get current quick actions (default or saved)
+  // Get current quick actions (default or saved) - ALWAYS use defaults if data not available
   const currentQuickActions = userPreferences?.themeSettings?.quickActions || [
     "mood-tracking", "daily-tasks", "financial", "caregiver"
   ];
@@ -149,19 +151,7 @@ export default function CustomizableQuickActions() {
     setIsCustomizing(true);
   };
 
-  if (isLoading) {
-    return (
-      <div className="mb-8">
-        <div className="h-8 bg-gray-200 rounded animate-pulse mb-6" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
+  // ALWAYS render buttons with defaults - never block on loading
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-6">
