@@ -3,6 +3,12 @@
 ## Overview
 Adaptalyfe is a full-stack web application designed to empower individuals with developmental disabilities by assisting them in managing daily tasks, finances, mood, and connecting with their support network. The application aims to foster independence and improve quality of life through comprehensive task management, financial tracking, mood monitoring, communication tools for caregivers, meal planning, and appointment scheduling. The business vision is to provide an accessible and supportive digital ecosystem that significantly improves daily living for this community, with potential for substantial market penetration and revenue growth through a freemium model and healthcare partnerships.
 
+## Recent Changes (September 30, 2025)
+- **Fixed Quick Actions Component**: Resolved React DOM insertBefore errors by using consistent grid layout for both reorder and normal modes
+- **Fixed Reorder Functionality**: Cards now stay visible and properly reorderable without disappearing or causing layout shifts
+- **Standardized Card Sizes**: All Quick Action cards now have uniform dimensions (w-16 h-16 icons, consistent padding)
+- **Firebase Deployment**: Updated backend URL to use Replit development domain (f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev) for stable cross-origin requests
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Visual Design Priority: Extremely particular about design aesthetics and visual clarity, especially for toggle switches and interactive elements. Requires vibrant, easily distinguishable on/off states with strong visual feedback for active/inactive states.

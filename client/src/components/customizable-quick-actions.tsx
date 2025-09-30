@@ -153,10 +153,6 @@ export default function CustomizableQuickActions() {
     items.splice(result.destination.index, 0, reorderedItem);
 
     setVisibleActionKeys(items);
-    toast({
-      title: "Quick Actions Reordered",
-      description: "Your new order has been saved.",
-    });
   };
 
   const toggleAction = (key: string) => {
@@ -176,8 +172,8 @@ export default function CustomizableQuickActions() {
       });
     } else {
       toast({
-        title: "Reorder Mode Disabled",
-        description: "Your changes have been saved.",
+        title: "Changes Saved",
+        description: "Your new order has been saved.",
       });
     }
   };
@@ -189,6 +185,7 @@ export default function CustomizableQuickActions() {
         <div className="flex gap-3">
           <button 
             onClick={toggleReorderMode}
+            data-testid="button-reorder-quick-actions"
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
               isReorderMode 
                 ? 'bg-blue-500 text-white border-2 border-blue-500' 
@@ -201,7 +198,10 @@ export default function CustomizableQuickActions() {
           
           <Dialog open={isCustomizeOpen} onOpenChange={setIsCustomizeOpen}>
             <DialogTrigger asChild>
-              <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+              <button 
+                data-testid="button-customize-quick-actions"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+              >
                 <Settings className="w-4 h-4" />
                 Customize
               </button>
@@ -218,6 +218,7 @@ export default function CustomizableQuickActions() {
                   return (
                     <div 
                       key={action.key}
+                      data-testid={`checkbox-${action.key}`}
                       className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
                         isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -264,84 +265,71 @@ export default function CustomizableQuickActions() {
         </div>
       )}
       
-      <div className="relative">
-        {isReorderMode ? (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="quick-actions" direction="horizontal">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {visibleActions.map((action, index) => {
-                    const Icon = action.icon;
-                    
-                    return (
-                      <Draggable key={action.key} draggableId={action.key} index={index}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`flex-shrink-0 w-[140px] transition-all ${
-                              snapshot.isDragging ? 'opacity-75 scale-105 shadow-2xl' : ''
-                            }`}
-                          >
-                            <div className="bg-white rounded-xl shadow-md border-2 border-blue-300 cursor-move">
-                              <div className="p-4 flex flex-col items-center text-center">
-                                <div className={`w-14 h-14 ${action.bgColor} rounded-lg flex items-center justify-center mb-3`}>
-                                  <Icon className="text-white w-7 h-7" />
-                                </div>
-                                <h4 className="font-semibold text-gray-900 text-xs mb-1 leading-tight">
-                                  {action.label}
-                                </h4>
-                                <p className="text-[10px] text-gray-600 leading-tight">
-                                  {action.description}
-                                </p>
-                              </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="quick-actions">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+            >
+              {visibleActions.map((action, index) => {
+                const Icon = action.icon;
+                
+                return (
+                  <Draggable 
+                    key={action.key} 
+                    draggableId={action.key} 
+                    index={index}
+                    isDragDisabled={!isReorderMode}
+                  >
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        data-testid={`card-quick-action-${action.key}`}
+                        className={`transition-all ${
+                          snapshot.isDragging ? 'opacity-75 scale-105 shadow-2xl z-50' : ''
+                        }`}
+                      >
+                        {isReorderMode ? (
+                          <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-300 cursor-move p-6 flex flex-col items-center text-center h-full">
+                            <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
+                              <Icon className="text-white w-8 h-8" />
                             </div>
+                            <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+                              {action.label}
+                            </h4>
+                            <p className="text-xs text-gray-600 leading-tight">
+                              {action.description}
+                            </p>
                           </div>
+                        ) : (
+                          <Link href={action.route}>
+                            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 flex flex-col items-center text-center h-full">
+                              <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
+                                <Icon className="text-white w-8 h-8" />
+                              </div>
+                              <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+                                {action.label}
+                              </h4>
+                              <p className="text-xs text-gray-600 leading-tight">
+                                {action.description}
+                              </p>
+                            </div>
+                          </Link>
                         )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {visibleActions.map((action) => {
-              const Icon = action.icon;
-              
-              return (
-                <Link key={action.key} href={action.route}>
-                  <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 flex flex-col items-center text-center min-h-[140px]">
-                    <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
-                      <Icon className="text-white w-8 h-8" />
-                    </div>
-                    <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
-                      {action.label}
-                    </h4>
-                    <p className="text-xs text-gray-600 leading-tight">
-                      {action.description}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+                      </div>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }
