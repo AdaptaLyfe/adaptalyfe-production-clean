@@ -261,7 +261,7 @@ export default function QuickActions() {
             </div>
           </SortableContext>
           
-          <DragOverlay>
+          <DragOverlay dropAnimation={null}>
             {activeAction ? (
               <div className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]">
                 <QuickActionCard
