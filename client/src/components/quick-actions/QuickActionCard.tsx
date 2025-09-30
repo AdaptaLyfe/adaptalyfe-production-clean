@@ -24,12 +24,11 @@ export function QuickActionCard({ action, isReorderMode, isDragging = false }: Q
       className={`
         bg-white rounded-2xl shadow-lg p-6 
         flex flex-col items-center text-center
-        transition-all
+        transition-shadow duration-200
         ${isReorderMode 
           ? 'cursor-move border-2 border-blue-300' 
           : 'cursor-pointer hover:shadow-xl'
         }
-        ${isDragging ? 'opacity-40' : 'opacity-100'}
       `}
     >
       <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>

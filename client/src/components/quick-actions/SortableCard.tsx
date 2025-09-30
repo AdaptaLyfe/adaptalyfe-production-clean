@@ -25,6 +25,7 @@ export function SortableCard({ id, action, isReorderMode }: SortableCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0 : 1,
   };
 
   return (
@@ -37,7 +38,7 @@ export function SortableCard({ id, action, isReorderMode }: SortableCardProps) {
       <QuickActionCard
         action={action}
         isReorderMode={isReorderMode}
-        isDragging={isDragging}
+        isDragging={false}
       />
     </div>
   );
