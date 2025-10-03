@@ -171,8 +171,17 @@ export default function PersonalDocuments() {
           Add Document
         </Button>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+        <Dialog open={isOpen} onOpenChange={(open) => {
+          console.log('🔍 Dialog onOpenChange called with:', open);
+          setIsOpen(open);
+        }}>
+          <DialogContent 
+            className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full" 
+            style={{ zIndex: 9999 }}
+            onOpenAutoFocus={(e) => {
+              console.log('🔍 Dialog opened! Content is visible');
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Add New Document</DialogTitle>
               <DialogDescription>
