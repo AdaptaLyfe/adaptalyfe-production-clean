@@ -165,16 +165,16 @@ export default function PersonalDocuments() {
         </Button>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
-            <DialogHeader className="text-left space-y-2">
-              <DialogTitle className="text-xl sm:text-2xl">Add New Document</DialogTitle>
-              <DialogDescription className="text-sm sm:text-base">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+            <DialogHeader>
+              <DialogTitle>Add New Document</DialogTitle>
+              <DialogDescription>
                 Store important information you need to remember
               </DialogDescription>
             </DialogHeader>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 {/* Title Field */}
                 <FormField
                   control={form.control}
@@ -388,7 +388,7 @@ export default function PersonalDocuments() {
                 />
 
                 {/* Action Buttons */}
-                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t mt-6">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"
