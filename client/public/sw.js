@@ -1,5 +1,5 @@
 // Adaptalyfe Service Worker for PWA functionality
-const CACHE_NAME = 'adaptalyfe-v1.0.1';
+const CACHE_NAME = 'adaptalyfe-v1.0.3';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -17,27 +17,48 @@ self.addEventListener('message', (event) => {
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing new version');
+  console.log('SW: Installing new version v1.0.3');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(urlsToCache);
       })
   );
-  // Force immediate activation
   self.skipWaiting();
 });
 
-// Fetch events - serve from cache when offline
+// Fetch events - NETWORK FIRST for JS/CSS, cache for static assets
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Network-first for JavaScript and CSS files
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Clone and cache the response
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // If network fails, try cache
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+  
+  // Cache-first for everything else
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+        return response || fetch(request);
       })
       .catch(() => {
-        // If both cache and network fail, show offline page
         return caches.match('/offline.html');
       })
   );
@@ -45,7 +66,7 @@ self.addEventListener('fetch', (event) => {
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating new version');
+  console.log('SW: Activating new version v1.0.3');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -58,6 +79,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  // Take control of all clients immediately
   return self.clients.claim();
 });
