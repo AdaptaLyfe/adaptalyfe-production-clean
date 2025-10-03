@@ -165,16 +165,16 @@ export default function PersonalDocuments() {
         </Button>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-            <DialogHeader>
-              <DialogTitle>Add New Document</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
+            <DialogHeader className="text-left space-y-2">
+              <DialogTitle className="text-xl sm:text-2xl">Add New Document</DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Store important information you need to remember
               </DialogDescription>
             </DialogHeader>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
                 {/* Title Field */}
                 <FormField
                   control={form.control}
@@ -223,18 +223,18 @@ export default function PersonalDocuments() {
 
                 {/* Document Type Selection */}
                 <div>
-                  <FormLabel>Document Type *</FormLabel>
-                  <div className="flex gap-2 mt-2 flex-wrap">
+                  <FormLabel className="text-sm font-medium">Document Type *</FormLabel>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
                     <Button
                       type="button"
                       variant={docType === "text" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setDocType("text")}
                       data-testid="button-type-text"
-                      className="flex-1 sm:flex-none"
+                      className="w-full justify-center"
                     >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Text
+                      <FileText className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Text</span>
                     </Button>
                     <Button
                       type="button"
@@ -242,10 +242,10 @@ export default function PersonalDocuments() {
                       size="sm"
                       onClick={() => setDocType("image")}
                       data-testid="button-type-image"
-                      className="flex-1 sm:flex-none"
+                      className="w-full justify-center"
                     >
-                      <ImageIcon className="w-4 h-4 mr-2" />
-                      Image
+                      <ImageIcon className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Image</span>
                     </Button>
                     <Button
                       type="button"
@@ -253,10 +253,10 @@ export default function PersonalDocuments() {
                       size="sm"
                       onClick={() => setDocType("link")}
                       data-testid="button-type-link"
-                      className="flex-1 sm:flex-none"
+                      className="w-full justify-center"
                     >
-                      <LinkIcon className="w-4 h-4 mr-2" />
-                      Link
+                      <LinkIcon className="w-4 h-4 mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">Link</span>
                     </Button>
                   </div>
                 </div>
@@ -371,21 +371,24 @@ export default function PersonalDocuments() {
                   control={form.control}
                   name="isImportant"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 py-2">
                       <FormControl>
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
                           data-testid="checkbox-important"
+                          className="mt-0"
                         />
                       </FormControl>
-                      <FormLabel className="cursor-pointer">Mark as Important</FormLabel>
+                      <FormLabel className="cursor-pointer text-sm sm:text-base font-normal mb-0">
+                        Mark as Important
+                      </FormLabel>
                     </FormItem>
                   )}
                 />
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 border-t mt-6">
                   <Button
                     type="button"
                     variant="outline"
@@ -395,7 +398,7 @@ export default function PersonalDocuments() {
                       setUploadedImageUrl("");
                     }}
                     data-testid="button-cancel"
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto min-w-[100px]"
                   >
                     Cancel
                   </Button>
@@ -403,7 +406,7 @@ export default function PersonalDocuments() {
                     type="submit"
                     disabled={createMutation.isPending}
                     data-testid="button-save-document"
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+                    className="w-full sm:w-auto min-w-[120px] bg-blue-600 hover:bg-blue-700"
                   >
                     {createMutation.isPending ? "Saving..." : "Save Document"}
                   </Button>
