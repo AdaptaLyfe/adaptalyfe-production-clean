@@ -40,8 +40,6 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function PersonalDocuments() {
   const [isOpen, setIsOpen] = useState(false);
-  
-  console.log('🔍 PersonalDocuments rendered, isOpen:', isOpen);
   const [docType, setDocType] = useState<"text" | "image" | "link">("text");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const { toast } = useToast();
@@ -160,28 +158,14 @@ export default function PersonalDocuments() {
         <Button 
           className="w-full sm:w-auto" 
           data-testid="button-add-document"
-          onClick={() => {
-            console.log('🔍 Add Document button clicked!');
-            console.log('🔍 Current isOpen state:', isOpen);
-            setIsOpen(true);
-            console.log('🔍 Set isOpen to true');
-          }}
+          onClick={() => setIsOpen(true)}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Document
         </Button>
 
-        <Dialog open={isOpen} onOpenChange={(open) => {
-          console.log('🔍 Dialog onOpenChange called with:', open);
-          setIsOpen(open);
-        }}>
-          <DialogContent 
-            className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full" 
-            style={{ zIndex: 9999 }}
-            onOpenAutoFocus={(e) => {
-              console.log('🔍 Dialog opened! Content is visible');
-            }}
-          >
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>Add New Document</DialogTitle>
               <DialogDescription>
