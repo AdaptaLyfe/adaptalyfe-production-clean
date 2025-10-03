@@ -157,7 +157,11 @@ export default function PersonalDocuments() {
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto" data-testid="button-add-document">
+            <Button 
+              className="w-full sm:w-auto" 
+              data-testid="button-add-document"
+              onClick={() => setIsOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Document
             </Button>
