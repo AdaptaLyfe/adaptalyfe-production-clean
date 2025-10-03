@@ -1,22 +1,22 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { insertPersonalDocumentSchema, type PersonalDocument, type InsertPersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, Camera, Link, ExternalLink } from "lucide-react";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { insertPersonalDocumentSchema, type PersonalDocument } from "@shared/schema";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2 } from "lucide-react";
+import { z } from "zod";
 
-const DOCUMENT_CATEGORIES = [
+const CATEGORIES = [
   { value: "insurance", label: "Insurance", icon: Shield },
   { value: "medical", label: "Medical", icon: Heart },
   { value: "vehicle", label: "Vehicle", icon: Car },
@@ -25,139 +25,74 @@ const DOCUMENT_CATEGORIES = [
   { value: "emergency", label: "Emergency", icon: AlertTriangle },
 ];
 
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  category: z.string().min(1, "Category is required"),
+  documentType: z.enum(["text", "link"]),
+  content: z.string().optional(),
+  linkUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  isImportant: z.boolean().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
 export default function PersonalDocuments() {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [documentType, setDocumentType] = useState<"text" | "image" | "link">("text");
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [docType, setDocType] = useState<"text" | "link">("text");
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: documents = [], isLoading, refetch, error } = useQuery({
+  const { data: documents = [], isLoading } = useQuery<PersonalDocument[]>({
     queryKey: ["/api/personal-documents"],
-    staleTime: 0,
-    gcTime: 0,
-  });
-  
-  console.log("=== FRONTEND: Documents state ===", {
-    documents: documents,
-    length: documents?.length || 0,
-    isLoading,
-    error: error?.message
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (data: InsertPersonalDocument) => {
-      console.log("=== FRONTEND: Creating document ===", data);
-      try {
-        const response = await apiRequest("POST", "/api/personal-documents", data);
-        const result = await response.json();
-        console.log("=== FRONTEND: API Response ===", result);
-        return result;
-      } catch (error) {
-        console.error("=== FRONTEND: API Error ===", error);
-        throw error;
-      }
-    },
-    onSuccess: (result) => {
-      console.log("=== FRONTEND: Success callback ===", result);
-      // Force refetch the documents list
-      queryClient.invalidateQueries({ queryKey: ["/api/personal-documents"] });
-      queryClient.removeQueries({ queryKey: ["/api/personal-documents"] });
-      setIsAddDialogOpen(false);
-      form.reset();
-      setDocumentType("text");
-      setUploadedImageUrl("");
-      toast({ title: "Success", description: "Document saved successfully!" });
-      // Force manual refetch
-      setTimeout(() => {
-        refetch();
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("=== FRONTEND: Error callback ===", error);
-      toast({ title: "Error", description: `Failed to save document: ${error.message}`, variant: "destructive" });
-    },
-  });
-
-  const form = useForm<InsertPersonalDocument>({
-    resolver: zodResolver(insertPersonalDocumentSchema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       category: "personal",
-      description: "",
       documentType: "text",
       content: "",
-      imageUrl: "",
       linkUrl: "",
-      tags: [],
       isImportant: false,
     },
   });
 
-  const onSubmit = (data: InsertPersonalDocument) => {
-    console.log("=== FRONTEND: Form submission started ===", data);
-    console.log("=== FRONTEND: Form errors ===", form.formState.errors);
-    console.log("=== FRONTEND: Form is valid ===", form.formState.isValid);
-    
-    // Ensure required fields are present and set appropriate document type
-    const processedData = {
-      ...data,
-      description: data.description || "",
-      tags: data.tags || [],
-      documentType: documentType,
-      imageUrl: documentType === "image" ? uploadedImageUrl : "",
-      linkUrl: documentType === "link" ? data.linkUrl : "",
-      content: documentType === "text" ? data.content : 
-               documentType === "image" ? `Image: ${data.title}` :
-               documentType === "link" ? `Link: ${data.linkUrl}` : data.content || ""
-    };
-    
-    console.log("=== FRONTEND: Processed data ===", processedData);
-    
-    // Force submission even if form thinks it's invalid (for debugging)
-    createMutation.mutate(processedData);
-  };
-
-  // Handle image upload completion
-  const handleImageUpload = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    try {
-      if (result.successful && result.successful.length > 0) {
-        const uploadUrl = result.successful[0].uploadURL;
-        setUploadedImageUrl(uploadUrl || "");
-        
-        // Set the ACL policy for the uploaded image
-        await apiRequest("PUT", "/api/personal-documents/set-image", {
-          imageURL: uploadUrl
-        });
-        
-        toast({
-          title: "Success",
-          description: "Image uploaded successfully!",
-        });
-      }
-    } catch (error) {
-      console.error("Error handling image upload:", error);
-      toast({
-        title: "Error", 
-        description: "Failed to process image upload",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Handle getting upload parameters for image upload
-  const getUploadParameters = async () => {
-    try {
-      const response = await apiRequest("POST", "/api/personal-documents/upload");
-      const data = await response.json();
-      return {
-        method: "PUT" as const,
-        url: data.uploadURL,
+  const createMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const payload = {
+        ...data,
+        documentType: docType,
+        content: data.content || "",
+        linkUrl: docType === "link" ? data.linkUrl : "",
+        tags: [],
       };
-    } catch (error) {
-      console.error("Error getting upload parameters:", error);
-      throw error;
-    }
+      const res = await apiRequest("POST", "/api/personal-documents", payload);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/personal-documents"] });
+      setIsOpen(false);
+      form.reset();
+      setDocType("text");
+      toast({ title: "Success", description: "Document saved!" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save document", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/personal-documents/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/personal-documents"] });
+      toast({ title: "Success", description: "Document deleted!" });
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    createMutation.mutate(data);
   };
 
   if (isLoading) {
@@ -171,10 +106,10 @@ export default function PersonalDocuments() {
           <h1 className="text-3xl font-bold">Personal Documents</h1>
           <p className="text-gray-600">Store important information you need to remember</p>
         </div>
-        
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button data-testid="button-add-document">
               <Plus className="w-4 h-4 mr-2" />
               Add Document
             </Button>
@@ -186,7 +121,7 @@ export default function PersonalDocuments() {
                 Store important information you need to remember
               </DialogDescription>
             </DialogHeader>
-            
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -196,7 +131,7 @@ export default function PersonalDocuments() {
                     <FormItem>
                       <FormLabel>Title *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Document title..." {...field} />
+                        <Input placeholder="Insurance Card" {...field} data-testid="input-title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -209,16 +144,16 @@ export default function PersonalDocuments() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
+                          <SelectTrigger data-testid="select-category">
+                            <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {DOCUMENT_CATEGORIES.map((category) => (
-                            <SelectItem key={category.value} value={category.value}>
-                              {category.label}
+                          {CATEGORIES.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -228,42 +163,33 @@ export default function PersonalDocuments() {
                   )}
                 />
 
-                {/* Document Type Selection */}
-                <FormItem>
+                <div>
                   <FormLabel>Document Type *</FormLabel>
-                  <div className="flex gap-2">
-                    <Button 
-                      type="button" 
-                      variant={documentType === "text" ? "default" : "outline"}
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant={docType === "text" ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setDocumentType("text")}
+                      onClick={() => setDocType("text")}
+                      data-testid="button-type-text"
                     >
                       <FileText className="w-4 h-4 mr-2" />
                       Text
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant={documentType === "image" ? "default" : "outline"}
+                    <Button
+                      type="button"
+                      variant={docType === "link" ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setDocumentType("image")}
+                      onClick={() => setDocType("link")}
+                      data-testid="button-type-link"
                     >
-                      <Camera className="w-4 h-4 mr-2" />
-                      Image
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant={documentType === "link" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setDocumentType("link")}
-                    >
-                      <Link className="w-4 h-4 mr-2" />
+                      <ExternalLink className="w-4 h-4 mr-2" />
                       Link
                     </Button>
                   </div>
-                </FormItem>
+                </div>
 
-                {/* Conditional Content Fields */}
-                {documentType === "text" && (
+                {docType === "text" && (
                   <FormField
                     control={form.control}
                     name="content"
@@ -271,10 +197,11 @@ export default function PersonalDocuments() {
                       <FormItem>
                         <FormLabel>Information *</FormLabel>
                         <FormControl>
-                          <Textarea 
+                          <Textarea
                             placeholder="Enter the information you want to save..."
                             className="min-h-[100px]"
-                            {...field} 
+                            {...field}
+                            data-testid="textarea-content"
                           />
                         </FormControl>
                         <FormMessage />
@@ -283,83 +210,25 @@ export default function PersonalDocuments() {
                   />
                 )}
 
-                {documentType === "image" && (
-                  <div className="space-y-4">
-                    <div>
-                      <FormLabel>Upload Image</FormLabel>
-                      <div className="mt-2">
-                        <ObjectUploader
-                          maxNumberOfFiles={1}
-                          maxFileSize={10485760} // 10MB
-                          onGetUploadParameters={getUploadParameters}
-                          onComplete={handleImageUpload}
-                          buttonClassName="w-full"
-                        >
-                          <Camera className="w-4 h-4 mr-2" />
-                          {uploadedImageUrl ? "Change Image" : "Upload Image"}
-                        </ObjectUploader>
-                        {uploadedImageUrl && (
-                          <p className="text-sm text-green-600 mt-2">✓ Image uploaded successfully</p>
-                        )}
-                      </div>
-                    </div>
-                    <FormField
-                      control={form.control}
-                      name="content"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Add a description for this image..."
-                              className="min-h-[60px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                {documentType === "link" && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="linkUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Website URL *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="https://example.com"
-                              type="url"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="content"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Add a description for this link..."
-                              className="min-h-[60px]"
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                {docType === "link" && (
+                  <FormField
+                    control={form.control}
+                    name="linkUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Website URL *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://example.com"
+                            type="url"
+                            {...field}
+                            data-testid="input-link-url"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
 
                 <FormField
@@ -368,15 +237,13 @@ export default function PersonalDocuments() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                       <FormControl>
-                        <input 
-                          type="checkbox" 
+                        <Checkbox
                           checked={field.value}
-                          onChange={field.onChange}
-                          className="h-4 w-4"
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-important"
                         />
                       </FormControl>
                       <FormLabel>Mark as Important</FormLabel>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -385,28 +252,15 @@ export default function PersonalDocuments() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsAddDialogOpen(false)}
+                    onClick={() => setIsOpen(false)}
+                    data-testid="button-cancel"
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={createMutation.isPending}
-                    className="border-2 border-blue-500 bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-                    onClick={(e) => {
-                      console.log("=== FRONTEND: Save button clicked ===");
-                      console.log("=== FRONTEND: Form valid? ===", form.formState.isValid);
-                      console.log("=== FRONTEND: Form values ===", form.getValues());
-                      console.log("=== FRONTEND: Form errors ===", form.formState.errors);
-                      
-                      // Force submit regardless of validation for debugging
-                      if (!form.formState.isValid) {
-                        console.log("=== FRONTEND: Forcing submission despite validation errors ===");
-                        const values = form.getValues();
-                        onSubmit(values);
-                        e.preventDefault();
-                      }
-                    }}
+                    data-testid="button-save-document"
                   >
                     {createMutation.isPending ? "Saving..." : "Save Document"}
                   </Button>
@@ -417,86 +271,69 @@ export default function PersonalDocuments() {
         </Dialog>
       </div>
 
-      {/* Documents List */}
-      <div className="grid gap-4">
-        {documents.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No documents yet</h3>
-              <p className="text-gray-600 mb-4">Add your first personal document to get started</p>
-            </CardContent>
-          </Card>
-        ) : (
-          documents.map((document: PersonalDocument) => {
-            const categoryInfo = DOCUMENT_CATEGORIES.find(cat => cat.value === document.category);
-            const IconComponent = categoryInfo?.icon || FileText;
-            
+      {documents.length === 0 ? (
+        <Card className="bg-gray-50">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <FileText className="w-16 h-16 text-gray-400 mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No documents yet</h3>
+            <p className="text-gray-600">Add your first personal document to get started</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {documents.map((doc) => {
+            const category = CATEGORIES.find((c) => c.value === doc.category);
+            const Icon = category?.icon || FileText;
+
             return (
-              <Card key={document.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <IconComponent className="w-5 h-5 mr-2" />
-                      {document.title}
-                      {document.isImportant && (
-                        <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                          Important
-                        </span>
-                      )}
+              <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-semibold">{doc.title}</h3>
                     </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-2">Category: {categoryInfo?.label || document.category}</p>
-                  
-                  {/* Display content based on document type */}
-                  {document.documentType === "image" && document.imageUrl && (
-                    <div className="space-y-2">
-                      <img 
-                        src={document.imageUrl} 
-                        alt={document.title}
-                        className="max-w-full h-auto rounded border"
-                        style={{ maxHeight: "200px" }}
-                      />
-                      {document.content && (
-                        <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm">{document.content}</p>
-                        </div>
-                      )}
-                    </div>
+                    {doc.isImportant && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
+                        Important
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-gray-600 mb-2">{category?.label}</p>
+
+                  {doc.documentType === "text" && doc.content && (
+                    <p className="text-sm text-gray-700 line-clamp-3">{doc.content}</p>
                   )}
-                  
-                  {document.documentType === "link" && document.linkUrl && (
-                    <div className="space-y-2">
-                      <a 
-                        href={document.linkUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800 underline"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        Open Link
-                      </a>
-                      {document.content && (
-                        <div className="bg-gray-50 p-3 rounded">
-                          <p className="text-sm">{document.content}</p>
-                        </div>
-                      )}
-                    </div>
+
+                  {doc.documentType === "link" && doc.linkUrl && (
+                    <a
+                      href={doc.linkUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Open Link
+                    </a>
                   )}
-                  
-                  {document.documentType === "text" && (
-                    <div className="bg-gray-50 p-3 rounded">
-                      <pre className="text-sm whitespace-pre-wrap">{document.content}</pre>
-                    </div>
-                  )}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => deleteMutation.mutate(doc.id)}
+                    data-testid={`button-delete-${doc.id}`}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
+                  </Button>
                 </CardContent>
               </Card>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }
