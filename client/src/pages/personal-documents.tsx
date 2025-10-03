@@ -40,6 +40,8 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function PersonalDocuments() {
   const [isOpen, setIsOpen] = useState(false);
+  
+  console.log('🔍 PersonalDocuments rendered, isOpen:', isOpen);
   const [docType, setDocType] = useState<"text" | "image" | "link">("text");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const { toast } = useToast();
@@ -158,7 +160,12 @@ export default function PersonalDocuments() {
         <Button 
           className="w-full sm:w-auto" 
           data-testid="button-add-document"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            console.log('🔍 Add Document button clicked!');
+            console.log('🔍 Current isOpen state:', isOpen);
+            setIsOpen(true);
+            console.log('🔍 Set isOpen to true');
+          }}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Document
