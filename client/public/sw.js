@@ -1,5 +1,5 @@
 // Adaptalyfe Service Worker for PWA functionality
-const CACHE_NAME = 'adaptalyfe-v1.0.3';
+const CACHE_NAME = 'adaptalyfe-v1.0.4';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -17,7 +17,7 @@ self.addEventListener('message', (event) => {
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing new version v1.0.3');
+  console.log('SW: Installing new version v1.0.4');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -32,16 +32,25 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
   
+  // Skip caching for chrome-extension and other non-http(s) schemes
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+  
   // Network-first for JavaScript and CSS files
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.startsWith('/assets/')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone and cache the response
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
-          });
+          // Only cache successful responses
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            }).catch((err) => {
+              console.log('Cache put failed:', err);
+            });
+          }
           return response;
         })
         .catch(() => {
@@ -66,7 +75,7 @@ self.addEventListener('fetch', (event) => {
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating new version v1.0.3');
+  console.log('SW: Activating new version v1.0.4');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
