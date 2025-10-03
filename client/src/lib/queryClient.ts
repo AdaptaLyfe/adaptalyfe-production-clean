@@ -2,10 +2,10 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 // Inline API configuration to avoid build path issues
 const API_CONFIG = {
-  // Use relative URLs for same-origin deployment (no CORS issues)
-  baseURL: '',
+  // Use Replit backend URL for Firebase deployment
+  baseURL: 'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
   
-  // Enable credentials for requests
+  // Enable credentials for cross-origin requests
   credentials: 'include' as RequestCredentials,
 };
 
