@@ -12,8 +12,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { insertPersonalDocumentSchema, type PersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2 } from "lucide-react";
+import { type PersonalDocument } from "@shared/schema";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Image as ImageIcon, Link as LinkIcon, Camera } from "lucide-react";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
 
 const CATEGORIES = [
@@ -28,9 +30,9 @@ const CATEGORIES = [
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   category: z.string().min(1, "Category is required"),
-  documentType: z.enum(["text", "link"]),
+  documentType: z.enum(["text", "image", "link"]),
   content: z.string().optional(),
-  linkUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  linkUrl: z.string().optional(),
   isImportant: z.boolean().optional(),
 });
 
@@ -38,7 +40,8 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function PersonalDocuments() {
   const [isOpen, setIsOpen] = useState(false);
-  const [docType, setDocType] = useState<"text" | "link">("text");
+  const [docType, setDocType] = useState<"text" | "image" | "link">("text");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const { toast } = useToast();
 
   const { data: documents = [], isLoading } = useQuery<PersonalDocument[]>({
@@ -49,7 +52,7 @@ export default function PersonalDocuments() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      category: "personal",
+      category: "medical",
       documentType: "text",
       content: "",
       linkUrl: "",
@@ -64,6 +67,7 @@ export default function PersonalDocuments() {
         documentType: docType,
         content: data.content || "",
         linkUrl: docType === "link" ? data.linkUrl : "",
+        imageUrl: docType === "image" ? uploadedImageUrl : "",
         tags: [],
       };
       const res = await apiRequest("POST", "/api/personal-documents", payload);
@@ -74,10 +78,15 @@ export default function PersonalDocuments() {
       setIsOpen(false);
       form.reset();
       setDocType("text");
-      toast({ title: "Success", description: "Document saved!" });
+      setUploadedImageUrl("");
+      toast({ title: "Success", description: "Document saved successfully!" });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to save document", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to save document", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -91,30 +100,69 @@ export default function PersonalDocuments() {
     },
   });
 
+  const handleImageUpload = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    try {
+      if (result.successful && result.successful.length > 0) {
+        const uploadUrl = result.successful[0].uploadURL;
+        setUploadedImageUrl(uploadUrl || "");
+        
+        await apiRequest("PUT", "/api/personal-documents/set-image", {
+          imageURL: uploadUrl
+        });
+        
+        toast({
+          title: "Success",
+          description: "Image uploaded successfully!",
+        });
+      }
+    } catch (error) {
+      console.error("Error handling image upload:", error);
+      toast({
+        title: "Error", 
+        description: "Failed to process image upload",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getUploadParameters = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/personal-documents/upload");
+      const data = await response.json();
+      return {
+        method: "PUT" as const,
+        url: data.uploadURL,
+      };
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      throw error;
+    }
+  };
+
   const onSubmit = (data: FormData) => {
     createMutation.mutate(data);
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-4 md:p-6">Loading...</div>;
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Personal Documents</h1>
-          <p className="text-gray-600">Store important information you need to remember</p>
+          <h1 className="text-2xl md:text-3xl font-bold">Personal Documents</h1>
+          <p className="text-sm md:text-base text-gray-600">Store important information you need to remember</p>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-document">
+            <Button className="w-full sm:w-auto" data-testid="button-add-document">
               <Plus className="w-4 h-4 mr-2" />
               Add Document
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>Add New Document</DialogTitle>
               <DialogDescription>
@@ -124,6 +172,7 @@ export default function PersonalDocuments() {
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* Title Field */}
                 <FormField
                   control={form.control}
                   name="title"
@@ -131,13 +180,19 @@ export default function PersonalDocuments() {
                     <FormItem>
                       <FormLabel>Title *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Insurance Card" {...field} data-testid="input-title" />
+                        <Input 
+                          placeholder="Insurance Card" 
+                          {...field} 
+                          data-testid="input-title"
+                          className="w-full"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
+                {/* Category Field */}
                 <FormField
                   control={form.control}
                   name="category"
@@ -146,7 +201,7 @@ export default function PersonalDocuments() {
                       <FormLabel>Category *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger data-testid="select-category">
+                          <SelectTrigger data-testid="select-category" className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -163,18 +218,31 @@ export default function PersonalDocuments() {
                   )}
                 />
 
+                {/* Document Type Selection */}
                 <div>
                   <FormLabel>Document Type *</FormLabel>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 flex-wrap">
                     <Button
                       type="button"
                       variant={docType === "text" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setDocType("text")}
                       data-testid="button-type-text"
+                      className="flex-1 sm:flex-none"
                     >
                       <FileText className="w-4 h-4 mr-2" />
                       Text
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={docType === "image" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDocType("image")}
+                      data-testid="button-type-image"
+                      className="flex-1 sm:flex-none"
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Image
                     </Button>
                     <Button
                       type="button"
@@ -182,13 +250,15 @@ export default function PersonalDocuments() {
                       size="sm"
                       onClick={() => setDocType("link")}
                       data-testid="button-type-link"
+                      className="flex-1 sm:flex-none"
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <LinkIcon className="w-4 h-4 mr-2" />
                       Link
                     </Button>
                   </div>
                 </div>
 
+                {/* Conditional Content Fields */}
                 {docType === "text" && (
                   <FormField
                     control={form.control}
@@ -199,7 +269,7 @@ export default function PersonalDocuments() {
                         <FormControl>
                           <Textarea
                             placeholder="Enter the information you want to save..."
-                            className="min-h-[100px]"
+                            className="min-h-[100px] w-full resize-none"
                             {...field}
                             data-testid="textarea-content"
                           />
@@ -210,27 +280,90 @@ export default function PersonalDocuments() {
                   />
                 )}
 
-                {docType === "link" && (
-                  <FormField
-                    control={form.control}
-                    name="linkUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website URL *</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="https://example.com"
-                            type="url"
-                            {...field}
-                            data-testid="input-link-url"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {docType === "image" && (
+                  <div className="space-y-4">
+                    <div>
+                      <FormLabel>Upload Image</FormLabel>
+                      <div className="mt-2">
+                        <ObjectUploader
+                          maxNumberOfFiles={1}
+                          maxFileSize={10485760}
+                          onGetUploadParameters={getUploadParameters}
+                          onComplete={handleImageUpload}
+                          buttonClassName="w-full"
+                        >
+                          <Camera className="w-4 h-4 mr-2" />
+                          {uploadedImageUrl ? "Change Image" : "Upload Image"}
+                        </ObjectUploader>
+                        {uploadedImageUrl && (
+                          <p className="text-sm text-green-600 mt-2">✓ Image uploaded successfully</p>
+                        )}
+                      </div>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Add a description for this image..."
+                              className="min-h-[80px] w-full resize-none"
+                              {...field}
+                              data-testid="textarea-description"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 )}
 
+                {docType === "link" && (
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="linkUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Website URL *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com"
+                              type="url"
+                              {...field}
+                              data-testid="input-link-url"
+                              className="w-full"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Add a description for this link..."
+                              className="min-h-[80px] w-full resize-none"
+                              {...field}
+                              data-testid="textarea-link-description"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Mark as Important Checkbox */}
                 <FormField
                   control={form.control}
                   name="isImportant"
@@ -243,17 +376,23 @@ export default function PersonalDocuments() {
                           data-testid="checkbox-important"
                         />
                       </FormControl>
-                      <FormLabel>Mark as Important</FormLabel>
+                      <FormLabel className="cursor-pointer">Mark as Important</FormLabel>
                     </FormItem>
                   )}
                 />
 
-                <div className="flex justify-end space-x-2 pt-4">
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => {
+                      setIsOpen(false);
+                      form.reset();
+                      setUploadedImageUrl("");
+                    }}
                     data-testid="button-cancel"
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -261,6 +400,7 @@ export default function PersonalDocuments() {
                     type="submit"
                     disabled={createMutation.isPending}
                     data-testid="button-save-document"
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
                   >
                     {createMutation.isPending ? "Saving..." : "Save Document"}
                   </Button>
@@ -271,12 +411,13 @@ export default function PersonalDocuments() {
         </Dialog>
       </div>
 
+      {/* Documents List */}
       {documents.length === 0 ? (
         <Card className="bg-gray-50">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <FileText className="w-16 h-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No documents yet</h3>
-            <p className="text-gray-600">Add your first personal document to get started</p>
+          <CardContent className="flex flex-col items-center justify-center py-12 md:py-16">
+            <FileText className="w-12 h-12 md:w-16 md:h-16 text-gray-400 mb-4" />
+            <h3 className="text-lg md:text-xl font-semibold mb-2">No documents yet</h3>
+            <p className="text-sm md:text-base text-gray-600 text-center px-4">Add your first personal document to get started</p>
           </CardContent>
         </Card>
       ) : (
@@ -289,12 +430,12 @@ export default function PersonalDocuments() {
               <Card key={doc.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-5 h-5 text-blue-600" />
-                      <h3 className="font-semibold">{doc.title}</h3>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <Icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                      <h3 className="font-semibold truncate">{doc.title}</h3>
                     </div>
                     {doc.isImportant && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded flex-shrink-0 ml-2">
                         Important
                       </span>
                     )}
@@ -303,25 +444,43 @@ export default function PersonalDocuments() {
                   <p className="text-sm text-gray-600 mb-2">{category?.label}</p>
 
                   {doc.documentType === "text" && doc.content && (
-                    <p className="text-sm text-gray-700 line-clamp-3">{doc.content}</p>
+                    <p className="text-sm text-gray-700 line-clamp-3 mb-3">{doc.content}</p>
+                  )}
+
+                  {doc.documentType === "image" && doc.imageUrl && (
+                    <div className="mb-3">
+                      <img 
+                        src={doc.imageUrl} 
+                        alt={doc.title}
+                        className="w-full h-32 object-cover rounded-md"
+                      />
+                      {doc.content && (
+                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">{doc.content}</p>
+                      )}
+                    </div>
                   )}
 
                   {doc.documentType === "link" && doc.linkUrl && (
-                    <a
-                      href={doc.linkUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Open Link
-                    </a>
+                    <div className="mb-3">
+                      <a
+                        href={doc.linkUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex items-center gap-1 break-all"
+                      >
+                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{doc.linkUrl}</span>
+                      </a>
+                      {doc.content && (
+                        <p className="text-sm text-gray-700 mt-2 line-clamp-2">{doc.content}</p>
+                      )}
+                    </div>
                   )}
 
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="mt-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto"
                     onClick={() => deleteMutation.mutate(doc.id)}
                     data-testid={`button-delete-${doc.id}`}
                   >
