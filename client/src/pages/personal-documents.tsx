@@ -182,6 +182,7 @@ export default function PersonalDocuments() {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add New Document</DialogTitle>
+              <p className="text-sm text-gray-500 mt-2">Store important information you need to remember</p>
             </DialogHeader>
             
             <Form {...form}>
