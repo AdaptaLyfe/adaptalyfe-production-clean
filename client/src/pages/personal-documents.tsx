@@ -224,36 +224,48 @@ export default function PersonalDocuments() {
                 {/* Document Type Selection */}
                 <div>
                   <FormLabel className="text-sm font-medium">Document Type *</FormLabel>
-                  <div className="grid grid-cols-3 gap-2 mt-2">
+                  <div className="grid grid-cols-3 gap-3 mt-2">
                     <Button
                       type="button"
-                      variant={docType === "text" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => setDocType("text")}
                       data-testid="button-type-text"
-                      className="w-full justify-center"
+                      className={`w-full justify-center transition-all ${
+                        docType === "text" 
+                          ? "border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-md" 
+                          : "border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                      }`}
                     >
                       <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                       <span className="text-xs sm:text-sm">Text</span>
                     </Button>
                     <Button
                       type="button"
-                      variant={docType === "image" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => setDocType("image")}
                       data-testid="button-type-image"
-                      className="w-full justify-center"
+                      className={`w-full justify-center transition-all ${
+                        docType === "image" 
+                          ? "border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-md" 
+                          : "border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                      }`}
                     >
                       <ImageIcon className="w-4 h-4 mr-1 sm:mr-2" />
                       <span className="text-xs sm:text-sm">Image</span>
                     </Button>
                     <Button
                       type="button"
-                      variant={docType === "link" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
                       onClick={() => setDocType("link")}
                       data-testid="button-type-link"
-                      className="w-full justify-center"
+                      className={`w-full justify-center transition-all ${
+                        docType === "link" 
+                          ? "border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-md" 
+                          : "border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                      }`}
                     >
                       <LinkIcon className="w-4 h-4 mr-1 sm:mr-2" />
                       <span className="text-xs sm:text-sm">Link</span>
