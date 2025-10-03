@@ -34,23 +34,8 @@ export default function PersonalDocuments() {
 
   const { data: documents = [], isLoading, refetch, error } = useQuery({
     queryKey: ["/api/personal-documents"],
-    staleTime: 0, // Always refetch
-    gcTime: 0, // Don't cache
-    queryFn: async () => {
-      console.log("=== FRONTEND: Fetching documents ===");
-      const response = await fetch("/api/personal-documents", {
-        credentials: "include",
-      });
-      
-      if (!response.ok) {
-        console.error("=== FRONTEND: Fetch error ===", response.status, response.statusText);
-        throw new Error(`${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log("=== FRONTEND: Raw API response ===", data);
-      return data;
-    }
+    staleTime: 0,
+    gcTime: 0,
   });
   
   console.log("=== FRONTEND: Documents state ===", {
