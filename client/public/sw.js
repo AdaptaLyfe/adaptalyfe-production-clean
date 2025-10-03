@@ -1,5 +1,5 @@
 // Adaptalyfe Service Worker for PWA functionality
-const CACHE_NAME = 'adaptalyfe-v1.0.6';
+const CACHE_NAME = 'adaptalyfe-v1.0.7';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -17,7 +17,7 @@ self.addEventListener('message', (event) => {
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing new version v1.0.6');
+  console.log('SW: Installing new version v1.0.7');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {

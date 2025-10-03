@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -155,17 +155,16 @@ export default function PersonalDocuments() {
           <p className="text-sm md:text-base text-gray-600">Store important information you need to remember</p>
         </div>
 
+        <Button 
+          className="w-full sm:w-auto" 
+          data-testid="button-add-document"
+          onClick={() => setIsOpen(true)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Document
+        </Button>
+
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="w-full sm:w-auto" 
-              data-testid="button-add-document"
-              onClick={() => setIsOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Document
-            </Button>
-          </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
               <DialogTitle>Add New Document</DialogTitle>
