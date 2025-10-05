@@ -13,7 +13,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type PersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Image as ImageIcon, Link as LinkIcon, Camera } from "lucide-react";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Edit, Image as ImageIcon, Link as LinkIcon, Camera } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
@@ -40,6 +40,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function PersonalDocuments() {
   const [isOpen, setIsOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<any>(null);
   const [docType, setDocType] = useState<"text" | "image" | "link">("text");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const { toast } = useToast();
@@ -70,21 +71,31 @@ export default function PersonalDocuments() {
         imageUrl: docType === "image" ? uploadedImageUrl : "",
         tags: [],
       };
-      const res = await apiRequest("POST", "/api/personal-documents", payload);
-      return res.json();
+      
+      if (editingDoc) {
+        const res = await apiRequest("PATCH", `/api/personal-documents/${editingDoc.id}`, payload);
+        return res.json();
+      } else {
+        const res = await apiRequest("POST", "/api/personal-documents", payload);
+        return res.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/personal-documents"] });
       setIsOpen(false);
+      setEditingDoc(null);
       form.reset();
       setDocType("text");
       setUploadedImageUrl("");
-      toast({ title: "Success", description: "Document saved successfully!" });
+      toast({ 
+        title: "Success", 
+        description: editingDoc ? "Document updated successfully!" : "Document saved successfully!" 
+      });
     },
     onError: (error: any) => {
       toast({ 
         title: "Error", 
-        description: error?.message || "Failed to save document", 
+        description: error?.message || `Failed to ${editingDoc ? "update" : "save"} document`, 
         variant: "destructive" 
       });
     },
@@ -164,10 +175,18 @@ export default function PersonalDocuments() {
           Add Document
         </Button>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+          setIsOpen(open);
+          if (!open) {
+            setEditingDoc(null);
+            form.reset();
+            setDocType("text");
+            setUploadedImageUrl("");
+          }
+        }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
             <DialogHeader>
-              <DialogTitle>Add New Document</DialogTitle>
+              <DialogTitle>{editingDoc ? "Edit Document" : "Add New Document"}</DialogTitle>
               <DialogDescription>
                 Store important information you need to remember
               </DialogDescription>
@@ -420,7 +439,9 @@ export default function PersonalDocuments() {
                     data-testid="button-save-document"
                     className="w-full sm:w-auto min-w-[120px] bg-blue-600 hover:bg-blue-700"
                   >
-                    {createMutation.isPending ? "Saving..." : "Save Document"}
+                    {createMutation.isPending 
+                      ? (editingDoc ? "Updating..." : "Saving...") 
+                      : (editingDoc ? "Update Document" : "Save Document")}
                   </Button>
                 </div>
               </form>
@@ -495,16 +516,41 @@ export default function PersonalDocuments() {
                     </div>
                   )}
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto"
-                    onClick={() => deleteMutation.mutate(doc.id)}
-                    data-testid={`button-delete-${doc.id}`}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex-1 sm:flex-none"
+                      onClick={() => {
+                        setEditingDoc(doc);
+                        setDocType(doc.documentType as "text" | "image" | "link");
+                        setUploadedImageUrl(doc.imageUrl || "");
+                        form.reset({
+                          title: doc.title,
+                          category: doc.category,
+                          documentType: doc.documentType as "text" | "image" | "link",
+                          content: doc.content || "",
+                          linkUrl: doc.linkUrl || "",
+                          isImportant: doc.isImportant || false,
+                        });
+                        setIsOpen(true);
+                      }}
+                      data-testid={`button-edit-${doc.id}`}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 sm:flex-none"
+                      onClick={() => deleteMutation.mutate(doc.id)}
+                      data-testid={`button-delete-${doc.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             );
