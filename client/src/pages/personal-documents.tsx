@@ -244,7 +244,10 @@ export default function PersonalDocuments() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setDocType("text")}
+                      onClick={() => {
+                        setDocType("text");
+                        form.setValue("documentType", "text");
+                      }}
                       data-testid="button-type-text"
                       className={`w-full justify-center transition-all ${
                         docType === "text" 
@@ -259,7 +262,10 @@ export default function PersonalDocuments() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setDocType("image")}
+                      onClick={() => {
+                        setDocType("image");
+                        form.setValue("documentType", "image");
+                      }}
                       data-testid="button-type-image"
                       className={`w-full justify-center transition-all ${
                         docType === "image" 
@@ -274,7 +280,10 @@ export default function PersonalDocuments() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setDocType("link")}
+                      onClick={() => {
+                        setDocType("link");
+                        form.setValue("documentType", "link");
+                      }}
                       data-testid="button-type-link"
                       className={`w-full justify-center transition-all ${
                         docType === "link" 
