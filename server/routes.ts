@@ -4641,7 +4641,7 @@ Provide a helpful, encouraging response:`;
           imageURL,
           {
             owner: userId.toString(),
-            visibility: "private", // Personal documents should be private
+            visibility: "public", // Make images publicly accessible for display
           }
         );
 
