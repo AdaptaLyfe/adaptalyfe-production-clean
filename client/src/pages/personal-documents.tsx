@@ -13,10 +13,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type PersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Edit, Image as ImageIcon, Link as LinkIcon, Camera } from "lucide-react";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Edit, Image as ImageIcon, Link as LinkIcon, Camera, Clock } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
+import { formatDistanceToNow } from "date-fns";
 
 const CATEGORIES = [
   { value: "insurance", label: "Insurance", icon: Shield },
@@ -486,6 +487,19 @@ export default function PersonalDocuments() {
                   </div>
 
                   <p className="text-sm text-gray-600 mb-2">{category?.label}</p>
+
+                  <div className="flex flex-col gap-1 mb-3 text-xs text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Created {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}</span>
+                    </div>
+                    {doc.updatedAt && new Date(doc.updatedAt).getTime() !== new Date(doc.createdAt).getTime() && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Updated {formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</span>
+                      </div>
+                    )}
+                  </div>
 
                   {doc.documentType === "text" && doc.content && (
                     <p className="text-sm text-gray-700 line-clamp-3 mb-3">{doc.content}</p>
