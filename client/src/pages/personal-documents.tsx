@@ -489,11 +489,13 @@ export default function PersonalDocuments() {
                   <p className="text-sm text-gray-600 mb-2">{category?.label}</p>
 
                   <div className="flex flex-col gap-1 mb-3 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>Created {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}</span>
-                    </div>
-                    {doc.updatedAt && new Date(doc.updatedAt).getTime() !== new Date(doc.createdAt).getTime() && (
+                    {doc.createdAt && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Created {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}</span>
+                      </div>
+                    )}
+                    {doc.updatedAt && doc.createdAt && new Date(doc.updatedAt).getTime() !== new Date(doc.createdAt).getTime() && (
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span>Updated {formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })}</span>
