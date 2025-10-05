@@ -4613,7 +4613,8 @@ Provide a helpful, encouraging response:`;
 
       const { ObjectStorageService } = await import('./objectStorage');
       const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      // Use public upload URL for personal documents so images can be displayed
+      const uploadURL = await objectStorageService.getPublicObjectUploadURL();
       res.json({ uploadURL });
     } catch (error) {
       console.error("Error getting upload URL:", error);
@@ -4621,42 +4622,6 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.put("/api/personal-documents/set-image", async (req: any, res) => {
-    try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const { imageURL } = req.body;
-      if (!imageURL) {
-        return res.status(400).json({ error: "imageURL is required" });
-      }
-
-      const userId = req.session.user.id;
-
-      try {
-        const { ObjectStorageService } = await import('./objectStorage');
-        const objectStorageService = new ObjectStorageService();
-        const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-          imageURL,
-          {
-            owner: userId.toString(),
-            visibility: "public", // Make images publicly accessible for display
-          }
-        );
-
-        res.status(200).json({
-          objectPath: objectPath,
-        });
-      } catch (error) {
-        console.error("Error setting document image:", error);
-        res.status(500).json({ error: "Internal server error" });
-      }
-    } catch (error) {
-      console.error("Error in set-image endpoint:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
 
   // Route to serve uploaded personal document images
   app.get("/objects/:objectPath(*)", async (req: any, res) => {
