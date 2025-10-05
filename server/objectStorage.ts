@@ -247,6 +247,33 @@ export class ObjectStorageService {
     return normalizedPath;
   }
 
+  // Sets ACL policy for a public object (for personal document images)
+  async setPublicObjectAcl(
+    rawPath: string,
+    aclPolicy: ObjectAclPolicy
+  ): Promise<void> {
+    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+      throw new Error("Invalid public object URL");
+    }
+
+    // Extract path from URL
+    const url = new URL(rawPath);
+    const fullPath = url.pathname; // e.g., /bucket-name/public/uploads/uuid
+    
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+
+    // Check if file exists
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new Error(`Object not found: ${objectName}`);
+    }
+
+    // Set ACL policy
+    await setObjectAclPolicy(file, aclPolicy);
+  }
+
   // Checks if the user can access the object entity.
   async canAccessObjectEntity({
     userId,

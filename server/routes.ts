@@ -4622,6 +4622,33 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // Set public ACL for uploaded personal document images
+  app.post("/api/personal-documents/set-public-acl", async (req: any, res) => {
+    try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ error: "imageUrl is required" });
+      }
+
+      const { ObjectStorageService } = await import('./objectStorage');
+      const objectStorageService = new ObjectStorageService();
+      
+      await objectStorageService.setPublicObjectAcl(imageUrl, {
+        owner: req.session.user.id.toString(),
+        visibility: "public"
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error setting public ACL:", error);
+      res.status(500).json({ error: "Failed to set public ACL" });
+    }
+  });
+
 
   // Route to serve uploaded personal document images
   app.get("/objects/:objectPath(*)", async (req: any, res) => {

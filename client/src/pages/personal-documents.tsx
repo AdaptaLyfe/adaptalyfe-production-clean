@@ -118,6 +118,15 @@ export default function PersonalDocuments() {
         const uploadUrl = result.successful[0].uploadURL;
         setUploadedImageUrl(uploadUrl || "");
         
+        // Set public ACL so image can be displayed
+        try {
+          await apiRequest("POST", "/api/personal-documents/set-public-acl", {
+            imageUrl: uploadUrl
+          });
+        } catch (aclError) {
+          console.error("Error setting public ACL:", aclError);
+        }
+        
         toast({
           title: "Success",
           description: "Image uploaded successfully!",
