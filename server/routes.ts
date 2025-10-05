@@ -4582,6 +4582,17 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  app.patch("/api/personal-documents/:id", async (req, res) => {
+    try {
+      const documentId = parseInt(req.params.id);
+      const document = await storage.updatePersonalDocument(documentId, req.body);
+      res.json(document);
+    } catch (error) {
+      console.error("Error updating personal document:", error);
+      res.status(500).json({ message: "Failed to update document" });
+    }
+  });
+
   app.delete("/api/personal-documents/:id", async (req, res) => {
     try {
       const documentId = parseInt(req.params.id);
