@@ -117,10 +117,6 @@ export default function PersonalDocuments() {
         const uploadUrl = result.successful[0].uploadURL;
         setUploadedImageUrl(uploadUrl || "");
         
-        await apiRequest("PUT", "/api/personal-documents/set-image", {
-          imageURL: uploadUrl
-        });
-        
         toast({
           title: "Success",
           description: "Image uploaded successfully!",
