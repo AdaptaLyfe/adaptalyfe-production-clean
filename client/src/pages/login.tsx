@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, setSessionToken } from "@/lib/queryClient";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -42,6 +42,12 @@ export default function Login() {
 
       // Get user data to ensure session is properly established
       const userData = await response.json();
+
+      // Store session token for mobile auth (if provided)
+      if (userData.sessionToken) {
+        setSessionToken(userData.sessionToken);
+        console.log("✅ Session token saved for mobile auth");
+      }
 
       toast({
         title: "Login Successful!",
