@@ -709,6 +709,7 @@ export default function PharmacyModule() {
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
 
             <div className="space-y-3">
               {userPharmacies.length === 0 ? (
