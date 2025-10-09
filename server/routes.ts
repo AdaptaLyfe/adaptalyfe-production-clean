@@ -348,7 +348,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             username: user.username, 
             name: user.name, 
             email: user.email 
-          } 
+          },
+          sessionToken: req.session.id // Include session ID for mobile/header-based auth
         });
       });
     } catch (error) {
