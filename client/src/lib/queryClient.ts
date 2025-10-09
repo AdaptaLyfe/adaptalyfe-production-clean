@@ -30,6 +30,20 @@ export function clearSessionToken(): void {
   localStorage.removeItem(SESSION_TOKEN_KEY);
 }
 
+// Logout helper that clears both server session and client token
+export async function logout(): Promise<void> {
+  try {
+    // Call backend logout to destroy server session
+    await apiRequest("POST", "/api/logout", {});
+  } catch (error) {
+    console.error("Logout API call failed:", error);
+    // Continue to clear local token even if API fails
+  } finally {
+    // Always clear the session token from localStorage
+    clearSessionToken();
+  }
+}
+
 // Helper to get auth headers (includes session token if available)
 function getAuthHeaders(): HeadersInit {
   const sessionToken = getSessionToken();
