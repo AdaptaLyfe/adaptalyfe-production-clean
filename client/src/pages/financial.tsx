@@ -444,7 +444,7 @@ export default function Financial() {
                                   </FormItem>
                                 )}
                               />
-                              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold" disabled={createBudgetMutation.isPending}>
+                              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={createBudgetMutation.isPending}>
                                 {createBudgetMutation.isPending ? "Adding..." : "Add Entry"}
                               </Button>
                             </form>
@@ -658,7 +658,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold" disabled={billMutation.isPending}>
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={billMutation.isPending}>
                             {billMutation.isPending ? "Saving..." : 
                              editingBill ? "Update Bill" : "Add Bill"}
                           </Button>
@@ -882,7 +882,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold" disabled={savingsGoalMutation.isPending}>
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={savingsGoalMutation.isPending}>
                             {savingsGoalMutation.isPending ? "Saving..." : 
                              editingSavingsGoal ? "Update Goal" : "Create Goal"}
                           </Button>
@@ -1049,7 +1049,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-semibold" disabled={categoryMutation.isPending}>
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={categoryMutation.isPending}>
                             {categoryMutation.isPending ? "Saving..." : 
                              editingCategory ? "Update Category" : "Add Category"}
                           </Button>
