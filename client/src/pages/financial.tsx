@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, DollarSign, Plus, CheckCircle, AlertCircle, CreditCard, Building, Target, FolderOpen } from "lucide-react";
+import { Calendar, DollarSign, Plus, CheckCircle, AlertCircle, CreditCard, Building, Target, FolderOpen, ExternalLink, Trash2 } from "lucide-react";
 import SavingsGoals from "@/components/savings-goals";
 import BudgetCategories from "@/components/budget-categories";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency, getDaysUntilDue } from "@/lib/utils";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
-import type { Bill, BudgetEntry } from "@shared/schema";
+import type { Bill, BudgetEntry, BankAccount } from "@shared/schema";
 
 const billSchema = z.object({
   name: z.string().min(1, "Bill name is required"),
@@ -52,6 +52,14 @@ const categorySchema = z.object({
   color: z.string().optional(),
 });
 
+const bankAccountSchema = z.object({
+  bankName: z.string().min(1, "Bank name is required"),
+  accountType: z.enum(["checking", "savings", "credit"]),
+  accountNickname: z.string().optional(),
+  bankWebsite: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  lastFour: z.string().max(4, "Last 4 digits only").optional(),
+});
+
 export default function Financial() {
   const { isPremiumUser } = useSubscriptionEnforcement();
   const { toast } = useToast();
@@ -74,9 +82,11 @@ export default function Financial() {
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [showSavingsDialog, setShowSavingsDialog] = useState(false);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showBankDialog, setShowBankDialog] = useState(false);
   const [editingSavingsGoal, setEditingSavingsGoal] = useState<any>(null);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingBill, setEditingBill] = useState<any>(null);
+  const [editingBank, setEditingBank] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   const { data: bills = [], isLoading: billsLoading } = useQuery<Bill[]>({
@@ -93,6 +103,10 @@ export default function Financial() {
 
   const { data: budgetCategories = [] } = useQuery<any[]>({
     queryKey: ["/api/budget-categories"],
+  });
+
+  const { data: bankAccounts = [] } = useQuery<BankAccount[]>({
+    queryKey: ["/api/bank-accounts"],
   });
 
   const billForm = useForm({
@@ -136,6 +150,17 @@ export default function Financial() {
       type: "expense" as const,
       budgetedAmount: 0,
       color: "#3b82f6",
+    },
+  });
+
+  const bankForm = useForm({
+    resolver: zodResolver(bankAccountSchema),
+    defaultValues: {
+      bankName: "",
+      accountType: "checking" as const,
+      accountNickname: "",
+      bankWebsite: "",
+      lastFour: "",
     },
   });
 
@@ -256,6 +281,58 @@ export default function Financial() {
       toast({
         title: "Error",
         description: "Failed to save category",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bankMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const endpoint = editingBank 
+        ? `/api/bank-accounts/${editingBank.id}` 
+        : "/api/bank-accounts";
+      const method = editingBank ? "PATCH" : "POST";
+      const response = await apiRequest(method, endpoint, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      queryClient.refetchQueries({ queryKey: ["/api/bank-accounts"] });
+      setShowBankDialog(false);
+      setEditingBank(null);
+      bankForm.reset();
+      toast({
+        title: "Success",
+        description: editingBank 
+          ? "Bank account updated successfully!" 
+          : "Bank account added successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save bank account",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBankMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/bank-accounts/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
+      toast({
+        title: "Success",
+        description: "Bank account removed successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove bank account",
         variant: "destructive",
       });
     },
@@ -726,7 +803,7 @@ export default function Financial() {
                                       amount: bill.amount,
                                       dueDate: bill.dueDate,
                                       category: bill.category,
-                                      isRecurring: bill.isRecurring,
+                                      isRecurring: bill.isRecurring ?? true,
                                     });
                                     setShowBillDialog(true);
                                   }}
@@ -1110,15 +1187,194 @@ export default function Financial() {
           <TabsContent value="banking" className="mt-6">
             <div className="space-y-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Banking & Bill Pay Integration</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>My Bank Accounts</CardTitle>
+                  <Dialog open={showBankDialog} onOpenChange={(open) => {
+                    setShowBankDialog(open);
+                    if (!open) {
+                      setEditingBank(null);
+                      bankForm.reset();
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-add-bank">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Bank Account
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{editingBank ? "Edit Bank Account" : "Add Bank Account"}</DialogTitle>
+                      </DialogHeader>
+                      <Form {...bankForm}>
+                        <form onSubmit={bankForm.handleSubmit((data) => bankMutation.mutate(data))} className="space-y-4">
+                          <FormField
+                            control={bankForm.control}
+                            name="bankName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Bank Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., Chase, Bank of America" {...field} data-testid="input-bank-name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={bankForm.control}
+                            name="accountType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Account Type</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid="select-account-type">
+                                      <SelectValue placeholder="Select type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="checking">Checking</SelectItem>
+                                    <SelectItem value="savings">Savings</SelectItem>
+                                    <SelectItem value="credit">Credit Card</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={bankForm.control}
+                            name="accountNickname"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nickname (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="e.g., Main Checking" {...field} data-testid="input-nickname" />
+                                </FormControl>
+                                <FormDescription>
+                                  Give this account a friendly name
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={bankForm.control}
+                            name="bankWebsite"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Bank Website URL</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://www.yourbank.com/login" {...field} data-testid="input-bank-website" />
+                                </FormControl>
+                                <FormDescription>
+                                  The login page for your online banking
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={bankForm.control}
+                            name="lastFour"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Last 4 Digits (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="1234" maxLength={4} {...field} data-testid="input-last-four" />
+                                </FormControl>
+                                <FormDescription>
+                                  For easy identification
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={bankMutation.isPending} data-testid="button-save-bank">
+                            {bankMutation.isPending ? "Saving..." : 
+                             editingBank ? "Update Account" : "Add Account"}
+                          </Button>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 mb-4">Connect your bank accounts for secure bill payments and balance checking.</p>
-                  <Button className="bg-bright-blue hover:bg-blue-600">
-                    <Building className="h-4 w-4 mr-2" />
-                    Connect Bank Account
-                  </Button>
+                  {bankAccounts.length > 0 ? (
+                    <div className="space-y-3">
+                      {bankAccounts.map((account) => (
+                        <div key={account.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Building className="h-5 w-5 text-blue-600" />
+                                <h3 className="font-semibold text-gray-900 dark:text-white">
+                                  {account.accountNickname || account.accountName}
+                                </h3>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{account.bankName}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-500 capitalize">{account.accountType}</p>
+                              {account.lastFour && (
+                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                  ****{account.lastFour}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {account.bankWebsite && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(account.bankWebsite || '', '_blank')}
+                                  data-testid={`button-visit-bank-${account.id}`}
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  Visit Bank
+                                </Button>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingBank(account);
+                                  bankForm.reset({
+                                    bankName: account.bankName,
+                                    accountType: account.accountType as any,
+                                    accountNickname: account.accountNickname || "",
+                                    bankWebsite: account.bankWebsite || "",
+                                    lastFour: account.lastFour || "",
+                                  });
+                                  setShowBankDialog(true);
+                                }}
+                                data-testid={`button-edit-bank-${account.id}`}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to remove this bank account?")) {
+                                    deleteBankMutation.mutate(account.id);
+                                  }
+                                }}
+                                data-testid={`button-delete-bank-${account.id}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Building className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500">No bank accounts added yet.</p>
+                      <p className="text-sm text-gray-400 mt-1">Add your bank's website URL for quick access to online banking.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
