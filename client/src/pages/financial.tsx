@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1205,6 +1205,9 @@ export default function Financial() {
                     <DialogContent className="max-w-md">
                       <DialogHeader>
                         <DialogTitle>{editingBank ? "Edit Bank Account" : "Add Bank Account"}</DialogTitle>
+                        <DialogDescription>
+                          {editingBank ? "Update your bank account details" : "Add a new bank account for quick access"}
+                        </DialogDescription>
                       </DialogHeader>
                       <Form {...bankForm}>
                         <form onSubmit={bankForm.handleSubmit((data) => bankMutation.mutate(data))} className="space-y-4">

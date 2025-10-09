@@ -484,6 +484,39 @@ export class DatabaseStorage implements IStorage {
     return account;
   }
 
+  async updateBankAccount(accountId: number, updateData: Partial<InsertBankAccount>): Promise<BankAccount | undefined> {
+    const accountData: any = {
+      updatedAt: new Date(),
+    };
+    
+    if (updateData.bankName !== undefined) {
+      accountData.bankName = updateData.bankName;
+      accountData.accountName = updateData.accountNickname || updateData.bankName;
+    }
+    if (updateData.accountType !== undefined) {
+      accountData.accountType = updateData.accountType;
+    }
+    if (updateData.accountNickname !== undefined) {
+      accountData.accountNickname = updateData.accountNickname;
+      if (!accountData.accountName) {
+        accountData.accountName = updateData.accountNickname;
+      }
+    }
+    if (updateData.bankWebsite !== undefined) {
+      accountData.bankWebsite = updateData.bankWebsite;
+    }
+    if (updateData.lastFour !== undefined) {
+      accountData.lastFour = updateData.lastFour;
+    }
+
+    const [account] = await db
+      .update(bankAccounts)
+      .set(accountData)
+      .where(eq(bankAccounts.id, accountId))
+      .returning();
+    return account || undefined;
+  }
+
   async deleteBankAccount(accountId: number): Promise<boolean> {
     const result = await db
       .delete(bankAccounts)

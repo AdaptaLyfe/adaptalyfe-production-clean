@@ -765,6 +765,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/bank-accounts/:id", async (req: any, res) => {
+    try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const accountId = parseInt(req.params.id);
+      const requestData = req.body;
+      const data = {
+        bankName: requestData.bankName,
+        accountType: requestData.accountType,
+        accountNickname: requestData.accountNickname,
+        bankWebsite: requestData.bankWebsite,
+        lastFour: requestData.lastFour,
+      };
+      const account = await storage.updateBankAccount(accountId, data);
+      if (!account) {
+        return res.status(404).json({ message: "Bank account not found" });
+      }
+      res.json(account);
+    } catch (error) {
+      console.error("Failed to update bank account:", error);
+      res.status(500).json({ message: "Failed to update bank account" });
+    }
+  });
+
   app.delete("/api/bank-accounts/:id", async (req, res) => {
     try {
       const accountId = parseInt(req.params.id);
