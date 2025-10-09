@@ -145,8 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("🏭 Production mode - skipping demo data initialization");
   }
   
-  // Setup sessions
+  // Setup sessions with store reference for dual-channel auth
+  const sessionStore = new session.MemoryStore();
   app.use(session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'demo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
@@ -159,15 +161,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
   
   // Middleware to ensure user is logged in for protected routes
+  // Supports both cookie-based (desktop) and header-based (mobile) auth
   const requireAuth = async (req: any, res: any, next: any) => {
-    // Production mode - no auto-login
-    if (!req.session.userId || !req.session.user) {
-      console.log("❌ No authenticated user - access denied to protected route");
-      return res.status(401).json({ message: "Authentication required" });
+    // Check if already authenticated via cookie
+    if (req.session.userId && req.session.user) {
+      req.user = req.session.user;
+      return next();
     }
     
-    req.user = req.session.user;
-    next();
+    // Check for Authorization header (mobile fallback)
+    const authHeader = req.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const sessionToken = authHeader.substring(7);
+      
+      // Try to load session from store using the token
+      return new Promise<void>((resolve) => {
+        sessionStore.get(sessionToken, (err, sessionData) => {
+          if (err || !sessionData || !sessionData.userId) {
+            console.log("❌ Invalid session token - access denied");
+            res.status(401).json({ message: "Authentication required" });
+            return resolve();
+          }
+          
+          // Restore session data
+          req.session.userId = sessionData.userId;
+          req.session.user = sessionData.user;
+          req.user = sessionData.user;
+          console.log("✅ Authenticated via header token:", sessionData.user.username);
+          next();
+          resolve();
+        });
+      });
+    }
+    
+    console.log("❌ No authenticated user - access denied to protected route");
+    return res.status(401).json({ message: "Authentication required" });
   };
 
   // User registration endpoint
@@ -269,7 +297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: user.name,
           email: user.email,
           isAdmin: user.isAdmin || false
-        }
+        },
+        sessionToken: req.session.id // Include session ID for mobile/header-based auth
       };
       console.log("🔐 LOGIN DEBUG - Sending response:", response);
       res.json(response);
