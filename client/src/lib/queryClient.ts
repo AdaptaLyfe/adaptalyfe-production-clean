@@ -15,6 +15,33 @@ function getApiUrl(path: string): string {
   return baseURL ? `${baseURL}${path}` : path;
 }
 
+// Session token management for mobile auth
+const SESSION_TOKEN_KEY = 'adaptalyfe_session_token';
+
+export function setSessionToken(token: string): void {
+  localStorage.setItem(SESSION_TOKEN_KEY, token);
+}
+
+export function getSessionToken(): string | null {
+  return localStorage.getItem(SESSION_TOKEN_KEY);
+}
+
+export function clearSessionToken(): void {
+  localStorage.removeItem(SESSION_TOKEN_KEY);
+}
+
+// Helper to get auth headers (includes session token if available)
+function getAuthHeaders(): HeadersInit {
+  const sessionToken = getSessionToken();
+  const headers: HeadersInit = {};
+  
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
+  }
+  
+  return headers;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -28,9 +55,14 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const fullUrl = getApiUrl(url);
+  const authHeaders = getAuthHeaders();
+  
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...(data ? { "Content-Type": "application/json" } : {}),
+      ...authHeaders, // Include Authorization header if session token exists
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: API_CONFIG.credentials,
   });
@@ -48,7 +80,10 @@ export const getQueryFn: <T>(options: {
     console.log("Making query to:", queryKey[0]);
     try {
       const fullUrl = getApiUrl(queryKey[0] as string);
+      const authHeaders = getAuthHeaders();
+      
       const res = await fetch(fullUrl, {
+        headers: authHeaders, // Include Authorization header if session token exists
         credentials: API_CONFIG.credentials,
       });
 
