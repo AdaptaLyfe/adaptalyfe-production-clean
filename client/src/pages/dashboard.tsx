@@ -41,6 +41,7 @@ export default function Dashboard() {
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
+    if (!modules || modules.length === 0) return; // Safety check
     
     const sourceIndex = result.source.index;
     const destinationIndex = result.destination.index;
@@ -49,12 +50,18 @@ export default function Dashboard() {
     
     // Get enabled modules to work with filtered indices
     const enabledModules = modules.filter(module => module.enabled);
-    const sourceModuleId = enabledModules[sourceIndex].id;
-    const destinationModuleId = enabledModules[destinationIndex].id;
+    if (!enabledModules || enabledModules.length === 0) return; // Safety check
+    
+    const sourceModuleId = enabledModules[sourceIndex]?.id;
+    const destinationModuleId = enabledModules[destinationIndex]?.id;
+    
+    if (!sourceModuleId || !destinationModuleId) return; // Safety check
     
     // Find original indices in the full modules array
     const originalSourceIndex = modules.findIndex(m => m.id === sourceModuleId);
     const originalDestinationIndex = modules.findIndex(m => m.id === destinationModuleId);
+    
+    if (originalSourceIndex === -1 || originalDestinationIndex === -1) return; // Safety check
     
     reorderModules(originalSourceIndex, originalDestinationIndex);
   };

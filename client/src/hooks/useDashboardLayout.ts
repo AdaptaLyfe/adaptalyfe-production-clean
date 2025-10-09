@@ -136,13 +136,13 @@ export function useDashboardLayout() {
     }
   };
 
-  // Get modules sorted by order for rendering
-  const sortedModules = modules
+  // Get modules sorted by order for rendering (with safety checks)
+  const sortedModules = (modules || [])
     .filter(module => module.enabled)
     .sort((a, b) => a.order - b.order);
 
-  const enabledModules = modules.filter(module => module.enabled);
-  const disabledModules = modules.filter(module => !module.enabled);
+  const enabledModules = (modules || []).filter(module => module.enabled);
+  const disabledModules = (modules || []).filter(module => !module.enabled);
 
   return {
     modules: sortedModules,
