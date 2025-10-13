@@ -55,7 +55,7 @@ const rewardSchema = z.object({
   category: z.string().min(1, "Category is required"),
   rewardType: z.string().min(1, "Type is required"),
   value: z.string().optional(),
-  maxRedemptions: z.number().optional(),
+  maxRedemptions: z.number().nullable().optional(),
   iconName: z.string().default("gift"),
   color: z.string().default("#3b82f6")
 });
@@ -67,7 +67,7 @@ const editRewardSchema = z.object({
   category: z.string().min(1, "Category is required"),
   rewardType: z.string().min(1, "Type is required"),
   value: z.string().optional(),
-  maxRedemptions: z.number().optional(),
+  maxRedemptions: z.number().nullable().optional(),
   iconName: z.string().default("gift"),
   color: z.string().default("#3b82f6")
 });
