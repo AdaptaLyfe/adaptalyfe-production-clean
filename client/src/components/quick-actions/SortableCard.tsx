@@ -49,7 +49,7 @@ export function SortableCard({ id, action, isReorderMode }: SortableCardProps) {
         bg-white rounded-2xl shadow-lg p-6 
         flex flex-col items-center text-center
         ${isReorderMode 
-          ? 'cursor-move border-2 border-blue-300' 
+          ? 'cursor-move border-2 border-blue-300 select-none touch-none' 
           : 'cursor-pointer hover:shadow-xl'
         }
       `}
