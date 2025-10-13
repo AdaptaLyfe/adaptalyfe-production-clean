@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -98,55 +98,14 @@ export default function RewardsPage() {
   const [isRedeemDialogOpen, setIsRedeemDialogOpen] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
 
-  // Fetch rewards for the user - Simple approach
-  const { data: rewardsData, isLoading: rewardsLoading, refetch: refetchRewards, error: rewardsError } = useQuery({
+  // Fetch rewards for the user
+  const { data: rewardsData = [], isLoading: rewardsLoading, refetch: refetchRewards } = useQuery({
     queryKey: ["/api/rewards"],
-    queryFn: async () => {
-      console.log("=== CUSTOM QUERY FUNCTION ===");
-      const response = await fetch("/api/rewards", {
-        credentials: "include",
-        headers: {
-          "Cache-Control": "no-cache"
-        }
-      });
-      
-      console.log("Custom query response status:", response.status);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Custom query failed:", response.status, errorText);
-        throw new Error(`${response.status}: ${errorText}`);
-      }
-      
-      const data = await response.json();
-      console.log("Custom query response data:", data);
-      console.log("Data is array:", Array.isArray(data));
-      console.log("Data length:", data?.length);
-      return data;
-    },
     staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: "always",
-    retry: false,
   });
 
-  // Ensure rewards is always an array and log for debugging
+  // Ensure rewards is always an array
   const rewards = Array.isArray(rewardsData) ? rewardsData : [];
-  
-  // Debug logging
-  console.log("=== FRONTEND REWARDS DEBUG ===");
-  console.log("Query isLoading:", rewardsLoading);
-  console.log("Query error:", rewardsError);
-  console.log("Rewards data from API:", rewardsData);
-  console.log("Processed rewards array:", rewards);
-  console.log("Rewards array length:", rewards.length);
-  
-  // Force refetch if we have no data but no error and not loading
-  useEffect(() => {
-    if (!rewardsLoading && !rewardsData && !rewardsError) {
-      console.log("Force refetching rewards - no data, no error, not loading");
-      refetchRewards();
-    }
-  }, [rewardsLoading, rewardsData, rewardsError, refetchRewards]);
 
 
 
