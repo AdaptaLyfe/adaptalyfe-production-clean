@@ -2058,100 +2058,7 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  // Rewards API Routes
-  app.get("/api/rewards", async (req, res) => {
-    try {
-      console.log("=== REWARDS: GET /api/rewards (FIRST ROUTE) ===");
-      console.log("Session data:", req.session);
-      
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      console.log("Final user ID:", req.session.userId);
-      const rewards = await storage.getRewardsByUser(req.session.userId);
-      console.log("Found rewards count:", rewards.length);
-      res.json(rewards);
-    } catch (error) {
-      console.error("Error fetching rewards:", error);
-      res.status(500).json({ message: "Failed to fetch rewards" });
-    }
-  });
-
-  app.post("/api/rewards", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      // Set default caregiver_id if not provided
-      const rewardData = { 
-        ...req.body, 
-        userId: req.session.userId,
-        caregiverId: req.body.caregiverId || 1 // Default to caregiver ID 1 (Mom)
-      };
-      const reward = await storage.createReward(rewardData);
-      res.json(reward);
-    } catch (error) {
-      console.error("Error creating reward:", error);
-      res.status(500).json({ message: "Failed to create reward" });
-    }
-  });
-
-  app.post("/api/rewards/:id/redeem", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const rewardId = parseInt(req.params.id);
-      // Reward redemption system ready for implementation
-      const redemption = { id: rewardId, status: "redeemed", userId: req.session.userId };
-      res.json(redemption);
-    } catch (error) {
-      console.error("Error redeeming reward:", error);
-      res.status(500).json({ message: "Failed to redeem reward" });
-    }
-  });
-
-  // Points API Routes  
-  app.get("/api/points/balance", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const balance = await storage.getUserPointsBalance(req.session.userId);
-      res.json(balance);
-    } catch (error) {
-      console.error("Error fetching points balance:", error);
-      res.status(500).json({ message: "Failed to fetch points balance" });
-    }
-  });
-
-  app.get("/api/points/transactions", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const transactions = await storage.getPointsTransactionsByUser(req.session.userId);
-      res.json(transactions);
-    } catch (error) {
-      console.error("Error fetching points transactions:", error);
-      res.status(500).json({ message: "Failed to fetch points transactions" });
-    }
-  });
-
-  app.post("/api/points/transactions", async (req, res) => {
-    try {
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const transactionData = { ...req.body, userId: req.session.userId };
-      // Points system endpoint ready for future implementation
-      res.json({ message: "Points system endpoint ready for implementation" });
-    } catch (error) {
-      console.error("Error creating points transaction:", error);
-      res.status(500).json({ message: "Failed to create points transaction" });
-    }
-  });
+  // Rewards API Routes - REMOVED DUPLICATES (better versions exist below around line 4391)
 
   // Caregiver Permission Management Routes
   app.get("/api/caregiver-permissions/:userId/:caregiverId", async (req, res) => {
@@ -4480,6 +4387,45 @@ Provide a helpful, encouraging response:`;
     } catch (error) {
       console.error("Error creating reward:", error);
       res.status(500).json({ message: "Failed to create reward", error: error.message });
+    }
+  });
+
+  app.patch("/api/rewards/:id", async (req: any, res) => {
+    try {
+      console.log("=== REWARDS: PATCH /api/rewards/:id ===");
+      console.log("Session data:", req.session);
+      console.log("Request body:", req.body);
+
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const rewardId = parseInt(req.params.id);
+      const updatedReward = await storage.updateReward(rewardId, req.body);
+      console.log("Updated reward:", updatedReward);
+      res.json(updatedReward);
+    } catch (error) {
+      console.error("Error updating reward:", error);
+      res.status(500).json({ message: "Failed to update reward", error: error.message });
+    }
+  });
+
+  app.delete("/api/rewards/:id", async (req: any, res) => {
+    try {
+      console.log("=== REWARDS: DELETE /api/rewards/:id ===");
+      console.log("Session data:", req.session);
+
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const rewardId = parseInt(req.params.id);
+      await storage.deleteReward(rewardId);
+      console.log("Deleted reward:", rewardId);
+      res.json({ success: true, message: "Reward deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting reward:", error);
+      res.status(500).json({ message: "Failed to delete reward", error: error.message });
     }
   });
 
