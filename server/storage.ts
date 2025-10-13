@@ -273,7 +273,9 @@ export interface IStorage {
   // Caregiver Invitation Management
   createCaregiverInvitation(invitation: InsertCaregiverInvitation): Promise<CaregiverInvitation>;
   getCaregiverInvitation(invitationCode: string): Promise<CaregiverInvitation | undefined>;
+  getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined>;
   getCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]>;
+  deleteCaregiverInvitation(id: number): Promise<void>;
   acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined>;
   expireCaregiverInvitation(invitationCode: string): Promise<boolean>;
   
@@ -1806,6 +1808,20 @@ export class DatabaseStorage implements IStorage {
       .from(caregiverInvitations)
       .where(eq(caregiverInvitations.caregiverId, caregiverId))
       .orderBy(desc(caregiverInvitations.createdAt));
+  }
+
+  async getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(caregiverInvitations)
+      .where(eq(caregiverInvitations.id, id));
+    return invitation || undefined;
+  }
+
+  async deleteCaregiverInvitation(id: number): Promise<void> {
+    await db
+      .delete(caregiverInvitations)
+      .where(eq(caregiverInvitations.id, id));
   }
 
   async acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined> {

@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Mail, Users, Settings, Heart, Shield, Clock, QrCode, Copy, Check, ExternalLink, Download, MessageSquare } from "lucide-react";
+import { UserPlus, Mail, Users, Settings, Heart, Shield, Clock, QrCode, Copy, Check, ExternalLink, Download, MessageSquare, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSafeRef } from "@/hooks/useSafeRef";
@@ -103,6 +103,28 @@ export default function CaregiverSetup() {
       toast({
         title: "Unable to Create Invitation",
         description: "There was a problem saving your invitation. Please check your information and try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteInvitationMutation = useMutation({
+    mutationFn: (invitationId: number) => 
+      apiRequest("DELETE", `/api/caregiver-invitations/${invitationId}`).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/caregiver-invitations"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/caregiver-invitations/${user?.id}`] });
+      
+      toast({
+        title: "Invitation Deleted",
+        description: "The invitation has been removed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Invitation deletion error:", error);
+      toast({
+        title: "Unable to Delete Invitation",
+        description: "There was a problem deleting the invitation. Please try again.",
         variant: "destructive",
       });
     },
@@ -474,6 +496,21 @@ export default function CaregiverSetup() {
                             >
                               <MessageSquare size={14} className="mr-1" />
                               Share
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete the invitation for ${invitation.userName}?`)) {
+                                  deleteInvitationMutation.mutate(invitation.id);
+                                }
+                              }}
+                              disabled={deleteInvitationMutation.isPending}
+                              className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                              data-testid={`button-delete-invitation-${invitation.id}`}
+                            >
+                              <Trash2 size={14} className="mr-1" />
+                              Delete
                             </Button>
                           </div>
                         </div>

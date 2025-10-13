@@ -2188,6 +2188,36 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  app.delete("/api/caregiver-invitations/:id", async (req: any, res) => {
+    try {
+      // Check authentication
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const invitationId = parseInt(req.params.id);
+      
+      // Get the invitation to verify ownership
+      const invitation = await storage.getCaregiverInvitationById(invitationId);
+      
+      if (!invitation) {
+        return res.status(404).json({ message: "Invitation not found" });
+      }
+
+      // Only the caregiver who created the invitation can delete it
+      if (invitation.caregiverId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteCaregiverInvitation(invitationId);
+      res.json({ message: "Invitation deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting caregiver invitation:", error);
+      res.status(500).json({ message: "Failed to delete caregiver invitation" });
+    }
+  });
+
   app.post("/api/accept-invitation", async (req, res) => {
     try {
       const { invitationCode, userId } = req.body;
