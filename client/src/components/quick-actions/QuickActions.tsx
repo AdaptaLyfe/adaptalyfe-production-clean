@@ -94,8 +94,8 @@ export default function QuickActions() {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 8,
+        delay: 250,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -236,7 +236,7 @@ export default function QuickActions() {
         </div>
         
         {isReorderMode && (
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2">
+          <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2 select-none">
             <GripVertical className="w-5 h-5 text-blue-600" />
             <p className="text-blue-800 text-sm font-medium">Drag and drop cards to reorder them</p>
           </div>
@@ -252,7 +252,7 @@ export default function QuickActions() {
             items={visibleActions.map(a => a.key)}
             strategy={rectSortingStrategy}
           >
-            <div className="flex flex-wrap gap-4">
+            <div className={`flex flex-wrap gap-4 ${isReorderMode ? 'select-none' : ''}`}>
               {visibleActions.map((action) => (
                 <div
                   key={action.key}
