@@ -612,7 +612,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = req.session.user;
       const taskId = parseInt(req.params.id);
-      const updates = req.body;
+      const updates = { ...req.body };
+
+      // Convert empty strings to null for time fields
+      if (updates.scheduledTime === '') updates.scheduledTime = null;
 
       // Get the task first to verify ownership
       const existingTask = await storage.getTaskById(taskId);
