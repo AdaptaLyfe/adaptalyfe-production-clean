@@ -3011,18 +3011,14 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.post("/api/symptom-entries", async (req, res) => {
+  app.post("/api/symptom-entries", requireAuth, async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      console.log("Creating symptom entry for user:", req.session.userId);
+      console.log("Creating symptom entry for user:", req.user.id);
       console.log("Request body:", req.body);
       
       const entryData = { 
         ...req.body, 
-        userId: req.session.userId,
+        userId: req.user.id,
         startTime: new Date(req.body.startTime),
         endTime: req.body.endTime ? new Date(req.body.endTime) : null
       };
@@ -3038,12 +3034,8 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.patch("/api/symptom-entries/:id", async (req, res) => {
+  app.patch("/api/symptom-entries/:id", requireAuth, async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const entryId = parseInt(req.params.id);
       const updates = req.body;
       
@@ -3060,12 +3052,8 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.delete("/api/symptom-entries/:id", async (req, res) => {
+  app.delete("/api/symptom-entries/:id", requireAuth, async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const entryId = parseInt(req.params.id);
       const deleted = await storage.deleteSymptomEntry(entryId);
       
