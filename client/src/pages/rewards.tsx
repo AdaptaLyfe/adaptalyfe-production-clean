@@ -263,16 +263,24 @@ export default function RewardsPage() {
   const onEditSubmit = async () => {
     console.log("=== EDIT BUTTON CLICKED ===");
     console.log("Editing reward:", editingReward);
-    console.log("Form values:", editForm.getValues());
-    console.log("Form errors:", editForm.formState.errors);
-    console.log("Form is valid:", editForm.formState.isValid);
+    
+    const formValues = editForm.getValues();
+    console.log("Form values:", formValues);
+    console.log("Form errors BEFORE validation:", editForm.formState.errors);
+    console.log("Form is valid BEFORE:", editForm.formState.isValid);
     
     // Validate manually
     const isValid = await editForm.trigger();
     console.log("Manual validation result:", isValid);
+    console.log("Form errors AFTER validation:", editForm.formState.errors);
     
     if (!isValid) {
-      console.error("Form validation failed:", editForm.formState.errors);
+      // Log detailed error information
+      const errors = editForm.formState.errors;
+      Object.keys(errors).forEach(key => {
+        console.error(`Field "${key}" error:`, errors[key]?.message);
+      });
+      
       toast({ 
         title: "Validation Error", 
         description: "Please check all fields", 
