@@ -57,10 +57,10 @@ export function SortableCard({ id, action, isReorderMode }: SortableCardProps) {
       <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
         <Icon className="text-white w-8 h-8" />
       </div>
-      <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+      <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight line-clamp-1">
         {action.label}
       </h4>
-      <p className="text-xs text-gray-600 leading-tight">
+      <p className="text-xs text-gray-600 leading-tight line-clamp-1">
         {action.description}
       </p>
     </div>
