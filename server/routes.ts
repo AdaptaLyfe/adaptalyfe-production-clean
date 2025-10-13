@@ -3037,15 +3037,26 @@ Provide a helpful, encouraging response:`;
   app.patch("/api/symptom-entries/:id", requireAuth, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
+      console.log("PATCH symptom - Original body:", JSON.stringify(req.body, null, 2));
+      
       const updates = { ...req.body };
       
       // Convert date strings to Date objects
-      if (updates.startTime) {
+      if (updates.startTime && typeof updates.startTime === 'string') {
         updates.startTime = new Date(updates.startTime);
+        console.log("Converted startTime to Date:", updates.startTime);
       }
-      if (updates.endTime) {
+      if (updates.endTime && typeof updates.endTime === 'string') {
         updates.endTime = new Date(updates.endTime);
+        console.log("Converted endTime to Date:", updates.endTime);
       }
+      
+      // Remove createdAt if it exists (it's auto-generated)
+      delete updates.createdAt;
+      delete updates.id;
+      delete updates.userId;
+      
+      console.log("PATCH symptom - Final updates:", JSON.stringify(updates, null, 2));
       
       const updated = await storage.updateSymptomEntry(entryId, updates);
       
