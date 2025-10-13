@@ -1,5 +1,5 @@
 // Adaptalyfe Service Worker for PWA functionality
-const CACHE_NAME = 'adaptalyfe-v1.0.16';
+const CACHE_NAME = 'adaptalyfe-v1.0.17';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -17,7 +17,7 @@ self.addEventListener('message', (event) => {
 
 // Install service worker
 self.addEventListener('install', (event) => {
-  console.log('SW: Installing new version v1.0.16');
+  console.log('SW: Installing new version v1.0.17 - NO JS/CSS CACHING');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -27,7 +27,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Fetch events - NETWORK FIRST for JS/CSS, cache for static assets
+// Fetch events - ALWAYS NETWORK for JS/CSS to prevent stale code
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -37,27 +37,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Network-first for JavaScript and CSS files
+  // ALWAYS fetch fresh for JavaScript and CSS - NO CACHING
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.startsWith('/assets/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Only cache successful responses
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            }).catch((err) => {
-              console.log('Cache put failed:', err);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try cache
-          return caches.match(request);
-        })
-    );
+    event.respondWith(fetch(request));
     return;
   }
   
@@ -75,17 +57,20 @@ self.addEventListener('fetch', (event) => {
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
-  console.log('SW: Activating new version v1.0.16');
+  console.log('SW: Activating new version v1.0.17 - Clearing ALL caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('SW: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
+          console.log('SW: Deleting cache', cacheName);
+          return caches.delete(cacheName);
         })
       );
+    }).then(() => {
+      // Recreate cache with static assets only
+      return caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(urlsToCache);
+      });
     })
   );
   return self.clients.claim();
