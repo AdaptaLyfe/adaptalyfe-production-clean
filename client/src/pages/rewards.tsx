@@ -424,7 +424,10 @@ export default function RewardsPage() {
                             <Input 
                               type="number" 
                               {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))} 
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? undefined : parseInt(e.target.value);
+                                field.onChange(value);
+                              }} 
                             />
                           </FormControl>
                           <FormMessage />
@@ -564,7 +567,10 @@ export default function RewardsPage() {
                             <Input 
                               type="number" 
                               {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value))} 
+                              onChange={(e) => {
+                                const value = e.target.value === '' ? undefined : parseInt(e.target.value);
+                                field.onChange(value);
+                              }} 
                             />
                           </FormControl>
                           <FormMessage />
