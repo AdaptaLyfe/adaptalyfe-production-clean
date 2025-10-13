@@ -3037,7 +3037,15 @@ Provide a helpful, encouraging response:`;
   app.patch("/api/symptom-entries/:id", requireAuth, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
-      const updates = req.body;
+      const updates = { ...req.body };
+      
+      // Convert date strings to Date objects
+      if (updates.startTime) {
+        updates.startTime = new Date(updates.startTime);
+      }
+      if (updates.endTime) {
+        updates.endTime = new Date(updates.endTime);
+      }
       
       const updated = await storage.updateSymptomEntry(entryId, updates);
       
