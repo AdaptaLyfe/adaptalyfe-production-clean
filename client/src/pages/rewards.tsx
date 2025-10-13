@@ -49,7 +49,6 @@ const REWARD_TYPES = [
 ];
 
 const rewardSchema = z.object({
-  userId: z.number(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   pointsRequired: z.number().min(1, "Points must be at least 1"),
@@ -230,7 +229,6 @@ export default function RewardsPage() {
   const form = useForm({
     resolver: zodResolver(rewardSchema),
     defaultValues: {
-      userId: 1,
       title: "",
       description: "",
       pointsRequired: 10,

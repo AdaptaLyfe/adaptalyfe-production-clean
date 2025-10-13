@@ -4377,6 +4377,7 @@ Provide a helpful, encouraging response:`;
 
       const rewardData = {
         ...req.body,
+        userId: req.body.userId || user.id, // Use session user if userId not provided
         caregiverId: user.id // Caregiver creating the reward
       };
 
