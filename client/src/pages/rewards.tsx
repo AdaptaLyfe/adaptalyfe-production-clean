@@ -29,7 +29,9 @@ import {
   Gamepad2,
   ShoppingBag,
   MapPin,
-  DollarSign
+  DollarSign,
+  Edit,
+  Trash2
 } from "lucide-react";
 
 const REWARD_CATEGORIES = [
@@ -95,8 +97,10 @@ export default function RewardsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isRedeemDialogOpen, setIsRedeemDialogOpen] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const [editingReward, setEditingReward] = useState<Reward | null>(null);
 
   // Fetch rewards for the user
   const { data: rewardsData = [], isLoading: rewardsLoading, refetch: refetchRewards } = useQuery({
@@ -141,6 +145,37 @@ export default function RewardsPage() {
     },
   });
 
+  // Edit reward mutation
+  const editRewardMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return await apiRequest("PATCH", `/api/rewards/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
+      setIsEditDialogOpen(false);
+      setEditingReward(null);
+      editForm.reset();
+      toast({ title: "Success", description: "Reward updated successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update reward", variant: "destructive" });
+    },
+  });
+
+  // Delete reward mutation
+  const deleteRewardMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest("DELETE", `/api/rewards/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
+      toast({ title: "Success", description: "Reward deleted successfully!" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete reward", variant: "destructive" });
+    },
+  });
+
   // Redeem reward mutation
   const redeemMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -175,8 +210,53 @@ export default function RewardsPage() {
     },
   });
 
+  const editForm = useForm({
+    resolver: zodResolver(rewardSchema),
+    defaultValues: {
+      userId: 1,
+      title: "",
+      description: "",
+      pointsRequired: 10,
+      category: "",
+      rewardType: "immediate",
+      value: "",
+      maxRedemptions: undefined,
+      iconName: "gift",
+      color: "#3b82f6"
+    },
+  });
+
   const onSubmit = (data: any) => {
     createRewardMutation.mutate(data);
+  };
+
+  const onEditSubmit = (data: any) => {
+    if (editingReward) {
+      editRewardMutation.mutate({ id: editingReward.id, data });
+    }
+  };
+
+  const handleEdit = (reward: Reward) => {
+    setEditingReward(reward);
+    editForm.reset({
+      userId: reward.userId,
+      title: reward.title,
+      description: reward.description,
+      pointsRequired: reward.pointsRequired,
+      category: reward.category,
+      rewardType: reward.rewardType,
+      value: reward.value || "",
+      maxRedemptions: reward.maxRedemptions,
+      iconName: reward.iconName,
+      color: reward.color
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (reward: Reward) => {
+    if (confirm(`Are you sure you want to delete "${reward.title}"?`)) {
+      deleteRewardMutation.mutate(reward.id);
+    }
   };
 
   const handleRedeem = (reward: Reward) => {
@@ -390,6 +470,146 @@ export default function RewardsPage() {
               </Form>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Reward Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" aria-describedby="edit-reward-description">
+              <DialogHeader>
+                <DialogTitle>Edit Reward</DialogTitle>
+                <p id="edit-reward-description" className="text-sm text-gray-600">
+                  Update reward details
+                </p>
+              </DialogHeader>
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                  <FormField
+                    control={editForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reward Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Extra screen time" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="pointsRequired"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Points Required</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              {...field} 
+                              onChange={(e) => field.onChange(parseInt(e.target.value))} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {REWARD_CATEGORIES.map((category) => (
+                                <SelectItem key={category.value} value={category.value}>
+                                  {category.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={editForm.control}
+                    name="rewardType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {REWARD_TYPES.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Value (optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="$10 or 30 minutes" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={editRewardMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
@@ -425,11 +645,33 @@ export default function RewardsPage() {
                           <IconComponent className="w-5 h-5" style={{ color: reward.color }} />
                           <CardTitle className="text-lg">{reward.title}</CardTitle>
                         </div>
-                        {categoryInfo && (
-                          <Badge variant="secondary" className={categoryInfo.color}>
-                            {categoryInfo.label}
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {categoryInfo && (
+                            <Badge variant="secondary" className={categoryInfo.color}>
+                              {categoryInfo.label}
+                            </Badge>
+                          )}
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEdit(reward)}
+                              className="h-7 w-7 p-0 hover:bg-blue-100"
+                              data-testid={`button-edit-reward-${reward.id}`}
+                            >
+                              <Edit className="w-4 h-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDelete(reward)}
+                              className="h-7 w-7 p-0 hover:bg-red-100"
+                              data-testid={`button-delete-reward-${reward.id}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -449,8 +691,9 @@ export default function RewardsPage() {
                       <Button 
                         onClick={() => handleRedeem(reward)}
                         disabled={!canAfford || redeemMutation.isPending}
-                        className="w-full"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                         variant={canAfford ? "default" : "secondary"}
+                        data-testid={`button-redeem-reward-${reward.id}`}
                       >
                         {!canAfford ? "Not enough points" : "Redeem"}
                       </Button>
