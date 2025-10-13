@@ -260,17 +260,38 @@ export default function RewardsPage() {
     createRewardMutation.mutate(data);
   };
 
-  const onEditSubmit = (data: any) => {
-    console.log("=== EDIT FORM SUBMITTED ===");
-    console.log("Form data:", data);
+  const onEditSubmit = async () => {
+    console.log("=== EDIT BUTTON CLICKED ===");
     console.log("Editing reward:", editingReward);
+    console.log("Form values:", editForm.getValues());
     console.log("Form errors:", editForm.formState.errors);
+    console.log("Form is valid:", editForm.formState.isValid);
+    
+    // Validate manually
+    const isValid = await editForm.trigger();
+    console.log("Manual validation result:", isValid);
+    
+    if (!isValid) {
+      console.error("Form validation failed:", editForm.formState.errors);
+      toast({ 
+        title: "Validation Error", 
+        description: "Please check all fields", 
+        variant: "destructive" 
+      });
+      return;
+    }
     
     if (editingReward) {
-      console.log("Calling mutation with:", { id: editingReward.id, data });
-      editRewardMutation.mutate({ id: editingReward.id, data });
+      const formData = editForm.getValues();
+      console.log("Calling mutation with:", { id: editingReward.id, data: formData });
+      editRewardMutation.mutate({ id: editingReward.id, data: formData });
     } else {
       console.error("No editing reward found!");
+      toast({ 
+        title: "Error", 
+        description: "No reward selected for editing", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -527,7 +548,7 @@ export default function RewardsPage() {
                 </p>
               </DialogHeader>
               <Form {...editForm}>
-                <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                   <FormField
                     control={editForm.control}
                     name="title"
@@ -648,14 +669,15 @@ export default function RewardsPage() {
                       Cancel
                     </Button>
                     <Button 
-                      type="submit" 
+                      type="button" 
+                      onClick={onEditSubmit}
                       disabled={editRewardMutation.isPending}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
                     </Button>
                   </div>
-                </form>
+                </div>
               </Form>
             </DialogContent>
           </Dialog>
