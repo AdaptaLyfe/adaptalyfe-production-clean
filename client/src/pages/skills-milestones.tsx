@@ -88,11 +88,6 @@ export default function SkillsMilestones() {
   // Fetch transition skills data
   const { data: transitionSkills = [], isLoading: skillsLoading, refetch: refetchSkills } = useQuery({
     queryKey: ["/api/transition-skills"],
-    queryFn: async () => {
-      const response = await fetch('/api/transition-skills');
-      if (!response.ok) throw new Error('Failed to fetch skills');
-      return response.json();
-    },
     staleTime: 0,
   });
 
