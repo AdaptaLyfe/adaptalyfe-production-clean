@@ -589,7 +589,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = req.session.user;
-      const data = insertDailyTaskSchema.parse({ ...req.body, userId: user.id });
+      const taskData = { ...req.body, userId: user.id };
+      
+      // Convert empty strings to null for time fields
+      if (taskData.scheduledTime === '') taskData.scheduledTime = null;
+      
+      const data = insertDailyTaskSchema.parse(taskData);
       const task = await storage.createDailyTask(data);
       res.json(task);
     } catch (error) {
