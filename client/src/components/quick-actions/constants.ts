@@ -58,7 +58,7 @@ export const ALL_QUICK_ACTIONS: QuickAction[] = [
   {
     key: "personal-documents",
     label: "Personal Documents",
-    description: "Access important documents",
+    description: "Your documents",
     icon: FileText,
     route: "/personal-documents",
     bgColor: "bg-blue-400"
