@@ -61,6 +61,18 @@ const rewardSchema = z.object({
   color: z.string().default("#3b82f6")
 });
 
+const editRewardSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  pointsRequired: z.number().min(1, "Points must be at least 1"),
+  category: z.string().min(1, "Category is required"),
+  rewardType: z.string().min(1, "Type is required"),
+  value: z.string().optional(),
+  maxRedemptions: z.number().optional(),
+  iconName: z.string().default("gift"),
+  color: z.string().default("#3b82f6")
+});
+
 interface Reward {
   id: number;
   userId: number;
@@ -148,31 +160,52 @@ export default function RewardsPage() {
   // Edit reward mutation
   const editRewardMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await apiRequest("PATCH", `/api/rewards/${id}`, data);
+      console.log("=== MUTATION: Editing reward ===");
+      console.log("ID:", id);
+      console.log("Data:", data);
+      const result = await apiRequest("PATCH", `/api/rewards/${id}`, data);
+      console.log("Mutation result:", result);
+      return result;
     },
     onSuccess: () => {
+      console.log("=== MUTATION SUCCESS ===");
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
       setIsEditDialogOpen(false);
       setEditingReward(null);
       editForm.reset();
       toast({ title: "Success", description: "Reward updated successfully!" });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update reward", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("=== MUTATION ERROR ===", error);
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to update reward", 
+        variant: "destructive" 
+      });
     },
   });
 
   // Delete reward mutation
   const deleteRewardMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest("DELETE", `/api/rewards/${id}`);
+      console.log("=== MUTATION: Deleting reward ===");
+      console.log("ID:", id);
+      const result = await apiRequest("DELETE", `/api/rewards/${id}`);
+      console.log("Delete result:", result);
+      return result;
     },
     onSuccess: () => {
+      console.log("=== DELETE SUCCESS ===");
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
       toast({ title: "Success", description: "Reward deleted successfully!" });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete reward", variant: "destructive" });
+    onError: (error: any) => {
+      console.error("=== DELETE ERROR ===", error);
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to delete reward", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -211,9 +244,8 @@ export default function RewardsPage() {
   });
 
   const editForm = useForm({
-    resolver: zodResolver(rewardSchema),
+    resolver: zodResolver(editRewardSchema),
     defaultValues: {
-      userId: 1,
       title: "",
       description: "",
       pointsRequired: 10,
@@ -231,15 +263,22 @@ export default function RewardsPage() {
   };
 
   const onEditSubmit = (data: any) => {
+    console.log("=== EDIT FORM SUBMITTED ===");
+    console.log("Form data:", data);
+    console.log("Editing reward:", editingReward);
+    console.log("Form errors:", editForm.formState.errors);
+    
     if (editingReward) {
+      console.log("Calling mutation with:", { id: editingReward.id, data });
       editRewardMutation.mutate({ id: editingReward.id, data });
+    } else {
+      console.error("No editing reward found!");
     }
   };
 
   const handleEdit = (reward: Reward) => {
     setEditingReward(reward);
     editForm.reset({
-      userId: reward.userId,
       title: reward.title,
       description: reward.description,
       pointsRequired: reward.pointsRequired,
@@ -254,8 +293,14 @@ export default function RewardsPage() {
   };
 
   const handleDelete = (reward: Reward) => {
+    console.log("=== DELETE CLICKED ===");
+    console.log("Reward to delete:", reward);
+    
     if (confirm(`Are you sure you want to delete "${reward.title}"?`)) {
+      console.log("User confirmed delete, calling mutation for ID:", reward.id);
       deleteRewardMutation.mutate(reward.id);
+    } else {
+      console.log("User cancelled delete");
     }
   };
 
