@@ -86,13 +86,13 @@ export default function Landing() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                <Brain className="w-6 h-6 text-white" />
+                <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Adaptalyfe</h1>
-                <p className="text-xs text-gray-500">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900">Adaptalyfe</h1>
+                <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">
                   Grow with Guidance. Thrive with Confidence.
                 </p>
               </div>
@@ -102,10 +102,10 @@ export default function Landing() {
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-blue-600 hover:text-blue-700 border-2 border-blue-400 hover:border-blue-600 shadow-md"
+                    className="text-blue-600 hover:text-blue-700 border-2 border-blue-400 hover:border-blue-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
                   >
-                    <Key className="w-4 h-4 mr-2" />
-                    Join with Code
+                    <Key className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Join with Code</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
@@ -155,13 +155,13 @@ export default function Landing() {
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md"
+                  className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
                 >
                   Sign In
                 </Button>
               </Link>
               <Link href="/register">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm px-2 sm:px-4">
                   Get Started
                 </Button>
               </Link>
@@ -171,13 +171,13 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-12 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Empowering Independence Through Technology
             </h2>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed">
               AdaptaLyfe is designed specifically for individuals with
               developmental disabilities, providing the tools and support needed
               to build confidence, manage daily life, and achieve greater
@@ -203,14 +203,14 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-white">
+      <section className="py-16 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <div className="text-center mb-12 sm:mb-20">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
               Comprehensive Support for{" "}
               <span className="text-blue-600 font-bold">Daily Living</span>
             </h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
               Every feature is thoughtfully designed with accessibility,
               independence, and personal growth in mind
             </p>
@@ -324,12 +324,12 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-purple-600">
+      <section className="py-16 sm:py-24 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight">
             Ready to Start Your Independence Journey?
           </h3>
-          <p className="text-xl text-white mb-12 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-white mb-8 sm:mb-12 max-w-2xl mx-auto">
             Join thousands of individuals building confidence and achieving
             their goals with AdaptaLyfe
           </p>
