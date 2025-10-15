@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { queryClient } from "@/lib/queryClient";
+import { initializeMobileApp, isNativeMobile, getPlatform } from "@/lib/mobile";
 import App from "./App";
 import "./index.css";
 import "./colors.css";
@@ -13,6 +14,8 @@ console.log("React version:", React.version);
 console.log("Current URL:", window.location.href);
 console.log("User agent:", navigator.userAgent);
 console.log("Screen size:", screen.width, "x", screen.height);
+console.log("Platform:", getPlatform());
+console.log("Is native mobile:", isNativeMobile());
 
 const container = document.getElementById("root");
 if (!container) {
@@ -63,6 +66,16 @@ try {
     </QueryClientProvider>
   );
   console.log("App rendered successfully");
+  
+  // Initialize mobile app features if running on native mobile
+  if (isNativeMobile()) {
+    console.log("Initializing mobile app features...");
+    initializeMobileApp().then(() => {
+      console.log("Mobile app features initialized");
+    }).catch((error) => {
+      console.error("Failed to initialize mobile app features:", error);
+    });
+  }
 } catch (error) {
   console.error("Error rendering app:", error);
   const errorMessage = error instanceof Error ? error.message : String(error);
