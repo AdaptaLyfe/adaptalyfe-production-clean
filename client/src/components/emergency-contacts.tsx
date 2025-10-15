@@ -293,24 +293,24 @@ export default function EmergencyContacts() {
           <CardContent>
             <div className="space-y-3">
               {primaryContacts.map((contact: EmergencyContact) => (
-                <div key={contact.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={contact.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {getRelationshipIcon(contact.relationship)}
-                    <div>
-                      <h3 className="font-semibold">{contact.name}</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold truncate">{contact.name}</h3>
+                      <p className="text-sm text-gray-600 truncate">
                         {contact.relationship} • {contact.phoneNumber}
                       </p>
                       {contact.notes && (
-                        <p className="text-xs text-gray-500 mt-1">{contact.notes}</p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{contact.notes}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       onClick={() => handleCall(contact.phoneNumber, contact.name)}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
@@ -318,6 +318,7 @@ export default function EmergencyContacts() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(contact)}
+                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -326,6 +327,7 @@ export default function EmergencyContacts() {
                       variant="outline"
                       onClick={() => deleteMutation.mutate(contact.id)}
                       disabled={deleteMutation.isPending}
+                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -469,31 +471,31 @@ export default function EmergencyContacts() {
           {contacts.length > 0 ? (
             <div className="space-y-3">
               {contacts.map((contact: EmergencyContact) => (
-                <div key={contact.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={contact.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {getRelationshipIcon(contact.relationship)}
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold">{contact.name}</h3>
                         {contact.isPrimary && <Badge variant="secondary">Primary</Badge>}
                         {contact.isEmergencyContact && <Badge variant="destructive">Emergency</Badge>}
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 truncate">
                         {contact.relationship} • {contact.phoneNumber}
                       </p>
                       {contact.email && (
-                        <p className="text-sm text-gray-500">{contact.email}</p>
+                        <p className="text-sm text-gray-500 truncate">{contact.email}</p>
                       )}
                       {contact.notes && (
-                        <p className="text-xs text-gray-500 mt-1">{contact.notes}</p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{contact.notes}</p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       onClick={() => handleCall(contact.phoneNumber, contact.name)}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
@@ -501,6 +503,7 @@ export default function EmergencyContacts() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleEdit(contact)}
+                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -509,6 +512,7 @@ export default function EmergencyContacts() {
                       variant="outline"
                       onClick={() => deleteMutation.mutate(contact.id)}
                       disabled={deleteMutation.isPending}
+                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
