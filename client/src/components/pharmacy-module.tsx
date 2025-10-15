@@ -601,12 +601,12 @@ export default function PharmacyModule() {
           </TabsContent>
 
           <TabsContent value="pharmacies" className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <h3 className="text-lg font-medium">Your Pharmacies</h3>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Dialog open={showCreatePharmacy} onOpenChange={setShowCreatePharmacy}>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" className="whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
                       Create Custom
                     </Button>
@@ -651,7 +651,7 @@ export default function PharmacyModule() {
                 </Dialog>
                 <Dialog open={showAddPharmacy} onOpenChange={setShowAddPharmacy}>
                   <DialogTrigger asChild>
-                    <Button size="sm">
+                    <Button size="sm" className="whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
                       Link Pharmacy
                     </Button>
