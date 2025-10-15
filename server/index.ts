@@ -43,60 +43,57 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration - Railway compatible
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = [
-      'http://localhost:5000', 
-      'http://127.0.0.1:5000',
-      'https://adaptalyfe-5a1d3.web.app',
-      'https://adaptalyfe-5a1d3.firebaseapp.com',
-      'https://workspace.barrettrchl.repl.co',
-      'https://adaptalyfe-db-production.up.railway.app'
-    ];
-    
-    // Allow any Railway domain
-    if (origin && (origin.includes('.railway.app') || origin.includes('.up.railway.app'))) {
-      console.log('CORS allowing Railway origin:', origin);
-      return callback(null, true);
+// Secure CORS middleware - explicit origin validation
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  
+  // List of exact allowed origins and domain suffixes
+  const exactOrigins = [
+    'https://adaptalyfe-5a1d3.web.app',
+    'https://adaptalyfe-5a1d3.firebaseapp.com',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000'
+  ];
+  
+  const allowedSuffixes = [
+    '.replit.dev',
+    '.replit.co',
+    '.railway.app',
+    '.up.railway.app'
+  ];
+  
+  // Check if origin is allowed (exact match or valid suffix)
+  let isAllowed = false;
+  if (origin) {
+    // Check exact matches
+    if (exactOrigins.includes(origin)) {
+      isAllowed = true;
+    } else {
+      // Check suffix matches (must be https and end with allowed suffix)
+      for (const suffix of allowedSuffixes) {
+        if (origin.startsWith('https://') && origin.endsWith(suffix)) {
+          isAllowed = true;
+          break;
+        }
+      }
     }
-    
-    // Allow any Replit domain
-    if (origin && (origin.includes('.replit.dev') || origin.includes('.replit.co'))) {
-      console.log('CORS allowing Replit origin:', origin);
-      return callback(null, true);
-    }
-    
-    // Check allowed origins
-    if (allowedOrigins.includes(origin)) {
-      console.log('CORS allowing known origin:', origin);
-      return callback(null, true);
-    }
-    
-    console.log('CORS rejected origin:', origin);
-    callback(null, true); // Allow all for now to debug
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials'
-  ],
-  exposedHeaders: [
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Credentials'
-  ],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
-}));
+  }
+  
+  // Set CORS headers only for allowed origins
+  if (isAllowed && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  }
+  
+  // Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return res.status(isAllowed ? 200 : 403).end();
+  }
+  
+  next();
+});
 
 // Rate limiting - more permissive for development
 const limiter = rateLimit({
