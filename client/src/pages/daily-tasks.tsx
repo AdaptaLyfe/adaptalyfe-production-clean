@@ -208,24 +208,24 @@ export default function DailyTasks() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Daily Tasks</h1>
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Daily Tasks</h1>
         <Card className="border-t-4 border-vibrant-green">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">Today's Progress</h3>
-                <p className="text-gray-600">{completedTasks} of {totalTasks} tasks completed</p>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Today's Progress</h3>
+                <p className="text-sm sm:text-base text-gray-600">{completedTasks} of {totalTasks} tasks completed</p>
               </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-green-600">{progressPercentage}%</div>
-                <p className="text-sm text-gray-600">Complete</p>
+              <div className="text-right flex-shrink-0">
+                <div className="text-2xl sm:text-3xl font-bold text-green-600">{progressPercentage}%</div>
+                <p className="text-xs sm:text-sm text-gray-600">Complete</p>
               </div>
             </div>
-            <div className="w-full bg-gradient-to-r from-gray-300 to-gray-400 rounded-full h-6 shadow-inner border border-gray-400">
+            <div className="w-full bg-gradient-to-r from-gray-300 to-gray-400 rounded-full h-5 sm:h-6 shadow-inner border border-gray-400">
               <div 
-                className="bg-gradient-to-r from-green-500 via-green-400 to-emerald-400 h-6 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden border-2 border-green-600"
+                className="bg-gradient-to-r from-green-500 via-green-400 to-emerald-400 h-5 sm:h-6 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden border-2 border-green-600"
                 style={{ width: `${progressPercentage}%` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-200 to-transparent opacity-50"></div>
@@ -236,26 +236,26 @@ export default function DailyTasks() {
         </Card>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 sm:gap-6">
         {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
           <Card key={category} className="border-t-4 border-gray-200">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-3">
-                <div className={`w-8 h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-lg`}></div>
-                <span className="capitalize">{category} Tasks</span>
-                <span className="text-sm font-normal text-gray-600">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-lg flex-shrink-0`}></div>
+                <span className="capitalize text-base sm:text-lg">{category} Tasks</span>
+                <span className="text-xs sm:text-sm font-normal text-gray-600">
                   ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length})
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {categoryTasks.map((task) => (
-                  <div key={task.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                  <div key={task.id} className="flex items-start gap-2 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`w-8 h-8 p-0 rounded-full flex items-center justify-center ${
+                      className={`w-11 h-11 sm:w-12 sm:h-12 p-0 rounded-full flex items-center justify-center flex-shrink-0 ${
                         task.isCompleted
                           ? "bg-vibrant-green hover:bg-vibrant-green"
                           : "bg-green-500 hover:bg-vibrant-green"
@@ -266,6 +266,7 @@ export default function DailyTasks() {
                         task: task
                       })}
                       disabled={toggleTaskMutation.isPending}
+                      data-testid={`button-toggle-task-${task.id}`}
                     >
                       {task.isCompleted ? (
                         <CheckCircle className="text-white" size={20} />
@@ -273,50 +274,49 @@ export default function DailyTasks() {
                         <Circle className="text-white" size={20} />
                       )}
                     </Button>
-                    <div className="flex-1">
-                      <h4 className={`font-medium text-gray-900 ${task.isCompleted ? 'line-through' : ''}`}>
+                    <div className="flex-1 min-w-0">
+                      <h4 className={`font-medium text-gray-900 text-sm sm:text-base ${task.isCompleted ? 'line-through' : ''}`}>
                         {task.title}
                       </h4>
-                      <p className="text-sm text-gray-600">{task.description}</p>
-                      <div className="flex items-center space-x-4 mt-1">
-                        <div className="flex items-center space-x-1">
-                          <Clock size={14} className="text-gray-400" />
-                          <span className="text-xs text-gray-500">{task.estimatedMinutes} minutes</span>
+                      {task.description && (
+                        <p className="text-xs sm:text-sm text-gray-600 mt-0.5">{task.description}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
+                        <div className="flex items-center gap-1">
+                          <Clock size={12} className="text-gray-400 flex-shrink-0" />
+                          <span className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">{task.estimatedMinutes} min</span>
                         </div>
                         {task.frequency && task.frequency !== 'daily' && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
-                              {task.frequency}
-                            </span>
-                          </div>
+                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium whitespace-nowrap">
+                            {task.frequency}
+                          </span>
                         )}
                         {task.scheduledTime && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full font-medium">
-                              {new Date(`2000-01-01T${task.scheduledTime}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                            </span>
-                          </div>
+                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full font-medium whitespace-nowrap">
+                            {new Date(`2000-01-01T${task.scheduledTime}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          </span>
                         )}
                         {task.pointValue && task.pointValue > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <Star size={14} className="text-yellow-500" />
-                            <span className="text-xs text-yellow-600 font-medium">{task.pointValue} points</span>
+                          <div className="flex items-center gap-1">
+                            <Star size={12} className="text-yellow-500 flex-shrink-0" />
+                            <span className="text-[10px] sm:text-xs text-yellow-600 font-medium whitespace-nowrap">{task.pointValue} pts</span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-8 h-8 p-0 hover:bg-blue-100"
+                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-blue-100 rounded-lg"
                         onClick={() => handleEditTask(task)}
+                        data-testid={`button-edit-task-${task.id}`}
                       >
-                        <Edit3 className="text-blue-600" size={16} />
+                        <Edit3 className="text-blue-600" size={18} />
                       </Button>
                       {task.isCompleted && (
-                        <div className="w-10 h-10 bg-sunny-orange rounded-full flex items-center justify-center">
-                          <Star className="text-white" size={20} />
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 bg-sunny-orange rounded-full flex items-center justify-center">
+                          <Star className="text-white" size={18} />
                         </div>
                       )}
                     </div>
@@ -328,34 +328,34 @@ export default function DailyTasks() {
         ))}
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-6 sm:mt-8 text-center pb-4">
         <Button 
           onClick={() => setIsAddDialogOpen(true)} 
-          className="bg-vibrant-green hover:bg-green-600 text-black font-bold shadow-lg border border-green-700"
+          className="bg-vibrant-green hover:bg-green-600 text-black font-bold shadow-lg border border-green-700 w-full sm:w-auto"
           data-testid="button-add-task"
         >
-          <Plus size={20} className="mr-2 text-black" />
+          <Plus size={18} className="mr-2 text-black" />
           <span className="text-black font-bold">Add New Task</span>
         </Button>
       </div>
 
       {/* Add Task Dialog */}
       {isAddDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsAddDialogOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Add New Daily Task</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Daily Task</h2>
                 <button
                   onClick={() => setIsAddDialogOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold -mt-1 w-11 h-11 flex items-center justify-center"
                 >
                   ×
                 </button>
               </div>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-3 sm:space-y-4">
                 <Input
                 placeholder="Task title"
                 value={newTask.title}
@@ -440,18 +440,18 @@ export default function DailyTasks() {
                 />
                 <p className="text-xs text-gray-500">Enter any number 0-100, or leave empty for 0 points</p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2 sm:gap-3 pt-2">
                 <Button 
                   onClick={handleCreateTask} 
                   disabled={createTaskMutation.isPending}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white h-11"
                 >
                   {createTaskMutation.isPending ? "Creating..." : "Create Task"}
                 </Button>
                 <Button 
                   onClick={() => setIsAddDialogOpen(false)} 
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 h-11"
                 >
                   Cancel
                 </Button>
@@ -464,21 +464,21 @@ export default function DailyTasks() {
 
       {/* Edit Task Dialog */}
       {isEditDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsEditDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4 border-b border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Edit Task</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Task</h2>
                 <button
                   onClick={() => setIsEditDialogOpen(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold -mt-1 w-11 h-11 flex items-center justify-center"
                 >
                   ×
                 </button>
               </div>
             </div>
-            <div className="p-6">
-              <div className="space-y-4">
+            <div className="p-4 sm:p-6">
+              <div className="space-y-3 sm:space-y-4">
                 <Input
                 placeholder="Task title"
                 value={editTask.title}
@@ -563,10 +563,10 @@ export default function DailyTasks() {
                 />
                 <p className="text-xs text-gray-500">Enter any number 0-100, or leave empty for 0 points</p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2 sm:gap-3 pt-2">
                 <Button 
                   onClick={handleUpdateTask} 
-                  className="flex-1 bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg"
+                  className="flex-1 bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg h-11"
                   disabled={updateTaskMutation.isPending}
                 >
                   {updateTaskMutation.isPending ? "Updating..." : "Update Task"}
@@ -574,7 +574,7 @@ export default function DailyTasks() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEditDialogOpen(false)}
-                  className="flex-1"
+                  className="flex-1 h-11"
                 >
                   Cancel
                 </Button>
