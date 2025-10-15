@@ -43,57 +43,65 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Secure CORS middleware - explicit origin validation
-app.use((req, res, next) => {
-  const origin = req.get('origin');
-  
-  // List of exact allowed origins and domain suffixes
-  const exactOrigins = [
-    'https://adaptalyfe-5a1d3.web.app',
-    'https://adaptalyfe-5a1d3.firebaseapp.com',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000'
-  ];
-  
-  const allowedSuffixes = [
-    '.replit.dev',
-    '.replit.co',
-    '.railway.app',
-    '.up.railway.app'
-  ];
-  
-  // Check if origin is allowed (exact match or valid suffix)
-  let isAllowed = false;
-  if (origin) {
-    // Check exact matches
+// CORS configuration with secure origin validation
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      console.log('🔍 CORS: No origin header, allowing request');
+      return callback(null, true);
+    }
+    
+    // Exact allowed origins
+    const exactOrigins = [
+      'https://adaptalyfe-5a1d3.web.app',
+      'https://adaptalyfe-5a1d3.firebaseapp.com',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'https://workspace.barrettrchl.repl.co',
+      'https://adaptalyfe-db-production.up.railway.app'
+    ];
+    
+    // Allowed domain suffixes (must be https and end with suffix)
+    const allowedSuffixes = [
+      '.replit.dev',
+      '.replit.co',
+      '.railway.app',
+      '.up.railway.app'
+    ];
+    
+    // Check exact match
     if (exactOrigins.includes(origin)) {
-      isAllowed = true;
-    } else {
-      // Check suffix matches (must be https and end with allowed suffix)
-      for (const suffix of allowedSuffixes) {
-        if (origin.startsWith('https://') && origin.endsWith(suffix)) {
-          isAllowed = true;
-          break;
-        }
+      console.log('✅ CORS: Allowing exact origin:', origin);
+      return callback(null, true);
+    }
+    
+    // Check secure suffix match
+    for (const suffix of allowedSuffixes) {
+      if (origin.startsWith('https://') && origin.endsWith(suffix)) {
+        console.log('✅ CORS: Allowing suffix-matched origin:', origin);
+        return callback(null, true);
       }
     }
-  }
-  
-  // Set CORS headers only for allowed origins
-  if (isAllowed && origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  }
-  
-  // Handle preflight OPTIONS requests
-  if (req.method === 'OPTIONS') {
-    return res.status(isAllowed ? 200 : 403).end();
-  }
-  
-  next();
-});
+    
+    // Reject all other origins
+    console.log('❌ CORS: Rejecting origin:', origin);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With'
+  ],
+  exposedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+}));
 
 // Rate limiting - more permissive for development
 const limiter = rateLimit({
