@@ -439,13 +439,13 @@ export default function Financial() {
             <div className="space-y-6">
               <Card className="border-t-4 border-bright-blue">
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span>Monthly Budget Overview</span>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
                         <DialogTrigger asChild>
-                          <Button className="bg-red-600 hover:bg-red-700 text-white">
-                            <Plus size={16} className="mr-2" />
+                          <Button className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap">
+                            <Plus size={16} className="mr-1 sm:mr-2" />
                             Add Expense
                           </Button>
                         </DialogTrigger>
@@ -529,13 +529,13 @@ export default function Financial() {
                         </DialogContent>
                       </Dialog>
                       <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base whitespace-nowrap"
                         onClick={() => {
                           budgetForm.reset({ type: 'income' as const, category: '', amount: 0, description: '' });
                           setShowBudgetDialog(true);
                         }}
                       >
-                        <Plus size={16} className="mr-2" />
+                        <Plus size={16} className="mr-1 sm:mr-2" />
                         Add Income
                       </Button>
                     </div>
