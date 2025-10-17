@@ -70,15 +70,10 @@ export default function Login() {
         }
       }
 
-      // Use different navigation method for mobile vs web
-      if (isNativeMobile()) {
-        // Force full page navigation for mobile/Capacitor
-        console.log("🔄 Mobile: Navigating to", redirectPath);
-        window.location.href = redirectPath;
-      } else {
-        // Use router navigation for web
-        setLocation(redirectPath);
-      }
+      // Use window.location.href for reliable navigation on all platforms
+      // This works better on mobile browsers and Capacitor apps
+      console.log("🔄 Navigating to", redirectPath);
+      window.location.href = redirectPath;
     } catch (error: any) {
       toast({
         title: "Login Failed",
