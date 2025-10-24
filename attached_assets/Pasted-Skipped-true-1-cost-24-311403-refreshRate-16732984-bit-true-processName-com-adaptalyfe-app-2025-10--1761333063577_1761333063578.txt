@@ -1,0 +1,120 @@
+Skipped: true 1 cost 24.311403 refreshRate 16732984 bit true processName com.adaptalyfe.app
+2025-10-25 00:40:14.878 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/dashboard - Line 32 - Msg: SW registered:  [object ServiceWorkerRegistration]
+2025-10-25 00:40:15.407 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:15.408 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:15.409 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:15.481 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/user
+2025-10-25 00:40:15.491 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/daily-tasks
+2025-10-25 00:40:15.496 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/mood-entries/today
+2025-10-25 00:40:15.525 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:15.526 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:15.526 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:15.546 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/bills
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.576 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.599 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.600 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.600 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.601 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:15.816 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:15.817 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:15.818 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:16.086 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:16.087 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:16.087 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:16.088 11090-11090 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: TypeError: Cannot read properties of null (reading 'filter')
+2025-10-25 00:40:16.088 11090-11090 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: TypeError: Cannot read properties of null (reading 'filter')
+2025-10-25 00:40:16.089 11090-11090 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: Error Boundary caught an error: TypeError: Cannot read properties of null (reading 'filter') [object Object]
+2025-10-25 00:40:16.089 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 845 - Msg: Error logged for analytics: [object Object]
+2025-10-25 00:40:16.095 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:16.096 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:16.096 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:16.105 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:16.105 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:16.105 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:16.105 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:16.143 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:40:16.143 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:40:16.143 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:40:16.790 11090-11090 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 123583030, pluginId: SplashScreen, methodName: hide
+2025-10-25 00:40:16.791 11090-11090 Capacitor               com.adaptalyfe.app                   V  callback: 123583030, pluginId: SplashScreen, methodName: hide, methodData: {}
+2025-10-25 00:40:16.794 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File:  - Line 333 - Msg: undefined
+2025-10-25 00:40:17.743 11090-15306 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/sw.js
+2025-10-25 00:40:29.631 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event pause
+2025-10-25 00:40:29.631 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  No listeners found for event pause
+2025-10-25 00:40:29.632 11090-11090 Capacitor               com.adaptalyfe.app                   D  App paused
+2025-10-25 00:40:29.640 11090-16174 VRI[MainActivity]       com.adaptalyfe.app                   D  dispatchAppVisibility visible:false
+2025-10-25 00:40:29.704 11090-11090 BLASTBufferQueue        com.adaptalyfe.app                   D  [VRI[MainActivity]#2](f:0,a:2) destructor()
+2025-10-25 00:40:29.704 11090-11090 BufferQueueConsumer     com.adaptalyfe.app                   D  [VRI[MainActivity]#2(BLAST Consumer)2](id:2b5200000002,api:0,p:-1,c:11090) disconnect
+2025-10-25 00:40:29.719 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  setWindowStopped stopped:true
+2025-10-25 00:40:29.720 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  Firing change: false
+2025-10-25 00:40:29.721 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event appStateChange
+2025-10-25 00:40:29.722 11090-11090 Capacitor               com.adaptalyfe.app                   D  App stopped
+2025-10-25 00:40:29.724 11090-11090 Capacitor               com.adaptalyfe.app                   D  Saving instance state!
+2025-10-25 00:40:29.727 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: App state changed. Is active? false
+2025-10-25 00:40:29.734 11090-11090 ViewRootImplExtImpl     com.adaptalyfe.app                   D  onDisplayChanged 0 for VRI android.view.ViewRootImpl@e3b9ff9
+2025-10-25 00:40:29.952 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  onFocusEvent false
+2025-10-25 00:40:31.550 11090-15456 VRI[MainActivity]       com.adaptalyfe.app                   D  dispatchAppVisibility visible:true
+2025-10-25 00:40:31.568 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  setWindowStopped stopped:false
+2025-10-25 00:40:31.569 11090-11090 Capacitor               com.adaptalyfe.app                   D  App restarted
+2025-10-25 00:40:31.579 11090-11090 Capacitor               com.adaptalyfe.app                   D  App started
+2025-10-25 00:40:31.582 11090-11090 OnBackInvokedCallback   com.adaptalyfe.app                   W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2025-10-25 00:40:31.584 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  Firing change: true
+2025-10-25 00:40:31.584 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event appStateChange
+2025-10-25 00:40:31.586 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event resume
+2025-10-25 00:40:31.586 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  No listeners found for event resume
+2025-10-25 00:40:31.587 11090-11090 Capacitor               com.adaptalyfe.app                   D  App resumed
+2025-10-25 00:40:31.601 11090-11090 BufferQueueConsumer     com.adaptalyfe.app                   D  [](id:2b5200000003,api:0,p:-1,c:11090) connect: controlledByApp=false
+2025-10-25 00:40:31.603 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  registerCallbacksForSync syncBuffer=false
+2025-10-25 00:40:31.622 11090-15224 BLASTBufferQueue        com.adaptalyfe.app                   D  [VRI[MainActivity]#3](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=408420554698650(auto) mPendingTransactions.size=0 graphicBufferId=47631187312653 transform=0
+2025-10-25 00:40:31.622 11090-15224 VRI[MainActivity]       com.adaptalyfe.app                   D  Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true syncBuffer=false
+2025-10-25 00:40:31.622 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  draw finished.
+2025-10-25 00:40:31.624 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: App state changed. Is active? true
+2025-10-25 00:40:31.649 11090-11090 ViewRootImplExtImpl     com.adaptalyfe.app                   D  onDisplayChanged 0 for VRI android.view.ViewRootImpl@e3b9ff9
+2025-10-25 00:40:31.720 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:31.721 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:31.721 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:31.721 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:31.847 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  onFocusEvent true
+2025-10-25 00:40:46.859 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event pause
+2025-10-25 00:40:46.859 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  No listeners found for event pause
+2025-10-25 00:40:46.860 11090-11090 Capacitor               com.adaptalyfe.app                   D  App paused
+2025-10-25 00:40:46.866 11090-15455 VRI[MainActivity]       com.adaptalyfe.app                   D  dispatchAppVisibility visible:false
+2025-10-25 00:40:46.928 11090-11090 ViewRootImplExtImpl     com.adaptalyfe.app                   D  onDisplayChanged 0 for VRI android.view.ViewRootImpl@e3b9ff9
+2025-10-25 00:40:46.949 11090-11090 BLASTBufferQueue        com.adaptalyfe.app                   D  [VRI[MainActivity]#3](f:0,a:2) destructor()
+2025-10-25 00:40:46.949 11090-11090 BufferQueueConsumer     com.adaptalyfe.app                   D  [VRI[MainActivity]#3(BLAST Consumer)3](id:2b5200000003,api:0,p:-1,c:11090) disconnect
+2025-10-25 00:40:46.958 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  setWindowStopped stopped:true
+2025-10-25 00:40:46.960 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  Firing change: false
+2025-10-25 00:40:46.961 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event appStateChange
+2025-10-25 00:40:46.962 11090-11090 Capacitor               com.adaptalyfe.app                   D  App stopped
+2025-10-25 00:40:46.963 11090-11090 Capacitor               com.adaptalyfe.app                   D  Saving instance state!
+2025-10-25 00:40:46.966 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: App state changed. Is active? false
+2025-10-25 00:40:47.186 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  onFocusEvent false
+2025-10-25 00:40:49.139 11090-15179 VRI[MainActivity]       com.adaptalyfe.app                   D  dispatchAppVisibility visible:true
+2025-10-25 00:40:49.166 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  setWindowStopped stopped:false
+2025-10-25 00:40:49.169 11090-11090 Capacitor               com.adaptalyfe.app                   D  App restarted
+2025-10-25 00:40:49.171 11090-11090 Capacitor               com.adaptalyfe.app                   D  App started
+2025-10-25 00:40:49.175 11090-11090 OnBackInvokedCallback   com.adaptalyfe.app                   W  OnBackInvokedCallback is not enabled for the application.
+                                                                                                    Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+2025-10-25 00:40:49.178 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  Firing change: true
+2025-10-25 00:40:49.178 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event appStateChange
+2025-10-25 00:40:49.180 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   V  Notifying listeners for event resume
+2025-10-25 00:40:49.180 11090-11090 Capacitor/AppPlugin     com.adaptalyfe.app                   D  No listeners found for event resume
+2025-10-25 00:40:49.180 11090-11090 Capacitor               com.adaptalyfe.app                   D  App resumed
+2025-10-25 00:40:49.187 11090-11090 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: App state changed. Is active? true
+2025-10-25 00:40:49.226 11090-11090 BufferQueueConsumer     com.adaptalyfe.app                   D  [](id:2b5200000004,api:0,p:-1,c:11090) connect: controlledByApp=false
+2025-10-25 00:40:49.229 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  registerCallbacksForSync syncBuffer=false
+2025-10-25 00:40:49.252 11090-15224 BLASTBufferQueue        com.adaptalyfe.app                   D  [VRI[MainActivity]#4](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=408438185316805(auto) mPendingTransactions.size=0 graphicBufferId=47631187312657 transform=0
+2025-10-25 00:40:49.253 11090-15224 VRI[MainActivity]       com.adaptalyfe.app                   D  Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true syncBuffer=false
+2025-10-25 00:40:49.253 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  draw finished.
+2025-10-25 00:40:49.281 11090-11090 ViewRootImplExtImpl     com.adaptalyfe.app                   D  onDisplayChanged 0 for VRI android.view.ViewRootImpl@e3b9ff9
+2025-10-25 00:40:49.334 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:49.334 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:49.335 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:49.335 11090-15224 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:40:49.439 11090-11090 VRI[MainActivity]       com.adaptalyfe.app                   D  onFocusEvent true
