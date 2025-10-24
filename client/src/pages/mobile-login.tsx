@@ -54,9 +54,9 @@ export default function MobileLogin() {
         redirectPath = `/accept-invitation?code=${pendingInvitation}`;
       }
 
-      // Use window.location.href for reliable navigation on mobile apps
+      // Use setLocation for SPA navigation (avoids Capacitor persisting route on restart)
       console.log("🔄 Mobile Login: Navigating to", redirectPath);
-      window.location.href = redirectPath;
+      setLocation(redirectPath);
     } catch (error: any) {
       toast({
         title: "Login Failed",
