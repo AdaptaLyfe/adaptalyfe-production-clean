@@ -58,6 +58,9 @@ app.use(cors({
       'https://adaptalyfe-5a1d3.firebaseapp.com',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
+      'https://localhost',           // Capacitor iOS/Android apps
+      'capacitor://localhost',       // Capacitor protocol
+      'ionic://localhost',           // Ionic protocol
       'https://workspace.barrettrchl.repl.co',
       'https://adaptalyfe-db-production.up.railway.app'
     ];
