@@ -15,8 +15,8 @@ html, body {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  /* Add padding for mobile safe areas */
-  padding-top: var(--safe-area-inset-top);
+  /* Add padding for mobile safe areas and status bar */
+  padding-top: max(var(--safe-area-inset-top), 24px);
   padding-bottom: var(--safe-area-inset-bottom);
 }
 

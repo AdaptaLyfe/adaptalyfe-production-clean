@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: 'Adaptalyfe',
   webDir: 'dist/public',
   server: {
-    url: 'https://adaptalyfe-5a1d3.web.app',
     androidScheme: 'https'
   },
   plugins: {
