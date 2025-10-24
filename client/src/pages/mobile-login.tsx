@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, setSessionToken } from "@/lib/queryClient";
 
 export default function MobileLogin() {
   const [, setLocation] = useLocation();
@@ -30,12 +30,20 @@ export default function MobileLogin() {
       // Get user data to ensure session is properly established
       const userData = await response.json();
 
+      // CRITICAL FOR MOBILE: Save session token for subsequent requests
+      if (userData.sessionToken) {
+        setSessionToken(userData.sessionToken);
+        console.log("✅ Mobile: Session token saved for authentication");
+      } else {
+        console.warn("⚠️ No session token received from login");
+      }
+
       toast({
         title: "Login Successful!",
         description: "Welcome back to Adaptalyfe",
       });
 
-      // Small delay to ensure session cookies are set
+      // Small delay to ensure token is saved
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Determine redirect path
