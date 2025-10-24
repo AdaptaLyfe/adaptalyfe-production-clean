@@ -142,7 +142,14 @@ export const getQueryFn: <T>(options: {
       }
     } catch (error) {
       console.error("Query error:", error);
-      throw error;
+      // For mobile apps: Return null on network errors instead of crashing
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.log("Network error detected, returning null for graceful degradation");
+        return null;
+      }
+      // Return null instead of throwing to prevent app crashes
+      console.log("Returning null due to error, app will handle gracefully");
+      return null;
     }
   };
 
