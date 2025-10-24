@@ -22,24 +22,33 @@ export default function MobileLogin() {
     setIsSubmitting(true);
     
     try {
-      await apiRequest("POST", "/api/login", {
+      const response = await apiRequest("POST", "/api/login", {
         username: formData.username,
         password: formData.password
       });
+
+      // Get user data to ensure session is properly established
+      const userData = await response.json();
 
       toast({
         title: "Login Successful!",
         description: "Welcome back to Adaptalyfe",
       });
 
-      // Check if there's a pending invitation to redirect to
+      // Small delay to ensure session cookies are set
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Determine redirect path
+      let redirectPath = "/dashboard";
       const pendingInvitation = localStorage.getItem('pendingInvitation');
       if (pendingInvitation) {
         localStorage.removeItem('pendingInvitation');
-        setLocation(`/accept-invitation?code=${pendingInvitation}`);
-      } else {
-        setLocation("/dashboard");
+        redirectPath = `/accept-invitation?code=${pendingInvitation}`;
       }
+
+      // Use window.location.href for reliable navigation on mobile apps
+      console.log("🔄 Mobile Login: Navigating to", redirectPath);
+      window.location.href = redirectPath;
     } catch (error: any) {
       toast({
         title: "Login Failed",
