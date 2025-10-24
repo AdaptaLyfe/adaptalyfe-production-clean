@@ -160,6 +160,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
   
+  // CRITICAL: Global middleware to check Authorization header for mobile auth
+  // This runs BEFORE all endpoints and loads session from token if present
+  app.use(async (req: any, res, next) => {
+    const authHeader = req.get('Authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const sessionToken = authHeader.substring(7);
+      console.log("🔑 Authorization header found, attempting token auth with:", sessionToken.substring(0, 10) + "...");
+      
+      // Try to load session from store using the token
+      await new Promise<void>((resolve) => {
+        sessionStore.get(sessionToken, (err, sessionData) => {
+          if (err) {
+            console.log("❌ Session store error:", err);
+            return resolve();
+          }
+          
+          if (!sessionData || !sessionData.userId) {
+            console.log("❌ Invalid or expired session token");
+            return resolve();
+          }
+          
+          // Restore session data to req.session
+          req.session.userId = sessionData.userId;
+          req.session.user = sessionData.user;
+          console.log("✅ Session restored from Authorization token for user:", sessionData.user?.username);
+          resolve();
+        });
+      });
+    }
+    
+    next();
+  });
+  
   // Middleware to ensure user is logged in for protected routes
   // Supports both cookie-based (desktop) and header-based (mobile) auth
   const requireAuth = async (req: any, res: any, next: any) => {
