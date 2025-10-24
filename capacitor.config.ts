@@ -5,10 +5,8 @@ const config: CapacitorConfig = {
   appName: 'Adaptalyfe',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https',
-    // For local development, you can uncomment and set your IP:
-    // url: 'http://192.168.1.X:5000',
-    // cleartext: true
+    url: 'https://adaptalyfe-5a1d3.web.app',
+    androidScheme: 'https'
   },
   plugins: {
     SplashScreen: {
