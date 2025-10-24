@@ -1,0 +1,111 @@
+ADAPTALYFE - ANDROID APK BUILD INSTRUCTIONS
+==========================================
+
+This package contains ONLY the files needed to build the Android APK.
+
+PACKAGE CONTENTS:
+----------------
+✓ android/              - Android Studio project
+✓ public/               - Built web app (your app's content)
+✓ capacitor.config.ts   - Capacitor configuration
+✓ package.json          - Project metadata
+
+QUICK START - BUILD APK IN 5 STEPS:
+-----------------------------------
+
+1. EXTRACT THE ZIP
+   - Extract adaptalyfe-android-build.zip to your Mac
+   - You'll get a folder: adaptalyfe-android-build/
+
+2. OPEN TERMINAL
+   cd /path/to/adaptalyfe-android-build
+
+3. SYNC WEB ASSETS (one-time setup)
+   npm install -g @capacitor/cli
+   npx cap sync android
+
+4. BUILD APK
+   cd android
+   chmod +x gradlew
+   ./gradlew assembleDebug
+
+5. GET YOUR APK
+   Location: android/app/build/outputs/apk/debug/app-debug.apk
+   Install this on your Android phone!
+
+ALTERNATIVE - USE ANDROID STUDIO:
+---------------------------------
+
+1. Install Android Studio from: https://developer.android.com/studio
+
+2. Open Android Studio → File → Open
+
+3. Select the "android" folder inside adaptalyfe-android-build
+
+4. Wait for Gradle sync to complete
+
+5. Click Build → Build Bundle(s) / APK(s) → Build APK(s)
+
+6. Find APK at: android/app/build/outputs/apk/debug/app-debug.apk
+
+INSTALL APK ON YOUR PHONE:
+--------------------------
+
+Method 1: Direct Install
+- Copy app-debug.apk to your phone
+- Tap to install
+- Allow "Install from unknown sources" if asked
+
+Method 2: Via Android Studio
+- Connect phone via USB
+- Enable USB Debugging on phone
+- Click Run (▶) in Android Studio
+- Select your phone
+
+TROUBLESHOOTING:
+---------------
+
+Error: "SDK location not found"
+Fix: Create android/local.properties with:
+     sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk
+
+Error: "Gradle build failed"
+Fix: cd android
+     ./gradlew clean
+     ./gradlew assembleDebug
+
+Error: "Permission denied: gradlew"
+Fix: chmod +x android/gradlew
+
+FOR GOOGLE PLAY STORE (PRODUCTION):
+-----------------------------------
+
+When ready to publish:
+1. cd android
+2. ./gradlew bundleRelease
+
+Output: android/app/build/outputs/bundle/release/app-release.aab
+
+(You'll need to set up signing keys first - see MOBILE_DEPLOYMENT_GUIDE.md)
+
+WHAT'S IN THIS BUILD:
+--------------------
+- App ID: com.adaptalyfe.app
+- App Name: Adaptalyfe
+- Backend: https://...spock.replit.dev (already configured)
+- All features: Tasks, Financial, Mood, Support Network, etc.
+
+LOGIN CREDENTIALS FOR TESTING:
+------------------------------
+Username: demo@adaptalyfe.com
+Password: demo123
+
+NEED HELP?
+----------
+If you get stuck, the full deployment guide is in your Replit project:
+MOBILE_DEPLOYMENT_GUIDE.md
+
+BUILD DATE: October 24, 2025
+VERSION: 1.0.0
+
+Good luck! 🚀
