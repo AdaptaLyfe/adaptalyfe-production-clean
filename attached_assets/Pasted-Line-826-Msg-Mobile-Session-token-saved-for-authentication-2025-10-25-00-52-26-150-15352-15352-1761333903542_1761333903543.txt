@@ -1,0 +1,28 @@
+Line 826 - Msg: ✅ Mobile: Session token saved for authentication
+2025-10-25 00:52:26.150 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 826 - Msg: 🔄 Mobile Login: Navigating to /dashboard
+2025-10-25 00:52:26.170 15352-15352 Quality                 com.adaptalyfe.app                   I  Skipped: true 1 cost 17.63492 refreshRate 16733988 bit true processName com.adaptalyfe.app
+2025-10-25 00:52:26.175 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/dashboard
+2025-10-25 00:52:26.230 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:52:26.231 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:52:26.301 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/force-hide-errors.css
+2025-10-25 00:52:26.304 15352-20684 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/block-error-modal.js?v=2
+2025-10-25 00:52:26.311 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/assets/index-OSiMQTfY.js
+2025-10-25 00:52:26.314 15352-15352 Quality                 com.adaptalyfe.app                   I  Skipped: true 1 cost 27.578768 refreshRate 16733736 bit true processName com.adaptalyfe.app
+2025-10-25 00:52:26.314 15352-20683 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/assets/index-DHtvN_cd.css
+2025-10-25 00:52:26.331 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/block-error-modal.js?v=2 - Line 95 - Msg: Vite error blocker activated (app dialogs unaffected)
+2025-10-25 00:52:26.370 15352-20841 RemoteInpu...ectionImpl com.adaptalyfe.app                   W  requestCursorAnchorInfo on inactive InputConnection
+2025-10-25 00:52:26.412 15352-15352 Capacitor/...oardPlugin com.adaptalyfe.app                   V  Notifying listeners for event keyboardWillHide
+2025-10-25 00:52:26.412 15352-15352 Capacitor/...oardPlugin com.adaptalyfe.app                   D  No listeners found for event keyboardWillHide
+2025-10-25 00:52:26.416 15352-15352 Quality                 com.adaptalyfe.app                   I  Skipped: true 1 cost 29.54404 refreshRate 16733692 bit true processName com.adaptalyfe.app
+2025-10-25 00:52:26.605 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Starting Adaptalyfe app...
+2025-10-25 00:52:26.605 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: React version: 18.3.1
+2025-10-25 00:52:26.606 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Current URL: https://localhost/dashboard
+2025-10-25 00:52:26.606 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: User agent: Mozilla/5.0 (Linux; Android 13; IV2201 Build/TP1A.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/141.0.7390.97 Mobile Safari/537.36
+2025-10-25 00:52:26.606 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Screen size: 360 x 800
+2025-10-25 00:52:26.606 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Platform: android
+2025-10-25 00:52:26.607 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Is native mobile: true
+2025-10-25 00:52:26.607 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Mobile device detected: true
+2025-10-25 00:52:26.607 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Creating React root and rendering app...
+2025-10-25 00:52:26.607 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Applying mobile-specific optimizations
+2025-10-25 00:52:26.607 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: App rendered successfully
+2025-10-25 00:52:26.608 15352-15352 Capacitor/Console       com.adaptalyfe.app            ...
