@@ -18,29 +18,84 @@ function getApiUrl(path: string): string {
 // Session token management for mobile auth
 const SESSION_TOKEN_KEY = 'adaptalyfe_session_token';
 
+// Helper to ensure localStorage is available and working
+function safeLocalStorageGet(key: string): string | null {
+  try {
+    const value = localStorage.getItem(key);
+    if (value) {
+      console.log(`✅ Retrieved ${key} from localStorage`);
+    }
+    return value;
+  } catch (error) {
+    console.error('localStorage.getItem error:', error);
+    return null;
+  }
+}
+
+function safeLocalStorageSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+    console.log(`✅ Saved ${key} to localStorage`);
+    
+    // Verify it was saved
+    const verify = localStorage.getItem(key);
+    if (verify === value) {
+      console.log(`✅ Verified ${key} persisted correctly`);
+    } else {
+      console.error(`❌ Failed to verify ${key} persistence`);
+    }
+  } catch (error) {
+    console.error('localStorage.setItem error:', error);
+  }
+}
+
+function safeLocalStorageRemove(key: string): void {
+  try {
+    localStorage.removeItem(key);
+    console.log(`✅ Removed ${key} from localStorage`);
+  } catch (error) {
+    console.error('localStorage.removeItem error:', error);
+  }
+}
+
 export function setSessionToken(token: string): void {
-  localStorage.setItem(SESSION_TOKEN_KEY, token);
+  safeLocalStorageSet(SESSION_TOKEN_KEY, token);
 }
 
 export function getSessionToken(): string | null {
-  return localStorage.getItem(SESSION_TOKEN_KEY);
+  return safeLocalStorageGet(SESSION_TOKEN_KEY);
 }
 
 export function clearSessionToken(): void {
-  localStorage.removeItem(SESSION_TOKEN_KEY);
+  safeLocalStorageRemove(SESSION_TOKEN_KEY);
+}
+
+// Initialize session on app startup (check if token exists)
+export function initializeSession(): boolean {
+  const token = getSessionToken();
+  if (token) {
+    console.log('🔄 Session token found on app startup, user should stay logged in');
+    return true;
+  } else {
+    console.log('🚫 No session token found on app startup');
+    return false;
+  }
 }
 
 // Logout helper that clears both server session and client token
 export async function logout(): Promise<void> {
+  console.log('🚪 Logout initiated');
   try {
     // Call backend logout to destroy server session
     await apiRequest("POST", "/api/logout", {});
+    console.log('✅ Backend logout successful');
   } catch (error) {
-    console.error("Logout API call failed:", error);
+    console.error("❌ Logout API call failed:", error);
     // Continue to clear local token even if API fails
   } finally {
     // Always clear the session token from localStorage
     clearSessionToken();
+    console.log('✅ Session token cleared from localStorage');
   }
 }
 
