@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
 import { apiRequest, setSessionToken } from "@/lib/queryClient";
+import { isNativeMobile } from "@/lib/mobile";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -57,19 +58,22 @@ export default function Login() {
       // Small delay to ensure session cookies are set
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Handle invitation code if provided
+      // Determine redirect path
+      let redirectPath = "/dashboard";
       if (formData.invitationCode) {
-        setLocation(`/accept-invitation?code=${formData.invitationCode}`);
+        redirectPath = `/accept-invitation?code=${formData.invitationCode}`;
       } else {
-        // Check if there's a pending invitation to redirect to
         const pendingInvitation = localStorage.getItem('pendingInvitation');
         if (pendingInvitation) {
           localStorage.removeItem('pendingInvitation');
-          setLocation(`/accept-invitation?code=${pendingInvitation}`);
-        } else {
-          setLocation("/dashboard");
+          redirectPath = `/accept-invitation?code=${pendingInvitation}`;
         }
       }
+
+      // Use window.location.href for reliable navigation on all platforms
+      // This works better on mobile browsers and Capacitor apps
+      console.log("🔄 Navigating to", redirectPath);
+      window.location.href = redirectPath;
     } catch (error: any) {
       toast({
         title: "Login Failed",
