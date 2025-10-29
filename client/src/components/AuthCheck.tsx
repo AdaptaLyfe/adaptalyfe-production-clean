@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getSessionToken } from "@/lib/queryClient";
 
 interface AuthCheckProps {
   children: React.ReactNode;
@@ -9,19 +10,39 @@ interface AuthCheckProps {
 
 export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheckProps) {
   const [, setLocation] = useLocation();
+  const [hasCheckedToken, setHasCheckedToken] = useState(false);
+  
+  // CRITICAL: Check for session token BEFORE making any API calls
+  useEffect(() => {
+    const sessionToken = getSessionToken();
+    const currentPath = window.location.pathname;
+    
+    if (!sessionToken && !['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
+      console.log('🚫 AuthCheck: No session token found, redirecting to login from', currentPath);
+      setLocation(redirectTo);
+      return;
+    }
+    
+    if (sessionToken) {
+      console.log('✅ AuthCheck: Session token found, proceeding with authentication');
+    }
+    
+    setHasCheckedToken(true);
+  }, [setLocation, redirectTo]);
   
   const { data: user, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/user'],
-    retry: 2, // Increase retries for cross-domain requests
-    retryDelay: 1000 // Longer delay for session establishment
+    retry: 2,
+    retryDelay: 1000,
+    enabled: hasCheckedToken // Only run query after token check
   });
 
   useEffect(() => {
-    if (!isLoading && !user && error) {
+    if (hasCheckedToken && !isLoading && !user && error) {
       // Only redirect if we're not already on an auth page
       const currentPath = window.location.pathname;
       if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
-        console.log('AuthCheck: No authenticated user, redirecting to', redirectTo, 'from', currentPath);
+        console.log('AuthCheck: API authentication failed, redirecting to', redirectTo, 'from', currentPath);
         console.log('AuthCheck: Error details:', error);
         
         // Add a small delay before redirect to handle potential session propagation
@@ -30,7 +51,7 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
         }, 100);
       }
     }
-  }, [isLoading, user, error, setLocation, redirectTo]);
+  }, [hasCheckedToken, isLoading, user, error, setLocation, redirectTo]);
 
   useEffect(() => {
     // Force a refetch when component mounts to ensure fresh auth state
