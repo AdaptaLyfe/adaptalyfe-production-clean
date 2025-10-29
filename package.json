@@ -90,6 +90,7 @@
     "express-validator": "^7.2.1",
     "firebase-tools": "^14.15.1",
     "framer-motion": "^11.13.1",
+    "glob": "^11.0.3",
     "google-auth-library": "^10.2.1",
     "helmet": "^8.1.0",
     "input-otp": "^1.4.2",
