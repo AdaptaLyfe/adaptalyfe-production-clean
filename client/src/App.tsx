@@ -85,6 +85,22 @@ function App() {
   const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
   useSubscriptionEnforcement();
   
+  // Session restoration on app startup (critical for mobile apps)
+  React.useEffect(() => {
+    const { getSessionToken } = require('@/lib/queryClient');
+    const sessionToken = getSessionToken();
+    
+    // If we have a session token and we're on the landing page, go to dashboard
+    if (sessionToken && (location === "/" || location === "" || location === "/landing")) {
+      console.log('🔄 App startup: Session token found, redirecting to dashboard');
+      setLocation('/dashboard');
+    } else if (sessionToken) {
+      console.log('✅ App startup: Session token found, user authenticated');
+    } else {
+      console.log('🚫 App startup: No session token, user not authenticated');
+    }
+  }, []); // Run only on mount
+  
   // Completely disable auto demo for production testing
   const isLoggingIn = false;
 
