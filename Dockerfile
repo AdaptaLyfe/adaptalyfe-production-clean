@@ -12,10 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build frontend with Vite
-RUN npm run build
+# Build frontend with Vite (skip backend build from package.json)
+RUN npx vite build
 
-# Build backend production server with esbuild
+# Build ONLY the production backend server with esbuild
 RUN npx esbuild server/production.ts \
   --platform=node \
   --packages=external \
