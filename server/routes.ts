@@ -152,11 +152,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: process.env.SESSION_SECRET || 'demo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Extend session on each request
     cookie: {
       secure: true, // Required for cross-site cookies
       httpOnly: true,
       sameSite: 'none', // Allow cross-site cookies (Firebase -> Replit)
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (increased from 24 hours)
     }
   }));
   
