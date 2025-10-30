@@ -1,11 +1,12 @@
 [phases.build]
 cmds = [
   "npm ci",
-  "esbuild server/api-only.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/api-server.js"
+  "npx vite build",
+  "npx esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/production.js"
 ]
 
-[phases.start]
-cmd = "node dist/api-server.js"
+[start]
+cmd = "node dist/production.js"
 
 [variables]
 NODE_ENV = "production"
