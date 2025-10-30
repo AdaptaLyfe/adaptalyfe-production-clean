@@ -36,6 +36,7 @@ import AdminCheck from "@/components/AdminCheck";
 import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
 import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
+import { getSessionToken } from "@/lib/queryClient";
 
 // Global error handler for Stripe loading issues
 const originalError = console.error;
@@ -87,7 +88,6 @@ function App() {
   
   // Session restoration on app startup (critical for mobile apps)
   React.useEffect(() => {
-    const { getSessionToken } = require('@/lib/queryClient');
     const sessionToken = getSessionToken();
     
     // If we have a session token and we're on the landing page, go to dashboard
