@@ -86,6 +86,8 @@ const IMPORTANT_FILES = [
   'server/index.ts',
   'server/routes.ts',
   'package.json',
+  'package-lock.json',
+  'railway.toml',
   'README.md',
   'replit.md',
   'SESSION_PERSISTENCE_CHANGES.md',
