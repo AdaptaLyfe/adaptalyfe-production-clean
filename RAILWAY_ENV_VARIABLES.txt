@@ -1,0 +1,45 @@
+====================================================
+RAILWAY ENVIRONMENT VARIABLES - COPY THESE VALUES
+====================================================
+
+Add these variables in Railway Dashboard:
+1. Go to Railway → Your Project → Variables tab
+2. Click "+ New Variable" for each one below
+3. Copy-paste the values exactly
+
+====================================================
+
+Variable 1: SESSION_SECRET
+--------------------------
+Name: SESSION_SECRET
+Value: adaptalyfe-production-secret-2025-railway-deployment-secure-key-do-not-share
+
+Variable 2: STRIPE_SECRET_KEY
+------------------------------
+Name: STRIPE_SECRET_KEY
+Value: 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
+
+Variable 3: VITE_STRIPE_PUBLIC_KEY
+-----------------------------------
+Name: VITE_STRIPE_PUBLIC_KEY
+Value: pk_live_51RkYzqCFbm4JsWkEL4YEwXvXBx66vPpgIhvYKBHmX0jjYh9Yv0vZPRIPpqYFOYzW9v0Dt8bG8JGvT7oPJ005JSBt3CB
+
+Variable 4: NODE_ENV (verify this exists)
+------------------------------------------
+Name: NODE_ENV
+Value: production
+
+Variable 5: DATABASE_URL (already set - verify)
+-----------------------------------------------
+Name: DATABASE_URL
+Value: postgresql://neondb_owner:npg_UaGgd6tcZ9Fe@ep-weathered-salad-afef9mso.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require
+
+====================================================
+AFTER ADDING ALL VARIABLES:
+====================================================
+1. Click "Redeploy" button in Railway
+2. Wait 2-3 minutes for deployment
+3. Test: https://adaptalyfe-cache-bust-production.up.railway.app/api/health
+4. Expected result: {"status":"OK","environment":"production",...}
+
+====================================================
