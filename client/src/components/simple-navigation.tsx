@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 // AuthUtils inlined to avoid import issues
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
+import { logout } from "@/lib/queryClient";
 
 export default function SimpleNavigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -339,8 +340,6 @@ export default function SimpleNavigation() {
                 className="w-full mt-3 p-3 rounded-md bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-medium text-sm flex items-center justify-center space-x-2 transition-colors"
                 onClick={async () => {
                   try {
-                    // Import logout function
-                    const { logout } = await import('@/lib/queryClient');
                     await logout();
                     setIsMenuOpen(false);
                     setLocation('/login');
