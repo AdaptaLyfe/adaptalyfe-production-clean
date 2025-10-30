@@ -8,7 +8,7 @@ cmds = ["npx vite build && npx esbuild server/production.ts --platform=node --pa
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-startCommand = "NODE_ENV=production node dist/production.js"
+startCommand = "node dist/production.js"
 
 [[deploy.healthcheck]]
 httpPath = "/api/health"
