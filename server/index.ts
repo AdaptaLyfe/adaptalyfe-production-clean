@@ -198,6 +198,13 @@ app.use((req, res, next) => {
           if (req.path.startsWith('/api/')) {
             return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
           }
+          
+          // Don't serve HTML for static assets
+          const staticAssetExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map'];
+          if (staticAssetExtensions.some(ext => req.path.toLowerCase().endsWith(ext))) {
+            return res.status(404).send('Not Found');
+          }
+          
           res.sendFile(path.resolve(distPath, "index.html"));
         });
       }
@@ -220,6 +227,16 @@ app.use((req, res, next) => {
         console.log(`API route not found: ${req.method} ${req.path}`);
         return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
       }
+      
+      // Don't serve HTML for static assets (JS, CSS, images, etc.)
+      // Let them 404 properly if they don't exist
+      const staticAssetExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map'];
+      if (staticAssetExtensions.some(ext => req.path.toLowerCase().endsWith(ext))) {
+        console.log(`Static asset not found: ${req.path}`);
+        return res.status(404).send('Not Found');
+      }
+      
+      // Serve index.html for all other routes (SPA routing)
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }
