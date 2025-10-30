@@ -1,14 +1,10 @@
 [build]
 builder = "NIXPACKS"
 
-[build.nixpacksPlan.phases.build]
-cmds = ["npx vite build && npx esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outdir=dist"]
-
 [deploy]
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-startCommand = "node dist/production.js"
 
 [[deploy.healthcheck]]
 httpPath = "/api/health"
