@@ -1,14 +1,8 @@
 [build]
-builder = "DOCKERFILE"
+builder = "NIXPACKS"
 
 [deploy]
+startCommand = "node dist/production.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
-
-[[deploy.healthcheck]]
-httpPath = "/api/health"
-initialDelaySeconds = 30
-periodSeconds = 10
-timeoutSeconds = 5
-failureThreshold = 3
