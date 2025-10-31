@@ -1,11 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs-20_x"]
+
+[phases.install]
+cmds = ["npm ci"]
+
 [phases.build]
-cmds = [
-  "npm ci",
-  "esbuild server/api-only.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/api-server.js"
-]
+cmds = ["npm run build"]
 
-[phases.start]
-cmd = "node dist/api-server.js"
-
-[variables]
-NODE_ENV = "production"
+[start]
+cmd = "node dist/production.js"
