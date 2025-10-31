@@ -5,7 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Adaptalyfe',
   webDir: 'dist/public',
   server: {
-    androidScheme: 'https'
+    url: 'https://app.getadaptalyfeapp.com',
+    androidScheme: 'https',
+    iosScheme: 'https',
+    cleartext: false
   },
   plugins: {
     SplashScreen: {
