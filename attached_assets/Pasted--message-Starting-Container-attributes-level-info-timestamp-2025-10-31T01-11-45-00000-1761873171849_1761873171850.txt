@@ -1,0 +1,116 @@
+{"message":"Starting Container","attributes":{"level":"info"},"timestamp":"2025-10-31T01:11:45.000000000Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723810033Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723817738Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723823327Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723834444Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723839413Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723847445Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723853065Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723863323Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723867115Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723869238Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723874466Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723876727Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723883302Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.723889704Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770745085Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770754697Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770759238Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770763541Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770769117Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770779082Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770783289Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770787201Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770793847Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770798510Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770803386Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770808755Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770814573Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:46.770895198Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146241467Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146242137Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146249181Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146255010Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146256828Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146260184Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146264188Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146268293Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146273303Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146276982Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146281040Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146286642Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146290657Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:48.146294601Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824884164Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824894202Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824897200Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824903722Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824904246Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824911091Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824912674Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824918735Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824918871Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824924958Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824929832Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824984796Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.824999003Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:49.825006241Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943326101Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943335733Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943347233Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943352760Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943357381Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943362425Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943366597Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943373700Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943377625Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943381898Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943385553Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943389991Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943394172Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:50.943398718Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189667774Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189674575Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189678518Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189682341Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189686631Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189690491Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189695293Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189699724Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189703767Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189707471Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189710886Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189714495Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189718801Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:52.189722850Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780067525Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780071191Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780075270Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780079236Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780083446Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780087267Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780091470Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780096381Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780100502Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780104672Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780108647Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780112319Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780116194Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:53.780120447Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306659229Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306660829Z"}
+{"message":"  throw err;","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306666905Z"}
+{"message":"  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306671554Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306675852Z"}
+{"message":"Error: Cannot find module '/app/dist/index.js'","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306681375Z"}
+{"message":"    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306691367Z"}
+{"message":"    at Module._load (node:internal/modules/cjs/loader:1038:27)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306695662Z"}
+{"message":"    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306699580Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306703833Z"}
+{"message":"  code: 'MODULE_NOT_FOUND',","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306708147Z"}
+{"message":"  requireStack: []","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306712297Z"}
+{"message":"}","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306716147Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:54.306719995Z"}
+{"message":"Node.js v20.19.5","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:55.810292505Z"}
+{"message":"    at node:internal/main/run_main_module:28:49 {","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:55.810429128Z"}
+{"message":"node:internal/modules/cjs/loader:1210","attributes":{"level":"error"},"timestamp":"2025-10-31T01:11:55.810434909Z"}
