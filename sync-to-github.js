@@ -89,6 +89,7 @@ const IMPORTANT_FILES = [
   'package-lock.json',
   'railway.toml',
   'railway.json',
+  'nixpacks.toml',
   'README.md',
   'replit.md',
   'SESSION_PERSISTENCE_CHANGES.md',
