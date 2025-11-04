@@ -85,6 +85,7 @@ const IMPORTANT_FILES = [
   'client/src/components/simple-navigation.tsx',
   'server/index.ts',
   'server/routes.ts',
+  'server/production.ts',
   'package.json',
   'package-lock.json',
   'railway.toml',
