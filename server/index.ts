@@ -62,7 +62,8 @@ app.use(cors({
       'capacitor://localhost',       // Capacitor protocol
       'ionic://localhost',           // Ionic protocol
       'https://workspace.barrettrchl.repl.co',
-      'https://adaptalyfe-db-production.up.railway.app'
+      'https://adaptalyfe-db-production.up.railway.app',
+      'https://app.getadaptalyfeapp.com'
     ];
     
     // Allowed domain suffixes (must be https and end with suffix)
