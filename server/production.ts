@@ -56,8 +56,9 @@ app.use(cors({
       'https://adaptalyfe-5a1d3.firebaseapp.com',
       'https://f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev',
       'https://adaptalyfe-db-production.up.railway.app',
-      'https://your-app.railway.app',
-      'https://app.adaptalyfeapp.com'
+      'https://app.getadaptalyfeapp.com',
+      'capacitor://localhost',
+      'ionic://localhost'
     ];
     
     // Allow any Railway domain
@@ -72,8 +73,14 @@ app.use(cors({
       return callback(null, true);
     }
     
-    console.log('CORS rejected origin:', origin);
-    callback(null, true); // Allow all for now to debug
+    // Allow getadaptalyfeapp.com subdomains
+    if (origin && origin.includes('.getadaptalyfeapp.com')) {
+      console.log('CORS allowing getadaptalyfeapp.com subdomain:', origin);
+      return callback(null, true);
+    }
+    
+    console.log('CORS REJECTED origin:', origin);
+    callback(new Error('Not allowed by CORS'))
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
