@@ -80,6 +80,7 @@ const EXCLUDE_PATTERNS = [
 
 // Important files to sync
 const IMPORTANT_FILES = [
+  'client/index.html',
   'client/src/lib/queryClient.ts',
   'client/src/App.tsx',
   'client/src/components/simple-navigation.tsx',
