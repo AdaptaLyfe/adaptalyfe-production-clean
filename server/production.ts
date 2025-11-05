@@ -31,7 +31,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://replit.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "https:", "https://api.stripe.com"],
       fontSrc: ["'self'"],
