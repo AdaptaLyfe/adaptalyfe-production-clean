@@ -92,6 +92,7 @@ const IMPORTANT_FILES = [
   'railway.toml',
   'railway.json',
   'nixpacks.toml',
+  'DEPLOY_VERSION.txt',
   'README.md',
   'replit.md',
   'SESSION_PERSISTENCE_CHANGES.md',
