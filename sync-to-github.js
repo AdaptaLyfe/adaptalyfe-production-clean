@@ -84,6 +84,8 @@ const IMPORTANT_FILES = [
   'client/src/lib/queryClient.ts',
   'client/src/App.tsx',
   'client/src/components/simple-navigation.tsx',
+  'client/src/pages/privacy-policy.tsx',
+  'client/src/pages/landing.tsx',
   'server/index.ts',
   'server/routes.ts',
   'server/production.ts',
@@ -164,7 +166,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Session persistence fixes\n- Logout button added\n- Syntax error fixes`;
+    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Added Privacy Policy page\n- Updated landing page footer with Privacy Policy link\n- Privacy Policy route configuration`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 
