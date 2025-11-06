@@ -73,6 +73,7 @@ window.addEventListener('unhandledrejection', (event) => {
 import PersonalDocuments from "@/pages/personal-documents";
 import RewardsPage from "@/pages/rewards";
 import SleepTracking from "@/pages/sleep-tracking";
+import PrivacyPolicy from "@/pages/privacy-policy";
 
 // Simple Route Component - no authentication required
 function SimpleRoute({ component: Component }: { component: React.ComponentType }) {
@@ -83,7 +84,7 @@ function App() {
   const [location, setLocation] = useLocation();
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
-  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
+  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location);
   useSubscriptionEnforcement();
   
   // Session restoration on app startup (critical for mobile apps)
@@ -119,12 +120,13 @@ function App() {
     <ReactErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100">
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location) && <SimpleNavigation />}
+      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <SimpleNavigation />}
       
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/landing" component={Landing} />
         <Route path="/debug-landing.html" component={Landing} />
+        <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/login" component={() => {
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           return isMobile ? <MobileLogin /> : <Login />;
@@ -290,7 +292,7 @@ function App() {
       </Switch>
       
       {/* Mobile bottom navigation - only show on authenticated pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location) && <MobileBottomNavigation />}
+      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <MobileBottomNavigation />}
       
       {/* Runtime error handler to prevent Replit modal */}
       <RuntimeErrorHandler />
