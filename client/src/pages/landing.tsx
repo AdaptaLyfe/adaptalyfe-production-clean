@@ -370,11 +370,22 @@ export default function Landing() {
               </p>
             </div>
           </div>
-          <p className="text-gray-300 max-w-2xl mx-auto text-lg">
+          <p className="text-gray-300 max-w-2xl mx-auto text-lg mb-6">
             Empowering individuals with developmental disabilities to achieve
             independence through innovative technology, personalized support,
             and a caring community.
           </p>
+          
+          {/* Footer Links */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm sm:text-base">
+            <Link href="/privacy-policy">
+              <span className="text-gray-400 hover:text-white transition-colors cursor-pointer">
+                Privacy Policy
+              </span>
+            </Link>
+            <span className="text-gray-600">•</span>
+            <span className="text-gray-400">© 2025 Adaptalyfe. All rights reserved.</span>
+          </div>
         </div>
       </footer>
     </div>
