@@ -1,0 +1,64 @@
+# Adaptalyfe Standalone Android Build - November 6, 2025
+
+## File Information
+- Filename: adaptalyfe-STANDALONE-android.zip
+- Size: 4.2 MB
+- Build Date: November 6, 2025
+- Location: Root directory of project
+
+## What's Included
+✅ Complete Android Studio project (android/)
+✅ All Capacitor plugin source code (169 files)
+   - @capacitor/app
+   - @capacitor/haptics
+   - @capacitor/keyboard
+   - @capacitor/splash-screen
+   - @capacitor/status-bar
+✅ Updated web build (index-DoYwBJC0.js - No Replit dependencies)
+✅ Comprehensive README.md with setup instructions
+✅ All web assets (HTML, CSS, JS, images)
+✅ Android manifest with all permissions configured
+✅ Splash screens for all screen sizes
+
+## Latest Updates (November 6, 2025)
+✅ Removed all Replit dev banner scripts
+✅ Fixed CORS for Railway production (app.getadaptalyfeapp.com)
+✅ Added aggressive no-cache headers
+✅ Clean CSP (only Stripe.js allowed)
+✅ Synced with latest web build
+
+## Production Configuration
+- App ID: com.adaptalyfe.app
+- App Name: Adaptalyfe
+- Backend URL: https://app.getadaptalyfeapp.com
+- Database: External Neon PostgreSQL (via Railway)
+
+## How to Use
+1. Extract adaptalyfe-STANDALONE-android.zip
+2. Open Android Studio
+3. Click "Open" (not "New Project")
+4. Navigate to extracted android/ folder
+5. Click "OK"
+6. Let Gradle sync
+7. Build → Build APK
+8. Install on device
+
+See README.md inside the ZIP for detailed instructions.
+
+## File Verification
+✅ Updated JavaScript build: index-DoYwBJC0.js
+✅ No Replit scripts in index.html
+✅ All Capacitor plugins included
+✅ Production server URL configured
+✅ All permissions in AndroidManifest.xml
+
+## Next Steps for App Store Deployment
+1. Build signed APK/AAB in Android Studio
+2. Create keystore (if not already created)
+3. Upload to Google Play Console
+4. Submit for review
+
+For detailed deployment guide, see MOBILE_DEPLOYMENT_GUIDE.md
+
+---
+Generated: November 6, 2025
