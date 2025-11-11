@@ -104,15 +104,15 @@ export default function SimpleNavigation() {
         {isMenuOpen && (
           <div 
             ref={menuRef}
-            className="absolute right-0 top-16 w-80 max-w-[90vw] bg-white border border-gray-200 rounded-lg shadow-xl z-50 mr-4"
+            className="fixed md:absolute right-0 top-16 left-0 md:left-auto md:w-96 md:max-w-[90vw] bg-white border-t md:border border-gray-200 md:rounded-lg shadow-xl z-50 md:mr-4 max-h-[calc(100vh-5rem)] overflow-y-auto"
           >
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Access to All Features</h3>
+            <div className="p-4 pb-8">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 sticky top-0 bg-white pt-1 pb-2 z-10">Quick Access to All Features</h3>
               <div className="grid grid-cols-2 gap-2">
                 {/* Core Features - Row 1 */}
                 <Link href="/dashboard">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Home className="w-4 h-4 text-blue-600" />
@@ -121,7 +121,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/daily-tasks">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <CheckSquare className="w-4 h-4 text-green-600" />
@@ -132,7 +132,7 @@ export default function SimpleNavigation() {
                 {/* Financial & Health - Row 2 */}
                 <Link href="/financial">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <DollarSign className="w-4 h-4 text-green-600" />
@@ -141,7 +141,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/mood-tracking">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Brain className="w-4 h-4 text-purple-600" />
@@ -152,7 +152,7 @@ export default function SimpleNavigation() {
                 {/* Sleep Tracking - New Feature */}
                 <Link href="/sleep-tracking">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Moon className="w-4 h-4 text-indigo-600" />
@@ -163,7 +163,7 @@ export default function SimpleNavigation() {
                 {/* Medical & Pharmacy - Row 3 */}
                 <Link href="/medical">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Stethoscope className="w-4 h-4 text-blue-600" />
@@ -172,7 +172,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/pharmacy">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Pill className="w-4 h-4 text-pink-600" />
@@ -183,7 +183,7 @@ export default function SimpleNavigation() {
                 {/* Life & Learning - Row 4 */}
                 <Link href="/meal-shopping">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <ShoppingCart className="w-4 h-4 text-orange-600" />
@@ -192,7 +192,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/calendar">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <CalendarIcon className="w-4 h-4 text-indigo-600" />
@@ -203,7 +203,7 @@ export default function SimpleNavigation() {
                 {/* Education & Skills - Row 5 */}
                 <Link href="/academic-planner">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <GraduationCap className="w-4 h-4 text-purple-600" />
@@ -212,7 +212,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/skills-milestones">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Target className="w-4 h-4 text-blue-600" />
@@ -223,7 +223,7 @@ export default function SimpleNavigation() {
                 {/* Documents & Support - Row 6 */}
                 <Link href="/personal-documents">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <FileText className="w-4 h-4 text-blue-600" />
@@ -232,7 +232,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/caregiver">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <UserIcon className="w-4 h-4 text-teal-600" />
@@ -243,7 +243,7 @@ export default function SimpleNavigation() {
                 {/* Caregiver Management - Row 7 */}
                 <Link href="/caregiver-dashboard">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Shield className="w-4 h-4 text-red-600" />
@@ -252,7 +252,7 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/caregiver-setup">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <UserPlus className="w-4 h-4 text-purple-600" />
@@ -263,7 +263,7 @@ export default function SimpleNavigation() {
                 {/* Resources - Row 8 */}
                 <Link href="/resources">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 flex items-center space-x-2 transition-colors col-span-2"
+                    className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors col-span-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Globe className="w-4 h-4 text-orange-600" />
@@ -274,7 +274,7 @@ export default function SimpleNavigation() {
                 {/* Rewards - Row 9 */}
                 <Link href="/rewards">
                   <button 
-                    className="w-full text-left p-3 rounded-md hover:bg-yellow-50 bg-gradient-to-r from-yellow-100 to-orange-100 border border-yellow-300 flex items-center space-x-2 transition-colors col-span-2"
+                    className="w-full text-left p-3 rounded-md hover:bg-yellow-50 active:bg-yellow-100 bg-gradient-to-r from-yellow-100 to-orange-100 border border-yellow-300 flex items-center space-x-2 transition-colors col-span-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Trophy className="w-4 h-4 text-yellow-600" />
@@ -287,7 +287,7 @@ export default function SimpleNavigation() {
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <Link href="/resources">
                   <button 
-                    className="w-full text-left p-3 rounded-md bg-red-600 hover:bg-red-700 text-white mb-2 flex items-center space-x-2"
+                    className="w-full text-left p-3 rounded-md bg-red-600 hover:bg-red-700 active:bg-red-800 text-white mb-2 flex items-center space-x-2 touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <AlertTriangle className="w-4 h-4" />
@@ -298,7 +298,7 @@ export default function SimpleNavigation() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link href="/settings">
                     <button 
-                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50 flex items-center space-x-2"
+                      className="w-full text-left p-3 rounded-md border border-gray-200 hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 touch-manipulation"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Settings className="w-4 h-4 text-gray-600" />
@@ -307,7 +307,7 @@ export default function SimpleNavigation() {
                   </Link>
                   <Link href="/features">
                     <button 
-                      className="w-full text-left p-3 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 flex items-center space-x-2"
+                      className="w-full text-left p-3 rounded-md border border-blue-200 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 flex items-center space-x-2 touch-manipulation"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Zap className="w-4 h-4 text-blue-600" />
@@ -337,7 +337,7 @@ export default function SimpleNavigation() {
               
               {/* Logout Button */}
               <button 
-                className="w-full mt-3 p-3 rounded-md bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-medium text-sm flex items-center justify-center space-x-2 transition-colors"
+                className="w-full mt-3 p-3 rounded-md bg-red-50 hover:bg-red-100 active:bg-red-200 border border-red-200 text-red-700 font-medium text-sm flex items-center justify-center space-x-2 transition-colors touch-manipulation"
                 onClick={async () => {
                   try {
                     await logout();
