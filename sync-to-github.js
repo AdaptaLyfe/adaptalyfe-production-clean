@@ -166,7 +166,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Added Privacy Policy page\n- Updated landing page footer with Privacy Policy link\n- Privacy Policy route configuration`;
+    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Fixed mobile menu responsiveness issues\n- Menu now full-width on mobile with scrolling support\n- Added touch-friendly interactions with active states\n- Sticky menu header while scrolling\n- Privacy Policy page integration`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 
