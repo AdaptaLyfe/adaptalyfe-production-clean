@@ -39,6 +39,9 @@ export default function Dashboard() {
   const { modules, reorderModules } = useDashboardLayout();
   const { showMoodModal, closeMoodModal } = useMoodRequirement();
 
+  // Safety check: ensure modules is always an array
+  const safeModules = modules || [];
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (!modules || modules.length === 0) return; // Safety check
@@ -148,10 +151,10 @@ export default function Dashboard() {
                     : ''
                 }`}
               >
-                {modules
-                  .filter(module => module.enabled)
+                {safeModules
+                  .filter(module => module && module.enabled)
                   .map((module, dragIndex) => {
-                    const originalIndex = modules.findIndex(m => m.id === module.id);
+                    const originalIndex = safeModules.findIndex(m => m && m.id === module.id);
 
                     return (
                       <Draggable 
@@ -171,7 +174,7 @@ export default function Dashboard() {
                           >
                             {/* Special layout for daily summary - pair with next module if it's daily tasks */}
                             {module.id === 'daily-summary' ? (() => {
-                              const nextModule = modules[originalIndex + 1];
+                              const nextModule = safeModules[originalIndex + 1];
                               const isDailyTasksNext = nextModule && nextModule.id === 'daily-tasks' && nextModule.enabled;
                               
                               return (
@@ -188,7 +191,7 @@ export default function Dashboard() {
                             
                             {/* Skip daily tasks if already rendered with daily summary */}
                             {module.id === 'daily-tasks' && originalIndex > 0 && (() => {
-                              const prevModule = modules[originalIndex - 1];
+                              const prevModule = safeModules[originalIndex - 1];
                               if (prevModule && prevModule.id === 'daily-summary' && prevModule.enabled) {
                                 return null; // Already rendered
                               }
