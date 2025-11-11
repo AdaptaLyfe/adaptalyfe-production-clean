@@ -86,6 +86,7 @@ const IMPORTANT_FILES = [
   'client/src/components/simple-navigation.tsx',
   'client/src/pages/privacy-policy.tsx',
   'client/src/pages/landing.tsx',
+  'client/src/pages/dashboard.tsx',
   'server/index.ts',
   'server/routes.ts',
   'server/production.ts',
@@ -166,7 +167,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Fixed mobile menu responsiveness issues\n- Menu now full-width on mobile with scrolling support\n- Added touch-friendly interactions with active states\n- Sticky menu header while scrolling\n- Privacy Policy page integration`;
+    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Fixed dashboard authentication error (null filter)\n- Added null safety checks to dashboard rendering\n- Mobile menu responsiveness improvements\n- Privacy Policy page integration`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 
