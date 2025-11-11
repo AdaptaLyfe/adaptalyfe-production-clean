@@ -167,7 +167,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Fixed dashboard authentication error (null filter)\n- Added null safety checks to dashboard rendering\n- Mobile menu responsiveness improvements\n- Privacy Policy page integration`;
+    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Dashboard null safety fixes (verified local build)\n- Mobile menu responsiveness improvements\n- Privacy Policy page integration\n- Trigger fresh Railway deployment`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 
