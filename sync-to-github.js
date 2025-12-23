@@ -84,6 +84,8 @@ const IMPORTANT_FILES = [
   'client/src/lib/queryClient.ts',
   'client/src/App.tsx',
   'client/src/components/simple-navigation.tsx',
+  'client/src/components/AuthCheck.tsx',
+  'client/src/hooks/useDashboardLayout.ts',
   'client/src/pages/privacy-policy.tsx',
   'client/src/pages/landing.tsx',
   'client/src/pages/dashboard.tsx',
@@ -167,7 +169,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔄 Sync from Replit - ${timestamp}\n\nUpdates:\n- Dashboard null safety fixes (verified local build)\n- Mobile menu responsiveness improvements\n- Privacy Policy page integration\n- Trigger fresh Railway deployment`;
+    const commitMessage = `🔧 PERMANENT FIX: Dashboard auth crash - ${timestamp}\n\nCritical fixes:\n- AuthCheck: Blocks rendering completely until auth verified\n- useDashboardLayout: Bulletproof null safety with ensureValidModules\n- Dashboard: Safe array handling prevents filter crash\n- Unauthenticated /dashboard access now redirects gracefully`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 

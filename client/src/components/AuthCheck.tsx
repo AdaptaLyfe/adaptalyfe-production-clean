@@ -10,59 +10,75 @@ interface AuthCheckProps {
 
 export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheckProps) {
   const [, setLocation] = useLocation();
-  const [hasCheckedToken, setHasCheckedToken] = useState(false);
+  const [authState, setAuthState] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   
-  // CRITICAL: Check for session token BEFORE making any API calls
+  // CRITICAL: Check for session token FIRST - block all rendering until verified
+  const sessionToken = getSessionToken();
+  
+  // Immediate redirect if no token - don't even start the query
   useEffect(() => {
-    const sessionToken = getSessionToken();
-    const currentPath = window.location.pathname;
-    
-    if (!sessionToken && !['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
-      console.log('🚫 AuthCheck: No session token found, redirecting to login from', currentPath);
-      setLocation(redirectTo);
-      return;
+    if (!sessionToken) {
+      const currentPath = window.location.pathname;
+      if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
+        console.log('🚫 AuthCheck: No session token, redirecting to login');
+        setAuthState('unauthenticated');
+        setLocation(redirectTo);
+      }
     }
-    
-    if (sessionToken) {
-      console.log('✅ AuthCheck: Session token found, proceeding with authentication');
-    }
-    
-    setHasCheckedToken(true);
-  }, [setLocation, redirectTo]);
+  }, [sessionToken, setLocation, redirectTo]);
   
-  const { data: user, isLoading, error, refetch } = useQuery({
+  // Only run the API check if we have a session token
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/user'],
     retry: 2,
     retryDelay: 1000,
-    enabled: hasCheckedToken // Only run query after token check
+    enabled: !!sessionToken // Only query if token exists
   });
 
+  // Handle API response
   useEffect(() => {
-    if (hasCheckedToken && !isLoading && !user && error) {
-      // Only redirect if we're not already on an auth page
+    if (!sessionToken) {
+      // Already handled above
+      return;
+    }
+    
+    if (isLoading) {
+      setAuthState('checking');
+      return;
+    }
+    
+    if (user) {
+      setAuthState('authenticated');
+      return;
+    }
+    
+    if (error) {
+      console.log('AuthCheck: API authentication failed, redirecting to login');
+      setAuthState('unauthenticated');
       const currentPath = window.location.pathname;
       if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
-        console.log('AuthCheck: API authentication failed, redirecting to', redirectTo, 'from', currentPath);
-        console.log('AuthCheck: Error details:', error);
-        
-        // Add a small delay before redirect to handle potential session propagation
-        setTimeout(() => {
-          setLocation(redirectTo);
-        }, 100);
+        setLocation(redirectTo);
       }
     }
-  }, [hasCheckedToken, isLoading, user, error, setLocation, redirectTo]);
+  }, [sessionToken, isLoading, user, error, setLocation, redirectTo]);
 
-  useEffect(() => {
-    // Force a refetch when component mounts to ensure fresh auth state
-    const timer = setTimeout(() => {
-      refetch();
-    }, 200);
-    
-    return () => clearTimeout(timer);
-  }, [refetch]);
-
-  if (isLoading) {
+  // CRITICAL: Block ALL rendering until we know auth state
+  // This prevents dashboard from trying to render before we redirect
+  
+  // No token = don't render anything, redirect is happening
+  if (!sessionToken) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Still checking = show loading
+  if (authState === 'checking' || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
@@ -73,10 +89,30 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
     );
   }
 
-  if (!user && error) {
-    // Don't render anything while redirecting
-    return null;
+  // Unauthenticated = show loading while redirecting
+  if (authState === 'unauthenticated' || (!user && error)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  // Only render children when fully authenticated
+  if (authState === 'authenticated' && user) {
+    return <>{children}</>;
+  }
+  
+  // Fallback - should never reach here, but show loading just in case
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
 }
