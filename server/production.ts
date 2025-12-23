@@ -88,24 +88,30 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Rate limiting
-const limiter = rateLimit({
+// Rate limiting - only apply to API routes, not static files
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 500, // Increased from 100 for better user experience
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for static files
+    const skipPaths = ['/assets/', '.css', '.js', '.png', '.ico', '.json', '.html'];
+    return skipPaths.some(path => req.path.includes(path));
+  }
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // More restrictive for auth routes
+  max: 20, // Increased from 10 for better UX
   message: 'Too many authentication attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-app.use(limiter);
+// Only rate limit API routes
+app.use('/api', apiLimiter);
 app.use('/api/auth', authLimiter);
 
 app.use(express.json({ limit: '10mb' }));
