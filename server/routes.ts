@@ -8,6 +8,8 @@ import bankingRoutes from "./banking-routes";
 import { registerAnalyticsRoutes } from "./analytics-routes";
 import { registerBillPaymentRoutes } from "./bill-payment-routes";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import pg from "pg";
 
 // Extend the session data interface
 declare module "express-session" {
@@ -145,8 +147,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("🏭 Production mode - skipping demo data initialization");
   }
   
-  // Setup sessions with store reference for dual-channel auth
-  const sessionStore = new session.MemoryStore();
+  // Setup PostgreSQL session store for persistent sessions across Railway deployments
+  const PgSession = connectPgSimple(session);
+  const pgPool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false,
+    max: 5,
+  });
+  
+  // Create session table if not exists
+  pgPool.query(`
+    CREATE TABLE IF NOT EXISTS "session" (
+      "sid" varchar NOT NULL COLLATE "default",
+      "sess" json NOT NULL,
+      "expire" timestamp(6) NOT NULL,
+      CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+    );
+    CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+  `).then(() => {
+    console.log("✅ PostgreSQL session table ready");
+  }).catch((err) => {
+    console.error("⚠️ Session table setup error:", err.message);
+  });
+  
+  const sessionStore = new PgSession({
+    pool: pgPool,
+    tableName: 'session',
+    createTableIfMissing: true,
+    pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+  });
+  
   app.use(session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET || 'demo-secret-key-change-in-production',
@@ -154,10 +184,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     saveUninitialized: false,
     rolling: true, // Extend session on each request
     cookie: {
-      secure: true, // Required for cross-site cookies
+      secure: process.env.NODE_ENV === 'production', // Only secure in production
       httpOnly: true,
-      sameSite: 'none', // Allow cross-site cookies (Firebase -> Replit)
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (increased from 24 hours)
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-site in production
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      domain: process.env.NODE_ENV === 'production' ? '.getadaptalyfeapp.com' : undefined
     }
   }));
   
