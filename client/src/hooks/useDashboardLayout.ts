@@ -25,54 +25,80 @@ const DEFAULT_MODULES: DashboardModule[] = [
   { id: 'progress-motivation', name: 'Progress & Motivation (Premium)', component: 'ProgressMotivationModule', enabled: false, order: 13 },
 ];
 
+// Helper function to ensure modules array is always valid
+function ensureValidModules(modules: unknown): DashboardModule[] {
+  if (!modules || !Array.isArray(modules)) {
+    return [...DEFAULT_MODULES];
+  }
+  
+  // Filter out any null/undefined items and validate structure
+  const validModules = modules.filter((m): m is DashboardModule => {
+    return m != null && 
+           typeof m === 'object' && 
+           typeof m.id === 'string' && 
+           typeof m.enabled === 'boolean';
+  });
+  
+  return validModules.length > 0 ? validModules : [...DEFAULT_MODULES];
+}
+
 export function useDashboardLayout() {
-  const [modules, setModules] = useState<DashboardModule[]>([]);
+  // CRITICAL: Initialize with DEFAULT_MODULES, never empty array
+  const [modules, setModules] = useState<DashboardModule[]>(() => [...DEFAULT_MODULES]);
   const [isCustomizing, setIsCustomizing] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load layout from localStorage on mount and merge with new modules
   useEffect(() => {
-    const savedLayout = localStorage.getItem('dashboard-layout');
-    if (savedLayout) {
-      try {
-        const parsedLayout: DashboardModule[] = JSON.parse(savedLayout);
+    try {
+      const savedLayout = localStorage.getItem('dashboard-layout');
+      if (savedLayout) {
+        const parsedLayout = JSON.parse(savedLayout);
+        const validLayout = ensureValidModules(parsedLayout);
         
         // Get existing module IDs
-        const existingIds = parsedLayout.map(m => m.id);
+        const existingIds = validLayout.map(m => m.id);
         
         // Find new modules that aren't in the saved layout
         const newModules = DEFAULT_MODULES.filter(m => !existingIds.includes(m.id));
         
         // Merge saved layout with new modules
-        const mergedModules = [...parsedLayout, ...newModules];
+        const mergedModules = [...validLayout, ...newModules];
         
         // Remove duplicates by ID (keep first occurrence)
         const deduplicatedModules = mergedModules.filter((module, index) => 
           mergedModules.findIndex(m => m.id === module.id) === index
         );
         
-        setModules(deduplicatedModules);
-      } catch (error) {
-        console.error('Failed to parse saved layout:', error);
-        setModules(DEFAULT_MODULES);
+        setModules(ensureValidModules(deduplicatedModules));
+      } else {
+        setModules([...DEFAULT_MODULES]);
       }
-    } else {
-      setModules(DEFAULT_MODULES);
+    } catch (error) {
+      console.error('Failed to parse saved layout:', error);
+      setModules([...DEFAULT_MODULES]);
     }
+    setIsLoaded(true);
   }, []);
 
-
-
-  // Save layout to localStorage whenever modules change
+  // Save layout to localStorage whenever modules change (only after loaded)
   useEffect(() => {
-    if (modules.length > 0) {
-      localStorage.setItem('dashboard-layout', JSON.stringify(modules));
+    if (isLoaded && modules && modules.length > 0) {
+      try {
+        localStorage.setItem('dashboard-layout', JSON.stringify(modules));
+      } catch (error) {
+        console.error('Failed to save layout:', error);
+      }
     }
-  }, [modules]);
+  }, [modules, isLoaded]);
 
   const reorderModules = (startIndex: number, endIndex: number) => {
-    const newModules = Array.from(modules);
+    const safeModules = ensureValidModules(modules);
+    const newModules = Array.from(safeModules);
     const [reorderedItem] = newModules.splice(startIndex, 1);
-    newModules.splice(endIndex, 0, reorderedItem);
+    if (reorderedItem) {
+      newModules.splice(endIndex, 0, reorderedItem);
+    }
     
     // Update order values
     const updatedModules = newModules.map((module, index) => ({
@@ -84,25 +110,31 @@ export function useDashboardLayout() {
   };
 
   const toggleModule = (moduleId: string) => {
-    setModules(prev => 
-      prev.map(module => 
+    setModules(prev => {
+      const safePrev = ensureValidModules(prev);
+      return safePrev.map(module => 
         module.id === moduleId 
           ? { ...module, enabled: !module.enabled }
           : module
-      )
-    );
+      );
+    });
   };
 
   const resetToDefault = () => {
-    setModules(DEFAULT_MODULES);
-    localStorage.removeItem('dashboard-layout');
+    setModules([...DEFAULT_MODULES]);
+    try {
+      localStorage.removeItem('dashboard-layout');
+    } catch (error) {
+      console.error('Failed to remove layout from storage:', error);
+    }
   };
 
   const removeDuplicates = () => {
-    const deduplicatedModules = modules.filter((module, index) => 
-      modules.findIndex(m => m.id === module.id) === index
+    const safeModules = ensureValidModules(modules);
+    const deduplicatedModules = safeModules.filter((module, index) => 
+      safeModules.findIndex(m => m.id === module.id) === index
     );
-    if (deduplicatedModules.length !== modules.length) {
+    if (deduplicatedModules.length !== safeModules.length) {
       setModules(deduplicatedModules);
     }
   };
@@ -116,37 +148,43 @@ export function useDashboardLayout() {
     ];
     
     setModules(prev => {
-      const existingIds = prev.map(m => m.id);
+      const safePrev = ensureValidModules(prev);
+      const existingIds = safePrev.map(m => m.id);
       const newModules = enhancedModules.filter(m => !existingIds.includes(m.id));
-      return [...prev, ...newModules];
+      return [...safePrev, ...newModules];
     });
   };
 
   const moveModuleUp = (moduleId: string) => {
-    const currentIndex = modules.findIndex(m => m.id === moduleId);
+    const safeModules = ensureValidModules(modules);
+    const currentIndex = safeModules.findIndex(m => m.id === moduleId);
     if (currentIndex > 0) {
       reorderModules(currentIndex, currentIndex - 1);
     }
   };
 
   const moveModuleDown = (moduleId: string) => {
-    const currentIndex = modules.findIndex(m => m.id === moduleId);
-    if (currentIndex < modules.length - 1) {
+    const safeModules = ensureValidModules(modules);
+    const currentIndex = safeModules.findIndex(m => m.id === moduleId);
+    if (currentIndex < safeModules.length - 1) {
       reorderModules(currentIndex, currentIndex + 1);
     }
   };
 
-  // Get modules sorted by order for rendering (with safety checks)
-  const sortedModules = (modules || [])
-    .filter(module => module.enabled)
-    .sort((a, b) => a.order - b.order);
+  // CRITICAL: Always ensure we return valid arrays, never null/undefined
+  const safeModules = ensureValidModules(modules);
+  
+  // Get modules sorted by order for rendering (with bulletproof safety)
+  const sortedModules = safeModules
+    .filter(module => module && module.enabled === true)
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  const enabledModules = (modules || []).filter(module => module.enabled);
-  const disabledModules = (modules || []).filter(module => !module.enabled);
+  const enabledModules = safeModules.filter(module => module && module.enabled === true);
+  const disabledModules = safeModules.filter(module => module && module.enabled === false);
 
   return {
     modules: sortedModules,
-    allModules: modules,
+    allModules: safeModules,
     enabledModules,
     disabledModules,
     isCustomizing,
@@ -156,6 +194,7 @@ export function useDashboardLayout() {
     resetToDefault,
     moveModuleUp,
     moveModuleDown,
-    addEnhancedFeatures
+    addEnhancedFeatures,
+    isLoaded
   };
 }
