@@ -1,0 +1,58 @@
+
+not available
+﻿
+app.getadaptalyfeapp.com/:1 Error while trying to use the following icon from the Manifest: https://app.getadaptalyfeapp.com/icon-144.png (Download error or resource isn't a valid image)
+api/mood-entries/today:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/daily-tasks:1 
+ Failed to load resource: the server responded with a status of 401 ()
+
+api/subscription:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/user:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/mood-entries/today:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/user:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/subscription:1 
+ Failed to load resource: the server responded with a status of 401 ()
+api/daily-tasks:1 
+ Failed to load resource: the server responded with a status of 401 ()
+block-error-modal.js?v=2:20 TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279)
+block-error-modal.js?v=2:20 TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279)
+block-error-modal.js?v=2:20 Error Boundary caught an error: TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279) 
+Object
+api/bills:1 
+ Failed to load resource: the server responded with a status of 401 ()
+﻿
