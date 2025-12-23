@@ -89,6 +89,13 @@ const IMPORTANT_FILES = [
   'client/src/pages/privacy-policy.tsx',
   'client/src/pages/landing.tsx',
   'client/src/pages/dashboard.tsx',
+  'client/public/force-hide-errors.css',
+  'client/public/block-error-modal.js',
+  'client/public/icon-144.png',
+  'client/public/icon-192.png',
+  'client/public/icon-512.png',
+  'client/public/manifest.json',
+  'client/public/sw.js',
   'server/index.ts',
   'server/routes.ts',
   'server/production.ts',
@@ -169,7 +176,7 @@ async function syncToGitHub() {
 
     // Get current timestamp for commit message
     const timestamp = new Date().toISOString();
-    const commitMessage = `🔧 PERMANENT FIX: Dashboard auth crash - ${timestamp}\n\nCritical fixes:\n- AuthCheck: Blocks rendering completely until auth verified\n- useDashboardLayout: Bulletproof null safety with ensureValidModules\n- Dashboard: Safe array handling prevents filter crash\n- Unauthenticated /dashboard access now redirects gracefully`;
+    const commitMessage = `🔧 Complete fix: Auth crash + static files - ${timestamp}\n\nFixes:\n- AuthCheck: Blocks rendering until auth verified\n- useDashboardLayout: Bulletproof null safety\n- Added missing static files (CSS, JS, icons)\n- PWA manifest and service worker`;
 
     console.log(`📦 Syncing ${IMPORTANT_FILES.length} important files...\n`);
 

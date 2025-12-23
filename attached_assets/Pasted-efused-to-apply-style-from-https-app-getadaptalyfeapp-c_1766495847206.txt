@@ -1,0 +1,116 @@
+efused to apply style from 'https://app.getadaptalyfeapp.com/force-hide-errors.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.Understand this error
+block-error-modal.js:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+app.getadaptalyfeapp.com/:1 Refused to execute script from 'https://app.getadaptalyfeapp.com/block-error-modal.js?v=2' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.Understand this error
+api/user:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+api/subscription:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+api/daily-tasks:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279)
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279)
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Error Boundary caught an error: TypeError: Cannot read properties of null (reading 'filter')
+    at yte (index-D5KdJ9sf.js:785:20126)
+    at Jw (index-D5KdJ9sf.js:38:17018)
+    at jb (index-D5KdJ9sf.js:40:3139)
+    at $5 (index-D5KdJ9sf.js:40:44833)
+    at F5 (index-D5KdJ9sf.js:40:39790)
+    at QB (index-D5KdJ9sf.js:40:39718)
+    at wg (index-D5KdJ9sf.js:40:39570)
+    at Db (index-D5KdJ9sf.js:40:35934)
+    at y2 (index-D5KdJ9sf.js:40:36738)
+    at Zo (index-D5KdJ9sf.js:38:3279) Object
+console.error @ index-D5KdJ9sf.js:870Understand this error
+icon-144.png:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+api/mood-entries/today:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+dashboard:1 Error while trying to use the following icon from the Manifest: https://app.getadaptalyfeapp.com/icon-144.png (Download error or resource isn't a valid image)Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+api/user:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+api/subscription:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+api/bills:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+index-D5KdJ9sf.js:870 Query failed: 429 Too many requests from this IP, please try again later.
+console.error @ index-D5KdJ9sf.js:870Understand this error
+index-D5KdJ9sf.js:870 Query error: Error: 429: Too many requests from this IP, please try again later.
+    at index-D5KdJ9sf.js:655:5053
+console.error @ index-D5KdJ9sf.js:870Understand this error
+dashboard:1 Refused to apply style from 'https://app.getadaptalyfeapp.com/force-hide-errors.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.Understand this error
+dashboard:1 
+        
+        
+       Failed to load resource: the server responded with a status of 429 ()Understand this error
+dashboard:1 Refused to apply style from 'https://app.getadaptalyfeapp.com/assets/index-CYxdj6DF.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.Understand this error
