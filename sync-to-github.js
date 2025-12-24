@@ -89,6 +89,7 @@ const IMPORTANT_FILES = [
   'client/src/pages/privacy-policy.tsx',
   'client/src/pages/landing.tsx',
   'client/src/pages/dashboard.tsx',
+  'client/src/pages/caregiver-setup.tsx',
   'client/public/force-hide-errors.css',
   'client/public/block-error-modal.js',
   'client/public/icon-144.png',

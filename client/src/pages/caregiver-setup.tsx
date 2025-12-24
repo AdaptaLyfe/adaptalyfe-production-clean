@@ -63,7 +63,7 @@ export default function CaregiverSetup() {
   });
 
   const { data: careRelationships = [] } = useQuery<CareRelationship[]>({
-    queryKey: ["/api/care-relationships/caregiver", user?.id],
+    queryKey: [`/api/care-relationships/caregiver/${user?.id}`],
     enabled: !!user?.id,
   });
 
