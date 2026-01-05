@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 const ALL_ACTIONS = [
   {
     key: "mood-tracking",
-    label: "Mood & Tracking",
+    label: "Mood Log",
     description: "Track your mood",
     icon: Smile,
     route: "/mood-tracking",
