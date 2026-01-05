@@ -122,7 +122,7 @@ export default function MoodModule() {
                 className="w-full bg-red-50 border-red-200 hover:bg-red-100 justify-start space-x-2 sm:space-x-3 py-2 sm:py-3"
               >
                 <Phone className="text-red-500 flex-shrink-0" size={16} />
-                <span className="font-medium text-gray-900 text-xs sm:text-sm">Emergency Support</span>
+                <span className="font-medium text-gray-900 text-xs sm:text-sm">Trusted Contacts</span>
               </Button>
             </Link>
           </div>
