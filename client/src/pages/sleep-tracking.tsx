@@ -141,7 +141,7 @@ export default function SleepTracking() {
           <Moon className="h-8 w-8 text-blue-600" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sleep Tracking</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Sleep Routine</h1>
           <p className="text-gray-600 mt-1">Monitor your sleep patterns and improve your rest quality</p>
         </div>
       </div>
