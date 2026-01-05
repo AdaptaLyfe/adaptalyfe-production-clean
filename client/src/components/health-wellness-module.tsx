@@ -403,7 +403,7 @@ export default function HealthWellnessModule() {
 
           <TabsContent value="sleep" className="space-y-4 mt-4">
             <div className="flex justify-between items-center">
-              <h3 className="font-medium">Sleep Tracking</h3>
+              <h3 className="font-medium">Sleep Routine</h3>
               <Dialog open={showSleepDialog} onOpenChange={setShowSleepDialog}>
                 <DialogTrigger asChild>
                   <Button size="sm">
