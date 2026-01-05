@@ -149,14 +149,14 @@ export default function SimpleNavigation() {
                   </button>
                 </Link>
                 
-                {/* Sleep Tracking - New Feature */}
+                {/* Sleep Routine - New Feature */}
                 <Link href="/sleep-tracking">
                   <button 
                     className="w-full text-left p-3 rounded-md hover:bg-gray-50 active:bg-gray-100 flex items-center space-x-2 transition-colors touch-manipulation"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Moon className="w-4 h-4 text-indigo-600" />
-                    <span className="text-xs font-medium">Sleep Tracking</span>
+                    <span className="text-xs font-medium">Sleep Routine</span>
                   </button>
                 </Link>
                 
