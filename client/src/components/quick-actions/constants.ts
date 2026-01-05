@@ -73,7 +73,7 @@ export const ALL_QUICK_ACTIONS: QuickAction[] = [
   },
   {
     key: "mood-tracking",
-    label: "Mood & Tracking",
+    label: "Mood Log",
     description: "Track your mood",
     icon: Smile,
     route: "/mood-tracking",

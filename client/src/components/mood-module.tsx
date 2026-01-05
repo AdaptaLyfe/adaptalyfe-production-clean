@@ -48,7 +48,7 @@ export default function MoodModule() {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-base sm:text-xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
-              <span className="whitespace-nowrap">Mood & Wellbeing</span>
+              <span className="whitespace-nowrap">Mood Log</span>
               {isRequired && (
                 <span className="text-red-500 text-xs sm:text-sm font-medium bg-red-100 px-2 py-1 rounded-full whitespace-nowrap">
                   Required

@@ -11,7 +11,7 @@ export interface DashboardModule {
 const DEFAULT_MODULES: DashboardModule[] = [
   { id: 'daily-summary', name: 'Daily Summary', component: 'DailySummary', enabled: true, order: 0 },
   { id: 'daily-tasks', name: 'Task Management', component: 'DailyTasksModule', enabled: true, order: 1 },
-  { id: 'mood', name: 'Mood & Wellbeing', component: 'MoodModule', enabled: true, order: 2 },
+  { id: 'mood', name: 'Mood Log', component: 'MoodModule', enabled: true, order: 2 },
   { id: 'financial', name: 'Financial Tracker', component: 'FinancialModule', enabled: false, order: 3 },
   { id: 'appointments', name: 'Appointments', component: 'AppointmentsModule', enabled: false, order: 4 },
   { id: 'pharmacy', name: 'Pharmacy & Medications', component: 'PharmacyModule', enabled: false, order: 5 },
