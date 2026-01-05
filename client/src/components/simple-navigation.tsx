@@ -145,7 +145,7 @@ export default function SimpleNavigation() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Brain className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs font-medium">Mood Tracking</span>
+                    <span className="text-xs font-medium">Mood Check-ins</span>
                   </button>
                 </Link>
                 

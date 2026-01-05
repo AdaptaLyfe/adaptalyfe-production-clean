@@ -19,7 +19,7 @@ export default function MoodTracking() {
     return (
       <div className="container mx-auto p-6">
         <PremiumFeaturePrompt
-          title="Mood Tracking"
+          title="Mood Check-ins"
           description="Monitor your emotional well-being with daily mood check-ins and progress tracking. Subscribe to continue using Adaptalyfe's mood management features."
           feature="mood"
           requiredPlan="premium"
@@ -129,7 +129,7 @@ export default function MoodTracking() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Mood & Wellbeing</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Mood Log</h1>
         
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="border-t-4 border-happy-purple">
