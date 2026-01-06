@@ -148,13 +148,13 @@ export default function PharmacyModule() {
       queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
       toast({
         title: "Success",
-        description: "Refill order placed successfully",
+        description: "Refill reminder set successfully",
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to place refill order",
+        description: "Failed to set refill reminder",
         variant: "destructive",
       });
     },
@@ -270,7 +270,7 @@ export default function PharmacyModule() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Pill className="w-5 h-5" />
-            Pharmacy & Medications
+            Medication List
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -288,19 +288,19 @@ export default function PharmacyModule() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Pill className="w-5 h-5" />
-          Pharmacy & Medications
+          Medication List
         </CardTitle>
         <CardDescription>
-          Manage your pharmacies and medications, order refills
+          Keep a personal list of medications for reference and reminders
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="medications" className="w-full">
           <TabsList className="grid w-full grid-cols-4 h-10">
-            <TabsTrigger value="medications" className="text-sm px-3">Medications</TabsTrigger>
-            <TabsTrigger value="refills" className="text-sm px-3">Refills</TabsTrigger>
-            <TabsTrigger value="orders" className="text-sm px-3">Orders</TabsTrigger>
-            <TabsTrigger value="pharmacies" className="text-sm px-3">Pharmacies</TabsTrigger>
+            <TabsTrigger value="medications" className="text-sm px-3">Medication List</TabsTrigger>
+            <TabsTrigger value="refills" className="text-sm px-3">Refill Reminders</TabsTrigger>
+            <TabsTrigger value="orders" className="text-sm px-3">Reminder History</TabsTrigger>
+            <TabsTrigger value="pharmacies" className="text-sm px-3">Pharmacy Notes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="medications" className="space-y-4">
@@ -344,8 +344,8 @@ export default function PharmacyModule() {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="prescribedBy">Prescribed By</Label>
-                      <Input name="prescribedBy" placeholder="Dr. Smith" />
+                      <Label htmlFor="prescribedBy">Notes (Optional)</Label>
+                      <Input name="prescribedBy" placeholder="e.g., Take with food, for headaches" />
                     </div>
                     <div>
                       <Label htmlFor="pharmacyId">Pharmacy</Label>
@@ -453,7 +453,7 @@ export default function PharmacyModule() {
                             <p className="text-sm text-gray-600">{medication.dosage}</p>
                           )}
                           {medication.prescribedBy && (
-                            <p className="text-xs text-gray-500">Prescribed by {medication.prescribedBy}</p>
+                            <p className="text-xs text-gray-500">Added by user</p>
                           )}
                           
                           {/* Pill Appearance */}
@@ -490,7 +490,7 @@ export default function PharmacyModule() {
                             disabled={orderRefillMutation.isPending || medication.refillsRemaining === 0}
                             variant={medication.refillsRemaining === 0 ? "outline" : "default"}
                           >
-                            {medication.refillsRemaining === 0 ? "No Refills" : "Order Refill"}
+                            {medication.refillsRemaining === 0 ? "No Refills" : "Set Refill Reminder"}
                           </Button>
                           {(() => {
                             const linkedPharmacy = userPharmacies.find(up => up.pharmacyId === medication.pharmacyId);
@@ -545,7 +545,7 @@ export default function PharmacyModule() {
                           onClick={() => handleOrderRefill(medication)}
                           disabled={orderRefillMutation.isPending}
                         >
-                          Order Now
+                          Set Reminder
                         </Button>
                       </div>
                     </CardContent>
@@ -556,13 +556,13 @@ export default function PharmacyModule() {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-4">
-            <h3 className="text-lg font-medium">Refill Order History</h3>
+            <h3 className="text-lg font-medium">Reminder History</h3>
             <div className="space-y-3">
               {refillOrders.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <RefreshCw className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No refill orders yet</p>
-                  <p className="text-sm">Your refill history will appear here</p>
+                  <p>No reminders set yet</p>
+                  <p className="text-sm">Your reminder history will appear here</p>
                 </div>
               ) : (
                 refillOrders.map((order) => (
