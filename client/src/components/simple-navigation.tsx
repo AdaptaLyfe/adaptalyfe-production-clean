@@ -176,7 +176,7 @@ export default function SimpleNavigation() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Pill className="w-4 h-4 text-pink-600" />
-                    <span className="text-xs font-medium">Pharmacy</span>
+                    <span className="text-xs font-medium">Medication List</span>
                   </button>
                 </Link>
                 
