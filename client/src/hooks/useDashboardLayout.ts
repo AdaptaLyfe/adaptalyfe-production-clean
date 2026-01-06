@@ -14,7 +14,7 @@ const DEFAULT_MODULES: DashboardModule[] = [
   { id: 'mood', name: 'Mood Log', component: 'MoodModule', enabled: true, order: 2 },
   { id: 'financial', name: 'Financial Tracker', component: 'FinancialModule', enabled: false, order: 3 },
   { id: 'appointments', name: 'Appointments', component: 'AppointmentsModule', enabled: false, order: 4 },
-  { id: 'pharmacy', name: 'Pharmacy & Medications', component: 'PharmacyModule', enabled: false, order: 5 },
+  { id: 'pharmacy', name: 'Medication List', component: 'PharmacyModule', enabled: false, order: 5 },
   { id: 'safety-transportation', name: 'Safety & Transportation (Premium)', component: 'SafetyTransportationModule', enabled: false, order: 6 },
   { id: 'location-safety', name: 'Location & Safety (Premium)', component: 'LocationSafetyModule', enabled: false, order: 7 },
   { id: 'achievements', name: 'Achievements', component: 'AchievementsModule', enabled: false, order: 8 },
