@@ -130,7 +130,7 @@ export default function MedicalInformationModule() {
     mutationFn: (data: Partial<Allergy>) => apiRequest("POST", "/api/allergies", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
-      toast({ title: "Success", description: "Allergy added successfully" });
+      toast({ title: "Success", description: "Sensitivity added successfully" });
     }
   });
 
@@ -139,7 +139,7 @@ export default function MedicalInformationModule() {
       apiRequest("PUT", `/api/allergies/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
-      toast({ title: "Success", description: "Allergy updated successfully" });
+      toast({ title: "Success", description: "Sensitivity updated successfully" });
       setEditingAllergy(null);
     }
   });
@@ -148,7 +148,7 @@ export default function MedicalInformationModule() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/allergies/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/allergies"] });
-      toast({ title: "Success", description: "Allergy deleted successfully" });
+      toast({ title: "Success", description: "Sensitivity deleted successfully" });
     }
   });
 
@@ -159,13 +159,13 @@ export default function MedicalInformationModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-conditions"] });
-      toast({ title: "Success", description: "Medical condition added successfully" });
+      toast({ title: "Success", description: "Note added successfully" });
     },
     onError: (error: any) => {
       console.error("Failed to create medical condition:", error);
       toast({ 
         title: "Error", 
-        description: "Failed to add medical condition. Please try again.",
+        description: "Failed to add note. Please try again.",
         variant: "destructive"
       });
     }
@@ -176,7 +176,7 @@ export default function MedicalInformationModule() {
       apiRequest("PUT", `/api/medical-conditions/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-conditions"] });
-      toast({ title: "Success", description: "Medical condition updated successfully" });
+      toast({ title: "Success", description: "Note updated successfully" });
       setEditingCondition(null);
     }
   });
@@ -185,7 +185,7 @@ export default function MedicalInformationModule() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/medical-conditions/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-conditions"] });
-      toast({ title: "Success", description: "Medical condition deleted successfully" });
+      toast({ title: "Success", description: "Note deleted successfully" });
     }
   });
 
@@ -196,7 +196,7 @@ export default function MedicalInformationModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adverse-medications"] });
-      toast({ title: "Success", description: "Adverse medication added successfully" });
+      toast({ title: "Success", description: "Reaction added successfully" });
     }
   });
 
@@ -205,7 +205,7 @@ export default function MedicalInformationModule() {
       apiRequest("PUT", `/api/adverse-medications/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adverse-medications"] });
-      toast({ title: "Success", description: "Adverse medication updated successfully" });
+      toast({ title: "Success", description: "Reaction updated successfully" });
       setEditingAdverseMed(null);
     }
   });
@@ -214,7 +214,7 @@ export default function MedicalInformationModule() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/adverse-medications/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/adverse-medications"] });
-      toast({ title: "Success", description: "Adverse medication deleted successfully" });
+      toast({ title: "Success", description: "Reaction deleted successfully" });
     }
   });
 
@@ -222,7 +222,7 @@ export default function MedicalInformationModule() {
     mutationFn: (data: Partial<EmergencyContact>) => apiRequest("POST", "/api/emergency-contacts", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
-      toast({ title: "Success", description: "Emergency contact added successfully" });
+      toast({ title: "Success", description: "Trusted contact added successfully" });
     }
   });
 
@@ -231,7 +231,7 @@ export default function MedicalInformationModule() {
       apiRequest("PUT", `/api/emergency-contacts/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
-      toast({ title: "Success", description: "Emergency contact updated successfully" });
+      toast({ title: "Success", description: "Trusted contact updated successfully" });
       setEditingContact(null);
     }
   });
@@ -240,7 +240,7 @@ export default function MedicalInformationModule() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/emergency-contacts/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
-      toast({ title: "Success", description: "Emergency contact deleted successfully" });
+      toast({ title: "Success", description: "Trusted contact deleted successfully" });
     }
   });
 
@@ -248,7 +248,7 @@ export default function MedicalInformationModule() {
     mutationFn: (data: Partial<PrimaryCareProvider>) => apiRequest("POST", "/api/primary-care-providers", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/primary-care-providers"] });
-      toast({ title: "Success", description: "Primary care provider added successfully" });
+      toast({ title: "Success", description: "Healthcare contact added successfully" });
     }
   });
 
@@ -257,7 +257,7 @@ export default function MedicalInformationModule() {
       apiRequest("PUT", `/api/primary-care-providers/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/primary-care-providers"] });
-      toast({ title: "Success", description: "Primary care provider updated successfully" });
+      toast({ title: "Success", description: "Healthcare contact updated successfully" });
       setEditingProvider(null);
     }
   });
@@ -266,45 +266,46 @@ export default function MedicalInformationModule() {
     mutationFn: (id: number) => apiRequest("DELETE", `/api/primary-care-providers/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/primary-care-providers"] });
-      toast({ title: "Success", description: "Primary care provider deleted successfully" });
+      toast({ title: "Success", description: "Healthcare contact deleted successfully" });
     }
   });
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Medical Information</h2>
-        <p className="text-gray-600">Manage your medical history, allergies, and healthcare contacts</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Health Records</h2>
+        <p className="text-gray-600">Store personal health-related details such as sensitivities and trusted contacts for reference.</p>
       </div>
 
       <Tabs defaultValue="allergies" className="w-full">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-16 md:h-12 p-1 gap-1">
           <TabsTrigger value="allergies" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Allergies
+            Sensitivities
           </TabsTrigger>
           <TabsTrigger value="conditions" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Conditions
+            Notes
           </TabsTrigger>
           <TabsTrigger value="adverse" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Adverse
+            Reactions
           </TabsTrigger>
           <TabsTrigger value="contacts" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Emergency
+            Trusted Contacts
           </TabsTrigger>
           <TabsTrigger value="providers" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Providers
+            Healthcare Contacts
           </TabsTrigger>
           <TabsTrigger value="symptoms" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
-            Symptoms
+            Personal Notes
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="allergies" className="space-y-4 mt-6 h-96 overflow-y-scroll">
+          <p className="text-xs text-gray-500 italic mb-2">Sensitivity information is entered by the user and stored for personal reference only.</p>
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Allergies</h3>
-            <Button onClick={() => setShowAllergyDialog(true)} data-testid="button-add-allergy">
+            <h3 className="text-lg font-medium">Sensitivities</h3>
+            <Button onClick={() => setShowAllergyDialog(true)} data-testid="button-add-sensitivity">
               <Plus className="w-4 h-4 mr-2" />
-              Add Allergy
+              Add Sensitivity
             </Button>
           </div>
 
@@ -312,7 +313,7 @@ export default function MedicalInformationModule() {
             {!allergies || allergies.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  No allergies recorded. Click "Add Allergy" to get started.
+                  No sensitivities recorded. Click "Add Sensitivity" to get started.
                 </CardContent>
               </Card>
             ) : (
@@ -352,10 +353,10 @@ export default function MedicalInformationModule() {
 
         <TabsContent value="conditions" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Medical Conditions</h3>
-            <Button onClick={() => setShowConditionDialog(true)} data-testid="button-add-condition">
+            <h3 className="text-lg font-medium">Notes</h3>
+            <Button onClick={() => setShowConditionDialog(true)} data-testid="button-add-note">
               <Plus className="w-4 h-4 mr-2" />
-              Add Condition
+              Add Note
             </Button>
           </div>
 
@@ -363,7 +364,7 @@ export default function MedicalInformationModule() {
             {!conditions || conditions.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  No medical conditions recorded. Click "Add Condition" to get started.
+                  No notes recorded. Click "Add Note" to get started.
                 </CardContent>
               </Card>
             ) : (
@@ -405,10 +406,10 @@ export default function MedicalInformationModule() {
 
         <TabsContent value="adverse" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Adverse Medications</h3>
-            <Button onClick={() => setShowAdverseMedDialog(true)} data-testid="button-add-adverse-med">
+            <h3 className="text-lg font-medium">Reactions</h3>
+            <Button onClick={() => setShowAdverseMedDialog(true)} data-testid="button-add-reaction">
               <Plus className="w-4 h-4 mr-2" />
-              Add Adverse Medication
+              Add Reaction
             </Button>
           </div>
 
@@ -416,7 +417,7 @@ export default function MedicalInformationModule() {
             {!adverseMeds || adverseMeds.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  No adverse medications recorded. Click "Add Adverse Medication" to get started.
+                  No reactions recorded. Click "Add Reaction" to get started.
                 </CardContent>
               </Card>
             ) : (
@@ -459,8 +460,8 @@ export default function MedicalInformationModule() {
 
         <TabsContent value="contacts" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Emergency Contacts</h3>
-            <Button onClick={() => setShowContactDialog(true)} data-testid="button-add-contact">
+            <h3 className="text-lg font-medium">Trusted Contacts</h3>
+            <Button onClick={() => setShowContactDialog(true)} data-testid="button-add-trusted-contact">
               <Plus className="w-4 h-4 mr-2" />
               Add Contact
             </Button>
@@ -470,7 +471,7 @@ export default function MedicalInformationModule() {
             {!emergencyContacts || emergencyContacts.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  No emergency contacts recorded. Click "Add Contact" to get started.
+                  No trusted contacts recorded. Click "Add Contact" to get started.
                 </CardContent>
               </Card>
             ) : (
@@ -517,10 +518,10 @@ export default function MedicalInformationModule() {
 
         <TabsContent value="providers" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Primary Care Providers</h3>
-            <Button onClick={() => setShowProviderDialog(true)} data-testid="button-add-provider">
+            <h3 className="text-lg font-medium">Healthcare Contacts</h3>
+            <Button onClick={() => setShowProviderDialog(true)} data-testid="button-add-healthcare-contact">
               <Plus className="w-4 h-4 mr-2" />
-              Add Provider
+              Add Healthcare Contact
             </Button>
           </div>
 
@@ -528,7 +529,7 @@ export default function MedicalInformationModule() {
             {!providers || providers.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center text-gray-500">
-                  No providers recorded. Click "Add Provider" to get started.
+                  No healthcare contacts recorded. Click "Add Healthcare Contact" to get started.
                 </CardContent>
               </Card>
             ) : (
