@@ -171,7 +171,7 @@ export default function Navigation() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Stethoscope className="w-4 h-4 mr-2" />
-                    Medical Info
+                    Health Records
                   </Button>
                 </Link>
                 <Link href="/pharmacy">
