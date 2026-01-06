@@ -73,7 +73,7 @@ export function SimpleOnboarding({ isVisible, onComplete, onSkip }: SimpleOnboar
             <li>• Daily Tasks & Mood Tracking</li>
             <li>• Financial Management</li>
             <li>• Meal Planning & Shopping</li>
-            <li>• Medication List & Health Records</li>
+            <li>• Pharmacy & Medical Info</li>
             <li>• Student Support Tools</li>
             <li>• Caregiver Communication</li>
           </ul>

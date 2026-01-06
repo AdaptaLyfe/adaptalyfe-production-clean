@@ -33,8 +33,8 @@ export const ALL_QUICK_ACTIONS: QuickAction[] = [
   },
   {
     key: "medical",
-    label: "Health Records",
-    description: "Personal health info",
+    label: "Medical Info",
+    description: "Health records",
     icon: Stethoscope,
     route: "/medical",
     bgColor: "bg-pink-500"
