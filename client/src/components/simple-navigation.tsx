@@ -167,7 +167,7 @@ export default function SimpleNavigation() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Stethoscope className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-medium">Medical Info</span>
+                    <span className="text-xs font-medium">Health Records</span>
                   </button>
                 </Link>
                 <Link href="/pharmacy">
