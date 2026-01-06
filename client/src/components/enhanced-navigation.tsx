@@ -106,7 +106,7 @@ export default function EnhancedNavigation({ className = "" }: NavigationProps) 
     { href: "/calendar", label: "Calendar", icon: Calendar },
     { href: "/academic-planner", label: "Student", icon: GraduationCap },
     { href: "/pharmacy", label: "Medication List", icon: Pill },
-    { href: "/medical", label: "Medical Info", icon: Stethoscope },
+    { href: "/medical", label: "Health Records", icon: Stethoscope },
     { href: "/resources", label: "Resources", icon: BookOpen, shortcut: "Alt+3" },
     { href: "/caregiver", label: "Support", icon: Users },
     { href: "/task-builder", label: "Life Skills", icon: Building },
