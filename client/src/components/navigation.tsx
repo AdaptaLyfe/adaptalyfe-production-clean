@@ -181,7 +181,7 @@ export default function Navigation() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <Pill className="w-4 h-4 mr-2" />
-                    Pharmacy
+                    Medication List
                   </Button>
                 </Link>
                 
