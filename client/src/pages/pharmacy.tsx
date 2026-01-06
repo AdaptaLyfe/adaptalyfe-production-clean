@@ -12,8 +12,8 @@ export default function Pharmacy() {
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <PremiumFeaturePrompt
-              title="Pharmacy & Medication Management"
-              description="Track medications, set reminders, manage pharmacy information, and order refills. This premium feature ensures you never miss a dose and stay on top of your health."
+              title="Medication List"
+              description="Keep a personal list of medications for reference and reminders. All information is entered by the user for organizational purposes only."
               feature="medicationManagement"
               requiredPlan="premium"
               className="max-w-md mx-auto mt-20"
@@ -29,10 +29,15 @@ export default function Pharmacy() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Pharmacy & Medications</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Medication List</h1>
             <p className="text-gray-600 mt-2">
-              Manage your pharmacies, track medications, and order refills easily
+              Keep a personal list of medications for reference and reminders. All information is entered by the user for organizational purposes only.
             </p>
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-800">
+                <strong>Disclaimer:</strong> Medication information is entered by the user and stored for personal reference only. This app does not provide medical advice or prescription services.
+              </p>
+            </div>
           </div>
           <PharmacyModule />
         </div>
