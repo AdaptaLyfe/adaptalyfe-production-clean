@@ -194,12 +194,12 @@ export default function Resources() {
         <EmergencyContacts />
       </div>
 
-      {/* Emergency Support */}
+      {/* Trusted Contacts */}
       <Card className="border-t-4 border-red-500 mb-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3 text-red-700">
             <Phone size={24} />
-            <span>Emergency Support</span>
+            <span>Trusted Contacts</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
