@@ -98,7 +98,7 @@ const ALL_ACTIONS = [
   },
   {
     key: "pharmacy",
-    label: "Pharmacy",
+    label: "Medication List",
     description: "Manage medications",
     icon: Pill,
     route: "/pharmacy",

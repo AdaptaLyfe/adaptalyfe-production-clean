@@ -97,7 +97,7 @@ export const ALL_QUICK_ACTIONS: QuickAction[] = [
   },
   {
     key: "pharmacy",
-    label: "Pharmacy",
+    label: "Medication List",
     description: "Manage medications",
     icon: Pill,
     route: "/pharmacy",
