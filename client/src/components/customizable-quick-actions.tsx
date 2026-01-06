@@ -50,8 +50,8 @@ const ALL_ACTIONS = [
   },
   {
     key: "medical",
-    label: "Medical Info",
-    description: "Health records",
+    label: "Health Records",
+    description: "Personal health info",
     icon: Stethoscope,
     route: "/medical",
     bgColor: "bg-pink-500"
