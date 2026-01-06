@@ -12,8 +12,8 @@ export default function Medical() {
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <PremiumFeaturePrompt
-              title="Medical Information Management"
-              description="Securely store and manage your medical history, allergies, medications, and healthcare contacts. Subscribe to continue using Adaptalyfe's medical features."
+              title="Health Records"
+              description="Store personal health-related details such as sensitivities and trusted contacts for reference."
               feature="medical"
               requiredPlan="premium"
               className="max-w-md mx-auto mt-20"
@@ -29,9 +29,9 @@ export default function Medical() {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Medical Information</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Health Records</h1>
             <p className="text-gray-600 mt-2">
-              Manage your medical history, allergies, healthcare contacts, and track symptoms
+              Store personal health-related details such as sensitivities and trusted contacts for reference.
             </p>
           </div>
           <MedicalInformationModule />
