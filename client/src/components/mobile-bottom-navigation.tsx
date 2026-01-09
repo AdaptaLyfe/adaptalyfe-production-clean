@@ -19,7 +19,7 @@ export default function MobileBottomNavigation() {
   const primaryNavItems = [
     { 
       name: 'Home', 
-      href: '/', 
+      href: '/dashboard', 
       icon: Home,
       activeColor: 'text-blue-600',
       activeBg: 'bg-blue-100'
@@ -57,7 +57,7 @@ export default function MobileBottomNavigation() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/') return location === '/';
+    if (href === '/dashboard') return location === '/dashboard' || location === '/';
     return location.startsWith(href);
   };
 
