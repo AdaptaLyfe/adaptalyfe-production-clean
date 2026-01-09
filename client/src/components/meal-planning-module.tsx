@@ -183,7 +183,7 @@ export default function MealPlanningModule() {
                     <FormItem>
                       <FormLabel>Planned Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <Input type="date" min={format(new Date(), "yyyy-MM-dd")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
