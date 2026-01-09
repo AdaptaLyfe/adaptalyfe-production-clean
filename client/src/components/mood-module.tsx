@@ -80,10 +80,12 @@ export default function MoodModule() {
                 className={`flex-1 p-2 sm:p-3 border-2 ${
                   todayMood?.mood === mood.value
                     ? "border-happy-purple bg-purple-50"
+                    : todayMood
+                    ? "border-gray-200 opacity-50 cursor-not-allowed"
                     : "border-gray-200 hover:border-happy-purple"
                 } transition-colors`}
-                onClick={() => moodMutation.mutate(mood.value)}
-                disabled={moodMutation.isPending}
+                onClick={() => !todayMood && moodMutation.mutate(mood.value)}
+                disabled={moodMutation.isPending || !!todayMood}
                 data-testid={`button-mood-${mood.value}`}
               >
                 <div className="text-center">
