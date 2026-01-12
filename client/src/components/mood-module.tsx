@@ -27,6 +27,7 @@ export default function MoodModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mood-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mood-entries/today"] });
       toast({
         title: "Mood recorded!",
         description: "Thanks for checking in today!",
