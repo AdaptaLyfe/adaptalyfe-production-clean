@@ -932,7 +932,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = req.session.user;
       const entry = await storage.getTodayMoodEntry(user.id);
-      res.json(entry);
+      res.json(entry || null);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch today's mood entry" });
     }
