@@ -1097,7 +1097,7 @@ export default function MedicalInformationModule() {
                 updateAllergy.mutate({
                   id: editingAllergy.id,
                   allergen: formData.get("allergen") as string,
-                  severity: allergySeverity,
+                  severity: allergySeverity || editingAllergy.severity,
                   reaction: formData.get("reaction") as string,
                   notes: formData.get("notes") as string,
                 });
@@ -1178,7 +1178,7 @@ export default function MedicalInformationModule() {
                   id: editingAdverseMed.id,
                   medicationName: formData.get("medicationName") as string,
                   reaction: formData.get("reaction") as string,
-                  severity: adverseMedSeverity,
+                  severity: adverseMedSeverity || editingAdverseMed.severity,
                   reactionDate: reactionDateStr ? reactionDateStr : undefined,
                   notes: formData.get("notes") as string,
                 });
