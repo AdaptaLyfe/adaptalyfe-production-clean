@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,16 +18,40 @@ export function CustomizeDialog({
   visibleKeys, 
   onVisibilityChange 
 }: CustomizeDialogProps) {
+  const [tempVisibleKeys, setTempVisibleKeys] = useState<string[]>(visibleKeys);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTempVisibleKeys(visibleKeys);
+    }
+  }, [isOpen, visibleKeys]);
+
   const toggleAction = (key: string) => {
-    if (visibleKeys.includes(key)) {
-      onVisibilityChange(visibleKeys.filter(k => k !== key));
+    if (tempVisibleKeys.includes(key)) {
+      setTempVisibleKeys(tempVisibleKeys.filter(k => k !== key));
     } else {
-      onVisibilityChange([...visibleKeys, key]);
+      setTempVisibleKeys([...tempVisibleKeys, key]);
     }
   };
 
+  const handleClose = () => {
+    setTempVisibleKeys(visibleKeys);
+    onOpenChange(false);
+  };
+
+  const handleSave = () => {
+    onVisibilityChange(tempVisibleKeys);
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        handleClose();
+      } else {
+        onOpenChange(true);
+      }
+    }}>
       <DialogTrigger asChild>
         <button 
           data-testid="button-customize-quick-actions"
@@ -43,7 +68,7 @@ export function CustomizeDialog({
         <div className="grid grid-cols-2 gap-4 mt-4">
           {ALL_QUICK_ACTIONS.map((action) => {
             const Icon = action.icon;
-            const isSelected = visibleKeys.includes(action.key);
+            const isSelected = tempVisibleKeys.includes(action.key);
             
             return (
               <div 
@@ -71,10 +96,10 @@ export function CustomizeDialog({
           })}
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={handleClose}>
             Close
           </Button>
-          <Button onClick={() => onOpenChange(false)}>
+          <Button onClick={handleSave}>
             Save Changes
           </Button>
         </div>
