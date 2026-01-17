@@ -15,6 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSymptomEntrySchema, type SymptomEntry, type InsertSymptomEntry } from "@shared/schema";
 import { format, formatDistanceToNow } from "date-fns";
+import { z } from "zod";
+
+// Extended schema with better validation messages
+const symptomFormSchema = insertSymptomEntrySchema.extend({
+  symptomName: z.string().min(1, "Symptom name is required").max(255, "Symptom name is too long"),
+  severity: z.number().min(1, "Please select a severity level").max(10, "Severity must be 1-10"),
+  startTime: z.date({ required_error: "Start time is required" }),
+});
 
 const severityColors = {
   1: "bg-green-100 text-green-800",
@@ -81,7 +89,7 @@ export function SymptomTracker() {
   });
 
   const form = useForm<InsertSymptomEntry>({
-    resolver: zodResolver(insertSymptomEntrySchema),
+    resolver: zodResolver(symptomFormSchema),
     defaultValues: {
       symptomName: "",
       severity: 1,
@@ -95,7 +103,7 @@ export function SymptomTracker() {
   });
 
   const editForm = useForm<InsertSymptomEntry>({
-    resolver: zodResolver(insertSymptomEntrySchema),
+    resolver: zodResolver(symptomFormSchema),
   });
 
   const onSubmit = (data: InsertSymptomEntry) => {
@@ -175,9 +183,9 @@ export function SymptomTracker() {
                   name="symptomName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Symptom Name</FormLabel>
+                      <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Headache, Nausea, Pain" {...field} />
+                        <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -189,7 +197,7 @@ export function SymptomTracker() {
                   name="severity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Severity (1-10)</FormLabel>
+                      <FormLabel>Severity (1-10) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <select
                           {...field}
@@ -216,7 +224,7 @@ export function SymptomTracker() {
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time</FormLabel>
+                      <FormLabel>Start Time <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
@@ -425,9 +433,9 @@ export function SymptomTracker() {
                 name="symptomName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Symptom Name</FormLabel>
+                    <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Headache, Nausea, Pain" {...field} />
+                      <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name-edit" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
