@@ -867,7 +867,18 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input name="phoneNumber" required placeholder="Phone number" />
+                  <Input 
+                    name="phoneNumber" 
+                    required 
+                    placeholder="Phone number" 
+                    type="tel"
+                    pattern="[0-9+\-\s\(\)]*"
+                    onKeyPress={(e) => {
+                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -954,7 +965,18 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input name="phoneNumber" required placeholder="Office phone number" />
+                  <Input 
+                    name="phoneNumber" 
+                    required 
+                    placeholder="Office phone number" 
+                    type="tel"
+                    pattern="[0-9+\-\s\(\)]*"
+                    onKeyPress={(e) => {
+                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -1281,7 +1303,19 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input name="phoneNumber" required placeholder="Phone number" defaultValue={editingContact.phoneNumber} />
+                  <Input 
+                    name="phoneNumber" 
+                    required 
+                    placeholder="Phone number" 
+                    defaultValue={editingContact.phoneNumber}
+                    type="tel"
+                    pattern="[0-9+\-\s\(\)]*"
+                    onKeyPress={(e) => {
+                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -1368,7 +1402,19 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input name="phoneNumber" required placeholder="Office phone number" defaultValue={editingProvider.phoneNumber} />
+                  <Input 
+                    name="phoneNumber" 
+                    required 
+                    placeholder="Office phone number" 
+                    defaultValue={editingProvider.phoneNumber}
+                    type="tel"
+                    pattern="[0-9+\-\s\(\)]*"
+                    onKeyPress={(e) => {
+                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
