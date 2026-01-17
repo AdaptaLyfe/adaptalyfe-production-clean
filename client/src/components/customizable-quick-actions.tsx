@@ -268,23 +268,17 @@ export default function CustomizableQuickActions() {
       {isReorderMode && (
         <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2">
           <GripVertical className="w-5 h-5 text-blue-600" />
-          <p className="text-blue-800 text-sm font-medium">Drag and drop cards to reorder them</p>
+          <p className="text-blue-800 text-sm font-medium">Use the grip icon on each card to drag and reorder</p>
         </div>
       )}
       
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="quick-actions">
+        <Droppable droppableId="quick-actions" direction="horizontal">
           {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className={`
-                ${isReorderMode 
-                  ? 'flex flex-wrap' 
-                  : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
-                } 
-                gap-4
-              `}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
             >
               {visibleActions.map((action, index) => {
                 const Icon = action.icon;
@@ -300,18 +294,26 @@ export default function CustomizableQuickActions() {
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        {...provided.dragHandleProps}
                         data-testid={`card-quick-action-${action.key}`}
-                        onClick={() => handleCardClick(action.route)}
                         className={`
-                          bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center
+                          bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center relative
                           ${isReorderMode 
-                            ? 'cursor-move border-2 border-blue-300 w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]' 
+                            ? 'border-2 border-blue-300' 
                             : 'cursor-pointer hover:shadow-xl'
                           }
-                          ${snapshot.isDragging ? 'opacity-50 scale-105 shadow-2xl' : ''}
+                          ${snapshot.isDragging ? 'opacity-70 scale-105 shadow-2xl z-50' : ''}
                         `}
+                        onClick={() => !isReorderMode && handleCardClick(action.route)}
                       >
+                        {isReorderMode && (
+                          <div 
+                            {...provided.dragHandleProps}
+                            className="absolute top-2 right-2 p-2 bg-blue-100 rounded-lg cursor-grab active:cursor-grabbing touch-none"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <GripVertical className="w-4 h-4 text-blue-600" />
+                          </div>
+                        )}
                         <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
                           <Icon className="text-white w-8 h-8" />
                         </div>
