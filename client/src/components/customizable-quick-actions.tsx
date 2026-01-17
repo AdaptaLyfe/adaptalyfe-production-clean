@@ -23,7 +23,6 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -161,6 +160,7 @@ function SortableCard({ action, index, totalCount, isReorderMode, onCardClick, o
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -204,11 +204,13 @@ function SortableCard({ action, index, totalCount, isReorderMode, onCardClick, o
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div 
+              ref={setActivatorNodeRef}
               {...attributes}
               {...listeners}
-              className="p-1.5 bg-blue-100 rounded-full cursor-grab active:cursor-grabbing touch-manipulation"
+              className="p-2.5 bg-blue-500 rounded-full cursor-grab active:cursor-grabbing touch-none select-none"
+              style={{ touchAction: 'none' }}
             >
-              <GripVertical className="w-4 h-4 text-blue-600" />
+              <GripVertical className="w-5 h-5 text-white" />
             </div>
             <button 
               onClick={(e) => { e.stopPropagation(); onMove(index, 'right'); }}
@@ -253,13 +255,10 @@ export default function CustomizableQuickActions() {
     .map(key => ALL_ACTIONS.find(a => a.key === key))
     .filter(Boolean) as typeof ALL_ACTIONS;
 
-  // Configure sensors for both pointer and touch with activation constraint
+  // Configure sensor - PointerSensor handles both mouse and touch on modern browsers
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
+      activationConstraint: { distance: 5 },
     })
   );
 
