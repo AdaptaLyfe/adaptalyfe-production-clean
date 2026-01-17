@@ -73,12 +73,12 @@ export default function MoodModule() {
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
         <div>
           <h4 className="font-medium text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">How are you feeling today?</h4>
-          <div className="flex justify-between items-stretch gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
             {moodOptions.map((mood) => (
               <Button
                 key={mood.value}
                 variant="outline"
-                className={`flex-1 p-2 sm:p-3 border-2 flex items-center justify-center ${
+                className={`h-16 sm:h-20 flex flex-col items-center justify-center p-1 sm:p-2 border-2 ${
                   todayMood?.mood === mood.value
                     ? "border-happy-purple bg-purple-50"
                     : todayMood
@@ -89,10 +89,10 @@ export default function MoodModule() {
                 disabled={moodMutation.isPending || !!todayMood}
                 data-testid={`button-mood-${mood.value}`}
               >
-                <div className="flex flex-col items-center justify-center w-full">
-                  <div className="text-xl sm:text-2xl mb-0.5 sm:mb-1">{mood.emoji}</div>
-                  <p className="text-[10px] sm:text-xs text-gray-600 text-center">{mood.label}</p>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center">
+                  <span className="text-xl sm:text-2xl leading-none">{mood.emoji}</span>
                 </div>
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight mt-0.5">{mood.label}</p>
               </Button>
             ))}
           </div>
