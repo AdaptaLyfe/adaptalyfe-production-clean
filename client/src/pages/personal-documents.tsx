@@ -157,6 +157,24 @@ export default function PersonalDocuments() {
   };
 
   const onSubmit = (data: FormData) => {
+    // Check for duplicate title (case-insensitive)
+    const normalizedTitle = data.title.trim().toLowerCase();
+    const duplicateDoc = documents.find(doc => {
+      const existingTitle = doc.title.trim().toLowerCase();
+      // When editing, exclude the current document from duplicate check
+      if (editingDoc && doc.id === editingDoc.id) return false;
+      return existingTitle === normalizedTitle;
+    });
+    
+    if (duplicateDoc) {
+      toast({
+        title: "Duplicate Title",
+        description: "A document with this title already exists. Please choose a different title.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     createMutation.mutate(data);
   };
 
@@ -246,10 +264,10 @@ export default function PersonalDocuments() {
                   )}
                 />
 
-                {/* Document Type Selection */}
+                {/* Document Type Selection - Image tab hidden for initial launch */}
                 <div>
                   <FormLabel className="text-sm font-medium">Document Type *</FormLabel>
-                  <div className="grid grid-cols-3 gap-3 mt-2">
+                  <div className="grid grid-cols-2 gap-3 mt-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -268,24 +286,7 @@ export default function PersonalDocuments() {
                       <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                       <span className="text-xs sm:text-sm">Text</span>
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setDocType("image");
-                        form.setValue("documentType", "image");
-                      }}
-                      data-testid="button-type-image"
-                      className={`w-full justify-center transition-all ${
-                        docType === "image" 
-                          ? "border-2 border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-md" 
-                          : "border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
-                      }`}
-                    >
-                      <ImageIcon className="w-4 h-4 mr-1 sm:mr-2" />
-                      <span className="text-xs sm:text-sm">Image</span>
-                    </Button>
+                    {/* Image button hidden for initial launch - will be enabled later */}
                     <Button
                       type="button"
                       variant="outline"
