@@ -154,7 +154,7 @@ export default function QuickActions() {
       if (!isReorderMode) {
         toast({
           title: "Reorder Mode Active",
-          description: "Drag and drop cards to reorder them.",
+          description: "Drag the blue grip or tap arrows to reorder.",
         });
       } else {
         toast({
@@ -165,6 +165,26 @@ export default function QuickActions() {
     } catch (error) {
       console.error("Error toggling reorder mode:", error);
     }
+  };
+
+  const moveItem = (index: number, direction: 'left' | 'right') => {
+    const newIndex = direction === 'left' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= visibleActions.length) return;
+    
+    setOrderedKeys((keys) => {
+      if (!Array.isArray(keys) || keys.length === 0) return keys;
+      const newKeys = [...keys];
+      const visibleKey = visibleActions[index]?.key;
+      const targetKey = visibleActions[newIndex]?.key;
+      if (!visibleKey || !targetKey) return keys;
+      
+      const keyIndex = newKeys.indexOf(visibleKey);
+      const targetKeyIndex = newKeys.indexOf(targetKey);
+      if (keyIndex === -1 || targetKeyIndex === -1) return keys;
+      
+      [newKeys[keyIndex], newKeys[targetKeyIndex]] = [newKeys[targetKeyIndex], newKeys[keyIndex]];
+      return newKeys;
+    });
   };
 
   const handleVisibilityChange = (newVisibleKeys: string[]) => {
@@ -238,7 +258,7 @@ export default function QuickActions() {
         {isReorderMode && (
           <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2 select-none">
             <GripVertical className="w-5 h-5 text-blue-600" />
-            <p className="text-blue-800 text-sm font-medium">Drag and drop cards to reorder them</p>
+            <p className="text-blue-800 text-sm font-medium">Drag the blue grip or tap arrows to reorder</p>
           </div>
         )}
         
@@ -253,7 +273,7 @@ export default function QuickActions() {
             strategy={rectSortingStrategy}
           >
             <div className={`flex flex-wrap gap-4 ${isReorderMode ? 'select-none' : ''}`}>
-              {visibleActions.map((action) => (
+              {visibleActions.map((action, index) => (
                 <div
                   key={action.key}
                   className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]"
@@ -262,6 +282,9 @@ export default function QuickActions() {
                     id={action.key}
                     action={action}
                     isReorderMode={isReorderMode}
+                    index={index}
+                    totalCount={visibleActions.length}
+                    onMove={moveItem}
                   />
                 </div>
               ))}
