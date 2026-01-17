@@ -1,3 +1,4 @@
+// Build version: 2026-01-17-v3 - Force Railway cache bust
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { 
