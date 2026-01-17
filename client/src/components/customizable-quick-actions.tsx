@@ -9,15 +9,16 @@ import {
   MessageSquare,
   Users,
   ShoppingCart,
-  GripVertical,
+  ArrowLeft,
+  ArrowRight,
   Settings,
   Pill,
   BookOpen,
   Star,
   GraduationCap,
-  FileText
+  FileText,
+  GripVertical
 } from "lucide-react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -146,13 +147,12 @@ export default function CustomizableQuickActions() {
     .map(key => ALL_ACTIONS.find(a => a.key === key))
     .filter(Boolean) as typeof ALL_ACTIONS;
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
-
+  const moveItem = (index: number, direction: 'left' | 'right') => {
     const items = Array.from(visibleActionKeys);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
+    const newIndex = direction === 'left' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= items.length) return;
+    
+    [items[index], items[newIndex]] = [items[newIndex], items[index]];
     setVisibleActionKeys(items);
   };
 
@@ -267,72 +267,68 @@ export default function CustomizableQuickActions() {
       
       {isReorderMode && (
         <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2">
-          <GripVertical className="w-5 h-5 text-blue-600" />
-          <p className="text-blue-800 text-sm font-medium">Use the grip icon on each card to drag and reorder</p>
+          <ArrowLeft className="w-5 h-5 text-blue-600" />
+          <p className="text-blue-800 text-sm font-medium">Tap the arrows to move cards left or right</p>
+          <ArrowRight className="w-5 h-5 text-blue-600" />
         </div>
       )}
       
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="quick-actions" direction="horizontal">
-          {(provided) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {visibleActions.map((action, index) => {
+          const Icon = action.icon;
+          
+          return (
             <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+              key={action.key}
+              data-testid={`card-quick-action-${action.key}`}
+              className={`
+                bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center relative
+                ${isReorderMode 
+                  ? 'border-2 border-blue-300' 
+                  : 'cursor-pointer hover:shadow-xl'
+                }
+              `}
+              onClick={() => !isReorderMode && handleCardClick(action.route)}
             >
-              {visibleActions.map((action, index) => {
-                const Icon = action.icon;
-                
-                return (
-                  <Draggable 
-                    key={action.key} 
-                    draggableId={action.key} 
-                    index={index}
-                    isDragDisabled={!isReorderMode}
+              {isReorderMode && (
+                <div className="absolute top-2 left-0 right-0 flex justify-between px-2">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); moveItem(index, 'left'); }}
+                    disabled={index === 0}
+                    className={`p-1.5 rounded-full transition-colors ${
+                      index === 0 
+                        ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+                    }`}
                   >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        data-testid={`card-quick-action-${action.key}`}
-                        className={`
-                          bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center relative
-                          ${isReorderMode 
-                            ? 'border-2 border-blue-300' 
-                            : 'cursor-pointer hover:shadow-xl'
-                          }
-                          ${snapshot.isDragging ? 'opacity-70 scale-105 shadow-2xl z-50' : ''}
-                        `}
-                        onClick={() => !isReorderMode && handleCardClick(action.route)}
-                      >
-                        {isReorderMode && (
-                          <div 
-                            {...provided.dragHandleProps}
-                            className="absolute top-2 right-2 p-2 bg-blue-100 rounded-lg cursor-grab active:cursor-grabbing touch-none"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <GripVertical className="w-4 h-4 text-blue-600" />
-                          </div>
-                        )}
-                        <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
-                          <Icon className="text-white w-8 h-8" />
-                        </div>
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
-                          {action.label}
-                        </h4>
-                        <p className="text-xs text-gray-600 leading-tight">
-                          {action.description}
-                        </p>
-                      </div>
-                    )}
-                  </Draggable>
-                );
-              })}
-              {provided.placeholder}
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); moveItem(index, 'right'); }}
+                    disabled={index === visibleActions.length - 1}
+                    className={`p-1.5 rounded-full transition-colors ${
+                      index === visibleActions.length - 1 
+                        ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+                    }`}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+              <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md ${isReorderMode ? 'mt-6' : ''}`}>
+                <Icon className="text-white w-8 h-8" />
+              </div>
+              <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+                {action.label}
+              </h4>
+              <p className="text-xs text-gray-600 leading-tight">
+                {action.description}
+              </p>
             </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+          );
+        })}
+      </div>
     </div>
   );
 }
