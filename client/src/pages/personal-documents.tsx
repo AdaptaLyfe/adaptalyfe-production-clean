@@ -64,14 +64,23 @@ export default function PersonalDocuments() {
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const payload = {
-        ...data,
+      const payload: any = {
+        title: data.title,
+        category: data.category,
         documentType: docType,
         content: data.content || "",
-        linkUrl: docType === "link" ? data.linkUrl : "",
-        imageUrl: docType === "image" ? uploadedImageUrl : "",
-        tags: [],
+        isImportant: data.isImportant || false,
       };
+      
+      // Only include linkUrl for link type
+      if (docType === "link") {
+        payload.linkUrl = data.linkUrl || "";
+      }
+      
+      // Only include imageUrl for image type
+      if (docType === "image" && uploadedImageUrl) {
+        payload.imageUrl = uploadedImageUrl;
+      }
       
       if (editingDoc) {
         const res = await apiRequest("PATCH", `/api/personal-documents/${editingDoc.id}`, payload);
