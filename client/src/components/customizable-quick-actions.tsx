@@ -19,6 +19,22 @@ import {
   FileText,
   GripVertical
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -131,6 +147,96 @@ const ALL_ACTIONS = [
   }
 ];
 
+interface SortableCardProps {
+  action: typeof ALL_ACTIONS[0];
+  index: number;
+  totalCount: number;
+  isReorderMode: boolean;
+  onCardClick: (route: string) => void;
+  onMove: (index: number, direction: 'left' | 'right') => void;
+}
+
+function SortableCard({ action, index, totalCount, isReorderMode, onCardClick, onMove }: SortableCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: action.key,
+    disabled: !isReorderMode 
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  const Icon = action.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-testid={`card-quick-action-${action.key}`}
+      className={`
+        bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center relative
+        ${isReorderMode ? 'border-2 border-blue-300' : 'cursor-pointer hover:shadow-xl'}
+        ${isDragging ? 'opacity-70 scale-105 shadow-2xl' : ''}
+      `}
+      onClick={() => !isReorderMode && onCardClick(action.route)}
+    >
+      {isReorderMode && (
+        <>
+          <div className="absolute top-2 left-0 right-0 flex justify-between px-2">
+            <button 
+              onClick={(e) => { e.stopPropagation(); onMove(index, 'left'); }}
+              disabled={index === 0}
+              className={`p-1.5 rounded-full transition-colors ${
+                index === 0 
+                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+              }`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div 
+              {...attributes}
+              {...listeners}
+              className="p-1.5 bg-blue-100 rounded-full cursor-grab active:cursor-grabbing touch-manipulation"
+            >
+              <GripVertical className="w-4 h-4 text-blue-600" />
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onMove(index, 'right'); }}
+              disabled={index === totalCount - 1}
+              className={`p-1.5 rounded-full transition-colors ${
+                index === totalCount - 1 
+                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
+                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+              }`}
+            >
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </>
+      )}
+      <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md ${isReorderMode ? 'mt-6' : ''}`}>
+        <Icon className="text-white w-8 h-8" />
+      </div>
+      <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
+        {action.label}
+      </h4>
+      <p className="text-xs text-gray-600 leading-tight">
+        {action.description}
+      </p>
+    </div>
+  );
+}
+
 export default function CustomizableQuickActions() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -146,6 +252,25 @@ export default function CustomizableQuickActions() {
   const visibleActions = visibleActionKeys
     .map(key => ALL_ACTIONS.find(a => a.key === key))
     .filter(Boolean) as typeof ALL_ACTIONS;
+
+  // Configure sensors for both pointer and touch with activation constraint
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = visibleActionKeys.indexOf(active.id as string);
+      const newIndex = visibleActionKeys.indexOf(over.id as string);
+      setVisibleActionKeys(arrayMove(visibleActionKeys, oldIndex, newIndex));
+    }
+  };
 
   const moveItem = (index: number, direction: 'left' | 'right') => {
     const items = Array.from(visibleActionKeys);
@@ -169,7 +294,7 @@ export default function CustomizableQuickActions() {
     if (!isReorderMode) {
       toast({
         title: "Reorder Mode Active",
-        description: "Drag and drop cards to reorder them.",
+        description: "Drag the grip icon or use arrows to reorder.",
       });
     } else {
       toast({
@@ -267,68 +392,35 @@ export default function CustomizableQuickActions() {
       
       {isReorderMode && (
         <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2">
-          <ArrowLeft className="w-5 h-5 text-blue-600" />
-          <p className="text-blue-800 text-sm font-medium">Tap the arrows to move cards left or right</p>
-          <ArrowRight className="w-5 h-5 text-blue-600" />
+          <GripVertical className="w-5 h-5 text-blue-600" />
+          <p className="text-blue-800 text-sm font-medium">Drag the grip icon or tap arrows to reorder</p>
         </div>
       )}
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {visibleActions.map((action, index) => {
-          const Icon = action.icon;
-          
-          return (
-            <div
-              key={action.key}
-              data-testid={`card-quick-action-${action.key}`}
-              className={`
-                bg-white rounded-2xl shadow-lg transition-all p-6 flex flex-col items-center text-center relative
-                ${isReorderMode 
-                  ? 'border-2 border-blue-300' 
-                  : 'cursor-pointer hover:shadow-xl'
-                }
-              `}
-              onClick={() => !isReorderMode && handleCardClick(action.route)}
-            >
-              {isReorderMode && (
-                <div className="absolute top-2 left-0 right-0 flex justify-between px-2">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); moveItem(index, 'left'); }}
-                    disabled={index === 0}
-                    className={`p-1.5 rounded-full transition-colors ${
-                      index === 0 
-                        ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
-                    }`}
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); moveItem(index, 'right'); }}
-                    disabled={index === visibleActions.length - 1}
-                    className={`p-1.5 rounded-full transition-colors ${
-                      index === visibleActions.length - 1 
-                        ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
-                    }`}
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-              <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md ${isReorderMode ? 'mt-6' : ''}`}>
-                <Icon className="text-white w-8 h-8" />
-              </div>
-              <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight">
-                {action.label}
-              </h4>
-              <p className="text-xs text-gray-600 leading-tight">
-                {action.description}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={visibleActionKeys}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {visibleActions.map((action, index) => (
+              <SortableCard
+                key={action.key}
+                action={action}
+                index={index}
+                totalCount={visibleActions.length}
+                isReorderMode={isReorderMode}
+                onCardClick={handleCardClick}
+                onMove={moveItem}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }
