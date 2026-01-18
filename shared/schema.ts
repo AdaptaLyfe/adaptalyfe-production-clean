@@ -684,6 +684,10 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
 export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({
   id: true,
   createdAt: true,
+}).extend({
+  mealName: z.string().min(1, "Meal name is required"),
+  mealType: z.string().min(1, "Meal type is required"),
+  plannedDate: z.string().min(1, "Planned date is required"),
 });
 
 export const insertGroceryStoreSchema = createInsertSchema(groceryStores).omit({
@@ -695,6 +699,9 @@ export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
   id: true,
   addedDate: true,
   purchasedDate: true,
+}).extend({
+  itemName: z.string().min(1, "Item name is required"),
+  category: z.string().min(1, "Category is required"),
 });
 
 export const insertEmergencyResourceSchema = createInsertSchema(emergencyResources).omit({
