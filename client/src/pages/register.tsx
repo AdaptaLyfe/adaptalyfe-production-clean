@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, Shield, Heart } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getSessionToken } from "@/lib/queryClient";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -27,6 +27,15 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasInvitation, setHasInvitation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Redirect authenticated users to dashboard (prevents back button loop)
+  useEffect(() => {
+    const sessionToken = getSessionToken();
+    if (sessionToken) {
+      console.log('🔄 Register: Already authenticated, redirecting to dashboard');
+      window.location.replace('/dashboard');
+    }
+  }, []);
 
   // Check for mobile device and invitation code on component mount
   useEffect(() => {

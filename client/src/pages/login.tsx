@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest, setSessionToken } from "@/lib/queryClient";
+import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
 import { isNativeMobile } from "@/lib/mobile";
 
 export default function Login() {
@@ -19,6 +19,15 @@ export default function Login() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasInvitationCode, setHasInvitationCode] = useState(false);
+
+  // Redirect authenticated users to dashboard (prevents back button loop)
+  useEffect(() => {
+    const sessionToken = getSessionToken();
+    if (sessionToken) {
+      console.log('🔄 Login: Already authenticated, redirecting to dashboard');
+      window.location.replace('/dashboard');
+    }
+  }, []);
 
   // Check for invitation code from URL parameters when component loads
   useEffect(() => {
@@ -70,10 +79,9 @@ export default function Login() {
         }
       }
 
-      // Use window.location.href for reliable navigation on all platforms
-      // This works better on mobile browsers and Capacitor apps
+      // Use window.location.replace to avoid back button returning to login
       console.log("🔄 Navigating to", redirectPath);
-      window.location.href = redirectPath;
+      window.location.replace(redirectPath);
     } catch (error: any) {
       toast({
         title: "Login Failed",
