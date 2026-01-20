@@ -1,0 +1,41 @@
+ADAPTALYFE - GOOGLE PLAY STORE LISTING
+======================================
+
+APP TITLE (max 50 characters):
+Adaptalyfe - Daily Life Assistant
+
+SHORT DESCRIPTION (max 80 characters):
+Manage tasks, finances, mood & wellness with personalized support
+
+FULL DESCRIPTION (max 4000 characters):
+Adaptalyfe empowers individuals with developmental disabilities to manage daily life independently. Our comprehensive app provides tools for task management, financial tracking, mood monitoring, and connecting with caregivers.
+
+KEY FEATURES:
+- Daily Task Management with rewards
+- Financial tracking and bill reminders  
+- Mood and symptom logging
+- Caregiver communication tools
+- Meal planning and shopping lists
+- Appointment scheduling
+- Medical information management
+- Personal documents storage
+- Sleep tracking
+- Accessibility-focused design
+
+Adaptalyfe is designed with accessibility in mind, featuring high contrast modes, large text options, and intuitive navigation. Our mission is to foster independence and improve quality of life.
+
+CATEGORY: Health & Fitness / Medical
+
+CONTENT RATING: Everyone
+
+PRIVACY POLICY URL:
+https://app.getadaptalyfeapp.com/privacy
+
+KEYWORDS:
+developmental disabilities, daily living, task management, caregiver support, wellness, accessibility, independence
+
+CONTACT EMAIL:
+(add your support email)
+
+WEBSITE:
+https://app.getadaptalyfeapp.com
