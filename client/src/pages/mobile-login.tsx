@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest, setSessionToken } from "@/lib/queryClient";
+import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
 
 export default function MobileLogin() {
   const [, setLocation] = useLocation();
@@ -16,6 +16,16 @@ export default function MobileLogin() {
     password: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect authenticated users to dashboard (prevents back button loop)
+  useEffect(() => {
+    const sessionToken = getSessionToken();
+    if (sessionToken) {
+      console.log('🔄 MobileLogin: Already authenticated, redirecting to dashboard');
+      // Use replace to avoid history loop
+      window.location.replace('/dashboard');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +64,9 @@ export default function MobileLogin() {
         redirectPath = `/accept-invitation?code=${pendingInvitation}`;
       }
 
-      // Use setLocation for SPA navigation (avoids Capacitor persisting route on restart)
+      // Use window.location.replace to avoid back button loop to login page
       console.log("🔄 Mobile Login: Navigating to", redirectPath);
-      setLocation(redirectPath);
+      window.location.replace(redirectPath);
     } catch (error: any) {
       toast({
         title: "Login Failed",
