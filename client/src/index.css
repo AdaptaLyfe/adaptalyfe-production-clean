@@ -27,8 +27,17 @@ html, body {
 
 /* Android-native header styling */
 .android-header {
-  padding-top: max(var(--safe-area-inset-top), var(--android-status-bar-height));
+  padding-top: max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px));
   background: linear-gradient(to bottom, rgba(255,255,255,0.98), rgba(255,255,255,1));
+}
+
+/* When running as Android native app */
+body.android-native .android-header {
+  padding-top: var(--android-status-bar-height, 28px);
+}
+
+body.android-native .main-content-with-header {
+  padding-top: calc(56px + var(--android-status-bar-height, 28px));
 }
 
 /* Android Material Design elevation */
@@ -66,7 +75,7 @@ html, body {
 
 /* Main content padding for fixed header */
 .main-content-with-header {
-  padding-top: calc(64px + max(var(--safe-area-inset-top), var(--android-status-bar-height)));
+  padding-top: calc(56px + max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px)));
 }
 
 /* Bottom navigation Android style */

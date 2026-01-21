@@ -33,12 +33,30 @@ function getPlatform(): 'ios' | 'android' | 'web' {
 }
 
 async function initializeMobileApp(): Promise<void> {
+  const platform = getPlatform();
+  
+  // Apply Android-specific status bar padding
+  if (platform === 'android') {
+    // Android status bar is typically 24-28dp, we use 28px for safety
+    document.documentElement.style.setProperty('--android-status-bar-height', '28px');
+    document.body.classList.add('android-native');
+  }
+  
   if (!isNativeMobile()) return;
   
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar');
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#ffffff' });
+    
+    // Get actual status bar height on Android
+    if (platform === 'android') {
+      const info = await StatusBar.getInfo();
+      if (info && info.visible) {
+        // Use 28px as reliable Android status bar height
+        document.documentElement.style.setProperty('--android-status-bar-height', '28px');
+      }
+    }
   } catch (e) { console.log('StatusBar not available'); }
 
   try {
