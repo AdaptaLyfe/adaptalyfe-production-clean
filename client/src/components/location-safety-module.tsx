@@ -508,6 +508,7 @@ function GeofencingManager() {
                   placeholder="e.g. Home, School, Work"
                   value={newGeofence.name}
                   onChange={(e) => setNewGeofence(prev => ({ ...prev, name: e.target.value }))}
+                  required
                 />
               </div>
               
@@ -521,6 +522,7 @@ function GeofencingManager() {
                     placeholder="40.7128"
                     value={newGeofence.latitude}
                     onChange={(e) => setNewGeofence(prev => ({ ...prev, latitude: e.target.value }))}
+                    required
                   />
                 </div>
                 <div>
@@ -532,6 +534,7 @@ function GeofencingManager() {
                     placeholder="-74.0060"
                     value={newGeofence.longitude}
                     onChange={(e) => setNewGeofence(prev => ({ ...prev, longitude: e.target.value }))}
+                    required
                   />
                 </div>
               </div>

@@ -593,11 +593,13 @@ export default function AcademicPlanner() {
                           placeholder="Class name"
                           value={newClass.className}
                           onChange={(e) => setNewClass({ ...newClass, className: e.target.value })}
+                          required
                         />
                         <Input
                           placeholder="Instructor"
                           value={newClass.instructor}
                           onChange={(e) => setNewClass({ ...newClass, instructor: e.target.value })}
+                          required
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <Input
@@ -734,6 +736,7 @@ export default function AcademicPlanner() {
                           placeholder="Assignment title"
                           value={newAssignment.title}
                           onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+                          required
                         />
                         <Textarea
                           placeholder="Description (optional)"
@@ -760,6 +763,7 @@ export default function AcademicPlanner() {
                           placeholder="Due date"
                           value={newAssignment.dueDate}
                           onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
+                          required
                         />
                         <Select 
                           value={newAssignment.priority} 
@@ -910,6 +914,7 @@ export default function AcademicPlanner() {
                           placeholder="Subject (required)"
                           value={newStudySession.subject}
                           onChange={(e) => setNewStudySession({ ...newStudySession, subject: e.target.value })}
+                          required
                         />
                         <Input
                           placeholder="Topic"
@@ -1045,11 +1050,13 @@ export default function AcademicPlanner() {
                         placeholder="Location name (required)"
                         value={newLocation.name}
                         onChange={(e) => setNewLocation({ ...newLocation, name: e.target.value })}
+                        required
                       />
                       <Input
                         placeholder="Building (required)"
                         value={newLocation.building}
                         onChange={(e) => setNewLocation({ ...newLocation, building: e.target.value })}
+                        required
                       />
                       <Input
                         placeholder="Floor (optional)"
@@ -1154,11 +1161,13 @@ export default function AcademicPlanner() {
                         placeholder="Route name (required)"
                         value={newTransport.routeName}
                         onChange={(e) => setNewTransport({ ...newTransport, routeName: e.target.value })}
+                        required
                       />
                       <Input
                         placeholder="From stop (required)"
                         value={newTransport.fromStop}
                         onChange={(e) => setNewTransport({ ...newTransport, fromStop: e.target.value })}
+                        required
                       />
                       <Input
                         placeholder="To stop"
@@ -1265,11 +1274,13 @@ export default function AcademicPlanner() {
                       placeholder="Group name (required)"
                       value={newStudyGroup.groupName}
                       onChange={(e) => setNewStudyGroup({ ...newStudyGroup, groupName: e.target.value })}
+                      required
                     />
                     <Input
                       placeholder="Subject (required)"
                       value={newStudyGroup.subject}
                       onChange={(e) => setNewStudyGroup({ ...newStudyGroup, subject: e.target.value })}
+                      required
                     />
                     <Textarea
                       placeholder="Description (optional)"

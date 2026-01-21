@@ -360,6 +360,7 @@ export default function DailyTasks() {
                 placeholder="Task title"
                 value={newTask.title}
                 onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                required
               />
               <Textarea
                 placeholder="Description (optional)"
@@ -483,6 +484,7 @@ export default function DailyTasks() {
                 placeholder="Task title"
                 value={editTask.title}
                 onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
+                required
               />
               <Textarea
                 placeholder="Description (optional)"
