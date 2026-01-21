@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, HelpCircle, Bell, Star, Volume2, Zap, GripVertical } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -8,22 +8,33 @@ import SubscriptionBanner from "@/components/subscription-banner";
 import WelcomeSection from "@/components/welcome-section";
 import QuickActions from "@/components/quick-actions/QuickActions";
 import DailyTasksModule from "@/components/daily-tasks-module";
-import FinancialModule from "@/components/financial-module";
-import MoodModule from "@/components/mood-module";
-import AchievementsModule from "@/components/achievements-module";
-import CaregiverModule from "@/components/caregiver-module";
-import AppointmentsModule from "@/components/appointments-module";
 import DailySummary from "@/components/daily-summary";
-import DashboardCustomizer from "@/components/dashboard-customizer";
-import MoodRequirementModal from "@/components/mood-requirement-modal";
-import AIChatbot from "@/components/ai-chatbot";
-import HealthWellnessModule from "@/components/health-wellness-module";
-import AccessibilitySettingsModule from "@/components/accessibility-settings-module";
-import LifeSkillsModule from "@/components/life-skills-module";
-import ProgressMotivationModule from "@/components/progress-motivation-module";
-import PharmacyModule from "@/components/pharmacy-module";
-import SafetyTransportationModule from "@/components/safety-transportation-module";
-import LocationSafetyModule from "@/components/location-safety-module";
+
+const FinancialModule = lazy(() => import("@/components/financial-module"));
+const MoodModule = lazy(() => import("@/components/mood-module"));
+const AchievementsModule = lazy(() => import("@/components/achievements-module"));
+const CaregiverModule = lazy(() => import("@/components/caregiver-module"));
+const AppointmentsModule = lazy(() => import("@/components/appointments-module"));
+const DashboardCustomizer = lazy(() => import("@/components/dashboard-customizer"));
+const MoodRequirementModal = lazy(() => import("@/components/mood-requirement-modal"));
+const AIChatbot = lazy(() => import("@/components/ai-chatbot"));
+const HealthWellnessModule = lazy(() => import("@/components/health-wellness-module"));
+const AccessibilitySettingsModule = lazy(() => import("@/components/accessibility-settings-module"));
+const LifeSkillsModule = lazy(() => import("@/components/life-skills-module"));
+const ProgressMotivationModule = lazy(() => import("@/components/progress-motivation-module"));
+const PharmacyModule = lazy(() => import("@/components/pharmacy-module"));
+const SafetyTransportationModule = lazy(() => import("@/components/safety-transportation-module"));
+const LocationSafetyModule = lazy(() => import("@/components/location-safety-module"));
+
+function ModuleSkeleton() {
+  return (
+    <div className="animate-pulse bg-gray-100 rounded-lg p-6 h-48">
+      <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+      <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+    </div>
+  );
+}
 // Enhanced features components - temporarily commented out due to integration issues
 // import { SmartNotifications } from "@/components/smart-notifications";
 // import { AchievementSystem } from "@/components/achievement-system";
@@ -92,6 +103,16 @@ export default function Dashboard() {
     const Component = componentMap[component as keyof typeof componentMap];
     if (!Component) return null;
 
+    const isEagerModule = component === 'DailySummary' || component === 'DailyTasksModule';
+    
+    const moduleContent = isEagerModule ? (
+      <Component key={moduleId} />
+    ) : (
+      <Suspense fallback={<ModuleSkeleton />}>
+        <Component key={moduleId} />
+      </Suspense>
+    );
+
     if (isDraggable && isDragMode) {
       return (
         <div className="relative group">
@@ -102,13 +123,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="border-2 border-dashed border-blue-200 rounded-lg p-2 hover:border-blue-400 transition-colors">
-            <Component key={moduleId} />
+            {moduleContent}
           </div>
         </div>
       );
     }
 
-    return <Component key={moduleId} />;
+    return moduleContent;
   };
 
   return (
@@ -247,7 +268,9 @@ export default function Dashboard() {
       </div>
 
       {/* AI Chatbot */}
-      <AIChatbot />
+      <Suspense fallback={null}>
+        <AIChatbot />
+      </Suspense>
 
       {/* Modals disabled - customizer removed */}
 
