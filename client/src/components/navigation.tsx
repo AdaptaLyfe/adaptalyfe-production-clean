@@ -37,7 +37,7 @@ export default function Navigation() {
   }, [isMobileMenuOpen]);
 
   return (
-    <header className="bg-card shadow-lg border-b border-border backdrop-blur-sm">
+    <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 shadow-lg border-b border-border backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex justify-between items-center h-16">
           <div 

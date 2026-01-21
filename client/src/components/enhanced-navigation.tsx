@@ -149,7 +149,7 @@ export default function EnhancedNavigation({ className = "" }: NavigationProps) 
   );
 
   return (
-    <header className={`bg-card shadow-lg border-b border-border backdrop-blur-sm ${className}`}>
+    <header className={`sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 shadow-lg border-b border-border backdrop-blur-md ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
