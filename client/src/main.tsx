@@ -4,10 +4,62 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { queryClient } from "@/lib/queryClient";
-import { initializeMobileApp, isNativeMobile, getPlatform } from "@/lib/mobile";
 import App from "./App";
 import "./index.css";
 import "./colors.css";
+
+// Inline mobile utilities to avoid import issues in production build
+function isNativeMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const cap = (window as any).Capacitor;
+    return cap?.isNativePlatform?.() ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function getPlatform(): 'ios' | 'android' | 'web' {
+  if (typeof window === 'undefined') return 'web';
+  try {
+    const cap = (window as any).Capacitor;
+    const platform = cap?.getPlatform?.() ?? 'web';
+    if (platform === 'ios') return 'ios';
+    if (platform === 'android') return 'android';
+    return 'web';
+  } catch {
+    return 'web';
+  }
+}
+
+async function initializeMobileApp(): Promise<void> {
+  if (!isNativeMobile()) return;
+  
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: '#ffffff' });
+  } catch (e) { console.log('StatusBar not available'); }
+
+  try {
+    const { SplashScreen } = await import('@capacitor/splash-screen');
+    await SplashScreen.hide();
+  } catch (e) { console.log('SplashScreen not available'); }
+
+  try {
+    const { Keyboard } = await import('@capacitor/keyboard');
+    Keyboard.addListener('keyboardWillShow', () => document.body.classList.add('keyboard-visible'));
+    Keyboard.addListener('keyboardWillHide', () => document.body.classList.remove('keyboard-visible'));
+  } catch (e) { console.log('Keyboard not available'); }
+
+  try {
+    const { App } = await import('@capacitor/app');
+    App.addListener('backButton', ({ canGoBack }) => {
+      if (canGoBack) window.history.back();
+      else App.exitApp();
+    });
+  } catch (e) { console.log('App not available'); }
+}
 
 console.log("Starting Adaptalyfe app...");
 console.log("React version:", React.version);

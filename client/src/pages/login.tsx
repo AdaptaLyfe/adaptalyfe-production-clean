@@ -7,7 +7,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
 import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
-import { isNativeMobile } from "@/lib/mobile";
+
+function isNativeMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const cap = (window as any).Capacitor;
+    return cap?.isNativePlatform?.() ?? false;
+  } catch {
+    return false;
+  }
+}
 
 export default function Login() {
   const [, setLocation] = useLocation();
