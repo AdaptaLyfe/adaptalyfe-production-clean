@@ -72,37 +72,62 @@ async function initializeMobileApp(): Promise<void> {
 
   try {
     const { App } = await import('@capacitor/app');
+    const authPages = ['/', '/login', '/register', '/landing', ''];
     
-    // Listen for popstate to intercept back navigation to auth pages
-    window.addEventListener('popstate', () => {
+    // Clear history after login - run once when dashboard loads after login
+    const justLoggedIn = sessionStorage.getItem('just_logged_in');
+    if (justLoggedIn) {
+      sessionStorage.removeItem('just_logged_in');
+      // Replace the entire history with just dashboard
+      window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+      console.log('🔄 History cleared after login');
+    }
+    
+    // Global popstate listener - ALWAYS intercept navigation to auth pages when authenticated
+    window.addEventListener('popstate', (event) => {
       const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
-      const authPages = ['/', '/login', '/register', '/landing'];
       const currentPath = window.location.pathname;
       
-      // If authenticated and navigated to auth page, replace with dashboard
+      // If authenticated and on an auth page, immediately redirect to dashboard
       if (hasSession && authPages.includes(currentPath)) {
-        console.log('🔄 Intercepted back to auth page, redirecting to dashboard');
-        window.history.replaceState(null, '', '/dashboard');
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        console.log('🔄 Intercepted navigation to auth page, forcing dashboard');
+        event.preventDefault();
+        window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+        // Force React Router to update
+        window.dispatchEvent(new Event('popstate'));
+        return;
       }
     });
     
     App.addListener('backButton', ({ canGoBack }) => {
       const currentPath = window.location.pathname;
-      const authPages = ['/', '/login', '/register', '/landing', ''];
       const isOnDashboard = currentPath === '/dashboard';
       const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
       
-      // If user is authenticated and on dashboard, exit app instead of going back to login
+      // If user is authenticated and on dashboard, exit app
       if (hasSession && isOnDashboard) {
         App.exitApp();
         return;
       }
       
-      // If user is authenticated and on any app page, check history depth
-      if (hasSession && canGoBack) {
-        // Use replaceState to prevent building up history, then go back
+      // If authenticated, check if we should allow back navigation
+      if (hasSession) {
+        // Get current history length - if it's 1 or we just logged in, exit
+        if (window.history.length <= 2) {
+          window.location.replace('/dashboard');
+          return;
+        }
+        
+        // Allow back, but the popstate listener will catch auth page navigation
         window.history.back();
+        
+        // After a small delay, check if we ended up on an auth page
+        setTimeout(() => {
+          const newPath = window.location.pathname;
+          if (authPages.includes(newPath)) {
+            window.location.replace('/dashboard');
+          }
+        }, 50);
         return;
       }
       

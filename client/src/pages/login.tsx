@@ -88,8 +88,14 @@ export default function Login() {
         }
       }
 
-      // Use window.location.replace to avoid back button returning to login
-      console.log("🔄 Navigating to", redirectPath);
+      // Clear browser history and navigate to dashboard
+      // This prevents back button from returning to login
+      console.log("🔄 Clearing history and navigating to", redirectPath);
+      
+      // Mark that we just logged in (used by back button handler)
+      sessionStorage.setItem('just_logged_in', 'true');
+      
+      // Replace current entry and navigate
       window.location.replace(redirectPath);
     } catch (error: any) {
       toast({
