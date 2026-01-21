@@ -122,7 +122,7 @@ function App() {
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <SimpleNavigation />}
       
-      <main className="relative z-0">
+      <main className="relative z-0 isolate">
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/landing" component={Landing} />
