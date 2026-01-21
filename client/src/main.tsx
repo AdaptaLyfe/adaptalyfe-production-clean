@@ -72,6 +72,21 @@ async function initializeMobileApp(): Promise<void> {
 
   try {
     const { App } = await import('@capacitor/app');
+    
+    // Listen for popstate to intercept back navigation to auth pages
+    window.addEventListener('popstate', () => {
+      const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
+      const authPages = ['/', '/login', '/register', '/landing'];
+      const currentPath = window.location.pathname;
+      
+      // If authenticated and navigated to auth page, replace with dashboard
+      if (hasSession && authPages.includes(currentPath)) {
+        console.log('🔄 Intercepted back to auth page, redirecting to dashboard');
+        window.history.replaceState(null, '', '/dashboard');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+    });
+    
     App.addListener('backButton', ({ canGoBack }) => {
       const currentPath = window.location.pathname;
       const authPages = ['/', '/login', '/register', '/landing', ''];
@@ -84,18 +99,11 @@ async function initializeMobileApp(): Promise<void> {
         return;
       }
       
-      // If user is authenticated and would go back to an auth page, go to dashboard instead
+      // If user is authenticated and on any app page, check history depth
       if (hasSession && canGoBack) {
-        // Check if previous page would be an auth page
-        const referrer = document.referrer;
-        const wouldGoToAuth = authPages.some(page => 
-          referrer.endsWith(page) || referrer.includes('/login') || referrer.includes('/register')
-        );
-        
-        if (wouldGoToAuth) {
-          window.location.replace('/dashboard');
-          return;
-        }
+        // Use replaceState to prevent building up history, then go back
+        window.history.back();
+        return;
       }
       
       if (canGoBack) window.history.back();

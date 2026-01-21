@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { 
   Home, 
   CheckSquare, 
@@ -11,6 +11,12 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+
+// Use replace navigation to prevent back button going to login after navigating
+function navigateReplace(href: string) {
+  window.history.replaceState(null, '', href);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
 
 export default function MobileBottomNavigation() {
   const [location] = useLocation();
@@ -76,18 +82,20 @@ export default function MobileBottomNavigation() {
                 const Icon = item.icon;
                 const active = isActive(item.href);
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <Button
-                      variant="ghost"
-                      className={`w-full h-14 flex flex-col items-center justify-center gap-1 rounded-xl android-ripple ${
-                        active ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setShowMoreMenu(false)}
-                    >
-                      <Icon size={20} strokeWidth={active ? 2.5 : 2} />
-                      <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
-                    </Button>
-                  </Link>
+                  <Button
+                    key={item.name}
+                    variant="ghost"
+                    className={`w-full h-14 flex flex-col items-center justify-center gap-1 rounded-xl android-ripple ${
+                      active ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      navigateReplace(item.href);
+                    }}
+                  >
+                    <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                    <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
+                  </Button>
                 );
               })}
             </div>
@@ -105,19 +113,19 @@ export default function MobileBottomNavigation() {
             const active = isActive(item.href);
             
             return (
-              <Link key={item.name} href={item.href}>
-                <Button
-                  variant="ghost"
-                  className={`flex flex-col items-center justify-center gap-0.5 h-14 min-w-[64px] flex-1 p-1 rounded-lg android-ripple transition-all ${
-                    active 
-                      ? `${item.activeBg} ${item.activeColor}` 
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                  <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
-                </Button>
-              </Link>
+              <Button
+                key={item.name}
+                variant="ghost"
+                className={`flex flex-col items-center justify-center gap-0.5 h-14 min-w-[64px] flex-1 p-1 rounded-lg android-ripple transition-all ${
+                  active 
+                    ? `${item.activeBg} ${item.activeColor}` 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+                onClick={() => navigateReplace(item.href)}
+              >
+                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
+              </Button>
             );
           })}
           
