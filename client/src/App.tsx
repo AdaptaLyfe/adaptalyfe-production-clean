@@ -122,6 +122,7 @@ function App() {
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <SimpleNavigation />}
       
+      <main className="relative z-0">
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/landing" component={Landing} />
@@ -290,6 +291,7 @@ function App() {
         
         <Route path="*" component={NotFound} />
       </Switch>
+      </main>
       
       {/* Mobile bottom navigation - only show on authenticated pages */}
       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <MobileBottomNavigation />}
