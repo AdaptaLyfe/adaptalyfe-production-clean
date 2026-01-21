@@ -82,36 +82,43 @@ function SimpleRoute({ component: Component }: { component: React.ComponentType 
 
 function App() {
   const [location, setLocation] = useLocation();
+  const [isCheckingSession, setIsCheckingSession] = React.useState(true);
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
   const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location);
   useSubscriptionEnforcement();
   
+  // IMMEDIATE session check - runs synchronously on every render
+  const sessionToken = getSessionToken();
+  const shouldRedirectToDashboard = sessionToken && isAuthPage && location !== "/privacy-policy";
+  
   // Session restoration on app startup (critical for mobile apps)
   React.useEffect(() => {
-    const sessionToken = getSessionToken();
-    
-    // If we have a session token and we're on the landing page, go to dashboard
-    if (sessionToken && (location === "/" || location === "" || location === "/landing" || location === "/login" || location === "/register")) {
+    // If we have a session token and we're on an auth page, redirect immediately
+    if (shouldRedirectToDashboard) {
       console.log('🔄 App startup: Session token found, redirecting to dashboard');
-      // Use replace to prevent back button from returning to auth pages
       window.location.replace('/dashboard');
-    } else if (sessionToken) {
+      return; // Don't set checking to false - we're redirecting
+    }
+    
+    if (sessionToken) {
       console.log('✅ App startup: Session token found, user authenticated');
     } else {
       console.log('🚫 App startup: No session token, user not authenticated');
     }
-  }, []); // Run only on mount
+    
+    // Small delay to ensure smooth transition
+    setIsCheckingSession(false);
+  }, [shouldRedirectToDashboard, sessionToken]);
   
-  // Completely disable auto demo for production testing
-  const isLoggingIn = false;
-
-  if (isLoggingIn) {
+  // Show loading screen while checking session OR if we need to redirect
+  // This prevents the login page flash
+  if (isCheckingSession || shouldRedirectToDashboard) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading AdaptaLyfe Demo...</p>
+          <p className="text-gray-600">Loading Adaptalyfe...</p>
         </div>
       </div>
     );
