@@ -73,6 +73,31 @@ async function initializeMobileApp(): Promise<void> {
   try {
     const { App } = await import('@capacitor/app');
     App.addListener('backButton', ({ canGoBack }) => {
+      const currentPath = window.location.pathname;
+      const authPages = ['/', '/login', '/register', '/landing', ''];
+      const isOnDashboard = currentPath === '/dashboard';
+      const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
+      
+      // If user is authenticated and on dashboard, exit app instead of going back to login
+      if (hasSession && isOnDashboard) {
+        App.exitApp();
+        return;
+      }
+      
+      // If user is authenticated and would go back to an auth page, go to dashboard instead
+      if (hasSession && canGoBack) {
+        // Check if previous page would be an auth page
+        const referrer = document.referrer;
+        const wouldGoToAuth = authPages.some(page => 
+          referrer.endsWith(page) || referrer.includes('/login') || referrer.includes('/register')
+        );
+        
+        if (wouldGoToAuth) {
+          window.location.replace('/dashboard');
+          return;
+        }
+      }
+      
       if (canGoBack) window.history.back();
       else App.exitApp();
     });

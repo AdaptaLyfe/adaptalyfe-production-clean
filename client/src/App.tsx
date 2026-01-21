@@ -92,9 +92,10 @@ function App() {
     const sessionToken = getSessionToken();
     
     // If we have a session token and we're on the landing page, go to dashboard
-    if (sessionToken && (location === "/" || location === "" || location === "/landing")) {
+    if (sessionToken && (location === "/" || location === "" || location === "/landing" || location === "/login" || location === "/register")) {
       console.log('🔄 App startup: Session token found, redirecting to dashboard');
-      setLocation('/dashboard');
+      // Use replace to prevent back button from returning to auth pages
+      window.location.replace('/dashboard');
     } else if (sessionToken) {
       console.log('✅ App startup: Session token found, user authenticated');
     } else {
