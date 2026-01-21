@@ -338,42 +338,44 @@ export default function CustomizableQuickActions() {
                 Customize
               </button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] mx-4 max-h-[85vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-base sm:text-lg">Customize Quick Actions</DialogTitle>
+            <DialogContent className="!max-w-[95vw] !w-[95vw] md:!max-w-2xl md:!w-auto !p-4 !rounded-2xl max-h-[80vh] overflow-hidden flex flex-col">
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="text-lg font-bold">Customize Quick Actions</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                {ALL_ACTIONS.map((action) => {
-                  const Icon = action.icon;
-                  const isSelected = visibleActionKeys.includes(action.key);
-                  
-                  return (
-                    <div 
-                      key={action.key}
-                      data-testid={`checkbox-${action.key}`}
-                      className={`flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
-                        isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => toggleAction(action.key)}
-                    >
-                      <Checkbox 
-                        checked={isSelected}
-                        onCheckedChange={() => toggleAction(action.key)}
-                        className="w-5 h-5"
-                      />
-                      <div className={`w-10 h-10 ${action.bgColor} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                        <Icon className="text-white w-5 h-5" />
+              <div className="flex-1 overflow-y-auto -mx-4 px-4 py-2">
+                <div className="space-y-2">
+                  {ALL_ACTIONS.map((action) => {
+                    const Icon = action.icon;
+                    const isSelected = visibleActionKeys.includes(action.key);
+                    
+                    return (
+                      <div 
+                        key={action.key}
+                        data-testid={`checkbox-${action.key}`}
+                        className={`flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all active:scale-[0.98] ${
+                          isSelected ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleAction(action.key)}
+                      >
+                        <Checkbox 
+                          checked={isSelected}
+                          onCheckedChange={() => toggleAction(action.key)}
+                          className="w-6 h-6 flex-shrink-0"
+                        />
+                        <div className={`w-12 h-12 ${action.bgColor} rounded-xl flex items-center justify-center flex-shrink-0 shadow-md`}>
+                          <Icon className="text-white w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-base text-gray-900">{action.label}</p>
+                          <p className="text-sm text-gray-500">{action.description}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-900">{action.label}</p>
-                        <p className="text-xs text-gray-500 line-clamp-1">{action.description}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsCustomizeOpen(false)}>
+              <div className="flex-shrink-0 flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsCustomizeOpen(false)} className="px-6">
                   Close
                 </Button>
                 <Button onClick={() => {
@@ -382,7 +384,7 @@ export default function CustomizableQuickActions() {
                     title: "Quick Actions Updated",
                     description: `${visibleActionKeys.length} actions selected.`,
                   });
-                }}>
+                }} className="px-6">
                   Save Changes
                 </Button>
               </div>
