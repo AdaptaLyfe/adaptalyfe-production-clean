@@ -61,11 +61,11 @@ export function CustomizeDialog({
           Customize
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] mx-4 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Customize Quick Actions</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">Customize Quick Actions</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
           {ALL_QUICK_ACTIONS.map((action) => {
             const Icon = action.icon;
             const isSelected = tempVisibleKeys.includes(action.key);
@@ -74,7 +74,7 @@ export function CustomizeDialog({
               <div 
                 key={action.key}
                 data-testid={`checkbox-${action.key}`}
-                className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all active:scale-[0.98] ${
                   isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                 }`}
                 onClick={() => toggleAction(action.key)}
@@ -83,13 +83,14 @@ export function CustomizeDialog({
                   checked={isSelected}
                   onCheckedChange={() => toggleAction(action.key)}
                   onClick={(e: any) => e.stopPropagation()}
+                  className="w-5 h-5"
                 />
-                <div className={`w-10 h-10 ${action.bgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <div className={`w-10 h-10 ${action.bgColor} rounded-xl flex items-center justify-center flex-shrink-0`}>
                   <Icon className="text-white w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900 truncate">{action.label}</p>
-                  <p className="text-xs text-gray-600 truncate">{action.description}</p>
+                  <p className="font-semibold text-sm text-gray-900">{action.label}</p>
+                  <p className="text-xs text-gray-500 line-clamp-1">{action.description}</p>
                 </div>
               </div>
             );
