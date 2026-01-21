@@ -1,0 +1,61 @@
+git add .
+git commit -m "Fix capacitor config and improve dashboard loading"
+git push origin main --force
+On branch main
+Your branch is ahead of 'origin/main' by 213 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+Enumerating objects: 1102, done.
+Counting objects: 100% (1095/1095), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (952/952), done.
+Writing objects: 100% (1021/1021), 36.00 MiB | 5.29 MiB/s, done.
+Total 1021 (delta 783), reused 76 (delta 66), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (783/783), completed with 42 local objects.
+remote: This repository moved. Please use the new location:
+remote:   https://github.com/AdaptaLyfe/adaptalyfe-production-clean.git
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Highnote SK Live Key ——————————————————————————————
+remote:        locations:
+remote:          - commit: 72552636f7d294dab68a2a963e7b08aa919a9573
+remote:            path: DEPLOY_RAILWAY_FRESH_START.md:57
+remote:          - commit: cf5f8dd38d9575ddb264115194bbec880c4d67fc
+remote:            path: RAILWAY_COMPLETE_SETUP.txt:42
+remote:          - commit: 5b628d097c487fbe839a88dcf45259f3b07f7519
+remote:            path: RAILWAY_ENV_VARIABLES.txt:20
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/AdaptaLyfe/adaptalyfe-production-clean/security/secret-scanning/unblock-secret/38YSzQZs1eC864Vbz1sUC7Dg7QI
+remote:     
+remote:     
+remote:       —— Stripe API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: 72552636f7d294dab68a2a963e7b08aa919a9573
+remote:            path: DEPLOY_RAILWAY_FRESH_START.md:57
+remote:          - commit: cf5f8dd38d9575ddb264115194bbec880c4d67fc
+remote:            path: RAILWAY_COMPLETE_SETUP.txt:42
+remote:          - commit: 5b628d097c487fbe839a88dcf45259f3b07f7519
+remote:            path: RAILWAY_ENV_VARIABLES.txt:20
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/AdaptaLyfe/adaptalyfe-production-clean/security/secret-scanning/unblock-secret/38YSzR4pgCKEI3cX8vZ8VzXjRnz
+remote:     
+remote: 
+remote: 
+To https://github.com/Adaptalyfe/adaptalyfe-production-clean.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/Adaptalyfe/adaptalyfe-production-clean.git'
+~/workspace$ 
