@@ -24,10 +24,10 @@ export default function MealShopping() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Meal Planning & Shopping</h1>
-        <p className="text-lg text-gray-600">
+    <div className="container mx-auto px-3 sm:px-6 py-4 sm:py-6 main-content-with-header">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Meal Planning & Shopping</h1>
+        <p className="text-sm sm:text-lg text-gray-600">
           Plan nutritious meals and manage your grocery shopping efficiently
         </p>
       </div>

@@ -82,22 +82,22 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      {/* Header - Android Material Design */}
+      <header className="bg-white android-header android-elevation-1 fixed top-0 left-0 right-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-1.5 sm:p-2 rounded-lg">
                 <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-base sm:text-xl font-bold text-gray-900">Adaptalyfe</h1>
-                <p className="text-[10px] sm:text-xs text-gray-500 hidden sm:block">
+                <h1 className="text-sm sm:text-xl font-bold text-gray-900">Adaptalyfe</h1>
+                <p className="text-[9px] sm:text-xs text-gray-500 hidden sm:block">
                   Grow with Guidance. Thrive with Confidence.
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <Dialog open={isJoinModalOpen} onOpenChange={setIsJoinModalOpen}>
                 <DialogTrigger asChild>
                   <Button
@@ -170,8 +170,8 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-12 sm:py-20">
+      {/* Hero Section - with padding for fixed header */}
+      <section className="pt-20 sm:pt-24 pb-12 sm:pb-20 main-content-with-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">

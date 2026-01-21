@@ -35,9 +35,9 @@ export default function SimpleNavigation() {
   }, [isMenuOpen]);
 
   return (
-    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-[100] shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-[100] android-header android-elevation-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           <div 
             className="flex items-center gap-3 cursor-pointer"
             onClick={async (e) => {
@@ -104,7 +104,8 @@ export default function SimpleNavigation() {
         {isMenuOpen && (
           <div 
             ref={menuRef}
-            className="fixed md:absolute right-0 top-16 left-0 md:left-auto md:w-96 md:max-w-[90vw] bg-white border-t md:border border-gray-200 md:rounded-lg shadow-xl z-50 md:mr-4 max-h-[calc(100vh-5rem)] overflow-y-auto"
+            className="fixed md:absolute right-0 left-0 md:left-auto md:w-96 md:max-w-[90vw] bg-white border-t md:border border-gray-200 md:rounded-lg android-elevation-2 z-50 md:mr-4 max-h-[70vh] overflow-y-auto"
+            style={{ top: 'calc(3.5rem + max(env(safe-area-inset-top, 0px), 24px))' }}
           >
             <div className="p-4 pb-8">
               <h3 className="text-sm font-semibold text-gray-700 mb-3 sticky top-0 bg-white pt-1 pb-2 z-10">Quick Access to All Features</h3>
