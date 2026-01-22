@@ -4810,6 +4810,47 @@ Provide a helpful, encouraging response:`;
   // Register bill payment routes
   registerBillPaymentRoutes(app);
 
+  // Super Admin - Get all subscription users (restricted to super admin only)
+  app.get("/api/super-admin/subscription-users", async (req: any, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Check if user is super admin (username === 'admin')
+      const currentUser = req.session.user;
+      if (currentUser.username !== 'admin') {
+        return res.status(403).json({ message: "Access denied. Super admin only." });
+      }
+
+      // Get all users from storage
+      const allUsers = await storage.getAllUsers();
+
+      // Filter to only return subscription-relevant data (excluding password)
+      const subscriptionUsers = allUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        email: user.email,
+        accountType: user.accountType,
+        subscriptionTier: user.subscriptionTier || 'free',
+        subscriptionStatus: user.subscriptionStatus || 'inactive',
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
+        stripeCustomerId: user.stripeCustomerId,
+        stripeSubscriptionId: user.stripeSubscriptionId,
+        streakDays: user.streakDays,
+        isActive: user.isActive,
+        createdAt: user.createdAt
+      }));
+
+      res.json(subscriptionUsers);
+    } catch (error) {
+      console.error("Error fetching subscription users:", error);
+      res.status(500).json({ message: "Failed to fetch subscription users" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
