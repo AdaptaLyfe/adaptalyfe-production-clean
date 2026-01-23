@@ -14,8 +14,17 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  DollarSign,
+  TrendingUp
 } from "lucide-react";
+
+const TIER_PRICES = {
+  free: 0,
+  basic: 4.99,
+  premium: 12.99,
+  family: 24.99
+};
 
 interface SubscriptionUser {
   id: number;
@@ -55,6 +64,10 @@ export default function SuperAdminSubscriptions() {
     return matchesSearch && matchesTier && matchesStatus;
   });
 
+  const activeBasic = users.filter(u => u.subscriptionTier === 'basic' && u.subscriptionStatus === 'active').length;
+  const activePremium = users.filter(u => u.subscriptionTier === 'premium' && u.subscriptionStatus === 'active').length;
+  const activeFamily = users.filter(u => u.subscriptionTier === 'family' && u.subscriptionStatus === 'active').length;
+
   const stats = {
     total: users.length,
     free: users.filter(u => u.subscriptionTier === 'free').length,
@@ -63,6 +76,14 @@ export default function SuperAdminSubscriptions() {
     family: users.filter(u => u.subscriptionTier === 'family').length,
     active: users.filter(u => u.subscriptionStatus === 'active').length,
     inactive: users.filter(u => u.subscriptionStatus === 'inactive').length
+  };
+
+  const revenue = {
+    basicMRR: activeBasic * TIER_PRICES.basic,
+    premiumMRR: activePremium * TIER_PRICES.premium,
+    familyMRR: activeFamily * TIER_PRICES.family,
+    totalMRR: (activeBasic * TIER_PRICES.basic) + (activePremium * TIER_PRICES.premium) + (activeFamily * TIER_PRICES.family),
+    annualProjected: ((activeBasic * TIER_PRICES.basic) + (activePremium * TIER_PRICES.premium) + (activeFamily * TIER_PRICES.family)) * 12
   };
 
   const getStatusBadge = (status: string) => {
@@ -128,6 +149,77 @@ export default function SuperAdminSubscriptions() {
           <p className="text-gray-500">Subscription Management Dashboard</p>
         </div>
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500 rounded-lg">
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-700">${revenue.totalMRR.toFixed(2)}</p>
+                <p className="text-sm text-green-600">Monthly Revenue (MRR)</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-blue-700">${revenue.annualProjected.toFixed(2)}</p>
+                <p className="text-sm text-blue-600">Annual Projected</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8 text-gray-500" />
+              <div>
+                <p className="text-2xl font-bold">{stats.active}</p>
+                <p className="text-sm text-gray-500">Paying Subscribers</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Revenue Breakdown by Tier</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div>
+                <p className="font-medium text-blue-800">Basic (${TIER_PRICES.basic}/mo)</p>
+                <p className="text-sm text-blue-600">{activeBasic} active subscribers</p>
+              </div>
+              <p className="text-xl font-bold text-blue-700">${revenue.basicMRR.toFixed(2)}</p>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+              <div>
+                <p className="font-medium text-purple-800">Premium (${TIER_PRICES.premium}/mo)</p>
+                <p className="text-sm text-purple-600">{activePremium} active subscribers</p>
+              </div>
+              <p className="text-xl font-bold text-purple-700">${revenue.premiumMRR.toFixed(2)}</p>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-pink-50 rounded-lg">
+              <div>
+                <p className="font-medium text-pink-800">Family (${TIER_PRICES.family}/mo)</p>
+                <p className="text-sm text-pink-600">{activeFamily} active subscribers</p>
+              </div>
+              <p className="text-xl font-bold text-pink-700">${revenue.familyMRR.toFixed(2)}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
