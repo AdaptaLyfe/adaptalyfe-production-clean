@@ -9,6 +9,14 @@
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --android-status-bar-height: 24px;
+  
+  /* App accent colors */
+  --bright-blue: hsl(210, 100%, 50%);
+  --vibrant-green: hsl(142, 76%, 36%);
+  --happy-purple: hsl(258, 89%, 56%);
+  --sunny-orange: hsl(28, 100%, 50%);
+  --cheerful-pink: hsl(330, 80%, 55%);
+  --calm-teal: hsl(174, 72%, 40%);
 }
 
 /* Ensure proper scrolling on all devices */
