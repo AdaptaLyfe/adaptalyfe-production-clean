@@ -214,9 +214,9 @@ export default function Resources() {
   return (
     <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Mental Health Resources</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-4">Helpful Resources</h1>
         <p className="text-base sm:text-lg text-gray-600">
-          Take care of your mental health with these helpful tools and resources.
+          Tools and resources to support your daily wellbeing and personal growth.
         </p>
       </div>
 
