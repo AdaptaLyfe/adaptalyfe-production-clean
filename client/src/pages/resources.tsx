@@ -14,30 +14,38 @@ import { EnhancedNotificationSystem } from "@/components/enhanced-notification-s
 const educationalContent = {
   anxiety: {
     title: "Understanding Anxiety",
+    subtitle: "Learn about anxiety symptoms and healthy ways to manage anxious feelings",
+    intro: "Anxiety is a feeling of worry, nervousness, or fear. Everyone experiences anxiety sometimes, especially during new or stressful situations.",
     content: [
-      { heading: "What is Anxiety?", text: "Anxiety is your body's natural response to stress. It's a feeling of fear or worry that can be mild or severe. Everyone feels anxious sometimes, but when anxiety becomes overwhelming or persistent, it may need attention." },
-      { heading: "Common Signs", text: "Physical signs include rapid heartbeat, sweating, and trouble sleeping. Emotional signs include constant worry, feeling restless, and difficulty concentrating." },
-      { heading: "Healthy Coping", text: "Try deep breathing exercises, take regular breaks, get enough sleep, exercise regularly, and talk to someone you trust. The breathing exercises on this page can help!" },
-      { heading: "When to Seek Help", text: "If anxiety is affecting your daily life, work, or relationships, consider talking to a healthcare provider. There's no shame in asking for support." }
-    ]
+      { heading: "Common Signs of Anxiety", text: "Racing thoughts, feeling tense or restless, stomach discomfort, trouble focusing, and wanting to avoid certain situations." },
+      { heading: "Helpful Coping Tools", text: "Slow breathing exercises, grounding techniques (naming things you see, hear, or feel), creating calming routines, and preparing for situations ahead of time." },
+      { heading: "When Anxiety Feels Overwhelming", text: "It's okay to ask for support. Talking to a trusted person can help. Learning coping strategies takes time." }
+    ],
+    tip: "Remember: Everyone experiences anxiety sometimes. Learning to manage it is a skill that improves with practice."
   },
   resilience: {
     title: "Building Resilience",
+    subtitle: "Strategies to bounce back from challenges and build emotional strength",
+    intro: "Resilience is the ability to cope with change, stress, and setbacks. Everyone struggles sometimes — resilience helps you recover, adapt, and keep moving forward.",
     content: [
-      { heading: "What is Resilience?", text: "Resilience is the ability to bounce back from challenges, adapt to change, and keep going during difficult times. It's like a muscle that gets stronger with practice." },
-      { heading: "Building Connections", text: "Strong relationships with family, friends, and community provide support during tough times. Don't be afraid to reach out and accept help when offered." },
-      { heading: "Healthy Thinking", text: "Try to see challenges as opportunities for growth. Focus on what you can control, and practice self-compassion when things don't go as planned." },
-      { heading: "Taking Action", text: "Set small, achievable goals each day. Celebrate your progress, no matter how small. Taking action helps build confidence and momentum." }
-    ]
+      { heading: "Understanding Challenges", text: "Change and unexpected events can feel overwhelming. Learning that struggles are not failures is an important first step." },
+      { heading: "Coping Strategies", text: "Taking breaks during stressful moments, using grounding techniques (deep breathing, sensory tools), and breaking big problems into smaller steps." },
+      { heading: "Self-Talk", text: "Recognize negative thoughts and replace harsh self-talk with supportive language. Be kind to yourself the way you would be to a friend." },
+      { heading: "Asking for Support", text: "Know when to ask for help. Reach out to family, caregivers, or trusted adults. Asking for help is a strength, not a weakness." }
+    ],
+    tip: "Resilience grows over time. Each challenge you face helps build confidence for the next one."
   },
   habits: {
     title: "Healthy Habits",
+    subtitle: "Simple daily practices that support your wellbeing",
+    intro: "Healthy habits are small, everyday actions that help create structure, balance, and stability. Building routines can make daily life feel more predictable, manageable, and less overwhelming.",
     content: [
-      { heading: "Sleep Matters", text: "Aim for 7-9 hours of sleep each night. Good sleep improves mood, concentration, and overall health. Try to keep a consistent sleep schedule." },
-      { heading: "Stay Active", text: "Regular physical activity, even a short daily walk, can boost your mood and energy. Find activities you enjoy to make exercise feel less like a chore." },
-      { heading: "Eat Well", text: "A balanced diet with fruits, vegetables, and whole grains supports mental and physical health. Stay hydrated and limit caffeine and sugar." },
-      { heading: "Take Breaks", text: "Regular breaks throughout the day help prevent burnout. Step away from screens, stretch, or do something you enjoy for a few minutes." }
-    ]
+      { heading: "Daily Routines", text: "Consistent routines can reduce stress and decision fatigue. Examples include morning routines, bedtime routines, and transition routines. Start small and build gradually." },
+      { heading: "Basic Self-Care", text: "Drink enough water, eat regular meals, get enough rest, and take breaks when feeling overwhelmed." },
+      { heading: "Body Awareness", text: "Try gentle movement like stretching, walking, or light exercise. Notice signs of fatigue, hunger, or stress. Learn when your body needs rest." },
+      { heading: "Habit Tracking", text: "Tracking habits can increase motivation. Use checklists or reminders. Celebrate small wins instead of aiming for perfection." }
+    ],
+    tip: "Healthy habits don't have to be perfect. Progress matters more than consistency."
   }
 };
 
@@ -407,13 +415,20 @@ export default function Resources() {
                       {educationalContent.anxiety.title}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4 mt-4">
+                  <p className="text-sm text-gray-600 mt-2">{educationalContent.anxiety.subtitle}</p>
+                  <div className="bg-orange-100 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-gray-800">{educationalContent.anxiety.intro}</p>
+                  </div>
+                  <div className="space-y-3 mt-4">
                     {educationalContent.anxiety.content.map((section, i) => (
                       <div key={i} className="bg-orange-50 rounded-lg p-3">
                         <h5 className="font-semibold text-gray-900 mb-1">{section.heading}</h5>
                         <p className="text-sm text-gray-700">{section.text}</p>
                       </div>
                     ))}
+                  </div>
+                  <div className="bg-orange-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-orange-800 font-medium">💡 {educationalContent.anxiety.tip}</p>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -437,13 +452,20 @@ export default function Resources() {
                       {educationalContent.resilience.title}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4 mt-4">
+                  <p className="text-sm text-gray-600 mt-2">{educationalContent.resilience.subtitle}</p>
+                  <div className="bg-blue-100 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-gray-800">{educationalContent.resilience.intro}</p>
+                  </div>
+                  <div className="space-y-3 mt-4">
                     {educationalContent.resilience.content.map((section, i) => (
                       <div key={i} className="bg-blue-50 rounded-lg p-3">
                         <h5 className="font-semibold text-gray-900 mb-1">{section.heading}</h5>
                         <p className="text-sm text-gray-700">{section.text}</p>
                       </div>
                     ))}
+                  </div>
+                  <div className="bg-blue-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-blue-800 font-medium">💪 {educationalContent.resilience.tip}</p>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -452,7 +474,7 @@ export default function Resources() {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <h4 className="font-semibold text-gray-900 mb-2">Healthy Habits</h4>
               <p className="text-sm text-gray-600 mb-3">
-                Simple daily practices that support your mental and emotional wellbeing.
+                Simple daily practices that support your wellbeing.
               </p>
               <Dialog open={openEducational === 'habits'} onOpenChange={(open) => setOpenEducational(open ? 'habits' : null)}>
                 <DialogTrigger asChild>
@@ -467,13 +489,20 @@ export default function Resources() {
                       {educationalContent.habits.title}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="space-y-4 mt-4">
+                  <p className="text-sm text-gray-600 mt-2">{educationalContent.habits.subtitle}</p>
+                  <div className="bg-green-100 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-gray-800">{educationalContent.habits.intro}</p>
+                  </div>
+                  <div className="space-y-3 mt-4">
                     {educationalContent.habits.content.map((section, i) => (
                       <div key={i} className="bg-green-50 rounded-lg p-3">
                         <h5 className="font-semibold text-gray-900 mb-1">{section.heading}</h5>
                         <p className="text-sm text-gray-700">{section.text}</p>
                       </div>
                     ))}
+                  </div>
+                  <div className="bg-green-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-green-800 font-medium">🌱 {educationalContent.habits.tip}</p>
                   </div>
                 </DialogContent>
               </Dialog>
