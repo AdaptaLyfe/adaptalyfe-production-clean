@@ -440,6 +440,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user account permanently
+  app.delete("/api/user/delete-account", async (req: any, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.session.userId;
+      console.log(`🗑️ Deleting account for user ID: ${userId}`);
+
+      // Delete all user data from various tables
+      // Order matters due to foreign key constraints
+      await storage.deleteUserAccount(userId);
+
+      // Destroy the session
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error("Session destruction error after account deletion:", err);
+        }
+      });
+
+      console.log(`✅ Account deleted successfully for user ID: ${userId}`);
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      console.error("Account deletion error:", error);
+      res.status(500).json({ message: "Failed to delete account" });
+    }
+  });
+
   // Get current user - mobile-optimized session handling
   app.get("/api/user", async (req: any, res) => {
     console.log("🔍 Checking session for user authentication");

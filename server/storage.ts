@@ -55,6 +55,7 @@ export interface IStorage {
   authenticateUser(username: string, password: string): Promise<User | null>;
   getCurrentUser(): User | null;
   setCurrentUser(user: User | null): void;
+  deleteUserAccount(userId: number): Promise<void>;
 
   // Daily Tasks
   getDailyTasksByUser(userId: number): Promise<DailyTask[]>;
@@ -329,6 +330,33 @@ export class DatabaseStorage implements IStorage {
 
   setCurrentUser(user: User | null): void {
     this.currentUser = user;
+  }
+
+  async deleteUserAccount(userId: number): Promise<void> {
+    // Delete all user data in order (respecting foreign key constraints)
+    // Start with tables that reference others, work backwards to the user table
+    
+    // Delete related data first
+    await db.delete(moodEntries).where(eq(moodEntries.userId, userId));
+    await db.delete(achievements).where(eq(achievements.userId, userId));
+    await db.delete(notifications).where(eq(notifications.userId, userId));
+    await db.delete(dailyTasks).where(eq(dailyTasks.userId, userId));
+    await db.delete(bills).where(eq(bills.userId, userId));
+    await db.delete(appointments).where(eq(appointments.userId, userId));
+    await db.delete(messages).where(eq(messages.userId, userId));
+    await db.delete(caregivers).where(eq(caregivers.userId, userId));
+    await db.delete(budgetEntries).where(eq(budgetEntries.userId, userId));
+    await db.delete(budgetCategories).where(eq(budgetCategories.userId, userId));
+    await db.delete(savingsGoals).where(eq(savingsGoals.userId, userId));
+    await db.delete(savingsTransactions).where(eq(savingsTransactions.userId, userId));
+    await db.delete(userPreferences).where(eq(userPreferences.userId, userId));
+    await db.delete(meals).where(eq(meals.userId, userId));
+    await db.delete(groceryItems).where(eq(groceryItems.userId, userId));
+    await db.delete(bankAccounts).where(eq(bankAccounts.userId, userId));
+    await db.delete(sleepSessions).where(eq(sleepSessions.userId, userId));
+    
+    // Finally delete the user
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   async getUser(id: number): Promise<User | undefined> {

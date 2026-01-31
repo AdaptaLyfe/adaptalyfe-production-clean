@@ -8,11 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye } from "lucide-react";
+import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [settings, setSettings] = useState({
     theme: 'light',
     fontSize: 16,
@@ -75,6 +83,40 @@ export default function SettingsPage() {
       title: "Settings Reset",
       description: "All settings have been reset to defaults.",
     });
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", "/api/user/delete-account");
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account and all data have been permanently deleted.",
+      });
+      setDeleteDialogOpen(false);
+      setLocation("/login");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmText.toLowerCase() === "delete my account") {
+      deleteAccountMutation.mutate();
+    } else {
+      toast({
+        title: "Confirmation Required",
+        description: "Please type 'delete my account' to confirm.",
+        variant: "destructive"
+      });
+    }
   };
 
   const updateSetting = (key: string, value: any) => {
@@ -580,8 +622,91 @@ export default function SettingsPage() {
         </Card>
       </div>
 
+      {/* Danger Zone */}
+      <Card className="border-red-200 bg-red-50 mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <AlertTriangle className="w-5 h-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription className="text-red-500">
+            Irreversible actions that permanently affect your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-red-200">
+            <div>
+              <h4 className="font-medium text-gray-900">Delete Account</h4>
+              <p className="text-sm text-gray-500">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </div>
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="destructive" className="flex items-center gap-2">
+                  <Trash2 className="w-4 h-4" />
+                  Delete Account
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-red-600">
+                    <AlertTriangle className="w-5 h-5" />
+                    Delete Your Account?
+                  </DialogTitle>
+                  <DialogDescription className="text-left pt-2">
+                    <div className="space-y-3">
+                      <p className="font-medium text-red-600">
+                        Warning: This action is permanent and cannot be undone!
+                      </p>
+                      <p>Deleting your account will:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        <li>Remove all your personal data</li>
+                        <li>Delete all tasks, appointments, and history</li>
+                        <li>Cancel any active subscriptions</li>
+                        <li>Remove all caregiver connections</li>
+                      </ul>
+                      <div className="pt-3">
+                        <Label htmlFor="confirm-delete" className="text-sm font-medium">
+                          Type "delete my account" to confirm:
+                        </Label>
+                        <Input
+                          id="confirm-delete"
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                          placeholder="delete my account"
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex gap-2 mt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setDeleteDialogOpen(false);
+                      setDeleteConfirmText("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText.toLowerCase() !== "delete my account" || deleteAccountMutation.isPending}
+                  >
+                    {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account Forever"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Action Buttons */}
-      <div className="mt-8 flex justify-between">
+      <div className="mt-8 flex justify-between pb-24">
         <Button onClick={handleReset} variant="outline" className="flex items-center gap-2">
           <RotateCcw className="w-4 h-4" />
           Reset to Defaults
