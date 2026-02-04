@@ -21,6 +21,7 @@ export default function Register() {
     confirmPassword: "",
     plan: "basic",
     agreeToTerms: false,
+    ageVerified: false,
     subscribeNewsletter: false,
     invitationCode: ""
   });
@@ -89,6 +90,16 @@ export default function Register() {
       toast({
         title: "Terms Required",
         description: "Please agree to the terms of service",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.ageVerified) {
+      toast({
+        title: "Age Verification Required",
+        description: "Users under 13 must have a parent or guardian create their account",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -277,6 +288,29 @@ export default function Register() {
                       <SelectItem value="family">Family - {planPrices.family}</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Age Verification */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900">Age Verification</h3>
+                
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Checkbox 
+                      id="ageVerified"
+                      checked={formData.ageVerified}
+                      onCheckedChange={(checked) => setFormData({...formData, ageVerified: checked as boolean})}
+                    />
+                    <div className="text-sm">
+                      <Label htmlFor="ageVerified" className="cursor-pointer font-medium text-gray-900">
+                        I confirm that I am 13 years of age or older
+                      </Label>
+                      <p className="text-amber-700 mt-1">
+                        Users under 13 must have a parent or guardian create an account on their behalf.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
