@@ -33,6 +33,9 @@ import {
   Key,
   DollarSign,
   Smile,
+  Check,
+  Crown,
+  Sparkles,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -318,6 +321,271 @@ export default function Landing() {
                 Earn badges and rewards for completing tasks and reaching
                 milestones
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Plans Section */}
+      <section id="pricing" className="py-16 sm:py-24 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-16">
+            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
+              Choose Your <span className="text-blue-600">Plan</span>
+            </h3>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+              Start with a 7-day free trial. Cancel anytime. All plans include mobile app access.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            {/* Basic Plan */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
+              <div className="p-6 sm:p-8 border-b border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2.5 rounded-xl">
+                    <Target className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900">Basic</h4>
+                    <p className="text-sm text-gray-500">Essential tools</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-gray-900">$4.99</span>
+                  <span className="text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500">or $49/year (save 18%)</p>
+              </div>
+              <div className="p-6 sm:p-8 flex-1 flex flex-col">
+                <p className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Core Features</p>
+                <ul className="space-y-3 flex-1">
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Daily Task Management – Create and complete daily activities</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Daily Check-ins – Simple 1–5 scale for personal reflection</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Financial Tracking – Bill reminders and due-date alerts</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Appointment Management – Track personal schedules</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Trusted Contacts – Quick access to saved contacts</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Mobile App Access – Full mobile functionality</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Email Support – Standard customer assistance</span>
+                  </li>
+                </ul>
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
+                  <ul className="space-y-1.5 text-xs text-gray-500">
+                    <li>• Up to 25 daily tasks per month</li>
+                    <li>• Up to 2 trusted contacts</li>
+                    <li>• Basic summaries and progress views</li>
+                  </ul>
+                </div>
+                <div className="mt-6 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-700 font-medium">Best For: Individuals starting with basic organization tools</p>
+                </div>
+                <Link href="/register">
+                  <Button className="w-full mt-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Premium Plan */}
+            <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-400 overflow-hidden hover:shadow-2xl transition-all duration-300 relative flex flex-col md:scale-105">
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-center py-2 text-sm font-bold tracking-wide">
+                <Sparkles className="w-4 h-4 inline mr-1" /> MOST POPULAR
+              </div>
+              <div className="p-6 sm:p-8 border-b border-gray-100 pt-12">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-500 p-2.5 rounded-xl">
+                    <Star className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900">Premium</h4>
+                    <p className="text-sm text-gray-500">Advanced tools & automation</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-gray-900">$12.99</span>
+                  <span className="text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500">or $129/year (save 17%)</p>
+              </div>
+              <div className="p-6 sm:p-8 flex-1 flex flex-col">
+                <p className="text-sm font-semibold text-purple-700 mb-4 uppercase tracking-wide">Everything in Basic, plus</p>
+                <ul className="space-y-3 flex-1">
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Guided Assistance – Tips and suggestions based on usage</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Voice Controls – Hands-free navigation</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Text-to-Speech – Accessibility support</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Location-Based Reminders – Alerts based on your locations</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Offline Access – Use core features without internet</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Usage Patterns & Progress Journals</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Personal Records – Notes, medications, sensitivities</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Skill Challenges & Custom Task Templates</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Meal Planning & Shopping Lists</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Data Export & Guided Tutorials</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Unlimited daily tasks & trusted contacts</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Expanded achievements & rewards</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Priority email support</span>
+                  </li>
+                </ul>
+                <div className="mt-6 p-3 bg-purple-50 rounded-lg">
+                  <p className="text-xs text-purple-700 font-medium">Best For: Users wanting advanced tools, automation & customization</p>
+                </div>
+                <Link href="/register">
+                  <Button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-base">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Family / Care Team Plan */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
+              <div className="p-6 sm:p-8 border-b border-gray-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-2.5 rounded-xl">
+                    <Crown className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900">Family / Care Team</h4>
+                    <p className="text-sm text-gray-500">Multi-user coordination</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-gray-900">$24.99</span>
+                  <span className="text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500">or $249/year (save 17%)</p>
+              </div>
+              <div className="p-6 sm:p-8 flex-1 flex flex-col">
+                <p className="text-sm font-semibold text-amber-700 mb-4 uppercase tracking-wide">Everything in Premium, plus</p>
+                <ul className="space-y-3 flex-1">
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Up to 5 individual user profiles</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Shared dashboards for coordination</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Role-based access controls</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">In-app messaging & video calls</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Granular sharing & security controls</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Activity history & audit views</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Combined progress summaries</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Shared routines, templates & calendars</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Cascading contact alerts</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Family achievements & milestones</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Dedicated account assistance</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Priority email & chat support</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">Guided onboarding sessions</span>
+                  </li>
+                </ul>
+                <div className="mt-6 p-3 bg-amber-50 rounded-lg">
+                  <p className="text-xs text-amber-700 font-medium">Best For: Families & support networks coordinating daily activities</p>
+                </div>
+                <Link href="/register">
+                  <Button className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity">
+                    Start Free Trial
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-md">
+              <Shield className="w-5 h-5 text-green-500" />
+              <span className="text-sm text-gray-700 font-medium">7-day free trial on all plans • Cancel anytime • Secure payment</span>
             </div>
           </div>
         </div>
