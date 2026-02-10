@@ -54,9 +54,13 @@ export default function PersonalResourcesModule() {
     },
   });
 
-  const { data: resources = [], isLoading } = useQuery<PersonalResource[]>({
-    queryKey: selectedCategory === "all" ? ["/api/personal-resources"] : ["/api/personal-resources", { category: selectedCategory }],
+  const { data: allResources = [], isLoading } = useQuery<PersonalResource[]>({
+    queryKey: ["/api/personal-resources"],
   });
+
+  const resources = selectedCategory === "all"
+    ? allResources
+    : allResources.filter((r) => r.category === selectedCategory);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertPersonalResource) => {
