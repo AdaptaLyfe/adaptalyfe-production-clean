@@ -1,13 +1,50 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { Heart, Wind, Lightbulb, Phone } from "lucide-react";
+import { Heart, Wind, Lightbulb, Phone, Sparkles } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { MoodEntry } from "@shared/schema";
 
+const moodMessages: Record<number, { title: string; message: string; tip: string; color: string }> = {
+  1: {
+    title: "We hear you",
+    message: "It's okay to have tough days. You're not alone, and checking in shows real strength.",
+    tip: "Try a breathing exercise or reach out to a trusted contact. Small steps matter.",
+    color: "from-blue-400 to-blue-600",
+  },
+  2: {
+    title: "Hanging in there",
+    message: "Neutral days are part of the journey. You showed up and that counts!",
+    tip: "A short walk or a favorite song can give your mood a gentle boost.",
+    color: "from-teal-400 to-teal-600",
+  },
+  3: {
+    title: "Looking good!",
+    message: "You're feeling positive today — keep that energy going!",
+    tip: "Write down one thing you're grateful for to hold onto this feeling.",
+    color: "from-green-400 to-emerald-600",
+  },
+  4: {
+    title: "What a great day!",
+    message: "You're doing amazing! Your positivity is something to celebrate.",
+    tip: "Share your good mood with someone — happiness is contagious!",
+    color: "from-purple-400 to-purple-600",
+  },
+  5: {
+    title: "You're on fire!",
+    message: "Incredible energy today! You should be so proud of yourself.",
+    tip: "Channel this energy into a goal or challenge — you've got this!",
+    color: "from-amber-400 to-orange-500",
+  },
+};
+
 export default function MoodModule() {
   const { toast } = useToast();
+  const [pendingMood, setPendingMood] = useState<number | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   
   const { data: todayMood } = useQuery<MoodEntry>({
     queryKey: ["/api/mood-entries/today"],
@@ -28,12 +65,21 @@ export default function MoodModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mood-entries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mood-entries/today"] });
-      toast({
-        title: "Mood recorded!",
-        description: "Thanks for checking in today!",
-      });
+      setShowConfirmation(true);
     },
   });
+
+  const handleMoodSelect = (moodValue: number) => {
+    if (!todayMood && !moodMutation.isPending) {
+      setPendingMood(moodValue);
+      moodMutation.mutate(moodValue);
+    }
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+    setPendingMood(null);
+  };
 
   // Show required indicator if mood not logged today
   const isRequired = !todayMood;
@@ -85,7 +131,7 @@ export default function MoodModule() {
                     ? "border-gray-200 opacity-50 cursor-not-allowed"
                     : "border-gray-200 hover:border-happy-purple"
                 } transition-colors`}
-                onClick={() => !todayMood && moodMutation.mutate(mood.value)}
+                onClick={() => handleMoodSelect(mood.value)}
                 disabled={moodMutation.isPending || !!todayMood}
                 data-testid={`button-mood-${mood.value}`}
               >
@@ -131,6 +177,45 @@ export default function MoodModule() {
           </div>
         </div>
       </div>
+
+      {pendingMood && moodMessages[pendingMood] && (
+        <Dialog open={showConfirmation} onOpenChange={handleCloseConfirmation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className={`w-full -mt-6 -mx-6 mb-4 px-6 py-5 bg-gradient-to-r ${moodMessages[pendingMood].color} rounded-t-lg`} style={{ width: 'calc(100% + 3rem)' }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{moodOptions.find(m => m.value === pendingMood)?.emoji}</span>
+                  <div>
+                    <DialogTitle className="text-white text-xl">{moodMessages[pendingMood].title}</DialogTitle>
+                    <p className="text-white/80 text-sm mt-1">
+                      You're feeling {moodOptions.find(m => m.value === pendingMood)?.label?.toLowerCase()} today
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <DialogDescription className="text-base text-gray-700 leading-relaxed">
+                {moodMessages[pendingMood].message}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800 mb-1">Daily Tip</p>
+                  <p className="text-sm text-amber-700">{moodMessages[pendingMood].tip}</p>
+                </div>
+              </div>
+            </div>
+            <Button 
+              onClick={handleCloseConfirmation}
+              className={`w-full mt-2 bg-gradient-to-r ${moodMessages[pendingMood].color} text-white font-semibold py-3 rounded-xl hover:opacity-90`}
+            >
+              Got it, thanks!
+            </Button>
+            <p className="text-xs text-gray-400 text-center">Your mood has been recorded for today.</p>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
