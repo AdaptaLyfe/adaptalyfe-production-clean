@@ -40,7 +40,20 @@ export function useSubscriptionEnforcement() {
     const isAdmin = user.accountType === 'admin' || user.username === 'admin' || user.name?.toLowerCase().includes('admin');
     if (isAdmin) return;
 
-    // List of premium features that require subscription
+    // Pages that should always be accessible (even after trial expires)
+    const alwaysAccessible = ['/subscription', '/pricing', '/settings'];
+    const isAlwaysAccessible = alwaysAccessible.some(route => location.startsWith(route));
+
+    // If trial expired and no active subscription, block ALL app routes
+    const trialExpired = subscription.status === 'expired' || 
+        (subscription.status !== 'active' && subscription.status !== 'trialing');
+    
+    if (trialExpired && !isAlwaysAccessible) {
+      setLocation('/subscription');
+      return;
+    }
+
+    // For users still in trial or with active subscription, check premium-specific features
     const premiumRoutes = [
       '/wearable-devices',
       '/meal-planning',
@@ -50,18 +63,9 @@ export function useSubscriptionEnforcement() {
       '/pharmacy'
     ];
 
-    // Check if current route is premium
     const isPremiumRoute = premiumRoutes.some(route => location.startsWith(route));
     
     if (isPremiumRoute) {
-      // If trial expired and no active subscription, redirect to subscription page
-      if (subscription.status === 'expired' || 
-          (subscription.status !== 'active' && subscription.trialDaysLeft === 0)) {
-        setLocation('/subscription');
-        return;
-      }
-
-      // Check specific feature access
       const routeFeatureMap: Record<string, keyof SubscriptionData['features']> = {
         '/wearable-devices': 'wearableDevices',
         '/meal-planning': 'mealPlanning',
