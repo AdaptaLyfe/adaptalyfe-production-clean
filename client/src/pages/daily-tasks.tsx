@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { trackTaskCompletion, trackFeatureUsage } from "@/lib/firebase";
 import type { DailyTask } from "@shared/schema";
 
 export default function DailyTasks() {
@@ -29,6 +30,11 @@ export default function DailyTasks() {
     );
   }
   const { toast } = useToast();
+
+  useEffect(() => {
+    trackFeatureUsage("daily_tasks");
+  }, []);
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<DailyTask | null>(null);
@@ -86,6 +92,9 @@ export default function DailyTasks() {
       queryClient.invalidateQueries({ queryKey: ["/api/points/balance"] });
       
       const { isCompleted, task } = variables;
+      if (isCompleted) {
+        trackTaskCompletion("daily_task");
+      }
       let description = "Great job staying on track!";
       
       if (isCompleted && task && task.pointValue > 0) {

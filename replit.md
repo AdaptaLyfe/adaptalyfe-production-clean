@@ -3,7 +3,13 @@
 ## Overview
 Adaptalyfe is a full-stack web application designed to empower individuals with developmental disabilities by assisting them in managing daily tasks, finances, mood, and connecting with their support network. The application aims to foster independence and improve quality of life through comprehensive task management, financial tracking, mood monitoring, communication tools for caregivers, meal planning, and appointment scheduling. The business vision is to provide an accessible and supportive digital ecosystem that significantly improves daily living for this community, with potential for substantial market penetration and revenue growth through a freemium model and healthcare partnerships.
 
-## Recent Changes (October 15, 2025)
+## Recent Changes (February 16, 2026)
+- **Firebase Analytics Integration**: Connected Firebase Analytics for comprehensive app tracking including DAU, feature usage, retention metrics, churn tracking, and subscription events. Lazy-init ensures no events are dropped.
+- **7-Day Free Trial Enforcement**: Fixed trial period (was 30 days for testing), now enforces 7-day trial with full app lockout redirecting expired users to subscription/payment page.
+- **Mood Log Confirmation Popup**: Added personalized confirmation dialog with colored gradient headers, encouragement messages, and daily tips based on selected mood.
+- **Resources Category Filter Fix**: Fixed personal resources category filter buttons to properly filter the list client-side.
+
+## Previous Changes (October 15, 2025)
 - **Native Mobile Apps Conversion**: Successfully converted Adaptalyfe web app to native iOS and Android apps using Capacitor, achieving 95% code reuse while maintaining full web functionality
 - **Capacitor Integration**: Installed and configured Capacitor with App ID `com.adaptalyfe.app`, integrated 5 essential plugins (App, Haptics, Keyboard, Splash Screen, Status Bar)
 - **Mobile Platform Setup**: Created native iOS (`ios/`) and Android (`android/`) projects with proper permissions, configurations, and deep linking support

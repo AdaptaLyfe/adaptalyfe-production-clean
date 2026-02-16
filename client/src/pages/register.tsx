@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, Shield, Heart } from "lucide-react";
 import { apiRequest, getSessionToken } from "@/lib/queryClient";
+import { trackSignUp } from "@/lib/firebase";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -109,6 +110,7 @@ export default function Register() {
     try {
       await apiRequest("POST", "/api/register", formData);
       
+      trackSignUp("email");
       toast({
         title: "Registration Successful!",
         description: `Welcome to AdaptaLyfe, ${formData.name}!`,

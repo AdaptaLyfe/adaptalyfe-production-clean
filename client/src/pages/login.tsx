@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
 import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
+import { trackLogin } from "@/lib/firebase";
 
 function isNativeMobile(): boolean {
   if (typeof window === 'undefined') return false;
@@ -66,6 +67,7 @@ export default function Login() {
       if (userData.sessionToken) {
         setSessionToken(userData.sessionToken);
         console.log("✅ Session token saved for mobile auth");
+        trackLogin("password");
       }
 
       toast({

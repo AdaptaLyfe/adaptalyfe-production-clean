@@ -39,6 +39,7 @@ import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
 import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import { getSessionToken } from "@/lib/queryClient";
+import { useFirebaseAnalytics } from "@/hooks/useFirebaseAnalytics";
 
 // Global error handler for Stripe loading issues
 const originalError = console.error;
@@ -89,6 +90,7 @@ function App() {
   // Initialize subscription enforcement for global use (only if not on auth pages)
   const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location);
   useSubscriptionEnforcement();
+  useFirebaseAnalytics();
   
   // IMMEDIATE session check - runs synchronously on every render
   const sessionToken = getSessionToken();

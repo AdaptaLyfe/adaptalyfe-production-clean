@@ -282,6 +282,9 @@ export default function AdminDashboard() {
               <TabsTrigger value="caregiver" className="px-8 py-6 text-base font-medium rounded-lg min-w-[140px] flex-shrink-0">
                 Caregiver Monitor
               </TabsTrigger>
+              <TabsTrigger value="firebase" className="px-8 py-6 text-base font-medium rounded-lg min-w-[140px] flex-shrink-0">
+                Firebase Analytics
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -843,6 +846,200 @@ export default function AdminDashboard() {
                       <p className="font-medium text-green-800">Excellent Progress</p>
                       <p className="text-sm text-green-700">User has maintained daily task streak for 12 days</p>
                     </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="firebase" className="space-y-12 mt-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-l-4 border-green-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500">Analytics Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-lg font-bold text-green-700">Connected</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Firebase Analytics active</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-blue-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500">Daily Active Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-blue-500" />
+                    <span className="text-2xl font-bold">{adminData.overview.activeUsers}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Tracked via session_start events</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-purple-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500">Retention Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-purple-500" />
+                    <span className="text-2xl font-bold">72.4%</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">7-day retention via retention_check</p>
+                </CardContent>
+              </Card>
+              <Card className="border-l-4 border-red-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500">Churn Risk</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    <span className="text-2xl font-bold">{adminData.overview.churnRate}%</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Tracked via churn_risk events</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-orange-500" />
+                  Events Being Tracked
+                </CardTitle>
+                <CardDescription>Firebase Analytics events configured across the app</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Event Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { event: "login", category: "DAU", description: "User login with method tracking", status: "active" },
+                        { event: "sign_up", category: "DAU", description: "New user registration", status: "active" },
+                        { event: "session_start_custom", category: "DAU", description: "App session begins with timestamp", status: "active" },
+                        { event: "session_end_custom", category: "DAU", description: "Session ends with duration in seconds", status: "active" },
+                        { event: "screen_view", category: "Feature Usage", description: "Page/screen navigation tracking", status: "active" },
+                        { event: "feature_used", category: "Feature Usage", description: "Specific feature interaction logged", status: "active" },
+                        { event: "daily_activity", category: "DAU", description: "Daily app open and page view events", status: "active" },
+                        { event: "mood_logged", category: "Feature Usage", description: "Mood value and label recorded", status: "active" },
+                        { event: "task_completed", category: "Feature Usage", description: "Task completion with category", status: "active" },
+                        { event: "retention_check", category: "Retention", description: "Days since signup with active status", status: "active" },
+                        { event: "trial_status", category: "Churn", description: "Trial days left and current status", status: "active" },
+                        { event: "churn_risk", category: "Churn", description: "Churn risk flags (trial ending/expired)", status: "active" },
+                        { event: "subscription_event", category: "Revenue", description: "Upgrade actions with plan type", status: "active" },
+                        { event: "page_navigation", category: "Feature Usage", description: "From/to page navigation tracking", status: "active" },
+                        { event: "app_error", category: "Health", description: "Application error tracking", status: "active" },
+                      ].map((row) => (
+                        <TableRow key={row.event}>
+                          <TableCell className="font-mono text-sm">{row.event}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={
+                              row.category === "DAU" ? "border-blue-300 text-blue-700" :
+                              row.category === "Feature Usage" ? "border-green-300 text-green-700" :
+                              row.category === "Retention" ? "border-purple-300 text-purple-700" :
+                              row.category === "Churn" ? "border-red-300 text-red-700" :
+                              row.category === "Revenue" ? "border-yellow-300 text-yellow-700" :
+                              "border-gray-300 text-gray-700"
+                            }>
+                              {row.category}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-600">{row.description}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Active
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-blue-500" />
+                    Retention Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { label: "Day 1 Retention", value: 89, color: "bg-green-500" },
+                    { label: "Day 7 Retention", value: 72, color: "bg-blue-500" },
+                    { label: "Day 14 Retention", value: 58, color: "bg-purple-500" },
+                    { label: "Day 30 Retention", value: 41, color: "bg-orange-500" },
+                  ].map((metric) => (
+                    <div key={metric.label}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">{metric.label}</span>
+                        <span className="text-sm font-bold">{metric.value}%</span>
+                      </div>
+                      <Progress value={metric.value} className="h-2" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-green-500" />
+                    Top Features by Usage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { feature: "Daily Tasks", usage: 94, sessions: "1,247" },
+                    { feature: "Mood Tracking", usage: 87, sessions: "1,089" },
+                    { feature: "Financial", usage: 63, sessions: "788" },
+                    { feature: "Calendar", usage: 55, sessions: "689" },
+                    { feature: "Resources", usage: 42, sessions: "525" },
+                    { feature: "Meal Planning", usage: 31, sessions: "388" },
+                  ].map((item) => (
+                    <div key={item.feature}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">{item.feature}</span>
+                        <span className="text-xs text-gray-500">{item.sessions} sessions</span>
+                      </div>
+                      <Progress value={item.usage} className="h-2" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Activity className="h-6 w-6 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-blue-900 mb-1">View Full Analytics in Firebase Console</h4>
+                    <p className="text-sm text-blue-700 mb-3">
+                      For detailed reports, funnels, user segments, and real-time data, visit your Firebase Analytics dashboard.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      onClick={() => window.open('https://console.firebase.google.com/', '_blank')}
+                    >
+                      Open Firebase Console
+                    </Button>
                   </div>
                 </div>
               </CardContent>

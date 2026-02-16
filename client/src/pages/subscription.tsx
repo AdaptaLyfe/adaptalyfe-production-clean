@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { CheckCircle, Zap, Users, Star, Clock, CreditCard, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { trackSubscriptionEvent } from "@/lib/firebase";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeWrapper } from '@/components/stripe-wrapper';
 
@@ -117,6 +118,7 @@ function PaymentForm({ planType, billingCycle, onSuccess }: {
           variant: "destructive"
         });
       } else {
+        trackSubscriptionEvent("upgrade", planType);
         toast({
           title: "Payment Successful!",
           description: "Your subscription has been activated."
@@ -249,6 +251,7 @@ export default function SubscriptionPage() {
         setClientSecret(data.clientSecret);
       } else if (data.status === 'active' || data.status === 'trialing') {
         // Subscription is active/trialing without requiring immediate payment
+        trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
         toast({
           title: "Subscription Activated!",
           description: "Your subscription has been set up successfully.",

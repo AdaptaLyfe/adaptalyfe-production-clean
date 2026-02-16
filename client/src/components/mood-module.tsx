@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import { Heart, Wind, Lightbulb, Phone, Sparkles } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { trackMoodEntry } from "@/lib/firebase";
 import type { MoodEntry } from "@shared/schema";
 
 const moodMessages: Record<number, { title: string; message: string; tip: string; color: string }> = {
@@ -62,9 +63,10 @@ export default function MoodModule() {
     mutationFn: async (mood: number) => {
       return apiRequest("POST", "/api/mood-entries", { mood });
     },
-    onSuccess: () => {
+    onSuccess: (_data, moodValue) => {
       queryClient.invalidateQueries({ queryKey: ["/api/mood-entries"] });
       queryClient.invalidateQueries({ queryKey: ["/api/mood-entries/today"] });
+      trackMoodEntry(moodValue, moodOptions.find(m => m.value === moodValue)?.label || "unknown");
       setShowConfirmation(true);
     },
   });
