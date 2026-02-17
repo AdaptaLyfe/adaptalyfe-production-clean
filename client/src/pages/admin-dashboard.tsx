@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -206,9 +207,17 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{adminData.overview.totalUsers.toLocaleString()}</div>
-              <div className="flex items-center gap-1 text-sm">
-                <TrendingUp className="h-3 w-3 text-green-500" />
-                <span className="text-green-600">+{adminData.overview.newUsersThisMonth} this month</span>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3 text-green-500" />
+                  <span className="text-green-600">+{adminData.overview.newUsersThisMonth} this month</span>
+                </div>
+                <Link href="/super-admin/subscriptions">
+                  <Button variant="outline" size="sm" className="h-7 text-xs px-2 gap-1">
+                    <Users className="h-3 w-3" />
+                    View All
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
