@@ -2,13 +2,19 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics, logEvent, setUserId, setUserProperties, isSupported } from "firebase/analytics";
 import type { Analytics } from "firebase/analytics";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
+const firebaseProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const firebaseApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+const firebaseAppId = import.meta.env.VITE_FIREBASE_APP_ID;
+
+const hasFirebaseConfig = !!(firebaseProjectId && firebaseApiKey && firebaseAppId);
+
+const firebaseConfig = hasFirebaseConfig ? {
+  apiKey: firebaseApiKey,
+  authDomain: `${firebaseProjectId}.firebaseapp.com`,
+  projectId: firebaseProjectId,
+  storageBucket: `${firebaseProjectId}.firebasestorage.app`,
+  appId: firebaseAppId,
+} : null;
 
 let analytics: Analytics | null = null;
 let initPromise: Promise<Analytics | null> | null = null;
@@ -18,6 +24,10 @@ export async function initFirebaseAnalytics(): Promise<Analytics | null> {
   if (analytics) return analytics;
   if (initAttempted) return null;
   initAttempted = true;
+  if (!hasFirebaseConfig || !firebaseConfig) {
+    console.log("Firebase Analytics skipped: missing configuration");
+    return null;
+  }
   try {
     const supported = await isSupported();
     if (!supported) {
