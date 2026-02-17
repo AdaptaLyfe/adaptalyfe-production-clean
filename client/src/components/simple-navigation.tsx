@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Brain, Menu, X, Home, CheckSquare, DollarSign, Stethoscope, Pill, 
          Calendar as CalendarIcon, ShoppingCart, GraduationCap, Target, User as UserIcon, Globe,
-         AlertTriangle, Settings, Trophy, FileText, UserPlus, Shield, Zap, Moon } from "lucide-react";
+         AlertTriangle, Settings, Trophy, FileText, UserPlus, Shield, Zap, Moon, Users } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 // AuthUtils inlined to avoid import issues
 import { useQuery } from "@tanstack/react-query";
@@ -78,6 +78,16 @@ export default function SimpleNavigation() {
             <Link href="/daily-tasks" className="text-gray-600 hover:text-gray-900 px-2 py-1 rounded text-sm">
               Tasks
             </Link>
+            {(user?.accountType === 'admin' || user?.username === 'admin') && (
+              <>
+                <Link href="/admin-dashboard" className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded text-sm font-medium">
+                  <span className="flex items-center gap-1"><Shield size={14} /> Admin</span>
+                </Link>
+                <Link href="/super-admin/subscriptions" className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded text-sm font-medium">
+                  <span className="flex items-center gap-1"><Users size={14} /> All Users</span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* User info and Menu button */}
@@ -284,6 +294,33 @@ export default function SimpleNavigation() {
                 </Link>
               </div>
               
+              {/* Admin Section - Only visible for admin users */}
+              {(user?.accountType === 'admin' || user?.username === 'admin') && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h3 className="text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-2">Admin</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/admin-dashboard">
+                      <button 
+                        className="w-full text-left p-3 rounded-md bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 border border-indigo-200 flex items-center space-x-2 transition-colors touch-manipulation"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Shield className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-medium text-indigo-700">Admin Dashboard</span>
+                      </button>
+                    </Link>
+                    <Link href="/super-admin/subscriptions">
+                      <button 
+                        className="w-full text-left p-3 rounded-md bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 border border-indigo-200 flex items-center space-x-2 transition-colors touch-manipulation"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Users className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-medium text-indigo-700">All Users</span>
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {/* Special Actions */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <Link href="/resources">
