@@ -514,11 +514,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ message: "Authentication required", mobile: isMobile });
     }
     
-    const user = req.session.user;
-    console.log("✅ Authenticated user found:", user.username);
+    const sessionUser = req.session.user;
+    console.log("✅ Authenticated user found:", sessionUser.username);
     
-    // Don't return password in response
-    const { password, ...userResponse } = user;
+    // Fetch fresh user data from database to ensure account_type and other fields are current
+    try {
+      const freshUser = await storage.getUserById(sessionUser.id);
+      if (freshUser) {
+        req.session.user = freshUser;
+        const { password, ...userResponse } = freshUser;
+        return res.json(userResponse);
+      }
+    } catch (error) {
+      console.error("Error fetching fresh user data:", error);
+    }
+    
+    // Fallback to session data
+    const { password, ...userResponse } = sessionUser;
     res.json(userResponse);
   });
 
