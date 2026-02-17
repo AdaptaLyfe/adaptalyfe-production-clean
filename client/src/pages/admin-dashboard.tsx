@@ -188,7 +188,13 @@ export default function AdminDashboard() {
                   <SelectItem value="1y">Last year</SelectItem>
                 </SelectContent>
               </Select>
-              <Button className="flex items-center gap-2">
+              <Link href="/super-admin/subscriptions">
+                <Button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+                  <Shield className="h-4 w-4" />
+                  Manage All Users
+                </Button>
+              </Link>
+              <Button className="flex items-center gap-2" variant="outline">
                 <Download className="h-4 w-4" />
                 Export Data
               </Button>
