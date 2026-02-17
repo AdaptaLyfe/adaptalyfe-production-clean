@@ -88,6 +88,22 @@ export default function Navigation() {
                 Tasks
               </Button>
             </Link>
+            {(user?.accountType === 'admin' || user?.username === 'admin') && (
+              <>
+                <Link href="/admin-dashboard">
+                  <Button variant={location === "/admin-dashboard" ? "default" : "ghost"} size="sm" className="text-xs px-2">
+                    <Shield size={16} className="mr-1" />
+                    Admin
+                  </Button>
+                </Link>
+                <Link href="/super-admin/subscriptions">
+                  <Button variant={location === "/super-admin/subscriptions" ? "default" : "ghost"} size="sm" className="text-xs px-2">
+                    <Users size={16} className="mr-1" />
+                    All Users
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
           
           <div className="flex items-center space-x-2">
