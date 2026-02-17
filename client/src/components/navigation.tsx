@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Heart, Bell, User as UserIcon, Menu, X, Pill, Stethoscope, GraduationCap, AlertTriangle, Target, 
          Calendar as CalendarIcon, DollarSign, Brain, ShoppingCart, Home, CheckSquare, Settings, 
-         Phone, BookOpen, Globe, Trophy, Star } from "lucide-react";
+         Phone, BookOpen, Globe, Trophy, Star, Shield, Users } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import NotificationCenter from "./notification-center";
 // AuthUtils inlined to avoid import issues
@@ -264,6 +264,35 @@ export default function Navigation() {
                 </Link>
               </div>
               
+              {/* Admin Section - Only visible for admin users */}
+              {(user?.accountType === 'admin' || user?.username === 'admin') && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Admin</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/admin-dashboard">
+                      <Button 
+                        variant={location === "/admin-dashboard" ? "default" : "ghost"}
+                        className="w-full justify-start h-12 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin Dashboard
+                      </Button>
+                    </Link>
+                    <Link href="/super-admin/subscriptions">
+                      <Button 
+                        variant={location === "/super-admin/subscriptions" ? "default" : "ghost"}
+                        className="w-full justify-start h-12 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        All Users
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               {/* Special Actions */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <Link href="/subscription">
