@@ -116,9 +116,18 @@ export default function Register() {
         description: `Welcome to AdaptaLyfe, ${formData.name}!`,
       });
 
-      // If there's an invitation code, redirect to accept invitation
       if (formData.invitationCode) {
-        setLocation(`/accept-invitation?code=${formData.invitationCode}`);
+        try {
+          const orgRes = await apiRequest("POST", "/api/org-codes/redeem", { code: formData.invitationCode });
+          const orgData = await orgRes.json();
+          toast({
+            title: "Organization Code Applied!",
+            description: `Free access granted through ${orgData.orgName}.`,
+          });
+          setLocation("/dashboard");
+        } catch {
+          setLocation(`/accept-invitation?code=${formData.invitationCode}`);
+        }
       } else {
         setLocation("/dashboard");
       }
@@ -259,17 +268,17 @@ export default function Register() {
 
                 {/* Invitation Code Section */}
                 <div>
-                  <Label htmlFor="invitationCode">Invitation Code (Optional)</Label>
+                  <Label htmlFor="invitationCode">Organization or Invitation Code (Optional)</Label>
                   <Input
                     id="invitationCode"
                     type="text"
                     value={formData.invitationCode}
-                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
-                    placeholder="Enter invitation code if you have one"
-                    className="mt-1"
+                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value.toUpperCase()})}
+                    placeholder="Enter organization or invitation code"
+                    className="mt-1 font-mono"
                   />
                   {hasInvitation && (
-                    <p className="text-sm text-green-600 mt-1">✓ Invitation code detected - your caregiver will join your support network after registration</p>
+                    <p className="text-sm text-green-600 mt-1">✓ Code detected - will be applied after registration</p>
                   )}
                 </div>
               </div>
