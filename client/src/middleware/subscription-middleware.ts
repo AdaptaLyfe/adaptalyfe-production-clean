@@ -32,6 +32,10 @@ export function useSubscriptionEnforcement() {
     queryKey: ["/api/subscription"],
     enabled: !isAuthPage 
   });
+  const { data: orgMembership } = useQuery<any>({ 
+    queryKey: ["/api/org-codes/my"],
+    enabled: !isAuthPage 
+  });
 
   useEffect(() => {
     if (isAuthPage || !user || !subscription) return;
@@ -39,6 +43,9 @@ export function useSubscriptionEnforcement() {
     // Admin users get full access without restrictions
     const isAdmin = user.accountType === 'admin' || user.username === 'admin' || user.name?.toLowerCase().includes('admin');
     if (isAdmin) return;
+
+    // Users with active org membership get full access
+    if (orgMembership && orgMembership.status === 'active') return;
 
     // Pages that should always be accessible (even after trial expires)
     const alwaysAccessible = ['/subscription', '/pricing', '/settings'];
@@ -86,13 +93,15 @@ export function useSubscriptionEnforcement() {
   }, [location, user, subscription, setLocation]);
 
   const isAdmin = user?.accountType === 'admin' || user?.username === 'admin' || user?.name?.toLowerCase().includes('admin');
+  const hasOrgAccess = orgMembership && orgMembership.status === 'active';
 
   return {
     subscription,
-    isPremiumUser: isAdmin || subscription?.status === 'active' || 
+    orgMembership,
+    isPremiumUser: isAdmin || hasOrgAccess || subscription?.status === 'active' || 
                    (subscription?.status === 'trialing' && (subscription?.trialDaysLeft || 0) > 0),
     hasFeature: (feature: keyof SubscriptionData['features']) => 
-      isAdmin || subscription?.features[feature] || false
+      isAdmin || hasOrgAccess || subscription?.features[feature] || false
   };
 }
 

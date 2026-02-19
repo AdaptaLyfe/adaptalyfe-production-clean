@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Brain, Menu, X, Home, CheckSquare, DollarSign, Stethoscope, Pill, 
          Calendar as CalendarIcon, ShoppingCart, GraduationCap, Target, User as UserIcon, Globe,
-         AlertTriangle, Settings, Trophy, FileText, UserPlus, Shield, Zap, Moon, Users } from "lucide-react";
+         AlertTriangle, Settings, Trophy, FileText, UserPlus, Shield, Zap, Moon, Users, Building2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 // AuthUtils inlined to avoid import issues
 import { useQuery } from "@tanstack/react-query";
@@ -85,6 +85,9 @@ export default function SimpleNavigation() {
                 </Link>
                 <Link href="/super-admin/subscriptions" className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded text-sm font-medium">
                   <span className="flex items-center gap-1"><Users size={14} /> All Users</span>
+                </Link>
+                <Link href="/admin/org-codes" className="text-indigo-600 hover:text-indigo-900 px-2 py-1 rounded text-sm font-medium">
+                  <span className="flex items-center gap-1"><Building2 size={14} /> Org Codes</span>
                 </Link>
               </>
             )}
@@ -315,6 +318,15 @@ export default function SimpleNavigation() {
                       >
                         <Users className="w-4 h-4 text-indigo-600" />
                         <span className="text-xs font-medium text-indigo-700">All Users</span>
+                      </button>
+                    </Link>
+                    <Link href="/admin/org-codes">
+                      <button 
+                        className="w-full text-left p-3 rounded-md bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 border border-indigo-200 flex items-center space-x-2 transition-colors touch-manipulation"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <span className="text-xs font-medium text-indigo-700">Org Codes</span>
                       </button>
                     </Link>
                   </div>

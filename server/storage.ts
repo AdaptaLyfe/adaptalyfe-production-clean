@@ -38,7 +38,9 @@ import {
   calendarEvents, type CalendarEvent, type InsertCalendarEvent,
   type Reward, type InsertReward, type UserPointsBalance, type InsertUserPointsBalance,
   type PointsTransaction, type InsertPointsTransaction, type RewardRedemption, type InsertRewardRedemption,
-  sleepSessions, type SleepSession, type InsertSleepSession, healthMetrics, type HealthMetric, type InsertHealthMetric
+  sleepSessions, type SleepSession, type InsertSleepSession, healthMetrics, type HealthMetric, type InsertHealthMetric,
+  organizationCodes, orgMemberships,
+  type OrganizationCode, type InsertOrganizationCode, type OrgMembership, type InsertOrgMembership
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, gt } from "drizzle-orm";
@@ -319,6 +321,22 @@ export interface IStorage {
   // Health Metrics
   getHealthMetricsByUser(userId: number, metricType?: string, startDate?: string, endDate?: string): Promise<HealthMetric[]>;
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
+
+  // Organization Codes
+  getAllOrgCodes(): Promise<OrganizationCode[]>;
+  getOrgCodeById(id: number): Promise<OrganizationCode | undefined>;
+  getOrgCodeByCode(code: string): Promise<OrganizationCode | undefined>;
+  createOrgCode(data: InsertOrganizationCode): Promise<OrganizationCode>;
+  updateOrgCode(id: number, updates: Partial<OrganizationCode>): Promise<OrganizationCode | undefined>;
+  deleteOrgCode(id: number): Promise<void>;
+
+  // Organization Memberships
+  getOrgMembershipsByCode(orgCodeId: number): Promise<OrgMembership[]>;
+  getActiveOrgMembershipByUser(userId: number): Promise<OrgMembership | undefined>;
+  createOrgMembership(data: InsertOrgMembership): Promise<OrgMembership>;
+  revokeOrgMembership(membershipId: number, revokedBy: number): Promise<OrgMembership | undefined>;
+  getOrgMembershipByUserAndCode(userId: number, orgCodeId: number): Promise<OrgMembership | undefined>;
+  countActiveMembersByCode(orgCodeId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2288,6 +2306,71 @@ export class DatabaseStorage implements IStorage {
       .where(eq(rewardRedemptions.id, redemptionId))
       .returning();
     return redemption || undefined;
+  }
+
+  // Organization Codes
+  async getAllOrgCodes(): Promise<OrganizationCode[]> {
+    return await db.select().from(organizationCodes).orderBy(desc(organizationCodes.createdAt));
+  }
+
+  async getOrgCodeById(id: number): Promise<OrganizationCode | undefined> {
+    const [code] = await db.select().from(organizationCodes).where(eq(organizationCodes.id, id));
+    return code || undefined;
+  }
+
+  async getOrgCodeByCode(code: string): Promise<OrganizationCode | undefined> {
+    const [result] = await db.select().from(organizationCodes).where(eq(organizationCodes.code, code));
+    return result || undefined;
+  }
+
+  async createOrgCode(data: InsertOrganizationCode): Promise<OrganizationCode> {
+    const [code] = await db.insert(organizationCodes).values(data).returning();
+    return code;
+  }
+
+  async updateOrgCode(id: number, updates: Partial<OrganizationCode>): Promise<OrganizationCode | undefined> {
+    const [code] = await db.update(organizationCodes).set(updates).where(eq(organizationCodes.id, id)).returning();
+    return code || undefined;
+  }
+
+  async deleteOrgCode(id: number): Promise<void> {
+    await db.delete(organizationCodes).where(eq(organizationCodes.id, id));
+  }
+
+  // Organization Memberships
+  async getOrgMembershipsByCode(orgCodeId: number): Promise<OrgMembership[]> {
+    return await db.select().from(orgMemberships).where(eq(orgMemberships.orgCodeId, orgCodeId));
+  }
+
+  async getActiveOrgMembershipByUser(userId: number): Promise<OrgMembership | undefined> {
+    const [membership] = await db.select().from(orgMemberships)
+      .where(and(eq(orgMemberships.userId, userId), eq(orgMemberships.status, 'active')));
+    return membership || undefined;
+  }
+
+  async createOrgMembership(data: InsertOrgMembership): Promise<OrgMembership> {
+    const [membership] = await db.insert(orgMemberships).values(data).returning();
+    return membership;
+  }
+
+  async revokeOrgMembership(membershipId: number, revokedBy: number): Promise<OrgMembership | undefined> {
+    const [membership] = await db.update(orgMemberships)
+      .set({ status: 'revoked', revokedAt: new Date(), revokedBy })
+      .where(eq(orgMemberships.id, membershipId))
+      .returning();
+    return membership || undefined;
+  }
+
+  async getOrgMembershipByUserAndCode(userId: number, orgCodeId: number): Promise<OrgMembership | undefined> {
+    const [membership] = await db.select().from(orgMemberships)
+      .where(and(eq(orgMemberships.userId, userId), eq(orgMemberships.orgCodeId, orgCodeId)));
+    return membership || undefined;
+  }
+
+  async countActiveMembersByCode(orgCodeId: number): Promise<number> {
+    const members = await db.select().from(orgMemberships)
+      .where(and(eq(orgMemberships.orgCodeId, orgCodeId), eq(orgMemberships.status, 'active')));
+    return members.length;
   }
 }
 

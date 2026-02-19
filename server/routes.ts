@@ -4892,6 +4892,215 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // ==================== ORGANIZATION CODE MANAGEMENT ====================
+
+  // Admin: Get all org codes with member counts
+  app.get("/api/admin/org-codes", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const codes = await storage.getAllOrgCodes();
+      const codesWithCounts = await Promise.all(codes.map(async (code) => {
+        const count = await storage.countActiveMembersByCode(code.id);
+        const members = await storage.getOrgMembershipsByCode(code.id);
+        return { ...code, activeMembers: count, totalMembers: members.length };
+      }));
+
+      res.json(codesWithCounts);
+    } catch (error: any) {
+      console.error("Error fetching org codes:", error);
+      res.status(500).json({ message: "Failed to fetch organization codes" });
+    }
+  });
+
+  // Admin: Get org code details with members
+  app.get("/api/admin/org-codes/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const code = await storage.getOrgCodeById(parseInt(req.params.id));
+      if (!code) return res.status(404).json({ message: "Organization code not found" });
+
+      const memberships = await storage.getOrgMembershipsByCode(code.id);
+      const allUsers = await storage.getAllUsers();
+      const membersWithDetails = memberships.map(m => {
+        const memberUser = allUsers.find(u => u.id === m.userId);
+        return {
+          ...m,
+          userName: memberUser?.name || 'Unknown',
+          userEmail: memberUser?.email || '',
+          userUsername: memberUser?.username || ''
+        };
+      });
+
+      res.json({ ...code, members: membersWithDetails });
+    } catch (error: any) {
+      console.error("Error fetching org code details:", error);
+      res.status(500).json({ message: "Failed to fetch organization code details" });
+    }
+  });
+
+  // Admin: Create org code
+  app.post("/api/admin/org-codes", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { orgName, code, maxUsers, expiresAt } = req.body;
+      if (!orgName || !code) {
+        return res.status(400).json({ message: "Organization name and code are required" });
+      }
+
+      const existing = await storage.getOrgCodeByCode(code);
+      if (existing) {
+        return res.status(400).json({ message: "This code is already in use" });
+      }
+
+      const newCode = await storage.createOrgCode({
+        orgName,
+        code: code.toUpperCase(),
+        maxUsers: maxUsers || null,
+        createdBy: user.id,
+        isActive: true,
+        expiresAt: expiresAt ? new Date(expiresAt) : null
+      });
+
+      res.json(newCode);
+    } catch (error: any) {
+      console.error("Error creating org code:", error);
+      res.status(500).json({ message: "Failed to create organization code" });
+    }
+  });
+
+  // Admin: Update org code (activate/deactivate)
+  app.patch("/api/admin/org-codes/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const updated = await storage.updateOrgCode(parseInt(req.params.id), req.body);
+      if (!updated) return res.status(404).json({ message: "Organization code not found" });
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating org code:", error);
+      res.status(500).json({ message: "Failed to update organization code" });
+    }
+  });
+
+  // Admin: Delete org code
+  app.delete("/api/admin/org-codes/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteOrgCode(parseInt(req.params.id));
+      res.json({ message: "Organization code deleted" });
+    } catch (error: any) {
+      console.error("Error deleting org code:", error);
+      res.status(500).json({ message: "Failed to delete organization code" });
+    }
+  });
+
+  // Admin: Revoke a user's org membership
+  app.post("/api/admin/org-memberships/:id/revoke", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const user = req.session.user;
+      if (user.accountType !== 'admin' && user.username !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const membership = await storage.revokeOrgMembership(parseInt(req.params.id), user.id);
+      if (!membership) return res.status(404).json({ message: "Membership not found" });
+
+      res.json({ message: "Access revoked. User will need a paid subscription to continue.", membership });
+    } catch (error: any) {
+      console.error("Error revoking membership:", error);
+      res.status(500).json({ message: "Failed to revoke membership" });
+    }
+  });
+
+  // User: Redeem an organization code
+  app.post("/api/org-codes/redeem", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const userId = req.session.user.id;
+      const { code } = req.body;
+
+      if (!code) return res.status(400).json({ message: "Organization code is required" });
+
+      const orgCode = await storage.getOrgCodeByCode(code.toUpperCase());
+      if (!orgCode) return res.status(404).json({ message: "Invalid organization code" });
+      if (!orgCode.isActive) return res.status(400).json({ message: "This organization code is no longer active" });
+      if (orgCode.expiresAt && new Date(orgCode.expiresAt) < new Date()) {
+        return res.status(400).json({ message: "This organization code has expired" });
+      }
+
+      const existingMembership = await storage.getActiveOrgMembershipByUser(userId);
+      if (existingMembership) {
+        return res.status(400).json({ message: "You already have an active organization membership" });
+      }
+
+      const priorMembership = await storage.getOrgMembershipByUserAndCode(userId, orgCode.id);
+      if (priorMembership && priorMembership.status === 'revoked') {
+        return res.status(400).json({ message: "Your access through this organization has been revoked. Please contact the organization or administrator." });
+      }
+
+      if (orgCode.maxUsers) {
+        const currentCount = await storage.countActiveMembersByCode(orgCode.id);
+        if (currentCount >= orgCode.maxUsers) {
+          return res.status(400).json({ message: "This organization code has reached its maximum number of users" });
+        }
+      }
+
+      const membership = await storage.createOrgMembership({
+        userId,
+        orgCodeId: orgCode.id,
+        status: 'active'
+      });
+
+      res.json({ message: "Organization code redeemed! You now have free access.", membership, orgName: orgCode.orgName });
+    } catch (error: any) {
+      console.error("Error redeeming org code:", error);
+      res.status(500).json({ message: "Failed to redeem organization code" });
+    }
+  });
+
+  // User: Get their current org membership
+  app.get("/api/org-codes/my", async (req: any, res) => {
+    try {
+      if (!req.session?.user) return res.status(401).json({ message: "Authentication required" });
+      const userId = req.session.user.id;
+
+      const membership = await storage.getActiveOrgMembershipByUser(userId);
+      if (!membership) return res.json(null);
+
+      const orgCode = await storage.getOrgCodeById(membership.orgCodeId);
+      res.json({ ...membership, orgName: orgCode?.orgName || 'Unknown Organization' });
+    } catch (error: any) {
+      console.error("Error fetching user org membership:", error);
+      res.status(500).json({ message: "Failed to fetch organization membership" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

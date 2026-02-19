@@ -602,6 +602,28 @@ export const geofenceEvents = pgTable("geofence_events", {
   notificationSent: boolean("notification_sent").default(false),
 });
 
+// Organization Codes - for organizations to provide free access to their users
+export const organizationCodes = pgTable("organization_codes", {
+  id: serial("id").primaryKey(),
+  orgName: text("org_name").notNull(),
+  code: text("code").notNull().unique(),
+  isActive: boolean("is_active").default(true),
+  maxUsers: integer("max_users"),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
+export const orgMemberships = pgTable("org_memberships", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  orgCodeId: integer("org_code_id").notNull().references(() => organizationCodes.id),
+  status: text("status").notNull().default("active"),
+  grantedAt: timestamp("granted_at").defaultNow(),
+  revokedAt: timestamp("revoked_at"),
+  revokedBy: integer("revoked_by"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -628,6 +650,23 @@ export const insertUserCaregiverConnectionSchema = createInsertSchema(userCaregi
   id: true,
   connectedAt: true,
 });
+
+export const insertOrgCodeSchema = createInsertSchema(organizationCodes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOrgMembershipSchema = createInsertSchema(orgMemberships).omit({
+  id: true,
+  grantedAt: true,
+  revokedAt: true,
+  revokedBy: true,
+});
+
+export type OrganizationCode = typeof organizationCodes.$inferSelect;
+export type InsertOrganizationCode = z.infer<typeof insertOrgCodeSchema>;
+export type OrgMembership = typeof orgMemberships.$inferSelect;
+export type InsertOrgMembership = z.infer<typeof insertOrgMembershipSchema>;
 
 export const insertInvitationCodeSchema = createInsertSchema(invitationCodes).omit({
   id: true,

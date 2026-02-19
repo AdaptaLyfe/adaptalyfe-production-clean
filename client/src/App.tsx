@@ -34,6 +34,7 @@ import AuthCheck from "@/components/AuthCheck";
 import AdminCheck from "@/components/AdminCheck";
 import SuperAdminCheck from "@/components/SuperAdminCheck";
 import SuperAdminSubscriptions from "@/pages/super-admin-subscriptions";
+import AdminOrgCodes from "@/pages/admin-org-codes";
 
 import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
 import { ReactErrorBoundary } from "@/components/error-boundary";
@@ -273,6 +274,9 @@ function App() {
         </Route>
         <Route path="/super-admin/subscriptions">
           <SuperAdminCheck><SuperAdminSubscriptions /></SuperAdminCheck>
+        </Route>
+        <Route path="/admin/org-codes">
+          <AdminCheck><AdminOrgCodes /></AdminCheck>
         </Route>
         <Route path="/settings">
           <AuthCheck><SettingsPage /></AuthCheck>

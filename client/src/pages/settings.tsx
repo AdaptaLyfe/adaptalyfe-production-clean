@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut } from "lucide-react";
+import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut, Building2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 
 export default function SettingsPage() {
@@ -40,8 +40,27 @@ export default function SettingsPage() {
     automaticCheckIns: true
   });
 
+  const [orgCodeInput, setOrgCodeInput] = useState("");
+
   // Get current user for locked settings checks
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
+  const { data: orgMembership } = useQuery<any>({ queryKey: ["/api/org-codes/my"] });
+
+  const redeemOrgCodeMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const res = await apiRequest("POST", "/api/org-codes/redeem", { code });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Code Redeemed!", description: `You now have free access through ${data.orgName}.` });
+      setOrgCodeInput("");
+      queryClient.invalidateQueries({ queryKey: ["/api/org-codes/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Invalid Code", description: error.message, variant: "destructive" });
+    },
+  });
   
   // Mock locked settings data - in real app this would come from API
   const lockedSettings = {
@@ -621,6 +640,48 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Organization Code Redemption */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600" />
+            Organization Access
+          </CardTitle>
+          <CardDescription>
+            If your organization provided an access code, enter it here for free access
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {orgMembership && orgMembership.status === 'active' ? (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <div>
+                <p className="font-medium text-green-800">Active Organization Access</p>
+                <p className="text-sm text-green-600">
+                  Free access provided by {orgMembership.orgName}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                value={orgCodeInput}
+                onChange={(e) => setOrgCodeInput(e.target.value.toUpperCase())}
+                placeholder="Enter organization code"
+                className="font-mono max-w-xs"
+              />
+              <Button
+                onClick={() => orgCodeInput && redeemOrgCodeMutation.mutate(orgCodeInput)}
+                disabled={!orgCodeInput || redeemOrgCodeMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {redeemOrgCodeMutation.isPending ? "Redeeming..." : "Redeem Code"}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Danger Zone */}
       <Card className="border-red-200 bg-red-50 mt-8">
