@@ -57,7 +57,7 @@ export default function AdminOrgCodes() {
   });
 
   const { data: codeDetail } = useQuery<OrgCodeDetail>({
-    queryKey: ["/api/admin/org-codes", selectedCodeId],
+    queryKey: [`/api/admin/org-codes/${selectedCodeId}`],
     enabled: !!selectedCodeId,
   });
 
@@ -110,7 +110,7 @@ export default function AdminOrgCodes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/org-codes"] });
       if (selectedCodeId) {
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/org-codes", selectedCodeId] });
+        queryClient.invalidateQueries({ queryKey: [`/api/admin/org-codes/${selectedCodeId}`] });
       }
       toast({ title: "User access revoked", description: "User will need a paid subscription to continue." });
     },
@@ -332,10 +332,10 @@ export default function AdminOrgCodes() {
             <div>
               <div className="flex items-center gap-3 mb-4 text-sm text-gray-500">
                 <span>Code: <code className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded font-mono">{codeDetail.code}</code></span>
-                <span>Active: {codeDetail.activeMembers}</span>
-                <span>Total: {codeDetail.totalMembers}</span>
+                <span>Active: {codeDetail.activeMembers ?? 0}</span>
+                <span>Total: {codeDetail.totalMembers ?? 0}</span>
               </div>
-              {codeDetail.members.length === 0 ? (
+              {!codeDetail.members || codeDetail.members.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Users className="w-10 h-10 mx-auto text-gray-300 mb-2" />
                   <p>No members have redeemed this code yet</p>
