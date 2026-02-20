@@ -203,11 +203,22 @@ app.use((req, res, next) => {
     }
   }));
   
+  // Return 404 for missing static asset files instead of falling through to SPA
+  app.get("/assets/*", (req, res) => {
+    res.status(404).send('Not found');
+  });
+
   // Serve index.html for all non-API routes (SPA fallback) with no-cache headers
   app.get("*", (req, res) => {
     // Don't serve HTML for API routes - let them return 404 naturally
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
+    }
+
+    // Don't serve HTML for static file extensions (prevents MIME type errors)
+    const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map', '.json', '.webp', '.avif'];
+    if (staticExtensions.some(ext => req.path.endsWith(ext))) {
+      return res.status(404).send('Not found');
     }
     
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
