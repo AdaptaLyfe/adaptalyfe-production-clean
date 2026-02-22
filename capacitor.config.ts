@@ -25,6 +25,9 @@ const config: CapacitorConfig = {
       resize: 'native'
     }
   },
+  android: {
+    webContentsDebuggingEnabled: false
+  },
   ios: {
     contentInset: 'automatic'
   }
