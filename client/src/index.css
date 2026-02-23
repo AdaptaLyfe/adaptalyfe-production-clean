@@ -30,7 +30,6 @@ html, body {
 
 #root {
   min-height: 100vh;
-  padding-bottom: var(--safe-area-inset-bottom);
 }
 
 /* Android-native header styling */
@@ -88,7 +87,7 @@ body.android-native .main-content-with-header {
 
 /* Bottom navigation Android style */
 .android-bottom-nav {
-  padding-bottom: max(var(--safe-area-inset-bottom), 8px);
+  padding-bottom: 0;
   background: #ffffff;
   border-top: 1px solid rgba(0,0,0,0.08);
 }

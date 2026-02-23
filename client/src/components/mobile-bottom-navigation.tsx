@@ -106,7 +106,7 @@ export default function MobileBottomNavigation() {
       {/* Bottom Navigation Bar - Android Material Design */}
       <div className="fixed bottom-0 left-0 right-0 bg-white z-30 md:hidden android-bottom-nav android-elevation-2">
         <div className="flex items-center justify-around px-1 py-1"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
         >
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
@@ -145,8 +145,8 @@ export default function MobileBottomNavigation() {
         </div>
       </div>
 
-      {/* Add bottom padding to main content to prevent overlap with safe area */}
-      <div className="h-20 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} />
+      {/* Add bottom padding to main content to prevent overlap with nav bar */}
+      <div className="h-16 md:hidden" />
     </>
   );
 }
