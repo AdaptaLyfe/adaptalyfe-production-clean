@@ -17,6 +17,10 @@ export const users = pgTable("users", {
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status").default("inactive"), // "active", "inactive", "cancelled", "past_due"
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  subscriptionPlatform: text("subscription_platform").default("web"), // "web", "google_play", "app_store"
+  googlePlayPurchaseToken: text("google_play_purchase_token"),
+  googlePlayOrderId: text("google_play_order_id"),
+  googlePlayProductId: text("google_play_product_id"),
   streakDays: integer("streak_days").default(0),
   createdBy: integer("created_by"), // Caregiver who created this user account
   isActive: boolean("is_active").default(true),
@@ -1754,6 +1758,10 @@ export const subscriptions = pgTable("subscriptions", {
   priceId: text("price_id"),
   amount: integer("amount"), // in cents
   currency: text("currency").default("usd"),
+  platform: text("platform").default("web"), // "web", "google_play", "app_store"
+  googlePlayPurchaseToken: text("google_play_purchase_token"),
+  googlePlayOrderId: text("google_play_order_id"),
+  googlePlayProductId: text("google_play_product_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

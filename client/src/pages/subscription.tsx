@@ -1,15 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { CheckCircle, Zap, Users, Star, Clock, CreditCard, AlertTriangle } from "lucide-react";
+import { CheckCircle, Zap, Users, Star, Clock, CreditCard, AlertTriangle, Smartphone, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeWrapper } from '@/components/stripe-wrapper';
+import {
+  isAndroidApp,
+  getGooglePlayProductId,
+  purchaseSubscription,
+  verifyPurchaseOnServer,
+  restorePurchases,
+  initGooglePlayBilling,
+} from "@/lib/google-play-billing";
 
 interface PlanFeatures {
   [key: string]: {
@@ -225,8 +233,22 @@ export default function SubscriptionPage() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
+  const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
+  const [isRestoringPurchases, setIsRestoringPurchases] = useState(false);
+  const [googlePlayAvailable, setGooglePlayAvailable] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const onAndroid = isAndroidApp();
+
+  useEffect(() => {
+    if (onAndroid) {
+      initGooglePlayBilling().then((available) => {
+        setGooglePlayAvailable(available);
+        console.log('Google Play Billing available:', available);
+      });
+    }
+  }, [onAndroid]);
 
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
@@ -234,6 +256,89 @@ export default function SubscriptionPage() {
 
   // Calculate trial days remaining
   const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+
+  const handleGooglePlayPurchase = async (planType: string) => {
+    setIsGooglePlayPurchasing(true);
+    setSelectedPlan(planType);
+
+    try {
+      const productId = getGooglePlayProductId(planType, billingCycle);
+      if (!productId) {
+        toast({ title: "Error", description: "Invalid plan selected", variant: "destructive" });
+        return;
+      }
+
+      const result = await purchaseSubscription(productId);
+      
+      if (!result.success) {
+        if (result.error !== 'Purchase canceled') {
+          toast({ title: "Purchase Failed", description: result.error || "Unable to complete purchase", variant: "destructive" });
+        }
+        return;
+      }
+
+      toast({ title: "Verifying Purchase...", description: "Please wait while we activate your subscription." });
+
+      const verification = await verifyPurchaseOnServer(
+        result.purchaseToken!,
+        result.productId!,
+        result.orderId
+      );
+
+      if (verification.success) {
+        trackSubscriptionEvent("upgrade", planType);
+        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+      } else {
+        toast({ title: "Verification Failed", description: verification.error || "Please contact support.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      console.error('Google Play purchase error:', error);
+      toast({ title: "Purchase Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
+    } finally {
+      setIsGooglePlayPurchasing(false);
+      setSelectedPlan(null);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setIsRestoringPurchases(true);
+    try {
+      const purchases = await restorePurchases();
+      
+      if (purchases.length === 0) {
+        toast({ title: "No Purchases Found", description: "No previous subscriptions found on this Google account." });
+        return;
+      }
+
+      const response = await fetch('/api/google-play/restore-purchases', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          purchases: purchases.map(p => ({
+            purchaseToken: p.purchaseToken,
+            productId: p.productId,
+            orderId: p.orderId,
+          }))
+        }),
+      });
+
+      const data = await response.json();
+      if (data.restored) {
+        toast({ title: "Subscription Restored!", description: "Your previous subscription has been restored." });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+      } else {
+        toast({ title: "Restore Failed", description: data.message || "Could not restore subscription.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({ title: "Restore Error", description: "Failed to restore purchases. Please try again.", variant: "destructive" });
+    } finally {
+      setIsRestoringPurchases(false);
+    }
+  };
 
   const createSubscriptionMutation = useMutation({
     mutationFn: async ({ planType, billingCycle }: { planType: string; billingCycle: string }) => {
@@ -247,10 +352,8 @@ export default function SubscriptionPage() {
       console.log('Subscription creation response:', data);
       
       if (data.clientSecret) {
-        // Payment required - show payment form
         setClientSecret(data.clientSecret);
       } else if (data.status === 'active' || data.status === 'trialing') {
-        // Subscription is active/trialing without requiring immediate payment
         trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
         toast({
           title: "Subscription Activated!",
@@ -260,7 +363,6 @@ export default function SubscriptionPage() {
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
       } else {
-        // Payment setup failed - show more detail
         console.error('Subscription creation failed:', data);
         toast({
           title: "Subscription Error", 
@@ -280,6 +382,10 @@ export default function SubscriptionPage() {
   });
 
   const handlePlanSelect = (planType: string) => {
+    if (onAndroid) {
+      handleGooglePlayPurchase(planType);
+      return;
+    }
     setSelectedPlan(planType);
     createSubscriptionMutation.mutate({ planType, billingCycle });
   };
@@ -433,15 +539,15 @@ export default function SubscriptionPage() {
                 ) : (
                   <Button 
                     onClick={() => handlePlanSelect(planKey)}
-                    disabled={createSubscriptionMutation.isPending}
+                    disabled={createSubscriptionMutation.isPending || isGooglePlayPurchasing}
                     className="w-full"
                     variant={plan.popular ? "default" : "outline"}
                   >
-                    {createSubscriptionMutation.isPending && selectedPlan === planKey
+                    {(createSubscriptionMutation.isPending || isGooglePlayPurchasing) && selectedPlan === planKey
                       ? "Setting up..."
-                      : trialDaysLeft > 0 
-                        ? "Start Free Trial" 
-                        : "Subscribe Now"
+                      : onAndroid
+                        ? (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe via Google Play")
+                        : (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe Now")
                     }
                   </Button>
                 )}
@@ -449,6 +555,34 @@ export default function SubscriptionPage() {
             </Card>
           ))}
         </div>
+
+        {/* Google Play Restore Purchases */}
+        {onAndroid && (
+          <div className="mt-8 text-center">
+            <Button
+              variant="outline"
+              onClick={handleRestorePurchases}
+              disabled={isRestoringPurchases}
+              className="gap-2"
+            >
+              <RotateCcw className={`w-4 h-4 ${isRestoringPurchases ? 'animate-spin' : ''}`} />
+              {isRestoringPurchases ? "Restoring..." : "Restore Previous Purchase"}
+            </Button>
+            <p className="text-sm text-gray-500 mt-2">
+              Already subscribed? Restore your Google Play subscription here.
+            </p>
+          </div>
+        )}
+
+        {/* Android Payment Notice */}
+        {onAndroid && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
+              <Smartphone className="w-4 h-4" />
+              Payments processed securely through Google Play
+            </div>
+          </div>
+        )}
 
         {/* Benefits Section */}
         <div className="mt-12 text-center">

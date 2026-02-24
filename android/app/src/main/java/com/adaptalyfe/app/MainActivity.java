@@ -7,6 +7,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(GooglePlayBillingPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Clear WebView cache on every app start to prevent white screen issues

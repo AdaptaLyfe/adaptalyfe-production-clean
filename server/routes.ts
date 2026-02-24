@@ -4211,6 +4211,244 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // Google Play Store subscription verification
+  app.post("/api/google-play/verify-purchase", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.session.user;
+      const { purchaseToken, productId, orderId } = req.body;
+
+      if (!purchaseToken || !productId) {
+        return res.status(400).json({ message: "Missing purchaseToken or productId" });
+      }
+
+      const productToPlan: Record<string, { planType: string; billingCycle: string; amount: number }> = {
+        adaptalyfe_basic_monthly: { planType: 'basic', billingCycle: 'monthly', amount: 499 },
+        adaptalyfe_basic_annual: { planType: 'basic', billingCycle: 'annual', amount: 4900 },
+        adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly', amount: 1299 },
+        adaptalyfe_premium_annual: { planType: 'premium', billingCycle: 'annual', amount: 12900 },
+        adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly', amount: 2499 },
+        adaptalyfe_family_annual: { planType: 'family', billingCycle: 'annual', amount: 24900 },
+      };
+
+      const planInfo = productToPlan[productId];
+      if (!planInfo) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      let verified = false;
+      let expiryTime: Date | null = null;
+
+      if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
+        try {
+          const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
+          const { google } = await import('googleapis');
+          const auth = new google.auth.GoogleAuth({
+            credentials: serviceAccount,
+            scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+          });
+          const androidPublisher = google.androidpublisher({ version: 'v3', auth });
+
+          const packageName = 'com.adaptalyfe.app';
+          const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
+            packageName,
+            token: purchaseToken,
+          });
+
+          const subscriptionState = purchaseResult.data.subscriptionState;
+          if (subscriptionState === 'SUBSCRIPTION_STATE_ACTIVE' || subscriptionState === 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD') {
+            const lineItems = purchaseResult.data.lineItems;
+            if (lineItems && lineItems.length > 0) {
+              const matchingItem = lineItems.find((item: any) => item.productId === productId);
+              if (!matchingItem) {
+                console.error(`Product ID mismatch: expected ${productId}, got ${lineItems.map((i: any) => i.productId).join(',')}`);
+                return res.status(400).json({ message: "Product ID mismatch in purchase verification" });
+              }
+
+              verified = true;
+              const expiryStr = matchingItem.expiryTime;
+              if (expiryStr) {
+                expiryTime = new Date(expiryStr);
+              }
+            } else {
+              verified = true;
+            }
+
+            if (verified && purchaseResult.data.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING') {
+              try {
+                await androidPublisher.purchases.subscriptions.acknowledge({
+                  packageName,
+                  subscriptionId: productId,
+                  token: purchaseToken,
+                });
+                console.log(`Acknowledged purchase for ${productId}`);
+              } catch (ackError: any) {
+                console.error("Purchase acknowledgement error:", ackError.message);
+              }
+            }
+          } else {
+            console.error(`Subscription not active: state=${subscriptionState}`);
+            return res.status(400).json({ message: "Subscription is not active" });
+          }
+        } catch (apiError: any) {
+          console.error("Google Play API verification error:", apiError.message);
+          return res.status(500).json({ message: "Purchase verification failed - API error" });
+        }
+      } else {
+        console.warn("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY not configured - accepting purchase in development mode only");
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ message: "Google Play verification not configured" });
+        }
+        verified = true;
+      }
+
+      if (!verified) {
+        return res.status(400).json({ message: "Purchase verification failed" });
+      }
+
+      if (!expiryTime) {
+        expiryTime = new Date();
+        if (planInfo.billingCycle === 'annual') {
+          expiryTime.setFullYear(expiryTime.getFullYear() + 1);
+        } else {
+          expiryTime.setMonth(expiryTime.getMonth() + 1);
+        }
+      }
+
+      await storage.updateUser(user.id, {
+        subscriptionTier: planInfo.planType,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiryTime,
+        subscriptionPlatform: 'google_play',
+        googlePlayPurchaseToken: purchaseToken,
+        googlePlayOrderId: orderId || null,
+        googlePlayProductId: productId,
+      });
+
+      req.session.user = {
+        ...req.session.user,
+        subscriptionTier: planInfo.planType,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiryTime,
+        subscriptionPlatform: 'google_play',
+      };
+
+      console.log(`Google Play subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType} (${planInfo.billingCycle})`);
+
+      res.json({
+        success: true,
+        planType: planInfo.planType,
+        billingCycle: planInfo.billingCycle,
+        expiresAt: expiryTime.toISOString(),
+        platform: 'google_play',
+      });
+    } catch (error: any) {
+      console.error("Google Play verification error:", error);
+      res.status(500).json({ message: "Failed to verify purchase", error: error.message });
+    }
+  });
+
+  app.post("/api/google-play/restore-purchases", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.session.user;
+      const { purchases } = req.body;
+
+      if (!purchases || !Array.isArray(purchases) || purchases.length === 0) {
+        return res.json({ restored: false, message: "No purchases to restore" });
+      }
+
+      const productToPlan: Record<string, { planType: string; billingCycle: string }> = {
+        adaptalyfe_basic_monthly: { planType: 'basic', billingCycle: 'monthly' },
+        adaptalyfe_basic_annual: { planType: 'basic', billingCycle: 'annual' },
+        adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly' },
+        adaptalyfe_premium_annual: { planType: 'premium', billingCycle: 'annual' },
+        adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly' },
+        adaptalyfe_family_annual: { planType: 'family', billingCycle: 'annual' },
+      };
+
+      let restored = false;
+      for (const purchase of purchases) {
+        if (!purchase.purchaseToken || !purchase.productId) continue;
+        const planInfo = productToPlan[purchase.productId];
+        if (!planInfo) continue;
+
+        let expiresAt: Date | null = null;
+
+        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
+          try {
+            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
+            const { google } = await import('googleapis');
+            const auth = new google.auth.GoogleAuth({
+              credentials: serviceAccount,
+              scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+            });
+            const androidPublisher = google.androidpublisher({ version: 'v3', auth });
+            const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
+              packageName: 'com.adaptalyfe.app',
+              token: purchase.purchaseToken,
+            });
+            const state = purchaseResult.data.subscriptionState;
+            if (state !== 'SUBSCRIPTION_STATE_ACTIVE' && state !== 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD') {
+              continue;
+            }
+            const lineItems = purchaseResult.data.lineItems;
+            if (lineItems && lineItems.length > 0 && lineItems[0].expiryTime) {
+              expiresAt = new Date(lineItems[0].expiryTime);
+            }
+          } catch (verifyError: any) {
+            console.error("Restore verification error:", verifyError.message);
+            continue;
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ message: "Google Play verification not configured" });
+        }
+
+        if (!expiresAt) {
+          expiresAt = new Date();
+          if (planInfo.billingCycle === 'annual') {
+            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+          } else {
+            expiresAt.setMonth(expiresAt.getMonth() + 1);
+          }
+        }
+
+        await storage.updateUser(user.id, {
+          subscriptionTier: planInfo.planType,
+          subscriptionStatus: 'active',
+          subscriptionExpiresAt: expiresAt,
+          subscriptionPlatform: 'google_play',
+          googlePlayPurchaseToken: purchase.purchaseToken,
+          googlePlayOrderId: purchase.orderId || null,
+          googlePlayProductId: purchase.productId,
+        });
+
+        req.session.user = {
+          ...req.session.user,
+          subscriptionTier: planInfo.planType,
+          subscriptionStatus: 'active',
+          subscriptionExpiresAt: expiresAt,
+          subscriptionPlatform: 'google_play',
+        };
+
+        console.log(`Restored Google Play subscription for user ${user.id}: ${purchase.productId}`);
+        restored = true;
+        break;
+      }
+
+      res.json({ restored, message: restored ? "Subscription restored successfully" : "No valid purchases found" });
+    } catch (error: any) {
+      console.error("Restore purchases error:", error);
+      res.status(500).json({ message: "Failed to restore purchases", error: error.message });
+    }
+  });
+
   app.get("/api/subscription/payment-history", async (req, res) => {
     try {
       // Get actual payment history from Stripe

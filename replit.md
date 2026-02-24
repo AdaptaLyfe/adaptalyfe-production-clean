@@ -3,7 +3,12 @@
 ## Overview
 Adaptalyfe is a full-stack web application designed to empower individuals with developmental disabilities by assisting them in managing daily tasks, finances, mood, and connecting with their support network. The application aims to foster independence and improve quality of life through comprehensive task management, financial tracking, mood monitoring, communication tools for caregivers, meal planning, and appointment scheduling. The business vision is to provide an accessible and supportive digital ecosystem that significantly improves daily living for this community, with potential for substantial market penetration and revenue growth through a freemium model and healthcare partnerships.
 
-## Recent Changes (February 16, 2026)
+## Recent Changes (February 24, 2026)
+- **Google Play Store In-App Subscriptions**: Added native Google Play Billing integration for Android app with same pricing tiers as web (Basic $4.99/mo, Premium $12.99/mo, Family $24.99/mo + annual options). Includes custom Capacitor plugin (GooglePlayBillingPlugin.java), server-side purchase verification via Google Play Developer API, purchase restoration, and platform-aware subscription page.
+- **Google Play Product IDs**: adaptalyfe_basic_monthly, adaptalyfe_basic_annual, adaptalyfe_premium_monthly, adaptalyfe_premium_annual, adaptalyfe_family_monthly, adaptalyfe_family_annual
+- **UI/UX Fixes**: Dialog scrolling (max-h-[85vh] overflow-y-auto), reduced bottom navigation white space
+
+## Previous Changes (February 16, 2026)
 - **Firebase Analytics Integration**: Connected Firebase Analytics for comprehensive app tracking including DAU, feature usage, retention metrics, churn tracking, and subscription events. Lazy-init ensures no events are dropped.
 - **7-Day Free Trial Enforcement**: Fixed trial period (was 30 days for testing), now enforces 7-day trial with full app lockout redirecting expired users to subscription/payment page.
 - **Mood Log Confirmation Popup**: Added personalized confirmation dialog with colored gradient headers, encouragement messages, and daily tips based on selected mood.
