@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { CheckCircle, Zap, Users, Star, Clock, CreditCard, AlertTriangle, Smartphone, RotateCcw } from "lucide-react";
+import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
@@ -33,10 +32,10 @@ const planFeatures: PlanFeatures = {
   basic: {
     name: "Basic Plan",
     description: "Essential features for daily independence",
-    price: { monthly: 4.99, annual: 49.00 },
+    price: { monthly: 4.99, annual: 4.99 },
     features: [
       "Daily task management",
-      "Basic mood tracking", 
+      "Basic mood tracking",
       "Simple financial tracking",
       "1 caregiver connection",
       "Basic reminders",
@@ -44,9 +43,9 @@ const planFeatures: PlanFeatures = {
     ]
   },
   premium: {
-    name: "Premium Plan", 
+    name: "Premium Plan",
     description: "Advanced features for enhanced independence",
-    price: { monthly: 12.99, annual: 129.00 },
+    price: { monthly: 12.99, annual: 12.99 },
     features: [
       "Everything in Basic",
       "Advanced analytics",
@@ -63,7 +62,7 @@ const planFeatures: PlanFeatures = {
   family: {
     name: "Family Plan",
     description: "Complete solution for families and care teams",
-    price: { monthly: 24.99, annual: 249.00 },
+    price: { monthly: 24.99, annual: 24.99 },
     features: [
       "Everything in Premium",
       "Unlimited caregiver connections",
@@ -230,7 +229,7 @@ function PaymentForm({ planType, billingCycle, onSuccess }: {
 
 export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  const billingCycle = "monthly";
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
@@ -431,16 +430,9 @@ export default function SubscriptionPage() {
             </div>
           )}
 
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <span className={billingCycle === 'monthly' ? 'font-semibold' : 'text-gray-600'}>Monthly</span>
-            <Switch
-              checked={billingCycle === 'annual'}
-              onCheckedChange={(checked) => setBillingCycle(checked ? 'annual' : 'monthly')}
-            />
-            <span className={billingCycle === 'annual' ? 'font-semibold' : 'text-gray-600'}>
-              Annual <Badge variant="secondary" className="ml-1">Save 20%</Badge>
-            </span>
+          {/* Monthly billing notice */}
+          <div className="flex items-center justify-center mb-8">
+            <Badge variant="secondary" className="text-sm px-4 py-1">Monthly billing — cancel anytime</Badge>
           </div>
         </div>
 
@@ -507,17 +499,8 @@ export default function SubscriptionPage() {
                 </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold">
-                    ${billingCycle === 'annual' ? plan.price.annual : plan.price.monthly}
-                  </span>
-                  <span className="text-gray-600">
-                    /{billingCycle === 'annual' ? 'year' : 'month'}
-                  </span>
-                  {billingCycle === 'annual' && (
-                    <div className="text-sm text-green-600 font-medium">
-                      Save ${(plan.price.monthly * 12 - plan.price.annual).toFixed(2)}
-                    </div>
-                  )}
+                  <span className="text-3xl font-bold">${plan.price.monthly}</span>
+                  <span className="text-gray-600">/month</span>
                 </div>
               </CardHeader>
               

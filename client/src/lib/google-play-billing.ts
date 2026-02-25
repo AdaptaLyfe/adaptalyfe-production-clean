@@ -1,19 +1,13 @@
 const GOOGLE_PLAY_PRODUCT_IDS = {
   basic_monthly: 'adaptalyfe_basic_monthly',
-  basic_annual: 'adaptalyfe_basic_annual',
   premium_monthly: 'adaptalyfe_premium_monthly',
-  premium_annual: 'adaptalyfe_premium_annual',
   family_monthly: 'adaptalyfe_family_monthly',
-  family_annual: 'adaptalyfe_family_annual',
 } as const;
 
 const PRODUCT_TO_PLAN: Record<string, { planType: string; billingCycle: string; amount: number }> = {
   adaptalyfe_basic_monthly: { planType: 'basic', billingCycle: 'monthly', amount: 499 },
-  adaptalyfe_basic_annual: { planType: 'basic', billingCycle: 'annual', amount: 4900 },
   adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly', amount: 1299 },
-  adaptalyfe_premium_annual: { planType: 'premium', billingCycle: 'annual', amount: 12900 },
   adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly', amount: 2499 },
-  adaptalyfe_family_annual: { planType: 'family', billingCycle: 'annual', amount: 24900 },
 };
 
 export function isAndroidApp(): boolean {

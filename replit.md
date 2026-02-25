@@ -5,7 +5,7 @@ Adaptalyfe is a full-stack web application designed to empower individuals with 
 
 ## Recent Changes (February 24, 2026)
 - **Google Play Store In-App Subscriptions**: Added native Google Play Billing integration for Android app with same pricing tiers as web (Basic $4.99/mo, Premium $12.99/mo, Family $24.99/mo + annual options). Includes custom Capacitor plugin (GooglePlayBillingPlugin.java), server-side purchase verification via Google Play Developer API, purchase restoration, and platform-aware subscription page.
-- **Google Play Product IDs**: adaptalyfe_basic_monthly, adaptalyfe_basic_annual, adaptalyfe_premium_monthly, adaptalyfe_premium_annual, adaptalyfe_family_monthly, adaptalyfe_family_annual
+- **Google Play Product IDs**: adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly (monthly only)
 - **UI/UX Fixes**: Dialog scrolling (max-h-[85vh] overflow-y-auto), reduced bottom navigation white space
 
 ## Previous Changes (February 16, 2026)
