@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { getSessionToken } from "@/lib/queryClient";
+import { getSessionToken, clearSessionToken } from "@/lib/queryClient";
 
 interface AuthCheckProps {
   children: React.ReactNode;
@@ -52,13 +52,13 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
       return;
     }
     
-    if (error) {
-      console.log('AuthCheck: API authentication failed, redirecting to login');
-      setAuthState('unauthenticated');
-      const currentPath = window.location.pathname;
-      if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
-        setLocation(redirectTo);
-      }
+    // If not loading and user is null (401 returns null, not an error), treat as unauthenticated
+    console.log('AuthCheck: No user returned (401 or session expired), clearing token and redirecting to login');
+    clearSessionToken(); // Clear stale token so next visit goes straight to login
+    setAuthState('unauthenticated');
+    const currentPath = window.location.pathname;
+    if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
+      setLocation(redirectTo);
     }
   }, [sessionToken, isLoading, user, error, setLocation, redirectTo]);
 
