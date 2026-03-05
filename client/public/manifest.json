@@ -61,22 +61,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "platform": "wide",
-      "label": "Adaptalyfe Dashboard"
-    },
-    {
-      "src": "/screenshot-2.png", 
-      "sizes": "540x720",
-      "type": "image/png",
-      "platform": "wide",
-      "label": "Daily Tasks Management"
-    }
-  ],
   "features": [
     "Cross Platform",
     "Fast",

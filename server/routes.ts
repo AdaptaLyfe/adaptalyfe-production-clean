@@ -182,13 +182,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: process.env.SESSION_SECRET || 'demo-secret-key-change-in-production',
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Extend session on each request
+    rolling: true,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Only secure in production
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Cross-site in production
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      domain: process.env.NODE_ENV === 'production' ? '.getadaptalyfeapp.com' : undefined
     }
   }));
   
