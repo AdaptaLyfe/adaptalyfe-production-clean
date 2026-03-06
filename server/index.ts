@@ -219,8 +219,23 @@ app.use((req, res, next) => {
       throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
     }
 
-    app.use(express.static(distPath));
-    
+    // Hashed assets (/assets/*.js, /assets/*.css) — long-term cache (1 year)
+    app.use('/assets', express.static(path.join(distPath, 'assets'), {
+      maxAge: '1y',
+      immutable: true,
+    }));
+
+    // Service worker — always fetch fresh so browsers pick up new versions immediately
+    app.get('/sw.js', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.sendFile(path.resolve(distPath, 'sw.js'));
+    });
+
+    // All other static files (icons, manifest, etc.) — short cache (1 hour)
+    app.use(express.static(distPath, { maxAge: '1h' }));
+
     // Serve index.html for all non-API routes (SPA fallback)
     app.get("*", (req, res) => {
       // Don't serve HTML for API routes - let them return proper 404 JSON
@@ -228,16 +243,18 @@ app.use((req, res, next) => {
         console.log(`API route not found: ${req.method} ${req.path}`);
         return res.status(404).json({ message: `API endpoint not found: ${req.path}` });
       }
-      
+
       // Don't serve HTML for static assets (JS, CSS, images, etc.)
-      // Let them 404 properly if they don't exist
       const staticAssetExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.map'];
       if (staticAssetExtensions.some(ext => req.path.toLowerCase().endsWith(ext))) {
         console.log(`Static asset not found: ${req.path}`);
         return res.status(404).send('Not Found');
       }
-      
-      // Serve index.html for all other routes (SPA routing)
+
+      // index.html — never cache so users always get the latest version on next visit
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.resolve(distPath, "index.html"));
     });
   }

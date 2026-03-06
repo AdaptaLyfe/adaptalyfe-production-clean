@@ -97,6 +97,18 @@ function App() {
   const sessionToken = getSessionToken();
   const shouldRedirectToDashboard = sessionToken && isAuthPage && location !== "/privacy-policy";
   
+  // Listen for service worker update signal — reload when new version is deployed
+  React.useEffect(() => {
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SW_UPDATED') {
+        console.log('🔄 New app version detected, reloading...');
+        window.location.reload();
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSwMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', handleSwMessage);
+  }, []);
+
   // Session restoration on app startup (critical for mobile apps)
   React.useEffect(() => {
     // If we have a session token and we're on an auth page, redirect immediately
