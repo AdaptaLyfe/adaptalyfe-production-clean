@@ -41,7 +41,7 @@ export function useSubscriptionEnforcement() {
     if (isAuthPage || !user || !subscription) return;
 
     // Admin users get full access without restrictions
-    const isAdmin = user.accountType === 'admin' || user.username === 'admin' || user.name?.toLowerCase().includes('admin');
+    const isAdmin = user.accountType === 'admin' || user.username === 'admin';
     if (isAdmin) return;
 
     // Users with active org membership get full access
@@ -92,7 +92,7 @@ export function useSubscriptionEnforcement() {
     }
   }, [location, user, subscription, setLocation]);
 
-  const isAdmin = user?.accountType === 'admin' || user?.username === 'admin' || user?.name?.toLowerCase().includes('admin');
+  const isAdmin = user?.accountType === 'admin' || user?.username === 'admin';
   const hasOrgAccess = orgMembership && orgMembership.status === 'active';
 
   return {
