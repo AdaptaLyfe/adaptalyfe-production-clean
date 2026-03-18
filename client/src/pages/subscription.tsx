@@ -12,11 +12,19 @@ import { StripeWrapper } from '@/components/stripe-wrapper';
 import {
   isAndroidApp,
   getGooglePlayProductId,
-  purchaseSubscription,
-  verifyPurchaseOnServer,
-  restorePurchases,
+  purchaseSubscription as googlePurchaseSubscription,
+  verifyPurchaseOnServer as googleVerifyPurchase,
+  restorePurchases as googleRestorePurchases,
   initGooglePlayBilling,
 } from "@/lib/google-play-billing";
+import {
+  isIOSApp,
+  getAppleProductId,
+  purchaseSubscription as applePurchaseSubscription,
+  verifyPurchaseOnServer as appleVerifyPurchase,
+  restorePurchases as appleRestorePurchases,
+  initAppleStoreKit,
+} from "@/lib/apple-store-billing";
 
 interface PlanFeatures {
   [key: string]: {
@@ -233,12 +241,16 @@ export default function SubscriptionPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
+  const [isApplePurchasing, setIsApplePurchasing] = useState(false);
   const [isRestoringPurchases, setIsRestoringPurchases] = useState(false);
   const [googlePlayAvailable, setGooglePlayAvailable] = useState(false);
+  const [appleStoreKitAvailable, setAppleStoreKitAvailable] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const onAndroid = isAndroidApp();
+  const onIOS = isIOSApp();
+  const onNative = onAndroid || onIOS;
 
   useEffect(() => {
     if (onAndroid) {
@@ -247,7 +259,13 @@ export default function SubscriptionPage() {
         console.log('Google Play Billing available:', available);
       });
     }
-  }, [onAndroid]);
+    if (onIOS) {
+      initAppleStoreKit().then((available) => {
+        setAppleStoreKitAvailable(available);
+        console.log('Apple StoreKit available:', available);
+      });
+    }
+  }, [onAndroid, onIOS]);
 
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
@@ -259,31 +277,21 @@ export default function SubscriptionPage() {
   const handleGooglePlayPurchase = async (planType: string) => {
     setIsGooglePlayPurchasing(true);
     setSelectedPlan(planType);
-
     try {
       const productId = getGooglePlayProductId(planType, billingCycle);
       if (!productId) {
         toast({ title: "Error", description: "Invalid plan selected", variant: "destructive" });
         return;
       }
-
-      const result = await purchaseSubscription(productId);
-      
+      const result = await googlePurchaseSubscription(productId);
       if (!result.success) {
         if (result.error !== 'Purchase canceled') {
           toast({ title: "Purchase Failed", description: result.error || "Unable to complete purchase", variant: "destructive" });
         }
         return;
       }
-
       toast({ title: "Verifying Purchase...", description: "Please wait while we activate your subscription." });
-
-      const verification = await verifyPurchaseOnServer(
-        result.purchaseToken!,
-        result.productId!,
-        result.orderId
-      );
-
+      const verification = await googleVerifyPurchase(result.purchaseToken!, result.productId!, result.orderId);
       if (verification.success) {
         trackSubscriptionEvent("upgrade", planType);
         toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
@@ -301,16 +309,67 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleApplePurchase = async (planType: string) => {
+    setIsApplePurchasing(true);
+    setSelectedPlan(planType);
+    try {
+      const productId = getAppleProductId(planType, billingCycle);
+      if (!productId) {
+        toast({ title: "Error", description: "Invalid plan selected", variant: "destructive" });
+        return;
+      }
+      const result = await applePurchaseSubscription(productId);
+      if (!result.success) {
+        if (result.error !== 'Purchase canceled') {
+          toast({ title: "Purchase Failed", description: result.error || "Unable to complete purchase", variant: "destructive" });
+        }
+        return;
+      }
+      toast({ title: "Verifying Purchase...", description: "Please wait while we activate your subscription." });
+      const verification = await appleVerifyPurchase(result.receiptData!, result.productId!, result.transactionId);
+      if (verification.success) {
+        trackSubscriptionEvent("upgrade", planType);
+        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+      } else {
+        toast({ title: "Verification Failed", description: verification.error || "Please contact support.", variant: "destructive" });
+      }
+    } catch (error: any) {
+      console.error('Apple purchase error:', error);
+      toast({ title: "Purchase Error", description: "An unexpected error occurred. Please try again.", variant: "destructive" });
+    } finally {
+      setIsApplePurchasing(false);
+      setSelectedPlan(null);
+    }
+  };
+
   const handleRestorePurchases = async () => {
     setIsRestoringPurchases(true);
     try {
-      const purchases = await restorePurchases();
-      
+      if (onIOS) {
+        const purchases = await appleRestorePurchases();
+        if (purchases.length === 0) {
+          toast({ title: "No Purchases Found", description: "No previous subscriptions found on this Apple ID." });
+          return;
+        }
+        const p = purchases[0];
+        const verification = await appleVerifyPurchase(p.receiptData!, p.productId!, p.transactionId);
+        if (verification.success) {
+          toast({ title: "Subscription Restored!", description: "Your previous subscription has been restored." });
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        } else {
+          toast({ title: "Restore Failed", description: "Could not restore subscription.", variant: "destructive" });
+        }
+        return;
+      }
+
+      const purchases = await googleRestorePurchases();
       if (purchases.length === 0) {
         toast({ title: "No Purchases Found", description: "No previous subscriptions found on this Google account." });
         return;
       }
-
       const response = await fetch('/api/google-play/restore-purchases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -323,7 +382,6 @@ export default function SubscriptionPage() {
           }))
         }),
       });
-
       const data = await response.json();
       if (data.restored) {
         toast({ title: "Subscription Restored!", description: "Your previous subscription has been restored." });
@@ -383,6 +441,10 @@ export default function SubscriptionPage() {
   const handlePlanSelect = (planType: string) => {
     if (onAndroid) {
       handleGooglePlayPurchase(planType);
+      return;
+    }
+    if (onIOS) {
+      handleApplePurchase(planType);
       return;
     }
     setSelectedPlan(planType);
@@ -522,15 +584,17 @@ export default function SubscriptionPage() {
                 ) : (
                   <Button 
                     onClick={() => handlePlanSelect(planKey)}
-                    disabled={createSubscriptionMutation.isPending || isGooglePlayPurchasing}
+                    disabled={createSubscriptionMutation.isPending || isGooglePlayPurchasing || isApplePurchasing}
                     className="w-full"
                     variant={plan.popular ? "default" : "outline"}
                   >
-                    {(createSubscriptionMutation.isPending || isGooglePlayPurchasing) && selectedPlan === planKey
+                    {((createSubscriptionMutation.isPending || isGooglePlayPurchasing || isApplePurchasing) && selectedPlan === planKey)
                       ? "Setting up..."
                       : onAndroid
                         ? (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe via Google Play")
-                        : (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe Now")
+                        : onIOS
+                          ? (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe via App Store")
+                          : (trialDaysLeft > 0 ? "Start Free Trial" : "Subscribe Now")
                     }
                   </Button>
                 )}
@@ -539,8 +603,8 @@ export default function SubscriptionPage() {
           ))}
         </div>
 
-        {/* Google Play Restore Purchases */}
-        {onAndroid && (
+        {/* Restore Purchases (Android + iOS) */}
+        {onNative && (
           <div className="mt-8 text-center">
             <Button
               variant="outline"
@@ -552,17 +616,25 @@ export default function SubscriptionPage() {
               {isRestoringPurchases ? "Restoring..." : "Restore Previous Purchase"}
             </Button>
             <p className="text-sm text-gray-500 mt-2">
-              Already subscribed? Restore your Google Play subscription here.
+              Already subscribed? Restore your {onIOS ? "App Store" : "Google Play"} subscription here.
             </p>
           </div>
         )}
 
-        {/* Android Payment Notice */}
+        {/* Platform Payment Notice */}
         {onAndroid && (
           <div className="mt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
               <Smartphone className="w-4 h-4" />
               Payments processed securely through Google Play
+            </div>
+          </div>
+        )}
+        {onIOS && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-full text-sm border border-gray-200">
+              <Smartphone className="w-4 h-4" />
+              Payments processed securely through Apple App Store
             </div>
           </div>
         )}

@@ -4347,6 +4347,134 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // ─── Apple App Store Receipt Verification ───────────────────────────────────
+  app.post("/api/apple/verify-purchase", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.session.user;
+      const { receiptData, productId, transactionId } = req.body;
+
+      if (!receiptData || !productId) {
+        return res.status(400).json({ message: "Missing receiptData or productId" });
+      }
+
+      const productToPlan: Record<string, { planType: string; billingCycle: string; amount: number }> = {
+        adaptalyfe_basic_monthly: { planType: 'basic', billingCycle: 'monthly', amount: 499 },
+        adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly', amount: 1299 },
+        adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly', amount: 2499 },
+      };
+
+      const planInfo = productToPlan[productId];
+      if (!planInfo) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+
+      let verified = false;
+      let expiryTime: Date | null = null;
+
+      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
+      if (APPLE_SHARED_SECRET) {
+        try {
+          // Try production first, then sandbox
+          const verifyReceipt = async (url: string) => {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                'receipt-data': receiptData,
+                'password': APPLE_SHARED_SECRET,
+                'exclude-old-transactions': true,
+              }),
+            });
+            return response.json();
+          };
+
+          let appleResponse = await verifyReceipt('https://buy.itunes.apple.com/verifyReceipt');
+
+          // status 21007 means sandbox receipt sent to production — retry with sandbox
+          if (appleResponse.status === 21007) {
+            appleResponse = await verifyReceipt('https://sandbox.itunes.apple.com/verifyReceipt');
+          }
+
+          if (appleResponse.status !== 0) {
+            console.error(`Apple receipt validation failed: status ${appleResponse.status}`);
+            return res.status(400).json({ message: `Apple receipt invalid (status ${appleResponse.status})` });
+          }
+
+          // Find latest valid receipt for our product ID
+          const latestReceipts: any[] = appleResponse.latest_receipt_info || appleResponse.receipt?.in_app || [];
+          const matchingReceipts = latestReceipts.filter((r: any) => r.product_id === productId);
+
+          if (matchingReceipts.length === 0) {
+            return res.status(400).json({ message: "No matching subscription found in receipt" });
+          }
+
+          // Sort by expires_date_ms descending, pick the latest
+          matchingReceipts.sort((a: any, b: any) => Number(b.expires_date_ms || 0) - Number(a.expires_date_ms || 0));
+          const latest = matchingReceipts[0];
+          const expiresMs = Number(latest.expires_date_ms);
+
+          if (!expiresMs || expiresMs < Date.now()) {
+            return res.status(400).json({ message: "Subscription has expired" });
+          }
+
+          verified = true;
+          expiryTime = new Date(expiresMs);
+        } catch (appleError: any) {
+          console.error("Apple receipt verification error:", appleError.message);
+          return res.status(500).json({ message: "Apple receipt verification failed" });
+        }
+      } else {
+        // Development fallback — no shared secret configured
+        console.warn("APPLE_SHARED_SECRET not configured — accepting Apple purchase in dev mode only");
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ message: "Apple receipt verification not configured" });
+        }
+        verified = true;
+      }
+
+      if (!verified) {
+        return res.status(400).json({ message: "Apple purchase verification failed" });
+      }
+
+      if (!expiryTime) {
+        expiryTime = new Date();
+        expiryTime.setMonth(expiryTime.getMonth() + 1);
+      }
+
+      await storage.updateUser(user.id, {
+        subscriptionTier: planInfo.planType,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiryTime,
+        subscriptionPlatform: 'app_store',
+      });
+
+      req.session.user = {
+        ...req.session.user,
+        subscriptionTier: planInfo.planType,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiryTime,
+        subscriptionPlatform: 'app_store',
+      };
+
+      console.log(`Apple subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType}`);
+
+      res.json({
+        success: true,
+        planType: planInfo.planType,
+        billingCycle: planInfo.billingCycle,
+        expiresAt: expiryTime.toISOString(),
+        platform: 'app_store',
+      });
+    } catch (error: any) {
+      console.error("Apple verification error:", error);
+      res.status(500).json({ message: "Failed to verify Apple purchase", error: error.message });
+    }
+  });
+
   app.post("/api/google-play/restore-purchases", async (req: any, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
