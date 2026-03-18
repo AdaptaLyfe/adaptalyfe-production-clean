@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "yc6EVVJnGwo8ZVNYO9jwZ"
+uri = "file://adaptalyfe-ios-20260318.zip"
+type = "unspecified"
+title = "Adaptalyfe iOS Project — Full Xcode Build (March 18, 2026)"
