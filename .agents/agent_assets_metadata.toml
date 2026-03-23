@@ -6,3 +6,9 @@ id = "yc6EVVJnGwo8ZVNYO9jwZ"
 uri = "file://adaptalyfe-ios-20260318.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS Project — Full Xcode Build (March 18, 2026)"
+
+[[outputs]]
+id = "Tdz2fImSouHLlZ3GZTj_4"
+uri = "file://adaptalyfe-ios-20260323.zip"
+type = "unspecified"
+title = "Adaptalyfe iOS — Self-Contained Xcode Project (March 23, 2026)"
