@@ -3956,16 +3956,16 @@ Provide a helpful, encouraging response:`;
   });
 
   // Upgrade user subscription after successful payment
-  app.post("/api/upgrade-subscription", async (req, res) => {
+  app.post("/api/upgrade-subscription", async (req: any, res) => {
     try {
       const { planType, billingCycle, paymentIntentId } = req.body;
-      const user = storage.getCurrentUser();
-      
-      if (!user) {
+
+      if (!req.session?.userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
-      // Verify payment intent was successful (in production, verify with Stripe)
+      const userId = req.session.userId;
+
+      // Verify payment intent was successful with Stripe
       const currentStripe = getStripeInstance();
       if (currentStripe && paymentIntentId) {
         const paymentIntent = await currentStripe.paymentIntents.retrieve(paymentIntentId);
@@ -3973,26 +3973,30 @@ Provide a helpful, encouraging response:`;
           return res.status(400).json({ message: "Payment not confirmed" });
         }
       }
-      
-      // Upgrade user subscription
-      const subscriptionTier = planType === 'basic' ? 'basic' : 
+
+      const subscriptionTier = planType === 'basic' ? 'basic' :
                               planType === 'premium' ? 'premium' : 'family';
-      
+
       const expiresAt = new Date();
       if (billingCycle === 'annual') {
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
       } else {
         expiresAt.setMonth(expiresAt.getMonth() + 1);
       }
-      
-      // Update user subscription in storage
-      await storage.updateUserSubscription(user.id, {
+
+      await storage.updateUserSubscription(userId, {
         subscriptionTier,
         subscriptionStatus: 'active',
         subscriptionExpiresAt: expiresAt
       });
-      
-      res.json({ 
+
+      // Refresh session user so middleware sees the new status immediately
+      const updatedUser = await storage.getUserById(userId);
+      if (updatedUser && req.session) {
+        req.session.user = updatedUser;
+      }
+
+      res.json({
         message: "Subscription upgraded successfully",
         plan: planType,
         billing: billingCycle,
@@ -4000,10 +4004,72 @@ Provide a helpful, encouraging response:`;
       });
     } catch (error: any) {
       console.error("Error upgrading subscription:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to upgrade subscription",
         error: error.message || "Unknown error"
       });
+    }
+  });
+
+  // Recover subscription for users who paid but whose status wasn't updated
+  app.post("/api/recover-subscription", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId = req.session.userId;
+      const user = await storage.getUserById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const currentStripe = getStripeInstance();
+      if (!currentStripe) {
+        return res.status(400).json({ message: "Stripe not configured" });
+      }
+
+      // Look up Stripe subscription by customer ID
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ message: "No Stripe customer found for this account" });
+      }
+
+      const subscriptions = await currentStripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1
+      });
+
+      if (subscriptions.data.length === 0) {
+        return res.status(400).json({ message: "No active Stripe subscription found" });
+      }
+
+      const activeSub = subscriptions.data[0];
+      const planType = (activeSub.metadata?.planType as string) || 'basic';
+      const billingCycle = (activeSub.metadata?.billingCycle as string) || 'monthly';
+      const subscriptionTier = planType === 'premium' ? 'premium' : planType === 'family' ? 'family' : 'basic';
+
+      const expiresAt = activeSub.current_period_end
+        ? new Date(activeSub.current_period_end * 1000)
+        : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d; })();
+
+      await storage.updateUserSubscription(userId, {
+        subscriptionTier,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiresAt
+      });
+
+      const updatedUser = await storage.getUserById(userId);
+      if (updatedUser && req.session) {
+        req.session.user = updatedUser;
+      }
+
+      res.json({
+        message: "Subscription recovered successfully",
+        plan: subscriptionTier,
+        billing: billingCycle,
+        expiresAt: expiresAt.toISOString()
+      });
+    } catch (error: any) {
+      console.error("Error recovering subscription:", error);
+      res.status(500).json({ message: "Failed to recover subscription", error: error.message });
     }
   });
 
@@ -4156,6 +4222,7 @@ Provide a helpful, encouraging response:`;
       res.json({
         subscriptionId: subscription.id,
         clientSecret: clientSecret,
+        paymentIntentId: paymentIntent?.id,
         status: subscription.status,
         requiresPayment: !!clientSecret
       });

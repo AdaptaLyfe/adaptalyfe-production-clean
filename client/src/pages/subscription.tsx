@@ -86,10 +86,11 @@ const planFeatures: PlanFeatures = {
   }
 };
 
-function PaymentForm({ planType, billingCycle, onSuccess }: {
+function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
   planType: string;
   billingCycle: string;
   onSuccess: () => void;
+  paymentIntentId?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -118,8 +119,8 @@ function PaymentForm({ planType, billingCycle, onSuccess }: {
     setIsProcessing(true);
 
     try {
-      // Confirm payment
-      const { error } = await stripe.confirmPayment({
+      // Confirm payment with Stripe
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/subscription?success=true`,
@@ -133,14 +134,33 @@ function PaymentForm({ planType, billingCycle, onSuccess }: {
           description: error.message,
           variant: "destructive"
         });
-      } else {
-        trackSubscriptionEvent("upgrade", planType);
-        toast({
-          title: "Payment Successful!",
-          description: "Your subscription has been activated."
-        });
-        onSuccess();
+        return;
       }
+
+      // Payment confirmed — now activate subscription on the server
+      const intentId = paymentIntent?.id || paymentIntentId;
+      try {
+        await fetch('/api/upgrade-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ planType, billingCycle, paymentIntentId: intentId })
+        });
+      } catch (upgradeErr) {
+        console.warn('Upgrade call failed, payment was still successful:', upgradeErr);
+      }
+
+      // Clear sessionStorage since payment is complete
+      sessionStorage.removeItem('pending_payment_intent_id');
+      sessionStorage.removeItem('pending_plan_type');
+      sessionStorage.removeItem('pending_billing_cycle');
+
+      trackSubscriptionEvent("upgrade", planType);
+      toast({
+        title: "Payment Successful!",
+        description: "Your subscription has been activated."
+      });
+      onSuccess();
     } catch (err) {
       toast({
         title: "Payment Error",
@@ -240,6 +260,7 @@ export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const billingCycle = "monthly";
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
   const [isApplePurchasing, setIsApplePurchasing] = useState(false);
@@ -273,10 +294,31 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
-      toast({ title: "Payment Successful!", description: "Your subscription is now active. Welcome to Adaptalyfe!" });
-      setTimeout(() => setLocation('/dashboard'), 1500);
+      const savedPlanType = sessionStorage.getItem('pending_plan_type') || 'basic';
+      const savedBillingCycle = sessionStorage.getItem('pending_billing_cycle') || 'monthly';
+      const savedPaymentIntentId = sessionStorage.getItem('pending_payment_intent_id');
+
+      sessionStorage.removeItem('pending_payment_intent_id');
+      sessionStorage.removeItem('pending_plan_type');
+      sessionStorage.removeItem('pending_billing_cycle');
+
+      // Tell the server to activate the subscription
+      apiRequest("POST", "/api/upgrade-subscription", {
+        planType: savedPlanType,
+        billingCycle: savedBillingCycle,
+        paymentIntentId: savedPaymentIntentId
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        toast({ title: "Payment Successful!", description: "Your subscription is now active. Welcome to Adaptalyfe!" });
+        setTimeout(() => setLocation('/dashboard'), 1500);
+      }).catch(() => {
+        // Still redirect even if verification call fails — payment was confirmed by Stripe
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        toast({ title: "Subscription Activated!", description: "Your payment was received. Welcome to Adaptalyfe!" });
+        setTimeout(() => setLocation('/dashboard'), 1500);
+      });
     }
   }, []);
 
@@ -425,6 +467,13 @@ export default function SubscriptionPage() {
       
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
+        if (data.paymentIntentId) {
+          setPaymentIntentId(data.paymentIntentId);
+          // Store for 3D Secure redirect recovery
+          sessionStorage.setItem('pending_payment_intent_id', data.paymentIntentId);
+          sessionStorage.setItem('pending_plan_type', selectedPlan || 'basic');
+          sessionStorage.setItem('pending_billing_cycle', billingCycle);
+        }
       } else if (data.status === 'active' || data.status === 'trialing') {
         trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
         toast({
@@ -509,9 +558,41 @@ export default function SubscriptionPage() {
           )}
 
           {/* Monthly billing notice */}
-          <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center justify-center mb-4">
             <Badge variant="secondary" className="text-sm px-4 py-1">Monthly billing — cancel anytime</Badge>
           </div>
+
+          {/* Recovery option for users who already paid */}
+          {user && user.subscriptionStatus !== 'active' && (
+            <div className="flex items-center justify-center mb-6">
+              <button
+                onClick={async () => {
+                  try {
+                    toast({ title: "Checking your payment...", description: "Looking up your Stripe account." });
+                    const res = await fetch('/api/recover-subscription', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include'
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+                      toast({ title: "Subscription Restored!", description: `Your ${data.plan} plan is now active.` });
+                      setTimeout(() => setLocation('/dashboard'), 1500);
+                    } else {
+                      toast({ title: "No payment found", description: data.message || "No active Stripe subscription found for your account.", variant: "destructive" });
+                    }
+                  } catch {
+                    toast({ title: "Error", description: "Could not check payment status. Try again.", variant: "destructive" });
+                  }
+                }}
+                className="text-sm text-blue-600 underline hover:text-blue-800"
+              >
+                Already paid? Click here to restore your subscription
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Payment Form Modal */}
@@ -536,6 +617,7 @@ export default function SubscriptionPage() {
                     planType={selectedPlan}
                     billingCycle={billingCycle}
                     onSuccess={handlePaymentSuccess}
+                    paymentIntentId={paymentIntentId}
                   />
                 </StripeWrapper>
                 <Button 
