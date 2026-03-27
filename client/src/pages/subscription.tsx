@@ -562,37 +562,6 @@ export default function SubscriptionPage() {
             <Badge variant="secondary" className="text-sm px-4 py-1">Monthly billing — cancel anytime</Badge>
           </div>
 
-          {/* Recovery option for users who already paid */}
-          {user && user.subscriptionStatus !== 'active' && (
-            <div className="flex items-center justify-center mb-6">
-              <button
-                onClick={async () => {
-                  try {
-                    toast({ title: "Checking your payment...", description: "Looking up your Stripe account." });
-                    const res = await fetch('/api/recover-subscription', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include'
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
-                      toast({ title: "Subscription Restored!", description: `Your ${data.plan} plan is now active.` });
-                      setTimeout(() => setLocation('/dashboard'), 1500);
-                    } else {
-                      toast({ title: "No payment found", description: data.message || "No active Stripe subscription found for your account.", variant: "destructive" });
-                    }
-                  } catch {
-                    toast({ title: "Error", description: "Could not check payment status. Try again.", variant: "destructive" });
-                  }
-                }}
-                className="text-sm text-blue-600 underline hover:text-blue-800"
-              >
-                Already paid? Click here to restore your subscription
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Payment Form Modal */}
@@ -734,6 +703,50 @@ export default function SubscriptionPage() {
               <Smartphone className="w-4 h-4" />
               Payments processed securely through Apple App Store
             </div>
+          </div>
+        )}
+
+        {/* Already Paid Recovery — always visible */}
+        {user?.subscriptionStatus !== 'active' && (
+          <div className="mt-10 max-w-lg mx-auto">
+            <Card className="border-2 border-orange-200 bg-orange-50 shadow-md">
+              <CardContent className="p-5 text-center">
+                <p className="font-semibold text-orange-900 mb-1">Already paid but still seeing this page?</p>
+                <p className="text-sm text-orange-700 mb-4">
+                  Your payment may have gone through but your account wasn't updated. Click below to check and restore access instantly.
+                </p>
+                <Button
+                  onClick={async () => {
+                    if (!user) {
+                      setLocation('/login');
+                      return;
+                    }
+                    try {
+                      toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
+                      const res = await fetch('/api/recover-subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                      });
+                      const data = await res.json();
+                      if (res.ok) {
+                        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+                        toast({ title: "Subscription Restored!", description: `Your ${data.plan} plan is now active. Taking you to the app...` });
+                        setTimeout(() => setLocation('/dashboard'), 1500);
+                      } else {
+                        toast({ title: "No payment found", description: data.message || "No active Stripe subscription found. Please subscribe below.", variant: "destructive" });
+                      }
+                    } catch {
+                      toast({ title: "Error", description: "Could not check your payment. Please try again.", variant: "destructive" });
+                    }
+                  }}
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                >
+                  Restore My Subscription
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
 

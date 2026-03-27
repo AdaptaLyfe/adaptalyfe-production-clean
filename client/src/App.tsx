@@ -164,7 +164,7 @@ function App() {
           <AuthCheck><Dashboard /></AuthCheck>
         </Route>
         <Route path="/subscription">
-          <AuthCheck><Subscription /></AuthCheck>
+          <Subscription />
         </Route>
         <Route path="/direct-payment">
           <AuthCheck><DirectPayment /></AuthCheck>
@@ -297,7 +297,7 @@ function App() {
           <Features />
         </Route>
         <Route path="/subscription">
-          <AuthCheck><Subscription /></AuthCheck>
+          <Subscription />
         </Route>
         <Route path="/personal-documents" component={() => (
           <AuthCheck>
