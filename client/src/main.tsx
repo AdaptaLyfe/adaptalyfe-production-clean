@@ -35,11 +35,13 @@ function getPlatform(): 'ios' | 'android' | 'web' {
 async function initializeMobileApp(): Promise<void> {
   const platform = getPlatform();
   
-  // Apply Android-specific status bar padding
+  // Apply platform-specific body class and status bar padding
   if (platform === 'android') {
-    // Android status bar is typically 24-28dp, we use 28px for safety
     document.documentElement.style.setProperty('--android-status-bar-height', '28px');
     document.body.classList.add('android-native');
+  }
+  if (platform === 'ios') {
+    document.body.classList.add('ios-native');
   }
   
   if (!isNativeMobile()) return;
@@ -178,10 +180,10 @@ try {
   // Add mobile-specific rendering
   if (isMobile) {
     console.log("Applying mobile-specific optimizations");
-    // Prevent zoom on input focus for mobile
+    // Prevent zoom on input focus — MUST keep viewport-fit=cover for iOS safe area insets
     const metaViewport = document.querySelector('meta[name="viewport"]');
     if (metaViewport) {
-      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
     }
   }
   

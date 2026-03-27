@@ -47,6 +47,24 @@ body.android-native .main-content-with-header {
   padding-top: calc(56px + var(--android-status-bar-height, 28px));
 }
 
+/* When running as iOS native app — force safe area so buttons clear the status bar */
+body.ios-native .android-header {
+  padding-top: env(safe-area-inset-top, 44px);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+body.ios-native .main-content-with-header {
+  padding-top: calc(56px + env(safe-area-inset-top, 44px));
+}
+
+/* Ensure fixed headers always receive touch events on iOS WebKit */
+.android-header {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  pointer-events: auto;
+}
+
 /* Android Material Design elevation */
 .android-elevation-1 {
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
