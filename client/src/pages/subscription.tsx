@@ -562,6 +562,39 @@ export default function SubscriptionPage() {
             <Badge variant="secondary" className="text-sm px-4 py-1">Monthly billing — cancel anytime</Badge>
           </div>
 
+          {/* Already Paid Recovery — shown at top so it's visible on mobile without scrolling */}
+          {user?.subscriptionStatus !== 'active' && (
+            <div className="max-w-sm mx-auto mb-2">
+              <button
+                onClick={async () => {
+                  if (!user) { setLocation('/login'); return; }
+                  try {
+                    toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
+                    const res = await fetch('/api/recover-subscription', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      credentials: 'include'
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+                      toast({ title: "Subscription Restored!", description: `Your ${data.plan} plan is now active.` });
+                      setTimeout(() => setLocation('/dashboard'), 1500);
+                    } else {
+                      toast({ title: "No active payment found", description: data.message || "No active Stripe subscription found.", variant: "destructive" });
+                    }
+                  } catch {
+                    toast({ title: "Error", description: "Could not check payment. Try again.", variant: "destructive" });
+                  }
+                }}
+                className="w-full py-2 px-4 rounded-lg border-2 border-orange-400 bg-orange-50 text-orange-800 text-sm font-semibold hover:bg-orange-100 transition-colors"
+              >
+                Already paid? Tap here to restore access
+              </button>
+            </div>
+          )}
+
         </div>
 
         {/* Payment Form Modal */}
