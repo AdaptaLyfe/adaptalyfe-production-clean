@@ -1,3 +1,5 @@
+import { registerPlugin } from '@capacitor/core';
+
 const GOOGLE_PLAY_PRODUCT_IDS = {
   basic_monthly: 'adaptalyfe_basic_monthly',
   premium_monthly: 'adaptalyfe_premium_monthly',
@@ -9,6 +11,27 @@ const PRODUCT_TO_PLAN: Record<string, { planType: string; billingCycle: string; 
   adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly', amount: 1299 },
   adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly', amount: 2499 },
 };
+
+// Capacitor 7 way to access a custom native plugin
+let _billingPlugin: any = null;
+function getBillingPlugin(): any {
+  if (_billingPlugin) return _billingPlugin;
+  try {
+    // Capacitor 4+ / 7: use registerPlugin
+    _billingPlugin = registerPlugin('GooglePlayBilling');
+    return _billingPlugin;
+  } catch {
+    // Fallback: check legacy window.Capacitor.Plugins
+    try {
+      const cap = (window as any).Capacitor;
+      if (cap?.Plugins?.GooglePlayBilling) {
+        _billingPlugin = cap.Plugins.GooglePlayBilling;
+        return _billingPlugin;
+      }
+    } catch {}
+    return null;
+  }
+}
 
 export function isAndroidApp(): boolean {
   if (typeof window === 'undefined') return false;
@@ -45,14 +68,15 @@ export async function initGooglePlayBilling(): Promise<boolean> {
   if (!isAndroidApp()) return false;
 
   try {
-    const cap = (window as any).Capacitor;
-    if (!cap?.Plugins?.GooglePlayBilling) {
-      console.log('GooglePlayBilling plugin not available, using web fallback');
+    const plugin = getBillingPlugin();
+    if (!plugin) {
+      console.warn('GooglePlayBilling plugin not found via registerPlugin or window.Capacitor.Plugins');
       return false;
     }
-    const { GooglePlayBilling } = cap.Plugins;
-    const result = await GooglePlayBilling.initialize();
-    return result?.connected === true;
+    const result = await plugin.initialize();
+    const connected = result?.connected === true;
+    console.log('Google Play Billing initialize result:', result, 'connected:', connected);
+    return connected;
   } catch (error) {
     console.error('Failed to initialize Google Play Billing:', error);
     return false;
@@ -63,11 +87,9 @@ export async function queryProducts(): Promise<any[]> {
   if (!isAndroidApp()) return [];
 
   try {
-    const cap = (window as any).Capacitor;
-    if (!cap?.Plugins?.GooglePlayBilling) return [];
-    
-    const { GooglePlayBilling } = cap.Plugins;
-    const result = await GooglePlayBilling.queryProducts({
+    const plugin = getBillingPlugin();
+    if (!plugin) return [];
+    const result = await plugin.queryProducts({
       productIds: getProductIds(),
       productType: 'subs'
     });
@@ -84,13 +106,12 @@ export async function purchaseSubscription(productId: string): Promise<GooglePla
   }
 
   try {
-    const cap = (window as any).Capacitor;
-    if (!cap?.Plugins?.GooglePlayBilling) {
+    const plugin = getBillingPlugin();
+    if (!plugin) {
       return { success: false, error: 'Billing plugin not available' };
     }
 
-    const { GooglePlayBilling } = cap.Plugins;
-    const result = await GooglePlayBilling.purchaseSubscription({
+    const result = await plugin.purchaseSubscription({
       productId,
       offerToken: ''
     });
@@ -118,12 +139,9 @@ export async function restorePurchases(): Promise<GooglePlayPurchaseResult[]> {
   if (!isAndroidApp()) return [];
 
   try {
-    const cap = (window as any).Capacitor;
-    if (!cap?.Plugins?.GooglePlayBilling) return [];
-
-    const { GooglePlayBilling } = cap.Plugins;
-    const result = await GooglePlayBilling.restorePurchases({ productType: 'subs' });
-    
+    const plugin = getBillingPlugin();
+    if (!plugin) return [];
+    const result = await plugin.restorePurchases({ productType: 'subs' });
     return (result?.purchases || []).map((p: any) => ({
       success: true,
       purchaseToken: p.purchaseToken,

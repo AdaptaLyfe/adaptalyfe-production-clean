@@ -340,9 +340,16 @@ export default function SubscriptionPage() {
       }
       const result = await googlePurchaseSubscription(productId);
       if (!result.success) {
-        if (result.error !== 'Purchase canceled') {
-          toast({ title: "Purchase Failed", description: result.error || "Unable to complete purchase", variant: "destructive" });
+        if (result.error === 'Purchase canceled') return;
+        // If Google Play billing plugin is unavailable, fall back to Stripe web checkout
+        if (result.error === 'Billing plugin not available' || result.error === 'Not running on Android') {
+          console.warn('Google Play Billing unavailable, falling back to Stripe');
+          toast({ title: "Opening secure payment...", description: "Redirecting to card payment." });
+          setIsGooglePlayPurchasing(false);
+          handlePlanSelect(planType);
+          return;
         }
+        toast({ title: "Purchase Failed", description: result.error || "Unable to complete purchase", variant: "destructive" });
         return;
       }
       toast({ title: "Verifying Purchase...", description: "Please wait while we activate your subscription." });
