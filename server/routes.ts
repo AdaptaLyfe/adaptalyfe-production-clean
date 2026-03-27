@@ -4026,29 +4026,95 @@ Provide a helpful, encouraging response:`;
         return res.status(400).json({ message: "Stripe not configured" });
       }
 
-      // Look up Stripe subscription by customer ID
-      if (!user.stripeCustomerId) {
-        return res.status(400).json({ message: "No Stripe customer found for this account" });
+      let stripeCustomerId = user.stripeCustomerId;
+
+      // If no customer ID stored, search Stripe by email
+      if (!stripeCustomerId && user.email) {
+        const customers = await currentStripe.customers.list({ email: user.email, limit: 1 });
+        if (customers.data.length > 0) {
+          stripeCustomerId = customers.data[0].id;
+          await storage.updateUser(userId, { stripeCustomerId });
+        }
       }
 
-      const subscriptions = await currentStripe.subscriptions.list({
-        customer: user.stripeCustomerId,
+      if (!stripeCustomerId) {
+        return res.status(400).json({ message: "No Stripe payment found for this account. Please subscribe below." });
+      }
+
+      let subscriptionTier = 'basic';
+      let billingCycle = 'monthly';
+      let expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      let found = false;
+
+      // Step 1: Check for active subscriptions
+      const activeSubs = await currentStripe.subscriptions.list({
+        customer: stripeCustomerId,
         status: 'active',
-        limit: 1
+        limit: 5,
+        expand: ['data.latest_invoice']
       });
-
-      if (subscriptions.data.length === 0) {
-        return res.status(400).json({ message: "No active Stripe subscription found" });
+      if (activeSubs.data.length > 0) {
+        const sub = activeSubs.data[0];
+        const planMeta = (sub.metadata?.planType as string) || 'basic';
+        subscriptionTier = planMeta === 'premium' ? 'premium' : planMeta === 'family' ? 'family' : 'basic';
+        billingCycle = (sub.metadata?.billingCycle as string) || 'monthly';
+        if (sub.current_period_end) expiresAt = new Date(sub.current_period_end * 1000);
+        found = true;
       }
 
-      const activeSub = subscriptions.data[0];
-      const planType = (activeSub.metadata?.planType as string) || 'basic';
-      const billingCycle = (activeSub.metadata?.billingCycle as string) || 'monthly';
-      const subscriptionTier = planType === 'premium' ? 'premium' : planType === 'family' ? 'family' : 'basic';
+      // Step 2: Check for incomplete subscriptions where payment actually succeeded
+      if (!found) {
+        const allSubs = await currentStripe.subscriptions.list({
+          customer: stripeCustomerId,
+          limit: 10,
+          expand: ['data.latest_invoice.payment_intent']
+        });
+        for (const sub of allSubs.data) {
+          const invoice = sub.latest_invoice as any;
+          const paymentIntent = invoice?.payment_intent as any;
+          if (paymentIntent?.status === 'succeeded') {
+            const planMeta = (sub.metadata?.planType as string) || 'basic';
+            subscriptionTier = planMeta === 'premium' ? 'premium' : planMeta === 'family' ? 'family' : 'basic';
+            billingCycle = (sub.metadata?.billingCycle as string) || 'monthly';
+            // Confirm the subscription on Stripe so it becomes active
+            try {
+              await currentStripe.subscriptions.update(sub.id, { 
+                payment_behavior: 'default_incomplete' 
+              });
+            } catch {}
+            expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + 1);
+            found = true;
+            break;
+          }
+        }
+      }
 
-      const expiresAt = activeSub.current_period_end
-        ? new Date(activeSub.current_period_end * 1000)
-        : (() => { const d = new Date(); d.setMonth(d.getMonth() + 1); return d; })();
+      // Step 3: Check for recent successful PaymentIntents (one-time payments)
+      if (!found) {
+        const paymentIntents = await currentStripe.paymentIntents.list({
+          customer: stripeCustomerId,
+          limit: 10
+        });
+        const succeeded = paymentIntents.data.find(pi => pi.status === 'succeeded');
+        if (succeeded) {
+          // Determine plan from amount
+          const amount = succeeded.amount;
+          if (amount >= 2499) subscriptionTier = 'family';
+          else if (amount >= 1299) subscriptionTier = 'premium';
+          else subscriptionTier = 'basic';
+          expiresAt = new Date();
+          expiresAt.setMonth(expiresAt.getMonth() + 1);
+          found = true;
+        }
+      }
+
+      if (!found) {
+        return res.status(400).json({ 
+          message: "No completed payment found on your account. If you believe this is an error, please contact support."
+        });
+      }
 
       await storage.updateUserSubscription(userId, {
         subscriptionTier,
@@ -4060,6 +4126,8 @@ Provide a helpful, encouraging response:`;
       if (updatedUser && req.session) {
         req.session.user = updatedUser;
       }
+
+      console.log(`✅ Subscription recovered for user ${userId}: ${subscriptionTier} plan`);
 
       res.json({
         message: "Subscription recovered successfully",
