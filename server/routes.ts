@@ -123,6 +123,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.get("/api/firebase-config", (req, res) => {
+    const projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+    const apiKey = process.env.VITE_FIREBASE_API_KEY;
+    const appId = process.env.VITE_FIREBASE_APP_ID;
+    if (!projectId || !apiKey || !appId) {
+      return res.json({ configured: false });
+    }
+    res.json({
+      configured: true,
+      apiKey,
+      authDomain: `${projectId}.firebaseapp.com`,
+      projectId,
+      storageBucket: `${projectId}.firebasestorage.app`,
+      appId,
+    });
+  });
+
   // Add debug endpoint for Railway troubleshooting
   app.get("/api/debug", (req, res) => {
     res.json({

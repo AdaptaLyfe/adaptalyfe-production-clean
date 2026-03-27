@@ -2,39 +2,56 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics, logEvent, setUserId, setUserProperties, isSupported } from "firebase/analytics";
 import type { Analytics } from "firebase/analytics";
 
-const firebaseProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-const firebaseApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-const firebaseAppId = import.meta.env.VITE_FIREBASE_APP_ID;
-
-const hasFirebaseConfig = !!(firebaseProjectId && firebaseApiKey && firebaseAppId);
-
-const firebaseConfig = hasFirebaseConfig ? {
-  apiKey: firebaseApiKey,
-  authDomain: `${firebaseProjectId}.firebaseapp.com`,
-  projectId: firebaseProjectId,
-  storageBucket: `${firebaseProjectId}.firebasestorage.app`,
-  appId: firebaseAppId,
-} : null;
-
 let analytics: Analytics | null = null;
 let initPromise: Promise<Analytics | null> | null = null;
 let initAttempted = false;
+
+async function fetchFirebaseConfig(): Promise<Record<string, string> | null> {
+  try {
+    const buildTimeProjectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+    const buildTimeApiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+    const buildTimeAppId = import.meta.env.VITE_FIREBASE_APP_ID;
+    if (buildTimeProjectId && buildTimeApiKey && buildTimeAppId) {
+      return {
+        apiKey: buildTimeApiKey,
+        authDomain: `${buildTimeProjectId}.firebaseapp.com`,
+        projectId: buildTimeProjectId,
+        storageBucket: `${buildTimeProjectId}.firebasestorage.app`,
+        appId: buildTimeAppId,
+      };
+    }
+    const res = await fetch("/api/firebase-config", { credentials: "include" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.configured) return null;
+    return {
+      apiKey: data.apiKey,
+      authDomain: data.authDomain,
+      projectId: data.projectId,
+      storageBucket: data.storageBucket,
+      appId: data.appId,
+    };
+  } catch {
+    return null;
+  }
+}
 
 export async function initFirebaseAnalytics(): Promise<Analytics | null> {
   if (analytics) return analytics;
   if (initAttempted) return null;
   initAttempted = true;
-  if (!hasFirebaseConfig || !firebaseConfig) {
-    console.log("Firebase Analytics skipped: missing configuration");
-    return null;
-  }
   try {
+    const config = await fetchFirebaseConfig();
+    if (!config) {
+      console.log("Firebase Analytics skipped: missing configuration");
+      return null;
+    }
     const supported = await isSupported();
     if (!supported) {
       console.log("Firebase Analytics not supported in this environment");
       return null;
     }
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp(config);
     analytics = getAnalytics(app);
     console.log("Firebase Analytics initialized");
     return analytics;
