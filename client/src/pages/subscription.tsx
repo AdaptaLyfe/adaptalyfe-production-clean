@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -247,6 +248,7 @@ export default function SubscriptionPage() {
   const [appleStoreKitAvailable, setAppleStoreKitAvailable] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const onAndroid = isAndroidApp();
   const onIOS = isIOSApp();
@@ -266,6 +268,17 @@ export default function SubscriptionPage() {
       });
     }
   }, [onAndroid, onIOS]);
+
+  // Handle Stripe 3D Secure redirect return (?success=true in URL)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+      toast({ title: "Payment Successful!", description: "Your subscription is now active. Welcome to Adaptalyfe!" });
+      setTimeout(() => setLocation('/dashboard'), 1500);
+    }
+  }, []);
 
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
@@ -294,9 +307,10 @@ export default function SubscriptionPage() {
       const verification = await googleVerifyPurchase(result.purchaseToken!, result.productId!, result.orderId);
       if (verification.success) {
         trackSubscriptionEvent("upgrade", planType);
-        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
+        setTimeout(() => setLocation('/dashboard'), 1500);
       } else {
         toast({ title: "Verification Failed", description: verification.error || "Please contact support.", variant: "destructive" });
       }
@@ -329,9 +343,10 @@ export default function SubscriptionPage() {
       const verification = await appleVerifyPurchase(result.receiptData!, result.productId!, result.transactionId);
       if (verification.success) {
         trackSubscriptionEvent("upgrade", planType);
-        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        toast({ title: "Subscription Activated!", description: `Your ${planFeatures[planType]?.name} is now active. Welcome to Adaptalyfe!` });
+        setTimeout(() => setLocation('/dashboard'), 1500);
       } else {
         toast({ title: "Verification Failed", description: verification.error || "Please contact support.", variant: "destructive" });
       }
@@ -456,6 +471,7 @@ export default function SubscriptionPage() {
     setClientSecret(null);
     queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+    setTimeout(() => setLocation('/dashboard'), 1500);
   };
 
   // Show trial warning if less than 2 days left
