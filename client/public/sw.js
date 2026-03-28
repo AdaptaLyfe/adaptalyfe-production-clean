@@ -5,7 +5,7 @@
 //   - On next open the old cache is deleted and everything is downloaded fresh
 //   - For regular web deploys: stale-while-revalidate picks up changes automatically
 //
-const CACHE_VERSION = 'adaptalyfe-v3';
+const CACHE_VERSION = 'adaptalyfe-v4';
 const STATIC_CACHE  = CACHE_VERSION + '-static'; // hashed JS/CSS — safe forever
 const SHELL_CACHE   = CACHE_VERSION + '-shell';  // index.html, icons, manifest
 
@@ -14,16 +14,26 @@ const SHELL_CACHE   = CACHE_VERSION + '-shell';  // index.html, icons, manifest
 var HASHED_ASSET = /\/assets\/[^/]+\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|svg|gif|ico)(\?.*)?$/;
 
 // ─── Install ─────────────────────────────────────────────────────────────────
-// Pre-cache the app shell so the loading screen can appear instantly offline too
+// Pre-cache the full app shell immediately so the NEXT open is instant.
+// This is the key fix for white screen after fresh install.
 self.addEventListener('install', function(event) {
-  self.skipWaiting();
+  self.skipWaiting(); // Don't wait — activate immediately, evict old SW
   event.waitUntil(
     caches.open(SHELL_CACHE).then(function(cache) {
-      return cache.addAll([
+      // Pre-fetch and cache the root HTML right now during install
+      // so the next open loads from cache instead of waiting for Railway
+      var htmlFetch = fetch('/', { cache: 'no-store' }).then(function(res) {
+        if (res.ok) return cache.put('/', res.clone());
+      }).catch(function() {});
+
+      // Also cache static assets
+      var assetFetch = cache.addAll([
         '/manifest.json',
         '/icon-192.png',
         '/icon-512.png'
-      ]).catch(function() {}); // don't block install if icons aren't ready yet
+      ]).catch(function() {});
+
+      return Promise.all([htmlFetch, assetFetch]);
     })
   );
 });

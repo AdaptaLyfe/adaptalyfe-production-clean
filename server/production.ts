@@ -112,6 +112,13 @@ const authLimiter = rateLimit({
 
 // Only rate limit API routes
 app.use('/api', apiLimiter);
+
+// Ultra-lightweight ping endpoint — responds in <5ms, keeps Railway awake
+// Used by the app on startup and by external uptime monitors (UptimeRobot etc.)
+app.get('/api/ping', (_req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true, t: Date.now() });
+});
 app.use('/api/auth', authLimiter);
 
 app.use(express.json({ limit: '10mb' }));

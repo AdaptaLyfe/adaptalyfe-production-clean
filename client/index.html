@@ -129,28 +129,65 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Show retry button if loading takes more than 12 seconds -->
+    <!-- Loading screen controller + Railway keep-alive ping -->
     <script>
-      var _loadTimer = setTimeout(function() {
+      // 1. Ping Railway immediately to wake it up before React even loads.
+      //    This runs as soon as the HTML parses — Railway starts waking up
+      //    while the browser is still downloading JS bundles.
+      (function() {
+        try {
+          fetch('/api/ping', { method: 'GET', cache: 'no-store' })
+            .then(function(r) {
+              if (r.ok) console.log('[Adaptalyfe] Server is awake');
+            })
+            .catch(function() {
+              console.warn('[Adaptalyfe] Server ping failed — may be waking up');
+            });
+        } catch(e) {}
+      })();
+
+      // 2. Progressive messages while loading
+      var _slowTimer = setTimeout(function() {
         var msg = document.getElementById('slow-msg');
-        if (msg) msg.style.display = 'block';
-      }, 6000);
+        if (msg) { msg.style.display = 'block'; msg.textContent = 'Starting up — almost there...'; }
+      }, 5000);
       var _retryTimer = setTimeout(function() {
-        var btn = document.getElementById('retry-btn');
         var msg = document.getElementById('slow-msg');
+        var btn = document.getElementById('retry-btn');
+        if (msg) msg.textContent = 'This is taking longer than usual.';
         if (btn) btn.style.display = 'block';
-        if (msg) msg.textContent = 'Connection is slow. Try again?';
-      }, 12000);
-      // Expose cleanup so React can call it on mount
+        // Auto-ping again to keep waking Railway
+        try { fetch('/api/ping', { cache: 'no-store' }).catch(function(){}); } catch(e){}
+      }, 15000);
+      var _autoRetry = setTimeout(function() {
+        // Auto-reload once after 40s — server should be up by then
+        var el = document.getElementById('app-loading');
+        if (el && !el.classList.contains('hidden')) {
+          console.warn('[Adaptalyfe] Auto-reloading after timeout');
+          window.location.reload();
+        }
+      }, 40000);
+
+      // 3. Called by React main.tsx once app is mounted — hides this screen
       window.__hideAppLoading = function() {
-        clearTimeout(_loadTimer);
+        clearTimeout(_slowTimer);
         clearTimeout(_retryTimer);
+        clearTimeout(_autoRetry);
         var el = document.getElementById('app-loading');
         if (el) {
           el.classList.add('hidden');
-          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
+          setTimeout(function() { if (el && el.parentNode) el.parentNode.removeChild(el); }, 450);
         }
       };
+
+      // 4. Force old service workers to update immediately
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(reg) {
+            reg.update(); // check for new SW version right now
+          });
+        }).catch(function(){});
+      }
     </script>
   </body>
 </html>
