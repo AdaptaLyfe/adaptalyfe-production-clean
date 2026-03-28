@@ -12,3 +12,9 @@ id = "Tdz2fImSouHLlZ3GZTj_4"
 uri = "file://adaptalyfe-ios-20260323.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS — Self-Contained Xcode Project (March 23, 2026)"
+
+[[outputs]]
+id = "j0eqxErgg29l2C_qyBH2q"
+uri = "file://android-assets.zip"
+type = "unspecified"
+title = "Android Assets Folder (with splash screen fix)"
