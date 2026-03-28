@@ -62,11 +62,6 @@ async function initializeMobileApp(): Promise<void> {
   } catch (e) { console.log('StatusBar not available'); }
 
   try {
-    const { SplashScreen } = await import('@capacitor/splash-screen');
-    await SplashScreen.hide();
-  } catch (e) { console.log('SplashScreen not available'); }
-
-  try {
     const { Keyboard } = await import('@capacitor/keyboard');
     Keyboard.addListener('keyboardWillShow', () => document.body.classList.add('keyboard-visible'));
     Keyboard.addListener('keyboardWillHide', () => document.body.classList.remove('keyboard-visible'));
@@ -201,8 +196,17 @@ try {
   if (typeof (window as any).__hideAppLoading === 'function') {
     (window as any).__hideAppLoading();
   }
-  
-  // Initialize mobile app features if running on native mobile
+
+  // Hide the Capacitor SplashScreen NOW — this is the key fix for white screen.
+  // launchAutoHide:false keeps the splash up until we call this explicitly.
+  // We call it right here so there is zero gap between splash and React app.
+  if (isNativeMobile()) {
+    import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+      SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+    }).catch(() => {});
+  }
+
+  // Initialize other mobile app features (status bar, keyboard, back button, etc.)
   if (isNativeMobile()) {
     console.log("Initializing mobile app features...");
     initializeMobileApp().then(() => {
@@ -213,6 +217,15 @@ try {
   }
 } catch (error) {
   console.error("Error rendering app:", error);
+  // Hide splash screen even on error so it doesn't stay forever
+  try {
+    import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+      SplashScreen.hide({ fadeOutDuration: 100 }).catch(() => {});
+    }).catch(() => {});
+  } catch {}
+  if (typeof (window as any).__hideAppLoading === 'function') {
+    (window as any).__hideAppLoading();
+  }
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorDetails = isMobile ? 
     `Mobile device: ${navigator.userAgent}. Error: ${errorMessage}` : 
