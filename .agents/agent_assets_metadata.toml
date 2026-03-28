@@ -18,3 +18,9 @@ id = "j0eqxErgg29l2C_qyBH2q"
 uri = "file://android-assets.zip"
 type = "unspecified"
 title = "Android Assets Folder (with splash screen fix)"
+
+[[outputs]]
+id = "BlD2WsbvXKslwjtkM001G"
+uri = "file://public-only.zip"
+type = "unspecified"
+title = "public folder (drop directly into assets/public/)"
