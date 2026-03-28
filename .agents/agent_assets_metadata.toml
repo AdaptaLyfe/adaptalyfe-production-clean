@@ -24,3 +24,9 @@ id = "BlD2WsbvXKslwjtkM001G"
 uri = "file://public-only.zip"
 type = "unspecified"
 title = "public folder (drop directly into assets/public/)"
+
+[[outputs]]
+id = "pWpAdKVuBVh-qrBHACpuG"
+uri = "file://capacitor-config-fix.zip"
+type = "unspecified"
+title = "capacitor.config.json (splash screen fix)"
