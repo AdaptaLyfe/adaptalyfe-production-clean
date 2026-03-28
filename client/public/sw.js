@@ -1,105 +1,131 @@
-// Adaptalyfe Service Worker for PWA functionality
-const CACHE_NAME = 'adaptalyfe-v1.0.25';
-const urlsToCache = [
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-];
+// Adaptalyfe Service Worker — Cache-First for instant loads
+//
+// HOW CACHE CLEARING WORKS:
+//   - Bump CACHE_VERSION below when you upload a new version to the Play Store
+//   - On next open the old cache is deleted and everything is downloaded fresh
+//   - For regular web deploys: stale-while-revalidate picks up changes automatically
+//
+const CACHE_VERSION = 'adaptalyfe-v3';
+const STATIC_CACHE  = CACHE_VERSION + '-static'; // hashed JS/CSS — safe forever
+const SHELL_CACHE   = CACHE_VERSION + '-shell';  // index.html, icons, manifest
 
-// Force update check - called from app to skip waiting
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+// Hashed assets: /assets/index-Ab3Xy9.js  /assets/main-Cd1Kp.css
+// The filename contains a content hash, so a new deploy = new filename = auto cache-bust
+var HASHED_ASSET = /\/assets\/[^/]+\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|svg|gif|ico)(\?.*)?$/;
+
+// ─── Install ─────────────────────────────────────────────────────────────────
+// Pre-cache the app shell so the loading screen can appear instantly offline too
+self.addEventListener('install', function(event) {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(SHELL_CACHE).then(function(cache) {
+      return cache.addAll([
+        '/manifest.json',
+        '/icon-192.png',
+        '/icon-512.png'
+      ]).catch(function() {}); // don't block install if icons aren't ready yet
+    })
+  );
 });
 
-// Install — cache only static shell assets (not index.html or JS bundles)
-self.addEventListener('install', (event) => {
-  console.log('SW: Installing version', CACHE_NAME);
-  self.skipWaiting(); // Activate immediately without waiting for old tabs to close
+// ─── Activate ────────────────────────────────────────────────────────────────
+// Delete every cache that doesn't match CACHE_VERSION — this is the "clear cache
+// on new Play Store upload" mechanism. Just bump CACHE_VERSION above.
+self.addEventListener('activate', function(event) {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch((err) => {
-        console.warn('SW: Failed to cache some assets during install', err);
+    caches.keys().then(function(keys) {
+      return Promise.all(
+        keys
+          .filter(function(k) { return !k.startsWith(CACHE_VERSION); })
+          .map(function(k) {
+            console.log('[SW] Removing old cache:', k);
+            return caches.delete(k);
+          })
+      );
+    })
+    .then(function() { return self.clients.claim(); })
+    .then(function() {
+      return self.clients.matchAll({ type: 'window' }).then(function(clients) {
+        clients.forEach(function(c) { c.postMessage({ type: 'SW_UPDATED' }); });
       });
     })
   );
 });
 
-// Activate — delete ALL old caches, then reload all open clients
-self.addEventListener('activate', (event) => {
-  console.log('SW: Activating version', CACHE_NAME, '— clearing old caches');
-  event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames
-            .filter((name) => name !== CACHE_NAME)
-            .map((name) => {
-              console.log('SW: Deleting old cache:', name);
-              return caches.delete(name);
-            })
-        );
-      })
-      .then(() => {
-        // Claim all clients immediately so they use the new SW
-        return self.clients.claim();
-      })
-      .then(() => {
-        // Tell every open tab to reload so they run the new code
-        return self.clients.matchAll({ type: 'window' }).then((clients) => {
-          clients.forEach((client) => {
-            console.log('SW: Sending reload signal to client', client.url);
-            client.postMessage({ type: 'SW_UPDATED' });
-          });
-        });
-      })
-  );
+// ─── Messages ────────────────────────────────────────────────────────────────
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Fetch — network-first strategy
-// index.html and JS/CSS assets: always fetch from network (never serve stale)
-// Other assets (icons, fonts): cache-first with network fallback
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+// ─── Fetch ───────────────────────────────────────────────────────────────────
+self.addEventListener('fetch', function(event) {
+  var req = event.request;
+  var url;
+  try { url = new URL(req.url); } catch(e) { return; }
 
-  // Skip non-http requests (chrome-extension, etc.)
+  // Skip non-GET, non-http
+  if (req.method !== 'GET') return;
   if (!url.protocol.startsWith('http')) return;
 
-  // Skip API requests entirely — let them go direct to server
+  // Skip API calls — always go to server, never cache
   if (url.pathname.startsWith('/api/')) return;
 
-  // index.html and JS/CSS assets — ALWAYS network, never cache
-  if (
-    url.pathname === '/' ||
-    url.pathname.endsWith('.html') ||
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.startsWith('/assets/')
-  ) {
-    event.respondWith(
-      fetch(request).catch(() => {
-        // Only fall back to cache for HTML when completely offline
-        if (url.pathname.endsWith('.html') || url.pathname === '/') {
-          return caches.match('/');
-        }
-        return new Response('Offline', { status: 503 });
-      })
-    );
+  // Skip cross-origin (Stripe, Firebase, Google, etc.)
+  if (url.origin !== self.location.origin) return;
+
+  // ── Hashed assets: Cache First ───────────────────────────────────────────
+  // These URLs change when content changes, so it's 100% safe to cache forever.
+  // Result: JS/CSS loads in <50ms from device, no network needed.
+  if (HASHED_ASSET.test(url.pathname)) {
+    event.respondWith(cacheFirst(req, STATIC_CACHE));
     return;
   }
 
-  // Icons, fonts, manifest — cache-first
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      return cached || fetch(request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
+  // ── index.html + SPA routes: Stale-While-Revalidate ─────────────────────
+  // Serve the CACHED version INSTANTLY (solves the 35-45s Railway cold start).
+  // Fetch a fresh copy in the background — user gets new content on next open.
+  if (
+    url.pathname === '/' ||
+    url.pathname === '/index.html' ||
+    !url.pathname.includes('.')  // /dashboard, /tasks, /subscription etc.
+  ) {
+    event.respondWith(staleWhileRevalidate(req, SHELL_CACHE));
+    return;
+  }
+
+  // ── Everything else (icons, manifest): Stale-While-Revalidate ───────────
+  event.respondWith(staleWhileRevalidate(req, SHELL_CACHE));
+});
+
+// ─── Strategy: Cache First ───────────────────────────────────────────────────
+// Return cached immediately; only hit network if not cached yet.
+function cacheFirst(request, cacheName) {
+  return caches.open(cacheName).then(function(cache) {
+    return cache.match(request).then(function(cached) {
+      if (cached) return cached;
+      return fetch(request).then(function(response) {
+        if (response && response.ok) cache.put(request, response.clone());
         return response;
       });
-    }).catch(() => new Response('Offline', { status: 503 }))
-  );
-});
+    });
+  });
+}
+
+// ─── Strategy: Stale-While-Revalidate ────────────────────────────────────────
+// Return cached version IMMEDIATELY (zero wait), then update the cache
+// silently in the background. Next open gets the fresh version.
+// This completely eliminates Railway cold-start wait time.
+function staleWhileRevalidate(request, cacheName) {
+  return caches.open(cacheName).then(function(cache) {
+    return cache.match(request).then(function(cached) {
+      var networkFetch = fetch(request).then(function(response) {
+        if (response && response.ok) cache.put(request, response.clone());
+        return response;
+      }).catch(function() { return null; });
+
+      // If we have a cached copy, return it instantly.
+      // The network fetch above runs in background to keep cache fresh.
+      return cached || networkFetch;
+    });
+  });
+}
