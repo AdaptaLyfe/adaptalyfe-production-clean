@@ -36,3 +36,9 @@ id = "Ipf2gP_rtuiqqz9wA2nzZ"
 uri = "file://android-values-fix.zip"
 type = "unspecified"
 title = "Android window background fix (2 files only)"
+
+[[outputs]]
+id = "mTd8_i9fGFJ55GeKXuVFU"
+uri = "file://FINAL-android-fix.zip"
+type = "unspecified"
+title = "FINAL Android Fix — All 4 files (one APK build needed)"
