@@ -192,19 +192,29 @@ try {
   );
   console.log("App rendered successfully");
 
-  // Hide the native HTML loading screen now that React has mounted
-  if (typeof (window as any).__hideAppLoading === 'function') {
-    (window as any).__hideAppLoading();
-  }
+  // Double requestAnimationFrame guarantees React has completed its FIRST PAINT
+  // before we remove any loading overlays. Without this, the native splash and
+  // HTML loading screen disappear while the WebView is still white (React 18
+  // concurrent rendering schedules work asynchronously after root.render()).
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      console.log("First paint confirmed — hiding loading screens");
 
-  // Hide the Capacitor SplashScreen NOW — this is the key fix for white screen.
-  // launchAutoHide:false keeps the splash up until we call this explicitly.
-  // We call it right here so there is zero gap between splash and React app.
-  if (isNativeMobile()) {
-    import('@capacitor/splash-screen').then(({ SplashScreen }) => {
-      SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
-    }).catch(() => {});
-  }
+      // Hide the HTML loading screen (green spinner overlay in index.html)
+      if (typeof (window as any).__hideAppLoading === 'function') {
+        (window as any).__hideAppLoading();
+      }
+
+      // Hide the native Capacitor splash screen.
+      // launchAutoHide:false in capacitor.config.json keeps it visible until
+      // we call this explicitly — NOW we know React has painted.
+      if (isNativeMobile()) {
+        import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+          SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+        }).catch(() => {});
+      }
+    });
+  });
 
   // Initialize other mobile app features (status bar, keyboard, back button, etc.)
   if (isNativeMobile()) {
