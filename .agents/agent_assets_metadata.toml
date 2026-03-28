@@ -30,3 +30,9 @@ id = "pWpAdKVuBVh-qrBHACpuG"
 uri = "file://capacitor-config-fix.zip"
 type = "unspecified"
 title = "capacitor.config.json (splash screen fix)"
+
+[[outputs]]
+id = "Ipf2gP_rtuiqqz9wA2nzZ"
+uri = "file://android-values-fix.zip"
+type = "unspecified"
+title = "Android window background fix (2 files only)"
