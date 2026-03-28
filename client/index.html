@@ -3,8 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
-    <!-- CSP temporarily disabled for Stripe.js compatibility -->
-    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://js.stripe.com https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://fonts.googleapis.com https://fonts.gstatic.com https://api.openai.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://replit.com blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://api.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://api.openai.com ws: wss:; frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com;"> -->
     <title>Adaptalyfe - Grow with Guidance. Thrive with Confidence.</title>
     <link rel="stylesheet" href="/force-hide-errors.css">
     <script src="/block-error-modal.js?v=2"></script>
@@ -17,30 +15,142 @@
     <meta name="theme-color" content="#22c55e" />
     <link rel="icon" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    
+
     <!-- PWA Meta Tags -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Adaptalyfe" />
-    
+
+    <!-- Instant loading screen — pure CSS/HTML, no JS needed, shows before React loads -->
+    <style>
+      #app-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 40%, #a7f3d0 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        transition: opacity 0.4s ease;
+      }
+      #app-loading.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #app-loading .logo-circle {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #059669);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(16,185,129,0.35);
+      }
+      #app-loading .logo-text {
+        font-size: 38px;
+        font-weight: 900;
+        color: white;
+        line-height: 1;
+      }
+      #app-loading h1 {
+        font-size: 26px;
+        font-weight: 800;
+        color: #065f46;
+        margin: 0 0 6px;
+        letter-spacing: -0.5px;
+      }
+      #app-loading p {
+        font-size: 13px;
+        color: #6b7280;
+        margin: 0 0 36px;
+        text-align: center;
+        padding: 0 24px;
+      }
+      #app-loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #d1fae5;
+        border-top-color: #10b981;
+        border-radius: 50%;
+        animation: spin 0.85s linear infinite;
+        margin-bottom: 20px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      #app-loading .retry-btn {
+        display: none;
+        margin-top: 16px;
+        padding: 12px 28px;
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+      }
+      #app-loading .slow-msg {
+        display: none;
+        font-size: 13px;
+        color: #6b7280;
+        margin-top: 8px;
+        text-align: center;
+      }
+    </style>
+
     <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+            .catch(() => {});
         });
       }
     </script>
   </head>
   <body>
+    <!-- Loading screen shown immediately before React mounts -->
+    <div id="app-loading">
+      <div class="logo-circle">
+        <span class="logo-text">A</span>
+      </div>
+      <h1>Adaptalyfe</h1>
+      <p>Grow with Guidance. Thrive with Confidence.</p>
+      <div class="spinner" id="loading-spinner"></div>
+      <div class="slow-msg" id="slow-msg">Taking a moment — almost there...</div>
+      <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">Tap to Retry</button>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Show retry button if loading takes more than 12 seconds -->
+    <script>
+      var _loadTimer = setTimeout(function() {
+        var msg = document.getElementById('slow-msg');
+        if (msg) msg.style.display = 'block';
+      }, 6000);
+      var _retryTimer = setTimeout(function() {
+        var btn = document.getElementById('retry-btn');
+        var msg = document.getElementById('slow-msg');
+        if (btn) btn.style.display = 'block';
+        if (msg) msg.textContent = 'Connection is slow. Try again?';
+      }, 12000);
+      // Expose cleanup so React can call it on mount
+      window.__hideAppLoading = function() {
+        clearTimeout(_loadTimer);
+        clearTimeout(_retryTimer);
+        var el = document.getElementById('app-loading');
+        if (el) {
+          el.classList.add('hidden');
+          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 450);
+        }
+      };
+    </script>
   </body>
 </html>

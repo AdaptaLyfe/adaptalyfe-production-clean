@@ -196,6 +196,11 @@ try {
     </QueryClientProvider>
   );
   console.log("App rendered successfully");
+
+  // Hide the native HTML loading screen now that React has mounted
+  if (typeof (window as any).__hideAppLoading === 'function') {
+    (window as any).__hideAppLoading();
+  }
   
   // Initialize mobile app features if running on native mobile
   if (isNativeMobile()) {
