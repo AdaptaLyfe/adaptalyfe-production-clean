@@ -440,7 +440,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDailyTasksByUser(userId: number): Promise<DailyTask[]> {
-    return await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));
+    const tasks = await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));
+
+    // Reset isCompleted for recurring tasks whose completedAt is from a previous period.
+    // We do this at read-time so no cron job is needed and it is always accurate.
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    return tasks.map(task => {
+      if (!task.isCompleted || !task.completedAt) return task;
+
+      const completedDate = new Date(task.completedAt);
+
+      if (task.frequency === 'daily') {
+        // Reset if completed before today
+        const startOfCompletedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
+        if (startOfCompletedDay < startOfToday) {
+          return { ...task, isCompleted: false };
+        }
+      } else if (task.frequency === 'weekly') {
+        // Reset if completed more than 7 days ago
+        const sevenDaysAgo = new Date(startOfToday);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        if (completedDate < sevenDaysAgo) {
+          return { ...task, isCompleted: false };
+        }
+      } else if (task.frequency === 'monthly') {
+        // Reset if completed in a previous month
+        if (
+          completedDate.getFullYear() < now.getFullYear() ||
+          (completedDate.getFullYear() === now.getFullYear() && completedDate.getMonth() < now.getMonth())
+        ) {
+          return { ...task, isCompleted: false };
+        }
+      }
+
+      return task;
+    });
   }
 
   async getTaskById(taskId: number): Promise<DailyTask | undefined> {
