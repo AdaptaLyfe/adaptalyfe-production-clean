@@ -40,7 +40,8 @@ import {
   type PointsTransaction, type InsertPointsTransaction, type RewardRedemption, type InsertRewardRedemption,
   sleepSessions, type SleepSession, type InsertSleepSession, healthMetrics, type HealthMetric, type InsertHealthMetric,
   organizationCodes, orgMemberships,
-  type OrganizationCode, type InsertOrganizationCode, type OrgMembership, type InsertOrgMembership
+  type OrganizationCode, type InsertOrganizationCode, type OrgMembership, type InsertOrgMembership,
+  familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, gt } from "drizzle-orm";
@@ -58,6 +59,13 @@ export interface IStorage {
   getCurrentUser(): User | null;
   setCurrentUser(user: User | null): void;
   deleteUserAccount(userId: number): Promise<void>;
+
+  // Family Members (Family Plan)
+  getFamilyMembers(primaryUserId: number): Promise<FamilyMember[]>;
+  inviteFamilyMember(data: { primaryUserId: number; inviteEmail: string; memberName: string; relationship: string }): Promise<FamilyMember>;
+  removeFamilyMember(memberId: number, primaryUserId: number): Promise<boolean>;
+  getFamilyMemberByInviteCode(code: string): Promise<FamilyMember | undefined>;
+  acceptFamilyInvite(inviteCode: string, memberUserId: number): Promise<FamilyMember | undefined>;
 
   // Daily Tasks
   getDailyTasksByUser(userId: number): Promise<DailyTask[]>;
@@ -438,6 +446,48 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(users.username, username), eq(users.password, password)));
     return user || null;
   }
+
+  // ── Family Members ───────────────────────────────────────────────────────────
+
+  async getFamilyMembers(primaryUserId: number): Promise<FamilyMember[]> {
+    return db.select().from(familyMembers)
+      .where(and(eq(familyMembers.primaryUserId, primaryUserId), eq(familyMembers.status, "active")));
+  }
+
+  async inviteFamilyMember(data: { primaryUserId: number; inviteEmail: string; memberName: string; relationship: string }): Promise<FamilyMember> {
+    const inviteCode = `FAM-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const [member] = await db.insert(familyMembers).values({
+      primaryUserId: data.primaryUserId,
+      inviteEmail: data.inviteEmail,
+      memberName: data.memberName,
+      relationship: data.relationship,
+      status: "pending",
+      inviteCode,
+    }).returning();
+    return member;
+  }
+
+  async removeFamilyMember(memberId: number, primaryUserId: number): Promise<boolean> {
+    const result = await db.update(familyMembers)
+      .set({ status: "removed" })
+      .where(and(eq(familyMembers.id, memberId), eq(familyMembers.primaryUserId, primaryUserId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getFamilyMemberByInviteCode(code: string): Promise<FamilyMember | undefined> {
+    const [member] = await db.select().from(familyMembers).where(eq(familyMembers.inviteCode, code));
+    return member;
+  }
+
+  async acceptFamilyInvite(inviteCode: string, memberUserId: number): Promise<FamilyMember | undefined> {
+    const [member] = await db.update(familyMembers)
+      .set({ status: "active", memberUserId, acceptedAt: new Date() })
+      .where(eq(familyMembers.inviteCode, inviteCode))
+      .returning();
+    return member;
+  }
+
+  // ── Daily Tasks ───────────────────────────────────────────────────────────────
 
   async getDailyTasksByUser(userId: number): Promise<DailyTask[]> {
     const tasks = await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));

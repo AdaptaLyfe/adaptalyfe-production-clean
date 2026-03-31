@@ -25,6 +25,7 @@ import SettingsPage from "@/pages/settings";
 import Calendar from "@/pages/calendar";
 import Features from "@/pages/features";
 import Subscription from "@/pages/subscription";
+import FamilyMembers from "@/pages/family-members";
 import DirectPayment from "@/pages/direct-payment";
 import LifeSkillsModule from "@/components/life-skills-module";
 import Landing from "@/pages/landing";
@@ -165,6 +166,9 @@ function App() {
         </Route>
         <Route path="/subscription">
           <Subscription />
+        </Route>
+        <Route path="/family-members">
+          <AuthCheck><FamilyMembers /></AuthCheck>
         </Route>
         <Route path="/direct-payment">
           <AuthCheck><DirectPayment /></AuthCheck>

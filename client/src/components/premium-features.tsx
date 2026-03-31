@@ -109,13 +109,13 @@ export default function PremiumFeatures({ userPlan }: PremiumFeatureProps) {
       title: 'Emergency Response Protocols',
       description: 'Automated crisis detection and caregiver alert system',
       icon: Shield,
-      available: isPremium,
-      category: 'Safety'
+      available: isFamily,
+      category: 'Family Features'
     },
     {
       id: 'family-dashboard',
-      title: 'Family Care Team Dashboard',
-      description: 'Multi-user coordination and shared progress monitoring',
+      title: 'Family Member Accounts',
+      description: 'Add up to 5 family members under one plan — each with their own full account',
       icon: Users,
       available: isFamily,
       category: 'Family Features'

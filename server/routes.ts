@@ -3762,6 +3762,74 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // ── Family Members Routes (Family Plan) ──────────────────────────────────────
+
+  app.get("/api/family-members", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const user = req.session.user;
+      if (user.subscriptionTier !== 'family' && user.accountType !== 'admin') {
+        return res.status(403).json({ message: "Family plan required" });
+      }
+      const members = await storage.getFamilyMembers(user.id);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching family members:", error);
+      res.status(500).json({ message: "Failed to fetch family members" });
+    }
+  });
+
+  app.post("/api/family-members/invite", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const user = req.session.user;
+      if (user.subscriptionTier !== 'family' && user.accountType !== 'admin') {
+        return res.status(403).json({ message: "Family plan required to invite members" });
+      }
+      // Limit to 5 additional members
+      const existing = await storage.getFamilyMembers(user.id);
+      if (existing.length >= 5) {
+        return res.status(400).json({ message: "Maximum of 5 family members reached" });
+      }
+      const { inviteEmail, memberName, relationship } = req.body;
+      if (!inviteEmail || !memberName) {
+        return res.status(400).json({ message: "Email and name are required" });
+      }
+      const member = await storage.inviteFamilyMember({
+        primaryUserId: user.id,
+        inviteEmail,
+        memberName,
+        relationship: relationship || "member",
+      });
+      res.json(member);
+    } catch (error) {
+      console.error("Error inviting family member:", error);
+      res.status(500).json({ message: "Failed to send invite" });
+    }
+  });
+
+  app.delete("/api/family-members/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const user = req.session.user;
+      const memberId = parseInt(req.params.id);
+      const success = await storage.removeFamilyMember(memberId, user.id);
+      if (!success) {
+        return res.status(404).json({ message: "Member not found" });
+      }
+      res.json({ message: "Family member removed" });
+    } catch (error) {
+      console.error("Error removing family member:", error);
+      res.status(500).json({ message: "Failed to remove member" });
+    }
+  });
+
   // Subscription Management Routes
   app.get("/api/subscription", async (req: any, res) => {
     try {
@@ -3825,12 +3893,26 @@ Provide a helpful, encouraging response:`;
           dataExports: { count: 0, limit: user.subscriptionTier === 'free' ? 0 : null }
         },
         features: {
-          wearableDevices: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
-          mealPlanning: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
-          medicationManagement: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          // Basic+ features
+          taskManagement: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          moodTracking: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          financialTracking: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          basicReminders: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          // Premium+ features
+          wearableDevices: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          mealPlanning: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          medicationManagement: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          advancedAnalytics: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          voiceCommands: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          academicPlanner: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          prioritySupport: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          // Family-only features
           locationSafety: user.subscriptionTier === 'family' || trialDaysLeft > 0,
-          advancedAnalytics: user.subscriptionTier === 'family' || trialDaysLeft > 0,
-          prioritySupport: user.subscriptionTier !== 'free' || trialDaysLeft > 0
+          familyDashboard: user.subscriptionTier === 'family',
+          multiUserAccounts: user.subscriptionTier === 'family',
+          emergencyProtocols: user.subscriptionTier === 'family',
+          customReporting: user.subscriptionTier === 'family',
+          unlimitedCaregivers: user.subscriptionTier === 'family',
         }
       };
       

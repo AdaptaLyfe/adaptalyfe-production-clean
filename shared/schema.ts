@@ -1835,3 +1835,28 @@ export type PointsTransaction = typeof pointsTransactions.$inferSelect;
 export type InsertPointsTransaction = z.infer<typeof insertPointsTransactionSchema>;
 export type UserPointsBalance = typeof userPointsBalance.$inferSelect;
 export type InsertUserPointsBalance = z.infer<typeof insertUserPointsBalanceSchema>;
+
+// Family Plan: manage additional member accounts under one Family subscription
+export const familyMembers = pgTable("family_members", {
+  id: serial("id").primaryKey(),
+  primaryUserId: integer("primary_user_id").notNull(), // Family plan owner
+  memberUserId: integer("member_user_id"), // Set when the invite is accepted
+  inviteEmail: text("invite_email").notNull(),
+  memberName: text("member_name").notNull(),
+  relationship: text("relationship").notNull().default("member"), // "child", "parent", "sibling", "caregiver", "other"
+  status: text("status").notNull().default("pending"), // "pending", "active", "removed"
+  inviteCode: text("invite_code").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  acceptedAt: timestamp("accepted_at"),
+});
+
+export const insertFamilyMemberSchema = createInsertSchema(familyMembers).omit({
+  id: true,
+  memberUserId: true,
+  inviteCode: true,
+  createdAt: true,
+  acceptedAt: true,
+});
+
+export type FamilyMember = typeof familyMembers.$inferSelect;
+export type InsertFamilyMember = z.infer<typeof insertFamilyMemberSchema>;

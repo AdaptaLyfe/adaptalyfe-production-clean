@@ -43,11 +43,12 @@ const planFeatures: PlanFeatures = {
     description: "Essential features for daily independence",
     price: { monthly: 4.99, annual: 4.99 },
     features: [
-      "Daily task management",
+      "Daily task management (up to 50 tasks)",
       "Basic mood tracking",
-      "Simple financial tracking",
+      "Financial tracking & bill reminders",
       "1 caregiver connection",
-      "Basic reminders",
+      "Basic reminders & notifications",
+      "7-day free trial",
       "Email support"
     ]
   },
@@ -57,12 +58,13 @@ const planFeatures: PlanFeatures = {
     price: { monthly: 12.99, annual: 12.99 },
     features: [
       "Everything in Basic",
-      "Advanced analytics",
+      "Unlimited tasks (up to 1,000)",
+      "Advanced analytics & insights",
       "Medication management",
       "Up to 5 caregiver connections",
       "Voice commands",
       "Smart notifications",
-      "Meal planning",
+      "Meal planning & grocery lists",
       "Academic planner",
       "Priority support"
     ],
@@ -74,12 +76,11 @@ const planFeatures: PlanFeatures = {
     price: { monthly: 24.99, annual: 24.99 },
     features: [
       "Everything in Premium",
+      "Up to 5 additional member accounts",
       "Unlimited caregiver connections",
-      "Family dashboard",
-      "Advanced safety features",
-      "Location tracking",
-      "Emergency protocols",
-      "Multi-user accounts",
+      "Family dashboard & shared progress",
+      "Location safety & geofencing",
+      "Emergency protocols & alerts",
       "Custom reporting",
       "Phone support"
     ]
@@ -684,10 +685,22 @@ export default function SubscriptionPage() {
                 </ul>
                 
                 {user?.subscriptionTier === planKey && user?.subscriptionStatus === 'active' ? (
-                  <Button disabled className="w-full">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Current Plan
-                  </Button>
+                  <div className="space-y-2">
+                    <Button disabled className="w-full">
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Current Plan
+                    </Button>
+                    {planKey === 'family' && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
+                        onClick={() => setLocation("/family-members")}
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        Manage Family Members
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <Button 
                     onClick={() => handlePlanSelect(planKey)}
