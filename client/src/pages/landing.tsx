@@ -392,9 +392,9 @@ export default function Landing() {
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
                   <ul className="space-y-1.5 text-xs text-gray-500">
-                    <li>• Up to 25 daily tasks per month</li>
-                    <li>• Up to 2 trusted contacts</li>
-                    <li>• Basic summaries and progress views</li>
+                    <li>• Up to 50 daily tasks</li>
+                    <li>• 1 caregiver connection</li>
+                    <li>• Basic progress summaries</li>
                   </ul>
                 </div>
                 <div className="mt-6 p-3 bg-blue-50 rounded-lg">
@@ -485,6 +485,14 @@ export default function Landing() {
                     <span className="text-sm text-gray-700">Priority email support</span>
                   </li>
                 </ul>
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
+                  <ul className="space-y-1.5 text-xs text-gray-500">
+                    <li>• Up to 1,000 daily tasks</li>
+                    <li>• Up to 5 caregiver connections</li>
+                    <li>• Full analytics & progress reports</li>
+                  </ul>
+                </div>
                 <div className="mt-6 p-3 bg-purple-50 rounded-lg">
                   <p className="text-xs text-purple-700 font-medium">Best For: Users wanting advanced tools, automation & customization</p>
                 </div>
@@ -570,6 +578,14 @@ export default function Landing() {
                     <span className="text-sm text-gray-700">Guided onboarding sessions</span>
                   </li>
                 </ul>
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
+                  <ul className="space-y-1.5 text-xs text-gray-500">
+                    <li>• Unlimited daily tasks</li>
+                    <li>• Up to 5 member accounts included</li>
+                    <li>• Unlimited caregiver connections</li>
+                  </ul>
+                </div>
                 <div className="mt-6 p-3 bg-amber-50 rounded-lg">
                   <p className="text-xs text-amber-700 font-medium">Best For: Families & support networks coordinating daily activities</p>
                 </div>
