@@ -4709,6 +4709,153 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // ─── Apple Restore Purchases (for reinstalls) ────────────────────────────────
+  app.post("/api/apple/restore-purchases", async (req: any, res) => {
+    try {
+      if (!req.session?.userId || !req.session?.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.session.user;
+      const { receiptData } = req.body;
+
+      if (!receiptData) {
+        return res.json({ restored: false, message: "No receipt data provided" });
+      }
+
+      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
+      if (!APPLE_SHARED_SECRET) {
+        if (process.env.NODE_ENV !== 'production') {
+          return res.json({ restored: false, message: "Apple not configured (dev mode)" });
+        }
+        return res.status(503).json({ message: "Apple receipt verification not configured" });
+      }
+
+      const productToPlan: Record<string, { planType: string; billingCycle: string }> = {
+        adaptalyfe_basic_monthly:   { planType: 'basic',   billingCycle: 'monthly' },
+        adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly' },
+        adaptalyfe_family_monthly:  { planType: 'family',  billingCycle: 'monthly' },
+      };
+
+      const verifyUrl = async (url: string) => {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 'receipt-data': receiptData, 'password': APPLE_SHARED_SECRET, 'exclude-old-transactions': true }),
+        });
+        return r.json();
+      };
+
+      let appleResponse = await verifyUrl('https://buy.itunes.apple.com/verifyReceipt');
+      if (appleResponse.status === 21007) {
+        appleResponse = await verifyUrl('https://sandbox.itunes.apple.com/verifyReceipt');
+      }
+
+      if (appleResponse.status !== 0) {
+        return res.json({ restored: false, message: `Apple receipt invalid (status ${appleResponse.status})` });
+      }
+
+      const receipts: any[] = appleResponse.latest_receipt_info || [];
+      const now = Date.now();
+
+      // Find the active subscription with the latest expiry
+      const active = receipts
+        .filter((r: any) => productToPlan[r.product_id] && Number(r.expires_date_ms) > now)
+        .sort((a: any, b: any) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
+
+      if (!active) {
+        return res.json({ restored: false, message: "No active Apple subscription found" });
+      }
+
+      const planInfo = productToPlan[active.product_id];
+      const expiresAt = new Date(Number(active.expires_date_ms));
+
+      await storage.updateUser(user.id, {
+        subscriptionTier: planInfo.planType,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: expiresAt,
+        subscriptionPlatform: 'app_store',
+      });
+
+      req.session.user = { ...req.session.user, subscriptionTier: planInfo.planType, subscriptionStatus: 'active', subscriptionExpiresAt: expiresAt, subscriptionPlatform: 'app_store' };
+
+      console.log(`Apple subscription restored for user ${user.id}: ${active.product_id} -> ${planInfo.planType}`);
+      res.json({ restored: true, planType: planInfo.planType, expiresAt: expiresAt.toISOString() });
+    } catch (error: any) {
+      console.error("Apple restore error:", error);
+      res.status(500).json({ message: "Failed to restore Apple purchases" });
+    }
+  });
+
+  // ─── Apple Server-to-Server Notifications (renewals, cancellations, refunds) ─
+  // Set this URL in App Store Connect → App Information → App Store Server Notifications
+  // URL: https://app.getadaptalyfeapp.com/api/apple/notifications
+  app.post("/api/apple/notifications", async (req: any, res) => {
+    try {
+      const { signedPayload, unified_receipt, notification_type, auto_renew_product_id } = req.body;
+
+      // Always respond 200 immediately so Apple doesn't retry
+      res.status(200).json({ received: true });
+
+      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
+      if (!APPLE_SHARED_SECRET) {
+        console.warn("Apple notification received but APPLE_SHARED_SECRET not set");
+        return;
+      }
+
+      const productToPlan: Record<string, string> = {
+        adaptalyfe_basic_monthly:   'basic',
+        adaptalyfe_premium_monthly: 'premium',
+        adaptalyfe_family_monthly:  'family',
+      };
+
+      // Handle V1 notifications (non-JWT payload)
+      if (unified_receipt) {
+        const latestInfo: any[] = unified_receipt.latest_receipt_info || [];
+        const now = Date.now();
+
+        // Determine notification type action
+        const type = notification_type || '';
+        const isCancellation = ['CANCEL', 'REFUND', 'REVOKE'].includes(type);
+        const isRenewal = ['DID_RENEW', 'INITIAL_BUY', 'DID_RECOVER', 'INTERACTIVE_RENEWAL'].includes(type);
+        const isExpired = type === 'DID_FAIL_TO_RENEW' || type === 'EXPIRED';
+
+        // Find user by original transaction id
+        const latestReceipt = latestInfo.sort((a: any, b: any) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
+        if (!latestReceipt) return;
+
+        const productId = latestReceipt.product_id;
+        const planType = productToPlan[productId];
+        if (!planType) return;
+
+        const expiresMs = Number(latestReceipt.expires_date_ms);
+        const expiresAt = new Date(expiresMs);
+
+        // Try to find the user by their stored Apple transaction info
+        // (In a full implementation you'd store the original_transaction_id on the user)
+        const originalTransactionId = latestReceipt.original_transaction_id;
+        console.log(`Apple notification [${type}] for product ${productId}, originalTxId: ${originalTransactionId}`);
+
+        // For now log the event — full user lookup requires storing originalTransactionId on users table
+        if (isCancellation) {
+          console.log(`Apple subscription CANCELLED for originalTxId: ${originalTransactionId}`);
+        } else if (isRenewal) {
+          console.log(`Apple subscription RENEWED for originalTxId: ${originalTransactionId}, expires: ${expiresAt}`);
+        } else if (isExpired) {
+          console.log(`Apple subscription EXPIRED for originalTxId: ${originalTransactionId}`);
+        }
+      }
+
+      // V2 signed notifications (JWT) are logged for now
+      if (signedPayload) {
+        console.log("Apple V2 notification received (signed JWT) — full JWT decoding requires @apple/app-store-server-library");
+      }
+    } catch (error: any) {
+      console.error("Apple notification processing error:", error);
+      // Already responded 200 above
+    }
+  });
+
   app.post("/api/google-play/restore-purchases", async (req: any, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
