@@ -434,26 +434,6 @@ export default function Landing() {
                 <ul className="space-y-3 flex-1">
                   <li className="flex items-start gap-2.5">
                     <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Guided Assistance – Tips and suggestions based on usage</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Voice Controls – Hands-free navigation</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Text-to-Speech – Accessibility support</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Location-Based Reminders – Alerts based on your locations</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Offline Access – Use core features without internet</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
                     <span className="text-sm text-gray-700">Usage Patterns & Progress Journals</span>
                   </li>
                   <li className="flex items-start gap-2.5">
