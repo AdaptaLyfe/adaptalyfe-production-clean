@@ -24,7 +24,6 @@ const LifeSkillsModule = lazy(() => import("@/components/life-skills-module"));
 const ProgressMotivationModule = lazy(() => import("@/components/progress-motivation-module"));
 const PharmacyModule = lazy(() => import("@/components/pharmacy-module"));
 const SafetyTransportationModule = lazy(() => import("@/components/safety-transportation-module"));
-const LocationSafetyModule = lazy(() => import("@/components/location-safety-module"));
 
 function ModuleSkeleton() {
   return (
@@ -91,7 +90,6 @@ export default function Dashboard() {
     'CaregiverModule': CaregiverModule,
     'PharmacyModule': PharmacyModule,
     'SafetyTransportationModule': SafetyTransportationModule,
-    'LocationSafetyModule': LocationSafetyModule,
     'HealthWellnessModule': HealthWellnessModule,
     'AccessibilitySettingsModule': AccessibilitySettingsModule,
     'LifeSkillsModule': LifeSkillsModule,
@@ -218,7 +216,7 @@ export default function Dashboard() {
                               }
                               
                               // Render standalone daily tasks if not paired
-                              const premiumModules = ['safety-transportation', 'location-safety', 'health-wellness', 'accessibility', 'life-skills', 'progress-motivation'];
+                              const premiumModules = ['safety-transportation', 'health-wellness', 'accessibility', 'life-skills', 'progress-motivation'];
                               if (premiumModules.includes(module.id)) {
                                 return (
                                   <div className="mb-8 border-2 border-purple-200 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-1">
@@ -238,7 +236,7 @@ export default function Dashboard() {
 
                             {/* Regular modules (not daily-summary or daily-tasks) */}
                             {module.id !== 'daily-summary' && module.id !== 'daily-tasks' ? (() => {
-                              const premiumModules = ['safety-transportation', 'location-safety', 'health-wellness', 'accessibility', 'life-skills', 'progress-motivation'];
+                              const premiumModules = ['safety-transportation', 'health-wellness', 'accessibility', 'life-skills', 'progress-motivation'];
                               if (premiumModules.includes(module.id)) {
                                 return (
                                   <div className="mb-8 border-2 border-purple-200 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 p-1">

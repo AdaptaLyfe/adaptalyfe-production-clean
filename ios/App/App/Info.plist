@@ -49,8 +49,6 @@
         <string>Adaptalyfe needs camera access to take photos for your tasks and visual guides.</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>Adaptalyfe needs access to your photo library to attach images to your tasks.</string>
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>Adaptalyfe uses your location for geofencing and safety features.</string>
         <key>NSMicrophoneUsageDescription</key>
         <string>Adaptalyfe needs microphone access for voice commands and audio notes.</string>
         <key>NSCalendarsUsageDescription</key>

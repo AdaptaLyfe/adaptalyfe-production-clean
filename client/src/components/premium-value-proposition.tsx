@@ -66,11 +66,6 @@ export default function PremiumValueProposition({ userPlan }: PremiumValueProps)
           savings: "Peace of mind worth $100+/month"
         },
         {
-          name: "Location Safety Monitoring",
-          description: "GPS geofencing with smart notifications",
-          savings: "Replaces $50/month safety monitoring services"
-        },
-        {
           name: "HIPAA-Compliant Data Protection",
           description: "Enterprise-grade security for sensitive health information",
           savings: "Professional data protection worth $200+/year"

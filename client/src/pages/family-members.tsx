@@ -97,7 +97,7 @@ export default function FamilyMembersPage() {
               <p>✓ Up to 5 additional member accounts</p>
               <p>✓ Unlimited caregiver connections</p>
               <p>✓ Family dashboard & shared progress</p>
-              <p>✓ Emergency protocols & location safety</p>
+              <p>✓ Emergency protocols & alerts</p>
               <p>✓ Custom reporting</p>
               <p>✓ Phone support</p>
             </div>

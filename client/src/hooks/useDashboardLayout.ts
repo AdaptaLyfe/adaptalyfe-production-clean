@@ -16,7 +16,6 @@ const DEFAULT_MODULES: DashboardModule[] = [
   { id: 'appointments', name: 'Appointments', component: 'AppointmentsModule', enabled: false, order: 4 },
   { id: 'pharmacy', name: 'Medication List', component: 'PharmacyModule', enabled: false, order: 5 },
   { id: 'safety-transportation', name: 'Safety & Transportation (Premium)', component: 'SafetyTransportationModule', enabled: false, order: 6 },
-  { id: 'location-safety', name: 'Location & Safety (Premium)', component: 'LocationSafetyModule', enabled: false, order: 7 },
   { id: 'achievements', name: 'Achievements', component: 'AchievementsModule', enabled: false, order: 8 },
   { id: 'caregiver', name: 'Support Network', component: 'CaregiverModule', enabled: false, order: 9 },
   { id: 'health-wellness', name: 'Health & Wellness (Premium)', component: 'HealthWellnessModule', enabled: false, order: 10 },

@@ -65,7 +65,6 @@ export function useSubscriptionEnforcement() {
       '/wearable-devices',
       '/meal-planning',
       '/medication-management',
-      '/location-safety',
       '/analytics',
       '/pharmacy'
     ];
@@ -77,7 +76,6 @@ export function useSubscriptionEnforcement() {
         '/wearable-devices': 'wearableDevices',
         '/meal-planning': 'mealPlanning',
         '/medication-management': 'medicationManagement',
-        '/location-safety': 'locationSafety',
         '/analytics': 'advancedAnalytics',
         '/pharmacy': 'medicationManagement'
       };

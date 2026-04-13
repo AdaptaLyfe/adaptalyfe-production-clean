@@ -63,7 +63,6 @@ export default function Pricing() {
         "All Basic features included",
         "AI life coach with personalized guidance",
         "Voice commands and text-to-speech accessibility",
-        "Smart location-based reminders (GPS alerts)",
         "Offline mode with automatic sync",
         "Advanced analytics and behavioral insights",
         "Visual progress journals with photo documentation",
@@ -76,7 +75,6 @@ export default function Pricing() {
         "Comprehensive meal planning & shopping",
         "Medication management & pharmacy integration",
         "Academic planning tools for students",
-        "Location safety & geofencing",
         "Advanced symptom tracking & medical records",
         "Wearable device integration and health tracking",
         "24/7 priority support with guaranteed response"

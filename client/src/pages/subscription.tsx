@@ -79,7 +79,6 @@ const planFeatures: PlanFeatures = {
       "Up to 5 additional member accounts",
       "Unlimited caregiver connections",
       "Family dashboard & shared progress",
-      "Location safety & geofencing",
       "Emergency protocols & alerts",
       "Custom reporting",
       "Phone support"

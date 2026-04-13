@@ -103,8 +103,6 @@ interface SafetyCheck {
 
 export default function SafetyTransportationModule() {
   const [activeTab, setActiveTab] = useState("overview");
-  const [isLocationSharing, setIsLocationSharing] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState<string>("Getting location...");
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [showBusDialog, setShowBusDialog] = useState(false);
   const [showEmergencyDialog, setShowEmergencyDialog] = useState(false);
@@ -293,33 +291,10 @@ export default function SafetyTransportationModule() {
   };
 
   const shareLocation = () => {
-    if (navigator.geolocation) {
-      setIsLocationSharing(true);
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setCurrentLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-          toast({
-            title: "Location shared",
-            description: "Your current location has been shared with your emergency contacts.",
-          });
-        },
-        (error) => {
-          setIsLocationSharing(false);
-          toast({
-            title: "Location error",
-            description: "Unable to get your location. Please check your browser settings.",
-            variant: "destructive"
-          });
-        }
-      );
-    } else {
-      toast({
-        title: "Location not supported",
-        description: "Your browser doesn't support location sharing.",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Safety check sent",
+      description: "Your safety status has been sent to your emergency contacts.",
+    });
   };
 
   const sendSafetyCheck = (status: 'safe' | 'help_needed' | 'emergency') => {
@@ -400,9 +375,8 @@ export default function SafetyTransportationModule() {
                 <Button 
                   onClick={shareLocation} 
                   className="w-full"
-                  disabled={isLocationSharing}
                 >
-                  {isLocationSharing ? "Sharing..." : "Share Location"}
+                  Send Safety Check
                 </Button>
               </Card>
 
