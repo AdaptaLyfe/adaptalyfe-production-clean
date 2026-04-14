@@ -57,8 +57,6 @@
         <string>Adaptalyfe needs reminders access to help you remember important tasks.</string>
         <key>NSContactsUsageDescription</key>
         <string>Adaptalyfe needs contacts access to manage your support network and emergency contacts.</string>
-        <key>NSUserTrackingUsageDescription</key>
-        <string>This helps us provide you with a better personalized experience.</string>
         <key>CFBundleURLTypes</key>
         <array>
                 <dict>
