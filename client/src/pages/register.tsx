@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
@@ -129,7 +128,8 @@ export default function Register() {
           setLocation(`/accept-invitation?code=${formData.invitationCode}`);
         }
       } else {
-        setLocation("/dashboard");
+        // Redirect to subscription page so users can choose and activate their plan
+        setLocation("/subscription");
       }
     } catch (error: any) {
       toast({
@@ -142,11 +142,6 @@ export default function Register() {
     }
   };
 
-  const planPrices = {
-    basic: "$4.99/month",
-    premium: "$12.99/month", 
-    family: "$24.99/month"
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
@@ -283,24 +278,6 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Plan Selection */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Choose Your Plan</h3>
-                
-                <div>
-                  <Label htmlFor="plan">Subscription Plan</Label>
-                  <Select value={formData.plan} onValueChange={(value) => setFormData({...formData, plan: value})}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="basic">Basic - {planPrices.basic}</SelectItem>
-                      <SelectItem value="premium">Premium - {planPrices.premium}</SelectItem>
-                      <SelectItem value="family">Family - {planPrices.family}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
               {/* Age Verification */}
               <div className="space-y-4">

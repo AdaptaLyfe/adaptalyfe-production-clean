@@ -695,7 +695,7 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-red-200">
+          <div className="flex flex-col gap-4 p-4 bg-white rounded-lg border border-red-200 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="font-medium text-gray-900">Delete Account</h4>
               <p className="text-sm text-gray-500">
@@ -704,7 +704,7 @@ export default function SettingsPage() {
             </div>
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="destructive" className="flex items-center gap-2">
+                <Button variant="destructive" className="flex items-center gap-2 shrink-0">
                   <Trash2 className="w-4 h-4" />
                   Delete Account
                 </Button>
