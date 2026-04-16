@@ -87,6 +87,16 @@ export default function Login() {
         if (pendingInvitation) {
           localStorage.removeItem('pendingInvitation');
           redirectPath = `/accept-invitation?code=${pendingInvitation}`;
+        } else {
+          // Send free/unsubscribed users directly to subscription page
+          const isAdmin = userData.accountType === 'admin' || userData.username === 'admin';
+          const isFreeOrInactive =
+            userData.subscriptionTier === 'free' ||
+            userData.subscriptionStatus === 'inactive' ||
+            !userData.subscriptionTier;
+          if (!isAdmin && isFreeOrInactive) {
+            redirectPath = "/subscription";
+          }
         }
       }
 

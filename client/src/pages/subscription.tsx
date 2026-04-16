@@ -541,7 +541,24 @@ export default function SubscriptionPage() {
           <p className="text-xl text-gray-600 mb-6">
             Unlock your full potential with Adaptalyfe's comprehensive features
           </p>
-          
+
+          {/* Explanation banner for new/unsubscribed users */}
+          {user?.subscriptionStatus !== 'active' && (
+            <div className="max-w-2xl mx-auto mb-6 bg-white rounded-2xl shadow-sm border border-teal-100 p-5 text-left">
+              <div className="flex gap-3 items-start">
+                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-teal-600 text-lg">ℹ️</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 mb-1">Get full access to Adaptalyfe</p>
+                  <p className="text-sm text-gray-600">
+                    Adaptalyfe helps individuals with daily tasks, finances, mood tracking, appointments, and connecting with their support network. Choose a plan below to unlock all features. Your subscription is billed monthly through your Apple ID and can be cancelled anytime from your device settings.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Trial Status */}
           {user?.subscriptionStatus !== 'active' && (
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 ${
