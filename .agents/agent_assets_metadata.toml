@@ -42,3 +42,9 @@ id = "mTd8_i9fGFJ55GeKXuVFU"
 uri = "file://FINAL-android-fix.zip"
 type = "unspecified"
 title = "FINAL Android Fix — All 4 files (one APK build needed)"
+
+[[outputs]]
+id = "JoJYQYg6EunXnDzQAaAp-"
+uri = "file://adaptalyfe-final.zip"
+type = "unspecified"
+title = "Adaptalyfe Final Build (iOS Ready)"
