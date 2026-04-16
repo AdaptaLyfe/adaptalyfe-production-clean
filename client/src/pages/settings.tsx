@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut, Building2, CheckCircle } from "lucide-react";
+import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut, Building2, CheckCircle, CreditCard, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -218,6 +218,46 @@ export default function SettingsPage() {
           Personalize your AdaptaLyfe experience with accessibility options, themes, and feature preferences.
         </p>
       </div>
+
+      {/* Subscription Banner — shown only when not subscribed */}
+      {user?.subscriptionStatus !== 'active' && (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-600 p-5 text-white shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <Crown className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-lg leading-tight">Activate Your Subscription</p>
+                <p className="text-sm text-white/80 mt-0.5">
+                  Unlock all features — daily tasks, finance, mood tracking, appointments &amp; more.
+                </p>
+                <p className="text-xs text-white/60 mt-1">
+                  Plans from $4.99/month · Billed through Apple ID · Cancel anytime
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setLocation('/subscription')}
+              className="bg-white text-teal-700 hover:bg-white/90 font-semibold px-6 py-2 rounded-xl flex-shrink-0 flex items-center gap-2"
+            >
+              <CreditCard className="w-4 h-4" />
+              View Plans
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Active subscription badge — shown only when subscribed */}
+      {user?.subscriptionStatus === 'active' && (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white shadow-md flex items-center gap-3">
+          <CheckCircle className="w-6 h-6 flex-shrink-0" />
+          <div>
+            <p className="font-semibold capitalize">{user.subscriptionTier} Plan — Active</p>
+            <p className="text-sm text-white/80">Your subscription is active. Manage it in your Apple ID settings.</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Appearance Settings */}
