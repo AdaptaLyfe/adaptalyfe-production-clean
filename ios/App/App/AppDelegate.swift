@@ -9,6 +9,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private var hasRequestedTracking = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Explicitly register the StoreKit plugin so Capacitor can find it
+        // This is required for local (non-npm) Capacitor plugins written in Swift
+        CAPBridgeViewController.registerPlugin(AppleStoreKitPlugin.self, withJsName: "AppleStoreKit")
         return true
     }
 
@@ -23,7 +26,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func showTrackingPrePrompt() {
         guard #available(iOS 14, *) else { return }
-
         guard let rootVC = window?.rootViewController else { return }
 
         let alert = UIAlertController(
@@ -46,7 +48,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         alert.addAction(allowAction)
         alert.addAction(denyAction)
-
         alert.preferredAction = allowAction
 
         if let popover = alert.popoverPresentationController {
@@ -64,7 +65,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         while let presented = topVC.presentedViewController {
             topVC = presented
         }
-
         topVC.present(alert, animated: true, completion: nil)
     }
 
