@@ -17,6 +17,7 @@
                 A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
                 AA1122334455667788990011 /* AppleStoreKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0011223344556677889900 /* AppleStoreKitPlugin.swift */; };
                 BB1122334455667788990011 /* AppleStoreKitPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0011223344556677889900 /* AppleStoreKitPlugin.m */; };
+                CC1122334455667788990011 /* StoreKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0011223344556677889900 /* StoreKitBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
                 FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
                 AA0011223344556677889900 /* AppleStoreKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleStoreKitPlugin.swift; sourceTree = "<group>"; };
                 BB0011223344556677889900 /* AppleStoreKitPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppleStoreKitPlugin.m; sourceTree = "<group>"; };
+                CC0011223344556677889900 /* StoreKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +83,7 @@
                                 504EC3071FED79650016851F /* AppDelegate.swift */,
                                 AA0011223344556677889900 /* AppleStoreKitPlugin.swift */,
                                 BB0011223344556677889900 /* AppleStoreKitPlugin.m */,
+                                CC0011223344556677889900 /* StoreKitBridge.swift */,
                                 504EC30B1FED79650016851F /* Main.storyboard */,
                                 504EC30E1FED79650016851F /* Assets.xcassets */,
                                 504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -218,6 +221,7 @@
                                 504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
                                 AA1122334455667788990011 /* AppleStoreKitPlugin.swift in Sources */,
                                 BB1122334455667788990011 /* AppleStoreKitPlugin.m in Sources */,
+                                CC1122334455667788990011 /* StoreKitBridge.swift in Sources */,
                         );
                         runOnlyForDeploymentPostprocessing = 0;
                 };

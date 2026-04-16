@@ -33,9 +33,52 @@ export function getProductIds(): string[] {
   return Object.values(APPLE_PRODUCT_IDS);
 }
 
-function getPlugin() {
-  const cap = (window as any).Capacitor;
-  return cap?.Plugins?.AppleStoreKit || null;
+// Check if the native StoreKit bridge is available
+function hasStoreKitBridge(): boolean {
+  return !!(window as any).webkit?.messageHandlers?.storeKit;
+}
+
+// Call native StoreKit bridge via WKWebView message handler
+function callBridge(action: string, params?: Record<string, any>): Promise<any> {
+  return new Promise((resolve, reject) => {
+    if (!hasStoreKitBridge()) {
+      reject(new Error('StoreKit bridge not available'));
+      return;
+    }
+
+    const callId = `sk_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Set up callback registry
+    if (!(window as any).__storeKitCallbacks) {
+      (window as any).__storeKitCallbacks = {};
+    }
+    (window as any).__storeKitCallbacks[callId] = { resolve, reject };
+
+    // Timeout after 60 seconds
+    const timeout = setTimeout(() => {
+      if ((window as any).__storeKitCallbacks?.[callId]) {
+        delete (window as any).__storeKitCallbacks[callId];
+        reject(new Error('StoreKit request timed out'));
+      }
+    }, 60000);
+
+    // Override resolve/reject to clean up timeout
+    (window as any).__storeKitCallbacks[callId] = {
+      resolve: (value: any) => {
+        clearTimeout(timeout);
+        delete (window as any).__storeKitCallbacks[callId];
+        resolve(value);
+      },
+      reject: (reason: any) => {
+        clearTimeout(timeout);
+        delete (window as any).__storeKitCallbacks[callId];
+        reject(new Error(reason));
+      }
+    };
+
+    // Send message to native
+    (window as any).webkit.messageHandlers.storeKit.postMessage({ action, params, callId });
+  });
 }
 
 interface ApplePurchaseResult {
@@ -50,15 +93,19 @@ interface ApplePurchaseResult {
 export async function initAppleStoreKit(): Promise<boolean> {
   if (!isIOSApp()) return false;
   try {
-    const plugin = getPlugin();
-    if (!plugin) {
-      console.log('AppleStoreKit plugin not available');
-      return false;
+    if (!hasStoreKitBridge()) {
+      console.log('StoreKit bridge not yet available, retrying...');
+      // Retry after short delay (bridge may not be installed yet)
+      await new Promise(r => setTimeout(r, 500));
+      if (!hasStoreKitBridge()) {
+        console.log('StoreKit bridge not available');
+        return false;
+      }
     }
-    const result = await plugin.initialize();
+    const result = await callBridge('initialize');
     return result?.available === true;
   } catch (error) {
-    console.error('Failed to initialize Apple StoreKit:', error);
+    console.error('Failed to initialize StoreKit:', error);
     return false;
   }
 }
@@ -66,9 +113,7 @@ export async function initAppleStoreKit(): Promise<boolean> {
 export async function queryProducts(): Promise<any[]> {
   if (!isIOSApp()) return [];
   try {
-    const plugin = getPlugin();
-    if (!plugin) return [];
-    const result = await plugin.queryProducts();
+    const result = await callBridge('queryProducts');
     return result?.products || [];
   } catch (error) {
     console.error('Failed to query Apple products:', error);
@@ -80,12 +125,11 @@ export async function purchaseSubscription(productId: string): Promise<ApplePurc
   if (!isIOSApp()) {
     return { success: false, error: 'Not running on iOS' };
   }
+  if (!hasStoreKitBridge()) {
+    return { success: false, error: 'StoreKit not available on this device' };
+  }
   try {
-    const plugin = getPlugin();
-    if (!plugin) {
-      return { success: false, error: 'StoreKit plugin not available' };
-    }
-    const result = await plugin.purchaseSubscription({ productId });
+    const result = await callBridge('purchaseSubscription', { productId });
     if (result?.success) {
       return {
         success: true,
@@ -108,9 +152,7 @@ export async function purchaseSubscription(productId: string): Promise<ApplePurc
 export async function restorePurchases(): Promise<ApplePurchaseResult[]> {
   if (!isIOSApp()) return [];
   try {
-    const plugin = getPlugin();
-    if (!plugin) return [];
-    const result = await plugin.restorePurchases();
+    const result = await callBridge('restorePurchases');
     if (result?.restored && result.receiptData) {
       return [{
         success: true,
