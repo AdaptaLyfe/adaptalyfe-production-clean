@@ -3,7 +3,17 @@ import StoreKit
 import Capacitor
 
 @objc(AppleStoreKitPlugin)
-public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymentTransactionObserver {
+public class AppleStoreKitPlugin: CAPPlugin, CAPBridgedPlugin {
+
+    public let identifier = "AppleStoreKitPlugin"
+    public let jsName = "AppleStoreKit"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "initialize", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "queryProducts", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "purchaseSubscription", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "restorePurchases", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getReceiptData", returnType: CAPPluginReturnPromise)
+    ]
 
     private var productsRequest: SKProductsRequest?
     private var productQueryCall: CAPPluginCall?
@@ -20,8 +30,6 @@ public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymen
     public override func load() {
         SKPaymentQueue.default().add(self)
     }
-
-    // MARK: - Plugin Methods
 
     @objc func initialize(_ call: CAPPluginCall) {
         let canMakePayments = SKPaymentQueue.canMakePayments()
@@ -53,7 +61,6 @@ public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymen
             let payment = SKPayment(product: product)
             SKPaymentQueue.default().add(payment)
         } else {
-            productQueryCall = nil
             purchaseCall = call
             let request = SKProductsRequest(productIdentifiers: [productId])
             request.delegate = self
@@ -70,44 +77,40 @@ public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymen
     @objc func getReceiptData(_ call: CAPPluginCall) {
         if let receiptURL = Bundle.main.appStoreReceiptURL,
            let receiptData = try? Data(contentsOf: receiptURL) {
-            let base64Receipt = receiptData.base64EncodedString()
-            call.resolve(["receiptData": base64Receipt])
+            call.resolve(["receiptData": receiptData.base64EncodedString()])
         } else {
             call.resolve(["receiptData": ""])
         }
     }
 
-    // MARK: - SKProductsRequestDelegate
+    deinit {
+        SKPaymentQueue.default().remove(self)
+    }
+}
 
+extension AppleStoreKitPlugin: SKProductsRequestDelegate {
     public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         for product in response.products {
             availableProducts[product.productIdentifier] = product
         }
-
-        if let purchaseCall = purchaseCall {
-            guard let productId = purchaseCall.getString("productId"),
-                  let product = availableProducts[productId] else {
-                purchaseCall.reject("Product not found in App Store")
-                self.purchaseCall = nil
-                return
-            }
+        if let purchaseCall = purchaseCall,
+           let productId = purchaseCall.getString("productId"),
+           let product = availableProducts[productId] {
             let payment = SKPayment(product: product)
             SKPaymentQueue.default().add(payment)
             return
         }
-
         if let queryCall = productQueryCall {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
             let productsArray = response.products.map { product -> [String: Any] in
-                let formatter = NumberFormatter()
-                formatter.numberStyle = .currency
                 formatter.locale = product.priceLocale
-                let priceString = formatter.string(from: product.price) ?? "$\(product.price)"
                 return [
                     "productId": product.productIdentifier,
                     "title": product.localizedTitle,
                     "description": product.localizedDescription,
                     "price": product.price.doubleValue,
-                    "priceString": priceString,
+                    "priceString": formatter.string(from: product.price) ?? "$\(product.price)",
                     "currencyCode": product.priceLocale.currencyCode ?? "USD"
                 ]
             }
@@ -117,33 +120,21 @@ public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymen
     }
 
     public func request(_ request: SKRequest, didFailWithError error: Error) {
-        if let call = productQueryCall {
-            call.reject("Failed to fetch products: \(error.localizedDescription)")
-            productQueryCall = nil
-        }
-        if let call = purchaseCall {
-            call.reject("Failed to fetch products: \(error.localizedDescription)")
-            purchaseCall = nil
-        }
+        productQueryCall?.reject("Failed to fetch products: \(error.localizedDescription)")
+        productQueryCall = nil
+        purchaseCall?.reject("Failed to fetch products: \(error.localizedDescription)")
+        purchaseCall = nil
     }
+}
 
-    // MARK: - SKPaymentTransactionObserver
-
+extension AppleStoreKitPlugin: SKPaymentTransactionObserver {
     public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
             switch transaction.transactionState {
-            case .purchased:
-                handlePurchased(transaction)
-            case .failed:
-                handleFailed(transaction)
-            case .restored:
-                handleRestored(transaction)
-            case .deferred:
-                break
-            case .purchasing:
-                break
-            @unknown default:
-                break
+            case .purchased:  handlePurchased(transaction)
+            case .failed:     handleFailed(transaction)
+            case .restored:   handleRestored(transaction)
+            default:          break
             }
         }
     }
@@ -151,68 +142,52 @@ public class AppleStoreKitPlugin: CAPPlugin, SKProductsRequestDelegate, SKPaymen
     private func handlePurchased(_ transaction: SKPaymentTransaction) {
         SKPaymentQueue.default().finishTransaction(transaction)
         var receiptData = ""
-        if let receiptURL = Bundle.main.appStoreReceiptURL,
-           let data = try? Data(contentsOf: receiptURL) {
+        if let url = Bundle.main.appStoreReceiptURL, let data = try? Data(contentsOf: url) {
             receiptData = data.base64EncodedString()
         }
-        if let call = purchaseCall {
-            call.resolve([
-                "success": true,
-                "productId": transaction.payment.productIdentifier,
-                "transactionId": transaction.transactionIdentifier ?? "",
-                "receiptData": receiptData,
-                "originalTransactionId": transaction.original?.transactionIdentifier ?? ""
-            ])
-            purchaseCall = nil
-        }
+        purchaseCall?.resolve([
+            "success": true,
+            "productId": transaction.payment.productIdentifier,
+            "transactionId": transaction.transactionIdentifier ?? "",
+            "receiptData": receiptData,
+            "originalTransactionId": transaction.original?.transactionIdentifier ?? ""
+        ])
+        purchaseCall = nil
     }
 
     private func handleFailed(_ transaction: SKPaymentTransaction) {
         SKPaymentQueue.default().finishTransaction(transaction)
-        if let call = purchaseCall {
-            let errorCode = (transaction.error as? SKError)?.code
-            if errorCode == .paymentCancelled {
-                call.reject("USER_CANCELED")
-            } else {
-                call.reject(transaction.error?.localizedDescription ?? "Purchase failed")
-            }
-            purchaseCall = nil
+        let errorCode = (transaction.error as? SKError)?.code
+        if errorCode == .paymentCancelled {
+            purchaseCall?.reject("USER_CANCELED")
+        } else {
+            purchaseCall?.reject(transaction.error?.localizedDescription ?? "Purchase failed")
         }
+        purchaseCall = nil
     }
 
     private func handleRestored(_ transaction: SKPaymentTransaction) {
         SKPaymentQueue.default().finishTransaction(transaction)
         var receiptData = ""
-        if let receiptURL = Bundle.main.appStoreReceiptURL,
-           let data = try? Data(contentsOf: receiptURL) {
+        if let url = Bundle.main.appStoreReceiptURL, let data = try? Data(contentsOf: url) {
             receiptData = data.base64EncodedString()
         }
-        if let call = restoreCall {
-            call.resolve([
-                "restored": true,
-                "productId": transaction.payment.productIdentifier,
-                "transactionId": transaction.original?.transactionIdentifier ?? transaction.transactionIdentifier ?? "",
-                "receiptData": receiptData
-            ])
-            restoreCall = nil
-        }
+        restoreCall?.resolve([
+            "restored": true,
+            "productId": transaction.payment.productIdentifier,
+            "transactionId": transaction.original?.transactionIdentifier ?? transaction.transactionIdentifier ?? "",
+            "receiptData": receiptData
+        ])
+        restoreCall = nil
     }
 
     public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-        if let call = restoreCall {
-            call.resolve(["restored": false, "message": "No previous purchases found"])
-            restoreCall = nil
-        }
+        restoreCall?.resolve(["restored": false, "message": "No previous purchases found"])
+        restoreCall = nil
     }
 
     public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
-        if let call = restoreCall {
-            call.reject("Restore failed: \(error.localizedDescription)")
-            restoreCall = nil
-        }
-    }
-
-    deinit {
-        SKPaymentQueue.default().remove(self)
+        restoreCall?.reject("Restore failed: \(error.localizedDescription)")
+        restoreCall = nil
     }
 }
