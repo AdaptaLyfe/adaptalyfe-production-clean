@@ -57,6 +57,8 @@
         <string>Adaptalyfe needs reminders access to help you remember important tasks.</string>
         <key>NSContactsUsageDescription</key>
         <string>Adaptalyfe needs contacts access to manage your support network and emergency contacts.</string>
+        <key>NSUserTrackingUsageDescription</key>
+        <string>Adaptalyfe uses analytics to understand how features are used so we can improve the app experience and better support your daily independence goals. No personal or health information is shared with advertisers.</string>
         <key>CFBundleURLTypes</key>
         <array>
                 <dict>
