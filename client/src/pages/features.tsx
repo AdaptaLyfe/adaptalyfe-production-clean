@@ -22,62 +22,322 @@ import {
   Heart,
   Lock,
   CheckCircle2,
+  CheckSquare,
+  Smile,
+  DollarSign,
+  Calendar,
+  Phone,
+  Smartphone,
+  Mail,
+  ClipboardList,
+  Utensils,
+  Download,
+  Trophy,
+  UserPlus,
+  LayoutDashboard,
+  KeyRound,
+  Video,
+  History,
+  TrendingUp,
+  CalendarDays,
+  AlertCircle,
+  Award,
+  HeadphonesIcon,
+  MessagesSquare,
+  GraduationCap,
   ArrowRight
 } from "lucide-react";
 
 export default function Features() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
 
+  // ============================================================
+  // FEATURES LIST — Aligned with subscription pricing tiers
+  // (Basic $4.99 / Premium $12.99 / Family $24.99)
+  // ============================================================
   const enhancedFeatures = [
+    // ===== BASIC PLAN — Core features (Available Now) =====
     {
-      id: 'smart-notifications',
-      title: 'Smart Notifications',
-      description: 'Intelligent reminder system with priority levels and customizable scheduling',
-      icon: Bell,
+      id: 'daily-task-management',
+      title: 'Daily Task Management',
+      description: 'Create and complete daily activities with categorized tasks and progress tracking',
+      icon: CheckSquare,
       status: 'integrated',
-      category: 'core'
+      category: 'basic'
     },
     {
-      id: 'achievement-system',
-      title: 'Achievement System',
-      description: 'Gamification features with points, levels, and progress tracking',
-      icon: Star,
+      id: 'daily-checkins',
+      title: 'Daily Check-ins',
+      description: 'Simple 1–5 scale for personal reflection and mood tracking',
+      icon: Smile,
       status: 'integrated',
-      category: 'motivation'
+      category: 'basic'
     },
     {
-      id: 'dashboard-insights',
-      title: 'Dashboard Insights',
-      description: 'AI-powered personalized recommendations and behavior analysis',
-      icon: Zap,
+      id: 'financial-tracking',
+      title: 'Financial Tracking',
+      description: 'Bill reminders, due-date alerts, and bill payment quick links',
+      icon: DollarSign,
       status: 'integrated',
-      category: 'ai'
+      category: 'basic'
     },
     {
-      id: 'enhanced-communication',
-      title: 'Enhanced Communication',
-      description: 'Improved messaging with emoji reactions and quick responses',
-      icon: HelpCircle,
+      id: 'appointment-management',
+      title: 'Appointment Management',
+      description: 'Track personal schedules, appointments, and reminders',
+      icon: Calendar,
       status: 'integrated',
-      category: 'communication'
+      category: 'basic'
     },
     {
-      id: 'personalization-engine',
-      title: 'Personalization Engine',
-      description: 'Adaptive UI themes and AI-powered customization based on usage patterns',
-      icon: Settings,
+      id: 'trusted-contacts',
+      title: 'Trusted Contacts',
+      description: 'Quick access to saved contacts and your support network',
+      icon: Phone,
       status: 'integrated',
-      category: 'customization'
+      category: 'basic'
     },
     {
-      id: 'ai-coach',
-      title: 'AI Life Skills Coach',
-      description: 'Personalized guidance and real-time support for daily challenges',
-      icon: Brain,
+      id: 'mobile-app-access',
+      title: 'Mobile App Access',
+      description: 'Full mobile functionality on iOS and Android',
+      icon: Smartphone,
+      status: 'integrated',
+      category: 'basic'
+    },
+    {
+      id: 'email-support',
+      title: 'Email Support',
+      description: 'Standard customer assistance via email',
+      icon: Mail,
+      status: 'integrated',
+      category: 'basic'
+    },
+
+    // ===== PREMIUM PLAN — Everything in Basic, plus =====
+    {
+      id: 'usage-patterns',
+      title: 'Usage Patterns & Progress Journals',
+      description: 'Track patterns and document your independence journey over time',
+      icon: BarChart3,
       status: 'premium',
-      category: 'ai'
+      category: 'premium'
     },
-    // Hidden — uncomment to restore Visual Progress Journals
+    {
+      id: 'personal-records',
+      title: 'Personal Records',
+      description: 'Notes, medications, allergies, and sensitivities all in one place',
+      icon: ClipboardList,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'skill-challenges-templates',
+      title: 'Skill Challenges & Custom Task Templates',
+      description: 'Interactive challenges and personalized task templates for daily routines',
+      icon: Target,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'meal-planning',
+      title: 'Meal Planning & Shopping Lists',
+      description: 'Weekly meal plans, recipes, and grocery list management',
+      icon: Utensils,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'data-export-tutorials',
+      title: 'Data Export & Guided Tutorials',
+      description: 'Export your data (JSON, CSV, PDF) with step-by-step skill tutorials',
+      icon: Download,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'unlimited-tasks',
+      title: 'Unlimited Daily Tasks & Trusted Contacts',
+      description: 'No limits on daily tasks or how many trusted contacts you can add',
+      icon: Zap,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'expanded-achievements',
+      title: 'Expanded Achievements & Rewards',
+      description: 'Unlock advanced gamification with badges, levels, and reward milestones',
+      icon: Trophy,
+      status: 'premium',
+      category: 'premium'
+    },
+    {
+      id: 'priority-email-support',
+      title: 'Priority Email Support',
+      description: 'Faster response times for premium subscribers',
+      icon: Mail,
+      status: 'premium',
+      category: 'premium'
+    },
+
+    // ===== FAMILY / CARE TEAM PLAN — Everything in Premium, plus =====
+    {
+      id: 'multiple-profiles',
+      title: 'Up to 5 Individual User Profiles',
+      description: 'Manage multiple family members or care recipients under one plan',
+      icon: UserPlus,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'shared-dashboards',
+      title: 'Shared Dashboards',
+      description: 'Coordinated views for family members and caregivers',
+      icon: LayoutDashboard,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'role-based-access',
+      title: 'Role-Based Access Controls',
+      description: 'Set permissions for caregivers, family, and care team roles',
+      icon: KeyRound,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'in-app-messaging',
+      title: 'In-App Messaging & Video Calls',
+      description: 'Stay connected with secure messaging and video communication',
+      icon: Video,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'granular-sharing',
+      title: 'Granular Sharing & Security Controls',
+      description: 'Fine-grained control over what each family member can see',
+      icon: Shield,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'activity-history',
+      title: 'Activity History & Audit Views',
+      description: 'Complete audit log of activity across all family profiles',
+      icon: History,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'combined-progress',
+      title: 'Combined Progress Summaries',
+      description: 'See progress across all family members in unified reports',
+      icon: TrendingUp,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'shared-routines',
+      title: 'Shared Routines, Templates & Calendars',
+      description: 'Build and share routines, task templates, and calendars across the family',
+      icon: CalendarDays,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'cascading-alerts',
+      title: 'Cascading Contact Alerts',
+      description: 'Automated alert system that notifies multiple contacts in priority order',
+      icon: AlertCircle,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'family-achievements',
+      title: 'Family Achievements & Milestones',
+      description: 'Celebrate wins and milestones together as a family',
+      icon: Award,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'dedicated-assistance',
+      title: 'Dedicated Account Assistance',
+      description: 'Personal support representative for your family account',
+      icon: HeadphonesIcon,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'priority-chat-support',
+      title: 'Priority Email & Chat Support',
+      description: 'Top-tier support with priority email and live chat access',
+      icon: MessagesSquare,
+      status: 'family',
+      category: 'family'
+    },
+    {
+      id: 'guided-onboarding',
+      title: 'Guided Onboarding Sessions',
+      description: 'Personalized onboarding to help your family get the most from Adaptalyfe',
+      icon: GraduationCap,
+      status: 'family',
+      category: 'family'
+    },
+
+    // ============================================================
+    // OLD FEATURES — Commented out to align with pricing tiers
+    // Uncomment any item below to restore it on the features page
+    // ============================================================
+    // {
+    //   id: 'smart-notifications',
+    //   title: 'Smart Notifications',
+    //   description: 'Intelligent reminder system with priority levels and customizable scheduling',
+    //   icon: Bell,
+    //   status: 'integrated',
+    //   category: 'core'
+    // },
+    // {
+    //   id: 'achievement-system',
+    //   title: 'Achievement System',
+    //   description: 'Gamification features with points, levels, and progress tracking',
+    //   icon: Star,
+    //   status: 'integrated',
+    //   category: 'motivation'
+    // },
+    // {
+    //   id: 'dashboard-insights',
+    //   title: 'Dashboard Insights',
+    //   description: 'AI-powered personalized recommendations and behavior analysis',
+    //   icon: Zap,
+    //   status: 'integrated',
+    //   category: 'ai'
+    // },
+    // {
+    //   id: 'enhanced-communication',
+    //   title: 'Enhanced Communication',
+    //   description: 'Improved messaging with emoji reactions and quick responses',
+    //   icon: HelpCircle,
+    //   status: 'integrated',
+    //   category: 'communication'
+    // },
+    // {
+    //   id: 'personalization-engine',
+    //   title: 'Personalization Engine',
+    //   description: 'Adaptive UI themes and AI-powered customization based on usage patterns',
+    //   icon: Settings,
+    //   status: 'integrated',
+    //   category: 'customization'
+    // },
+    // {
+    //   id: 'ai-coach',
+    //   title: 'AI Life Skills Coach',
+    //   description: 'Personalized guidance and real-time support for daily challenges',
+    //   icon: Brain,
+    //   status: 'premium',
+    //   category: 'ai'
+    // },
     // {
     //   id: 'progress-photos',
     //   title: 'Visual Progress Journals',
@@ -86,43 +346,37 @@ export default function Features() {
     //   status: 'premium',
     //   category: 'tracking'
     // },
-    {
-      id: 'advanced-analytics',
-      title: 'Advanced Analytics & Insights',
-      description: 'Detailed progress reports and behavioral pattern analysis',
-      icon: BarChart3,
-      status: 'premium',
-      category: 'analytics'
-    },
-    {
-      id: 'skill-challenges',
-      title: 'Interactive Skill Challenges',
-      description: 'Gamified learning experiences with custom difficulty levels',
-      icon: Target,
-      status: 'premium',
-      category: 'learning'
-    },
-    {
-      id: 'custom-templates',
-      title: 'Custom Task Templates',
-      description: 'Create and share personalized task sequences and routines',
-      icon: BookOpen,
-      status: 'premium',
-      category: 'customization'
-    },
+    // {
+    //   id: 'advanced-analytics',
+    //   title: 'Advanced Analytics & Insights',
+    //   description: 'Detailed progress reports and behavioral pattern analysis',
+    //   icon: BarChart3,
+    //   status: 'premium',
+    //   category: 'analytics'
+    // },
+    // {
+    //   id: 'skill-challenges',
+    //   title: 'Interactive Skill Challenges',
+    //   description: 'Gamified learning experiences with custom difficulty levels',
+    //   icon: Target,
+    //   status: 'premium',
+    //   category: 'learning'
+    // },
+    // {
+    //   id: 'custom-templates',
+    //   title: 'Custom Task Templates',
+    //   description: 'Create and share personalized task sequences and routines',
+    //   icon: BookOpen,
+    //   status: 'premium',
+    //   category: 'customization'
+    // },
   ];
 
   const categories = [
     { id: 'all', name: 'All Features', count: enhancedFeatures.length },
-    { id: 'core', name: 'Core Features', count: enhancedFeatures.filter(f => f.category === 'core').length },
-    { id: 'ai', name: 'AI Enhanced', count: enhancedFeatures.filter(f => f.category === 'ai').length },
-    { id: 'accessibility', name: 'Accessibility', count: enhancedFeatures.filter(f => f.category === 'accessibility').length },
-    { id: 'motivation', name: 'Motivation', count: enhancedFeatures.filter(f => f.category === 'motivation').length },
-    { id: 'communication', name: 'Communication', count: enhancedFeatures.filter(f => f.category === 'communication').length },
-    { id: 'customization', name: 'Customization', count: enhancedFeatures.filter(f => f.category === 'customization').length },
-    { id: 'tracking', name: 'Progress Tracking', count: enhancedFeatures.filter(f => f.category === 'tracking').length },
-    { id: 'learning', name: 'Learning', count: enhancedFeatures.filter(f => f.category === 'learning').length },
-    { id: 'health', name: 'Health & Wellness', count: enhancedFeatures.filter(f => f.category === 'health').length },
+    { id: 'basic', name: 'Basic Plan', count: enhancedFeatures.filter(f => f.category === 'basic').length },
+    { id: 'premium', name: 'Premium Plan', count: enhancedFeatures.filter(f => f.category === 'premium').length },
+    { id: 'family', name: 'Family Plan', count: enhancedFeatures.filter(f => f.category === 'family').length },
   ];
 
   const filteredFeatures = activeCategory === 'all' 
@@ -133,6 +387,7 @@ export default function Features() {
     switch (status) {
       case 'integrated': return 'text-green-600 bg-green-100 border-green-300';
       case 'premium': return 'text-purple-600 bg-purple-100 border-purple-300';
+      case 'family': return 'text-pink-600 bg-pink-100 border-pink-300';
       case 'coming-soon': return 'text-blue-600 bg-blue-100 border-blue-300';
       default: return 'text-gray-600 bg-gray-100 border-gray-300';
     }
@@ -142,6 +397,7 @@ export default function Features() {
     switch (status) {
       case 'integrated': return <CheckCircle2 className="w-3 h-3" />;
       case 'premium': return <Lock className="w-3 h-3" />;
+      case 'family': return <Users className="w-3 h-3" />;
       case 'coming-soon': return <ArrowRight className="w-3 h-3" />;
       default: return null;
     }
@@ -149,8 +405,9 @@ export default function Features() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'integrated': return 'Available Now';
+      case 'integrated': return 'Basic Plan';
       case 'premium': return 'Premium Feature';
+      case 'family': return 'Family Plan';
       case 'coming-soon': return 'Coming Soon';
       default: return 'Unknown';
     }
