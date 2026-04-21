@@ -77,14 +77,15 @@ export default function Features() {
       status: 'premium',
       category: 'ai'
     },
-    {
-      id: 'progress-photos',
-      title: 'Visual Progress Journals',
-      description: 'Photo documentation of achievements and daily accomplishments',
-      icon: Camera,
-      status: 'premium',
-      category: 'tracking'
-    },
+    // Hidden — uncomment to restore Visual Progress Journals
+    // {
+    //   id: 'progress-photos',
+    //   title: 'Visual Progress Journals',
+    //   description: 'Photo documentation of achievements and daily accomplishments',
+    //   icon: Camera,
+    //   status: 'premium',
+    //   category: 'tracking'
+    // },
     {
       id: 'advanced-analytics',
       title: 'Advanced Analytics & Insights',

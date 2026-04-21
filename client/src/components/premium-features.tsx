@@ -40,14 +40,15 @@ export default function PremiumFeatures({ userPlan }: PremiumFeatureProps) {
       available: isPremium,
       category: 'AI Enhanced'
     },
-    {
-      id: 'progress-photos',
-      title: 'Visual Progress Journals',
-      description: 'Photo documentation of achievements and daily accomplishments',
-      icon: Camera,
-      available: isPremium,
-      category: 'Progress Tracking'
-    },
+    // Hidden — uncomment to restore Visual Progress Journals
+    // {
+    //   id: 'progress-photos',
+    //   title: 'Visual Progress Journals',
+    //   description: 'Photo documentation of achievements and daily accomplishments',
+    //   icon: Camera,
+    //   available: isPremium,
+    //   category: 'Progress Tracking'
+    // },
     {
       id: 'advanced-analytics',
       title: 'Advanced Analytics & Insights',
