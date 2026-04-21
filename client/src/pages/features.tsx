@@ -46,14 +46,6 @@ export default function Features() {
       category: 'motivation'
     },
     {
-      id: 'voice-commands',
-      title: 'Voice Commands',
-      description: 'Hands-free navigation and task management with speech recognition',
-      icon: Volume2,
-      status: 'integrated',
-      category: 'accessibility'
-    },
-    {
       id: 'dashboard-insights',
       title: 'Dashboard Insights',
       description: 'AI-powered personalized recommendations and behavior analysis',
@@ -117,14 +109,6 @@ export default function Features() {
       status: 'premium',
       category: 'customization'
     },
-    {
-      id: 'health-integration',
-      title: 'Health Data Integration',
-      description: 'Connect with Apple Health, Google Fit, and medical devices',
-      icon: Heart,
-      status: 'premium',
-      category: 'health'
-    }
   ];
 
   const categories = [

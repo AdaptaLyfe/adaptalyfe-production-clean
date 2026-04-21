@@ -41,14 +41,6 @@ export default function PremiumFeatures({ userPlan }: PremiumFeatureProps) {
       category: 'AI Enhanced'
     },
     {
-      id: 'voice-commands',
-      title: 'Voice Commands & Text-to-Speech',
-      description: 'Hands-free navigation and audio feedback for accessibility',
-      icon: Mic,
-      available: isPremium,
-      category: 'Accessibility'
-    },
-    {
       id: 'progress-photos',
       title: 'Visual Progress Journals',
       description: 'Photo documentation of achievements and daily accomplishments',
@@ -79,14 +71,6 @@ export default function PremiumFeatures({ userPlan }: PremiumFeatureProps) {
       icon: BookOpen,
       available: isPremium,
       category: 'Customization'
-    },
-    {
-      id: 'health-integration',
-      title: 'Health Data Integration',
-      description: 'Connect with Apple Health, Google Fit, and medical devices',
-      icon: Heart,
-      available: isPremium,
-      category: 'Health'
     },
     {
       id: 'emergency-protocols',
