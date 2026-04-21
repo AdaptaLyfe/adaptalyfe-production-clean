@@ -73,22 +73,6 @@ export default function PremiumFeatures({ userPlan }: PremiumFeatureProps) {
       category: 'Gamification'
     },
     {
-      id: 'smart-reminders',
-      title: 'Smart Location-Based Reminders',
-      description: 'GPS-triggered alerts for medications, tasks, and appointments',
-      icon: MessageSquare,
-      available: isPremium,
-      category: 'Smart Features'
-    },
-    {
-      id: 'offline-mode',
-      title: 'Offline Mode & Sync',
-      description: 'Full app functionality without internet, auto-sync when connected',
-      icon: FileText,
-      available: isPremium,
-      category: 'Reliability'
-    },
-    {
       id: 'custom-templates',
       title: 'Custom Task Templates',
       description: 'Create and share personalized task sequences and routines',
