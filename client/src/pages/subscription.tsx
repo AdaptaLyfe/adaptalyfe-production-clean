@@ -583,7 +583,14 @@ export default function SubscriptionPage() {
 
           {/* Monthly billing notice */}
           <div className="flex items-center justify-center mb-4">
-            <Badge variant="secondary" className="text-sm px-4 py-1">Monthly billing — cancel anytime</Badge>
+            <Badge variant="secondary" className="text-sm px-4 py-1">Monthly Subscription — auto-renewable, cancel anytime</Badge>
+          </div>
+
+          {/* Premium feature notice — required by Apple Guideline 2.3.2 */}
+          <div className="max-w-2xl mx-auto mb-4 px-4">
+            <p className="text-sm text-gray-600 italic">
+              Some features require an active subscription. All plans are auto-renewing monthly subscriptions.
+            </p>
           </div>
 
           {/* Already Paid Recovery — shown at top so it's visible on mobile without scrolling */}
@@ -838,6 +845,48 @@ export default function SubscriptionPage() {
               <h3 className="font-semibold mb-2">Proven Results</h3>
               <p className="text-gray-600">Thousands of users building independence every day</p>
             </div>
+          </div>
+        </div>
+
+        {/* Apple-required legal disclosure block — Guideline 3.1.2(c) */}
+        <div className="mt-12 max-w-3xl mx-auto p-6 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 leading-relaxed">
+          <h3 className="font-semibold text-gray-900 mb-3">Subscription Terms</h3>
+          <ul className="space-y-2 list-disc pl-5 mb-4">
+            <li><strong>Basic Plan:</strong> $4.99 per month (auto-renewable)</li>
+            <li><strong>Premium Plan:</strong> $12.99 per month (auto-renewable)</li>
+            <li><strong>Family / Care Team Plan:</strong> $24.99 per month (auto-renewable)</li>
+          </ul>
+          <p className="mb-2">
+            Payment will be charged to your Apple ID account at confirmation of purchase.
+          </p>
+          <p className="mb-2">
+            Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period.
+          </p>
+          <p className="mb-2">
+            Your account will be charged for renewal within 24 hours prior to the end of the current period at the same monthly price.
+          </p>
+          <p className="mb-4">
+            You can manage and cancel your subscription by going to your account settings on the App Store after purchase.
+          </p>
+          <div className="flex flex-wrap gap-4 pt-3 border-t border-gray-300">
+            <a
+              href="/privacy-policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline font-medium"
+              data-testid="link-privacy-policy"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline font-medium"
+              data-testid="link-terms-of-use"
+            >
+              Terms of Use (EULA)
+            </a>
           </div>
         </div>
       </div>

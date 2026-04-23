@@ -1,0 +1,157 @@
+You’ve got 4 separate rejection reasons, and each one is very fixable. I’ll walk you through exactly what to change (no fluff, only what works for approval).
+
+✅ 1. Missing Terms of Use (EULA) – Guideline 3.1.2(c)
+❌ Problem
+
+You don’t have a Terms of Use link in your App Store metadata.
+
+✅ Fix (IMPORTANT)
+
+You must add EULA link in ONE of these places:
+
+Option A (Recommended – easiest)
+
+Add this to your App Description in App Store Connect:
+
+Terms of Use (EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+Option B (Custom EULA)
+Go to App Store Connect → App → App Information
+Add your own Terms URL in EULA field
+⚠️ ALSO REQUIRED INSIDE APP (you’re missing this too)
+
+On your subscription screen (your screenshot):
+
+Add at bottom:
+
+Privacy Policy | Terms of Use
+
+Clickable links.
+
+👉 Without this → rejection again.
+
+✅ 2. Placeholder Splash Screen – Guideline 2.1(a)
+❌ Problem
+
+Your second screenshot clearly shows:
+
+Empty screen
+Small logo in center
+
+Apple sees this as placeholder / unfinished UI
+
+✅ Fix
+
+You must replace it with a real launch experience:
+
+Good splash screen should have:
+App logo (bigger)
+Background color or gradient
+Optional tagline
+Example fix:
+
+Instead of current:
+
+👉 small icon floating
+
+Do this:
+
+Full screen gradient background
+Center logo (large)
+App name "AdaptaLyfe"
+
+OR
+
+Skip splash screen entirely and go directly to home
+
+👉 Apple actually prefers no fake loading screens
+
+✅ 3. Paid Features Not Clearly Marked – Guideline 2.3.2
+❌ Problem
+
+Your app description / screenshots show features
+BUT don’t clearly say:
+
+👉 “Requires subscription”
+
+✅ Fix (App Store Description)
+
+Add something like this:
+
+Premium Features (Subscription Required):
+- Advanced task management
+- Unlimited tracking
+- Caregiver connections
+- Insights & analytics
+✅ Fix (Inside App UI)
+
+On your plan screen:
+
+Add:
+
+Some features require an active subscription.
+✅ Fix (Screenshots)
+
+Add small labels like:
+
+"Premium Feature"
+"Requires Subscription"
+✅ 4. Promotional Image Issue
+❌ Problem
+
+You used same image as app icon
+
+Apple hates this.
+
+✅ Fix
+
+Create a new promotional image:
+
+Good example:
+Show app UI (subscription screen)
+Add text:
+“Unlock Premium”
+“Upgrade Your Life”
+❌ Don’t:
+Reuse app icon
+Use blank or minimal image
+🚨 BONUS ISSUE (IMPORTANT – you’re close to rejection again)
+
+Your subscription screen is missing required Apple info
+
+From your screenshot, I see:
+
+✅ Price → OK
+❌ Missing:
+
+Privacy Policy link ❌
+Terms link ❌
+Subscription duration clearly ❌ (write “Monthly Subscription”)
+✅ Final Required Subscription UI
+
+Add this at bottom:
+
+$4.99/month (auto-renewable)
+
+Payment will be charged to your Apple ID.
+Subscription automatically renews unless cancelled at least 24 hours before the end.
+
+Privacy Policy: https://yourlink.com
+Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+✅ FINAL CHECKLIST (DO ALL BEFORE RESUBMIT)
+
+✔ Add EULA link in App Description
+✔ Add Privacy Policy + Terms inside app screen
+✔ Fix splash screen (remove placeholder)
+✔ Mark premium features clearly
+✔ Fix promotional image (NOT app icon)
+✔ Add subscription legal text
+
+🎯 PRO TIP (WHY YOU GOT REJECTED)
+
+Your app is actually fine — this is 100% compliance issues, not technical.
+
+Apple is strict with:
+
+subscriptions
+metadata clarity
+UI completeness
