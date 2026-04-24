@@ -53,19 +53,19 @@ title = "Adaptalyfe Final Build (iOS Ready)"
 id = "GZmALdfBo3S9wFeKewgwl"
 uri = "file://attached_assets/promo_images/promo_basic_1024.png"
 type = "image"
-title = "Basic Plan Promotional Image (1024x1024)"
+title = "Basic Plan Promo (1024x1024 RGB - no alpha)"
 
 [[outputs]]
 id = "eaAxee7Jp3r2RbO0nFw1F"
 uri = "file://attached_assets/promo_images/promo_premium_1024.png"
 type = "image"
-title = "Premium Plan Promotional Image (1024x1024)"
+title = "Premium Plan Promo (1024x1024 RGB - no alpha)"
 
 [[outputs]]
 id = "X7QEppAbn2ex02UnIEfsY"
 uri = "file://attached_assets/promo_images/promo_family_1024.png"
 type = "image"
-title = "Family Plan Promotional Image (1024x1024)"
+title = "Family Plan Promo (1024x1024 RGB - no alpha)"
 
 [[outputs]]
 id = "PDQDRPJkzeaOkfhgEDb9S"
