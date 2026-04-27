@@ -3837,7 +3837,19 @@ Provide a helpful, encouraging response:`;
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const user = req.session.user;
+      // Always read fresh user from DB so a recent purchase is reflected immediately,
+      // even if req.session.user is momentarily stale (e.g. right after IAP verify).
+      let user: any = req.session.user;
+      try {
+        const freshUser = await storage.getUserById(req.session.userId);
+        if (freshUser) {
+          user = freshUser;
+          req.session.user = freshUser;
+        }
+      } catch (e) {
+        console.error("Failed to refresh user for /api/subscription, falling back to session:", e);
+      }
+      
       const now = new Date();
       
       // Admin accounts get full access without payment requirements
@@ -4566,6 +4578,15 @@ Provide a helpful, encouraging response:`;
         subscriptionPlatform: 'google_play',
       };
 
+      // Force session persistence before responding so the next /api/subscription
+      // call from the client sees the active subscription immediately.
+      await new Promise<void>((resolve) => {
+        req.session.save((err: any) => {
+          if (err) console.error("Session save error after Google Play verify:", err);
+          resolve();
+        });
+      });
+
       console.log(`Google Play subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType} (${planInfo.billingCycle})`);
 
       res.json({
@@ -4694,6 +4715,15 @@ Provide a helpful, encouraging response:`;
         subscriptionPlatform: 'app_store',
       };
 
+      // Force session persistence before responding so the next /api/subscription
+      // call from the client sees the active subscription immediately.
+      await new Promise<void>((resolve) => {
+        req.session.save((err: any) => {
+          if (err) console.error("Session save error after Apple verify:", err);
+          resolve();
+        });
+      });
+
       console.log(`Apple subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType}`);
 
       res.json({
@@ -4778,6 +4808,13 @@ Provide a helpful, encouraging response:`;
       });
 
       req.session.user = { ...req.session.user, subscriptionTier: planInfo.planType, subscriptionStatus: 'active', subscriptionExpiresAt: expiresAt, subscriptionPlatform: 'app_store' };
+
+      await new Promise<void>((resolve) => {
+        req.session.save((err: any) => {
+          if (err) console.error("Session save error after Apple restore:", err);
+          resolve();
+        });
+      });
 
       console.log(`Apple subscription restored for user ${user.id}: ${active.product_id} -> ${planInfo.planType}`);
       res.json({ restored: true, planType: planInfo.planType, expiresAt: expiresAt.toISOString() });
