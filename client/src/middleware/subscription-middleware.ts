@@ -51,10 +51,23 @@ export function useSubscriptionEnforcement() {
     const alwaysAccessible = ['/subscription', '/pricing', '/settings'];
     const isAlwaysAccessible = alwaysAccessible.some(route => location.startsWith(route));
 
+    // BULLETPROOF active-subscription check: trust the user record (source of truth)
+    // first, then fall back to /api/subscription. This prevents redirect loops when
+    // the derived /api/subscription endpoint is momentarily stale (e.g. right after
+    // a successful Apple/Google IAP purchase).
+    const userHasActiveSub = (user as any).subscriptionStatus === 'active' &&
+      (user as any).subscriptionExpiresAt &&
+      new Date((user as any).subscriptionExpiresAt as any).getTime() > Date.now();
+
+    if (userHasActiveSub) {
+      // Active subscriber — never redirect them away from any route.
+      return;
+    }
+
     // If trial expired and no active subscription, block ALL app routes
-    const trialExpired = subscription.status === 'expired' || 
+    const trialExpired = subscription.status === 'expired' ||
         (subscription.status !== 'active' && subscription.status !== 'trialing');
-    
+
     if (trialExpired && !isAlwaysAccessible) {
       setLocation('/subscription');
       return;

@@ -537,10 +537,23 @@ export default function SubscriptionPage() {
     <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 p-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Plan</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            {user?.subscriptionStatus === 'active' ? 'Manage Your Subscription' : 'Choose Your Plan'}
+          </h1>
           <p className="text-xl text-gray-600 mb-6">
-            Unlock your full potential with Adaptalyfe's comprehensive features
+            {user?.subscriptionStatus === 'active'
+              ? `You're subscribed to the ${user?.subscriptionTier ? user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1) : ''} Plan. You can change plans below or return to your dashboard.`
+              : "Unlock your full potential with Adaptalyfe's comprehensive features"}
           </p>
+          {user?.subscriptionStatus === 'active' && (
+            <Button
+              onClick={() => setLocation('/dashboard')}
+              className="mb-6 bg-teal-600 hover:bg-teal-700 text-white"
+              size="lg"
+            >
+              Go to Dashboard
+            </Button>
+          )}
 
           {/* Explanation banner for new/unsubscribed users */}
           {user?.subscriptionStatus !== 'active' && (
