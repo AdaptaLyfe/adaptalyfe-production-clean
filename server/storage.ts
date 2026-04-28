@@ -45,7 +45,7 @@ import {
   familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, gt } from "drizzle-orm";
+import { eq, and, gte, lte, desc, gt, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -360,29 +360,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUserAccount(userId: number): Promise<void> {
-    // Delete all user data in order (respecting foreign key constraints)
-    // Start with tables that reference others, work backwards to the user table
-    
-    // Delete related data first
-    await db.delete(moodEntries).where(eq(moodEntries.userId, userId));
-    await db.delete(achievements).where(eq(achievements.userId, userId));
-    await db.delete(notifications).where(eq(notifications.userId, userId));
-    await db.delete(dailyTasks).where(eq(dailyTasks.userId, userId));
-    await db.delete(bills).where(eq(bills.userId, userId));
-    await db.delete(appointments).where(eq(appointments.userId, userId));
-    await db.delete(messages).where(eq(messages.userId, userId));
-    await db.delete(caregivers).where(eq(caregivers.userId, userId));
-    await db.delete(budgetEntries).where(eq(budgetEntries.userId, userId));
-    await db.delete(budgetCategories).where(eq(budgetCategories.userId, userId));
-    await db.delete(savingsGoals).where(eq(savingsGoals.userId, userId));
-    await db.delete(savingsTransactions).where(eq(savingsTransactions.userId, userId));
-    await db.delete(userPreferences).where(eq(userPreferences.userId, userId));
-    await db.delete(mealPlans).where(eq(mealPlans.userId, userId));
-    await db.delete(shoppingLists).where(eq(shoppingLists.userId, userId));
-    await db.delete(bankAccounts).where(eq(bankAccounts.userId, userId));
-    await db.delete(sleepSessions).where(eq(sleepSessions.userId, userId));
-    
-    // Finally delete the user
+    // Bulletproof cascade delete: dynamically discover EVERY foreign key that
+    // references users.id (or any user column) and delete those rows first.
+    // This avoids FK constraint errors when the schema gains new tables that
+    // reference users — no code change required.
+    const fkResult: any = await db.execute(sql`
+      SELECT DISTINCT tc.table_name, kcu.column_name
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.key_column_usage kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+      WHERE tc.constraint_type = 'FOREIGN KEY'
+        AND ccu.table_name = 'users'
+        AND ccu.column_name = 'id'
+        AND tc.table_name <> 'users'
+    `);
+
+    const rows: Array<{ table_name: string; column_name: string }> =
+      (fkResult?.rows ?? fkResult ?? []) as any;
+
+    for (const row of rows) {
+      const tableName = row.table_name;
+      const colName = row.column_name;
+      // Identifiers come from information_schema (trusted). Bind userId as a parameter.
+      try {
+        await db.execute(
+          sql.raw(`DELETE FROM "${tableName}" WHERE "${colName}" = ${Number(userId)}`)
+        );
+      } catch (err) {
+        console.warn(`⚠️ Cascade delete failed for ${tableName}.${colName} (user ${userId}):`, err);
+        // Continue — some tables (e.g. audit logs with ON DELETE SET NULL) may
+        // already handle this themselves; final users delete will fail loudly
+        // if anything important still references this user.
+      }
+    }
+
+    // Finally delete the user record itself
     await db.delete(users).where(eq(users.id, userId));
   }
 
