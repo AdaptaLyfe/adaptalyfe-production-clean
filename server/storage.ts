@@ -1,11 +1,12 @@
 import {
   users, dailyTasks, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
+  budgetCategories, savingsGoals, savingsTransactions, userPreferences,
   mealPlans, shoppingLists, groceryStores, emergencyResources, pharmacies, userPharmacies, medications, refillOrders,
   allergies, medicalConditions, adverseMedications, emergencyContacts, primaryCareProviders, symptomEntries,
   personalResources, personalDocuments, busSchedules, emergencyTreatmentPlans, geofences, geofenceEvents,
-  notifications, userPreferences, userAchievements, streakTracking, voiceInteractions, quickResponses,
+  notifications, userAchievements, streakTracking, voiceInteractions, quickResponses,
   messageReactions, activityPatterns, caregiverPermissions, lockedUserSettings, userCaregiverConnections,
-  caregiverInvitations, careRelationships, feedback, savingsGoals, savingsTransactions, budgetCategories,
+  caregiverInvitations, careRelationships, feedback,
   academicClasses, assignments, studySessions, campusLocations, campusTransport, studyGroups, transitionSkills,
   rewards, userPointsBalance, pointsTransactions, rewardRedemptions, sleepSessions, healthMetrics,
   type User, type InsertUser, type DailyTask, type InsertDailyTask, type Bill, type InsertBill,
@@ -376,8 +377,8 @@ export class DatabaseStorage implements IStorage {
     await db.delete(savingsGoals).where(eq(savingsGoals.userId, userId));
     await db.delete(savingsTransactions).where(eq(savingsTransactions.userId, userId));
     await db.delete(userPreferences).where(eq(userPreferences.userId, userId));
-    await db.delete(meals).where(eq(meals.userId, userId));
-    await db.delete(groceryItems).where(eq(groceryItems.userId, userId));
+    await db.delete(mealPlans).where(eq(mealPlans.userId, userId));
+    await db.delete(shoppingLists).where(eq(shoppingLists.userId, userId));
     await db.delete(bankAccounts).where(eq(bankAccounts.userId, userId));
     await db.delete(sleepSessions).where(eq(sleepSessions.userId, userId));
     
