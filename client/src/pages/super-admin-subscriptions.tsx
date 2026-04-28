@@ -1,14 +1,25 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Shield, 
-  Users, 
-  CreditCard, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Shield,
+  Users,
+  CreditCard,
   Search,
   Crown,
   CheckCircle,
@@ -16,7 +27,10 @@ import {
   Clock,
   AlertTriangle,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  Trash2,
+  Archive,
+  Loader2
 } from "lucide-react";
 
 const TIER_PRICES = {
@@ -46,10 +60,50 @@ export default function SuperAdminSubscriptions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [deleteTarget, setDeleteTarget] = useState<SubscriptionUser | null>(null);
+  const [deleteMode, setDeleteMode] = useState<'choose' | 'confirm-hard'>('choose');
+  const [hardConfirmText, setHardConfirmText] = useState("");
+  const { toast } = useToast();
 
   const { data: users = [], isLoading, error } = useQuery<SubscriptionUser[]>({
     queryKey: ['/api/super-admin/subscription-users'],
     retry: false
+  });
+
+  const closeDialog = () => {
+    setDeleteTarget(null);
+    setDeleteMode('choose');
+    setHardConfirmText("");
+  };
+
+  const softDeleteMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest('POST', `/api/super-admin/users/${userId}/soft-delete`);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "User disabled", description: data?.message || "Account soft-deleted." });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-users'] });
+      closeDialog();
+    },
+    onError: (err: any) => {
+      toast({ title: "Soft delete failed", description: err?.message || "Could not disable user.", variant: "destructive" });
+    },
+  });
+
+  const hardDeleteMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest('DELETE', `/api/super-admin/users/${userId}`, { confirm: 'DELETE' });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "User permanently deleted", description: data?.message || "Account and data removed." });
+      queryClient.invalidateQueries({ queryKey: ['/api/super-admin/subscription-users'] });
+      closeDialog();
+    },
+    onError: (err: any) => {
+      toast({ title: "Permanent delete failed", description: err?.message || "Could not delete user.", variant: "destructive" });
+    },
   });
 
   const filteredUsers = users.filter(user => {
@@ -328,35 +382,60 @@ export default function SuperAdminSubscriptions() {
                     <TableHead>Expires</TableHead>
                     <TableHead>Stripe ID</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                         No users found matching your criteria
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-mono text-sm">{user.id}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{user.name}</p>
-                            <p className="text-sm text-gray-500">@{user.username}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{user.email || '-'}</TableCell>
-                        <TableCell>{getTierBadge(user.subscriptionTier)}</TableCell>
-                        <TableCell>{getStatusBadge(user.subscriptionStatus)}</TableCell>
-                        <TableCell className="text-sm">{formatDate(user.subscriptionExpiresAt)}</TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {user.stripeCustomerId ? user.stripeCustomerId.slice(0, 12) + '...' : '-'}
-                        </TableCell>
-                        <TableCell className="text-sm">{formatDate(user.createdAt)}</TableCell>
-                      </TableRow>
-                    ))
+                    filteredUsers.map((user) => {
+                      const isAdminRow = user.username === 'admin' || user.accountType === 'admin';
+                      return (
+                        <TableRow key={user.id} className={user.isActive === false ? 'opacity-60' : ''}>
+                          <TableCell className="font-mono text-sm">{user.id}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">
+                                {user.name}
+                                {user.isActive === false && (
+                                  <span className="ml-2 text-xs text-orange-600 font-normal">(disabled)</span>
+                                )}
+                              </p>
+                              <p className="text-sm text-gray-500">@{user.username}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">{user.email || '-'}</TableCell>
+                          <TableCell>{getTierBadge(user.subscriptionTier)}</TableCell>
+                          <TableCell>{getStatusBadge(user.subscriptionStatus)}</TableCell>
+                          <TableCell className="text-sm">{formatDate(user.subscriptionExpiresAt)}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {user.stripeCustomerId ? user.stripeCustomerId.slice(0, 12) + '...' : '-'}
+                          </TableCell>
+                          <TableCell className="text-sm">{formatDate(user.createdAt)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                              disabled={isAdminRow}
+                              title={isAdminRow ? "Cannot delete admin accounts" : "Delete this user"}
+                              onClick={() => {
+                                setDeleteTarget(user);
+                                setDeleteMode('choose');
+                                setHardConfirmText("");
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -368,6 +447,120 @@ export default function SuperAdminSubscriptions() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) closeDialog(); }}>
+        <DialogContent className="max-w-md">
+          {deleteTarget && deleteMode === 'choose' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-600" />
+                  Delete user
+                </DialogTitle>
+                <DialogDescription className="pt-2">
+                  Choose how you want to delete{' '}
+                  <span className="font-semibold text-gray-900">{deleteTarget.name}</span>{' '}
+                  <span className="text-gray-500">(@{deleteTarget.username})</span>.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => softDeleteMutation.mutate(deleteTarget.id)}
+                  disabled={softDeleteMutation.isPending || hardDeleteMutation.isPending}
+                  className="w-full text-left p-4 border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-lg transition disabled:opacity-50"
+                >
+                  <div className="flex items-start gap-3">
+                    <Archive className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-orange-900 flex items-center gap-2">
+                        Soft Delete
+                        {softDeleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      </p>
+                      <p className="text-sm text-orange-800 mt-1">
+                        Disables the account and cancels their subscription.
+                        All data is kept and the account can be restored later.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDeleteMode('confirm-hard')}
+                  disabled={softDeleteMutation.isPending || hardDeleteMutation.isPending}
+                  className="w-full text-left p-4 border border-red-300 bg-red-50 hover:bg-red-100 rounded-lg transition disabled:opacity-50"
+                >
+                  <div className="flex items-start gap-3">
+                    <Trash2 className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-900">Permanently Delete</p>
+                      <p className="text-sm text-red-800 mt-1">
+                        Removes the user and ALL of their data (tasks, bills,
+                        moods, messages, etc.) from the database.
+                        <span className="font-semibold"> This cannot be undone.</span>
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={closeDialog}>
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {deleteTarget && deleteMode === 'confirm-hard' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-700">
+                  <AlertTriangle className="w-5 h-5" />
+                  Confirm permanent deletion
+                </DialogTitle>
+                <DialogDescription className="pt-2">
+                  You are about to <span className="font-semibold text-red-700">permanently delete</span>{' '}
+                  <span className="font-semibold text-gray-900">{deleteTarget.name}</span>{' '}
+                  (@{deleteTarget.username}) and every record they own. This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="py-3">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Type <span className="font-mono text-red-700">DELETE</span> to confirm:
+                </label>
+                <Input
+                  value={hardConfirmText}
+                  onChange={(e) => setHardConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="font-mono"
+                  autoFocus
+                />
+              </div>
+
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={() => { setDeleteMode('choose'); setHardConfirmText(""); }}>
+                  Back
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={hardConfirmText !== 'DELETE' || hardDeleteMutation.isPending}
+                  onClick={() => hardDeleteMutation.mutate(deleteTarget.id)}
+                >
+                  {hardDeleteMutation.isPending ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...</>
+                  ) : (
+                    <><Trash2 className="w-4 h-4 mr-2" /> Permanently Delete</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

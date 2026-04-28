@@ -5674,6 +5674,101 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // Super Admin: Soft-delete a user (disables the account but keeps all data)
+  app.post("/api/super-admin/users/:id/soft-delete", async (req: any, res) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      const currentUser = req.session.user;
+      if (currentUser.username !== 'admin') {
+        return res.status(403).json({ message: "Access denied. Super admin only." });
+      }
+
+      const targetId = parseInt(req.params.id, 10);
+      if (Number.isNaN(targetId)) {
+        return res.status(400).json({ message: "Invalid user id" });
+      }
+      if (targetId === currentUser.id) {
+        return res.status(400).json({ message: "You cannot delete your own admin account." });
+      }
+
+      const target = await storage.getUserById(targetId);
+      if (!target) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (target.username === 'admin' || target.accountType === 'admin') {
+        return res.status(400).json({ message: "Cannot delete an admin account." });
+      }
+
+      await storage.updateUser(targetId, {
+        isActive: false,
+        subscriptionStatus: 'cancelled',
+      } as any);
+
+      console.log(`🟠 Super admin ${currentUser.username} soft-deleted user ${target.username} (id=${targetId})`);
+      res.json({
+        success: true,
+        type: 'soft',
+        userId: targetId,
+        message: `User '${target.username}' has been disabled. Their data is retained and the account can be restored.`
+      });
+    } catch (error: any) {
+      console.error("Error soft-deleting user:", error);
+      res.status(500).json({ message: error?.message || "Failed to soft-delete user" });
+    }
+  });
+
+  // Super Admin: Hard-delete a user (PERMANENT — removes user record and all related data)
+  app.delete("/api/super-admin/users/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      const currentUser = req.session.user;
+      if (currentUser.username !== 'admin') {
+        return res.status(403).json({ message: "Access denied. Super admin only." });
+      }
+
+      const targetId = parseInt(req.params.id, 10);
+      if (Number.isNaN(targetId)) {
+        return res.status(400).json({ message: "Invalid user id" });
+      }
+      if (targetId === currentUser.id) {
+        return res.status(400).json({ message: "You cannot delete your own admin account." });
+      }
+
+      const target = await storage.getUserById(targetId);
+      if (!target) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (target.username === 'admin' || target.accountType === 'admin') {
+        return res.status(400).json({ message: "Cannot delete an admin account." });
+      }
+
+      // Require an explicit confirmation phrase in the request body to avoid accidents.
+      const confirmation = (req.body?.confirm || '').toString();
+      if (confirmation !== 'DELETE') {
+        return res.status(400).json({
+          message: "Confirmation required. Pass { confirm: 'DELETE' } in the request body."
+        });
+      }
+
+      await storage.deleteUserAccount(targetId);
+
+      console.log(`🔴 Super admin ${currentUser.username} PERMANENTLY DELETED user ${target.username} (id=${targetId})`);
+      res.json({
+        success: true,
+        type: 'hard',
+        userId: targetId,
+        message: `User '${target.username}' and all related data have been permanently deleted.`
+      });
+    } catch (error: any) {
+      console.error("Error hard-deleting user:", error);
+      res.status(500).json({ message: error?.message || "Failed to permanently delete user" });
+    }
+  });
+
   // ==================== ORGANIZATION CODE MANAGEMENT ====================
 
   // Admin: Get all org codes with member counts
