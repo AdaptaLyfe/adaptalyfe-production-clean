@@ -55,9 +55,20 @@ export function useSubscriptionEnforcement() {
     // first, then fall back to /api/subscription. This prevents redirect loops when
     // the derived /api/subscription endpoint is momentarily stale (e.g. right after
     // a successful Apple/Google IAP purchase).
-    const userHasActiveSub = (user as any).subscriptionStatus === 'active' &&
-      (user as any).subscriptionExpiresAt &&
-      new Date((user as any).subscriptionExpiresAt as any).getTime() > Date.now();
+    //
+    // For App Store / Google Play users we do NOT check subscriptionExpiresAt here —
+    // Apple and Google manage renewals asynchronously, so our stored expiry date can
+    // briefly lag a successful renewal. The server is the authoritative gate for
+    // actual expiration. If a status is 'active', trust it on the client.
+    const isPlatformIAP = (user as any).subscriptionPlatform === 'app_store' ||
+                          (user as any).subscriptionPlatform === 'google_play';
+    const userHasActiveSub = (user as any).subscriptionStatus === 'active' && (
+      isPlatformIAP ||
+      (
+        (user as any).subscriptionExpiresAt &&
+        new Date((user as any).subscriptionExpiresAt as any).getTime() > Date.now()
+      )
+    );
 
     if (userHasActiveSub) {
       // Active subscriber — never redirect them away from any route.

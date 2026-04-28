@@ -3886,11 +3886,16 @@ Provide a helpful, encouraging response:`;
       trialEndDate.setDate(trialEndDate.getDate() + 7); // 7-day free trial
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
-      // Check subscription status
-      const isActiveSubscription = user.subscriptionStatus === 'active' && 
-                                 user.subscriptionExpiresAt && 
-                                 new Date(user.subscriptionExpiresAt) > now;
-      
+      // Check subscription status.
+      // For app_store / google_play users, Apple/Google manage renewals server-to-server.
+      // Our local subscriptionExpiresAt can lag a renewal by minutes or hours.
+      // So for IAP users we trust subscriptionStatus='active' directly and don't gate on
+      // expiry — Apple will send a server notification when it actually lapses.
+      // For Stripe users we still honour the expiry date.
+      const isPlatformIAP = user.subscriptionPlatform === 'app_store' || user.subscriptionPlatform === 'google_play';
+      const isActiveSubscription = user.subscriptionStatus === 'active' &&
+                                 (isPlatformIAP || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now));
+
       const subscription = {
         id: user.id,
         planType: user.subscriptionTier || "free",
