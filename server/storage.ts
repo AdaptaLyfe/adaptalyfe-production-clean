@@ -44,7 +44,7 @@ import {
   type OrganizationCode, type InsertOrganizationCode, type OrgMembership, type InsertOrgMembership,
   familyMembers, type FamilyMember
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, gte, lte, desc, gt, sql } from "drizzle-orm";
 
 export interface IStorage {
@@ -360,11 +360,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUserAccount(userId: number): Promise<void> {
-    // Bulletproof cascade delete: dynamically discover EVERY foreign key that
-    // references users.id (or any user column) and delete those rows first.
-    // This avoids FK constraint errors when the schema gains new tables that
-    // reference users — no code change required.
-    const fkResult: any = await db.execute(sql`
+    // Bulletproof cascade delete using the raw pg pool so we bypass any
+    // Drizzle/neon-serverless result-shape quirks. Discovers EVERY foreign key
+    // that references users.id (or users.<anything>) and deletes those rows
+    // first. New tables added later are handled automatically — no code change.
+    const safeUserId = Number(userId);
+    if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+      throw new Error(`Invalid userId for deleteUserAccount: ${userId}`);
+    }
+
+    console.log(`🗑️  deleteUserAccount: starting cascade for user id=${safeUserId}`);
+
+    const fkResult = await pool.query<{ table_name: string; column_name: string }>(`
       SELECT DISTINCT tc.table_name, kcu.column_name
       FROM information_schema.table_constraints tc
       JOIN information_schema.key_column_usage kcu
@@ -379,27 +386,36 @@ export class DatabaseStorage implements IStorage {
         AND tc.table_name <> 'users'
     `);
 
-    const rows: Array<{ table_name: string; column_name: string }> =
-      (fkResult?.rows ?? fkResult ?? []) as any;
+    const fkRows = fkResult?.rows ?? [];
+    console.log(`🗑️  deleteUserAccount: discovered ${fkRows.length} FK references to users.id`);
 
-    for (const row of rows) {
+    let totalDeleted = 0;
+    for (const row of fkRows) {
       const tableName = row.table_name;
       const colName = row.column_name;
-      // Identifiers come from information_schema (trusted). Bind userId as a parameter.
+      // Identifiers come from information_schema (trusted). userId is a number.
+      const deleteSql = `DELETE FROM "${tableName}" WHERE "${colName}" = $1`;
       try {
-        await db.execute(
-          sql.raw(`DELETE FROM "${tableName}" WHERE "${colName}" = ${Number(userId)}`)
+        const result = await pool.query(deleteSql, [safeUserId]);
+        const cnt = result?.rowCount ?? 0;
+        if (cnt > 0) {
+          totalDeleted += cnt;
+          console.log(`   ✓ Cleared ${cnt} row(s) from ${tableName}.${colName}`);
+        }
+      } catch (err: any) {
+        console.error(`   ✗ Failed clearing ${tableName}.${colName}: ${err?.message || err}`);
+        // Re-throw so the caller sees the real reason instead of the generic
+        // "violates foreign key constraint" error from the final user delete.
+        throw new Error(
+          `Cascade delete failed on ${tableName}.${colName}: ${err?.message || err}`
         );
-      } catch (err) {
-        console.warn(`⚠️ Cascade delete failed for ${tableName}.${colName} (user ${userId}):`, err);
-        // Continue — some tables (e.g. audit logs with ON DELETE SET NULL) may
-        // already handle this themselves; final users delete will fail loudly
-        // if anything important still references this user.
       }
     }
+    console.log(`🗑️  deleteUserAccount: cleared ${totalDeleted} dependent rows total`);
 
     // Finally delete the user record itself
-    await db.delete(users).where(eq(users.id, userId));
+    const userDel = await pool.query(`DELETE FROM "users" WHERE "id" = $1`, [safeUserId]);
+    console.log(`🗑️  deleteUserAccount: deleted ${userDel?.rowCount ?? 0} user row(s) for id=${safeUserId}`);
   }
 
   async getUser(id: number): Promise<User | undefined> {
