@@ -5,12 +5,75 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Circle, Star, Plus, Clock, Edit3, X } from "lucide-react";
+
+const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
+
+function to24h(hour: string, minute: string, ampm: string) {
+  let h = parseInt(hour, 10);
+  if (ampm === "PM" && h !== 12) h += 12;
+  if (ampm === "AM" && h === 12) h = 0;
+  return `${String(h).padStart(2, "0")}:${minute}`;
+}
+
+function from24h(val: string): { hour: string; minute: string; ampm: string } {
+  if (!val) return { hour: "12", minute: "00", ampm: "AM" };
+  const [hStr, mStr] = val.split(":");
+  let h = parseInt(hStr, 10);
+  const ampm = h >= 12 ? "PM" : "AM";
+  if (h > 12) h -= 12;
+  if (h === 0) h = 12;
+  return { hour: String(h), minute: mStr || "00", ampm };
+}
+
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const parsed = from24h(value);
+  const [hour, setHour] = useState(parsed.hour);
+  const [minute, setMinute] = useState(parsed.minute);
+  const [ampm, setAmpm] = useState(parsed.ampm);
+
+  useEffect(() => {
+    const p = from24h(value);
+    setHour(p.hour); setMinute(p.minute); setAmpm(p.ampm);
+  }, [value]);
+
+  const update = (h: string, m: string, a: string) => onChange(to24h(h, m, a));
+
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1));
+  const minutes = ["00","05","10","15","20","25","30","35","40","45","50","55"];
+
+  return (
+    <div className="flex items-center gap-2">
+      <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+      <select className={selectCls} value={hour}
+        onChange={e => { setHour(e.target.value); update(e.target.value, minute, ampm); }}>
+        {hours.map(h => <option key={h} value={h}>{h}</option>)}
+      </select>
+      <span className="text-lg font-semibold text-muted-foreground">:</span>
+      <select className={selectCls} value={minute}
+        onChange={e => { setMinute(e.target.value); update(hour, e.target.value, ampm); }}>
+        {minutes.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+      <select className={selectCls} style={{ minWidth: 60 }} value={ampm}
+        onChange={e => { setAmpm(e.target.value); update(hour, minute, e.target.value); }}>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+      {value && (
+        <button type="button" onClick={() => onChange("")}
+          className="text-gray-400 hover:text-gray-600 text-lg leading-none font-bold" title="Clear time">
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { trackTaskCompletion, trackFeatureUsage } from "@/lib/firebase";
 import type { DailyTask } from "@shared/schema";
+
 
 export default function DailyTasks() {
   const { isPremiumUser } = useSubscriptionEnforcement();
@@ -409,11 +472,9 @@ export default function DailyTasks() {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
-                <Input
-                  type="time"
-                  placeholder="e.g., 10:00 AM"
+                <TimePicker
                   value={newTask.scheduledTime}
-                  onChange={(e) => setNewTask({ ...newTask, scheduledTime: e.target.value })}
+                  onChange={(v) => setNewTask({ ...newTask, scheduledTime: v })}
                 />
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
@@ -533,11 +594,9 @@ export default function DailyTasks() {
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
-                <Input
-                  type="time"
-                  placeholder="e.g., 10:00 AM"
+                <TimePicker
                   value={editTask.scheduledTime}
-                  onChange={(e) => setEditTask({ ...editTask, scheduledTime: e.target.value })}
+                  onChange={(v) => setEditTask({ ...editTask, scheduledTime: v })}
                 />
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
