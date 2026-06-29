@@ -2029,11 +2029,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(caregiverInvitations.invitationCode, invitationCode))
       .returning();
 
-    // Create care relationship
+    // Create care relationship.
+    // In caregiver_invitations, caregiverId holds the CARE RECIPIENT's ID (the person
+    // who created the invite from their own account). The person who accepts is
+    // the actual caregiver. So careRelationships must store them correctly:
+    //   caregiverId = acceptedBy  (the caregiver who accepted)
+    //   userId      = invitation.caregiverId  (the care recipient who sent it)
     if (updatedInvitation) {
       await this.createCareRelationship({
-        caregiverId: updatedInvitation.caregiverId,
-        userId: acceptedBy,
+        caregiverId: acceptedBy,                      // person who accepted = actual caregiver
+        userId: updatedInvitation.caregiverId,        // person who created invite = care recipient
         relationship: updatedInvitation.relationship,
         isPrimary: false,
         isActive: true,

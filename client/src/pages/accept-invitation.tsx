@@ -114,11 +114,11 @@ export default function AcceptInvitation() {
     onSuccess: () => {
       toast({
         title: "Invitation Accepted!",
-        description: "You're now connected with your caregiver. Welcome to Adaptalyfe!",
+        description: "You're now connected. Redirecting to your caregiver view...",
       });
       setTimeout(() => {
-        setLocation("/dashboard");
-      }, 2000);
+        setLocation("/caregiver-dashboard");
+      }, 1500);
     },
     onError: (error: any) => {
       toast({

@@ -2388,6 +2388,37 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // Returns the care recipients (users) that the currently logged-in caregiver looks after
+  app.get("/api/my-care-recipients", async (req: any, res) => {
+    try {
+      const user = req.session?.user;
+      if (!user) return res.status(401).json({ message: "Authentication required" });
+
+      const relationships = await storage.getCareRelationshipsByCaregiver(user.id);
+      if (relationships.length === 0) return res.json([]);
+
+      // Fetch each care recipient's user record
+      const recipients = await Promise.all(
+        relationships.map(async (rel) => {
+          const recipient = await storage.getUser(rel.userId);
+          if (!recipient) return null;
+          return {
+            userId: recipient.id,
+            userName: recipient.name || recipient.username,
+            relationship: rel.relationship,
+            isPrimary: rel.isPrimary,
+            relationshipId: rel.id,
+          };
+        })
+      );
+
+      res.json(recipients.filter(Boolean));
+    } catch (error) {
+      console.error("Error fetching care recipients:", error);
+      res.status(500).json({ message: "Failed to fetch care recipients" });
+    }
+  });
+
   app.get("/api/locked-settings/:userId/:settingKey", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
