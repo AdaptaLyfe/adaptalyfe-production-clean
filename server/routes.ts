@@ -2388,6 +2388,29 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  // Remove (deactivate) a care relationship — only the care recipient can do this
+  app.delete("/api/care-relationships/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user;
+      if (!user) return res.status(401).json({ message: "Authentication required" });
+
+      const id = parseInt(req.params.id);
+      const relationships = await storage.getCareRelationshipsByUser(user.id);
+      const owned = relationships.find(r => r.id === id);
+      if (!owned) {
+        return res.status(403).json({ message: "You can only remove caregivers linked to your own account" });
+      }
+
+      const success = await storage.removeCareRelationship(id);
+      if (!success) return res.status(404).json({ message: "Relationship not found" });
+
+      res.json({ message: "Caregiver access removed successfully" });
+    } catch (error) {
+      console.error("Error removing care relationship:", error);
+      res.status(500).json({ message: "Failed to remove care relationship" });
+    }
+  });
+
   // Returns the care recipients (users) that the currently logged-in caregiver looks after
   app.get("/api/my-care-recipients", async (req: any, res) => {
     try {

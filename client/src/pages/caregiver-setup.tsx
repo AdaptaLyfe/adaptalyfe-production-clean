@@ -53,6 +53,8 @@ export default function CaregiverSetup() {
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("create");
+  const [manageRelationship, setManageRelationship] = useState<CareRelationship | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const [showQrModal, setShowQrModal] = useState<string | null>(null);
 
@@ -62,8 +64,9 @@ export default function CaregiverSetup() {
     enabled: !!user?.id,
   });
 
+  // Fetch relationships where the logged-in user is the CARE RECIPIENT (userId = me)
   const { data: careRelationships = [] } = useQuery<CareRelationship[]>({
-    queryKey: [`/api/care-relationships/caregiver/${user?.id}`],
+    queryKey: [`/api/care-relationships/user/${user?.id}`],
     enabled: !!user?.id,
   });
 
@@ -125,6 +128,27 @@ export default function CaregiverSetup() {
       toast({
         title: "Unable to Delete Invitation",
         description: "There was a problem deleting the invitation. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeRelationshipMutation = useMutation({
+    mutationFn: (relationshipId: number) =>
+      apiRequest("DELETE", `/api/care-relationships/${relationshipId}`).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/care-relationships/user/${user?.id}`] });
+      setManageRelationship(null);
+      setConfirmRemove(false);
+      toast({
+        title: "Access Removed",
+        description: "This caregiver no longer has access to your account.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Unable to Remove Access",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       });
     },
@@ -570,7 +594,11 @@ export default function CaregiverSetup() {
                       </div>
                       
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setManageRelationship(relationship); setConfirmRemove(false); }}
+                        >
                           <Settings size={14} className="mr-1" />
                           Manage Access
                         </Button>
@@ -583,6 +611,82 @@ export default function CaregiverSetup() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* ── Manage Access Dialog ── */}
+      <Dialog open={!!manageRelationship} onOpenChange={(open) => { if (!open) { setManageRelationship(null); setConfirmRemove(false); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings size={18} className="text-purple-600" />
+              Manage Caregiver Access
+            </DialogTitle>
+            <DialogDescription>
+              Care Relationship #{manageRelationship?.id} · <span className="capitalize">{manageRelationship?.relationship?.replace(/_/g, ' ')}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Relationship details */}
+            <div className="rounded-lg border bg-gray-50 p-4 space-y-2 text-sm text-gray-700">
+              <p><strong>Relationship type:</strong> <span className="capitalize">{manageRelationship?.relationship?.replace(/_/g, ' ')}</span></p>
+              <p><strong>Established:</strong> {manageRelationship?.establishedAt ? new Date(manageRelationship.establishedAt).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Method:</strong> {manageRelationship?.establishedVia}</p>
+              <p><strong>Status:</strong> <span className="text-green-600 font-medium">Active</span></p>
+            </div>
+
+            {/* Permissions granted at invitation time */}
+            <div>
+              <p className="text-sm font-medium text-gray-800 mb-2">Access permissions granted:</p>
+              <div className="flex flex-wrap gap-2">
+                {permissionTypes.map(p => (
+                  <span key={p.id} className="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">{p.label}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Remove access section */}
+            {!confirmRemove ? (
+              <div className="pt-2 border-t">
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={() => setConfirmRemove(true)}
+                >
+                  <Trash2 size={14} className="mr-2" />
+                  Remove Caregiver Access
+                </Button>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  This will immediately revoke this person's access to your account.
+                </p>
+              </div>
+            ) : (
+              <div className="pt-2 border-t space-y-3">
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-800">
+                  <strong>Are you sure?</strong> This caregiver will lose all access to your account immediately.
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setConfirmRemove(false)}
+                    disabled={removeRelationshipMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    disabled={removeRelationshipMutation.isPending}
+                    onClick={() => manageRelationship && removeRelationshipMutation.mutate(manageRelationship.id)}
+                  >
+                    {removeRelationshipMutation.isPending ? "Removing…" : "Yes, Remove Access"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
         <CardContent className="p-6 text-center">
