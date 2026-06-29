@@ -126,6 +126,9 @@ const authLimiter = rateLimit({
 app.use(limiter);
 app.use('/api/auth', authLimiter);
 
+// Stripe webhooks MUST receive the raw body — register before json middleware
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 

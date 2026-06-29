@@ -4270,6 +4270,129 @@ Provide a helpful, encouraging response:`;
     });
   }
 
+  // ─── Stripe Webhook (recurring billing, cancellations, failures) ────────────
+  // Register this URL in Stripe Dashboard → Developers → Webhooks:
+  //   https://app.getadaptalyfeapp.com/api/stripe/webhook
+  // Events to listen for: invoice.payment_succeeded, invoice.payment_failed,
+  //   customer.subscription.updated, customer.subscription.deleted
+  app.post("/api/stripe/webhook", async (req: any, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const currentStripe = getStripeInstance();
+
+    if (!currentStripe) {
+      console.error("Stripe webhook: Stripe not configured");
+      return res.status(500).send("Stripe not configured");
+    }
+
+    let event: any;
+    try {
+      if (webhookSecret && sig) {
+        // Verify the event signature (req.body is raw Buffer via express.raw)
+        event = currentStripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      } else {
+        // No webhook secret configured — accept unsigned events (dev only)
+        console.warn("STRIPE_WEBHOOK_SECRET not set — accepting unsigned webhook event");
+        event = typeof req.body === 'string' || Buffer.isBuffer(req.body)
+          ? JSON.parse(req.body.toString())
+          : req.body;
+      }
+    } catch (err: any) {
+      console.error("Stripe webhook signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Acknowledge immediately
+    res.status(200).json({ received: true });
+
+    try {
+      const tierMap: Record<string, string> = {
+        'adaptalyfe_basic_monthly': 'basic', 'adaptalyfe_basic_annual': 'basic',
+        'adaptalyfe_premium_monthly': 'premium', 'adaptalyfe_premium_annual': 'premium',
+        'adaptalyfe_family_monthly': 'family', 'adaptalyfe_family_annual': 'family',
+      };
+
+      const extendSubscription = async (stripeSubId: string, stripeCustomerId: string, periodEnd: number, tier?: string) => {
+        // Find user by subscription ID first, fall back to customer ID
+        let user = await storage.getUserByStripeSubscriptionId(stripeSubId);
+        if (!user && stripeCustomerId) user = await storage.getUserByStripeCustomerId(stripeCustomerId);
+        if (!user) {
+          console.warn(`Stripe webhook: no user found for sub=${stripeSubId} cust=${stripeCustomerId}`);
+          return;
+        }
+        const expiresAt = new Date(periodEnd * 1000);
+        await storage.updateUserSubscription(user.id, {
+          subscriptionStatus: 'active',
+          subscriptionExpiresAt: expiresAt,
+          ...(tier ? { subscriptionTier: tier } : {}),
+        });
+        console.log(`✅ Stripe webhook: extended user ${user.id} (${user.username}) until ${expiresAt.toISOString()}`);
+      };
+
+      switch (event.type) {
+        case 'invoice.payment_succeeded': {
+          const invoice = event.data.object as any;
+          const subId = invoice.subscription;
+          const customerId = invoice.customer;
+          // Get the subscription to find current_period_end
+          if (subId) {
+            const sub = await currentStripe.subscriptions.retrieve(subId);
+            const metadata = sub.metadata || {};
+            const tierFromMeta = metadata.planType ? tierMap[metadata.planType] || metadata.planType : undefined;
+            await extendSubscription(subId, customerId, sub.current_period_end, tierFromMeta);
+          }
+          break;
+        }
+        case 'customer.subscription.updated': {
+          const sub = event.data.object as any;
+          const statusMap: Record<string, string> = {
+            active: 'active', trialing: 'active', past_due: 'past_due',
+            canceled: 'cancelled', unpaid: 'past_due', incomplete: 'pending',
+          };
+          let user = await storage.getUserByStripeSubscriptionId(sub.id);
+          if (!user) user = await storage.getUserByStripeCustomerId(sub.customer);
+          if (user) {
+            await storage.updateUserSubscription(user.id, {
+              subscriptionStatus: statusMap[sub.status] || sub.status,
+              subscriptionExpiresAt: new Date(sub.current_period_end * 1000),
+            });
+            console.log(`✅ Stripe webhook: updated user ${user.id} status=${sub.status}`);
+          }
+          break;
+        }
+        case 'customer.subscription.deleted': {
+          const sub = event.data.object as any;
+          let user = await storage.getUserByStripeSubscriptionId(sub.id);
+          if (!user) user = await storage.getUserByStripeCustomerId(sub.customer);
+          if (user) {
+            await storage.updateUserSubscription(user.id, {
+              subscriptionStatus: 'cancelled',
+              subscriptionTier: 'free',
+            });
+            console.log(`✅ Stripe webhook: cancelled user ${user.id}`);
+          }
+          break;
+        }
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object as any;
+          let user = invoice.subscription
+            ? await storage.getUserByStripeSubscriptionId(invoice.subscription)
+            : null;
+          if (!user && invoice.customer) user = await storage.getUserByStripeCustomerId(invoice.customer);
+          if (user) {
+            await storage.updateUserSubscription(user.id, { subscriptionStatus: 'past_due' });
+            console.log(`⚠️  Stripe webhook: payment failed for user ${user.id}`);
+          }
+          break;
+        }
+        default:
+          console.log(`Stripe webhook: unhandled event type ${event.type}`);
+      }
+    } catch (err: any) {
+      console.error("Stripe webhook processing error:", err.message);
+    }
+  });
+
   // Create Stripe subscription with proper setup
   app.post("/api/create-subscription", async (req: any, res) => {
     try {
@@ -4705,11 +4828,34 @@ Provide a helpful, encouraging response:`;
         expiryTime.setMonth(expiryTime.getMonth() + 1);
       }
 
+      // Extract original_transaction_id from the verified receipt for server notifications
+      let originalTransactionId: string | undefined;
+      if (APPLE_SHARED_SECRET) {
+        try {
+          const verifyForTxId = async (url: string) => {
+            const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 'receipt-data': receiptData, 'password': APPLE_SHARED_SECRET, 'exclude-old-transactions': true }) });
+            return r.json();
+          };
+          let resp = await verifyForTxId('https://buy.itunes.apple.com/verifyReceipt');
+          if (resp.status === 21007) resp = await verifyForTxId('https://sandbox.itunes.apple.com/verifyReceipt');
+          if (resp.status === 0) {
+            const receipts: any[] = resp.latest_receipt_info || resp.receipt?.in_app || [];
+            const match = receipts.filter((r: any) => r.product_id === productId)
+              .sort((a: any, b: any) => Number(b.expires_date_ms || 0) - Number(a.expires_date_ms || 0))[0];
+            if (match) originalTransactionId = match.original_transaction_id;
+          }
+        } catch (_) {}
+      }
+      // Fall back to client-supplied transactionId if receipt lookup didn't produce one
+      if (!originalTransactionId && transactionId) originalTransactionId = transactionId;
+
       await storage.updateUser(user.id, {
         subscriptionTier: planInfo.planType,
         subscriptionStatus: 'active',
         subscriptionExpiresAt: expiryTime,
         subscriptionPlatform: 'app_store',
+        ...(originalTransactionId ? { appleOriginalTransactionId: originalTransactionId } : {}),
       });
 
       req.session.user = {
@@ -4833,11 +4979,11 @@ Provide a helpful, encouraging response:`;
   // Set this URL in App Store Connect → App Information → App Store Server Notifications
   // URL: https://app.getadaptalyfeapp.com/api/apple/notifications
   app.post("/api/apple/notifications", async (req: any, res) => {
-    try {
-      const { signedPayload, unified_receipt, notification_type, auto_renew_product_id } = req.body;
+    // Always respond 200 immediately so Apple stops retrying
+    res.status(200).json({ received: true });
 
-      // Always respond 200 immediately so Apple doesn't retry
-      res.status(200).json({ received: true });
+    try {
+      const { signedPayload, unified_receipt, notification_type } = req.body;
 
       const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
       if (!APPLE_SHARED_SECRET) {
@@ -4851,50 +4997,174 @@ Provide a helpful, encouraging response:`;
         adaptalyfe_family_monthly:  'family',
       };
 
-      // Handle V1 notifications (non-JWT payload)
+      // ── V1 Notifications ──────────────────────────────────────────────────────
       if (unified_receipt) {
         const latestInfo: any[] = unified_receipt.latest_receipt_info || [];
-        const now = Date.now();
+        const type = (notification_type || '') as string;
 
-        // Determine notification type action
-        const type = notification_type || '';
-        const isCancellation = ['CANCEL', 'REFUND', 'REVOKE'].includes(type);
-        const isRenewal = ['DID_RENEW', 'INITIAL_BUY', 'DID_RECOVER', 'INTERACTIVE_RENEWAL'].includes(type);
-        const isExpired = type === 'DID_FAIL_TO_RENEW' || type === 'EXPIRED';
+        const latestReceipt = latestInfo
+          .sort((a: any, b: any) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
+        if (!latestReceipt) { console.warn("Apple notif: no receipt in payload"); return; }
 
-        // Find user by original transaction id
-        const latestReceipt = latestInfo.sort((a: any, b: any) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
-        if (!latestReceipt) return;
-
-        const productId = latestReceipt.product_id;
+        const originalTransactionId: string = latestReceipt.original_transaction_id;
+        const productId: string = latestReceipt.product_id;
         const planType = productToPlan[productId];
-        if (!planType) return;
+        const expiresAt = new Date(Number(latestReceipt.expires_date_ms));
 
-        const expiresMs = Number(latestReceipt.expires_date_ms);
-        const expiresAt = new Date(expiresMs);
+        console.log(`Apple notification [${type}] product=${productId} originalTxId=${originalTransactionId} expires=${expiresAt.toISOString()}`);
 
-        // Try to find the user by their stored Apple transaction info
-        // (In a full implementation you'd store the original_transaction_id on the user)
-        const originalTransactionId = latestReceipt.original_transaction_id;
-        console.log(`Apple notification [${type}] for product ${productId}, originalTxId: ${originalTransactionId}`);
+        // Look up user by stored original_transaction_id
+        const user = originalTransactionId
+          ? await storage.getUserByAppleTransactionId(originalTransactionId)
+          : undefined;
 
-        // For now log the event — full user lookup requires storing originalTransactionId on users table
-        if (isCancellation) {
-          console.log(`Apple subscription CANCELLED for originalTxId: ${originalTransactionId}`);
-        } else if (isRenewal) {
-          console.log(`Apple subscription RENEWED for originalTxId: ${originalTransactionId}, expires: ${expiresAt}`);
+        if (!user) {
+          console.warn(`Apple notif: no user found for originalTxId=${originalTransactionId}`);
+          return;
+        }
+
+        const isRenewal  = ['DID_RENEW','INITIAL_BUY','DID_RECOVER','INTERACTIVE_RENEWAL'].includes(type);
+        const isCancel   = ['CANCEL','REFUND','REVOKE'].includes(type);
+        const isExpired  = type === 'DID_FAIL_TO_RENEW' || type === 'EXPIRED';
+
+        if (isRenewal && planType) {
+          await storage.updateUserSubscription(user.id, {
+            subscriptionStatus: 'active',
+            subscriptionTier: planType,
+            subscriptionExpiresAt: expiresAt,
+            subscriptionPlatform: 'app_store',
+          });
+          console.log(`✅ Apple renewal: updated user ${user.id} (${user.username}) → ${planType} until ${expiresAt.toISOString()}`);
+        } else if (isCancel) {
+          await storage.updateUserSubscription(user.id, {
+            subscriptionStatus: 'cancelled',
+            subscriptionTier: 'free',
+          });
+          console.log(`✅ Apple cancel: user ${user.id} (${user.username}) subscription cancelled`);
         } else if (isExpired) {
-          console.log(`Apple subscription EXPIRED for originalTxId: ${originalTransactionId}`);
+          await storage.updateUserSubscription(user.id, {
+            subscriptionStatus: 'inactive',
+            subscriptionTier: 'free',
+          });
+          console.log(`✅ Apple expired: user ${user.id} (${user.username}) subscription expired`);
         }
       }
 
-      // V2 signed notifications (JWT) are logged for now
+      // ── V2 Signed Notifications (JWT) ─────────────────────────────────────────
+      // Apple sends V2 notifications as a signed JWT. Decoding requires the
+      // @apple/app-store-server-library package. For now we log it so we can
+      // track if App Store Connect is sending V2 format.
       if (signedPayload) {
-        console.log("Apple V2 notification received (signed JWT) — full JWT decoding requires @apple/app-store-server-library");
+        console.log("Apple V2 signed notification received — JWT payload length:", signedPayload.length);
+        // TODO: install @apple/app-store-server-library and decode the JWT
+        // to handle V2 notifications with the same logic as V1 above.
       }
     } catch (error: any) {
       console.error("Apple notification processing error:", error);
-      // Already responded 200 above
+    }
+  });
+
+  // ─── Google Play Server-to-Server Notifications (Pub/Sub push) ──────────────
+  // In Google Play Console → Monetization → Real-time developer notifications:
+  //   Topic: create a Cloud Pub/Sub topic, subscribe with push endpoint:
+  //   https://app.getadaptalyfeapp.com/api/google-play/notifications
+  app.post("/api/google-play/notifications", async (req: any, res) => {
+    // Acknowledge immediately so Pub/Sub doesn't retry
+    res.status(200).json({ received: true });
+
+    try {
+      // Pub/Sub wraps the message in { message: { data: base64, messageId } }
+      const pubsubMessage = req.body?.message;
+      if (!pubsubMessage?.data) {
+        console.warn("Google Play notification: no Pub/Sub message data");
+        return;
+      }
+
+      const decoded = Buffer.from(pubsubMessage.data, 'base64').toString('utf8');
+      const notification = JSON.parse(decoded);
+      console.log("Google Play notification:", JSON.stringify(notification));
+
+      const { subscriptionNotification, voidedPurchaseNotification } = notification;
+      if (!subscriptionNotification) return;
+
+      const { notificationType, purchaseToken, subscriptionId } = subscriptionNotification;
+
+      // https://developer.android.com/google/play/billing/rtdn-reference
+      // 1=RECOVERED 2=RENEWED 3=CANCELED 4=PURCHASED 5=ON_HOLD 6=IN_GRACE_PERIOD
+      // 7=RESTARTED 12=REVOKED 13=EXPIRED
+      const RENEWED   = [1, 2, 4, 7];
+      const CANCELLED = [3, 12];
+      const EXPIRED   = [13];
+
+      const productToPlan: Record<string, { tier: string }> = {
+        adaptalyfe_basic_monthly:   { tier: 'basic' },
+        adaptalyfe_premium_monthly: { tier: 'premium' },
+        adaptalyfe_family_monthly:  { tier: 'family' },
+      };
+
+      // Find user by stored purchase token
+      const user = purchaseToken
+        ? await storage.getUserByGooglePlayToken(purchaseToken)
+        : undefined;
+
+      if (!user) {
+        console.warn(`Google Play notif: no user found for purchaseToken=${purchaseToken?.slice(0, 20)}...`);
+        return;
+      }
+
+      const planInfo = productToPlan[subscriptionId];
+
+      if (RENEWED.includes(notificationType) && planInfo) {
+        // Verify with Google Play API to get the actual expiry date
+        let expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1); // fallback: extend 1 month
+
+        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
+          try {
+            const { google } = await import('googleapis') as any;
+            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
+            const auth = new google.auth.GoogleAuth({
+              credentials: serviceAccount,
+              scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+            });
+            const androidPublisher = google.androidpublisher({ version: 'v3', auth });
+            const result = await androidPublisher.purchases.subscriptions.get({
+              packageName: 'com.adaptalyfe.app',
+              subscriptionId,
+              token: purchaseToken,
+            });
+            if (result.data?.expiryTimeMillis) {
+              expiresAt = new Date(Number(result.data.expiryTimeMillis));
+            }
+          } catch (gpErr: any) {
+            console.warn("Google Play API verification failed, using +1 month fallback:", gpErr.message);
+          }
+        }
+
+        await storage.updateUserSubscription(user.id, {
+          subscriptionStatus: 'active',
+          subscriptionTier: planInfo.tier,
+          subscriptionExpiresAt: expiresAt,
+          subscriptionPlatform: 'google_play',
+        });
+        console.log(`✅ Google Play renewal: user ${user.id} (${user.username}) → ${planInfo.tier} until ${expiresAt.toISOString()}`);
+      } else if (CANCELLED.includes(notificationType)) {
+        await storage.updateUserSubscription(user.id, {
+          subscriptionStatus: 'cancelled',
+          subscriptionTier: 'free',
+        });
+        console.log(`✅ Google Play cancel: user ${user.id} (${user.username}) subscription cancelled`);
+      } else if (EXPIRED.includes(notificationType)) {
+        await storage.updateUserSubscription(user.id, {
+          subscriptionStatus: 'inactive',
+          subscriptionTier: 'free',
+        });
+        console.log(`✅ Google Play expired: user ${user.id} (${user.username}) subscription expired`);
+      } else {
+        console.log(`Google Play notif type ${notificationType} for user ${user.id} — no action needed`);
+      }
+    } catch (error: any) {
+      console.error("Google Play notification processing error:", error);
     }
   });
 

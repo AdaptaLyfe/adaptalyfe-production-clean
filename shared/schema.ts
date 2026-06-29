@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   googlePlayPurchaseToken: text("google_play_purchase_token"),
   googlePlayOrderId: text("google_play_order_id"),
   googlePlayProductId: text("google_play_product_id"),
+  appleOriginalTransactionId: text("apple_original_transaction_id"),
   streakDays: integer("streak_days").default(0),
   createdBy: integer("created_by"), // Caregiver who created this user account
   isActive: boolean("is_active").default(true),

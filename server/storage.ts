@@ -472,6 +472,26 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeCustomerId, customerId));
+    return user || undefined;
+  }
+
+  async getUserByStripeSubscriptionId(subId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeSubscriptionId, subId));
+    return user || undefined;
+  }
+
+  async getUserByAppleTransactionId(txId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.appleOriginalTransactionId, txId));
+    return user || undefined;
+  }
+
+  async getUserByGooglePlayToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.googlePlayPurchaseToken, token));
+    return user || undefined;
+  }
+
   async authenticateUser(username: string, password: string): Promise<User | null> {
     const [user] = await db
       .select()
