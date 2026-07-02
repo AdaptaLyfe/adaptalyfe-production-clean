@@ -72,3 +72,9 @@ id = "PDQDRPJkzeaOkfhgEDb9S"
 uri = "file://attached_assets/promo_images/adaptalyfe_promo_images.zip"
 type = "unspecified"
 title = "All 3 Promotional Images (ZIP)"
+
+[[outputs]]
+id = "X7SzQl8wzb0F37Icq5wOL"
+uri = "file://TECH_STACK_AND_CODE_FLOW.md"
+type = "text"
+title = "Adaptalyfe — Tech Stack & Code Flow Reference"
