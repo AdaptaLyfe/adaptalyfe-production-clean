@@ -140,11 +140,10 @@ function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
       // Payment confirmed — now activate subscription on the server
       const intentId = paymentIntent?.id || paymentIntentId;
       try {
-        await fetch('/api/upgrade-subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ planType, billingCycle, paymentIntentId: intentId })
+        await apiRequest('POST', '/api/upgrade-subscription', {
+          planType,
+          billingCycle,
+          paymentIntentId: intentId,
         });
       } catch (upgradeErr) {
         console.warn('Upgrade call failed, payment was still successful:', upgradeErr);

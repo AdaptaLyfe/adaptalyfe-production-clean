@@ -4140,13 +4140,18 @@ Provide a helpful, encouraging response:`;
       await storage.updateUserSubscription(userId, {
         subscriptionTier,
         subscriptionStatus: 'active',
-        subscriptionExpiresAt: expiresAt
+        subscriptionExpiresAt: expiresAt,
+        subscriptionPlatform: 'web',
       });
 
       // Refresh session user so middleware sees the new status immediately
       const updatedUser = await storage.getUserById(userId);
       if (updatedUser && req.session) {
         req.session.user = updatedUser;
+        await new Promise<void>((resolve) => req.session.save((err: any) => {
+          if (err) console.error('Session save error after upgrade:', err);
+          resolve();
+        }));
       }
 
       res.json({
@@ -4486,26 +4491,53 @@ Provide a helpful, encouraging response:`;
       
       const amount = pricing[planType as keyof typeof pricing]?.[billingCycle as keyof typeof pricing.basic] || 1299;
       
-      // First create a product
-      const product = await currentStripe.products.create({
-        name: `Adaptalyfe ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
-        description: `${billingCycle} subscription to Adaptalyfe ${planType} features`
-      });
-
-      // Create a price first
-      const price = await currentStripe.prices.create({
-        currency: 'usd',
-        product: product.id,
-        unit_amount: amount,
-        recurring: {
-          interval: billingCycle === 'annual' ? 'year' : 'month'
+      // If this user already has an active Stripe subscription, cancel it first
+      // to avoid duplicate subscriptions building up.
+      if (user.stripeSubscriptionId) {
+        try {
+          const existing = await currentStripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
+            await currentStripe.subscriptions.cancel(user.stripeSubscriptionId);
+            console.log(`Cancelled previous Stripe subscription ${user.stripeSubscriptionId} before creating new one`);
+          }
+        } catch (e: any) {
+          // Subscription may already be gone on Stripe's side — that's fine
+          console.warn('Could not cancel previous subscription:', e.message);
         }
-      });
+      }
 
-      // Create subscription with immediate payment intent
+      // Look up or create a price for this plan/cycle combination.
+      // We search existing prices first so we don't create duplicate products on every attempt.
+      const planLabel = `adaptalyfe_${planType}_${billingCycle}`;
+      let price: any;
+      const existingPrices = await currentStripe.prices.search({
+        query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
+        limit: 1,
+      });
+      if (existingPrices.data.length > 0) {
+        price = existingPrices.data[0];
+        console.log(`Reusing existing Stripe price ${price.id} for ${planLabel}`);
+      } else {
+        const product = await currentStripe.products.create({
+          name: `Adaptalyfe ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
+          description: `${billingCycle} subscription to Adaptalyfe ${planType} features`,
+          metadata: { plan_key: planLabel },
+        });
+        price = await currentStripe.prices.create({
+          currency: 'usd',
+          product: product.id,
+          unit_amount: amount,
+          recurring: { interval: billingCycle === 'annual' ? 'year' : 'month' },
+          metadata: { plan_key: planLabel },
+        });
+        console.log(`Created new Stripe price ${price.id} for ${planLabel}`);
+      }
+
+      // Create subscription with immediate payment intent + 7-day free trial
       const subscription = await currentStripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
+        trial_period_days: 7,
         payment_behavior: 'default_incomplete',
         payment_settings: { 
           save_default_payment_method: 'on_subscription',
@@ -4598,22 +4630,21 @@ Provide a helpful, encouraging response:`;
       // Retrieve subscription status
       const subscription = await currentStripe.subscriptions.retrieve(subscriptionId);
       
-      if (subscription.status === 'active') {
-        // Update user with active subscription
-        const expiresAt = new Date();
+      if (subscription.status === 'active' || subscription.status === 'trialing') {
         const metadata = subscription.metadata;
+        // Use Stripe's authoritative period end, not a calculated date
+        const expiresAt = new Date(subscription.current_period_end * 1000);
         
-        if (metadata.billingCycle === 'annual') {
-          expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-        } else {
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-        }
-        
-        await storage.updateUser(user.id, {
+        await storage.updateUserSubscription(user.id, {
           subscriptionTier: metadata.planType || 'premium',
           subscriptionStatus: 'active',
-          subscriptionExpiresAt: expiresAt
+          subscriptionExpiresAt: expiresAt,
+          stripeSubscriptionId: subscription.id,
         });
+
+        // Refresh session so the user doesn't need to log out/in to see the change
+        const updatedUser = await storage.getUserById(user.id);
+        if (updatedUser && req.session) req.session.user = updatedUser;
         
         res.json({ 
           success: true, 
@@ -5182,13 +5213,17 @@ Provide a helpful, encouraging response:`;
               scopes: ['https://www.googleapis.com/auth/androidpublisher'],
             });
             const androidPublisher = google.androidpublisher({ version: 'v3', auth });
-            const result = await androidPublisher.purchases.subscriptions.get({
+            // Use subscriptionsv2 (same API as verify-purchase endpoint for consistency)
+            const result = await androidPublisher.purchases.subscriptionsv2.get({
               packageName: 'com.adaptalyfe.app',
-              subscriptionId,
               token: purchaseToken,
             });
-            if (result.data?.expiryTimeMillis) {
-              expiresAt = new Date(Number(result.data.expiryTimeMillis));
+            const lineItems = result.data?.lineItems;
+            if (lineItems && lineItems.length > 0) {
+              const item = lineItems.find((li: any) => li.productId === subscriptionId) || lineItems[0];
+              if (item?.expiryTime) {
+                expiresAt = new Date(item.expiryTime);
+              }
             }
           } catch (gpErr: any) {
             console.warn("Google Play API verification failed, using +1 month fallback:", gpErr.message);
