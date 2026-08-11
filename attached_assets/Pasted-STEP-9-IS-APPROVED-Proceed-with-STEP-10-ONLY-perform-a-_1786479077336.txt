@@ -1,0 +1,531 @@
+STEP 9 IS APPROVED.
+
+Proceed with STEP 10 ONLY: perform a complete security, privacy, structure, and integrity validation of the FULL Phase 1 Daily Guide context.
+
+IMPORTANT:
+
+This is a VALIDATION-ONLY step.
+
+Do NOT create the Daily Guide API yet.
+
+Do NOT call OpenAI.
+
+Do NOT modify the dashboard.
+
+Do NOT create useDailyGuide.ts.
+
+Do NOT create DailyGuideCard.
+
+Do NOT modify authentication.
+
+Do NOT modify authorization.
+
+Do NOT modify payments.
+
+Do NOT modify subscriptions.
+
+Do NOT modify caregiver functionality.
+
+Do NOT modify the database schema.
+
+Do NOT create migrations.
+
+Do NOT add new data sources.
+
+==================================================
+CURRENT COMPLETE CONTEXT
+==================================================
+
+server/ai-context.ts now combines:
+
+1. Safe user identity
+2. Current date
+3. Current time
+4. Timezone
+5. Daily tasks
+6. Upcoming appointments
+7. Today's calendar events
+8. Safe user preferences
+
+The intended context is conceptually:
+
+{
+  userName,
+  date,
+  time,
+  timezone,
+
+  tasks: [...],
+
+  appointments: [...],
+
+  calendarEvents: [...],
+
+  preferences: {
+    preferredTaskTime,
+    reminderStyle,
+    motivationLevel,
+    complexityPreference,
+    supportLevel
+  }
+}
+
+Use the actual implementation as the source of truth.
+
+Do not add any new fields during this step.
+
+==================================================
+PURPOSE OF STEP 10
+==================================================
+
+Before allowing this context to be sent to OpenAI, prove that the complete context is safe and correctly scoped.
+
+We need to verify the boundary:
+
+Authenticated Adaptalyfe user
+        ↓
+Existing storage
+        ↓
+Explicit whitelist
+        ↓
+Complete Daily Guide context
+        ↓
+[SECURITY CHECKPOINT]
+        ↓
+Future AI service
+
+The context must NOT contain anything outside the explicitly approved Phase 1 data.
+
+==================================================
+IDENTITY VALIDATION
+==================================================
+
+Verify:
+
+1. userName is derived from the existing authenticated session/user identity.
+
+2. userId is NOT present in the AI context.
+
+3. The frontend cannot supply an arbitrary userId.
+
+4. Authentication remains unchanged.
+
+5. requireAuth remains unchanged.
+
+6. Session tokens are not included.
+
+7. Bearer tokens are not included.
+
+8. Passwords/password hashes are not included.
+
+9. Session data is not included.
+
+==================================================
+TASK VALIDATION
+==================================================
+
+Verify task objects contain ONLY the approved fields:
+
+- title
+- description when present
+- category
+- scheduledTime when present
+- isCompleted
+- frequency
+- estimatedMinutes
+- dueDate when present
+
+Verify the following are NOT present:
+
+- id
+- userId
+- pointValue
+- completedAt
+- lastCompleted
+- lastReminderSent
+- lastOverdueReminder
+- authentication information
+- payment information
+- financial information
+- medical records
+- security information
+
+Do not reject legitimate user-entered task content simply because a title/description contains words such as:
+
+"medication"
+
+"doctor"
+
+"therapy"
+
+"health"
+
+The security boundary is the FIELD STRUCTURE, not keyword scanning of legitimate user text.
+
+==================================================
+APPOINTMENT VALIDATION
+==================================================
+
+Verify appointment objects contain ONLY:
+
+- title
+- appointmentDate
+- provider
+- location
+- description
+
+Verify these are excluded:
+
+- id
+- userId
+- isCompleted
+- reminderSet
+- createdAt
+- updatedAt
+- unrelated internal fields
+
+Verify upcoming appointment filtering remains intact.
+
+==================================================
+CALENDAR VALIDATION
+==================================================
+
+Verify calendar objects contain ONLY:
+
+- title
+- startDate
+- endDate when present
+- allDay
+- category
+- location when present
+- description when present
+
+Verify these are excluded:
+
+- id
+- userId
+- color
+- isRecurring
+- recurrenceRule
+- reminderMinutes
+- isCompleted
+- createdAt
+- updatedAt
+
+Verify only relevant current-day calendar events are included.
+
+Verify all-day and multi-day event handling remains correct.
+
+Verify no timezone information is invented.
+
+==================================================
+PREFERENCE VALIDATION
+==================================================
+
+Verify the ONLY preference fields entering the AI context are:
+
+- preferredTaskTime
+- reminderStyle
+- motivationLevel
+- complexityPreference
+- supportLevel
+
+Verify these are NOT included:
+
+- notificationSettings
+- reminderTiming
+- themeSettings
+- accessibilitySettings
+- id
+- userId
+- createdAt
+- updatedAt
+
+Especially verify that:
+
+reminderTiming.medicationReminders
+
+cannot enter the context.
+
+Do NOT change reminderTiming.
+
+Do NOT attempt to fix the existing inconsistent reminderTiming structure.
+
+==================================================
+SENSITIVE DATA VALIDATION
+==================================================
+
+The complete AI context must NOT contain:
+
+- passwords
+- password hashes
+- session tokens
+- authentication tokens
+- API keys
+- Stripe IDs
+- Stripe secrets
+- Apple payment identifiers
+- Google payment identifiers
+- bank account information
+- banking credentials
+- financial credentials
+- encryption keys
+- medical records
+- medication records
+- allergies
+- medical conditions
+- symptom entries
+- emergency records
+- private documents
+- private messages
+- caregiver information
+- caregiver permissions
+- security events
+- audit information
+- internal database IDs
+- userId
+
+IMPORTANT:
+
+Do not perform simplistic keyword scanning against user-entered task, appointment, calendar, or preference values.
+
+For example:
+
+"Take medication"
+
+is legitimate user content.
+
+Instead, validate:
+
+1. Object keys.
+2. Object structure.
+3. Allowed fields.
+4. Data source.
+5. User ownership.
+
+==================================================
+USER ISOLATION
+==================================================
+
+Verify that every data source is scoped to the authenticated user's server-side userId:
+
+Tasks:
+getDailyTasksByUser(userId)
+
+Appointments:
+getUpcomingAppointments(userId)
+
+Calendar:
+getCalendarEventsByUser(userId)
+
+Preferences:
+getUserPreferences(userId)
+
+The userId must originate from the authenticated server-side request/session.
+
+Do not accept userId from the frontend.
+
+Do not test by querying another real user's data.
+
+Use mocks/synthetic data where possible.
+
+==================================================
+DATABASE SAFETY
+==================================================
+
+Verify that building the complete context performs only SELECT/read operations.
+
+There must be:
+
+NO INSERT
+NO UPDATE
+NO DELETE
+NO migration
+NO schema modification
+
+Do not modify existing records.
+
+Do not mark tasks complete.
+
+Do not modify appointments.
+
+Do not modify calendar events.
+
+Do not modify preferences.
+
+==================================================
+AI BOUNDARY
+==================================================
+
+DO NOT call OpenAI.
+
+This step is specifically verifying the object BEFORE it crosses the AI boundary.
+
+The expected flow is:
+
+Authenticated user
+        ↓
+Safe context builder
+        ↓
+Complete validated context
+        ↓
+STOP
+
+OpenAI comes later.
+
+==================================================
+TESTING
+==================================================
+
+Create a focused complete-context security/integrity test.
+
+Test at minimum:
+
+1. Complete context contains exactly the approved top-level fields.
+
+2. userName exists.
+
+3. date exists.
+
+4. time exists.
+
+5. timezone exists.
+
+6. tasks exists and is an array.
+
+7. appointments exists and is an array.
+
+8. calendarEvents exists and is an array.
+
+9. preferences is absent or contains only approved fields.
+
+10. No userId anywhere in the context.
+
+11. No internal database IDs anywhere in the context.
+
+12. No authentication information anywhere in the context.
+
+13. No payment information anywhere in the context.
+
+14. No financial information anywhere in the context.
+
+15. No medical records anywhere in the context.
+
+16. No caregiver data anywhere in the context.
+
+17. Task field whitelist passes.
+
+18. Appointment field whitelist passes.
+
+19. Calendar field whitelist passes.
+
+20. Preference field whitelist passes.
+
+21. reminderTiming cannot enter the context.
+
+22. medicationReminders cannot enter the context.
+
+23. User-entered legitimate words are not incorrectly treated as leaks.
+
+24. Empty tasks work.
+
+25. Empty appointments work.
+
+26. Empty calendar events work.
+
+27. Missing preferences work.
+
+28. Invalid userId is handled safely.
+
+29. Existing task behavior remains unchanged.
+
+30. Existing appointment behavior remains unchanged.
+
+31. Existing calendar behavior remains unchanged.
+
+32. Existing preference behavior remains unchanged.
+
+33. No database writes occur.
+
+34. No migrations occur.
+
+35. No OpenAI calls occur.
+
+36. Authentication remains unchanged.
+
+37. Payments/subscriptions remain unchanged.
+
+38. Caregiver functionality remains unchanged.
+
+39. TypeScript/build checks pass.
+
+==================================================
+FILES
+==================================================
+
+Prefer ZERO application-code changes during STEP 10.
+
+A temporary test file is acceptable, for example:
+
+scripts/test-ai-context-step10.ts
+
+Do not modify:
+
+server/ai-context.ts
+server/ai-service.ts
+server/storage.ts
+server/db.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a genuine security/logic issue is discovered.
+
+If a genuine issue is discovered:
+
+STOP and report it.
+
+Do not automatically fix it.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 10 is complete, STOP.
+
+Report:
+
+1. STEP 10 status
+2. Complete context top-level structure
+3. Task whitelist result
+4. Appointment whitelist result
+5. Calendar whitelist result
+6. Preference whitelist result
+7. Sensitive-data validation result
+8. User isolation result
+9. Database writes
+10. Migrations
+11. OpenAI calls
+12. Authentication changes
+13. Payment/subscription changes
+14. Caregiver changes
+15. Files created
+16. Files modified
+17. Test count
+18. Test results
+19. Any warnings
+20. Any risks
+
+IMPORTANT:
+
+Do not create the Daily Guide API.
+
+Do not call OpenAI.
+
+Do not modify the dashboard.
+
+Do not proceed to STEP 11.
+
+STOP and wait for my approval.
