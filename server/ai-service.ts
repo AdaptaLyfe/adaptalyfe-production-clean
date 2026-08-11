@@ -74,10 +74,17 @@ export interface DailyGuideContext {
     location?: string;
   }>;
 
-  // Populated from Step 9 onward
+  // Populated from Step 8 onward
   calendarEvents?: Array<{
     title: string;
-    date: string;
+    /** ISO string: "YYYY-MM-DDTHH:MM:SS.sssZ" */
+    startDate: string;
+    /** ISO string, omitted for open-ended or point-in-time events */
+    endDate?: string;
+    /** true if the event occupies the full day with no specific time */
+    allDay: boolean;
+    category: string;
+    location?: string;
     description?: string;
   }>;
 

@@ -13,13 +13,13 @@
  * Growth path:
  *  Step 4  (done)    — user identity + date/time
  *  Step 5  (done)    — adds today's tasks
- *  Step 7  (current) — adds upcoming appointments
- *  Step 9            — adds today's calendar events
+ *  Step 7  (done)    — adds upcoming appointments
+ *  Step 8  (current) — adds today's calendar events
  *  Step 11           — adds safe preference subset
  */
 
 import { storage } from "./storage.js";
-import type { DailyTask, Appointment } from "../shared/schema.js";
+import type { DailyTask, Appointment, CalendarEvent } from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -69,12 +69,42 @@ export interface AiAppointment {
   description?: string;
 }
 
+/**
+ * Whitelisted calendar event shape sent to the AI.
+ *
+ * Storage format: startDate and endDate are timestamp columns — Drizzle
+ * returns them as JavaScript Date objects. They are serialized to ISO
+ * strings here. No timezone is stored; server UTC convention applies.
+ *
+ * Fields intentionally excluded:
+ *   id, userId, color, isRecurring, recurrenceRule, reminderMinutes,
+ *   isCompleted, createdAt, updatedAt
+ *
+ * Recurring event note:
+ *   getCalendarEventsByUser returns base records only — it does not expand
+ *   recurring instances. A recurring event is included only if its stored
+ *   startDate falls within today's UTC window. Future instance expansion
+ *   is out of scope for Phase 1.
+ */
+export interface AiCalendarEvent {
+  title: string;
+  /** ISO string (UTC): "YYYY-MM-DDTHH:MM:SS.sssZ" */
+  startDate: string;
+  /** ISO string (UTC), omitted for open-ended or point-in-time events */
+  endDate?: string;
+  /** true if the event occupies the full day with no specific time */
+  allDay: boolean;
+  /** "personal" | "work" | "health" | "social" | "education" */
+  category: string;
+  location?: string;
+  description?: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
  * Extract a friendly first name from a full name string.
  * "Alex Johnson" → "Alex"
- * "Alex" → "Alex"
  */
 function extractFirstName(fullName: string): string {
   const trimmed = fullName.trim();
@@ -93,8 +123,7 @@ function normalizeScheduledTime(raw: string | null | undefined): string | undefi
 
 /**
  * Return current server date/time in machine-readable formats.
- * Timezone note: no per-user timezone is stored in the DB yet — UTC is the
- * documented fallback until Step 11 / a future phase.
+ * Timezone: UTC is the documented fallback — no per-user timezone in DB yet.
  */
 function getCurrentTimeContext(): { date: string; time: string; timezone: string } {
   const now = new Date();
@@ -105,19 +134,25 @@ function getCurrentTimeContext(): { date: string; time: string; timezone: string
   };
 }
 
-// ─── Task context builder (exported for unit testing without DB) ───────────────
+/**
+ * Coerce a value from a Drizzle timestamp column to a Date.
+ * Drizzle returns Date objects for timestamp columns; this guard handles
+ * edge cases where the value might already be a string.
+ */
+function toDate(val: Date | string | null | undefined): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// ─── Task context builder ──────────────────────────────────────────────────────
 
 /**
- * mapTasksToContext
+ * mapTasksToContext — exported for unit testing without DB.
  *
- * Filters raw DailyTask records to those relevant to today and applies
- * the explicit field whitelist. Exported so it can be unit-tested with
- * synthetic data without requiring a database connection.
- *
- * Filtering logic:
- *  - Tasks WITHOUT a dueDate are recurring routines — always included.
- *  - Tasks WITH a dueDate are included only if the due date is today or earlier.
- *    (Future-dated tasks are not relevant to today's Daily Guide.)
+ * Filtering: tasks with no dueDate (recurring) always included;
+ * tasks with dueDate included only if date <= today.
  */
 export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[] {
   return tasks
@@ -134,45 +169,23 @@ export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[
         frequency: task.frequency,
         estimatedMinutes: task.estimatedMinutes,
       };
-
       if (task.description) result.description = task.description;
-
       const st = normalizeScheduledTime(task.scheduledTime as string | null);
       if (st) result.scheduledTime = st;
-
       if (task.dueDate) {
         result.dueDate = new Date(task.dueDate).toISOString().slice(0, 10);
       }
-
       return result;
-      // Fields intentionally excluded:
-      // id, userId, pointValue, completedAt, lastCompleted,
-      // lastReminderSent, lastOverdueReminder
     });
 }
 
-// ─── Appointment context builder (exported for unit testing without DB) ────────
+// ─── Appointment context builder ───────────────────────────────────────────────
 
 /**
- * mapAppointmentsToContext
+ * mapAppointmentsToContext — exported for unit testing without DB.
  *
- * Applies the explicit field whitelist to raw Appointment records.
- * Exported so it can be unit-tested with synthetic data without requiring
- * a database connection.
- *
- * Upstream filtering is handled by getUpcomingAppointments:
- *   - isCompleted = false
- *   - appointmentDate >= now (ISO string comparison)
- *   - Scoped to authenticated userId
- *
- * No additional date filtering is added here — the storage method
- * already restricts to upcoming appointments, which is exactly the
- * right scope for the Daily Guide.
- *
- * Date format note:
- *   appointmentDate is stored as text ("YYYY-MM-DDTHH:MM:SS") with no
- *   timezone designator. The value is preserved exactly as stored.
- *   The AI system prompt documents this as server-local (UTC) time.
+ * Upstream filtering by getUpcomingAppointments:
+ *   isCompleted=false + appointmentDate >= now + userId-scoped.
  */
 export function mapAppointmentsToContext(appointments: Appointment[]): AiAppointment[] {
   return appointments.map((appt): AiAppointment => {
@@ -180,16 +193,83 @@ export function mapAppointmentsToContext(appointments: Appointment[]): AiAppoint
       title: appt.title,
       appointmentDate: appt.appointmentDate,
     };
-
-    // Optional fields — omit if empty/null
-    if (appt.provider)     result.provider = appt.provider;
-    if (appt.location)     result.location = appt.location;
-    if (appt.description)  result.description = appt.description;
-
+    if (appt.provider)    result.provider = appt.provider;
+    if (appt.location)    result.location = appt.location;
+    if (appt.description) result.description = appt.description;
     return result;
-    // Fields intentionally excluded:
-    // id, userId, isCompleted, reminderSet, createdAt
   });
+}
+
+// ─── Calendar event context builder ───────────────────────────────────────────
+
+/**
+ * mapCalendarEventsToContext — exported for unit testing without DB.
+ *
+ * Filters events to those occurring on todayStr (UTC) and applies the
+ * field whitelist. getCalendarEventsByUser returns all events for a user
+ * with no date filter, so this function does the date scoping.
+ *
+ * "Occurring today" definition (UTC-based):
+ *   todayStart = YYYY-MM-DDT00:00:00.000Z
+ *   todayEnd   = YYYY-MM-DDT23:59:59.999Z
+ *
+ *   Include if:
+ *     event.startDate <= todayEnd
+ *     AND ( event.endDate >= todayStart  — event ends today or later
+ *           OR (no endDate AND event.startDate >= todayStart) )
+ *
+ * This correctly handles:
+ *   - Single events today (startDate today, no/same endDate)
+ *   - Multi-day events spanning today (startDate before, endDate after)
+ *   - All-day events (stored at UTC midnight boundaries)
+ *   - Past events → excluded (endDate before todayStart)
+ *   - Future events → excluded (startDate after todayEnd)
+ *
+ * Recurring event limitation (Phase 1):
+ *   Only the base record's startDate is checked. Recurring instances
+ *   are not expanded. Documented in AiCalendarEvent JSDoc.
+ */
+export function mapCalendarEventsToContext(
+  events: CalendarEvent[],
+  todayStr: string
+): AiCalendarEvent[] {
+  const todayStart = new Date(todayStr + "T00:00:00.000Z");
+  const todayEnd   = new Date(todayStr + "T23:59:59.999Z");
+
+  return events
+    .filter((event) => {
+      const start = toDate(event.startDate);
+      const end   = toDate(event.endDate);
+
+      if (!start) return false;              // invalid start — skip
+      if (start > todayEnd) return false;    // starts in the future — exclude
+
+      if (end !== null) {
+        return end >= todayStart;            // ends today or later — include
+      }
+      // No endDate: include only if startDate is within today's window
+      return start >= todayStart;
+    })
+    .map((event): AiCalendarEvent => {
+      const start = toDate(event.startDate)!;
+      const end   = toDate(event.endDate);
+
+      const result: AiCalendarEvent = {
+        title:     event.title,
+        startDate: start.toISOString(),
+        allDay:    event.allDay ?? false,
+        category:  event.category ?? "personal",
+      };
+
+      if (end)              result.endDate     = end.toISOString();
+      if (event.location)   result.location    = event.location;
+      if (event.description) result.description = event.description;
+
+      return result;
+      // Fields intentionally excluded:
+      // id, userId, color, isRecurring, recurrenceRule,
+      // reminderMinutes, isCompleted, createdAt, updatedAt
+    });
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -199,10 +279,8 @@ export function mapAppointmentsToContext(appointments: Appointment[]): AiAppoint
  *
  * Assembles a safe, validated context object for the AI Daily Guide.
  *
- * @param userId      - Authenticated user's ID (from req.session.userId).
- *                      Used for all database queries. Never from the frontend.
- * @param sessionUser - Explicitly whitelisted identity fields only.
- *                      Caller must extract these from req.session.user.
+ * @param userId      - Authenticated user's ID (from req.session.userId). Never from the frontend.
+ * @param sessionUser - Explicitly whitelisted identity fields from req.session.user.
  */
 export async function buildDailyGuideContext(
   userId: number,
@@ -212,13 +290,13 @@ export async function buildDailyGuideContext(
   if (!userId || typeof userId !== "number" || userId < 1) {
     console.warn("[ai-context] Invalid userId received:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [], appointments: [] };
+    return { userName: "there", date, time, timezone, tasks: [], appointments: [], calendarEvents: [] };
   }
 
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
     console.warn("[ai-context] Missing or invalid session name for userId:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [], appointments: [] };
+    return { userName: "there", date, time, timezone, tasks: [], appointments: [], calendarEvents: [] };
   }
 
   // ── Safe identity ──────────────────────────────────────────────────────────
@@ -228,38 +306,38 @@ export async function buildDailyGuideContext(
   const { date, time, timezone } = getCurrentTimeContext();
 
   // ── Today's tasks (Step 5) ─────────────────────────────────────────────────
-  // getDailyTasksByUser is strictly read-only (verified in Step 5 safety check).
   let tasks: AiTask[] = [];
   try {
     const rawTasks = await storage.getDailyTasksByUser(userId);
     tasks = mapTasksToContext(rawTasks, date);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch tasks for userId",
-      userId,
-      "—",
-      err instanceof Error ? err.message : String(err)
-    );
+    console.warn("[ai-context] Failed to fetch tasks for userId", userId, "—",
+      err instanceof Error ? err.message : String(err));
     tasks = [];
   }
 
   // ── Upcoming appointments (Step 7) ─────────────────────────────────────────
-  // getUpcomingAppointments is strictly read-only (verified in Step 7 safety check).
-  // It filters to: userId-scoped + isCompleted=false + appointmentDate >= now.
-  // This is exactly the right scope for the Daily Guide — no additional
-  // date filtering is needed here.
   let appointments: AiAppointment[] = [];
   try {
     const rawAppointments = await storage.getUpcomingAppointments(userId);
     appointments = mapAppointmentsToContext(rawAppointments);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch appointments for userId",
-      userId,
-      "—",
-      err instanceof Error ? err.message : String(err)
-    );
+    console.warn("[ai-context] Failed to fetch appointments for userId", userId, "—",
+      err instanceof Error ? err.message : String(err));
     appointments = [];
+  }
+
+  // ── Today's calendar events (Step 8) ──────────────────────────────────────
+  // getCalendarEventsByUser returns all events — mapCalendarEventsToContext
+  // filters to those occurring today (UTC) and applies the field whitelist.
+  let calendarEvents: AiCalendarEvent[] = [];
+  try {
+    const rawEvents = await storage.getCalendarEventsByUser(userId);
+    calendarEvents = mapCalendarEventsToContext(rawEvents, date);
+  } catch (err) {
+    console.warn("[ai-context] Failed to fetch calendar events for userId", userId, "—",
+      err instanceof Error ? err.message : String(err));
+    calendarEvents = [];
   }
 
   // ── Build context ──────────────────────────────────────────────────────────
@@ -270,8 +348,8 @@ export async function buildDailyGuideContext(
     timezone,
     tasks,
     appointments,
-    // calendarEvents: populated in Step 9
-    // preferences:    populated in Step 11
+    calendarEvents,
+    // preferences: populated in Step 11
   };
 
   return context;
