@@ -12,14 +12,14 @@
  *
  * Growth path:
  *  Step 4  (done)    — user identity + date/time
- *  Step 5  (current) — adds today's tasks
- *  Step 7            — adds upcoming appointments
+ *  Step 5  (done)    — adds today's tasks
+ *  Step 7  (current) — adds upcoming appointments
  *  Step 9            — adds today's calendar events
  *  Step 11           — adds safe preference subset
  */
 
 import { storage } from "./storage.js";
-import type { DailyTask } from "../shared/schema.js";
+import type { DailyTask, Appointment } from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,6 +50,25 @@ export interface AiTask {
   dueDate?: string;
 }
 
+/**
+ * Whitelisted appointment shape sent to the AI.
+ *
+ * Storage format: appointmentDate is stored as a text column with ISO-like
+ * values (e.g. "2026-08-12T15:00:00") — no timezone designator.
+ * The value is preserved as-is; no conversion applied.
+ *
+ * Fields intentionally excluded:
+ *   id, userId, isCompleted, reminderSet, createdAt
+ */
+export interface AiAppointment {
+  title: string;
+  /** ISO-like string as stored: "YYYY-MM-DDTHH:MM:SS" */
+  appointmentDate: string;
+  provider?: string;
+  location?: string;
+  description?: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -68,7 +87,6 @@ function extractFirstName(fullName: string): string {
  */
 function normalizeScheduledTime(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
-  // Take only the first 5 characters: "10:00"
   const trimmed = raw.trim().slice(0, 5);
   return /^\d{2}:\d{2}$/.test(trimmed) ? trimmed : undefined;
 }
@@ -100,17 +118,13 @@ function getCurrentTimeContext(): { date: string; time: string; timezone: string
  *  - Tasks WITHOUT a dueDate are recurring routines — always included.
  *  - Tasks WITH a dueDate are included only if the due date is today or earlier.
  *    (Future-dated tasks are not relevant to today's Daily Guide.)
- *
- * Note: getDailyTasksByUser already handles in-memory recurring-task
- * completion resets (strictly read-only — no DB writes). That behavior
- * is preserved here; we do not re-implement it.
  */
 export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[] {
   return tasks
     .filter((task) => {
-      if (!task.dueDate) return true; // recurring — always relevant
+      if (!task.dueDate) return true;
       const dueDateStr = new Date(task.dueDate).toISOString().slice(0, 10);
-      return dueDateStr <= todayStr;  // include today and overdue only
+      return dueDateStr <= todayStr;
     })
     .map((task): AiTask => {
       const result: AiTask = {
@@ -121,7 +135,6 @@ export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[
         estimatedMinutes: task.estimatedMinutes,
       };
 
-      // Optional fields — omit if empty/null
       if (task.description) result.description = task.description;
 
       const st = normalizeScheduledTime(task.scheduledTime as string | null);
@@ -136,6 +149,47 @@ export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[
       // id, userId, pointValue, completedAt, lastCompleted,
       // lastReminderSent, lastOverdueReminder
     });
+}
+
+// ─── Appointment context builder (exported for unit testing without DB) ────────
+
+/**
+ * mapAppointmentsToContext
+ *
+ * Applies the explicit field whitelist to raw Appointment records.
+ * Exported so it can be unit-tested with synthetic data without requiring
+ * a database connection.
+ *
+ * Upstream filtering is handled by getUpcomingAppointments:
+ *   - isCompleted = false
+ *   - appointmentDate >= now (ISO string comparison)
+ *   - Scoped to authenticated userId
+ *
+ * No additional date filtering is added here — the storage method
+ * already restricts to upcoming appointments, which is exactly the
+ * right scope for the Daily Guide.
+ *
+ * Date format note:
+ *   appointmentDate is stored as text ("YYYY-MM-DDTHH:MM:SS") with no
+ *   timezone designator. The value is preserved exactly as stored.
+ *   The AI system prompt documents this as server-local (UTC) time.
+ */
+export function mapAppointmentsToContext(appointments: Appointment[]): AiAppointment[] {
+  return appointments.map((appt): AiAppointment => {
+    const result: AiAppointment = {
+      title: appt.title,
+      appointmentDate: appt.appointmentDate,
+    };
+
+    // Optional fields — omit if empty/null
+    if (appt.provider)     result.provider = appt.provider;
+    if (appt.location)     result.location = appt.location;
+    if (appt.description)  result.description = appt.description;
+
+    return result;
+    // Fields intentionally excluded:
+    // id, userId, isCompleted, reminderSet, createdAt
+  });
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -158,13 +212,13 @@ export async function buildDailyGuideContext(
   if (!userId || typeof userId !== "number" || userId < 1) {
     console.warn("[ai-context] Invalid userId received:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [] };
+    return { userName: "there", date, time, timezone, tasks: [], appointments: [] };
   }
 
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
     console.warn("[ai-context] Missing or invalid session name for userId:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [] };
+    return { userName: "there", date, time, timezone, tasks: [], appointments: [] };
   }
 
   // ── Safe identity ──────────────────────────────────────────────────────────
@@ -175,7 +229,6 @@ export async function buildDailyGuideContext(
 
   // ── Today's tasks (Step 5) ─────────────────────────────────────────────────
   // getDailyTasksByUser is strictly read-only (verified in Step 5 safety check).
-  // It handles recurring-task completion reset in-memory — no DB writes.
   let tasks: AiTask[] = [];
   try {
     const rawTasks = await storage.getDailyTasksByUser(userId);
@@ -187,7 +240,26 @@ export async function buildDailyGuideContext(
       "—",
       err instanceof Error ? err.message : String(err)
     );
-    tasks = []; // fail open: empty tasks, do not crash the Daily Guide
+    tasks = [];
+  }
+
+  // ── Upcoming appointments (Step 7) ─────────────────────────────────────────
+  // getUpcomingAppointments is strictly read-only (verified in Step 7 safety check).
+  // It filters to: userId-scoped + isCompleted=false + appointmentDate >= now.
+  // This is exactly the right scope for the Daily Guide — no additional
+  // date filtering is needed here.
+  let appointments: AiAppointment[] = [];
+  try {
+    const rawAppointments = await storage.getUpcomingAppointments(userId);
+    appointments = mapAppointmentsToContext(rawAppointments);
+  } catch (err) {
+    console.warn(
+      "[ai-context] Failed to fetch appointments for userId",
+      userId,
+      "—",
+      err instanceof Error ? err.message : String(err)
+    );
+    appointments = [];
   }
 
   // ── Build context ──────────────────────────────────────────────────────────
@@ -197,7 +269,7 @@ export async function buildDailyGuideContext(
     time,
     timezone,
     tasks,
-    // appointments:   populated in Step 7
+    appointments,
     // calendarEvents: populated in Step 9
     // preferences:    populated in Step 11
   };
