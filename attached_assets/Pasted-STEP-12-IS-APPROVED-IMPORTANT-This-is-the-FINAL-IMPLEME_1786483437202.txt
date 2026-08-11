@@ -1,0 +1,738 @@
+STEP 12 IS APPROVED.
+
+IMPORTANT:
+This is the FINAL IMPLEMENTATION STEP for Phase 1 of the READ-ONLY Adaptalyfe Guide.
+
+I want to minimize development iterations and paid Replit usage.
+
+Implement the complete frontend Daily Guide experience in ONE step.
+
+Do not create another development step after this unless there is a genuine blocking bug.
+
+==================================================
+PROJECT CONTEXT
+==================================================
+
+This is the existing Adaptalyfe application.
+
+This is NOT a new application.
+
+The existing application, authentication, database, payments, subscriptions, caregiver functionality, and existing features are already working.
+
+The production application must remain untouched.
+
+All work is being performed on the staging / AI-staging environment.
+
+==================================================
+BACKEND STATUS
+==================================================
+
+The backend Daily Guide is COMPLETE and has passed full staging verification.
+
+Existing endpoint:
+
+POST /api/ai/daily-guide
+
+It is already:
+
+- protected by existing requireAuth
+- user-scoped
+- read-only
+- using req.session.userId
+- using server/ai-context.ts
+- using server/ai-service.ts
+- using OpenAI server-side only
+- Zod validated
+- protected by safe fallback behavior
+- tested with a real authenticated staging request
+- tested with a real OpenAI response
+
+STEP 12 PASSED:
+
+49/49 tests.
+
+Do NOT rebuild the backend.
+
+Do NOT create another AI endpoint.
+
+Do NOT create another OpenAI client.
+
+Do NOT create another database query.
+
+Do NOT change the existing AI context architecture.
+
+==================================================
+IMPORTANT SECURITY RULE
+==================================================
+
+The frontend must NEVER:
+
+- access PostgreSQL directly
+- access DATABASE_URL
+- access NEON_DATABASE_URL
+- access OPENAI_API_KEY
+- access OpenAI directly
+- send userId to the backend
+- create authentication tokens
+- modify session handling
+- bypass requireAuth
+
+The frontend only calls:
+
+POST /api/ai/daily-guide
+
+The backend determines the authenticated user.
+
+==================================================
+FRONTEND OBJECTIVE
+==================================================
+
+Add the first visible Adaptalyfe Guide experience to the EXISTING NORMAL USER DASHBOARD.
+
+The Guide should appear as a new section/card on the existing dashboard.
+
+IMPORTANT:
+
+Do NOT modify the caregiver dashboard.
+
+Do NOT add caregiver AI.
+
+Do NOT redesign the dashboard.
+
+Do NOT replace existing dashboard sections.
+
+Do NOT remove existing functionality.
+
+Do NOT change existing navigation.
+
+Do NOT change existing authentication.
+
+Do NOT change payment/subscription functionality.
+
+Do NOT modify existing feature pages.
+
+Only add the new Daily Guide experience.
+
+==================================================
+FIRST INSPECT EXISTING FRONTEND
+==================================================
+
+Before implementing, inspect the existing:
+
+- client/src/pages/dashboard.tsx
+- client/src/queryClient.ts
+- existing React Query hooks
+- existing API request patterns
+- existing dashboard cards/components
+- existing loading states
+- existing error states
+- existing typography
+- existing spacing
+- existing responsive layout
+- existing accessibility patterns
+
+Follow the existing Adaptalyfe design system.
+
+Do NOT invent a completely different UI style.
+
+==================================================
+CREATE HOOK
+==================================================
+
+Create:
+
+client/src/hooks/useDailyGuide.ts
+
+Use the existing React Query architecture.
+
+Use the existing API request helper.
+
+Do NOT create a second HTTP client.
+
+Do NOT manually implement authentication.
+
+The hook should call:
+
+POST /api/ai/daily-guide
+
+The request must NOT contain:
+
+userId
+
+The backend already determines the user from the authenticated session.
+
+Use React Query caching appropriately.
+
+Do NOT create:
+
+- polling
+- recursive requests
+- infinite refresh
+- automatic repeated AI requests
+
+The Guide should not repeatedly consume OpenAI credits every time React re-renders.
+
+Use an appropriate staleTime/cache configuration based on the existing application's React Query patterns.
+
+==================================================
+CREATE COMPONENT
+==================================================
+
+Create:
+
+client/src/components/daily-guide-card.tsx
+
+The component must render the structured DailyGuideResponse returned by:
+
+POST /api/ai/daily-guide
+
+Do NOT render raw AI JSON.
+
+Do NOT display internal technical information.
+
+Do NOT display database IDs.
+
+Do NOT display userId.
+
+Do NOT display API errors.
+
+==================================================
+USER EXPERIENCE
+==================================================
+
+The purpose of Adaptalyfe Guide is:
+
+"What do I need to know right now?"
+
+It should NOT feel like a generic ChatGPT screen.
+
+It should NOT be a chat interface.
+
+It should feel like a simple personalized daily guide.
+
+Conceptually:
+
+--------------------------------
+
+Adaptalyfe Guide
+
+Good morning, Alex.
+
+You have a few things to focus on today.
+
+[Important highlight]
+
+[Next important item]
+
+[Upcoming appointment]
+
+[Encouraging progress]
+
+--------------------------------
+
+The actual content MUST come from the backend response.
+
+Do not hardcode fake tasks.
+
+Do not hardcode fake appointments.
+
+Do not invent information.
+
+==================================================
+DISPLAY THE EXISTING RESPONSE
+==================================================
+
+Inspect the actual DailyGuideResponse schema in:
+
+server/ai-service.ts
+
+Use the real response fields.
+
+Render:
+
+- greeting
+- summary
+- highlights
+- nextAction
+
+ONLY if those fields exist in the actual validated response.
+
+Do not assume additional fields.
+
+Do not invent additional AI response fields.
+
+==================================================
+DESIGN PRINCIPLES
+==================================================
+
+Keep Phase 1 intentionally simple.
+
+The card should:
+
+- clearly identify "Adaptalyfe Guide"
+- feel integrated into the existing dashboard
+- be easy to understand
+- use simple language
+- avoid overwhelming the user
+- have clear visual hierarchy
+- work on desktop
+- work on mobile
+- follow existing Adaptalyfe styling
+
+Do NOT create:
+
+- chat bubbles
+- chat history
+- typing interface
+- voice assistant
+- microphone controls
+- AI avatar
+- complex animations
+- AI action buttons
+- task edit buttons
+- appointment edit buttons
+- medication controls
+- financial controls
+- caregiver controls
+
+This is READ-ONLY guidance.
+
+==================================================
+LOADING STATE
+==================================================
+
+The Daily Guide must NOT block the rest of the dashboard.
+
+When AI is loading:
+
+- existing dashboard must remain usable
+- show a lightweight loading/skeleton state inside the Guide card
+- do not freeze the dashboard
+- do not show technical loading messages
+
+The user should still be able to use all existing Adaptalyfe features.
+
+==================================================
+ERROR STATE
+==================================================
+
+If:
+
+POST /api/ai/daily-guide
+
+fails, do NOT display:
+
+- OpenAI errors
+- HTTP stack traces
+- database errors
+- API keys
+- internal server details
+- technical provider messages
+
+Show a simple friendly state.
+
+For example:
+
+"Your Guide isn't available right now. You can still use Adaptalyfe normally."
+
+Use the existing application's styling.
+
+Do not create a new complex error system.
+
+==================================================
+EMPTY DATA
+==================================================
+
+The UI must correctly handle:
+
+- no tasks
+- no appointments
+- no calendar events
+- no preferences
+
+Do NOT show fake content.
+
+Do NOT invent a schedule.
+
+Do NOT invent achievements.
+
+Do NOT invent recommendations.
+
+The UI should simply render the validated backend response.
+
+==================================================
+DASHBOARD INTEGRATION
+==================================================
+
+Modify:
+
+client/src/pages/dashboard.tsx
+
+Add:
+
+<DailyGuideCard />
+
+in an appropriate location.
+
+The Guide should be visible and reasonably prominent.
+
+However:
+
+DO NOT redesign the dashboard.
+
+DO NOT move existing sections unnecessarily.
+
+DO NOT rename existing sections.
+
+DO NOT remove existing sections.
+
+DO NOT change existing dashboard behavior.
+
+Only add the new Guide section.
+
+==================================================
+NORMAL USER ONLY
+==================================================
+
+This feature is for the existing normal Adaptalyfe user dashboard.
+
+Do NOT modify:
+
+- caregiver-dashboard
+- caregiver permissions
+- caregiver relationships
+- caregiver messaging
+- caregiver routes
+
+Do not add caregiver AI in this phase.
+
+==================================================
+AUTHENTICATION
+==================================================
+
+Reuse existing authentication.
+
+Do not modify:
+
+- requireAuth
+- session handling
+- Bearer authentication
+- cookie authentication
+- login
+- logout
+- user identity logic
+
+The frontend must NOT determine the user ID.
+
+==================================================
+PAYMENTS / SUBSCRIPTIONS
+==================================================
+
+Do NOT modify:
+
+- Stripe
+- Apple subscriptions
+- Google subscriptions
+- billing
+- payment validation
+- subscription validation
+- entitlement logic
+- purchase flow
+- subscription UI
+
+The Guide uses the existing authenticated application session.
+
+Do not add a new payment requirement in this Phase 1 implementation.
+
+==================================================
+DATABASE
+==================================================
+
+Do NOT:
+
+- create tables
+- modify tables
+- create migrations
+- modify schemas
+- write database records
+
+The frontend communicates only with the backend endpoint.
+
+==================================================
+ACCESSIBILITY
+==================================================
+
+Follow the existing accessibility patterns.
+
+Verify:
+
+- semantic heading structure
+- readable text
+- keyboard-safe UI
+- appropriate aria labels where needed
+- clear loading state
+- clear error state
+- responsive layout
+- no unnecessary interactive controls
+
+Do not introduce accessibility regressions.
+
+==================================================
+RESPONSIVE DESIGN
+==================================================
+
+Verify the Guide works correctly on:
+
+- desktop
+- tablet
+- mobile
+
+Do not create a separate mobile implementation.
+
+Use the existing responsive layout system.
+
+==================================================
+SECURITY CHECK
+==================================================
+
+After implementation, inspect frontend source and confirm it does NOT contain:
+
+OPENAI_API_KEY
+DATABASE_URL
+NEON_DATABASE_URL
+PostgreSQL credentials
+OpenAI credentials
+provider secrets
+
+The browser must communicate only with the existing backend API.
+
+==================================================
+PERFORMANCE
+==================================================
+
+Do not make the AI request block initial dashboard rendering.
+
+The dashboard should render independently.
+
+The Guide can load asynchronously.
+
+Do not create multiple Daily Guide requests from:
+
+- React re-renders
+- component remounts
+- polling
+- timers
+- multiple hooks
+
+Use the existing React Query caching mechanism.
+
+==================================================
+TESTING
+==================================================
+
+After implementation, run comprehensive tests.
+
+At minimum verify:
+
+1. Daily Guide card renders.
+
+2. Daily Guide hook works.
+
+3. Hook calls POST /api/ai/daily-guide.
+
+4. Frontend does not send userId.
+
+5. Existing authentication is used.
+
+6. Successful backend response renders correctly.
+
+7. Greeting renders.
+
+8. Summary renders.
+
+9. Highlights render correctly.
+
+10. nextAction renders when provided.
+
+11. Missing optional fields do not crash the UI.
+
+12. Empty tasks work.
+
+13. Empty appointments work.
+
+14. Empty calendar events work.
+
+15. Missing preferences work.
+
+16. Loading state renders.
+
+17. Loading Guide does not block the dashboard.
+
+18. API failure renders friendly fallback UI.
+
+19. Raw backend/OpenAI errors are never displayed.
+
+20. Dashboard existing sections remain unchanged.
+
+21. Normal user dashboard works.
+
+22. Caregiver dashboard is unchanged.
+
+23. Authentication is unchanged.
+
+24. Payment/subscription functionality is unchanged.
+
+25. No database writes occur.
+
+26. No migrations occur.
+
+27. No OpenAI key exists in frontend code.
+
+28. No database credentials exist in frontend code.
+
+29. No direct OpenAI browser call exists.
+
+30. No userId is hardcoded or sent from frontend.
+
+31. Responsive layout works.
+
+32. Accessibility checks pass.
+
+33. TypeScript check passes except for documented pre-existing errors.
+
+34. Existing server remains healthy.
+
+35. Existing dashboard functionality remains functional.
+
+36. Existing API routes remain functional.
+
+==================================================
+PRE-EXISTING ERROR
+==================================================
+
+There is already a known unrelated file:
+
+client/src/pages/caregiver-dashboard-broken.tsx
+
+It has pre-existing TypeScript errors.
+
+Do NOT modify this file.
+
+Do NOT attempt to fix it as part of this feature.
+
+Clearly distinguish pre-existing errors from any new errors introduced by the Daily Guide.
+
+==================================================
+PRODUCTION SAFETY
+==================================================
+
+This is staging / AI-staging only.
+
+Do NOT:
+
+- modify Railway production
+- modify production environment variables
+- modify production database
+- run production migrations
+- push production configuration
+- change live authentication
+- change live payments
+- change live subscriptions
+
+Production must remain completely untouched.
+
+==================================================
+DEPENDENCIES
+==================================================
+
+Do NOT install unnecessary packages.
+
+Reuse:
+
+- existing React
+- existing React Query
+- existing UI components
+- existing API helper
+- existing styling system
+
+Only add a dependency if absolutely required.
+
+If a dependency is already installed, reuse it.
+
+==================================================
+FILES
+==================================================
+
+Expected new files:
+
+client/src/hooks/useDailyGuide.ts
+
+client/src/components/daily-guide-card.tsx
+
+Expected modified file:
+
+client/src/pages/dashboard.tsx
+
+Do NOT create unnecessary files.
+
+Do NOT modify backend files unless a genuine frontend integration blocker is discovered.
+
+If a backend blocker is discovered:
+
+STOP and report it rather than redesigning the backend.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After implementation and testing, STOP.
+
+Provide a complete final report containing:
+
+1. STEP 13 status
+2. Files created
+3. Files modified
+4. Backend endpoint used
+5. Hook implementation summary
+6. React Query caching/staleTime behavior
+7. Dashboard integration location
+8. UI behavior
+9. Loading behavior
+10. Error/fallback behavior
+11. Empty-data behavior
+12. Responsive behavior
+13. Accessibility result
+14. Authentication confirmation
+15. Payment/subscription confirmation
+16. Caregiver functionality confirmation
+17. Database/schema confirmation
+18. Database write result
+19. Migration result
+20. Dependencies added/changed
+21. TypeScript result
+22. Build result
+23. Test count
+24. Test results
+25. Any warnings
+26. Any remaining limitations
+
+IMPORTANT:
+
+Do NOT add:
+
+- chat
+- AI actions
+- caregiver AI
+- medical AI
+- financial AI
+- voice
+- notifications
+- automatic task modification
+- appointment modification
+- medication modification
+- financial actions
+- new database tables
+
+This is the FIRST SIMPLE READ-ONLY Adaptalyfe Guide.
+
+Complete the frontend integration and STOP.
