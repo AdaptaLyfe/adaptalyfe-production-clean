@@ -1,0 +1,189 @@
+I want to add a new AI-powered experience to the existing Adaptalyfe application called "Adaptalyfe Guide".
+
+IMPORTANT CONTEXT:
+
+This is NOT a new application.
+
+You already have the complete existing Adaptalyfe application in this Replit project, including the frontend, backend, database integration, authentication, caregiver relationships, permissions, tasks, appointments, goals, meals, health-related features, notifications, and other existing functionality.
+
+I do NOT want you to rebuild or redesign any existing functionality.
+
+We are working ONLY on the staging/ai-staging branch.
+
+The production application must remain completely untouched.
+
+VISION:
+
+Adaptalyfe Guide should eventually become the primary intelligent experience of Adaptalyfe.
+
+The database remains the source of truth.
+
+The AI should interpret existing structured data and turn it into useful, simple, personalized guidance.
+
+The long-term experience should be able to understand things such as:
+
+- today's schedule
+- daily tasks and routines
+- appointments
+- goals
+- habits
+- meals
+- preferences
+- mood
+- sleep
+- progress
+- caregiver-provided information
+- transitions and independence skills
+
+The AI should help answer:
+
+"What do I need to know right now?"
+
+and eventually:
+
+"What should I do next?"
+
+IMPORTANT ARCHITECTURE PRINCIPLES:
+
+1. Do NOT replace the existing database.
+2. Do NOT redesign the existing application architecture.
+3. Reuse existing services, models, APIs, authentication, authorization, and business logic wherever possible.
+4. Do NOT duplicate existing database queries or business logic if an existing service already provides the required information.
+5. The AI must operate through the backend.
+6. Never expose AI API keys or other secrets to the frontend.
+7. Never give the AI unrestricted database access.
+8. Never send raw sensitive credentials, passwords, payment credentials, or security information to the AI.
+9. Respect the existing user/caregiver permission system.
+10. The backend must determine what data the current user is authorized to access BEFORE that data is provided to the AI.
+11. The AI should initially be read-only.
+12. Do not allow the AI to create, update, delete, or modify user data in this first phase.
+13. Do not modify production configuration.
+14. Do not modify the production database.
+15. Do not create unnecessary database tables.
+16. Do not add unnecessary dependencies.
+17. Do not change existing authentication.
+18. Do not change existing authorization.
+19. Do not change existing user-facing functionality outside the new AI feature.
+
+DATABASE CONTEXT:
+
+The existing Adaptalyfe database contains tables including:
+
+users
+daily_tasks
+appointments
+calendar_events
+meal_plans
+mood_entries
+achievements
+points_transactions
+user_points_balance
+savings_goals
+sleep_sessions
+transition_skills
+care_relationships
+user_caregiver_connections
+caregiver_permissions
+locked_user_settings
+user_preferences
+user_privacy_settings
+medications
+allergies
+medical_conditions
+symptom_entries
+emergency_contacts
+primary_care_providers
+messages
+notifications
+
+There are also highly sensitive tables such as financial credentials, bank information, security information, passwords, private documents, and other sensitive records.
+
+Do not expose those sensitive records directly to an AI model.
+
+FIRST DEVELOPMENT PHASE:
+
+Do NOT build the full AI assistant.
+
+Do NOT build AI chat yet.
+
+Do NOT build caregiver AI yet.
+
+Do NOT build AI actions yet.
+
+Do NOT build medical AI yet.
+
+Do NOT build financial AI yet.
+
+For this first phase, I only want you to prepare the backend AI foundation for a READ-ONLY "Daily Guide".
+
+The first Daily Guide should eventually be able to understand:
+
+- current authenticated user
+- today's date/time
+- today's daily tasks
+- today's appointments
+- today's calendar events
+- relevant user preferences
+
+However, in this first implementation step, DO NOT connect the AI to all of those data sources yet.
+
+FIRST TASK:
+
+Analyze the existing codebase and identify:
+
+1. Where the existing backend services live.
+2. Where the existing database access/model layer lives.
+3. Where authentication is handled.
+4. Where caregiver authorization/permissions are handled.
+5. Where user preferences are handled.
+6. Where daily tasks are retrieved.
+7. Where appointments/calendar events are retrieved.
+8. Where the frontend application should eventually integrate the Daily Guide.
+9. What existing services can be reused by the AI layer.
+
+Then design the smallest clean architecture for an AI service layer that fits the EXISTING Adaptalyfe architecture.
+
+I expect something conceptually similar to:
+
+Existing application
+        ↓
+Existing authentication
+        ↓
+Existing authorization/permissions
+        ↓
+AI Context Service
+        ↓
+AI Service
+        ↓
+Structured AI response
+        ↓
+Daily Guide UI
+
+But do not blindly create files based on this example. Use the architecture that actually exists in this project.
+
+FOR THIS STEP:
+
+DO NOT modify application files yet.
+
+DO NOT create database migrations.
+
+DO NOT install packages.
+
+DO NOT implement the AI.
+
+Only inspect the existing project and give me:
+
+A. Existing architecture relevant to AI
+B. Existing services we can reuse
+C. Recommended AI service location
+D. Recommended AI context service location
+E. Recommended API endpoint structure
+F. Recommended frontend integration point
+G. Authentication/permission flow
+H. Data flow for Daily Guide
+I. Potential risks or conflicts
+J. Exact files you recommend modifying in the next step
+
+STOP after this analysis.
+
+Do not implement anything until I approve the architecture.
