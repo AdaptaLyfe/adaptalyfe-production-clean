@@ -60,10 +60,17 @@ export function useSubscriptionEnforcement() {
     // Apple and Google manage renewals asynchronously, so our stored expiry date can
     // briefly lag a successful renewal. The server is the authoritative gate for
     // actual expiration. If a status is 'active', trust it on the client.
+    //
+    // For Stripe (web) users we apply the same trust: if subscriptionStatus is 'active'
+    // and a stripeSubscriptionId exists, the subscription is live on Stripe. The local
+    // subscriptionExpiresAt is not refreshed by the monthly renewal webhook, so checking
+    // it would incorrectly block paying subscribers from the dashboard.
     const isPlatformIAP = (user as any).subscriptionPlatform === 'app_store' ||
                           (user as any).subscriptionPlatform === 'google_play';
+    const hasActiveStripeId = !!((user as any).stripeSubscriptionId);
     const userHasActiveSub = (user as any).subscriptionStatus === 'active' && (
       isPlatformIAP ||
+      hasActiveStripeId ||
       (
         (user as any).subscriptionExpiresAt &&
         new Date((user as any).subscriptionExpiresAt as any).getTime() > Date.now()

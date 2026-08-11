@@ -3947,10 +3947,17 @@ Provide a helpful, encouraging response:`;
       // Our local subscriptionExpiresAt can lag a renewal by minutes or hours.
       // So for IAP users we trust subscriptionStatus='active' directly and don't gate on
       // expiry — Apple will send a server notification when it actually lapses.
-      // For Stripe users we still honour the expiry date.
+      //
+      // For Stripe users we apply the same trust: Stripe sends customer.subscription.updated
+      // webhooks that update subscriptionStatus to 'past_due' / 'cancelled' when a charge
+      // fails. If subscriptionStatus is 'active' and a valid stripeSubscriptionId exists, the
+      // subscription IS active on Stripe — the local subscriptionExpiresAt date simply isn't
+      // refreshed after each monthly renewal (a known webhook gap). Gating on that stale date
+      // would incorrectly block paying subscribers from the dashboard.
       const isPlatformIAP = user.subscriptionPlatform === 'app_store' || user.subscriptionPlatform === 'google_play';
+      const hasActiveStripeSubscription = !!(user.stripeSubscriptionId);
       const isActiveSubscription = user.subscriptionStatus === 'active' &&
-                                 (isPlatformIAP || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now));
+                                 (isPlatformIAP || hasActiveStripeSubscription || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now));
 
       const subscription = {
         id: user.id,
