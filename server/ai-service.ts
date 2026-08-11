@@ -27,7 +27,11 @@ export const DailyGuideHighlightSchema = z.object({
 export const DailyGuideNextActionSchema = z.object({
   title: z.string().max(200),
   reason: z.string().max(300).optional(),
-  source: z.enum(["task", "appointment", "calendar"]).optional(),
+  // AI sometimes returns "none" as a literal — strip it so it becomes undefined
+  source: z
+    .enum(["task", "appointment", "calendar", "none"])
+    .optional()
+    .transform((v) => (v === "none" ? undefined : v)),
 });
 
 export const DailyGuideResponseSchema = z.object({
