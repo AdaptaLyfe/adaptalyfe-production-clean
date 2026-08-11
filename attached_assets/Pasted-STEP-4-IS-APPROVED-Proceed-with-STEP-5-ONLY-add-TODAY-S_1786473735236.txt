@@ -1,0 +1,425 @@
+STEP 4 IS APPROVED.
+
+Proceed with STEP 5 ONLY: add TODAY'S DAILY TASKS to the existing AI context.
+
+Do not proceed to Step 6 or any later step.
+
+Do not add appointments yet.
+
+Do not add calendar events yet.
+
+Do not add preferences yet.
+
+Do not call OpenAI yet.
+
+Do not create the Daily Guide API yet.
+
+Do not modify the dashboard.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create migrations.
+
+==================================================
+CURRENT ARCHITECTURE
+==================================================
+
+The existing AI context service is:
+
+server/ai-context.ts
+
+It currently produces only:
+
+{
+  userName,
+  date,
+  time,
+  timezone
+}
+
+This has already passed its tests.
+
+The authenticated user's identity comes from the existing application authentication flow:
+
+req.session.userId
+
+Do NOT accept a userId from the frontend.
+
+Do NOT create new authentication.
+
+Do NOT modify requireAuth.
+
+==================================================
+DATABASE
+==================================================
+
+The existing PostgreSQL database is already configured through:
+
+DATABASE_URL
+
+The Replit environment also contains:
+
+NEON_DATABASE_URL
+
+Do not modify either variable.
+
+Do not modify server/db.ts.
+
+The database connection has already been verified successfully.
+
+==================================================
+TASK SOURCE
+==================================================
+
+Reuse the existing storage method:
+
+getDailyTasksByUser(userId)
+
+from:
+
+server/storage.ts
+
+Do NOT create a duplicate SQL query.
+
+Do NOT create a second task repository.
+
+Do NOT modify storage.ts unless you discover a concrete technical problem that prevents safe reuse.
+
+Before implementation, inspect the exact returned DailyTask structure.
+
+==================================================
+READ-ONLY REQUIREMENT
+==================================================
+
+The task retrieval must be strictly read-only.
+
+Allowed:
+
+SELECT / existing read-only storage method.
+
+Not allowed:
+
+INSERT
+UPDATE
+DELETE
+migration
+schema modification
+task completion
+task reset
+task creation
+task deletion
+task modification
+
+IMPORTANT:
+
+The existing getDailyTasksByUser() implementation may contain read-time recurring-task logic.
+
+Inspect that implementation carefully.
+
+If it performs any database writes as part of "read-time reset" behavior, DO NOT call it blindly from the AI context.
+
+Instead, stop and report the issue before implementing the AI context.
+
+The AI context must never trigger an unexpected database write.
+
+==================================================
+TASK DATA WHITELIST
+==================================================
+
+Do NOT pass complete DailyTask objects to the AI.
+
+Create an explicit whitelist.
+
+Initially include only the fields necessary for the Daily Guide.
+
+Recommended fields:
+
+- title
+- description
+- category
+- scheduledTime
+- isCompleted
+- frequency
+- estimatedMinutes
+- dueDate if required for determining today's task
+
+Do NOT include fields such as:
+
+- internal database IDs
+- user IDs
+- point values
+- reminder metadata
+- audit fields
+- internal timestamps unless required
+- authentication information
+- payment information
+- security information
+- unrelated database fields
+
+If a field is not required for the Daily Guide, leave it out.
+
+Use clean camelCase names in the AI context even if the database uses snake_case.
+
+==================================================
+TODAY'S TASKS
+==================================================
+
+The Daily Guide needs tasks relevant to TODAY.
+
+Do not blindly send all historical/future tasks to the AI.
+
+Inspect getDailyTasksByUser(userId) and determine exactly what it returns.
+
+If it already returns today's relevant tasks, reuse that behavior.
+
+If it returns recurring/current tasks appropriately, preserve the existing application behavior.
+
+If additional date filtering is necessary, implement it carefully using the application's existing date conventions.
+
+Do NOT introduce a new timezone system in this step.
+
+Because the current AI context uses UTC as the documented timezone fallback, clearly preserve the existing application's date/time behavior.
+
+Do not silently reinterpret stored task times.
+
+==================================================
+CONTEXT STRUCTURE
+==================================================
+
+Extend the existing AI context with:
+
+tasks: [...]
+
+For example:
+
+{
+  userName: "Alex",
+  date: "2026-08-11",
+  time: "18:38",
+  timezone: "UTC",
+  tasks: [
+    {
+      title: "Take morning walk",
+      description: "Walk for 20 minutes",
+      category: "Health",
+      scheduledTime: "08:00",
+      isCompleted: true,
+      frequency: "daily",
+      estimatedMinutes: 20,
+      dueDate: "2026-08-11"
+    }
+  ]
+}
+
+This is only an example.
+
+Use the actual fields and values available in the existing application.
+
+Do not invent task information.
+
+==================================================
+EMPTY TASKS
+==================================================
+
+If the user has no tasks today:
+
+tasks should be:
+
+[]
+
+This is a valid state.
+
+Do not create fake tasks.
+
+Do not ask the AI to invent tasks.
+
+==================================================
+SECURITY
+==================================================
+
+The task query must be scoped to:
+
+authenticated userId
+
+Every returned task must belong to that user.
+
+Do not retrieve tasks for other users.
+
+Do not retrieve caregiver tasks.
+
+Do not retrieve organization-wide task data.
+
+Do not retrieve global task data unless it is already part of the existing user's task method.
+
+Do not pass user IDs to the AI.
+
+Do not pass database IDs to the AI.
+
+==================================================
+AI
+==================================================
+
+Do NOT call OpenAI in STEP 5.
+
+We are only building and testing the context.
+
+The flow is:
+
+Authenticated user
+        ↓
+userId
+        ↓
+getDailyTasksByUser(userId)
+        ↓
+explicit field whitelist
+        ↓
+ai-context.ts
+        ↓
+safe context
+
+NOT:
+
+Database
+        ↓
+OpenAI
+
+OpenAI integration will happen after the complete context has been built and tested.
+
+==================================================
+TESTING
+==================================================
+
+Extend the existing context tests or create a focused STEP 5 test.
+
+Test at minimum:
+
+1. User with multiple tasks receives only that user's tasks.
+
+2. Tasks contain only the approved whitelisted fields.
+
+3. Internal database IDs are not included.
+
+4. userId is not included in task context.
+
+5. Payment information is not included.
+
+6. Authentication information is not included.
+
+7. Medical information is not included.
+
+8. Financial information is not included.
+
+9. Completed status is preserved correctly.
+
+10. Scheduled time is preserved correctly.
+
+11. Empty task list returns [].
+
+12. No INSERT occurs.
+
+13. No UPDATE occurs.
+
+14. No DELETE occurs.
+
+15. No migration occurs.
+
+16. OpenAI is not called.
+
+17. Existing authentication remains unchanged.
+
+18. Existing task functionality remains unchanged.
+
+If possible, use mock/synthetic storage data for unit tests rather than real production user records.
+
+If a staging integration test requires a real user, do not print the user's task data into logs or the final report.
+
+==================================================
+EXISTING FILES
+==================================================
+
+Expected:
+
+MODIFY:
+server/ai-context.ts
+
+Possibly modify/create a focused test file.
+
+Do NOT modify:
+
+server/storage.ts
+server/db.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless absolutely necessary.
+
+Prefer only modifying ai-context.ts and test code.
+
+==================================================
+PRE-IMPLEMENTATION SAFETY CHECK
+==================================================
+
+Before writing code, inspect:
+
+getDailyTasksByUser(userId)
+
+and confirm whether it performs any writes or side effects.
+
+If it performs any INSERT/UPDATE/DELETE during a read, STOP and report that finding.
+
+Do not work around it silently.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 5 is complete, STOP.
+
+Report:
+
+1. STEP 5 status
+2. Exact storage method used
+3. Whether the storage method is strictly read-only
+4. Exact task fields included
+5. Exact task fields excluded
+6. How today's tasks were determined
+7. Date/time handling
+8. Whether timezone affects filtering
+9. Whether any database writes occurred
+10. Whether any migrations occurred
+11. Whether OpenAI was called
+12. Whether authentication was modified
+13. Whether payments/subscriptions were modified
+14. Whether caregiver functionality was modified
+15. Files created
+16. Files modified
+17. Test count
+18. Test results
+19. Any risks or warnings
+
+IMPORTANT:
+
+Do not proceed to STEP 6.
+
+Do not add appointments.
+
+Do not add calendar events.
+
+Do not add preferences.
+
+Do not call OpenAI.
+
+STOP and wait for my approval.

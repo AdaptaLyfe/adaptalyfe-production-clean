@@ -8,29 +8,46 @@
  *  - Never accepts a userId from the frontend
  *  - Never queries another user's data
  *  - Never returns sensitive fields (passwords, tokens, payment IDs, etc.)
- *  - Never modifies the database
- *  - Read-only
+ *  - Never modifies the database (read-only storage calls only)
  *
  * Growth path:
- *  Step 4  (current) — user identity + date/time only
- *  Step 5  — adds today's tasks
- *  Step 7  — adds upcoming appointments
- *  Step 9  — adds today's calendar events
- *  Step 11 — adds safe preference subset
+ *  Step 4  (done)    — user identity + date/time
+ *  Step 5  (current) — adds today's tasks
+ *  Step 7            — adds upcoming appointments
+ *  Step 9            — adds today's calendar events
+ *  Step 11           — adds safe preference subset
  */
 
+import { storage } from "./storage.js";
+import type { DailyTask } from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 /**
  * The safe subset of session.user that this module is allowed to read.
- * Caller (route handler) extracts only these fields from req.session.user
- * before passing them here — the full session object is never accepted.
+ * Caller (route handler) extracts only these fields from req.session.user.
  */
 export interface SafeSessionIdentity {
   /** Full display name from the users table (e.g. "Alex Johnson") */
   name: string;
+}
+
+/**
+ * Whitelisted task shape sent to the AI.
+ * Never includes: id, userId, pointValue, reminder metadata, completedAt, etc.
+ */
+export interface AiTask {
+  title: string;
+  description?: string;
+  category: string;
+  /** HH:MM format, UTC */
+  scheduledTime?: string;
+  isCompleted: boolean;
+  frequency: string;
+  estimatedMinutes: number;
+  /** YYYY-MM-DD, only when a specific due date is set */
+  dueDate?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,31 +59,83 @@ export interface SafeSessionIdentity {
  */
 function extractFirstName(fullName: string): string {
   const trimmed = fullName.trim();
-  const firstWord = trimmed.split(/\s+/)[0];
-  return firstWord || trimmed;
+  return trimmed.split(/\s+/)[0] || trimmed;
+}
+
+/**
+ * Normalize a stored scheduled_time value to HH:MM.
+ * The DB time column may return "HH:MM:SS" or "HH:MM".
+ */
+function normalizeScheduledTime(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined;
+  // Take only the first 5 characters: "10:00"
+  const trimmed = raw.trim().slice(0, 5);
+  return /^\d{2}:\d{2}$/.test(trimmed) ? trimmed : undefined;
 }
 
 /**
  * Return current server date/time in machine-readable formats.
- *
- * Timezone note: The Adaptalyfe database and user_preferences table
- * currently have no stored timezone field. Server clock (UTC) is used
- * as the fallback. When per-user timezone is added in a future step,
- * this function will accept it as a parameter.
+ * Timezone note: no per-user timezone is stored in the DB yet — UTC is the
+ * documented fallback until Step 11 / a future phase.
  */
 function getCurrentTimeContext(): { date: string; time: string; timezone: string } {
   const now = new Date();
+  return {
+    date: now.toISOString().slice(0, 10),  // YYYY-MM-DD
+    time: now.toISOString().slice(11, 16), // HH:MM
+    timezone: "UTC",
+  };
+}
 
-  // YYYY-MM-DD
-  const date = now.toISOString().slice(0, 10);
+// ─── Task context builder (exported for unit testing without DB) ───────────────
 
-  // HH:MM (24-hour, UTC)
-  const time = now.toISOString().slice(11, 16);
+/**
+ * mapTasksToContext
+ *
+ * Filters raw DailyTask records to those relevant to today and applies
+ * the explicit field whitelist. Exported so it can be unit-tested with
+ * synthetic data without requiring a database connection.
+ *
+ * Filtering logic:
+ *  - Tasks WITHOUT a dueDate are recurring routines — always included.
+ *  - Tasks WITH a dueDate are included only if the due date is today or earlier.
+ *    (Future-dated tasks are not relevant to today's Daily Guide.)
+ *
+ * Note: getDailyTasksByUser already handles in-memory recurring-task
+ * completion resets (strictly read-only — no DB writes). That behavior
+ * is preserved here; we do not re-implement it.
+ */
+export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[] {
+  return tasks
+    .filter((task) => {
+      if (!task.dueDate) return true; // recurring — always relevant
+      const dueDateStr = new Date(task.dueDate).toISOString().slice(0, 10);
+      return dueDateStr <= todayStr;  // include today and overdue only
+    })
+    .map((task): AiTask => {
+      const result: AiTask = {
+        title: task.title,
+        category: task.category,
+        isCompleted: task.isCompleted ?? false,
+        frequency: task.frequency,
+        estimatedMinutes: task.estimatedMinutes,
+      };
 
-  // UTC until per-user timezone is available (Step 11 / future)
-  const timezone = "UTC";
+      // Optional fields — omit if empty/null
+      if (task.description) result.description = task.description;
 
-  return { date, time, timezone };
+      const st = normalizeScheduledTime(task.scheduledTime as string | null);
+      if (st) result.scheduledTime = st;
+
+      if (task.dueDate) {
+        result.dueDate = new Date(task.dueDate).toISOString().slice(0, 10);
+      }
+
+      return result;
+      // Fields intentionally excluded:
+      // id, userId, pointValue, completedAt, lastCompleted,
+      // lastReminderSent, lastOverdueReminder
+    });
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -76,53 +145,61 @@ function getCurrentTimeContext(): { date: string; time: string; timezone: string
  *
  * Assembles a safe, validated context object for the AI Daily Guide.
  *
- * @param userId        - Authenticated user's ID (from req.session.userId).
- *                        Used for database queries in Steps 5+.
- *                        Never accepted from the frontend.
- * @param sessionUser   - Explicitly whitelisted identity fields only.
- *                        Caller must extract these from req.session.user;
- *                        the full session object must not be passed here.
- *
- * @returns             DailyGuideContext ready to pass to generateDailyGuide().
- *                      Never throws — returns a minimal safe context on error.
+ * @param userId      - Authenticated user's ID (from req.session.userId).
+ *                      Used for all database queries. Never from the frontend.
+ * @param sessionUser - Explicitly whitelisted identity fields only.
+ *                      Caller must extract these from req.session.user.
  */
 export async function buildDailyGuideContext(
   userId: number,
   sessionUser: SafeSessionIdentity
 ): Promise<DailyGuideContext> {
-  // Validate inputs defensively
+  // ── Input validation ───────────────────────────────────────────────────────
   if (!userId || typeof userId !== "number" || userId < 1) {
     console.warn("[ai-context] Invalid userId received:", userId);
-    // Return a minimal anonymous context rather than throwing
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone };
+    return { userName: "there", date, time, timezone, tasks: [] };
   }
 
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
     console.warn("[ai-context] Missing or invalid session name for userId:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone };
+    return { userName: "there", date, time, timezone, tasks: [] };
   }
 
   // ── Safe identity ──────────────────────────────────────────────────────────
-  // Use first name only — friendly, minimal, not an identifier
   const userName = extractFirstName(sessionUser.name);
 
   // ── Time context ───────────────────────────────────────────────────────────
   const { date, time, timezone } = getCurrentTimeContext();
 
+  // ── Today's tasks (Step 5) ─────────────────────────────────────────────────
+  // getDailyTasksByUser is strictly read-only (verified in Step 5 safety check).
+  // It handles recurring-task completion reset in-memory — no DB writes.
+  let tasks: AiTask[] = [];
+  try {
+    const rawTasks = await storage.getDailyTasksByUser(userId);
+    tasks = mapTasksToContext(rawTasks, date);
+  } catch (err) {
+    console.warn(
+      "[ai-context] Failed to fetch tasks for userId",
+      userId,
+      "—",
+      err instanceof Error ? err.message : String(err)
+    );
+    tasks = []; // fail open: empty tasks, do not crash the Daily Guide
+  }
+
   // ── Build context ──────────────────────────────────────────────────────────
-  // Future steps will add tasks, appointments, calendarEvents, preferences here.
-  // They are intentionally absent in Step 4.
   const context: DailyGuideContext = {
     userName,
     date,
     time,
     timezone,
-    // tasks:         populated in Step 5
-    // appointments:  populated in Step 7
+    tasks,
+    // appointments:   populated in Step 7
     // calendarEvents: populated in Step 9
-    // preferences:   populated in Step 11
+    // preferences:    populated in Step 11
   };
 
   return context;
