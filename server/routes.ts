@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
+import { buildDailyGuideContext } from "./ai-context";
+import { generateDailyGuide } from "./ai-service";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -6336,6 +6338,45 @@ Provide a helpful, encouraging response:`;
       res.status(500).json({ message: "Failed to fetch organization membership" });
     }
   });
+
+  // ── Adaptalyfe Guide — Daily Guide AI endpoint (Phase 1, Step 11) ─────────────
+  // READ-ONLY. No writes to any data source. No AI tool/function calling.
+  // userId is sourced exclusively from req.session.userId — never from the request body.
+  // The full security boundary (whitelist, user-isolation, sensitive-field exclusion)
+  // is enforced inside buildDailyGuideContext() (server/ai-context.ts).
+  // generateDailyGuide() never throws — returns a safe fallback on any provider error.
+  app.post(
+    "/api/ai/daily-guide",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        console.log("[daily-guide] Request received");
+
+        // Identity from the authenticated server-side session only.
+        // Any userId present in the request body is intentionally not read here.
+        const userId: number = req.session.userId;
+        const sessionUser = { name: (req.session.user?.name as string) ?? "" };
+
+        // Context assembly: whitelisted, user-scoped, read-only.
+        const context = await buildDailyGuideContext(userId, sessionUser);
+
+        // AI call: validated response via Zod schema; safe fallback on any failure.
+        const guide = await generateDailyGuide(context);
+
+        console.log("[daily-guide] Generated successfully");
+        return res.json(guide);
+      } catch (err) {
+        // Defensive outer catch — generateDailyGuide() handles its own errors,
+        // so this path should not normally be reached. Log operational info only.
+        console.error("[daily-guide] Unexpected route error");
+        return res.status(500).json({
+          greeting: "Hello",
+          summary: "Your Daily Guide is temporarily unavailable.",
+          highlights: [],
+        });
+      }
+    }
+  );
 
   const httpServer = createServer(app);
   return httpServer;
