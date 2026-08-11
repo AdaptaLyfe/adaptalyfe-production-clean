@@ -191,6 +191,7 @@ export async function generateDailyGuide(
 
   // API key not configured — return fallback silently
   if (!client) {
+    console.warn("[ai-service] OPENAI_API_KEY not configured — returning fallback. Set this environment variable to enable the Daily Guide.");
     return FALLBACK_RESPONSE;
   }
 
