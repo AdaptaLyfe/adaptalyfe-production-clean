@@ -1,0 +1,406 @@
+STEP 8 IS APPROVED.
+
+Proceed with STEP 9 ONLY: inspect and safely add relevant user preferences to the existing AI context.
+
+Do not proceed to Step 10 or any later step.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+Do not modify the dashboard.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create migrations.
+
+==================================================
+CURRENT CONTEXT
+==================================================
+
+server/ai-context.ts currently contains:
+
+- userName
+- date
+- time
+- timezone
+- tasks
+- appointments
+- calendarEvents
+
+Steps 1–8 have passed their tests.
+
+Do not break existing task, appointment, or calendar behavior.
+
+==================================================
+MANDATORY PRE-IMPLEMENTATION INSPECTION
+==================================================
+
+Before writing any code, inspect:
+
+- getUserPreferences(userId)
+- the UserPreferences schema/type
+- the actual JSONB structures stored in:
+  - reminder_timing
+  - behavior_patterns
+  - notification_settings
+  - theme_settings
+  - accessibility_settings
+
+Do NOT assume that a JSONB column is safe simply because its column name sounds safe.
+
+Determine exactly:
+
+1. What fields exist inside reminder_timing.
+2. What fields exist inside behavior_patterns.
+3. Whether either object can contain sensitive information.
+4. Whether either object can contain medical information.
+5. Whether either object can contain financial information.
+6. Whether either object can contain authentication/security information.
+7. Whether either object can contain arbitrary user-entered text.
+8. Whether the values are structured or free-form.
+9. Whether the storage method is strictly read-only.
+10. Whether the query is scoped to the authenticated userId.
+
+If the structure cannot be safely determined, STOP and report it instead of passing the object through to the AI.
+
+==================================================
+DATABASE SAFETY
+==================================================
+
+Inspect getUserPreferences(userId) before using it.
+
+Confirm it performs only read operations.
+
+No:
+
+INSERT
+UPDATE
+DELETE
+migration
+schema modification
+side effects
+
+Do not modify server/storage.ts.
+
+Do not modify the user_preferences table.
+
+Do not create migrations.
+
+==================================================
+PREFERENCE WHITELIST
+==================================================
+
+Do NOT pass the complete UserPreferences object to the AI.
+
+Do NOT pass complete JSONB objects blindly.
+
+Use an explicit whitelist.
+
+The initial candidates are:
+
+- reminder_timing
+- behavior_patterns
+
+However, ONLY include specific fields inside those objects that are proven to be useful and safe for the Daily Guide.
+
+For example, if reminder_timing contains something like:
+
+{
+  morning: "08:00",
+  evening: "20:00"
+}
+
+then those specific fields may be useful.
+
+But do not assume this exact structure exists.
+
+Inspect the real schema/data first.
+
+Similarly, if behavior_patterns contains routine information, include only the specific safe fields that are useful for guidance.
+
+Do NOT include arbitrary free-form text.
+
+==================================================
+EXCLUDE THESE
+==================================================
+
+Do NOT include:
+
+notification_settings
+
+theme_settings
+
+accessibility_settings
+
+unless a specific field is clearly required for Daily Guide behavior and separately approved.
+
+Do not include:
+
+- passwords
+- authentication data
+- session data
+- tokens
+- security information
+- payment information
+- Stripe IDs
+- Apple IDs
+- Google IDs
+- banking information
+- financial information
+- medical records
+- medications
+- allergies
+- symptoms
+- private documents
+- messages
+- caregiver information
+- internal database IDs
+- userId
+- audit information
+
+==================================================
+USER ISOLATION
+==================================================
+
+The preference query must use the authenticated user's server-side userId.
+
+The userId comes from:
+
+req.session.userId
+
+Do NOT accept userId from the frontend.
+
+Do NOT create new authentication.
+
+Do NOT modify requireAuth.
+
+Do NOT retrieve preferences for another user.
+
+Do not retrieve caregiver preferences.
+
+==================================================
+USER-ENTERED CONTENT
+==================================================
+
+If behavior_patterns contains legitimate user-entered text, do not automatically reject it just because it contains words such as:
+
+- health
+- medication
+- doctor
+- therapy
+
+The security boundary is the explicitly approved field structure.
+
+However, do NOT intentionally send arbitrary free-form sensitive text to the AI.
+
+If a field could contain sensitive free-form information and there is no reliable way to constrain it, exclude that field.
+
+==================================================
+AI
+==================================================
+
+Do NOT call OpenAI during STEP 9.
+
+The flow remains:
+
+Authenticated user
+        ↓
+userId
+        ↓
+Existing preference storage
+        ↓
+Explicit safe-field whitelist
+        ↓
+ai-context.ts
+
+No OpenAI.
+
+==================================================
+CONTEXT STRUCTURE
+==================================================
+
+Extend the current context with:
+
+preferences
+
+But keep it minimal.
+
+Conceptually:
+
+{
+  userName,
+  date,
+  time,
+  timezone,
+  tasks,
+  appointments,
+  calendarEvents,
+  preferences: {
+    reminderTiming: ...,
+    behaviorPatterns: ...
+  }
+}
+
+This is only conceptual.
+
+Use the actual safe fields discovered during inspection.
+
+Do not include empty or irrelevant preference categories just to fill the structure.
+
+==================================================
+TESTING
+==================================================
+
+Create focused STEP 9 tests.
+
+Test at minimum:
+
+1. getUserPreferences() is confirmed read-only.
+
+2. Preference query is scoped to userId.
+
+3. Another user's preferences cannot enter the context.
+
+4. Only explicitly approved preference fields are included.
+
+5. Entire JSONB objects are not passed blindly.
+
+6. notification_settings is excluded unless specifically approved.
+
+7. theme_settings is excluded unless specifically approved.
+
+8. accessibility_settings is excluded unless specifically approved.
+
+9. Authentication information is excluded.
+
+10. Payment information is excluded.
+
+11. Financial information is excluded.
+
+12. Medical information is excluded.
+
+13. Security information is excluded.
+
+14. Database IDs are excluded.
+
+15. userId is excluded.
+
+16. Free-form sensitive content is excluded where it cannot be safely constrained.
+
+17. Empty preferences are handled safely.
+
+18. Existing task context remains unchanged.
+
+19. Existing appointment context remains unchanged.
+
+20. Existing calendar context remains unchanged.
+
+21. No database writes occur.
+
+22. No migrations occur.
+
+23. OpenAI is not called.
+
+24. Authentication is not modified.
+
+25. Payments/subscriptions are not modified.
+
+26. Caregiver functionality is not modified.
+
+27. TypeScript/build checks pass.
+
+Use synthetic/mock preference data for unit tests where possible.
+
+If a live DB test is required, keep it read-only and do not print real preference values into logs or the final report.
+
+==================================================
+FILES
+==================================================
+
+Expected:
+
+MODIFY:
+server/ai-context.ts
+
+Possibly create:
+
+scripts/test-ai-context-step9.ts
+
+Do not modify:
+
+server/storage.ts
+server/db.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a genuine issue is discovered.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover:
+
+- unexpected JSONB structures
+- sensitive preference data
+- unclear data ownership
+- timezone problems
+- authentication issues
+- database issues
+
+STOP and report the issue rather than making an unrelated change.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 9 is complete, STOP.
+
+Report:
+
+1. STEP 9 status
+2. Exact UserPreferences structure discovered
+3. Exact fields inside reminder_timing
+4. Exact fields inside behavior_patterns
+5. Exact preference fields included
+6. Exact preference fields excluded
+7. Why each included field is safe/useful
+8. Whether any sensitive information was found
+9. Storage method used
+10. Whether it is strictly read-only
+11. User isolation result
+12. Database writes — expected NO
+13. Migrations — expected NO
+14. OpenAI calls — expected NO
+15. Authentication changes — expected NO
+16. Payment/subscription changes — expected NO
+17. Caregiver changes — expected NO
+18. Files created
+19. Files modified
+20. Test count
+21. Test results
+22. Any warnings or risks
+
+IMPORTANT:
+
+Do not proceed to Step 10.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+STOP and wait for my approval.

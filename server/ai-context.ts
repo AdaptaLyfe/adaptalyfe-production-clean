@@ -14,12 +14,12 @@
  *  Step 4  (done)    — user identity + date/time
  *  Step 5  (done)    — adds today's tasks
  *  Step 7  (done)    — adds upcoming appointments
- *  Step 8  (current) — adds today's calendar events
- *  Step 11           — adds safe preference subset
+ *  Step 8  (done)    — adds today's calendar events
+ *  Step 9  (current) — adds safe behavior preference subset
  */
 
 import { storage } from "./storage.js";
-import type { DailyTask, Appointment, CalendarEvent } from "../shared/schema.js";
+import type { DailyTask, Appointment, CalendarEvent, UserPreferences } from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -73,18 +73,12 @@ export interface AiAppointment {
  * Whitelisted calendar event shape sent to the AI.
  *
  * Storage format: startDate and endDate are timestamp columns — Drizzle
- * returns them as JavaScript Date objects. They are serialized to ISO
- * strings here. No timezone is stored; server UTC convention applies.
+ * returns them as JavaScript Date objects. Serialized to ISO strings here.
+ * No timezone is stored; server UTC convention applies.
  *
  * Fields intentionally excluded:
  *   id, userId, color, isRecurring, recurrenceRule, reminderMinutes,
  *   isCompleted, createdAt, updatedAt
- *
- * Recurring event note:
- *   getCalendarEventsByUser returns base records only — it does not expand
- *   recurring instances. A recurring event is included only if its stored
- *   startDate falls within today's UTC window. Future instance expansion
- *   is out of scope for Phase 1.
  */
 export interface AiCalendarEvent {
   title: string;
@@ -100,45 +94,66 @@ export interface AiCalendarEvent {
   description?: string;
 }
 
+/**
+ * Whitelisted preference subset sent to the AI.
+ *
+ * Source: behavior_patterns JSONB column in user_preferences.
+ * All fields are structured enum-like strings set by the user in the
+ * personalization engine — never free-form sensitive text.
+ *
+ * Columns intentionally excluded from AI context:
+ *   id, userId, createdAt, updatedAt          — internal metadata
+ *   notificationSettings                       — push/email/SMS config
+ *   themeSettings                              — UI display settings
+ *   accessibilitySettings                      — UI a11y settings
+ *   reminderTiming                             — inconsistent format in DB
+ *                                                (string | object | {});
+ *                                                contains medicationReminders
+ *                                                (medical-adjacent); not
+ *                                                useful for AI guide content
+ *
+ * Fields inside behavior_patterns intentionally excluded:
+ *   Any field that is not a known safe string enum (guarded at extraction time)
+ */
+export interface AiPreferences {
+  /** When the user prefers to work: "morning" | "afternoon" | "evening" */
+  preferredTaskTime?: string;
+  /** How the user prefers reminders: e.g. "gentle" | "firm" */
+  reminderStyle?: string;
+  /** User's motivation level: e.g. "low" | "medium" | "high" */
+  motivationLevel?: string;
+  /** Preferred task complexity: "simple" | "moderate" | "detailed" */
+  complexityPreference?: string;
+  /** Level of guidance the user prefers */
+  supportLevel?: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Extract a friendly first name from a full name string.
- * "Alex Johnson" → "Alex"
- */
+/** Extract a friendly first name from a full name string. */
 function extractFirstName(fullName: string): string {
   const trimmed = fullName.trim();
   return trimmed.split(/\s+/)[0] || trimmed;
 }
 
-/**
- * Normalize a stored scheduled_time value to HH:MM.
- * The DB time column may return "HH:MM:SS" or "HH:MM".
- */
+/** Normalize a stored scheduled_time value to HH:MM. */
 function normalizeScheduledTime(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
   const trimmed = raw.trim().slice(0, 5);
   return /^\d{2}:\d{2}$/.test(trimmed) ? trimmed : undefined;
 }
 
-/**
- * Return current server date/time in machine-readable formats.
- * Timezone: UTC is the documented fallback — no per-user timezone in DB yet.
- */
+/** Return current server date/time (UTC). */
 function getCurrentTimeContext(): { date: string; time: string; timezone: string } {
   const now = new Date();
   return {
-    date: now.toISOString().slice(0, 10),  // YYYY-MM-DD
-    time: now.toISOString().slice(11, 16), // HH:MM
+    date: now.toISOString().slice(0, 10),
+    time: now.toISOString().slice(11, 16),
     timezone: "UTC",
   };
 }
 
-/**
- * Coerce a value from a Drizzle timestamp column to a Date.
- * Drizzle returns Date objects for timestamp columns; this guard handles
- * edge cases where the value might already be a string.
- */
+/** Coerce a Drizzle timestamp column value to Date or null. */
 function toDate(val: Date | string | null | undefined): Date | null {
   if (!val) return null;
   if (val instanceof Date) return val;
@@ -146,14 +161,21 @@ function toDate(val: Date | string | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Safely extract a string field from an unknown JSONB value.
+ * Returns undefined if the object or field is missing, null, or not a string.
+ * Never returns objects, arrays, booleans, or numbers.
+ */
+function safeString(obj: unknown, key: string): string | undefined {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return undefined;
+  const val = (obj as Record<string, unknown>)[key];
+  if (typeof val !== "string" || val.trim() === "") return undefined;
+  return val;
+}
+
 // ─── Task context builder ──────────────────────────────────────────────────────
 
-/**
- * mapTasksToContext — exported for unit testing without DB.
- *
- * Filtering: tasks with no dueDate (recurring) always included;
- * tasks with dueDate included only if date <= today.
- */
+/** mapTasksToContext — exported for unit testing without DB. */
 export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[] {
   return tasks
     .filter((task) => {
@@ -181,12 +203,7 @@ export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[
 
 // ─── Appointment context builder ───────────────────────────────────────────────
 
-/**
- * mapAppointmentsToContext — exported for unit testing without DB.
- *
- * Upstream filtering by getUpcomingAppointments:
- *   isCompleted=false + appointmentDate >= now + userId-scoped.
- */
+/** mapAppointmentsToContext — exported for unit testing without DB. */
 export function mapAppointmentsToContext(appointments: Appointment[]): AiAppointment[] {
   return appointments.map((appt): AiAppointment => {
     const result: AiAppointment = {
@@ -202,33 +219,7 @@ export function mapAppointmentsToContext(appointments: Appointment[]): AiAppoint
 
 // ─── Calendar event context builder ───────────────────────────────────────────
 
-/**
- * mapCalendarEventsToContext — exported for unit testing without DB.
- *
- * Filters events to those occurring on todayStr (UTC) and applies the
- * field whitelist. getCalendarEventsByUser returns all events for a user
- * with no date filter, so this function does the date scoping.
- *
- * "Occurring today" definition (UTC-based):
- *   todayStart = YYYY-MM-DDT00:00:00.000Z
- *   todayEnd   = YYYY-MM-DDT23:59:59.999Z
- *
- *   Include if:
- *     event.startDate <= todayEnd
- *     AND ( event.endDate >= todayStart  — event ends today or later
- *           OR (no endDate AND event.startDate >= todayStart) )
- *
- * This correctly handles:
- *   - Single events today (startDate today, no/same endDate)
- *   - Multi-day events spanning today (startDate before, endDate after)
- *   - All-day events (stored at UTC midnight boundaries)
- *   - Past events → excluded (endDate before todayStart)
- *   - Future events → excluded (startDate after todayEnd)
- *
- * Recurring event limitation (Phase 1):
- *   Only the base record's startDate is checked. Recurring instances
- *   are not expanded. Documented in AiCalendarEvent JSDoc.
- */
+/** mapCalendarEventsToContext — exported for unit testing without DB. */
 export function mapCalendarEventsToContext(
   events: CalendarEvent[],
   todayStr: string
@@ -240,36 +231,67 @@ export function mapCalendarEventsToContext(
     .filter((event) => {
       const start = toDate(event.startDate);
       const end   = toDate(event.endDate);
-
-      if (!start) return false;              // invalid start — skip
-      if (start > todayEnd) return false;    // starts in the future — exclude
-
-      if (end !== null) {
-        return end >= todayStart;            // ends today or later — include
-      }
-      // No endDate: include only if startDate is within today's window
+      if (!start) return false;
+      if (start > todayEnd) return false;
+      if (end !== null) return end >= todayStart;
       return start >= todayStart;
     })
     .map((event): AiCalendarEvent => {
       const start = toDate(event.startDate)!;
       const end   = toDate(event.endDate);
-
       const result: AiCalendarEvent = {
-        title:     event.title,
+        title:    event.title,
         startDate: start.toISOString(),
-        allDay:    event.allDay ?? false,
-        category:  event.category ?? "personal",
+        allDay:   event.allDay ?? false,
+        category: event.category ?? "personal",
       };
-
-      if (end)              result.endDate     = end.toISOString();
-      if (event.location)   result.location    = event.location;
-      if (event.description) result.description = event.description;
-
+      if (end)               result.endDate      = end.toISOString();
+      if (event.location)    result.location     = event.location;
+      if (event.description) result.description  = event.description;
       return result;
-      // Fields intentionally excluded:
-      // id, userId, color, isRecurring, recurrenceRule,
-      // reminderMinutes, isCompleted, createdAt, updatedAt
     });
+}
+
+// ─── Preference context builder ────────────────────────────────────────────────
+
+/**
+ * mapPreferencesToContext — exported for unit testing without DB.
+ *
+ * Extracts only the explicitly whitelisted fields from the behavior_patterns
+ * JSONB column. Each field is individually type-checked — the entire JSONB
+ * object is never passed through.
+ *
+ * Returns undefined (not an empty object) when no useful preferences are
+ * found, so the AI receives no `preferences` key rather than an empty one.
+ *
+ * Excluded entirely: notificationSettings, themeSettings,
+ * accessibilitySettings, reminderTiming (see AiPreferences JSDoc for reasons).
+ */
+export function mapPreferencesToContext(
+  prefs: UserPreferences | undefined | null
+): AiPreferences | undefined {
+  if (!prefs) return undefined;
+
+  // behaviorPatterns is jsonb — Drizzle returns it as unknown.
+  const bp = prefs.behaviorPatterns;
+
+  const result: AiPreferences = {};
+
+  // Extract only the known safe string fields, one at a time.
+  const preferredTaskTime  = safeString(bp, "preferredTaskTime");
+  const reminderStyle      = safeString(bp, "reminderStyle");
+  const motivationLevel    = safeString(bp, "motivationLevel");
+  const complexityPreference = safeString(bp, "complexityPreference");
+  const supportLevel       = safeString(bp, "supportLevel");
+
+  if (preferredTaskTime)   result.preferredTaskTime   = preferredTaskTime;
+  if (reminderStyle)       result.reminderStyle       = reminderStyle;
+  if (motivationLevel)     result.motivationLevel     = motivationLevel;
+  if (complexityPreference) result.complexityPreference = complexityPreference;
+  if (supportLevel)        result.supportLevel        = supportLevel;
+
+  // Return undefined if nothing useful was extracted.
+  return Object.keys(result).length > 0 ? result : undefined;
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -328,8 +350,6 @@ export async function buildDailyGuideContext(
   }
 
   // ── Today's calendar events (Step 8) ──────────────────────────────────────
-  // getCalendarEventsByUser returns all events — mapCalendarEventsToContext
-  // filters to those occurring today (UTC) and applies the field whitelist.
   let calendarEvents: AiCalendarEvent[] = [];
   try {
     const rawEvents = await storage.getCalendarEventsByUser(userId);
@@ -338,6 +358,19 @@ export async function buildDailyGuideContext(
     console.warn("[ai-context] Failed to fetch calendar events for userId", userId, "—",
       err instanceof Error ? err.message : String(err));
     calendarEvents = [];
+  }
+
+  // ── User preferences (Step 9) ─────────────────────────────────────────────
+  // getUserPreferences is strictly read-only (db.select() only — verified).
+  // Only behavior_patterns fields are extracted; other JSONB columns excluded.
+  let preferences: AiPreferences | undefined;
+  try {
+    const rawPrefs = await storage.getUserPreferences(userId);
+    preferences = mapPreferencesToContext(rawPrefs);
+  } catch (err) {
+    console.warn("[ai-context] Failed to fetch preferences for userId", userId, "—",
+      err instanceof Error ? err.message : String(err));
+    preferences = undefined;
   }
 
   // ── Build context ──────────────────────────────────────────────────────────
@@ -349,7 +382,7 @@ export async function buildDailyGuideContext(
     tasks,
     appointments,
     calendarEvents,
-    // preferences: populated in Step 11
+    ...(preferences !== undefined ? { preferences } : {}),
   };
 
   return context;

@@ -88,11 +88,23 @@ export interface DailyGuideContext {
     description?: string;
   }>;
 
-  // Populated from Step 11 onward
+  // Populated from Step 9 onward
   preferences?: {
-    theme?: string;
-    language?: string;
-    [key: string]: unknown;
+    /**
+     * Structured behavioral preference fields from behavior_patterns JSONB.
+     * All string enum-like values set by the user in the personalization engine.
+     * Never contains raw user text, medical, financial, or auth data.
+     */
+    /** When the user prefers to do tasks: "morning" | "afternoon" | "evening" */
+    preferredTaskTime?: string;
+    /** How the user prefers to be reminded: e.g. "gentle" | "firm" */
+    reminderStyle?: string;
+    /** User's motivation level: e.g. "low" | "medium" | "high" */
+    motivationLevel?: string;
+    /** Preferred task complexity: "simple" | "moderate" | "detailed" */
+    complexityPreference?: string;
+    /** Level of guidance the user prefers */
+    supportLevel?: string;
   };
 }
 
