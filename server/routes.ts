@@ -3942,22 +3942,12 @@ Provide a helpful, encouraging response:`;
       trialEndDate.setDate(trialEndDate.getDate() + 7); // 7-day free trial
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
-      // Check subscription status.
-      // For app_store / google_play users, Apple/Google manage renewals server-to-server.
-      // Our local subscriptionExpiresAt can lag a renewal by minutes or hours.
-      // So for IAP users we trust subscriptionStatus='active' directly and don't gate on
-      // expiry — Apple will send a server notification when it actually lapses.
-      //
-      // For Stripe users we apply the same trust: Stripe sends customer.subscription.updated
-      // webhooks that update subscriptionStatus to 'past_due' / 'cancelled' when a charge
-      // fails. If subscriptionStatus is 'active' and a valid stripeSubscriptionId exists, the
-      // subscription IS active on Stripe — the local subscriptionExpiresAt date simply isn't
-      // refreshed after each monthly renewal (a known webhook gap). Gating on that stale date
-      // would incorrectly block paying subscribers from the dashboard.
-      const isPlatformIAP = user.subscriptionPlatform === 'app_store' || user.subscriptionPlatform === 'google_play';
-      const hasActiveStripeSubscription = !!(user.stripeSubscriptionId);
-      const isActiveSubscription = user.subscriptionStatus === 'active' &&
-                                 (isPlatformIAP || hasActiveStripeSubscription || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now));
+      // Check subscription status. Trust subscriptionStatus as the single source of truth.
+      // Stripe, Apple, and Google webhooks update this field to 'cancelled'/'past_due' when
+      // a subscription lapses — so if it says 'active', that is definitive. We do NOT
+      // additionally require stripeSubscriptionId or a non-expired subscriptionExpiresAt,
+      // because those fields can be null/stale for valid subscribers.
+      const isActiveSubscription = user.subscriptionStatus === 'active';
 
       const subscription = {
         id: user.id,
@@ -4317,14 +4307,9 @@ Provide a helpful, encouraging response:`;
     const user = req.session.user;
     const now = new Date();
     
-    // Check if user has active subscription or is still in trial.
-    // IAP (Apple/Google) subscriptions are trusted by status alone — renewals happen
-    // server-to-server and our local expiry date can lag. Same logic applies for Stripe:
-    // if subscriptionStatus is 'active' and a stripeSubscriptionId exists, the subscription
-    // is confirmed live on Stripe (failed payments update status to 'past_due' via webhook).
-    const isPlatformIAP = user.subscriptionPlatform === 'app_store' || user.subscriptionPlatform === 'google_play';
-    const hasActiveStripeId = !!(user.stripeSubscriptionId);
-    if (user.subscriptionStatus === 'active' && (isPlatformIAP || hasActiveStripeId || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now))) {
+    // Trust subscriptionStatus as the single source of truth. Webhooks (Stripe, Apple,
+    // Google) update this field when a subscription lapses — 'active' is definitive.
+    if (user.subscriptionStatus === 'active') {
       return next(); // Active paid subscription
     }
     
