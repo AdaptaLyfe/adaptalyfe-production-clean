@@ -37,7 +37,7 @@ export const DailyGuideNextActionSchema = z.object({
 export const DailyGuideResponseSchema = z.object({
   greeting: z.string().max(200),
   summary: z.string().max(500),
-  highlights: z.array(DailyGuideHighlightSchema).max(5),
+  highlights: z.array(DailyGuideHighlightSchema).max(12),
   nextAction: DailyGuideNextActionSchema.optional(),
 });
 
@@ -179,7 +179,11 @@ Return a JSON object with exactly:
   "nextAction": { "title": "...", "reason": "optional", "source": "task"|"appointment"|"calendar" }
 }
 
-highlights: up to 5 items, most important first.
+highlights: up to 12 items total. IMPORTANT — include items from ALL available data sources:
+  - Include tasks (type "task") — all or the most important ones
+  - Include appointments (type "appointment") — include ALL if any exist, they are high priority
+  - Include calendar events (type "calendar") — include ALL if any exist
+  List appointments and calendar events first, then tasks. Never skip a type just because another type fills the list.
 nextAction: the single most time-sensitive or important thing right now (omit if nothing urgent).`;
 }
 
