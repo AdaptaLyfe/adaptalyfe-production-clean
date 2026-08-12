@@ -27,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDailyGuide, type DailyGuideHighlight } from "@/hooks/useDailyGuide";
 
-// ─── Time-of-day config ───────────────────────────────────────────────────────
+// ─── Time-of-day config ─────────────────────────────────────── updated: 2026-08-13 ──
 
 type Period = "morning" | "afternoon" | "evening" | "night";
 
