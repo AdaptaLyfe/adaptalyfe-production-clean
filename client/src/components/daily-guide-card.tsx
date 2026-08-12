@@ -2,7 +2,8 @@
  * DailyGuideCard — Time-aware check-in briefing card
  *
  * Surfaces a Morning / Afternoon / Evening check-in with the user's
- * AI-generated day summary, task highlights, appointments, and next action.
+ * AI-generated day summary, task highlights grouped by time period,
+ * appointments, and next action.
  *
  * States:
  *  - Loading  → skeleton matching the card shape
@@ -14,13 +15,13 @@ import {
   Sunrise,
   Sun,
   Moon,
-  Stars,
+  Sparkles,
   CheckCircle2,
   Calendar,
   Clock,
   ArrowRight,
   AlertCircle,
-  Sparkles,
+  Star,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,48 @@ function getPeriodConfig(): PeriodConfig {
   };
 }
 
+// ─── Task period bucketing ────────────────────────────────────────────────────
+
+type TaskPeriod = "morning" | "afternoon" | "evening" | "night" | "anytime";
+
+interface TaskPeriodMeta {
+  key: TaskPeriod;
+  label: string;
+  Icon: React.ElementType;
+  iconClass: string;
+  labelClass: string;
+}
+
+const TASK_PERIODS: TaskPeriodMeta[] = [
+  { key: "morning",   label: "Morning",   Icon: Sunrise,  iconClass: "text-amber-500",  labelClass: "text-amber-700"  },
+  { key: "afternoon", label: "Afternoon", Icon: Sun,      iconClass: "text-blue-500",   labelClass: "text-blue-700"   },
+  { key: "evening",   label: "Evening",   Icon: Moon,     iconClass: "text-indigo-500", labelClass: "text-indigo-700" },
+  { key: "night",     label: "Night",     Icon: Sparkles, iconClass: "text-purple-500", labelClass: "text-purple-700" },
+  { key: "anytime",   label: "Anytime",   Icon: Star,     iconClass: "text-gray-400",   labelClass: "text-gray-500"   },
+];
+
+/** Return which time bucket a "HH:MM" string falls into. */
+function getTaskPeriod(time: string | undefined | null): TaskPeriod {
+  if (!time) return "anytime";
+  const [hStr] = time.split(":");
+  const h = parseInt(hStr, 10);
+  if (isNaN(h)) return "anytime";
+  if (h >= 5  && h < 12) return "morning";
+  if (h >= 12 && h < 17) return "afternoon";
+  if (h >= 17 && h < 21) return "evening";
+  return "night"; // 21:00 – 04:59
+}
+
+function groupTasksByPeriod(tasks: DailyGuideHighlight[]) {
+  const buckets: Record<TaskPeriod, DailyGuideHighlight[]> = {
+    morning: [], afternoon: [], evening: [], night: [], anytime: [],
+  };
+  for (const t of tasks) {
+    buckets[getTaskPeriod(t.time)].push(t);
+  }
+  return buckets;
+}
+
 // ─── Highlight helpers ────────────────────────────────────────────────────────
 
 function highlightIcon(type: DailyGuideHighlight["type"]) {
@@ -110,7 +153,7 @@ function highlightIcon(type: DailyGuideHighlight["type"]) {
   }
 }
 
-function priorityBadge(priority: DailyGuideHighlight["priority"], badgeClass: string) {
+function priorityBadge(priority: DailyGuideHighlight["priority"]) {
   if (!priority || priority === "normal") return null;
   return (
     <Badge
@@ -172,10 +215,14 @@ export default function DailyGuideCard() {
 
   const { greeting, summary, highlights, nextAction } = data;
 
-  // Split highlights by type for organised sections
-  const tasks = highlights.filter((h) => h.type === "task");
+  // Split highlights by type
+  const tasks        = highlights.filter((h) => h.type === "task");
   const appointments = highlights.filter((h) => h.type === "appointment");
-  const events = highlights.filter((h) => h.type === "calendar");
+  const events       = highlights.filter((h) => h.type === "calendar");
+
+  // Group tasks into Morning / Afternoon / Evening / Night / Anytime
+  const taskBuckets  = groupTasksByPeriod(tasks);
+  const activePeriods = TASK_PERIODS.filter((p) => taskBuckets[p.key].length > 0);
 
   return (
     <Card className="overflow-hidden border-0 shadow-md rounded-2xl">
@@ -199,26 +246,44 @@ export default function DailyGuideCard() {
           <p className="text-sm text-gray-700 leading-relaxed">{summary}</p>
         </div>
 
-        {/* ── Tasks ── */}
-        {tasks.length > 0 && (
+        {/* ── Tasks by time period ── */}
+        {activePeriods.length > 0 && (
           <div className={`px-5 py-3 border-b ${config.sectionBorder}`}>
-            <p className={`text-xs font-semibold uppercase tracking-wider mb-2.5 ${config.accentColor}`}>
+            {/* Section header */}
+            <p className={`text-xs font-semibold uppercase tracking-wider mb-3 ${config.accentColor}`}>
               Tasks · {tasks.length}
             </p>
-            <ul className="space-y-2">
-              {tasks.map((h, i) => (
-                <li key={i} className="flex items-start gap-2.5">
-                  {highlightIcon(h.type)}
-                  <span className="text-sm text-gray-700 flex-1 leading-snug">
-                    {h.title}
-                    {h.time && (
-                      <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
-                    )}
-                  </span>
-                  {priorityBadge(h.priority, config.badgeClass)}
-                </li>
+
+            {/* One sub-block per period */}
+            <div className="space-y-4">
+              {activePeriods.map(({ key, label, Icon: PIcon, iconClass, labelClass }) => (
+                <div key={key}>
+                  {/* Period label row */}
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <PIcon className={`w-3.5 h-3.5 ${iconClass}`} aria-hidden="true" />
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${labelClass}`}>
+                      {label}
+                    </span>
+                  </div>
+
+                  {/* Tasks in this period */}
+                  <ul className="space-y-2 pl-5">
+                    {taskBuckets[key].map((h, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        {highlightIcon(h.type)}
+                        <span className="text-sm text-gray-700 flex-1 leading-snug">
+                          {h.title}
+                          {h.time && (
+                            <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
+                          )}
+                        </span>
+                        {priorityBadge(h.priority)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
@@ -238,7 +303,7 @@ export default function DailyGuideCard() {
                       <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
                     )}
                   </span>
-                  {priorityBadge(h.priority, config.badgeClass)}
+                  {priorityBadge(h.priority)}
                 </li>
               ))}
             </ul>
