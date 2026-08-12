@@ -6355,8 +6355,16 @@ Provide a helpful, encouraging response:`;
         const userId: number = req.session.userId;
         const sessionUser = { name: (req.session.user?.name as string) ?? "" };
 
+        // Accept client's local date/time so the AI generates the right time-of-day tone.
+        // These are display-only values — never used for auth or data access.
+        const clientTime: { localDate?: string; localTime?: string; timezone?: string } = {
+          localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
+          localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
+          timezone:  typeof req.body?.timezone  === "string" ? req.body.timezone  : undefined,
+        };
+
         // Context assembly: whitelisted, user-scoped, read-only.
-        const context = await buildDailyGuideContext(userId, sessionUser);
+        const context = await buildDailyGuideContext(userId, sessionUser, clientTime);
 
         // AI call: validated response via Zod schema; safe fallback on any failure.
         const guide = await generateDailyGuide(context);

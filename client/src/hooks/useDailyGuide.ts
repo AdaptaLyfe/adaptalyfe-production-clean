@@ -58,9 +58,18 @@ export function useDailyGuide() {
     queryKey: ["/api/ai/daily-guide"],
 
     queryFn: async () => {
-      // POST with no body — backend reads identity from the server-side session.
-      // No identity passed here. No provider keys in this file.
-      const res = await apiRequest("POST", "/api/ai/daily-guide");
+      // Send the user's local time so the AI generates the right time-of-day tone.
+      // Identity is never sent here — the backend reads it from the server-side session.
+      const now = new Date();
+      const localTime = now.toTimeString().slice(0, 5);       // "HH:MM"
+      const localDate = now.toLocaleDateString("en-CA");      // "YYYY-MM-DD"
+      const timezone  = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const res = await apiRequest("POST", "/api/ai/daily-guide", {
+        localDate,
+        localTime,
+        timezone,
+      });
       return res.json() as Promise<DailyGuideResponse>;
     },
 

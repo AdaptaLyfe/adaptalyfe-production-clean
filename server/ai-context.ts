@@ -303,10 +303,14 @@ export function mapPreferencesToContext(
  *
  * @param userId      - Authenticated user's ID (from req.session.userId). Never from the frontend.
  * @param sessionUser - Explicitly whitelisted identity fields from req.session.user.
+ * @param clientTime  - Optional local date/time/timezone from the user's browser (display only).
+ *                      When provided, the AI uses the user's local time for time-of-day tone
+ *                      (morning/afternoon/evening/night) instead of server UTC.
  */
 export async function buildDailyGuideContext(
   userId: number,
-  sessionUser: SafeSessionIdentity
+  sessionUser: SafeSessionIdentity,
+  clientTime?: { localDate?: string; localTime?: string; timezone?: string }
 ): Promise<DailyGuideContext> {
   // ── Input validation ───────────────────────────────────────────────────────
   if (!userId || typeof userId !== "number" || userId < 1) {
@@ -325,7 +329,15 @@ export async function buildDailyGuideContext(
   const userName = extractFirstName(sessionUser.name);
 
   // ── Time context ───────────────────────────────────────────────────────────
-  const { date, time, timezone } = getCurrentTimeContext();
+  // Prefer the client's local time so the AI generates morning/afternoon/evening/night
+  // tone that matches what the user actually sees on their device. Fall back to server
+  // UTC when the client doesn't send local time (e.g. older app versions).
+  const serverCtx = getCurrentTimeContext();
+  const isValidDate = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const isValidTime = (s?: string) => !!s && /^\d{2}:\d{2}$/.test(s);
+  const date     = isValidDate(clientTime?.localDate) ? clientTime!.localDate! : serverCtx.date;
+  const time     = isValidTime(clientTime?.localTime) ? clientTime!.localTime! : serverCtx.time;
+  const timezone = clientTime?.timezone || serverCtx.timezone;
 
   // ── Today's tasks (Step 5) ─────────────────────────────────────────────────
   let tasks: AiTask[] = [];
