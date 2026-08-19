@@ -78,3 +78,10 @@ id = "X7SzQl8wzb0F37Icq5wOL"
 uri = "file://TECH_STACK_AND_CODE_FLOW.md"
 type = "text"
 title = "Adaptalyfe — Tech Stack & Code Flow Reference"
+
+[[outputs]]
+id = "5Z5vKi6VOTPunuZpLvzBZ"
+uri = "file://adaptalyfe-android-billing9-plugin-fix.zip"
+type = "unspecified"
+title = "Android Billing 9 Plugin Fix"
+description = "Replacement GooglePlayBillingPlugin.java updated for Google Play Billing Library 9.0.0."
