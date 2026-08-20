@@ -87,17 +87,11 @@ export default function Login() {
         if (pendingInvitation) {
           localStorage.removeItem('pendingInvitation');
           redirectPath = `/accept-invitation?code=${pendingInvitation}`;
-        } else {
-          // Send free/unsubscribed users directly to subscription page
-          const isAdmin = userData.accountType === 'admin' || userData.username === 'admin';
-          const isFreeOrInactive =
-            userData.subscriptionTier === 'free' ||
-            userData.subscriptionStatus === 'inactive' ||
-            !userData.subscriptionTier;
-          if (!isAdmin && isFreeOrInactive) {
-            redirectPath = "/subscription";
-          }
         }
+        // Note: subscription gating is handled by useSubscriptionEnforcement middleware
+        // after the user reaches the dashboard. Checking subscription status here is
+        // unreliable because the login response only returns { id, username, name, email, isAdmin }
+        // and does not include subscriptionTier / subscriptionStatus.
       }
 
       // Clear browser history and navigate to dashboard

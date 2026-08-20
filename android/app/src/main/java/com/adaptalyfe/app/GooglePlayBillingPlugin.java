@@ -23,7 +23,11 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
         try {
             billingClient = BillingClient.newBuilder(getContext())
                 .setListener(this)
-                .enablePendingPurchases()
+                .enablePendingPurchases(
+                    PendingPurchasesParams.newBuilder()
+                        .enableOneTimeProducts()
+                        .build()
+                )
                 .build();
 
             billingClient.startConnection(new BillingClientStateListener() {
@@ -87,7 +91,8 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     org.json.JSONArray products = new org.json.JSONArray();
-                    for (ProductDetails details : productDetailsList) {
+                    List<ProductDetails> detailsList = productDetailsList.getProductDetailsList();
+                    for (ProductDetails details : detailsList) {
                         JSObject product = new JSObject();
                         product.put("productId", details.getProductId());
                         product.put("name", details.getName());
@@ -148,13 +153,14 @@ public class GooglePlayBillingPlugin extends Plugin implements PurchasesUpdatedL
             .build();
 
         billingClient.queryProductDetailsAsync(queryParams, (billingResult, productDetailsList) -> {
-            if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK || productDetailsList.isEmpty()) {
+            List<ProductDetails> detailsList = productDetailsList.getProductDetailsList();
+            if (billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK || detailsList.isEmpty()) {
                 pendingPurchaseCall = null;
                 call.reject("Product not found: " + productId);
                 return;
             }
 
-            ProductDetails productDetails = productDetailsList.get(0);
+            ProductDetails productDetails = detailsList.get(0);
             List<ProductDetails.SubscriptionOfferDetails> offers = productDetails.getSubscriptionOfferDetails();
             if (offers == null || offers.isEmpty()) {
                 pendingPurchaseCall = null;

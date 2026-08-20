@@ -1,3 +1,4 @@
+// Adaptalyfe server — build 2026-08-13
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";

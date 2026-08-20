@@ -1,0 +1,483 @@
+Thanks for the architecture analysis.
+
+I want to clarify the scope before we implement anything.
+
+IMPORTANT SCOPE DECISIONS:
+
+1. PHASE 1 IS USER-ONLY
+
+For the first version of Adaptalyfe Guide, we are ONLY building the experience for the currently authenticated individual user.
+
+Do NOT implement caregiver AI.
+
+Do NOT modify caregiver functionality.
+
+Do NOT add caregiver-specific AI permissions.
+
+Do NOT create caregiver AI summaries.
+
+Do NOT change the existing caregiver dashboard or caregiver access system.
+
+The existing caregiver functionality already exists in the application and should remain completely unchanged.
+
+The existing application already determines which features/pages a caregiver can access for their connected user/child. We are not changing that system.
+
+For Adaptalyfe Guide Phase 1, simply use the currently authenticated user's existing identity and existing authorization flow.
+
+2. EXISTING AUTHENTICATION MUST NOT CHANGE
+
+Do NOT modify:
+
+- login
+- logout
+- registration
+- password reset
+- session handling
+- Bearer token authentication
+- requireAuth
+- user identity handling
+- authentication middleware
+
+Use the existing authenticated user exactly as the application already does.
+
+The Daily Guide must determine the current user from the existing authenticated request/session.
+
+Do NOT create a new authentication mechanism.
+
+3. PAYMENTS AND SUBSCRIPTIONS MUST NOT CHANGE
+
+Do NOT modify:
+
+- Stripe
+- Apple subscriptions
+- Google Play subscriptions
+- subscription status
+- billing
+- payment transactions
+- payment APIs
+- purchase verification
+- entitlement logic
+- subscription middleware
+- payment-related database tables
+
+The AI feature has no relationship to payments in Phase 1.
+
+4. DATABASE STRATEGY
+
+For Phase 1, use the EXISTING PostgreSQL database.
+
+Do NOT create a new database.
+
+Do NOT create new AI tables.
+
+Do NOT create database migrations.
+
+Do NOT alter existing table structures.
+
+Do NOT add columns.
+
+Do NOT modify existing production data.
+
+The AI feature must be READ-ONLY.
+
+It may retrieve existing data through the application's existing storage/repository methods, but it must not INSERT, UPDATE, DELETE, or otherwise modify database records.
+
+The existing database backup is available as a recovery backup, but do NOT treat the backup as permission to make risky database changes.
+
+The goal is that Phase 1 requires no database changes at all.
+
+5. READ-ONLY AI DATA
+
+For the first Daily Guide implementation, only retrieve the minimum information necessary for the currently authenticated user.
+
+Initially use only:
+
+- safe user identity information
+- current date
+- current time
+- user's timezone if already available
+- today's daily tasks
+- today's appointments
+- today's calendar events
+- safe user preferences
+
+Do NOT initially include:
+
+- medications
+- medical conditions
+- allergies
+- symptoms
+- emergency information
+- financial information
+- bank accounts
+- payment information
+- credentials
+- passwords
+- security events
+- private documents
+- private messages
+- caregiver data
+- unrelated user records
+
+We will add other categories later only after separately reviewing them.
+
+6. USER DATA IS STRICTLY SCOPED
+
+Every AI context query must use the authenticated user's existing user ID.
+
+Never query broad application data and then filter it after sending it to the AI.
+
+Instead:
+
+authenticated user ID
+        ↓
+existing storage method
+        ↓
+that user's records
+        ↓
+explicit field whitelist
+        ↓
+AI context
+
+Do not pass complete database objects to the AI.
+
+Use explicit field whitelists.
+
+For example, for a task only send fields actually needed by the Daily Guide such as:
+
+- title
+- description if appropriate
+- scheduled date/time
+- completion status
+- category if useful
+
+Do not send unrelated database fields.
+
+7. EXISTING STORAGE MUST BE REUSED
+
+The existing application already has a single Drizzle repository in:
+
+server/storage.ts
+
+Reuse the existing storage methods wherever possible.
+
+Do NOT create duplicate database queries if an existing storage method already retrieves the required information.
+
+Expected existing methods include:
+
+- getDailyTasksByUser(userId)
+- getAppointmentsByUser(userId)
+- getUpcomingAppointments(userId)
+- getCalendarEventsByUser(userId)
+- getUserPreferences(userId)
+
+Use the existing database/repository architecture.
+
+8. AI MUST NOT HAVE DATABASE ACCESS
+
+The AI service itself must NEVER receive a database connection.
+
+The architecture should be:
+
+Authenticated Request
+        ↓
+Existing requireAuth
+        ↓
+Current user ID
+        ↓
+AI Context Builder
+        ↓
+Existing storage methods
+        ↓
+Explicitly whitelisted safe context
+        ↓
+AI Service
+        ↓
+Structured response
+        ↓
+Frontend
+
+The AI service should receive only the already-sanitized context object.
+
+9. AI SERVICE
+
+Create a small server-side AI service wrapper.
+
+Recommended:
+
+server/ai-service.ts
+
+Responsibilities:
+
+- communicate with the selected AI provider
+- read the AI API key from server environment variables
+- never expose the API key to the frontend
+- accept only the sanitized context
+- request structured output
+- validate the response
+- return a typed/validated response
+- handle timeout/error cases safely
+
+Do not let the AI service query the database.
+
+10. AI CONTEXT SERVICE
+
+Create:
+
+server/ai-context.ts
+
+Responsibilities:
+
+- receive the authenticated user's ID
+- retrieve only the required data using existing storage methods
+- explicitly whitelist fields
+- create a small typed context object
+- never include sensitive information
+- never modify database data
+
+11. DAILY GUIDE API
+
+Create:
+
+POST /api/ai/daily-guide
+
+Protect it with the existing requireAuth middleware.
+
+The endpoint should:
+
+1. authenticate the request
+2. obtain the existing authenticated user ID
+3. build safe context
+4. send context to the AI service
+5. validate the AI response
+6. return structured JSON
+
+The endpoint must never modify database data.
+
+12. AI RESPONSE
+
+Use a strict structured response.
+
+Recommended shape:
+
+{
+  greeting: string,
+  summary: string,
+  highlights: [
+    {
+      type: "task" | "appointment" | "calendar",
+      title: string,
+      time?: string,
+      priority?: "low" | "normal" | "high"
+    }
+  ],
+  nextAction?: {
+    title: string,
+    reason?: string,
+    source?: "task" | "appointment" | "calendar"
+  }
+}
+
+You may improve this structure if the existing frontend architecture suggests a better design.
+
+The AI response must be validated before being returned to the frontend.
+
+Do not allow arbitrary AI-generated HTML.
+
+Do not allow arbitrary AI-generated JavaScript.
+
+13. AI FAILURE MUST NOT BREAK THE APP
+
+If the AI provider:
+
+- times out
+- is unavailable
+- returns invalid JSON
+- returns an invalid schema
+- returns an unexpected response
+- has no API key configured
+
+the existing dashboard must continue working normally.
+
+The Daily Guide should show a safe fallback state such as:
+
+"Your Daily Guide is temporarily unavailable."
+
+Do not make the entire dashboard fail because the AI service failed.
+
+14. FRONTEND
+
+The Daily Guide should eventually be a section/card on the existing dashboard.
+
+Do not redesign the dashboard.
+
+Use the existing dashboard design system/components/styles.
+
+Recommended files:
+
+client/src/hooks/useDailyGuide.ts
+client/src/components/daily-guide-card.tsx
+client/src/pages/dashboard.tsx
+
+The Daily Guide should load independently from the existing dashboard data.
+
+The normal dashboard must render even if the AI request is slow or unavailable.
+
+Use the existing React Query architecture.
+
+15. CACHING
+
+Use a reasonable React Query staleTime so repeatedly opening the dashboard does not unnecessarily call the AI provider.
+
+Start with a conservative value such as 5 minutes unless the existing application has a better caching convention.
+
+Do not introduce Redis or another caching system for Phase 1.
+
+16. NO NEW DATABASE OR AI MEMORY
+
+Do NOT create:
+
+- AI memory tables
+- embeddings tables
+- vector database
+- conversation history tables
+- RAG system
+- background AI jobs
+- autonomous AI agents
+
+Those are future considerations, not Phase 1.
+
+17. NO AI ACTIONS
+
+The AI must be READ-ONLY in Phase 1.
+
+It cannot:
+
+- create tasks
+- edit tasks
+- delete tasks
+- create appointments
+- modify appointments
+- send notifications
+- modify preferences
+- modify medication records
+- modify financial records
+- modify user information
+
+18. IMPLEMENTATION ORDER
+
+Do NOT implement everything at once.
+
+Implement in this exact order:
+
+STEP 1
+Create the server-side AI service abstraction only.
+
+STEP 2
+Test the AI provider connection with a minimal safe test.
+
+STEP 3
+Create the AI context service using ONLY safe user identity/date information.
+
+STEP 4
+Test the context service.
+
+STEP 5
+Add today's daily tasks.
+
+STEP 6
+Test task context.
+
+STEP 7
+Add today's appointments.
+
+STEP 8
+Test appointment context.
+
+STEP 9
+Add today's calendar events.
+
+STEP 10
+Test calendar context.
+
+STEP 11
+Add safe user preferences.
+
+STEP 12
+Test the complete Daily Guide context.
+
+STEP 13
+Create POST /api/ai/daily-guide.
+
+STEP 14
+Test the API independently.
+
+STEP 15
+Create useDailyGuide.ts.
+
+STEP 16
+Create DailyGuideCard.
+
+STEP 17
+Add the Daily Guide card to the existing dashboard.
+
+STEP 18
+Test the complete user experience on staging.
+
+IMPORTANT:
+Do NOT implement all steps in one response.
+
+Start ONLY with STEP 1.
+
+19. PRODUCTION SAFETY
+
+We are working on:
+
+ai-staging
+
+Do not modify:
+
+- main branch
+- production environment
+- production configuration
+- production payment configuration
+- production authentication configuration
+
+Do not create production migrations.
+
+Do not change production environment variables.
+
+20. FIRST IMPLEMENTATION TASK
+
+For this response, implement ONLY STEP 1:
+
+Create the smallest clean server-side AI service abstraction that fits the existing Adaptalyfe architecture.
+
+Before creating it, inspect the existing package.json and dependency structure.
+
+If an appropriate AI SDK is already installed, reuse it.
+
+If no AI SDK exists, recommend the smallest appropriate dependency but DO NOT install it until you tell me which dependency you recommend and why.
+
+The AI service should not connect to the database.
+
+The AI service should not be connected to the dashboard yet.
+
+The AI service should not expose any API endpoint yet.
+
+The AI service should not receive user data yet.
+
+After completing STEP 1, STOP.
+
+Report:
+
+- files created
+- files modified
+- dependencies added (if any)
+- environment variables required
+- exact purpose of each change
+- how you tested it
+- test results
+- any risks
+
+Do not proceed to STEP 2 until I approve.

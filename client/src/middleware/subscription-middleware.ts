@@ -51,24 +51,15 @@ export function useSubscriptionEnforcement() {
     const alwaysAccessible = ['/subscription', '/pricing', '/settings'];
     const isAlwaysAccessible = alwaysAccessible.some(route => location.startsWith(route));
 
-    // BULLETPROOF active-subscription check: trust the user record (source of truth)
-    // first, then fall back to /api/subscription. This prevents redirect loops when
-    // the derived /api/subscription endpoint is momentarily stale (e.g. right after
-    // a successful Apple/Google IAP purchase).
-    //
-    // For App Store / Google Play users we do NOT check subscriptionExpiresAt here —
-    // Apple and Google manage renewals asynchronously, so our stored expiry date can
-    // briefly lag a successful renewal. The server is the authoritative gate for
-    // actual expiration. If a status is 'active', trust it on the client.
-    const isPlatformIAP = (user as any).subscriptionPlatform === 'app_store' ||
-                          (user as any).subscriptionPlatform === 'google_play';
-    const userHasActiveSub = (user as any).subscriptionStatus === 'active' && (
-      isPlatformIAP ||
-      (
-        (user as any).subscriptionExpiresAt &&
-        new Date((user as any).subscriptionExpiresAt as any).getTime() > Date.now()
-      )
-    );
+    // BULLETPROOF active-subscription check: trust subscriptionStatus from the user
+    // record as the single source of truth. Stripe, Apple, and Google webhooks are
+    // responsible for updating this field to 'cancelled' / 'past_due' when a charge
+    // fails or a subscription lapses. If it says 'active', that is definitive —
+    // we do NOT additionally require stripeSubscriptionId or a non-expired
+    // subscriptionExpiresAt, because those fields can be null/stale for perfectly
+    // valid subscribers (e.g. subscriptionExpiresAt not refreshed after monthly
+    // renewal, or a manually-activated account with no Stripe record).
+    const userHasActiveSub = (user as any).subscriptionStatus === 'active';
 
     if (userHasActiveSub) {
       // Active subscriber — never redirect them away from any route.

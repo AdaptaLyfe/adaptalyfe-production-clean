@@ -1,0 +1,1 @@
+- [Adaptalyfe infra](adaptalyfe-infra.md) — staging URL, DATABASE_URL vs NEON_DATABASE_URL split, Railway vars, key auth/nav decisions.

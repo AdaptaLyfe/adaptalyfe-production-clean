@@ -1,0 +1,366 @@
+STEP 3 DATABASE VERIFICATION IS APPROVED.
+
+Proceed with STEP 4 ONLY: create and test the initial AI context service using SAFE USER IDENTITY AND TIME CONTEXT ONLY.
+
+IMPORTANT:
+
+Do not proceed to Steps 5–18.
+
+Do not add tasks yet.
+
+Do not add appointments yet.
+
+Do not add calendar events yet.
+
+Do not add user preferences yet.
+
+Do not build the Daily Guide API yet.
+
+Do not modify the dashboard.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create database migrations.
+
+Do not create new database tables.
+
+Do not call OpenAI during this step unless absolutely required for the context test. Prefer testing the context independently first.
+
+==================================================
+DATABASE CONFIGURATION
+==================================================
+
+The Replit environment now has:
+
+DATABASE_URL
+
+configured with the same PostgreSQL connection value already used by:
+
+NEON_DATABASE_URL
+
+Do NOT modify server/db.ts.
+
+Do NOT delete NEON_DATABASE_URL.
+
+Do NOT modify Railway.
+
+Do NOT modify production configuration.
+
+The existing database connection has already been verified successfully.
+
+==================================================
+STEP 4 GOAL
+==================================================
+
+Create:
+
+server/ai-context.ts
+
+This module should become the single controlled place where application data is transformed into safe AI context.
+
+For this step, keep it extremely small.
+
+It should accept the authenticated user's existing user ID.
+
+It should construct ONLY:
+
+1. Safe user identity
+2. Current date
+3. Current time
+4. Timezone
+
+Do NOT include:
+
+- tasks
+- appointments
+- calendar events
+- preferences
+- mood
+- sleep
+- medications
+- medical conditions
+- allergies
+- symptoms
+- financial data
+- bank information
+- payment data
+- credentials
+- private documents
+- messages
+- caregiver data
+- security information
+
+==================================================
+USER IDENTITY
+==================================================
+
+The existing authentication system has already been verified.
+
+The canonical authenticated identity is:
+
+req.session.userId
+
+Do NOT create new authentication.
+
+Do NOT modify requireAuth.
+
+Do NOT create a new session.
+
+Do NOT modify the Bearer token flow.
+
+Do NOT modify cookie authentication.
+
+The AI context function should receive the already authenticated userId from the route/caller.
+
+Do not allow the AI context service to determine identity from arbitrary request parameters.
+
+Do NOT accept a userId from the frontend.
+
+The frontend must never be able to choose another user's ID for AI context.
+
+==================================================
+USER DATA
+==================================================
+
+For this first context step, retrieve ONLY the minimum safe identity information required for the Daily Guide.
+
+If the existing session already contains the user's safe name information, prefer using the existing authenticated session data rather than performing an unnecessary database query.
+
+If a database query is genuinely required, inspect the existing storage/user method and retrieve ONLY the necessary safe identity fields.
+
+Do NOT retrieve the complete users table record.
+
+Do NOT pass the complete user object to the AI.
+
+Use an explicit whitelist.
+
+For example:
+
+{
+  firstName: string
+}
+
+Do not include:
+
+- password
+- password hash
+- session information
+- authentication tokens
+- email unless genuinely required
+- phone number unless genuinely required
+- Stripe IDs
+- Apple IDs
+- Google IDs
+- payment information
+- security information
+- internal identifiers unless required internally
+- unrelated account fields
+
+==================================================
+TIME CONTEXT
+==================================================
+
+The Daily Guide needs reliable time context.
+
+Determine the safest existing source for the user's timezone.
+
+If the application already stores or exposes a timezone for the user, inspect how it is currently handled.
+
+Do not invent a new timezone field.
+
+If a reliable user timezone is not currently available, use the server timezone only as a temporary fallback and clearly report that.
+
+The context should contain:
+
+date
+time
+timezone
+
+Use a consistent machine-readable format.
+
+Prefer ISO 8601 for timestamps where appropriate.
+
+Do not hard-code the current date.
+
+==================================================
+CONTEXT TYPE
+==================================================
+
+Create a strongly typed context structure that can later be expanded safely.
+
+Conceptually:
+
+{
+  user: {
+    firstName: string
+  },
+  date: string,
+  time: string,
+  timezone: string,
+  tasks: [],
+  appointments: [],
+  calendarEvents: [],
+  preferences: {}
+}
+
+However, for STEP 4 the only populated fields should be:
+
+user
+date
+time
+timezone
+
+Keep future fields empty or omit them according to the cleanest TypeScript design.
+
+Do not prematurely populate future data sources.
+
+==================================================
+SECURITY REQUIREMENTS
+==================================================
+
+The context service must:
+
+- never accept arbitrary frontend user IDs
+- never query another user's data
+- never return sensitive fields
+- never expose database credentials
+- never expose session secrets
+- never expose authentication tokens
+- never access payment secrets
+- never access financial credentials
+- never access medical records
+- never modify the database
+
+The context service is READ-ONLY.
+
+==================================================
+TESTING
+==================================================
+
+Add an appropriate test for the context service.
+
+The test must verify:
+
+1. A valid authenticated user ID can produce a safe context.
+
+2. The context contains only the intended safe identity/time fields.
+
+3. Sensitive user fields are not included.
+
+4. No database writes occur.
+
+5. The context does not contain authentication information.
+
+6. The context does not contain payment information.
+
+7. The context does not contain medical information.
+
+8. The context does not contain financial information.
+
+9. The context uses the correct timezone behavior.
+
+10. An invalid/nonexistent user ID is handled safely.
+
+Do not use real production user information in a test if synthetic/mock data can be used.
+
+If a real authenticated-user test is necessary, use the existing staging/test account only and do not expose its data in logs.
+
+==================================================
+OPENAI
+==================================================
+
+Do NOT send this context to OpenAI yet.
+
+We are testing the context builder independently.
+
+The purpose of this step is to prove that:
+
+authenticated identity
+        ↓
+safe context
+        ↓
+validated structure
+
+works correctly before introducing more data.
+
+==================================================
+FILES
+==================================================
+
+Recommended:
+
+CREATE:
+server/ai-context.ts
+
+You may create a focused test file if the existing testing architecture requires it.
+
+Do NOT modify:
+
+server/db.ts
+server/storage.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a minimal test integration is absolutely required.
+
+Prefer no existing application file modifications.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover any unrelated issues:
+
+- report them
+- do not fix them automatically
+
+Do not modify existing functionality outside this step.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 4 is complete, STOP.
+
+Report:
+
+1. Files created
+2. Files modified
+3. Context structure created
+4. Exact user fields included
+5. Exact time/timezone source
+6. Whether any database query was required
+7. If a database query occurred, exactly what was queried
+8. Whether any sensitive fields were retrieved
+9. Whether any database records were modified
+10. Whether authentication was modified
+11. Whether payments/subscriptions were modified
+12. Whether caregiver functionality was modified
+13. Test method
+14. Test results
+15. Any risks or warnings
+
+IMPORTANT:
+
+Do not proceed to STEP 5.
+
+Do not add tasks.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+STOP and wait for my approval.

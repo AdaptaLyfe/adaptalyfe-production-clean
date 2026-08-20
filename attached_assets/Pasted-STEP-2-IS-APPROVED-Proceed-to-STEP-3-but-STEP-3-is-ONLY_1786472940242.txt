@@ -1,0 +1,261 @@
+STEP 2 IS APPROVED.
+
+Proceed to STEP 3, but STEP 3 is ONLY a DATABASE CONNECTION AND AUTHENTICATED USER CONTEXT DIAGNOSTIC.
+
+Do NOT yet implement the full AI context.
+
+Do NOT retrieve tasks.
+
+Do NOT retrieve appointments.
+
+Do NOT retrieve calendar events.
+
+Do NOT retrieve preferences.
+
+Do NOT call OpenAI.
+
+Do NOT send any real user data to the AI.
+
+We first need to safely verify how the existing Adaptalyfe application connects to its existing PostgreSQL database.
+
+IMPORTANT ENVIRONMENT CONTEXT:
+
+This Replit project is a clone of the existing Adaptalyfe application and currently contains the existing Adaptalyfe environment configuration.
+
+The existing secret is:
+
+NEON_DATABASE_URL
+
+Replit previously identified that:
+
+server/db.ts
+
+appears to read:
+
+DATABASE_URL
+
+while the available secret is:
+
+NEON_DATABASE_URL
+
+DO NOT automatically rename, delete, replace, or modify either variable.
+
+DO NOT modify server/db.ts yet.
+
+DO NOT modify Railway configuration.
+
+DO NOT modify production configuration.
+
+DO NOT modify authentication.
+
+DO NOT modify payments.
+
+DO NOT modify subscriptions.
+
+DO NOT modify caregiver functionality.
+
+DO NOT modify the database schema.
+
+DO NOT create migrations.
+
+DO NOT modify any database records.
+
+==================================================
+STEP 3A — INSPECT DATABASE CONFIGURATION
+==================================================
+
+First inspect:
+
+- server/db.ts
+- server/storage.ts
+- shared/schema.ts
+- package.json
+- existing database initialization code
+- existing environment-variable usage
+
+Determine:
+
+1. Which environment variable the running application actually expects.
+2. Whether NEON_DATABASE_URL is currently used anywhere else.
+3. Whether DATABASE_URL is required by another part of the application.
+4. Whether the current Replit application is already successfully connecting to PostgreSQL.
+5. Whether changing DATABASE_URL would risk breaking the existing application.
+6. Whether the existing storage layer can already query the database successfully without any modification.
+
+Do NOT make changes yet.
+
+==================================================
+STEP 3B — DATABASE CONNECTIVITY TEST
+==================================================
+
+If the existing application already has a safe database connectivity/test mechanism, use it.
+
+Otherwise create the smallest temporary server-side diagnostic test.
+
+The test must:
+
+- use the existing database configuration
+- perform only a harmless read-only database operation
+- perform no INSERT
+- perform no UPDATE
+- perform no DELETE
+- perform no migration
+- not modify schema
+- not modify user data
+
+A simple connectivity/read test is sufficient.
+
+Do NOT retrieve an actual user's tasks, appointments, medical data, financial data, or other private information yet.
+
+Do NOT send anything to OpenAI.
+
+==================================================
+STEP 3C — AUTHENTICATION INSPECTION ONLY
+==================================================
+
+Inspect the existing authentication implementation and determine exactly how the authenticated user ID is obtained.
+
+Confirm whether:
+
+req.session.userId
+
+is the correct source of identity for this request.
+
+Also inspect the existing Bearer-token/session flow described in the previous architecture analysis.
+
+Do NOT modify authentication.
+
+Do NOT create new authentication.
+
+Do NOT create a new session.
+
+Do NOT query another user's data.
+
+For this diagnostic step, simply confirm the existing authenticated identity mechanism.
+
+==================================================
+STEP 3D — STORAGE INSPECTION
+==================================================
+
+Inspect the existing storage methods that we will eventually reuse:
+
+- getDailyTasksByUser(userId)
+- getAppointmentsByUser(userId)
+- getUpcomingAppointments(userId)
+- getCalendarEventsByUser(userId)
+- getUserPreferences(userId)
+
+Do not call all of them yet.
+
+Determine:
+
+- exact method signatures
+- returned data structures
+- fields returned
+- whether they already scope queries by userId
+- whether any sensitive fields are included
+- whether additional filtering will be required before AI context is created
+
+Do NOT modify storage.ts yet.
+
+==================================================
+CRITICAL SAFETY RULE
+==================================================
+
+At this stage we are NOT giving the AI access to the database.
+
+The architecture must eventually be:
+
+Existing Authentication
+        ↓
+Authenticated User ID
+        ↓
+Existing Storage
+        ↓
+Explicit Safe Context
+        ↓
+AI Service
+
+But for THIS STEP, stop at:
+
+Existing Authentication
+        ↓
+Authenticated User ID
+        ↓
+Existing Storage inspection
+
+Do NOT send database information to OpenAI yet.
+
+==================================================
+OPENAI
+==================================================
+
+Do NOT call OpenAI during this step.
+
+The OpenAI account currently has no remaining credits, and there is no reason to make another API call while we are diagnosing the database configuration.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover:
+
+- DATABASE_URL / NEON_DATABASE_URL mismatch
+- authentication issues
+- storage issues
+- existing application issues
+
+DO NOT automatically fix them.
+
+Report the problem and explain the safest recommended fix.
+
+Do not make unrelated changes.
+
+==================================================
+TEMPORARY TEST CODE
+==================================================
+
+If temporary diagnostic code is created:
+
+- keep it server-side
+- clearly mark it temporary
+- do not expose secrets
+- do not expose user data
+- remove it after testing if no longer needed
+
+==================================================
+FINAL REPORT
+==================================================
+
+After completing this diagnostic step, STOP.
+
+Report:
+
+1. Database variable expected by server/db.ts
+2. Available database variable in Replit
+3. Whether the existing database connection works
+4. Whether any database records were modified
+5. Whether any migrations were executed
+6. Exact authentication mechanism currently used
+7. Exact source of authenticated user ID
+8. Whether requireAuth remains untouched
+9. Existing storage methods and their signatures
+10. Whether those methods are user-scoped
+11. Any sensitive fields that need to be filtered
+12. Files inspected
+13. Files modified
+14. Files created
+15. Any risks discovered
+16. Recommended fix for DATABASE_URL/NEON_DATABASE_URL, if necessary
+
+IMPORTANT:
+
+Do not implement ai-context.ts yet.
+
+Do not retrieve real user data yet.
+
+Do not call OpenAI.
+
+Do not modify server/db.ts until I review your findings.
+
+STOP and wait for my approval.

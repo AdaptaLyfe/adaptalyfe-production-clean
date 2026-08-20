@@ -12,14 +12,8 @@ import {
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-// Use replace navigation to prevent back button going to login after navigating
-function navigateReplace(href: string) {
-  window.history.replaceState(null, '', href);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
-
 export default function MobileBottomNavigation() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const primaryNavItems = [
@@ -90,7 +84,7 @@ export default function MobileBottomNavigation() {
                     }`}
                     onClick={() => {
                       setShowMoreMenu(false);
-                      navigateReplace(item.href);
+                      setLocation(item.href);
                     }}
                   >
                     <Icon size={20} strokeWidth={active ? 2.5 : 2} />
@@ -121,7 +115,7 @@ export default function MobileBottomNavigation() {
                     ? `${item.activeBg} ${item.activeColor}` 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 }`}
-                onClick={() => navigateReplace(item.href)}
+                onClick={() => setLocation(item.href)}
               >
                 <Icon size={22} strokeWidth={active ? 2.5 : 2} />
                 <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>

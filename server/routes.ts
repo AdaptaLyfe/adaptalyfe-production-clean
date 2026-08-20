@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
+import { buildDailyGuideContext } from "./ai-context";
+import { generateDailyGuide } from "./ai-service";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -3940,15 +3942,12 @@ Provide a helpful, encouraging response:`;
       trialEndDate.setDate(trialEndDate.getDate() + 7); // 7-day free trial
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
-      // Check subscription status.
-      // For app_store / google_play users, Apple/Google manage renewals server-to-server.
-      // Our local subscriptionExpiresAt can lag a renewal by minutes or hours.
-      // So for IAP users we trust subscriptionStatus='active' directly and don't gate on
-      // expiry — Apple will send a server notification when it actually lapses.
-      // For Stripe users we still honour the expiry date.
-      const isPlatformIAP = user.subscriptionPlatform === 'app_store' || user.subscriptionPlatform === 'google_play';
-      const isActiveSubscription = user.subscriptionStatus === 'active' &&
-                                 (isPlatformIAP || (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now));
+      // Check subscription status. Trust subscriptionStatus as the single source of truth.
+      // Stripe, Apple, and Google webhooks update this field to 'cancelled'/'past_due' when
+      // a subscription lapses — so if it says 'active', that is definitive. We do NOT
+      // additionally require stripeSubscriptionId or a non-expired subscriptionExpiresAt,
+      // because those fields can be null/stale for valid subscribers.
+      const isActiveSubscription = user.subscriptionStatus === 'active';
 
       const subscription = {
         id: user.id,
@@ -4308,8 +4307,9 @@ Provide a helpful, encouraging response:`;
     const user = req.session.user;
     const now = new Date();
     
-    // Check if user has active subscription or is still in trial
-    if (user.subscriptionStatus === 'active' && user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) > now) {
+    // Trust subscriptionStatus as the single source of truth. Webhooks (Stripe, Apple,
+    // Google) update this field when a subscription lapses — 'active' is definitive.
+    if (user.subscriptionStatus === 'active') {
       return next(); // Active paid subscription
     }
     
@@ -6336,6 +6336,53 @@ Provide a helpful, encouraging response:`;
       res.status(500).json({ message: "Failed to fetch organization membership" });
     }
   });
+
+  // ── Adaptalyfe Guide — Daily Guide AI endpoint (Phase 1, Step 11) ─────────────
+  // READ-ONLY. No writes to any data source. No AI tool/function calling.
+  // userId is sourced exclusively from req.session.userId — never from the request body.
+  // The full security boundary (whitelist, user-isolation, sensitive-field exclusion)
+  // is enforced inside buildDailyGuideContext() (server/ai-context.ts).
+  // generateDailyGuide() never throws — returns a safe fallback on any provider error.
+  app.post(
+    "/api/ai/daily-guide",
+    requireAuth,
+    async (req: any, res) => {
+      try {
+        console.log("[daily-guide] Request received");
+
+        // Identity from the authenticated server-side session only.
+        // Any userId present in the request body is intentionally not read here.
+        const userId: number = req.session.userId;
+        const sessionUser = { name: (req.session.user?.name as string) ?? "" };
+
+        // Accept client's local date/time so the AI generates the right time-of-day tone.
+        // These are display-only values — never used for auth or data access.
+        const clientTime: { localDate?: string; localTime?: string; timezone?: string } = {
+          localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
+          localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
+          timezone:  typeof req.body?.timezone  === "string" ? req.body.timezone  : undefined,
+        };
+
+        // Context assembly: whitelisted, user-scoped, read-only.
+        const context = await buildDailyGuideContext(userId, sessionUser, clientTime);
+
+        // AI call: validated response via Zod schema; safe fallback on any failure.
+        const guide = await generateDailyGuide(context);
+
+        console.log("[daily-guide] Generated successfully");
+        return res.json(guide);
+      } catch (err) {
+        // Defensive outer catch — generateDailyGuide() handles its own errors,
+        // so this path should not normally be reached. Log operational info only.
+        console.error("[daily-guide] Unexpected route error");
+        return res.status(500).json({
+          greeting: "Hello",
+          summary: "Your Daily Guide is temporarily unavailable.",
+          highlights: [],
+        });
+      }
+    }
+  );
 
   const httpServer = createServer(app);
   return httpServer;
