@@ -303,11 +303,26 @@ export default function SubscriptionPage() {
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
   const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"] });
+  const hasActiveSubscription = user?.subscriptionStatus === 'active';
+  const activeSubscriptionLabel = user?.subscriptionPlatform === 'web'
+    ? 'website'
+    : user?.subscriptionPlatform === 'google_play'
+      ? 'Google Play'
+      : user?.subscriptionPlatform === 'app_store'
+        ? 'Apple App Store'
+        : 'another platform';
 
   // Calculate trial days remaining
   const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
 
   const handleGooglePlayPurchase = async (planType: string) => {
+    if (hasActiveSubscription) {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     setIsGooglePlayPurchasing(true);
     setSelectedPlan(planType);
     try {
@@ -351,6 +366,13 @@ export default function SubscriptionPage() {
   };
 
   const handleApplePurchase = async (planType: string) => {
+    if (hasActiveSubscription) {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     setIsApplePurchasing(true);
     setSelectedPlan(planType);
     try {
@@ -483,6 +505,13 @@ export default function SubscriptionPage() {
   });
 
   const handlePlanSelect = (planType: string) => {
+    if (hasActiveSubscription && user?.subscriptionPlatform !== 'web') {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     if (onAndroid) {
       handleGooglePlayPurchase(planType);
       return;
@@ -699,13 +728,19 @@ export default function SubscriptionPage() {
                   ))}
                 </ul>
                 
-                {user?.subscriptionTier === planKey && user?.subscriptionStatus === 'active' ? (
+                {hasActiveSubscription ? (
                   <div className="space-y-2">
                     <Button disabled className="w-full">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Current Plan
+                      {user?.subscriptionTier === planKey ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Current Plan
+                        </>
+                      ) : (
+                        "Subscription Already Active"
+                      )}
                     </Button>
-                    {planKey === 'family' && (
+                    {planKey === 'family' && user?.subscriptionTier === planKey && (
                       <Button
                         variant="outline"
                         className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
@@ -739,7 +774,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Restore Purchases (Android + iOS) */}
-        {onNative && (
+        {onNative && !hasActiveSubscription && (
           <div className="mt-8 text-center">
             <Button
               variant="outline"
@@ -757,7 +792,23 @@ export default function SubscriptionPage() {
         )}
 
         {/* Platform Payment Notice */}
-        {onAndroid && (
+        {onAndroid && hasActiveSubscription && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
+              <Smartphone className="w-4 h-4" />
+              Your {activeSubscriptionLabel} subscription works in this app
+            </div>
+          </div>
+        )}
+        {onIOS && hasActiveSubscription && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
+              <Smartphone className="w-4 h-4" />
+              Your {activeSubscriptionLabel} subscription works in this app
+            </div>
+          </div>
+        )}
+        {onAndroid && !hasActiveSubscription && (
           <div className="mt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
               <Smartphone className="w-4 h-4" />
@@ -765,7 +816,7 @@ export default function SubscriptionPage() {
             </div>
           </div>
         )}
-        {onIOS && (
+        {onIOS && !hasActiveSubscription && (
           <div className="mt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-full text-sm border border-gray-200">
               <Smartphone className="w-4 h-4" />

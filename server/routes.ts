@@ -4408,16 +4408,30 @@ Provide a helpful, encouraging response:`;
       if (!currentStripe) {
         return res.status(500).json({ message: "Payment processing unavailable" });
       }
+
+      // Native store subscriptions are already active across all platforms.
+      // Do not create a second Stripe subscription for the same account.
+      const freshUser = await storage.getUserById(req.session.userId);
+      const currentUser = freshUser || user;
+      if (
+        currentUser.subscriptionStatus === 'active' &&
+        currentUser.subscriptionPlatform &&
+        currentUser.subscriptionPlatform !== 'web'
+      ) {
+        return res.status(409).json({
+          message: `This account already has an active ${currentUser.subscriptionPlatform === 'google_play' ? 'Google Play' : 'Apple App Store'} subscription.`
+        });
+      }
       
       // Create or retrieve Stripe customer
       let customer;
-      if (user.stripeCustomerId) {
-        customer = await currentStripe.customers.retrieve(user.stripeCustomerId);
+      if (currentUser.stripeCustomerId) {
+        customer = await currentStripe.customers.retrieve(currentUser.stripeCustomerId);
       } else {
         const customerOptions: Stripe.CustomerCreateParams = {
-          email: user.email || undefined,
-          name: user.name || undefined,
-          metadata: { userId: user.id.toString() },
+          email: currentUser.email || undefined,
+          name: currentUser.name || undefined,
+          metadata: { userId: currentUser.id.toString() },
         };
 
         // Optional accelerated-renewal testing. A Test Clock is accepted only
@@ -4433,7 +4447,7 @@ Provide a helpful, encouraging response:`;
         customer = await currentStripe.customers.create(customerOptions);
 
         // Update user with Stripe customer ID
-        await storage.updateUser(user.id, { stripeCustomerId: customer.id });
+         await storage.updateUser(currentUser.id, { stripeCustomerId: customer.id });
       }
       
       // Define pricing
@@ -4451,12 +4465,12 @@ Provide a helpful, encouraging response:`;
       
       // If this user already has an active Stripe subscription, cancel it first
       // to avoid duplicate subscriptions building up.
-      if (user.stripeSubscriptionId) {
+      if (currentUser.stripeSubscriptionId) {
         try {
-          const existing = await currentStripe.subscriptions.retrieve(user.stripeSubscriptionId);
+          const existing = await currentStripe.subscriptions.retrieve(currentUser.stripeSubscriptionId);
           if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
-            await currentStripe.subscriptions.cancel(user.stripeSubscriptionId);
-            console.log(`Cancelled previous Stripe subscription ${user.stripeSubscriptionId} before creating new one`);
+            await currentStripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
+            console.log(`Cancelled previous Stripe subscription ${currentUser.stripeSubscriptionId} before creating new one`);
           }
         } catch (e: any) {
           // Subscription may already be gone on Stripe's side — that's fine
@@ -4507,7 +4521,7 @@ Provide a helpful, encouraging response:`;
         },
         expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
         metadata: {
-          userId: user.id.toString(),
+           userId: currentUser.id.toString(),
           planType,
           billingCycle
         }
@@ -4542,7 +4556,7 @@ Provide a helpful, encouraging response:`;
       }
 
       // Update user subscription info
-      await storage.updateUser(user.id, {
+       await storage.updateUser(currentUser.id, {
         stripeSubscriptionId: subscription.id,
         subscriptionTier: planType,
         subscriptionStatus: 'pending',
@@ -4676,6 +4690,17 @@ Provide a helpful, encouraging response:`;
 
       if (!purchaseToken || !productId) {
         return res.status(400).json({ message: "Missing purchaseToken or productId" });
+      }
+
+      const freshUser = await storage.getUserById(req.session.userId);
+      if (
+        freshUser?.subscriptionStatus === 'active' &&
+        freshUser.subscriptionPlatform &&
+        freshUser.subscriptionPlatform !== 'google_play'
+      ) {
+        return res.status(409).json({
+          message: "This account already has an active subscription. It works on Android without another Google Play purchase."
+        });
       }
 
       const productToPlan: Record<string, { planType: string; billingCycle: string; amount: number }> = {
@@ -4822,6 +4847,17 @@ Provide a helpful, encouraging response:`;
 
       if (!receiptData || !productId) {
         return res.status(400).json({ message: "Missing receiptData or productId" });
+      }
+
+      const freshUser = await storage.getUserById(req.session.userId);
+      if (
+        freshUser?.subscriptionStatus === 'active' &&
+        freshUser.subscriptionPlatform &&
+        freshUser.subscriptionPlatform !== 'app_store'
+      ) {
+        return res.status(409).json({
+          message: "This account already has an active subscription. It works on iPhone without another App Store purchase."
+        });
       }
 
       const productToPlan: Record<string, { planType: string; billingCycle: string; amount: number }> = {
