@@ -86,11 +86,12 @@ const planFeatures: PlanFeatures = {
   }
 };
 
-function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
+function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuccess }: {
   planType: string;
   billingCycle: string;
+  subscriptionId: string;
+  intentType: "payment" | "setup";
   onSuccess: () => void;
-  paymentIntentId?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -119,45 +120,52 @@ function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
     setIsProcessing(true);
 
     try {
-      // Confirm payment with Stripe
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/subscription?success=true`,
-        },
-        redirect: 'if_required'
-      });
+      // Preserve only the subscription ID for an off-site 3DS return. On the
+      // return page, the server retrieves and verifies this subscription.
+      sessionStorage.setItem("pending_stripe_subscription_id", subscriptionId);
+      const confirmParams = {
+        return_url: `${window.location.origin}/subscription?success=true`,
+      };
+      const result = intentType === "setup"
+        ? await stripe.confirmSetup({ elements, confirmParams, redirect: "if_required" })
+        : await stripe.confirmPayment({ elements, confirmParams, redirect: "if_required" });
 
-      if (error) {
+      if (result.error) {
         toast({
-          title: "Payment Failed",
-          description: error.message,
+          title: intentType === "setup" ? "Could not save payment method" : "Payment Failed",
+          description: result.error.message,
           variant: "destructive"
         });
         return;
       }
 
-      // Payment confirmed — now activate subscription on the server
-      const intentId = paymentIntent?.id || paymentIntentId;
-      try {
-        await apiRequest('POST', '/api/upgrade-subscription', {
-          planType,
-          billingCycle,
-          paymentIntentId: intentId,
+      const completedIntent = intentType === "setup"
+        ? result.setupIntent
+        : result.paymentIntent;
+      if (!completedIntent || completedIntent.status !== "succeeded") {
+        toast({
+          title: "Payment confirmation pending",
+          description: "Your payment method is still being confirmed. Please try again shortly.",
+          variant: "destructive",
         });
-      } catch (upgradeErr) {
-        console.warn('Upgrade call failed, payment was still successful:', upgradeErr);
+        return;
       }
 
-      // Clear sessionStorage since payment is complete
-      sessionStorage.removeItem('pending_payment_intent_id');
-      sessionStorage.removeItem('pending_plan_type');
-      sessionStorage.removeItem('pending_billing_cycle');
+      // The server retrieves the Stripe subscription and verifies that its
+      // metadata/customer belong to this signed-in user before granting access.
+      const confirmationResponse = await apiRequest('POST', '/api/confirm-subscription', {
+        subscriptionId,
+      });
+      const confirmation = await confirmationResponse.json();
+      if (!confirmation.success) {
+        throw new Error(confirmation.message || "Subscription has not been activated yet");
+      }
 
       trackSubscriptionEvent("upgrade", planType);
+      sessionStorage.removeItem("pending_stripe_subscription_id");
       toast({
-        title: "Payment Successful!",
-        description: "Your subscription has been activated."
+        title: intentType === "setup" ? "Payment method saved!" : "Payment Successful!",
+        description: "Your recurring subscription has been activated."
       });
       onSuccess();
     } catch (err) {
@@ -179,42 +187,10 @@ function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
           
           if (loadTimeout) {
             return (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-center space-y-3">
-                  <div className="text-red-600 mb-2">
-                    <p className="font-semibold">Stripe.js Loading Failed</p>
-                    <p className="text-sm">Using Demo Payment Mode</p>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Network issues prevented secure payment form loading
-                  </p>
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={() => {
-                        window.location.href = `/direct-payment?plan=${planType}&billing=${billingCycle}`;
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white w-full"
-                    >
-                      Use Alternative Payment Form
-                    </Button>
-                    <Button 
-                      onClick={async () => {
-                        // Demo payment for testing
-                        setIsProcessing(true);
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        toast({
-                          title: "Subscription Activated!",
-                          description: `Your ${planType} plan is now active. Welcome to Adaptalyfe!`,
-                        });
-                        onSuccess();
-                        setIsProcessing(false);
-                      }}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Demo Payment - $${planFeatures[planType]?.price[billingCycle === 'annual' ? 'annual' : 'monthly']}
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-center h-32 text-center">
+                <div>
+                  <p className="font-semibold text-red-600">Secure payment form unavailable</p>
+                  <p className="text-sm text-gray-500 mt-1">Refresh the page and try again. Your plan has not been activated.</p>
                 </div>
               </div>
             );
@@ -259,7 +235,8 @@ export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const billingCycle = "monthly";
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [intentType, setIntentType] = useState<"payment" | "setup">("payment");
+  const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
   const [isApplePurchasing, setIsApplePurchasing] = useState(false);
@@ -293,30 +270,32 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      const savedPlanType = sessionStorage.getItem('pending_plan_type') || 'basic';
-      const savedBillingCycle = sessionStorage.getItem('pending_billing_cycle') || 'monthly';
-      const savedPaymentIntentId = sessionStorage.getItem('pending_payment_intent_id');
+      const subscriptionId = sessionStorage.getItem('pending_stripe_subscription_id');
+      if (!subscriptionId) {
+        toast({
+          title: "Subscription confirmation required",
+          description: "We could not identify your pending subscription. Please use the restore access button.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      sessionStorage.removeItem('pending_payment_intent_id');
-      sessionStorage.removeItem('pending_plan_type');
-      sessionStorage.removeItem('pending_billing_cycle');
-
-      // Tell the server to activate the subscription
-      apiRequest("POST", "/api/upgrade-subscription", {
-        planType: savedPlanType,
-        billingCycle: savedBillingCycle,
-        paymentIntentId: savedPaymentIntentId
-      }).then(() => {
+      apiRequest("POST", "/api/confirm-subscription", { subscriptionId }).then(async (response) => {
+        const confirmation = await response.json();
+        if (!confirmation.success) {
+          throw new Error(confirmation.message || "Subscription was not activated");
+        }
+        sessionStorage.removeItem('pending_stripe_subscription_id');
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
         toast({ title: "Payment Successful!", description: "Your subscription is now active. Welcome to Adaptalyfe!" });
         setTimeout(() => setLocation('/dashboard'), 1500);
       }).catch(() => {
-        // Still redirect even if verification call fails — payment was confirmed by Stripe
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
-        toast({ title: "Subscription Activated!", description: "Your payment was received. Welcome to Adaptalyfe!" });
-        setTimeout(() => setLocation('/dashboard'), 1500);
+        toast({
+          title: "Subscription confirmation incomplete",
+          description: "Your payment was not activated. Use the restore access button after the page reloads.",
+          variant: "destructive",
+        });
       });
     }
   }, []);
@@ -473,13 +452,8 @@ export default function SubscriptionPage() {
       
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
-        if (data.paymentIntentId) {
-          setPaymentIntentId(data.paymentIntentId);
-          // Store for 3D Secure redirect recovery
-          sessionStorage.setItem('pending_payment_intent_id', data.paymentIntentId);
-          sessionStorage.setItem('pending_plan_type', selectedPlan || 'basic');
-          sessionStorage.setItem('pending_billing_cycle', billingCycle);
-        }
+        setIntentType(data.intentType === "setup" ? "setup" : "payment");
+        setStripeSubscriptionId(data.subscriptionId);
       } else if (data.status === 'active' || data.status === 'trialing') {
         trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
         toast({
@@ -524,6 +498,7 @@ export default function SubscriptionPage() {
   const handlePaymentSuccess = () => {
     setSelectedPlan(null);
     setClientSecret(null);
+    setStripeSubscriptionId(null);
     queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
     setTimeout(() => setLocation('/dashboard'), 1500);
@@ -641,7 +616,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Payment Form Modal */}
-        {clientSecret && selectedPlan && (
+        {clientSecret && selectedPlan && stripeSubscriptionId && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md bg-white shadow-2xl border-2">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -661,13 +636,18 @@ export default function SubscriptionPage() {
                   <PaymentForm 
                     planType={selectedPlan}
                     billingCycle={billingCycle}
+                    subscriptionId={stripeSubscriptionId}
+                    intentType={intentType}
                     onSuccess={handlePaymentSuccess}
-                    paymentIntentId={paymentIntentId}
                   />
                 </StripeWrapper>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setSelectedPlan(null); setClientSecret(null); }}
+                  onClick={() => {
+                    setSelectedPlan(null);
+                    setClientSecret(null);
+                    setStripeSubscriptionId(null);
+                  }}
                   className="w-full mt-4 bg-gray-50 hover:bg-gray-100"
                 >
                   Cancel

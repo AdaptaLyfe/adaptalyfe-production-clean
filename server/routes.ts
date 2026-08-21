@@ -23,14 +23,15 @@ declare module "express-session" {
 
 // Initialize Stripe with dynamic key support
 function getStripeInstance() {
-  if (!process.env.STRIPE_SECRET_KEY) {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
     console.warn('STRIPE_SECRET_KEY not found, using demo mode');
     return null;
   }
-  
-  console.log('Using Stripe key prefix:', process.env.STRIPE_SECRET_KEY.substring(0, 10) + '...');
-  
-  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+
+  console.log(`Stripe configured in ${stripeSecretKey.startsWith('sk_test_') ? 'test' : 'live'} mode`);
+
+  return new Stripe(stripeSecretKey, {
     apiVersion: "2025-07-30.basil",
   });
 }
@@ -4107,65 +4108,13 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  // Upgrade user subscription after successful payment
-  app.post("/api/upgrade-subscription", async (req: any, res) => {
-    try {
-      const { planType, billingCycle, paymentIntentId } = req.body;
-
-      if (!req.session?.userId) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const userId = req.session.userId;
-
-      // Verify payment intent was successful with Stripe
-      const currentStripe = getStripeInstance();
-      if (currentStripe && paymentIntentId) {
-        const paymentIntent = await currentStripe.paymentIntents.retrieve(paymentIntentId);
-        if (paymentIntent.status !== 'succeeded') {
-          return res.status(400).json({ message: "Payment not confirmed" });
-        }
-      }
-
-      const subscriptionTier = planType === 'basic' ? 'basic' :
-                              planType === 'premium' ? 'premium' : 'family';
-
-      const expiresAt = new Date();
-      if (billingCycle === 'annual') {
-        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-      } else {
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-      }
-
-      await storage.updateUserSubscription(userId, {
-        subscriptionTier,
-        subscriptionStatus: 'active',
-        subscriptionExpiresAt: expiresAt,
-        subscriptionPlatform: 'web',
-      });
-
-      // Refresh session user so middleware sees the new status immediately
-      const updatedUser = await storage.getUserById(userId);
-      if (updatedUser && req.session) {
-        req.session.user = updatedUser;
-        await new Promise<void>((resolve) => req.session.save((err: any) => {
-          if (err) console.error('Session save error after upgrade:', err);
-          resolve();
-        }));
-      }
-
-      res.json({
-        message: "Subscription upgraded successfully",
-        plan: planType,
-        billing: billingCycle,
-        expiresAt: expiresAt.toISOString()
-      });
-    } catch (error: any) {
-      console.error("Error upgrading subscription:", error);
-      res.status(500).json({
-        message: "Failed to upgrade subscription",
-        error: error.message || "Unknown error"
-      });
-    }
+  // Retired legacy path. It previously activated access from a standalone
+  // PaymentIntent and could leave the account without a recurring Stripe
+  // subscription. Web checkout now always uses create/confirm-subscription.
+  app.post("/api/upgrade-subscription", (_req: any, res) => {
+    return res.status(410).json({
+      message: "This checkout flow has been retired. Please subscribe from the subscription page.",
+    });
   });
 
   // Recover subscription for users who paid but whose status wasn't updated
@@ -4183,19 +4132,19 @@ Provide a helpful, encouraging response:`;
         return res.status(400).json({ message: "Stripe not configured" });
       }
 
-      let stripeCustomerId = user.stripeCustomerId;
-
-      // If no customer ID stored, search Stripe by email
-      if (!stripeCustomerId && user.email) {
-        const customers = await currentStripe.customers.list({ email: user.email, limit: 1 });
-        if (customers.data.length > 0) {
-          stripeCustomerId = customers.data[0].id;
-          await storage.updateUser(userId, { stripeCustomerId });
-        }
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({
+          message: "No verified Stripe subscription is linked to this account. Please subscribe below or contact support.",
+        });
       }
 
-      if (!stripeCustomerId) {
-        return res.status(400).json({ message: "No Stripe payment found for this account. Please subscribe below." });
+      const stripeCustomer = await currentStripe.customers.retrieve(user.stripeCustomerId);
+      if (
+        stripeCustomer.deleted ||
+        stripeCustomer.metadata?.userId !== String(userId)
+      ) {
+        console.warn(`Stripe subscription recovery rejected for user ${userId}: customer ownership mismatch`);
+        return res.status(403).json({ message: "The linked Stripe customer does not belong to this account." });
       }
 
       let subscriptionTier = 'basic';
@@ -4204,15 +4153,25 @@ Provide a helpful, encouraging response:`;
       expiresAt.setMonth(expiresAt.getMonth() + 1);
       let found = false;
 
-      // Step 1: Check for active subscriptions
-      const activeSubs = await currentStripe.subscriptions.list({
-        customer: stripeCustomerId,
-        status: 'active',
+      // Recovery only trusts an active or trialing recurring subscription.
+      const subscriptions = await currentStripe.subscriptions.list({
+        customer: stripeCustomer.id,
+        status: 'all',
         limit: 5,
-        expand: ['data.latest_invoice']
+        expand: ['data.latest_invoice', 'data.pending_setup_intent', 'data.default_payment_method']
       });
-      if (activeSubs.data.length > 0) {
-        const sub = activeSubs.data[0];
+      const validSubscription = subscriptions.data.find((sub) => {
+        if (sub.status === 'active') return true;
+        if (sub.status !== 'trialing') return false;
+
+        // A new free-trial subscription is trialing before its card SetupIntent
+        // completes. Recovery must not turn that unconfirmed trial into access.
+        const setupIntent = sub.pending_setup_intent as any;
+        const hasSavedPaymentMethod = Boolean(sub.default_payment_method);
+        return setupIntent?.status === 'succeeded' || hasSavedPaymentMethod;
+      });
+      if (validSubscription) {
+        const sub = validSubscription;
         const planMeta = (sub.metadata?.planType as string) || 'basic';
         subscriptionTier = planMeta === 'premium' ? 'premium' : planMeta === 'family' ? 'family' : 'basic';
         billingCycle = (sub.metadata?.billingCycle as string) || 'monthly';
@@ -4220,56 +4179,9 @@ Provide a helpful, encouraging response:`;
         found = true;
       }
 
-      // Step 2: Check for incomplete subscriptions where payment actually succeeded
-      if (!found) {
-        const allSubs = await currentStripe.subscriptions.list({
-          customer: stripeCustomerId,
-          limit: 10,
-          expand: ['data.latest_invoice.payment_intent']
-        });
-        for (const sub of allSubs.data) {
-          const invoice = sub.latest_invoice as any;
-          const paymentIntent = invoice?.payment_intent as any;
-          if (paymentIntent?.status === 'succeeded') {
-            const planMeta = (sub.metadata?.planType as string) || 'basic';
-            subscriptionTier = planMeta === 'premium' ? 'premium' : planMeta === 'family' ? 'family' : 'basic';
-            billingCycle = (sub.metadata?.billingCycle as string) || 'monthly';
-            // Confirm the subscription on Stripe so it becomes active
-            try {
-              await currentStripe.subscriptions.update(sub.id, { 
-                payment_behavior: 'default_incomplete' 
-              });
-            } catch {}
-            expiresAt = new Date();
-            expiresAt.setMonth(expiresAt.getMonth() + 1);
-            found = true;
-            break;
-          }
-        }
-      }
-
-      // Step 3: Check for recent successful PaymentIntents (one-time payments)
-      if (!found) {
-        const paymentIntents = await currentStripe.paymentIntents.list({
-          customer: stripeCustomerId,
-          limit: 10
-        });
-        const succeeded = paymentIntents.data.find(pi => pi.status === 'succeeded');
-        if (succeeded) {
-          // Determine plan from amount
-          const amount = succeeded.amount;
-          if (amount >= 2499) subscriptionTier = 'family';
-          else if (amount >= 1299) subscriptionTier = 'premium';
-          else subscriptionTier = 'basic';
-          expiresAt = new Date();
-          expiresAt.setMonth(expiresAt.getMonth() + 1);
-          found = true;
-        }
-      }
-
       if (!found) {
         return res.status(400).json({ 
-          message: "No completed payment found on your account. If you believe this is an error, please contact support."
+          message: "No active recurring subscription found on your account. If you believe this is an error, please contact support."
         });
       }
 
@@ -4344,25 +4256,24 @@ Provide a helpful, encouraging response:`;
       return res.status(500).send("Stripe not configured");
     }
 
+    if (!webhookSecret) {
+      console.error("Stripe webhook: STRIPE_WEBHOOK_SECRET is not configured");
+      return res.status(500).send("Webhook configuration error");
+    }
+
+    if (!sig) {
+      console.warn("Stripe webhook: missing Stripe signature");
+      return res.status(400).send("Missing Stripe signature");
+    }
+
     let event: any;
     try {
-      if (webhookSecret && sig) {
-        // Verify the event signature (req.body is raw Buffer via express.raw)
-        event = currentStripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } else {
-        // No webhook secret configured — accept unsigned events (dev only)
-        console.warn("STRIPE_WEBHOOK_SECRET not set — accepting unsigned webhook event");
-        event = typeof req.body === 'string' || Buffer.isBuffer(req.body)
-          ? JSON.parse(req.body.toString())
-          : req.body;
-      }
+      // Verify the event signature (req.body is raw Buffer via express.raw).
+      event = currentStripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err: any) {
       console.error("Stripe webhook signature verification failed:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-
-    // Acknowledge immediately
-    res.status(200).json({ received: true });
 
     try {
       const tierMap: Record<string, string> = {
@@ -4370,49 +4281,76 @@ Provide a helpful, encouraging response:`;
         'adaptalyfe_premium_monthly': 'premium', 'adaptalyfe_premium_annual': 'premium',
         'adaptalyfe_family_monthly': 'family', 'adaptalyfe_family_annual': 'family',
       };
+      const appStatusForStripeSubscription = (sub: any): string => {
+        if (sub.status !== 'trialing') return sub.status;
+        const setupIntent = sub.pending_setup_intent as any;
+        const hasSavedPaymentMethod = Boolean(sub.default_payment_method);
+        return setupIntent?.status === 'succeeded' || hasSavedPaymentMethod
+          ? 'trialing'
+          : 'pending';
+      };
 
-      const extendSubscription = async (stripeSubId: string, stripeCustomerId: string, periodEnd: number, tier?: string) => {
-        // Find user by subscription ID first, fall back to customer ID
-        let user = await storage.getUserByStripeSubscriptionId(stripeSubId);
-        if (!user && stripeCustomerId) user = await storage.getUserByStripeCustomerId(stripeCustomerId);
+      const extendSubscription = async (
+        stripeSubId: string,
+        periodEnd: number,
+        stripeStatus: string,
+        tier?: string,
+      ) => {
+        // Webhook mutations must match the currently stored subscription ID.
+        // A customer can have a canceled historical subscription and a new one;
+        // customer-only fallback would let delayed old events overwrite the new state.
+        const user = await storage.getUserByStripeSubscriptionId(stripeSubId);
         if (!user) {
-          console.warn(`Stripe webhook: no user found for sub=${stripeSubId} cust=${stripeCustomerId}`);
+          console.warn(`Stripe webhook: ignoring event for unknown or replaced subscription ${stripeSubId}`);
           return;
         }
+
+        const statusMap: Record<string, string> = {
+          active: 'active', trialing: 'active', past_due: 'past_due',
+          canceled: 'cancelled', unpaid: 'past_due', incomplete: 'pending',
+        };
         const expiresAt = new Date(periodEnd * 1000);
         await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: 'active',
+          subscriptionStatus: statusMap[stripeStatus] || stripeStatus,
           subscriptionExpiresAt: expiresAt,
-          ...(tier ? { subscriptionTier: tier } : {}),
+          ...((stripeStatus === 'active' || stripeStatus === 'trialing') && tier ? { subscriptionTier: tier } : {}),
         });
-        console.log(`✅ Stripe webhook: extended user ${user.id} (${user.username}) until ${expiresAt.toISOString()}`);
+        console.log(`✅ Stripe webhook: synchronized user ${user.id} (${user.username}) to ${stripeStatus} until ${expiresAt.toISOString()}`);
       };
 
       switch (event.type) {
         case 'invoice.payment_succeeded': {
           const invoice = event.data.object as any;
-          const subId = invoice.subscription;
-          const customerId = invoice.customer;
+          const subId = invoice.subscription || invoice.parent?.subscription_details?.subscription;
           // Get the subscription to find current_period_end
           if (subId) {
-            const sub = await currentStripe.subscriptions.retrieve(subId);
+            const sub = await currentStripe.subscriptions.retrieve(subId, {
+              expand: ['pending_setup_intent', 'default_payment_method'],
+            });
             const metadata = sub.metadata || {};
             const tierFromMeta = metadata.planType ? tierMap[metadata.planType] || metadata.planType : undefined;
-            await extendSubscription(subId, customerId, sub.current_period_end, tierFromMeta);
+            await extendSubscription(
+              subId,
+              sub.current_period_end,
+              appStatusForStripeSubscription(sub),
+              tierFromMeta,
+            );
           }
           break;
         }
         case 'customer.subscription.updated': {
-          const sub = event.data.object as any;
+          const eventSubscription = event.data.object as any;
+          const sub = await currentStripe.subscriptions.retrieve(eventSubscription.id, {
+            expand: ['pending_setup_intent', 'default_payment_method'],
+          });
           const statusMap: Record<string, string> = {
             active: 'active', trialing: 'active', past_due: 'past_due',
             canceled: 'cancelled', unpaid: 'past_due', incomplete: 'pending',
           };
-          let user = await storage.getUserByStripeSubscriptionId(sub.id);
-          if (!user) user = await storage.getUserByStripeCustomerId(sub.customer);
+          const user = await storage.getUserByStripeSubscriptionId(sub.id);
           if (user) {
             await storage.updateUserSubscription(user.id, {
-              subscriptionStatus: statusMap[sub.status] || sub.status,
+              subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
               subscriptionExpiresAt: new Date(sub.current_period_end * 1000),
             });
             console.log(`✅ Stripe webhook: updated user ${user.id} status=${sub.status}`);
@@ -4421,8 +4359,7 @@ Provide a helpful, encouraging response:`;
         }
         case 'customer.subscription.deleted': {
           const sub = event.data.object as any;
-          let user = await storage.getUserByStripeSubscriptionId(sub.id);
-          if (!user) user = await storage.getUserByStripeCustomerId(sub.customer);
+          const user = await storage.getUserByStripeSubscriptionId(sub.id);
           if (user) {
             await storage.updateUserSubscription(user.id, {
               subscriptionStatus: 'cancelled',
@@ -4434,10 +4371,10 @@ Provide a helpful, encouraging response:`;
         }
         case 'invoice.payment_failed': {
           const invoice = event.data.object as any;
-          let user = invoice.subscription
-            ? await storage.getUserByStripeSubscriptionId(invoice.subscription)
+          const subId = invoice.subscription || invoice.parent?.subscription_details?.subscription;
+          const user = subId
+            ? await storage.getUserByStripeSubscriptionId(subId)
             : null;
-          if (!user && invoice.customer) user = await storage.getUserByStripeCustomerId(invoice.customer);
           if (user) {
             await storage.updateUserSubscription(user.id, { subscriptionStatus: 'past_due' });
             console.log(`⚠️  Stripe webhook: payment failed for user ${user.id}`);
@@ -4447,8 +4384,13 @@ Provide a helpful, encouraging response:`;
         default:
           console.log(`Stripe webhook: unhandled event type ${event.type}`);
       }
+
+      // Only acknowledge after subscription state is persisted. A 5xx response
+      // tells Stripe to retry if a transient API or database failure occurs.
+      return res.status(200).json({ received: true });
     } catch (err: any) {
       console.error("Stripe webhook processing error:", err.message);
+      return res.status(500).send("Webhook processing failed");
     }
   });
 
@@ -4472,12 +4414,24 @@ Provide a helpful, encouraging response:`;
       if (user.stripeCustomerId) {
         customer = await currentStripe.customers.retrieve(user.stripeCustomerId);
       } else {
-        customer = await currentStripe.customers.create({
-          email: user.email,
-          name: user.name,
-          metadata: { userId: user.id.toString() }
-        });
-        
+        const customerOptions: Stripe.CustomerCreateParams = {
+          email: user.email || undefined,
+          name: user.name || undefined,
+          metadata: { userId: user.id.toString() },
+        };
+
+        // Optional accelerated-renewal testing. A Test Clock is accepted only
+        // with Stripe test-mode credentials, so it can never attach to a live
+        // customer or affect production billing.
+        if (
+          process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_') &&
+          process.env.STRIPE_TEST_CLOCK_ID
+        ) {
+          customerOptions.test_clock = process.env.STRIPE_TEST_CLOCK_ID;
+        }
+
+        customer = await currentStripe.customers.create(customerOptions);
+
         // Update user with Stripe customer ID
         await storage.updateUser(user.id, { stripeCustomerId: customer.id });
       }
@@ -4489,7 +4443,11 @@ Provide a helpful, encouraging response:`;
         family: { monthly: 2499, annual: 24900 } // $24.99, $249
       };
       
-      const amount = pricing[planType as keyof typeof pricing]?.[billingCycle as keyof typeof pricing.basic] || 1299;
+      const planPricing = pricing[planType as keyof typeof pricing];
+      if (!planPricing || (billingCycle !== 'monthly' && billingCycle !== 'annual')) {
+        return res.status(400).json({ message: "Invalid subscription plan or billing cycle" });
+      }
+      const amount = planPricing[billingCycle];
       
       // If this user already has an active Stripe subscription, cancel it first
       // to avoid duplicate subscriptions building up.
@@ -4533,17 +4491,21 @@ Provide a helpful, encouraging response:`;
         console.log(`Created new Stripe price ${price.id} for ${planLabel}`);
       }
 
-      // Create subscription with immediate payment intent + 7-day free trial
+      // Create a recurring subscription. For a free trial, Stripe returns a
+      // pending SetupIntent so the card is saved for the first renewal.
       const subscription = await currentStripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
         trial_period_days: 7,
         payment_behavior: 'default_incomplete',
-        payment_settings: { 
+        payment_settings: {
           save_default_payment_method: 'on_subscription',
           payment_method_types: ['card']
         },
-        expand: ['latest_invoice.payment_intent'],
+        trial_settings: {
+          end_behavior: { missing_payment_method: 'cancel' },
+        },
+        expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
         metadata: {
           userId: user.id.toString(),
           planType,
@@ -4551,54 +4513,55 @@ Provide a helpful, encouraging response:`;
         }
       });
 
-      // Get payment intent from subscription
-      let paymentIntent = null;
+      // A trial uses a SetupIntent; an immediate charge uses the invoice's
+      // PaymentIntent. Never create a standalone intent, because it is not
+      // linked to the recurring subscription or its future renewal.
+      let clientSecret: string | null = null;
+      let intentType: 'payment' | 'setup' | null = null;
+      let intentId: string | null = null;
       const invoice = subscription.latest_invoice as any;
-      
+
       if (invoice && invoice.payment_intent) {
-        paymentIntent = invoice.payment_intent;
-      } else if (invoice && !invoice.payment_intent) {
-        // Create a standalone payment intent for manual payment
-        console.log('Creating standalone payment intent for subscription payment');
-        paymentIntent = await currentStripe.paymentIntents.create({
-          amount: invoice.amount_due,
-          currency: 'usd',
-          customer: customer.id,
-          metadata: {
-            userId: user.id.toString(),
-            subscriptionId: subscription.id,
-            invoiceId: invoice.id
-          },
-          automatic_payment_methods: {
-            enabled: true,
-          }
+        clientSecret = invoice.payment_intent.client_secret;
+        intentType = 'payment';
+        intentId = invoice.payment_intent.id;
+      } else {
+        const setupIntent = subscription.pending_setup_intent as any;
+        if (setupIntent?.client_secret) {
+          clientSecret = setupIntent.client_secret;
+          intentType = 'setup';
+          intentId = setupIntent.id;
+        }
+      }
+
+      if (!clientSecret && subscription.status !== 'active') {
+        await currentStripe.subscriptions.cancel(subscription.id);
+        return res.status(502).json({
+          message: "Stripe could not prepare secure payment-method setup for this subscription",
         });
       }
-      
+
       // Update user subscription info
       await storage.updateUser(user.id, {
         stripeSubscriptionId: subscription.id,
         subscriptionTier: planType,
-        subscriptionStatus: 'pending'
+        subscriptionStatus: 'pending',
+        subscriptionPlatform: 'web',
       });
-      
-      // Get client secret from payment intent
-      let clientSecret = null;
-      if (paymentIntent) {
-        clientSecret = paymentIntent.client_secret;
-      }
-      
+
       console.log('Final subscription setup:', {
         subscriptionId: subscription.id,
         hasClientSecret: !!clientSecret,
+        intentType,
         subscriptionStatus: subscription.status,
-        paymentIntentId: paymentIntent?.id
+        intentId,
       });
-      
+
       res.json({
         subscriptionId: subscription.id,
-        clientSecret: clientSecret,
-        paymentIntentId: paymentIntent?.id,
+        clientSecret,
+        intentType,
+        intentId,
         status: subscription.status,
         requiresPayment: !!clientSecret
       });
@@ -4621,16 +4584,46 @@ Provide a helpful, encouraging response:`;
       
       const user = req.session.user;
       const { subscriptionId } = req.body;
+      if (!subscriptionId || typeof subscriptionId !== 'string') {
+        return res.status(400).json({ message: "Subscription ID is required" });
+      }
       
       const currentStripe = getStripeInstance();
       if (!currentStripe) {
         return res.status(500).json({ message: "Payment processing unavailable" });
       }
       
-      // Retrieve subscription status
-      const subscription = await currentStripe.subscriptions.retrieve(subscriptionId);
-      
-      if (subscription.status === 'active' || subscription.status === 'trialing') {
+      // Retrieve and verify that this subscription belongs to the authenticated
+      // user before changing their paid-access status.
+      const subscription = await currentStripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['pending_setup_intent', 'default_payment_method', 'latest_invoice.payment_intent'],
+      });
+      const subscriptionCustomerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer?.id;
+      const subscriptionUserId = subscription.metadata?.userId;
+
+      if (
+        subscriptionUserId !== String(user.id) ||
+        (user.stripeCustomerId && subscriptionCustomerId !== user.stripeCustomerId)
+      ) {
+        console.warn(`Stripe subscription confirmation rejected for user ${user.id}`);
+        return res.status(403).json({ message: "Subscription does not belong to this account" });
+      }
+
+      const pendingSetupIntent = subscription.pending_setup_intent as any;
+      const invoice = subscription.latest_invoice as any;
+      const invoicePaymentIntent = invoice?.payment_intent as any;
+      const hasSavedPaymentMethod = Boolean(subscription.default_payment_method);
+      const trialPaymentReady =
+        pendingSetupIntent?.status === 'succeeded' || hasSavedPaymentMethod;
+      const immediatePaymentReady =
+        !invoicePaymentIntent || invoicePaymentIntent.status === 'succeeded';
+      const isReadyToActivate =
+        (subscription.status === 'trialing' && trialPaymentReady) ||
+        (subscription.status === 'active' && immediatePaymentReady);
+
+      if (isReadyToActivate) {
         const metadata = subscription.metadata;
         // Use Stripe's authoritative period end, not a calculated date
         const expiresAt = new Date(subscription.current_period_end * 1000);
@@ -4640,6 +4633,8 @@ Provide a helpful, encouraging response:`;
           subscriptionStatus: 'active',
           subscriptionExpiresAt: expiresAt,
           stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscriptionCustomerId,
+          subscriptionPlatform: 'web',
         });
 
         // Refresh session so the user doesn't need to log out/in to see the change
@@ -4656,7 +4651,7 @@ Provide a helpful, encouraging response:`;
         res.json({ 
           success: false, 
           status: subscription.status,
-          message: "Payment not completed"
+          message: "Payment method setup or subscription payment is not complete"
         });
       }
       

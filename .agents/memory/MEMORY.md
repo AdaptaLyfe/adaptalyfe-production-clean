@@ -1,1 +1,2 @@
 - [Adaptalyfe infra](adaptalyfe-infra.md) — staging URL, DATABASE_URL vs NEON_DATABASE_URL split, Railway vars, key auth/nav decisions.
+- [Stripe renewal safety](stripe-renewal-safety.md) — trials require a saved card; staging Stripe credentials and webhook secrets stay test-only.

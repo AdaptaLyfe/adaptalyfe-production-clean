@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Check, Star, Users, Shield } from "lucide-react";
 import PremiumValueProposition from "@/components/premium-value-proposition";
-// Note: Simple checkout system, no API requests needed
 
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -17,8 +16,9 @@ export default function Pricing() {
     try {
       setIsUpgrading(true);
       
-      // Redirect to simple checkout
-      window.location.href = `/checkout?plan=${planType}&billing=${billingCycle}`;
+      // The subscription page is the only supported web billing flow. It
+      // creates a recurring Stripe subscription rather than a one-time charge.
+      window.location.href = `/subscription`;
       
     } catch (error) {
       console.error("Payment error:", error);
