@@ -12,6 +12,7 @@ import { registerBillPaymentRoutes } from "./bill-payment-routes";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
+import crypto from "crypto";
 
 // Extend the session data interface
 declare module "express-session" {
@@ -196,6 +197,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     createTableIfMissing: true,
     pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
   });
+
+  // Native clients use their own session-store key rather than the browser's
+  // cookie session ID. This keeps a mobile login independent from a web login
+  // for the same account.
+  const createMobileSessionToken = (user: any, cookie: any): Promise<string> => {
+    const token = crypto.randomBytes(32).toString("hex");
+
+    return new Promise((resolve, reject) => {
+      sessionStore.set(
+        token,
+        {
+          cookie: { ...cookie },
+          userId: user.id,
+          user,
+        } as any,
+        (error: any) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(token);
+        },
+      );
+    });
+  };
+
+  const isNativeClientRequest = (req: any): boolean =>
+    req.get("X-Adaptalyfe-Client") === "native";
   
   app.use(session({
     store: sessionStore,
@@ -233,9 +262,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return resolve();
           }
           
-          // Restore session data to req.session
-          req.session.userId = sessionData.userId;
-          req.session.user = sessionData.user;
+          // Keep bearer auth separate from the cookie session. Non-enumerable
+          // compatibility properties let existing protected routes read the
+          // authenticated user without persisting it into a browser session.
+          req.auth = {
+            sessionToken,
+            userId: sessionData.userId,
+            user: sessionData.user,
+          };
+          Object.defineProperties(req.session, {
+            userId: {
+              configurable: true,
+              enumerable: false,
+              value: sessionData.userId,
+              writable: true,
+            },
+            user: {
+              configurable: true,
+              enumerable: false,
+              value: sessionData.user,
+              writable: true,
+            },
+          });
           console.log("✅ Session restored from Authorization token for user:", sessionData.user?.username);
           resolve();
         });
@@ -248,6 +296,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to ensure user is logged in for protected routes
   // Supports both cookie-based (desktop) and header-based (mobile) auth
   const requireAuth = async (req: any, res: any, next: any) => {
+    if (req.auth?.userId && req.auth?.user) {
+      req.user = req.auth.user;
+      return next();
+    }
+
     // Check if already authenticated via cookie
     if (req.session.userId && req.session.user) {
       req.user = req.session.user;
@@ -287,6 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/register", async (req, res) => {
     try {
       const { name, email, username, password, plan, subscribeNewsletter } = req.body;
+      const nativeClient = isNativeClientRequest(req);
       
       // Validate required fields
       if (!username || !password || !name) {
@@ -307,16 +361,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: email || null
       });
 
-      // Create session for new user
-      req.session.userId = user.id;
-      req.session.user = user;
-      
-      await new Promise<void>((resolve, reject) => {
-        req.session.save((err: any) => {
-          if (err) reject(err);
-          else resolve();
+      if (!nativeClient) {
+        // Browser sessions remain cookie-based.
+        req.session.userId = user.id;
+        req.session.user = user;
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve();
+          });
         });
-      });
+      }
+
+      const sessionToken = nativeClient
+        ? await createMobileSessionToken(user, req.session.cookie)
+        : undefined;
 
       res.json({ 
         message: "Registration successful",
@@ -325,7 +384,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: user.username,
           name: user.name,
           email: user.email
-        }
+        },
+        ...(sessionToken ? { sessionToken } : {}),
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -336,13 +396,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User login endpoint - Railway compatible
   app.post("/api/login", async (req, res) => {
     try {
-      console.log("🔐 LOGIN DEBUG - Method:", req.method);
-      console.log("🔐 LOGIN DEBUG - URL:", req.url);
-      console.log("🔐 LOGIN DEBUG - Headers:", req.headers);
-      console.log("🔐 LOGIN DEBUG - Body:", req.body);
-      console.log("🔐 LOGIN DEBUG - Origin:", req.get('origin'));
-      
       const { username, password } = req.body;
+      const nativeClient = isNativeClientRequest(req);
       
       if (!username || !password) {
         console.log("❌ Missing credentials");
@@ -357,21 +412,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Create session for user
-      req.session.userId = user.id;
-      req.session.user = user;
-      
-      await new Promise<void>((resolve, reject) => {
-        req.session.save((err: any) => {
-          if (err) {
-            console.log("❌ Session save error:", err);
-            reject(err);
-          } else {
-            console.log("✅ Session saved successfully");
-            resolve();
-          }
+      if (!nativeClient) {
+        // Browser sessions remain cookie-based.
+        req.session.userId = user.id;
+        req.session.user = user;
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) {
+              console.log("❌ Session save error:", err);
+              reject(err);
+            } else {
+              console.log("✅ Session saved successfully");
+              resolve();
+            }
+          });
         });
-      });
+      }
+
+      const sessionToken = nativeClient
+        ? await createMobileSessionToken(user, req.session.cookie)
+        : undefined;
 
       console.log(`✅ User ${user.username} logged in successfully`);
       const response = { 
@@ -383,9 +443,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: user.email,
           isAdmin: user.isAdmin || false
         },
-        sessionToken: req.session.id // Include session ID for mobile/header-based auth
+        ...(sessionToken ? { sessionToken } : {})
       };
-      console.log("🔐 LOGIN DEBUG - Sending response:", response);
       res.json(response);
     } catch (error) {
       console.error("❌ Login error:", error);
@@ -397,10 +456,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/demo-login", async (req: any, res) => {
     try {
       const { username, password } = req.body;
-      console.log("Demo login attempt:", { username, password });
+      const nativeClient = isNativeClientRequest(req);
+      console.log("Demo login attempt:", { username });
       
       const user = await storage.getUserByUsername(username);
-      console.log("User found:", user ? { id: user.id, username: user.username, password: user.password } : "No user found");
+      console.log("User found:", user ? { id: user.id, username: user.username } : "No user found");
       
       if (!user) {
         console.log("No user found for username:", username);
@@ -409,33 +469,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Simple password check for demo (in production, use proper hashing)
       if (user.password !== password) {
-        console.log("Password mismatch:", { provided: password, expected: user.password });
+        console.log("Password mismatch for user:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
-      // Store user in session and save the session
-      req.session.userId = user.id;
-      req.session.user = user;
-      
-      // Save session explicitly before sending response
-      req.session.save((err: any) => {
-        if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Session save failed" });
-        }
-        
-        console.log("Session saved successfully for user:", user.id);
-        
-        res.json({ 
-          message: "Login successful", 
-          user: { 
-            id: user.id, 
-            username: user.username, 
-            name: user.name, 
-            email: user.email 
-          },
-          sessionToken: req.session.id // Include session ID for mobile/header-based auth
+      if (!nativeClient) {
+        req.session.userId = user.id;
+        req.session.user = user;
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((error: any) => {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve();
+          });
         });
+      }
+
+      const sessionToken = nativeClient
+        ? await createMobileSessionToken(user, req.session.cookie)
+        : undefined;
+
+      res.json({
+        message: "Login successful",
+        user: {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          email: user.email
+        },
+        ...(sessionToken ? { sessionToken } : {})
       });
     } catch (error) {
       console.error("Demo login error:", error);
@@ -446,6 +510,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Logout endpoint
   app.post("/api/logout", async (req: any, res) => {
     try {
+      const authHeader = req.get("Authorization");
+      const mobileSessionToken = authHeader?.startsWith("Bearer ")
+        ? authHeader.substring(7)
+        : undefined;
+
+      // A native logout only invalidates the independent bearer session. The
+      // browser cookie session is intentionally left untouched so web and
+      // mobile can remain signed in independently.
+      if (mobileSessionToken) {
+        return sessionStore.destroy(mobileSessionToken, (error: any) => {
+          if (error) {
+            console.error("Mobile session destruction error:", error);
+            return res.status(500).json({ message: "Logout failed" });
+          }
+
+          res.json({ message: "Logout successful" });
+        });
+      }
+
       req.session.destroy((err: any) => {
         if (err) {
           console.error("Session destruction error:", err);
@@ -494,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Session ID:", req.sessionID);
     console.log("User-Agent:", req.headers['user-agent']?.substring(0, 100));
     console.log("Cookies:", req.headers.cookie);
-    console.log("Session data:", JSON.stringify(req.session, null, 2));
+    console.log("Session user ID:", req.session.userId);
     
     // Check session validity and attempt recovery
     if (!req.session.userId || !req.session.user) {

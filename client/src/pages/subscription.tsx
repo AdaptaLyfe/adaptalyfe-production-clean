@@ -434,17 +434,12 @@ export default function SubscriptionPage() {
         toast({ title: "No Purchases Found", description: "No previous subscriptions found on this Google account." });
         return;
       }
-      const response = await fetch('/api/google-play/restore-purchases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          purchases: purchases.map(p => ({
-            purchaseToken: p.purchaseToken,
-            productId: p.productId,
-            orderId: p.orderId,
-          }))
-        }),
+      const response = await apiRequest('POST', '/api/google-play/restore-purchases', {
+        purchases: purchases.map(p => ({
+          purchaseToken: p.purchaseToken,
+          productId: p.productId,
+          orderId: p.orderId,
+        }))
       });
       const data = await response.json();
       if (data.restored) {
@@ -617,11 +612,7 @@ export default function SubscriptionPage() {
                   if (!user) { setLocation('/login'); return; }
                   try {
                     toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
-                    const res = await fetch('/api/recover-subscription', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include'
-                    });
+                    const res = await apiRequest('POST', '/api/recover-subscription');
                     const data = await res.json();
                     if (res.ok) {
                       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
@@ -842,11 +833,7 @@ export default function SubscriptionPage() {
                     }
                     try {
                       toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
-                      const res = await fetch('/api/recover-subscription', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                      });
+                      const res = await apiRequest('POST', '/api/recover-subscription');
                       const data = await res.json();
                       if (res.ok) {
                         queryClient.invalidateQueries({ queryKey: ["/api/user"] });

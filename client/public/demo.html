@@ -351,13 +351,19 @@
             try {
                 showMessage('Connecting to server...', 'success');
                 
+                const isNativeClient = Boolean(
+                    window.Capacitor &&
+                    typeof window.Capacitor.isNativePlatform === 'function' &&
+                    window.Capacitor.isNativePlatform()
+                );
                 const response = await fetch('/api/demo-login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        ...(isNativeClient ? { 'X-Adaptalyfe-Client': 'native' } : {}),
                     },
                     body: JSON.stringify({ username, password }),
-                    credentials: 'include'
+                    credentials: isNativeClient ? 'omit' : 'include'
                 });
 
                 console.log('Response status:', response.status);
@@ -370,13 +376,16 @@
 
                 const data = await response.json();
                 console.log('Login successful:', data);
+                if (isNativeClient && data.sessionToken) {
+                    localStorage.setItem('adaptalyfe_session_token', data.sessionToken);
+                }
                 
                 showMessage('Login successful! Redirecting to dashboard...', 'success');
                 
                 // Redirect to dashboard
                 setTimeout(() => {
                     console.log('Redirecting to dashboard...');
-                    window.location.href = '/dashboard.html';
+                    window.location.href = isNativeClient ? '/dashboard' : '/dashboard.html';
                 }, 1000);
                 
             } catch (error) {

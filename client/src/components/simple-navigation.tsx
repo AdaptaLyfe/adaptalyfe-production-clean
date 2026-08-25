@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 // AuthUtils inlined to avoid import issues
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
-import { logout } from "@/lib/queryClient";
+import { apiRequest, logout } from "@/lib/queryClient";
 
 export default function SimpleNavigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,13 +48,8 @@ export default function SimpleNavigation() {
               const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
               if (isMobile) {
                 try {
-                  const response = await fetch('/api/user', { credentials: 'include' });
-                  if (response.ok) {
-                    setLocation('/dashboard');
-                  } else {
-                    console.warn('Session lost, redirecting to login');
-                    setLocation('/login');
-                  }
+                  await apiRequest('GET', '/api/user');
+                  setLocation('/dashboard');
                 } catch (error) {
                   console.error('Session check failed:', error);
                   setLocation('/login');

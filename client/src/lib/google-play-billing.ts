@@ -1,4 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
+import { apiRequest } from "@/lib/queryClient";
 
 const GOOGLE_PLAY_PRODUCT_IDS = {
   basic_monthly: 'adaptalyfe_basic_monthly',
@@ -160,11 +161,10 @@ export async function verifyPurchaseOnServer(
   orderId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch('/api/google-play/verify-purchase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ purchaseToken, productId, orderId }),
+    const response = await apiRequest('POST', '/api/google-play/verify-purchase', {
+      purchaseToken,
+      productId,
+      orderId,
     });
 
     const data = await response.json();

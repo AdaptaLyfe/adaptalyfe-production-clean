@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, Shield, Heart } from "lucide-react";
-import { apiRequest, getSessionToken } from "@/lib/queryClient";
+import { apiRequest, getSessionToken, isNativeClient, setSessionToken } from "@/lib/queryClient";
 import { trackSignUp } from "@/lib/firebase";
 
 export default function Register() {
@@ -107,7 +107,14 @@ export default function Register() {
     }
 
     try {
-      await apiRequest("POST", "/api/register", formData);
+      const response = await apiRequest("POST", "/api/register", formData);
+      const registration = await response.json();
+
+      // Keep native authentication independent from the web cookie while
+      // preserving the existing subscription and invitation redirects.
+      if (isNativeClient() && registration.sessionToken) {
+        setSessionToken(registration.sessionToken);
+      }
       
       trackSignUp("email");
       toast({
