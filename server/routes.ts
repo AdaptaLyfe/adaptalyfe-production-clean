@@ -847,6 +847,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/daily-tasks/:id", async (req: any, res) => {
+    try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const user = req.session.user;
+      const taskId = parseInt(req.params.id);
+      const existingTask = await storage.getTaskById(taskId);
+
+      if (!existingTask || existingTask.userId !== user.id) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      const deleted = await storage.deleteDailyTask(taskId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json({ message: "Task deleted successfully" });
+    } catch (error: any) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+
   app.patch("/api/daily-tasks/:id/complete", async (req: any, res) => {
     try {
       if (!req.session.userId || !req.session.user) {

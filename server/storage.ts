@@ -74,6 +74,7 @@ export interface IStorage {
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
   updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined>;
+  deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
   // Bills
   getBillsByUser(userId: number): Promise<Bill[]>;
@@ -614,6 +615,13 @@ export class DatabaseStorage implements IStorage {
       .where(eq(dailyTasks.id, taskId))
       .returning();
     return task || undefined;
+  }
+
+  async deleteDailyTask(taskId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(dailyTasks)
+      .where(and(eq(dailyTasks.id, taskId), eq(dailyTasks.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getBillsByUser(userId: number): Promise<Bill[]> {
