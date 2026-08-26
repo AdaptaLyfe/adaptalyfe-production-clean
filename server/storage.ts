@@ -115,6 +115,7 @@ export interface IStorage {
   // Budget Entries
   getBudgetEntriesByUser(userId: number): Promise<BudgetEntry[]>;
   createBudgetEntry(entry: InsertBudgetEntry): Promise<BudgetEntry>;
+  deleteBudgetEntry(entryId: number, userId: number): Promise<boolean>;
 
   // Budget Categories
   getBudgetCategoriesByUser(userId: number): Promise<BudgetCategory[]>;
@@ -873,6 +874,13 @@ export class DatabaseStorage implements IStorage {
       console.error("Error in createBudgetEntry:", error);
       throw error;
     }
+  }
+
+  async deleteBudgetEntry(entryId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(budgetEntries)
+      .where(and(eq(budgetEntries.id, entryId), eq(budgetEntries.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Budget Categories

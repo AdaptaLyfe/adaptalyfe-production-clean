@@ -1212,6 +1212,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/budget-entries/:id", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const entryId = parseInt(req.params.id, 10);
+      if (Number.isNaN(entryId)) {
+        return res.status(400).json({ message: "Invalid budget entry ID" });
+      }
+
+      const deleted = await storage.deleteBudgetEntry(entryId, req.session.userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Budget entry not found" });
+      }
+
+      res.json({ message: "Budget entry deleted successfully" });
+    } catch (error) {
+      console.error("Failed to delete budget entry:", error);
+      res.status(500).json({ message: "Failed to delete budget entry" });
+    }
+  });
+
   // Budget Categories routes
   app.get("/api/budget-categories", async (req: any, res) => {
     try {
