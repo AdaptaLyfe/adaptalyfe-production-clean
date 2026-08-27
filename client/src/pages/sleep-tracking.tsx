@@ -360,15 +360,22 @@ export default function SleepTracking() {
               }
             }}
           >
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure you want to delete this sleep log?</AlertDialogTitle>
-                <AlertDialogDescription>
+            <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
+              <AlertDialogHeader className="space-y-3 text-left">
+                <AlertDialogTitle className="text-base leading-6 text-slate-900 sm:text-lg">
+                  Are you sure you want to delete this log?
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-sm leading-5 text-slate-600">
                   This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleteSleepSession.isPending}>Cancel</AlertDialogCancel>
+              <AlertDialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-2 sm:space-x-0">
+                <AlertDialogCancel
+                  disabled={deleteSleepSession.isPending}
+                  className="mt-0 w-full sm:w-auto"
+                >
+                  Cancel
+                </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={(event) => {
                     event.preventDefault();
@@ -377,7 +384,7 @@ export default function SleepTracking() {
                     }
                   }}
                   disabled={deleteSleepSession.isPending}
-                  className="bg-red-600 hover:bg-red-700"
+                  className="mt-0 w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
                 >
                   Delete
                 </AlertDialogAction>
