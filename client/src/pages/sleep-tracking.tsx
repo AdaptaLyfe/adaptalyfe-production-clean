@@ -9,7 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
-import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +58,7 @@ export default function SleepTracking() {
     targetBedtime: '22:00',
     targetWakeTime: '06:00'
   });
+  const [sessionToDelete, setSessionToDelete] = useState<SleepSession | null>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -77,6 +88,45 @@ export default function SleepTracking() {
     onError: () => {
       toast({ title: 'Failed to save sleep session', variant: 'destructive' });
     }
+  });
+
+  const deleteSleepSession = useMutation({
+    mutationFn: (sessionId: number) =>
+      apiRequest('DELETE', `/api/sleep-sessions/${sessionId}`),
+    onMutate: async (sessionId) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/sleep-sessions'] });
+
+      const previousSessions = queryClient.getQueryData<SleepSession[]>(['/api/sleep-sessions']);
+      queryClient.setQueryData<SleepSession[]>(
+        ['/api/sleep-sessions'],
+        (currentSessions = []) => currentSessions.filter(session => session.id !== sessionId)
+      );
+
+      return { previousSessions };
+    },
+    onError: (_error, _sessionId, context) => {
+      if (context?.previousSessions) {
+        queryClient.setQueryData(['/api/sleep-sessions'], context.previousSessions);
+      }
+      toast({
+        title: 'Failed to delete sleep log',
+        description: 'Please try again.',
+        variant: 'destructive',
+      });
+    },
+    onSuccess: () => {
+      setSessionToDelete(null);
+      toast({
+        title: 'Sleep log deleted',
+        description: 'The sleep log was permanently deleted.',
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
+      });
+    },
   });
 
   // Calculate sleep statistics
@@ -241,7 +291,7 @@ export default function SleepTracking() {
             <CardContent>
               <div className="space-y-4">
                 {sleepSessions.slice(-7).reverse().map((session: SleepSession) => (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={session.id} className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-full">
                         <Moon className="h-4 w-4 text-blue-600" />
@@ -258,7 +308,7 @@ export default function SleepTracking() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
                       <div className="text-center">
                         <p className="font-medium">{formatDuration(session.totalSleepDuration)}</p>
                         <p className="text-gray-500">Duration</p>
@@ -272,6 +322,18 @@ export default function SleepTracking() {
                           {session.quality}
                         </Badge>
                       )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setSessionToDelete(session)}
+                        disabled={deleteSleepSession.isPending}
+                        aria-label={`Delete sleep log from ${format(new Date(session.sleepDate), 'MMM dd, yyyy')}`}
+                        title="Delete sleep log"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -289,6 +351,39 @@ export default function SleepTracking() {
               </div>
             </CardContent>
           </Card>
+
+          <AlertDialog
+            open={!!sessionToDelete}
+            onOpenChange={(open) => {
+              if (!open && !deleteSleepSession.isPending) {
+                setSessionToDelete(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to delete this sleep log?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleteSleepSession.isPending}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(event) => {
+                    event.preventDefault();
+                    if (sessionToDelete) {
+                      deleteSleepSession.mutate(sessionToDelete.id);
+                    }
+                  }}
+                  disabled={deleteSleepSession.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </TabsContent>
 
         {/* Log Sleep Tab */}

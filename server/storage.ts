@@ -327,7 +327,7 @@ export interface IStorage {
   getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined>;
   createSleepSession(session: InsertSleepSession): Promise<SleepSession>;
   updateSleepSession(sessionId: number, updates: Partial<InsertSleepSession>): Promise<SleepSession | undefined>;
-  deleteSleepSession(sessionId: number): Promise<boolean>;
+  deleteSleepSession(sessionId: number, userId: number): Promise<boolean>;
 
   // Health Metrics
   getHealthMetricsByUser(userId: number, metricType?: string, startDate?: string, endDate?: string): Promise<HealthMetric[]>;
@@ -2319,8 +2319,13 @@ export class DatabaseStorage implements IStorage {
     return updatedSession || undefined;
   }
 
-  async deleteSleepSession(sessionId: number): Promise<boolean> {
-    const result = await db.delete(sleepSessions).where(eq(sleepSessions.id, sessionId));
+  async deleteSleepSession(sessionId: number, userId: number): Promise<boolean> {
+    const result = await db.delete(sleepSessions).where(
+      and(
+        eq(sleepSessions.id, sessionId),
+        eq(sleepSessions.userId, userId)
+      )
+    );
     return (result.rowCount ?? 0) > 0;
   }
 

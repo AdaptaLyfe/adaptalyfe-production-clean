@@ -3063,7 +3063,7 @@ Provide a helpful, encouraging response:`;
       }
       
       const sessionId = parseInt(req.params.id);
-      const success = await storage.deleteSleepSession(sessionId);
+      const success = await storage.deleteSleepSession(sessionId, req.session.user.id);
       if (!success) {
         return res.status(404).json({ message: "Sleep session not found" });
       }
