@@ -35,6 +35,8 @@ const budgetSchema = z.object({
   description: z.string().optional(),
 });
 
+const budgetAmountPresets = Array.from({ length: 20 }, (_, index) => ((index + 1) / 10).toFixed(1));
+
 const savingsGoalSchema = z.object({
   title: z.string().min(1, "Goal title is required"),
   description: z.string().optional(),
@@ -531,13 +533,31 @@ export default function Financial() {
                                   <FormItem>
                                     <FormLabel>Amount</FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="0.01" 
-                                        placeholder="0.00"
-                                        {...field}
-                                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                                      />
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          placeholder="0.00"
+                                          className="flex-1 min-w-0"
+                                          {...field}
+                                          onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                        />
+                                        <Select
+                                          value={budgetAmountPresets.includes(field.value.toFixed(1)) ? field.value.toFixed(1) : ""}
+                                          onValueChange={value => field.onChange(parseFloat(value))}
+                                        >
+                                          <SelectTrigger className="h-11 w-28 shrink-0" aria-label="Choose a predefined amount">
+                                            <SelectValue placeholder="Presets" />
+                                          </SelectTrigger>
+                                          <SelectContent className="max-h-60">
+                                            {budgetAmountPresets.map(amount => (
+                                              <SelectItem key={amount} value={amount}>
+                                                {amount}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
