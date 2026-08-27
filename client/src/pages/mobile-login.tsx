@@ -13,9 +13,11 @@ export default function MobileLogin() {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     username: "",
-    password: ""
+    password: "",
+    invitationCode: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasInvitationCode, setHasInvitationCode] = useState(false);
 
   // Redirect authenticated users to dashboard (prevents back button loop)
   useEffect(() => {
@@ -24,6 +26,17 @@ export default function MobileLogin() {
       console.log('🔄 MobileLogin: Already authenticated, redirecting to dashboard');
       // Use replace to avoid history loop
       window.location.replace('/dashboard');
+    }
+  }, []);
+
+  // Check for invitation code from URL parameters when the component loads.
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitationFromUrl = urlParams.get('code');
+
+    if (invitationFromUrl) {
+      setFormData(prev => ({ ...prev, invitationCode: invitationFromUrl }));
+      setHasInvitationCode(true);
     }
   }, []);
 
@@ -58,10 +71,14 @@ export default function MobileLogin() {
 
       // Determine redirect path
       let redirectPath = "/dashboard";
-      const pendingInvitation = localStorage.getItem('pendingInvitation');
-      if (pendingInvitation) {
-        localStorage.removeItem('pendingInvitation');
-        redirectPath = `/accept-invitation?code=${pendingInvitation}`;
+      if (formData.invitationCode) {
+        redirectPath = `/accept-invitation?code=${formData.invitationCode}`;
+      } else {
+        const pendingInvitation = localStorage.getItem('pendingInvitation');
+        if (pendingInvitation) {
+          localStorage.removeItem('pendingInvitation');
+          redirectPath = `/accept-invitation?code=${pendingInvitation}`;
+        }
       }
 
       // Use window.location.replace to avoid back button loop to login page
@@ -144,6 +161,36 @@ export default function MobileLogin() {
                   className="mt-1"
                 />
               </div>
+
+              {hasInvitationCode && (
+                <div className="bg-blue-50 p-3 rounded-lg border">
+                  <Label htmlFor="invitationCode" className="text-blue-700 font-medium">Caregiver Invitation Code</Label>
+                  <Input
+                    id="invitationCode"
+                    type="text"
+                    value={formData.invitationCode}
+                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
+                    placeholder="Enter invitation code"
+                    className="mt-1 bg-white"
+                    readOnly={true}
+                  />
+                  <p className="text-xs text-blue-600 mt-1">You'll become a caregiver after logging in</p>
+                </div>
+              )}
+
+              {!hasInvitationCode && (
+                <div>
+                  <Label htmlFor="invitationCode">Have a Caregiver Invitation Code? (Optional)</Label>
+                  <Input
+                    id="invitationCode"
+                    type="text"
+                    value={formData.invitationCode}
+                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
+                    placeholder="Enter invitation code to become a caregiver"
+                    className="mt-1"
+                  />
+                </div>
+              )}
 
               <Button 
                 type="submit" 
