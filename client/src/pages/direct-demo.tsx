@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Crown, User, CheckCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { demoLogin } from "@/lib/queryClient";
 
 export default function DirectDemo() {
   const [, setLocation] = useLocation();
@@ -47,35 +48,16 @@ export default function DirectDemo() {
     try {
       console.log("Attempting auto-login with admin credentials...");
       
-      const response = await fetch("/api/demo-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "admin",
-          password: "demo2025"
-        }),
-        credentials: "include"
+      await demoLogin("admin", "demo2025");
+      toast({
+        title: "Demo Access Granted!",
+        description: "Welcome to the full Adaptalyfe demo experience",
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Auto-login successful:", data);
-        
-        toast({
-          title: "Demo Access Granted!",
-          description: "Welcome to the full Adaptalyfe demo experience",
-        });
-
-        // Redirect to dashboard after successful login
-        setTimeout(() => {
-          setLocation("/dashboard");
-        }, 1000);
-      } else {
-        console.log("Auto-login failed, showing manual options");
-        setIsSubmitting(false);
-      }
+      // Redirect to dashboard after successful login
+      setTimeout(() => {
+        setLocation("/dashboard");
+      }, 1000);
     } catch (error) {
       console.error("Auto-login error:", error);
       setIsSubmitting(false);
@@ -88,24 +70,7 @@ export default function DirectDemo() {
     try {
       console.log(`Attempting manual login with ${account.username}...`);
       
-      const response = await fetch("/api/demo-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: account.username,
-          password: account.password
-        }),
-        credentials: "include"
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Manual login successful:", data);
+      await demoLogin(account.username, account.password);
 
       toast({
         title: "Demo Login Successful!",

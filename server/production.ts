@@ -84,7 +84,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Adaptalyfe-Client'],
   optionsSuccessStatus: 200
 }));
 
@@ -121,6 +121,9 @@ app.get('/api/ping', (_req, res) => {
 });
 app.use('/api/auth', authLimiter);
 
+// Stripe signatures are calculated over the original request bytes. This must
+// be registered before the JSON parser, just like the development server.
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 

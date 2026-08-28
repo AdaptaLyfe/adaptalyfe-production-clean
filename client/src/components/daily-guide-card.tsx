@@ -153,6 +153,10 @@ function highlightIcon(type: DailyGuideHighlight["type"]) {
   }
 }
 
+function getDisplayTitle(title: string) {
+  return title.replace(/^\s*\[TEST\]\s*/i, "");
+}
+
 function priorityBadge(priority: DailyGuideHighlight["priority"]) {
   if (!priority || priority === "normal") return null;
   return (
@@ -272,7 +276,7 @@ export default function DailyGuideCard() {
                       <li key={i} className="flex items-start gap-2.5">
                         {highlightIcon(h.type)}
                         <span className="text-sm text-gray-700 flex-1 leading-snug">
-                          {h.title}
+                          {getDisplayTitle(h.title)}
                           {h.time && (
                             <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
                           )}
@@ -298,7 +302,7 @@ export default function DailyGuideCard() {
                 <li key={i} className="flex items-start gap-2.5">
                   {highlightIcon(h.type)}
                   <span className="text-sm text-gray-700 flex-1 leading-snug">
-                    {h.title}
+                    {getDisplayTitle(h.title)}
                     {h.time && (
                       <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
                     )}
@@ -321,7 +325,7 @@ export default function DailyGuideCard() {
                 <li key={i} className="flex items-start gap-2.5">
                   {highlightIcon(h.type)}
                   <span className="text-sm text-gray-700 flex-1 leading-snug">
-                    {h.title}
+                    {getDisplayTitle(h.title)}
                     {h.time && (
                       <span className="text-gray-400 ml-1.5 text-xs">· {h.time}</span>
                     )}
@@ -345,7 +349,7 @@ export default function DailyGuideCard() {
             <ArrowRight className={`w-4 h-4 shrink-0 mt-0.5 ${config.accentColor}`} />
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-semibold leading-snug ${config.accentColor}`}>
-                Up next: {nextAction.title}
+                Up next: {getDisplayTitle(nextAction.title)}
               </p>
               {nextAction.reason && (
                 <p className="text-xs text-gray-500 mt-0.5 leading-snug">{nextAction.reason}</p>

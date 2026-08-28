@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Crown, User, Key } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { demoLogin } from "@/lib/queryClient";
 
 export default function AdminDemo() {
   const [, setLocation] = useLocation();
@@ -45,26 +45,7 @@ export default function AdminDemo() {
     setIsSubmitting(true);
     
     try {
-      // Make direct fetch request to avoid any API client issues
-      const response = await fetch("/api/demo-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: account.username,
-          password: account.password
-        }),
-        credentials: "include"
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Login failed" }));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Demo login response:", data);
+      await demoLogin(account.username, account.password);
 
       toast({
         title: "Demo Login Successful!",
@@ -108,10 +89,7 @@ export default function AdminDemo() {
     setIsSubmitting(true);
     
     try {
-      await apiRequest("POST", "/api/demo-login", {
-        username,
-        password
-      });
+      await demoLogin(username, password);
 
       toast({
         title: "Demo Login Successful!",

@@ -86,11 +86,12 @@ const planFeatures: PlanFeatures = {
   }
 };
 
-function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
+function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuccess }: {
   planType: string;
   billingCycle: string;
+  subscriptionId: string;
+  intentType: "payment" | "setup";
   onSuccess: () => void;
-  paymentIntentId?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -119,45 +120,52 @@ function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
     setIsProcessing(true);
 
     try {
-      // Confirm payment with Stripe
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/subscription?success=true`,
-        },
-        redirect: 'if_required'
-      });
+      // Preserve only the subscription ID for an off-site 3DS return. On the
+      // return page, the server retrieves and verifies this subscription.
+      sessionStorage.setItem("pending_stripe_subscription_id", subscriptionId);
+      const confirmParams = {
+        return_url: `${window.location.origin}/subscription?success=true`,
+      };
+      const result = intentType === "setup"
+        ? await stripe.confirmSetup({ elements, confirmParams, redirect: "if_required" })
+        : await stripe.confirmPayment({ elements, confirmParams, redirect: "if_required" });
 
-      if (error) {
+      if (result.error) {
         toast({
-          title: "Payment Failed",
-          description: error.message,
+          title: intentType === "setup" ? "Could not save payment method" : "Payment Failed",
+          description: result.error.message,
           variant: "destructive"
         });
         return;
       }
 
-      // Payment confirmed — now activate subscription on the server
-      const intentId = paymentIntent?.id || paymentIntentId;
-      try {
-        await apiRequest('POST', '/api/upgrade-subscription', {
-          planType,
-          billingCycle,
-          paymentIntentId: intentId,
+      const completedIntent = intentType === "setup"
+        ? result.setupIntent
+        : result.paymentIntent;
+      if (!completedIntent || completedIntent.status !== "succeeded") {
+        toast({
+          title: "Payment confirmation pending",
+          description: "Your payment method is still being confirmed. Please try again shortly.",
+          variant: "destructive",
         });
-      } catch (upgradeErr) {
-        console.warn('Upgrade call failed, payment was still successful:', upgradeErr);
+        return;
       }
 
-      // Clear sessionStorage since payment is complete
-      sessionStorage.removeItem('pending_payment_intent_id');
-      sessionStorage.removeItem('pending_plan_type');
-      sessionStorage.removeItem('pending_billing_cycle');
+      // The server retrieves the Stripe subscription and verifies that its
+      // metadata/customer belong to this signed-in user before granting access.
+      const confirmationResponse = await apiRequest('POST', '/api/confirm-subscription', {
+        subscriptionId,
+      });
+      const confirmation = await confirmationResponse.json();
+      if (!confirmation.success) {
+        throw new Error(confirmation.message || "Subscription has not been activated yet");
+      }
 
       trackSubscriptionEvent("upgrade", planType);
+      sessionStorage.removeItem("pending_stripe_subscription_id");
       toast({
-        title: "Payment Successful!",
-        description: "Your subscription has been activated."
+        title: intentType === "setup" ? "Payment method saved!" : "Payment Successful!",
+        description: "Your recurring subscription has been activated."
       });
       onSuccess();
     } catch (err) {
@@ -179,42 +187,10 @@ function PaymentForm({ planType, billingCycle, onSuccess, paymentIntentId }: {
           
           if (loadTimeout) {
             return (
-              <div className="flex items-center justify-center h-32">
-                <div className="text-center space-y-3">
-                  <div className="text-red-600 mb-2">
-                    <p className="font-semibold">Stripe.js Loading Failed</p>
-                    <p className="text-sm">Using Demo Payment Mode</p>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Network issues prevented secure payment form loading
-                  </p>
-                  <div className="space-y-2">
-                    <Button 
-                      onClick={() => {
-                        window.location.href = `/direct-payment?plan=${planType}&billing=${billingCycle}`;
-                      }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white w-full"
-                    >
-                      Use Alternative Payment Form
-                    </Button>
-                    <Button 
-                      onClick={async () => {
-                        // Demo payment for testing
-                        setIsProcessing(true);
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-                        toast({
-                          title: "Subscription Activated!",
-                          description: `Your ${planType} plan is now active. Welcome to Adaptalyfe!`,
-                        });
-                        onSuccess();
-                        setIsProcessing(false);
-                      }}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Demo Payment - $${planFeatures[planType]?.price[billingCycle === 'annual' ? 'annual' : 'monthly']}
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-center h-32 text-center">
+                <div>
+                  <p className="font-semibold text-red-600">Secure payment form unavailable</p>
+                  <p className="text-sm text-gray-500 mt-1">Refresh the page and try again. Your plan has not been activated.</p>
                 </div>
               </div>
             );
@@ -259,7 +235,8 @@ export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const billingCycle = "monthly";
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [intentType, setIntentType] = useState<"payment" | "setup">("payment");
+  const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
   const [isApplePurchasing, setIsApplePurchasing] = useState(false);
@@ -293,30 +270,32 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
-      const savedPlanType = sessionStorage.getItem('pending_plan_type') || 'basic';
-      const savedBillingCycle = sessionStorage.getItem('pending_billing_cycle') || 'monthly';
-      const savedPaymentIntentId = sessionStorage.getItem('pending_payment_intent_id');
+      const subscriptionId = sessionStorage.getItem('pending_stripe_subscription_id');
+      if (!subscriptionId) {
+        toast({
+          title: "Subscription confirmation required",
+          description: "We could not identify your pending subscription. Please use the restore access button.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      sessionStorage.removeItem('pending_payment_intent_id');
-      sessionStorage.removeItem('pending_plan_type');
-      sessionStorage.removeItem('pending_billing_cycle');
-
-      // Tell the server to activate the subscription
-      apiRequest("POST", "/api/upgrade-subscription", {
-        planType: savedPlanType,
-        billingCycle: savedBillingCycle,
-        paymentIntentId: savedPaymentIntentId
-      }).then(() => {
+      apiRequest("POST", "/api/confirm-subscription", { subscriptionId }).then(async (response) => {
+        const confirmation = await response.json();
+        if (!confirmation.success) {
+          throw new Error(confirmation.message || "Subscription was not activated");
+        }
+        sessionStorage.removeItem('pending_stripe_subscription_id');
         queryClient.invalidateQueries({ queryKey: ["/api/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
         toast({ title: "Payment Successful!", description: "Your subscription is now active. Welcome to Adaptalyfe!" });
         setTimeout(() => setLocation('/dashboard'), 1500);
       }).catch(() => {
-        // Still redirect even if verification call fails — payment was confirmed by Stripe
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
-        toast({ title: "Subscription Activated!", description: "Your payment was received. Welcome to Adaptalyfe!" });
-        setTimeout(() => setLocation('/dashboard'), 1500);
+        toast({
+          title: "Subscription confirmation incomplete",
+          description: "Your payment was not activated. Use the restore access button after the page reloads.",
+          variant: "destructive",
+        });
       });
     }
   }, []);
@@ -324,11 +303,26 @@ export default function SubscriptionPage() {
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
   const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"] });
+  const hasActiveSubscription = user?.subscriptionStatus === 'active';
+  const activeSubscriptionLabel = user?.subscriptionPlatform === 'web'
+    ? 'website'
+    : user?.subscriptionPlatform === 'google_play'
+      ? 'Google Play'
+      : user?.subscriptionPlatform === 'app_store'
+        ? 'Apple App Store'
+        : 'another platform';
 
   // Calculate trial days remaining
   const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
 
   const handleGooglePlayPurchase = async (planType: string) => {
+    if (hasActiveSubscription) {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     setIsGooglePlayPurchasing(true);
     setSelectedPlan(planType);
     try {
@@ -372,6 +366,13 @@ export default function SubscriptionPage() {
   };
 
   const handleApplePurchase = async (planType: string) => {
+    if (hasActiveSubscription) {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     setIsApplePurchasing(true);
     setSelectedPlan(planType);
     try {
@@ -433,17 +434,12 @@ export default function SubscriptionPage() {
         toast({ title: "No Purchases Found", description: "No previous subscriptions found on this Google account." });
         return;
       }
-      const response = await fetch('/api/google-play/restore-purchases', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          purchases: purchases.map(p => ({
-            purchaseToken: p.purchaseToken,
-            productId: p.productId,
-            orderId: p.orderId,
-          }))
-        }),
+      const response = await apiRequest('POST', '/api/google-play/restore-purchases', {
+        purchases: purchases.map(p => ({
+          purchaseToken: p.purchaseToken,
+          productId: p.productId,
+          orderId: p.orderId,
+        }))
       });
       const data = await response.json();
       if (data.restored) {
@@ -473,13 +469,8 @@ export default function SubscriptionPage() {
       
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
-        if (data.paymentIntentId) {
-          setPaymentIntentId(data.paymentIntentId);
-          // Store for 3D Secure redirect recovery
-          sessionStorage.setItem('pending_payment_intent_id', data.paymentIntentId);
-          sessionStorage.setItem('pending_plan_type', selectedPlan || 'basic');
-          sessionStorage.setItem('pending_billing_cycle', billingCycle);
-        }
+        setIntentType(data.intentType === "setup" ? "setup" : "payment");
+        setStripeSubscriptionId(data.subscriptionId);
       } else if (data.status === 'active' || data.status === 'trialing') {
         trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
         toast({
@@ -509,6 +500,13 @@ export default function SubscriptionPage() {
   });
 
   const handlePlanSelect = (planType: string) => {
+    if (hasActiveSubscription && user?.subscriptionPlatform !== 'web') {
+      toast({
+        title: "Subscription already active",
+        description: `Your subscription is already active and managed through ${activeSubscriptionLabel}.`,
+      });
+      return;
+    }
     if (onAndroid) {
       handleGooglePlayPurchase(planType);
       return;
@@ -524,6 +522,7 @@ export default function SubscriptionPage() {
   const handlePaymentSuccess = () => {
     setSelectedPlan(null);
     setClientSecret(null);
+    setStripeSubscriptionId(null);
     queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
     setTimeout(() => setLocation('/dashboard'), 1500);
@@ -613,11 +612,7 @@ export default function SubscriptionPage() {
                   if (!user) { setLocation('/login'); return; }
                   try {
                     toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
-                    const res = await fetch('/api/recover-subscription', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      credentials: 'include'
-                    });
+                    const res = await apiRequest('POST', '/api/recover-subscription');
                     const data = await res.json();
                     if (res.ok) {
                       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
@@ -641,7 +636,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Payment Form Modal */}
-        {clientSecret && selectedPlan && (
+        {clientSecret && selectedPlan && stripeSubscriptionId && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <Card className="w-full max-w-md bg-white shadow-2xl border-2">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -661,13 +656,18 @@ export default function SubscriptionPage() {
                   <PaymentForm 
                     planType={selectedPlan}
                     billingCycle={billingCycle}
+                    subscriptionId={stripeSubscriptionId}
+                    intentType={intentType}
                     onSuccess={handlePaymentSuccess}
-                    paymentIntentId={paymentIntentId}
                   />
                 </StripeWrapper>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setSelectedPlan(null); setClientSecret(null); }}
+                  onClick={() => {
+                    setSelectedPlan(null);
+                    setClientSecret(null);
+                    setStripeSubscriptionId(null);
+                  }}
                   className="w-full mt-4 bg-gray-50 hover:bg-gray-100"
                 >
                   Cancel
@@ -719,13 +719,19 @@ export default function SubscriptionPage() {
                   ))}
                 </ul>
                 
-                {user?.subscriptionTier === planKey && user?.subscriptionStatus === 'active' ? (
+                {hasActiveSubscription ? (
                   <div className="space-y-2">
                     <Button disabled className="w-full">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Current Plan
+                      {user?.subscriptionTier === planKey ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Current Plan
+                        </>
+                      ) : (
+                        "Subscription Already Active"
+                      )}
                     </Button>
-                    {planKey === 'family' && (
+                    {planKey === 'family' && user?.subscriptionTier === planKey && (
                       <Button
                         variant="outline"
                         className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
@@ -759,7 +765,7 @@ export default function SubscriptionPage() {
         </div>
 
         {/* Restore Purchases (Android + iOS) */}
-        {onNative && (
+        {onNative && !hasActiveSubscription && (
           <div className="mt-8 text-center">
             <Button
               variant="outline"
@@ -777,7 +783,23 @@ export default function SubscriptionPage() {
         )}
 
         {/* Platform Payment Notice */}
-        {onAndroid && (
+        {onAndroid && hasActiveSubscription && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
+              <Smartphone className="w-4 h-4" />
+              Your {activeSubscriptionLabel} subscription works in this app
+            </div>
+          </div>
+        )}
+        {onIOS && hasActiveSubscription && (
+          <div className="mt-4 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
+              <Smartphone className="w-4 h-4" />
+              Your {activeSubscriptionLabel} subscription works in this app
+            </div>
+          </div>
+        )}
+        {onAndroid && !hasActiveSubscription && (
           <div className="mt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm border border-green-200">
               <Smartphone className="w-4 h-4" />
@@ -785,7 +807,7 @@ export default function SubscriptionPage() {
             </div>
           </div>
         )}
-        {onIOS && (
+        {onIOS && !hasActiveSubscription && (
           <div className="mt-4 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 text-gray-700 rounded-full text-sm border border-gray-200">
               <Smartphone className="w-4 h-4" />
@@ -811,11 +833,7 @@ export default function SubscriptionPage() {
                     }
                     try {
                       toast({ title: "Checking your payment...", description: "Looking up your account in Stripe." });
-                      const res = await fetch('/api/recover-subscription', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                      });
+                      const res = await apiRequest('POST', '/api/recover-subscription');
                       const data = await res.json();
                       if (res.ok) {
                         queryClient.invalidateQueries({ queryKey: ["/api/user"] });

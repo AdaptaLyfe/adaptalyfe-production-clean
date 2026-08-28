@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, User, Crown } from "lucide-react";
+import { demoLogin } from "@/lib/queryClient";
 
 export default function DemoLoginSimple() {
   const [username, setUsername] = useState("");
@@ -23,22 +24,7 @@ export default function DemoLoginSimple() {
     setMessage("");
     
     try {
-      const response = await fetch("/api/demo-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-        credentials: "include"
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Login failed" }));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("Login successful:", data);
+      await demoLogin(username, password);
       
       setMessage("Login successful! Redirecting to dashboard...");
       

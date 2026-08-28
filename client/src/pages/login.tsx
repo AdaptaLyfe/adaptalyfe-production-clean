@@ -63,12 +63,13 @@ export default function Login() {
       // Get user data to ensure session is properly established
       const userData = await response.json();
 
-      // Store session token for mobile auth (if provided)
-      if (userData.sessionToken) {
+      // Browsers use the HttpOnly cookie session. Only a native Capacitor app
+      // keeps the independent bearer token returned by the API.
+      if (userData.sessionToken && isNativeMobile()) {
         setSessionToken(userData.sessionToken);
         console.log("✅ Session token saved for mobile auth");
-        trackLogin("password");
       }
+      trackLogin("password");
 
       toast({
         title: "Login Successful!",

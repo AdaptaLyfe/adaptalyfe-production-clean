@@ -1,3 +1,5 @@
+import { apiRequest } from "@/lib/queryClient";
+
 const APPLE_PRODUCT_IDS = {
   basic_monthly: 'adaptalyfe_basic_monthly',
   premium_monthly: 'adaptalyfe_premium_monthly',
@@ -174,11 +176,10 @@ export async function verifyPurchaseOnServer(
   transactionId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch('/api/apple/verify-purchase', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ receiptData, productId, transactionId }),
+    const response = await apiRequest('POST', '/api/apple/verify-purchase', {
+      receiptData,
+      productId,
+      transactionId,
     });
     const data = await response.json();
     if (!response.ok) {

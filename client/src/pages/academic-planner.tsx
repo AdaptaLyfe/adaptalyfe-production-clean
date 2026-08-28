@@ -126,8 +126,7 @@ export default function AcademicPlanner() {
   const { data: classes = [], isLoading: classesLoading, refetch: refetchClasses } = useQuery({
     queryKey: ["/api/academic-classes"],
     queryFn: async () => {
-      const response = await fetch('/api/academic-classes');
-      if (!response.ok) throw new Error('Failed to fetch classes');
+      const response = await apiRequest("GET", "/api/academic-classes");
       return response.json();
     },
     staleTime: 0, // Always refetch
@@ -137,8 +136,7 @@ export default function AcademicPlanner() {
   const { data: assignments = [], isLoading: assignmentsLoading, refetch: refetchAssignments } = useQuery({
     queryKey: ["/api/assignments"],
     queryFn: async () => {
-      const response = await fetch('/api/assignments');
-      if (!response.ok) throw new Error('Failed to fetch assignments');
+      const response = await apiRequest("GET", "/api/assignments");
       return response.json();
     },
     staleTime: 0, // Always refetch
@@ -148,8 +146,7 @@ export default function AcademicPlanner() {
   const { data: studySessions = [], isLoading: studyLoading, refetch: refetchSessions } = useQuery({
     queryKey: ["/api/study-sessions"],
     queryFn: async () => {
-      const response = await fetch('/api/study-sessions');
-      if (!response.ok) throw new Error('Failed to fetch study sessions');
+      const response = await apiRequest("GET", "/api/study-sessions");
       return response.json();
     },
     staleTime: 0,
@@ -159,8 +156,7 @@ export default function AcademicPlanner() {
   const { data: campusLocations = [], isLoading: locationsLoading } = useQuery({
     queryKey: ["/api/campus-locations"],
     queryFn: async () => {
-      const response = await fetch('/api/campus-locations');
-      if (!response.ok) throw new Error('Failed to fetch locations');
+      const response = await apiRequest("GET", "/api/campus-locations");
       return response.json();
     },
     staleTime: 0,
@@ -170,8 +166,7 @@ export default function AcademicPlanner() {
   const { data: campusTransport = [], isLoading: transportLoading } = useQuery({
     queryKey: ["/api/campus-transport"],
     queryFn: async () => {
-      const response = await fetch('/api/campus-transport');
-      if (!response.ok) throw new Error('Failed to fetch transport');
+      const response = await apiRequest("GET", "/api/campus-transport");
       return response.json();
     },
     staleTime: 0,
@@ -181,8 +176,7 @@ export default function AcademicPlanner() {
   const { data: studyGroups = [], isLoading: groupsLoading } = useQuery({
     queryKey: ["/api/study-groups"],
     queryFn: async () => {
-      const response = await fetch('/api/study-groups');
-      if (!response.ok) throw new Error('Failed to fetch study groups');
+      const response = await apiRequest("GET", "/api/study-groups");
       return response.json();
     },
     staleTime: 0,
@@ -873,20 +867,12 @@ export default function AcademicPlanner() {
                               e.preventDefault();
                               console.log("Complete button clicked for session:", session.id);
                               // Complete the session via API
-                              fetch(`/api/study-sessions/${session.id}`, {
-                                method: 'PATCH',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
+                              apiRequest("PATCH", `/api/study-sessions/${session.id}`, {
                                   completedAt: new Date().toISOString(),
                                   effectiveness: 4
-                                })
-                              }).then(response => {
-                                if (response.ok) {
-                                  console.log("Session completed successfully");
-                                  queryClient.invalidateQueries({ queryKey: ["/api/study-sessions"] });
-                                } else {
-                                  console.error("Failed to complete session:", response.status);
-                                }
+                              }).then(() => {
+                                console.log("Session completed successfully");
+                                queryClient.invalidateQueries({ queryKey: ["/api/study-sessions"] });
                               }).catch(err => console.error("Failed to complete session:", err));
                             }}
                           >

@@ -1,0 +1,54 @@
+I have an existing project with a **Financial** section that contains **Income** and **Expense** records.
+
+I want to add a **Delete option only** for both Income and Expense records.
+
+Before making any changes, please analyze my existing project structure, Financial components, and related backend/API/database code to understand how Income and Expense data is currently stored and displayed.
+
+Requirements:
+
+1. Add a **Delete button or trash icon** for every Income record.
+
+2. Add a **Delete button or trash icon** for every Expense record.
+
+3. When the user clicks the Delete option, show a confirmation dialog:
+
+   **"Are you sure you want to delete this record?"**
+
+4. If the user confirms:
+
+   * Delete the selected Income or Expense record.
+   * Remove it from the UI immediately.
+   * Update the application state correctly.
+   * If the project uses a backend, API, or database, permanently delete the record there as well.
+
+5. If the user cancels, do not delete anything.
+
+6. After deletion, make sure all financial calculations update correctly, including:
+
+   * Total Income
+   * Total Expenses
+   * Balance or remaining amount
+   * Any charts, summaries, or statistics related to the deleted record
+
+7. Do not add or modify the Edit functionality yet. **Only implement the Delete feature.**
+
+8. Do not break or change any existing functionality, including:
+
+   * Adding Income
+   * Adding Expenses
+   * Existing financial calculations
+   * Existing UI and design
+
+9. Use the same coding style, components, API structure, and UI design already used in my project.
+
+10. Handle errors properly. If deletion fails, show a user-friendly error message and do not incorrectly remove the record.
+
+After implementing, test the following:
+
+* Add an Income and delete it.
+* Add an Expense and delete it.
+* Cancel the delete confirmation.
+* Verify totals and balance update correctly.
+* Refresh the page and verify deleted records do not return if data is stored in a database.
+
+Finally, clearly explain which files were changed and what changes were made.

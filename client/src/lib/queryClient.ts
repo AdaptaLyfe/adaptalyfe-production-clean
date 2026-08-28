@@ -18,6 +18,16 @@ function getApiUrl(path: string): string {
 // Session token management for mobile auth
 const SESSION_TOKEN_KEY = 'adaptalyfe_session_token';
 
+export function isNativeClient(): boolean {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return Boolean((window as any).Capacitor?.isNativePlatform?.());
+  } catch {
+    return false;
+  }
+}
+
 // Helper to ensure localStorage is available and working
 function safeLocalStorageGet(key: string): string | null {
   try {
@@ -59,10 +69,12 @@ function safeLocalStorageRemove(key: string): void {
 }
 
 export function setSessionToken(token: string): void {
+  if (!isNativeClient()) return;
   safeLocalStorageSet(SESSION_TOKEN_KEY, token);
 }
 
 export function getSessionToken(): string | null {
+  if (!isNativeClient()) return null;
   return safeLocalStorageGet(SESSION_TOKEN_KEY);
 }
 
@@ -104,6 +116,10 @@ function getAuthHeaders(): HeadersInit {
   const sessionToken = getSessionToken();
   const headers: HeadersInit = {};
   
+  if (isNativeClient()) {
+    headers['X-Adaptalyfe-Client'] = 'native';
+  }
+
   if (sessionToken) {
     headers['Authorization'] = `Bearer ${sessionToken}`;
   }
@@ -133,11 +149,25 @@ export async function apiRequest(
       ...authHeaders, // Include Authorization header if session token exists
     },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: API_CONFIG.credentials,
+    credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
   });
 
   await throwIfResNotOk(res);
   return res;
+}
+
+export async function demoLogin(username: string, password: string) {
+  const response = await apiRequest("POST", "/api/demo-login", {
+    username,
+    password,
+  });
+  const data = await response.json();
+
+  if (data.sessionToken) {
+    setSessionToken(data.sessionToken);
+  }
+
+  return data;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -153,7 +183,7 @@ export const getQueryFn: <T>(options: {
       
       const res = await fetch(fullUrl, {
         headers: authHeaders, // Include Authorization header if session token exists
-        credentials: API_CONFIG.credentials,
+        credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
       });
 
       console.log("Query response status:", res.status);

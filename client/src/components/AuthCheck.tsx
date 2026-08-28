@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { getSessionToken, clearSessionToken } from "@/lib/queryClient";
+import { getQueryFn, getSessionToken, clearSessionToken } from "@/lib/queryClient";
 
 interface AuthCheckProps {
   children: React.ReactNode;
@@ -12,36 +12,19 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
   const [, setLocation] = useLocation();
   const [authState, setAuthState] = useState<'checking' | 'authenticated' | 'unauthenticated'>('checking');
   
-  // CRITICAL: Check for session token FIRST - block all rendering until verified
+  // Native clients send a bearer token while browsers rely on their HttpOnly
+  // cookie. Both session types are verified through the same endpoint.
   const sessionToken = getSessionToken();
-  
-  // Immediate redirect if no token - don't even start the query
-  useEffect(() => {
-    if (!sessionToken) {
-      const currentPath = window.location.pathname;
-      if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
-        console.log('🚫 AuthCheck: No session token, redirecting to login');
-        setAuthState('unauthenticated');
-        setLocation(redirectTo);
-      }
-    }
-  }, [sessionToken, setLocation, redirectTo]);
-  
-  // Only run the API check if we have a session token
+
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/user'],
-    retry: 2,
+    queryFn: getQueryFn({ on401: 'returnNull' }),
+    retry: 1,
     retryDelay: 1000,
-    enabled: !!sessionToken // Only query if token exists
   });
 
   // Handle API response
   useEffect(() => {
-    if (!sessionToken) {
-      // Already handled above
-      return;
-    }
-    
     if (isLoading) {
       setAuthState('checking');
       return;
@@ -53,8 +36,10 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
     }
     
     // If not loading and user is null (401 returns null, not an error), treat as unauthenticated
-    console.log('AuthCheck: No user returned (401 or session expired), clearing token and redirecting to login');
-    clearSessionToken(); // Clear stale token so next visit goes straight to login
+    console.log('AuthCheck: No user returned (401 or session expired), redirecting to login');
+    if (sessionToken) {
+      clearSessionToken(); // Clear stale native token so next visit goes straight to login
+    }
     setAuthState('unauthenticated');
     const currentPath = window.location.pathname;
     if (!['/login', '/register', '/', '/demo', '/landing'].includes(currentPath)) {
@@ -64,18 +49,6 @@ export default function AuthCheck({ children, redirectTo = "/login" }: AuthCheck
 
   // CRITICAL: Block ALL rendering until we know auth state
   // This prevents dashboard from trying to render before we redirect
-  
-  // No token = don't render anything, redirect is happening
-  if (!sessionToken) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to login...</p>
-        </div>
-      </div>
-    );
-  }
   
   // Still checking = show loading
   if (authState === 'checking' || isLoading) {

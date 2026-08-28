@@ -35,6 +35,8 @@ const budgetSchema = z.object({
   description: z.string().optional(),
 });
 
+const budgetAmountPresets = Array.from({ length: 20 }, (_, index) => ((index + 1) / 10).toFixed(1));
+
 const savingsGoalSchema = z.object({
   title: z.string().min(1, "Goal title is required"),
   description: z.string().optional(),
@@ -186,6 +188,41 @@ export default function Financial() {
         description: "Failed to add budget entry",
         variant: "destructive",
       });
+    },
+  });
+
+  const deleteBudgetMutation = useMutation({
+    mutationFn: async (entryId: number) => {
+      return apiRequest("DELETE", `/api/budget-entries/${entryId}`);
+    },
+    onMutate: async (entryId) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/budget-entries"] });
+
+      const previousEntries = queryClient.getQueryData<BudgetEntry[]>(["/api/budget-entries"]);
+      queryClient.setQueryData<BudgetEntry[]>(["/api/budget-entries"], (currentEntries = []) =>
+        currentEntries.filter(entry => entry.id !== entryId)
+      );
+
+      return { previousEntries };
+    },
+    onError: (_error, _entryId, context) => {
+      if (context?.previousEntries) {
+        queryClient.setQueryData(["/api/budget-entries"], context.previousEntries);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete this record. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Record deleted",
+        description: "The financial record was permanently deleted.",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/budget-entries"] });
     },
   });
 
@@ -496,13 +533,31 @@ export default function Financial() {
                                   <FormItem>
                                     <FormLabel>Amount</FormLabel>
                                     <FormControl>
-                                      <Input 
-                                        type="number" 
-                                        step="0.01" 
-                                        placeholder="0.00"
-                                        {...field}
-                                        onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                                      />
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          step="0.01"
+                                          placeholder="0.00"
+                                          className="flex-1 min-w-0"
+                                          {...field}
+                                          onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                                        />
+                                        <Select
+                                          value={budgetAmountPresets.includes(field.value.toFixed(1)) ? field.value.toFixed(1) : ""}
+                                          onValueChange={value => field.onChange(parseFloat(value))}
+                                        >
+                                          <SelectTrigger className="h-11 w-28 shrink-0" aria-label="Choose a predefined amount">
+                                            <SelectValue placeholder="Presets" />
+                                          </SelectTrigger>
+                                          <SelectContent className="max-h-60">
+                                            {budgetAmountPresets.map(amount => (
+                                              <SelectItem key={amount} value={amount}>
+                                                {amount}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -587,7 +642,7 @@ export default function Financial() {
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Transactions</h3>
                     {budgetEntries.length > 0 ? (
                       <div className="space-y-3">
-                        {budgetEntries.slice(-5).reverse().map((entry) => (
+                        {budgetEntries.slice().reverse().map((entry) => (
                           <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center space-x-3">
                               <div className={`w-3 h-3 rounded-full ${
@@ -598,11 +653,29 @@ export default function Financial() {
                                 <p className="text-sm text-gray-600">{entry.description || 'No description'}</p>
                               </div>
                             </div>
-                            <span className={`font-semibold ${
-                              entry.type === 'income' ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                              {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount)}
-                            </span>
+                            <div className="flex items-center gap-3">
+                              <span className={`font-semibold ${
+                                entry.type === 'income' ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount)}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9 w-9 p-0 text-red-600 hover:bg-red-100 hover:text-red-700"
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to delete this record?")) {
+                                    deleteBudgetMutation.mutate(entry.id);
+                                  }
+                                }}
+                                disabled={deleteBudgetMutation.isPending}
+                                data-testid={`button-delete-budget-entry-${entry.id}`}
+                                aria-label={`Delete ${entry.type} record for ${entry.category}`}
+                                title="Delete record"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>

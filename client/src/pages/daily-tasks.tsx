@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Circle, Star, Plus, Clock, Edit3, X } from "lucide-react";
+import { CheckCircle, Circle, Star, Plus, Clock, Edit3, Trash2, X } from "lucide-react";
 
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
@@ -190,6 +190,41 @@ export default function DailyTasks() {
         description: "Failed to update task. Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return apiRequest("DELETE", `/api/daily-tasks/${taskId}`);
+    },
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
+      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
+        currentTasks.filter(task => task.id !== taskId)
+      );
+
+      return { previousTasks };
+    },
+    onError: (_error, _taskId, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-tasks"], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Task deleted",
+        description: "The task was permanently deleted.",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
     },
   });
 
@@ -385,6 +420,22 @@ export default function DailyTasks() {
                         data-testid={`button-edit-task-${task.id}`}
                       >
                         <Edit3 className="text-blue-600" size={18} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-red-100 rounded-lg"
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this task?")) {
+                            deleteTaskMutation.mutate(task.id);
+                          }
+                        }}
+                        disabled={deleteTaskMutation.isPending}
+                        data-testid={`button-delete-task-${task.id}`}
+                        aria-label={`Delete ${task.title}`}
+                        title="Delete task"
+                      >
+                        <Trash2 className="text-red-600" size={18} />
                       </Button>
                       {task.isCompleted && (
                         <div className="w-11 h-11 sm:w-12 sm:h-12 bg-sunny-orange rounded-full flex items-center justify-center">

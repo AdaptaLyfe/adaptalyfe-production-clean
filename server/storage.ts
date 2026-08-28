@@ -74,6 +74,7 @@ export interface IStorage {
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
   updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined>;
+  deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
   // Bills
   getBillsByUser(userId: number): Promise<Bill[]>;
@@ -114,6 +115,7 @@ export interface IStorage {
   // Budget Entries
   getBudgetEntriesByUser(userId: number): Promise<BudgetEntry[]>;
   createBudgetEntry(entry: InsertBudgetEntry): Promise<BudgetEntry>;
+  deleteBudgetEntry(entryId: number, userId: number): Promise<boolean>;
 
   // Budget Categories
   getBudgetCategoriesByUser(userId: number): Promise<BudgetCategory[]>;
@@ -325,7 +327,7 @@ export interface IStorage {
   getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined>;
   createSleepSession(session: InsertSleepSession): Promise<SleepSession>;
   updateSleepSession(sessionId: number, updates: Partial<InsertSleepSession>): Promise<SleepSession | undefined>;
-  deleteSleepSession(sessionId: number): Promise<boolean>;
+  deleteSleepSession(sessionId: number, userId: number): Promise<boolean>;
 
   // Health Metrics
   getHealthMetricsByUser(userId: number, metricType?: string, startDate?: string, endDate?: string): Promise<HealthMetric[]>;
@@ -616,6 +618,13 @@ export class DatabaseStorage implements IStorage {
     return task || undefined;
   }
 
+  async deleteDailyTask(taskId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(dailyTasks)
+      .where(and(eq(dailyTasks.id, taskId), eq(dailyTasks.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
   async getBillsByUser(userId: number): Promise<Bill[]> {
     return await db.select().from(bills).where(eq(bills.userId, userId));
   }
@@ -865,6 +874,13 @@ export class DatabaseStorage implements IStorage {
       console.error("Error in createBudgetEntry:", error);
       throw error;
     }
+  }
+
+  async deleteBudgetEntry(entryId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(budgetEntries)
+      .where(and(eq(budgetEntries.id, entryId), eq(budgetEntries.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Budget Categories
@@ -2303,8 +2319,13 @@ export class DatabaseStorage implements IStorage {
     return updatedSession || undefined;
   }
 
-  async deleteSleepSession(sessionId: number): Promise<boolean> {
-    const result = await db.delete(sleepSessions).where(eq(sleepSessions.id, sessionId));
+  async deleteSleepSession(sessionId: number, userId: number): Promise<boolean> {
+    const result = await db.delete(sleepSessions).where(
+      and(
+        eq(sleepSessions.id, sessionId),
+        eq(sleepSessions.userId, userId)
+      )
+    );
     return (result.rowCount ?? 0) > 0;
   }
 
