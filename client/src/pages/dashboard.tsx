@@ -10,6 +10,7 @@ import QuickActions from "@/components/quick-actions/QuickActions";
 import DailyTasksModule from "@/components/daily-tasks-module";
 import DailySummary from "@/components/daily-summary";
 import DailyGuideCard from "@/components/daily-guide-card";
+import TodayFlowCard from "@/components/ai-ready/today-flow";
 
 const FinancialModule = lazy(() => import("@/components/financial-module"));
 const MoodModule = lazy(() => import("@/components/mood-module"));
@@ -144,6 +145,11 @@ export default function Dashboard() {
         </div>
 
         <QuickActions />
+
+        {/* AI-ready Today story — uses live task/event data and isolated demo states only when needed */}
+        <div className="mt-6">
+          <TodayFlowCard />
+        </div>
 
         {/* Adaptalyfe Guide — loads asynchronously, does not block the dashboard */}
         <div className="mt-6">

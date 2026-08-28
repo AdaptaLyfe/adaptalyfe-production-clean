@@ -73,6 +73,7 @@ import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { trackTaskCompletion, trackFeatureUsage } from "@/lib/firebase";
 import type { DailyTask } from "@shared/schema";
+import { TaskJourneySummary } from "@/components/ai-ready";
 
 
 export default function DailyTasks() {
@@ -282,6 +283,10 @@ export default function DailyTasks() {
   const completedTasks = (tasks || []).filter(task => task.isCompleted).length;
   const totalTasks = (tasks || []).length;
   const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const nextTask = (tasks || []).find(task => !task.isCompleted);
+  const remainingMinutes = (tasks || [])
+    .filter(task => !task.isCompleted)
+    .reduce((total, task) => total + (task.estimatedMinutes || 0), 0);
 
   const tasksByCategory = (tasks || []).reduce((acc, task) => {
     if (!acc[task.category]) {
@@ -318,6 +323,14 @@ export default function DailyTasks() {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Daily Tasks</h1>
+        <div className="mb-4">
+          <TaskJourneySummary
+            completedTasks={completedTasks}
+            totalTasks={totalTasks}
+            nextTaskTitle={nextTask?.title}
+            remainingMinutes={remainingMinutes}
+          />
+        </div>
         <Card className="border-t-4 border-vibrant-green">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3">

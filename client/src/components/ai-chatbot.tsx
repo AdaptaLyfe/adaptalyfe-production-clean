@@ -428,12 +428,13 @@ export default function AIChatbot() {
   return (
     <>
       {/* Chatbot Toggle Button */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 z-50 md:bottom-4">
         {!isOpen && !showFullChat && (
           <Button
             onClick={() => setIsOpen(true)}
             className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
-            title="Open AdaptAI Assistant"
+            title="Open AdaptAI Chat"
+            aria-label="Open AdaptAI Chat"
           >
             <Bot className="w-6 h-6 text-white" />
           </Button>
@@ -444,7 +445,7 @@ export default function AIChatbot() {
 
       {/* Full Screen Chat Dialog */}
       <Dialog open={showFullChat} onOpenChange={setShowFullChat}>
-        <DialogContent className="max-w-4xl h-[80vh] p-0">
+        <DialogContent className="h-[calc(100dvh-2rem)] w-[calc(100vw-1rem)] max-w-4xl p-0 md:h-[80vh]">
           <DialogHeader className="sr-only">
             <DialogTitle>AdaptAI Chat</DialogTitle>
             <DialogDescription>Full screen chat interface with the AdaptAI assistant</DialogDescription>

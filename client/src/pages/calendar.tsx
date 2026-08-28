@@ -25,6 +25,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
+import { EventPreparationCard } from "@/components/ai-ready";
 
 export default function Calendar() {
   const { isPremiumUser } = useSubscriptionEnforcement();
@@ -370,7 +371,7 @@ export default function Calendar() {
     }
 
     return (
-      <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden">
+      <div className="grid min-w-[760px] grid-cols-7 gap-0 overflow-hidden rounded-lg border border-gray-200">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="bg-gray-100 p-3 text-center font-semibold text-gray-700 border-b border-gray-200">
             {day}
@@ -522,6 +523,19 @@ export default function Calendar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {events.length > 0 && (
+            <EventPreparationCard
+              title={events[0].title}
+              time={events[0].time || undefined}
+              detail="See the day's related steps before moving into the next activity."
+              steps={events.slice(0, 4).map((event) => ({
+                id: event.id,
+                label: event.title,
+                completed: Boolean(event.completed),
+                detail: event.time || undefined,
+              }))}
+            />
+          )}
           {events.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No events scheduled for this day</p>
           ) : (
@@ -579,14 +593,14 @@ export default function Calendar() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <CalendarIcon className="w-8 h-8 text-blue-600" />
           Calendar
         </h1>
         
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
           <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -676,8 +690,8 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
+        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-4">
           <Button
             onClick={() => navigateDate('prev')}
             variant="outline"
@@ -735,7 +749,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 overflow-x-auto pb-1">
         {view === 'month' && renderMonthView()}
         {view === 'week' && renderWeekView()}
         {view === 'day' && renderDayView()}
