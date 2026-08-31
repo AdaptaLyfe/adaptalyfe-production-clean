@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { getSubscriptionManagementMessage } from "@/lib/subscription-management";
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -44,7 +45,13 @@ export default function SettingsPage() {
 
   // Get current user for locked settings checks
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
+  const { data: subscription } = useQuery<{ subscriptionPlatform?: string | null }>({
+    queryKey: ["/api/subscription"],
+  });
   const { data: orgMembership } = useQuery<any>({ queryKey: ["/api/org-codes/my"] });
+  const subscriptionManagementMessage = getSubscriptionManagementMessage(
+    subscription?.subscriptionPlatform ?? user?.subscriptionPlatform
+  );
 
   const redeemOrgCodeMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -254,7 +261,7 @@ export default function SettingsPage() {
           <CheckCircle className="w-6 h-6 flex-shrink-0" />
           <div>
             <p className="font-semibold capitalize">{user.subscriptionTier} Plan — Active</p>
-            <p className="text-sm text-white/80">Your subscription is active. Manage it in your Apple ID settings.</p>
+            <p className="text-sm text-white/80">{subscriptionManagementMessage}</p>
           </div>
         </div>
       )}
