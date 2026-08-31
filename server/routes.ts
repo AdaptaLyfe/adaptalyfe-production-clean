@@ -4422,6 +4422,28 @@ Provide a helpful, encouraging response:`;
           : 'pending';
       };
 
+      const getStripePeriodEndSeconds = (sub: any): number => {
+        // Stripe has returned the billing period on the subscription item in
+        // newer API versions, while older responses expose it on the
+        // subscription itself. Prefer the documented top-level field and
+        // support the item-level shape as a compatibility fallback.
+        const candidates = [
+          sub?.current_period_end,
+          sub?.items?.data?.[0]?.current_period_end,
+        ];
+        const periodEnd = candidates
+          .map((value) => typeof value === 'number' ? value : Number(value))
+          .find((value) => Number.isFinite(value) && value > 0);
+
+        if (periodEnd === undefined) {
+          throw new Error(
+            `Stripe subscription ${sub?.id || 'unknown'} has no valid current_period_end`
+          );
+        }
+
+        return periodEnd;
+      };
+
       const extendSubscription = async (
         stripeSubId: string,
         periodEnd: number,
@@ -4463,7 +4485,7 @@ Provide a helpful, encouraging response:`;
             const tierFromMeta = metadata.planType ? tierMap[metadata.planType] || metadata.planType : undefined;
             await extendSubscription(
               subId,
-              sub.current_period_end,
+              getStripePeriodEndSeconds(sub),
               appStatusForStripeSubscription(sub),
               tierFromMeta,
             );
@@ -4481,9 +4503,10 @@ Provide a helpful, encouraging response:`;
           };
           const user = await storage.getUserByStripeSubscriptionId(sub.id);
           if (user) {
+            const periodEnd = getStripePeriodEndSeconds(sub);
             await storage.updateUserSubscription(user.id, {
               subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
-              subscriptionExpiresAt: new Date(sub.current_period_end * 1000),
+              subscriptionExpiresAt: new Date(periodEnd * 1000),
             });
             console.log(`✅ Stripe webhook: updated user ${user.id} status=${sub.status}`);
           }
