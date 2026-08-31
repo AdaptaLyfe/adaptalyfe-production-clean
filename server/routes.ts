@@ -37,6 +37,26 @@ function getStripeInstance() {
   });
 }
 
+function getStripePeriodEndSeconds(subscription: any): number {
+  // Newer Stripe API versions may expose the billing period on the
+  // subscription item instead of the top-level subscription.
+  const candidates = [
+    subscription?.current_period_end,
+    subscription?.items?.data?.[0]?.current_period_end,
+  ];
+  const periodEnd = candidates
+    .map((value) => typeof value === "number" ? value : Number(value))
+    .find((value) => Number.isFinite(value) && value > 0);
+
+  if (periodEnd === undefined) {
+    throw new Error(
+      `Stripe subscription ${subscription?.id || "unknown"} has no valid current_period_end`
+    );
+  }
+
+  return periodEnd;
+}
+
 // Stripe instance is created dynamically when needed
 import { 
   insertDailyTaskSchema, insertBillSchema, insertBankAccountSchema, insertMoodEntrySchema, 
@@ -4422,28 +4442,6 @@ Provide a helpful, encouraging response:`;
           : 'pending';
       };
 
-      const getStripePeriodEndSeconds = (sub: any): number => {
-        // Stripe has returned the billing period on the subscription item in
-        // newer API versions, while older responses expose it on the
-        // subscription itself. Prefer the documented top-level field and
-        // support the item-level shape as a compatibility fallback.
-        const candidates = [
-          sub?.current_period_end,
-          sub?.items?.data?.[0]?.current_period_end,
-        ];
-        const periodEnd = candidates
-          .map((value) => typeof value === 'number' ? value : Number(value))
-          .find((value) => Number.isFinite(value) && value > 0);
-
-        if (periodEnd === undefined) {
-          throw new Error(
-            `Stripe subscription ${sub?.id || 'unknown'} has no valid current_period_end`
-          );
-        }
-
-        return periodEnd;
-      };
-
       const extendSubscription = async (
         stripeSubId: string,
         periodEnd: number,
@@ -4485,7 +4483,7 @@ Provide a helpful, encouraging response:`;
             const tierFromMeta = metadata.planType ? tierMap[metadata.planType] || metadata.planType : undefined;
             await extendSubscription(
               subId,
-              getStripePeriodEndSeconds(sub),
+               getStripePeriodEndSeconds(sub),
               appStatusForStripeSubscription(sub),
               tierFromMeta,
             );
@@ -4795,7 +4793,7 @@ Provide a helpful, encouraging response:`;
       if (isReadyToActivate) {
         const metadata = subscription.metadata;
         // Use Stripe's authoritative period end, not a calculated date
-        const expiresAt = new Date(subscription.current_period_end * 1000);
+        const expiresAt = new Date(getStripePeriodEndSeconds(subscription) * 1000);
         
         await storage.updateUserSubscription(user.id, {
           subscriptionTier: metadata.planType || 'premium',
