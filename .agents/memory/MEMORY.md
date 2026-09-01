@@ -3,3 +3,4 @@
 - [Cross-platform billing](cross-platform-billing.md) — one active entitlement works everywhere; never offer a second platform purchase.
 - [Concurrent client sessions](concurrent-client-sessions.md) — browser cookies and native bearer sessions are independent credentials for one account.
 - [Validation baseline](validation-baseline.md) — the full TypeScript check has unrelated legacy failures; use focused checks plus the production build for this area.
+- [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.
