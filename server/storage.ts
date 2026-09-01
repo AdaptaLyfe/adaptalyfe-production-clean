@@ -6,7 +6,7 @@ import {
   personalResources, personalDocuments, busSchedules, emergencyTreatmentPlans, geofences, geofenceEvents,
   notifications, userAchievements, streakTracking, voiceInteractions, quickResponses,
   messageReactions, activityPatterns, caregiverPermissions, lockedUserSettings, userCaregiverConnections,
-  caregiverInvitations, careRelationships, feedback,
+  caregiverInvitations, careRelationships, feedback, passwordResetTokens,
   academicClasses, assignments, studySessions, campusLocations, campusTransport, studyGroups, transitionSkills,
   rewards, userPointsBalance, pointsTransactions, rewardRedemptions, sleepSessions, healthMetrics,
   type User, type InsertUser, type DailyTask, type InsertDailyTask, type Bill, type InsertBill,
@@ -36,6 +36,7 @@ import {
   type CampusTransport, type InsertCampusTransport,
   type StudyGroup, type InsertStudyGroup, type TransitionSkill, type InsertTransitionSkill,
   type CaregiverInvitation, type InsertCaregiverInvitation, type CareRelationship, type InsertCareRelationship,
+  type PasswordResetToken, type InsertPasswordResetToken,
   calendarEvents, type CalendarEvent, type InsertCalendarEvent,
   type Reward, type InsertReward, type UserPointsBalance, type InsertUserPointsBalance,
   type PointsTransaction, type InsertPointsTransaction, type RewardRedemption, type InsertRewardRedemption,
@@ -45,18 +46,24 @@ import {
   familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, desc, gt, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserById(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
   updateUserStreak(userId: number, streakDays: number): Promise<User | undefined>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
   authenticateUser(username: string, password: string): Promise<User | null>;
+  invalidatePasswordResetTokens(userId: number): Promise<void>;
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
+  hasValidPasswordResetToken(tokenHash: string): Promise<boolean>;
+  resetPasswordWithToken(tokenHash: string, passwordHash: string): Promise<boolean>;
   getCurrentUser(): User | null;
   setCurrentUser(user: User | null): void;
   deleteUserAccount(userId: number): Promise<void>;
@@ -439,6 +446,14 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -495,11 +510,94 @@ export class DatabaseStorage implements IStorage {
   }
 
   async authenticateUser(username: string, password: string): Promise<User | null> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(and(eq(users.username, username), eq(users.password, password)));
-    return user || null;
+    const user = await this.getUserByUsername(username);
+    if (!user) return null;
+
+    const isHash = /^\$2[aby]?\$\d{2}\$/.test(user.password);
+    const valid = isHash
+      ? await bcrypt.compare(password, user.password)
+      : user.password === password;
+
+    if (!valid) return null;
+
+    if (!isHash) {
+      const passwordHash = await bcrypt.hash(password, 12);
+      return (await this.updateUser(user.id, { password: passwordHash })) || user;
+    }
+
+    return user;
+  }
+
+  async invalidatePasswordResetTokens(userId: number): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
+  }
+
+  async createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    await db
+      .delete(passwordResetTokens)
+      .where(or(
+        lt(passwordResetTokens.expiresAt, new Date()),
+        isNotNull(passwordResetTokens.usedAt),
+      ));
+    const [created] = await db.insert(passwordResetTokens).values(token).returning();
+    return created;
+  }
+
+  async hasValidPasswordResetToken(tokenHash: string): Promise<boolean> {
+    const [token] = await db
+      .select({ id: passwordResetTokens.id })
+      .from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.tokenHash, tokenHash),
+        isNull(passwordResetTokens.usedAt),
+        gt(passwordResetTokens.expiresAt, new Date()),
+      ));
+    return Boolean(token);
+  }
+
+  async resetPasswordWithToken(tokenHash: string, passwordHash: string): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tokenResult = await client.query<{ user_id: number }>(
+        `SELECT "user_id" FROM "password_reset_tokens"
+         WHERE "token_hash" = $1 AND "used_at" IS NULL AND "expires_at" > NOW()
+         FOR UPDATE`,
+        [tokenHash],
+      );
+
+      const token = tokenResult.rows[0];
+      if (!token) {
+        await client.query("ROLLBACK");
+        return false;
+      }
+
+      await client.query(
+        `UPDATE "users" SET "password" = $1 WHERE "id" = $2`,
+        [passwordHash, token.user_id],
+      );
+      const consumed = await client.query(
+        `UPDATE "password_reset_tokens" SET "used_at" = NOW()
+         WHERE "token_hash" = $1 AND "used_at" IS NULL`,
+        [tokenHash],
+      );
+
+      if (consumed.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        return false;
+      }
+
+      await client.query("COMMIT");
+      return true;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // ── Family Members ───────────────────────────────────────────────────────────

@@ -31,6 +31,8 @@ import LifeSkillsModule from "@/components/life-skills-module";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import AuthCheck from "@/components/AuthCheck";
 import AdminCheck from "@/components/AdminCheck";
 import SuperAdminCheck from "@/components/SuperAdminCheck";
@@ -42,6 +44,7 @@ import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import { getSessionToken } from "@/lib/queryClient";
 import { useFirebaseAnalytics } from "@/hooks/useFirebaseAnalytics";
+import { App as CapacitorApp } from "@capacitor/app";
 
 // Global error handler for Stripe loading issues
 const originalError = console.error;
@@ -90,13 +93,43 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = React.useState(true);
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
-  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location);
+    const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location);
+    const isPasswordRecoveryPage = ["/forgot-password", "/reset-password"].includes(location);
   useSubscriptionEnforcement();
   useFirebaseAnalytics();
   
   // IMMEDIATE session check - runs synchronously on every render
   const sessionToken = getSessionToken();
-  const shouldRedirectToDashboard = sessionToken && isAuthPage && location !== "/privacy-policy";
+   const shouldRedirectToDashboard = sessionToken && isAuthPage && !isPasswordRecoveryPage && location !== "/privacy-policy";
+
+  React.useEffect(() => {
+    const openResetLink = (url: string) => {
+      try {
+        const parsed = new URL(url);
+        const token = parsed.searchParams.get("token");
+        if (token) {
+          setLocation(`/reset-password?token=${encodeURIComponent(token)}`);
+        }
+      } catch (error) {
+        console.warn("Unable to parse app link:", error);
+      }
+    };
+
+    let listener: { remove: () => Promise<void> } | undefined;
+    void (async () => {
+      try {
+        listener = await CapacitorApp.addListener("appUrlOpen", ({ url }) => openResetLink(url));
+        const launchUrl = await CapacitorApp.getLaunchUrl();
+        if (launchUrl?.url) openResetLink(launchUrl.url);
+      } catch {
+        // The Capacitor App plugin is unavailable in a regular browser.
+      }
+    })();
+
+    return () => {
+      void listener?.remove();
+    };
+  }, [setLocation]);
   
   // Listen for service worker update signal — reload when new version is deployed
   React.useEffect(() => {
@@ -146,7 +179,7 @@ function App() {
     <ReactErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100">
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <SimpleNavigation />}
+       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <SimpleNavigation />}
       
       <main className="relative z-0 pt-16">
       <Switch>
@@ -159,6 +192,8 @@ function App() {
           return isMobile ? <MobileLogin /> : <Login />;
         }} />
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/demo" component={Dashboard} />
         
         <Route path="/dashboard">
@@ -329,7 +364,7 @@ function App() {
       </main>
       
       {/* Mobile bottom navigation - only show on authenticated pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <MobileBottomNavigation />}
+       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <MobileBottomNavigation />}
       
       {/* Runtime error handler to prevent Replit modal */}
       <RuntimeErrorHandler />

@@ -13,6 +13,8 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "./email-service";
 
 // Extend the session data interface
 declare module "express-session" {
@@ -55,6 +57,25 @@ function getStripePeriodEndSeconds(subscription: any): number {
   }
 
   return periodEnd;
+}
+
+function publicUser(user: any): any {
+  if (!user) return user;
+  const { password: _password, ...safeUser } = user;
+  return safeUser;
+}
+
+async function verifyAndUpgradePassword(user: any, password: string): Promise<boolean> {
+  const isHash = /^\$2[aby]?\$\d{2}\$/.test(user.password);
+  const valid = isHash
+    ? await bcrypt.compare(password, user.password)
+    : user.password === password;
+
+  if (valid && !isHash) {
+    await storage.updateUser(user.id, { password: await bcrypt.hash(password, 12) });
+  }
+
+  return valid;
 }
 
 // Stripe instance is created dynamically when needed
@@ -230,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           cookie: { ...cookie },
           userId: user.id,
-          user,
+          user: publicUser(user),
         } as any,
         (error: any) => {
           if (error) {
@@ -356,6 +377,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(401).json({ message: "Authentication required" });
   };
 
+  const genericResetResponse = {
+    message: "If an account with that email exists, we sent password reset instructions.",
+  };
+
+  app.post("/api/forgot-password", async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+
+    try {
+      if (email) {
+        const user = await storage.getUserByEmail(email);
+        if (user?.email) {
+          const rawToken = crypto.randomBytes(32).toString("base64url");
+          const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+          await storage.invalidatePasswordResetTokens(user.id);
+          await storage.createPasswordResetToken({
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          });
+
+          try {
+            const origin = `${req.protocol}://${req.get("host")}`;
+            await sendPasswordResetEmail({
+              to: user.email,
+              name: user.name,
+              token: rawToken,
+              origin,
+            });
+          } catch (emailError) {
+            console.error("Password reset email delivery failed:", emailError);
+          }
+        }
+      }
+    } catch (error) {
+      // Always return the same response, including when lookup or delivery fails.
+      console.error("Password reset request failed:", error);
+    }
+
+    return res.status(200).json(genericResetResponse);
+  });
+
+  app.get("/api/password-reset/validate", async (req, res) => {
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    if (!token) return res.status(400).json({ valid: false });
+
+    try {
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+      const valid = await storage.hasValidPasswordResetToken(tokenHash);
+      return res.json({ valid });
+    } catch (error) {
+      console.error("Password reset token validation failed:", error);
+      return res.json({ valid: false });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    const token = typeof req.body?.token === "string" ? req.body.token : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+    if (!token || password.length < 8 || password.length > 128) {
+      return res.status(400).json({ message: "The reset link is invalid or the password does not meet the requirements." });
+    }
+
+    try {
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+      const validToken = await storage.hasValidPasswordResetToken(tokenHash);
+      if (!validToken) {
+        return res.status(400).json({ message: "This reset link is invalid, expired, or has already been used." });
+      }
+      const passwordHash = await bcrypt.hash(password, 12);
+      const didReset = await storage.resetPasswordWithToken(tokenHash, passwordHash);
+      if (!didReset) {
+        return res.status(400).json({ message: "This reset link is invalid, expired, or has already been used." });
+      }
+
+      return res.json({ message: "Password reset successfully. You can now sign in." });
+    } catch (error) {
+      console.error("Password reset failed:", error);
+      return res.status(500).json({ message: "Unable to reset your password right now. Please request a new link." });
+    }
+  });
+
   // User registration endpoint
   app.post("/api/register", async (req, res) => {
     try {
@@ -376,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create new user
       const user = await storage.createUser({
         username,
-        password, // In production, this would be hashed
+        password: await bcrypt.hash(password, 12),
         name,
         email: email || null
       });
@@ -384,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!nativeClient) {
         // Browser sessions remain cookie-based.
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) reject(err);
@@ -427,7 +530,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByUsername(username);
       console.log("👤 User lookup result:", user ? `Found: ${user.username}` : "Not found");
       
-      if (!user || user.password !== password) {
+      if (!user || !(await verifyAndUpgradePassword(user, password))) {
         console.log("❌ Invalid credentials for:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -435,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!nativeClient) {
         // Browser sessions remain cookie-based.
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) {
@@ -488,14 +591,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Simple password check for demo (in production, use proper hashing)
-      if (user.password !== password) {
+      if (!(await verifyAndUpgradePassword(user, password))) {
         console.log("Password mismatch for user:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
       if (!nativeClient) {
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((error: any) => {
             if (error) {
