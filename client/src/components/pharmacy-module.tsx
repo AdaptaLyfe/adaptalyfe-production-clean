@@ -296,11 +296,11 @@ export default function PharmacyModule() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="medications" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-10">
-            <TabsTrigger value="medications" className="text-sm px-3">Medication List</TabsTrigger>
-            <TabsTrigger value="refills" className="text-sm px-3">Refill Reminders</TabsTrigger>
-            <TabsTrigger value="orders" className="text-sm px-3">Reminder History</TabsTrigger>
-            <TabsTrigger value="pharmacies" className="text-sm px-3">Pharmacy Notes</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 gap-1 h-auto p-1 sm:grid-cols-4">
+            <TabsTrigger value="medications" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Medication List</TabsTrigger>
+            <TabsTrigger value="refills" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Refill Reminders</TabsTrigger>
+            <TabsTrigger value="orders" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Reminder History</TabsTrigger>
+            <TabsTrigger value="pharmacies" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Pharmacy Notes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="medications" className="space-y-4">
