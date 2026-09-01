@@ -9,6 +9,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(GooglePlayBillingPlugin.class);
+        registerPlugin(ReportDownloadPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Set WebView background to Adaptalyfe green so the screen is never

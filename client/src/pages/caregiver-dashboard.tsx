@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format, subDays, isAfter } from "date-fns";
 import { jsPDF } from "jspdf";
+import { savePdfDocument } from "@/lib/report-download";
 import CaregiverControlPanel from "@/components/caregiver-control-panel";
 import { GuideInsight } from "@/components/ai-ready";
 
@@ -245,20 +246,24 @@ export default function CaregiverDashboard() {
 
       const safePatientName = reportData.patient.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "patient";
       const dateStamp = new Date().toISOString().split("T")[0];
-      doc.save(`medical-report-${safePatientName}-${dateStamp}.pdf`);
+      const downloadResult = await savePdfDocument(
+        doc,
+        `medical-report-${safePatientName}-${dateStamp}.pdf`,
+      );
 
       return {
         hasReportableData: recentMoods.length > 0 || dailyTaskList.length > 0 ||
           reportData.medications.length > 0 || reportData.upcomingAppointments.length > 0 ||
           reportData.emergencyContacts.length > 0,
+        downloadResult,
       };
     },
-    onSuccess: ({ hasReportableData }) => {
+    onSuccess: ({ hasReportableData, downloadResult }) => {
       toast({
         title: "Medical Report Generated",
         description: hasReportableData
-          ? `Comprehensive medical report for ${selectedUser?.userName} has been downloaded.`
-          : "No activity data was available, so a report with empty sections was downloaded.",
+          ? `Comprehensive medical report for ${selectedUser?.userName} was saved to ${downloadResult.location}.`
+          : `No activity data was available; an empty report was saved to ${downloadResult.location}.`,
       });
     },
     onError: (error: Error) => {
