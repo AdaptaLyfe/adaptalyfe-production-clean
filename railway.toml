@@ -1,5 +1,6 @@
 [build]
-builder = "NIXPACKS"
+builder = "RAILPACK"
+buildCommand = "NPM_CONFIG_PRODUCTION=false npm ci --include=dev && npm run build"
 
 [deploy]
 startCommand = "node dist/production.js"

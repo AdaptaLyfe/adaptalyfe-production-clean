@@ -1,4 +1,5 @@
 - [Adaptalyfe infra](adaptalyfe-infra.md) — staging URL, DATABASE_URL vs NEON_DATABASE_URL split, Railway vars, key auth/nav decisions.
+- [Railway build dependencies](railway-build-dependencies.md) — Railway builds must explicitly install dev dependencies before Vite/esbuild runs.
 - [Stripe renewal safety](stripe-renewal-safety.md) — trials require a saved card; staging Stripe credentials and webhook secrets stay test-only.
 - [Cross-platform billing](cross-platform-billing.md) — one active entitlement works everywhere; never offer a second platform purchase.
 - [Concurrent client sessions](concurrent-client-sessions.md) — browser cookies and native bearer sessions are independent credentials for one account.
