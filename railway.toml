@@ -1,6 +1,5 @@
 [build]
-builder = "RAILPACK"
-buildCommand = "NPM_CONFIG_REGISTRY=https://registry.npmjs.org/ NPM_CONFIG_PRODUCTION=false npm ci --include=dev && npm run build"
+builder = "NIXPACKS"
 
 [deploy]
 startCommand = "node dist/production.js"
