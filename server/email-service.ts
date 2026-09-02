@@ -41,7 +41,7 @@ export async function sendPasswordResetEmail({
   const safeName = escapeHtml(name || "there");
 
   sgMail.setApiKey(apiKey);
-  await sgMail.send({
+  const [response] = await sgMail.send({
     to,
     from: {
       email: fromEmail,
@@ -69,4 +69,11 @@ export async function sendPasswordResetEmail({
       </div>
     `,
   });
+
+  if (response.statusCode === 202) {
+    console.info("Password reset email SendGrid request accepted (HTTP 202).");
+  } else {
+    console.warn(`Password reset email SendGrid request returned HTTP ${response.statusCode}.`);
+    throw new Error("SendGrid did not accept the password reset email");
+  }
 }

@@ -405,14 +405,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               token: rawToken,
               origin,
             });
-          } catch (emailError) {
-            console.error("Password reset email delivery failed:", emailError);
+          } catch {
+            console.error("Password reset email delivery failed.");
           }
         }
       }
-    } catch (error) {
+    } catch {
       // Always return the same response, including when lookup or delivery fails.
-      console.error("Password reset request failed:", error);
+      console.error("Password reset request failed.");
     }
 
     return res.status(200).json(genericResetResponse);
@@ -426,8 +426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
       const valid = await storage.hasValidPasswordResetToken(tokenHash);
       return res.json({ valid });
-    } catch (error) {
-      console.error("Password reset token validation failed:", error);
+    } catch {
+      console.error("Password reset token validation failed.");
       return res.json({ valid: false });
     }
   });

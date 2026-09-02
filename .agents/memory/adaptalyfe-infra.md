@@ -23,3 +23,10 @@ DATABASE_URL, OPENAI_API_KEY, SESSION_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_
 - subscriptionStatus='active' is trusted as the sole auth gate on both client and server — no stripeSubscriptionId or expiry date required.
 - Mobile bottom nav uses Wouter setLocation (not window.history.replaceState) for Android WebView compatibility.
 - Daily guide sends browser localDate/localTime/timezone in POST body so AI uses user's local time, not server UTC.
+
+## Production schema changes
+Replit-managed production schema changes are applied through the Publish schema-diff flow; the production database query interface is read-only for agents.
+
+**Why:** Production DDL outside Publish is unsafe and unsupported, while development and production can be out of sync after a schema change.
+
+**How to apply:** Update the shared Drizzle schema and migration source, verify development, then publish and accept the non-destructive table/column creation prompt.
