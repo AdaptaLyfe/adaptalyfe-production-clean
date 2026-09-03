@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import { generateAdaptAIChatResponse, generateDailyGuide } from "./ai-service";
 import { buildTodayBriefing, isTodayBriefingRequest } from "./today-briefing";
+import { buildNextAction, isNextActionRequest } from "./next-action";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2295,6 +2296,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
+        : isNextActionRequest(message)
+        ? buildNextAction(context)
         : await generateAdaptAIChatResponse(message, context);
       
       res.json({ 
