@@ -10,6 +10,10 @@ import {
   buildTasksRoutinesResponse,
   isTasksRoutinesRequest,
 } from "./tasks-routines";
+import {
+  buildAppointmentTransitionResponse,
+  isAppointmentTransitionRequest,
+} from "./appointment-transitions";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2300,6 +2304,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
+        : isAppointmentTransitionRequest(message) &&
+          (message.trim().toLowerCase() !== "what's next?" ||
+            Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
+        ? buildAppointmentTransitionResponse(message, context)
         : isNextActionRequest(message)
         ? buildNextAction(context)
         : isTasksRoutinesRequest(message)
