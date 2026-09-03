@@ -4,6 +4,7 @@ import path from "path";
 import { storage } from "./storage";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import { generateAdaptAIChatResponse, generateDailyGuide } from "./ai-service";
+import { buildTodayBriefing, isTodayBriefingRequest } from "./today-briefing";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2292,7 +2293,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { name: typeof req.session.user?.name === "string" ? req.session.user.name : "" },
         clientTime
       );
-      const response = await generateAdaptAIChatResponse(message, context);
+      const response = isTodayBriefingRequest(message)
+        ? buildTodayBriefing(context)
+        : await generateAdaptAIChatResponse(message, context);
       
       res.json({ 
         message: response,

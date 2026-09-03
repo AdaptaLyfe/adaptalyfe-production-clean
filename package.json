@@ -10,6 +10,7 @@
     "check": "tsc",
     "test:chatbot-greeting": "tsx --test client/src/lib/chatbot-greeting.test.ts",
     "test:adaptai-context": "tsx --test server/ai-context.test.ts",
+    "test:today-briefing": "tsx --test server/today-briefing.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
