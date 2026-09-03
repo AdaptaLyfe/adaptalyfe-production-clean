@@ -12,6 +12,7 @@
     "test:adaptai-context": "tsx --test server/ai-context.test.ts",
     "test:today-briefing": "tsx --test server/today-briefing.test.ts",
     "test:next-action": "tsx --test server/next-action.test.ts",
+    "test:tasks-routines": "tsx --test server/tasks-routines.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
