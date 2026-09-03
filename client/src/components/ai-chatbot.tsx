@@ -10,6 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  claimDailyChatbotGreeting,
+  getChatbotGreeting,
+  getLocalDateKey,
+} from "@/lib/chatbot-greeting";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ChatInput } from "@/components/chat-input";
 import { 
@@ -34,7 +39,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'suggestion' | 'encouragement';
+  type?: 'text' | 'suggestion' | 'encouragement' | 'daily-greeting';
 }
 
 interface QuickSuggestion {
@@ -200,6 +205,38 @@ export default function AIChatbot() {
   const handleQuickSuggestion = (suggestion: QuickSuggestion) => {
     setInputMessage(suggestion.text);
   };
+
+  const openChat = useCallback(() => {
+    const openedAt = new Date();
+
+    if (user?.id && claimDailyChatbotGreeting(user.id, openedAt)) {
+      const greetingMessage: ChatMessage = {
+        id: `daily-greeting-${user.id}-${openedAt.getTime()}`,
+        role: "assistant",
+        content: getChatbotGreeting(user.name, openedAt),
+        timestamp: openedAt,
+        type: "daily-greeting",
+      };
+      const greetingDate = getLocalDateKey(openedAt);
+
+      setMessages((previousMessages) => {
+        // Protect against duplicate messages if the open action is triggered
+        // more than once before React finishes the state update.
+        if (
+          previousMessages.some((message) =>
+            message.type === "daily-greeting" &&
+            getLocalDateKey(message.timestamp) === greetingDate
+          )
+        ) {
+          return previousMessages;
+        }
+
+        return [...previousMessages, greetingMessage];
+      });
+    }
+
+    setIsOpen(true);
+  }, [user?.id, user?.name]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -431,7 +468,7 @@ export default function AIChatbot() {
       <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 z-50 md:bottom-4">
         {!isOpen && !showFullChat && (
           <Button
-            onClick={() => setIsOpen(true)}
+            onClick={openChat}
             className="h-12 w-12 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
             title="Open AdaptAI Chat"
             aria-label="Open AdaptAI Chat"
