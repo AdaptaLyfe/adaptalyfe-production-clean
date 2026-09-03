@@ -12,9 +12,11 @@ Platform: Railway
 ## Database connections — CRITICAL
 The app has TWO separate DB connection strings in the environment:
 - `DATABASE_URL` — used by Drizzle ORM (`server/db.ts`) and by the running app. **Always use this for any data that must reach the app.**
-- `NEON_DATABASE_URL` — separate connection; does NOT feed the app. Using it for inserts/tests will appear to work but the app will never see the data.
+- `NEON_DATABASE_URL` — separate connection; does NOT feed the app, but it matches the Railway/Replit production Neon endpoint and is valid for read-only production backups. Never use it for app writes or tests.
 
 **Why:** `server/db.ts` reads only `DATABASE_URL`. Any raw SQL test or seed script must also use `DATABASE_URL`.
+
+For production backups, `NEON_DATABASE_URL` may be used with `pg_dump` after confirming its hostname matches the live production endpoint. Do not substitute it for the app's `DATABASE_URL`.
 
 ## Railway Variables (confirmed present)
 DATABASE_URL, OPENAI_API_KEY, SESSION_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VITE_STRIPE_PUBLIC_KEY, APPLE_SHARED_SECRET, GOOGLE_PLAY_SERVICE_ACCOUNT_KEY, NODE_ENV

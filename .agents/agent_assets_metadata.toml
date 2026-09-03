@@ -6,78 +6,91 @@ id = "yc6EVVJnGwo8ZVNYO9jwZ"
 uri = "file://adaptalyfe-ios-20260318.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS Project — Full Xcode Build (March 18, 2026)"
+logical_id = "2571041e-b08f-4d31-88d2-391af3879fb2"
 
 [[outputs]]
 id = "Tdz2fImSouHLlZ3GZTj_4"
 uri = "file://adaptalyfe-ios-20260323.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS — Self-Contained Xcode Project (March 23, 2026)"
+logical_id = "42e051e5-21cc-4dc5-a46f-9fb4e4287726"
 
 [[outputs]]
 id = "j0eqxErgg29l2C_qyBH2q"
 uri = "file://android-assets.zip"
 type = "unspecified"
 title = "Android Assets Folder (with splash screen fix)"
+logical_id = "3cec425c-4393-4e92-938c-a6fc21e7aff0"
 
 [[outputs]]
 id = "BlD2WsbvXKslwjtkM001G"
 uri = "file://public-only.zip"
 type = "unspecified"
 title = "public folder — UPDATED (first-paint fix included)"
+logical_id = "1bf71eec-cd6f-4884-85c4-098f074800b5"
 
 [[outputs]]
 id = "pWpAdKVuBVh-qrBHACpuG"
 uri = "file://capacitor-config-fix.zip"
 type = "unspecified"
 title = "capacitor.config.json (splash screen fix)"
+logical_id = "87b61f5f-0a2b-48c0-b625-953532010c57"
 
 [[outputs]]
 id = "Ipf2gP_rtuiqqz9wA2nzZ"
 uri = "file://android-values-fix.zip"
 type = "unspecified"
 title = "Android window background fix (2 files only)"
+logical_id = "b6b473d7-5713-4047-85fc-77db373cec2b"
 
 [[outputs]]
 id = "mTd8_i9fGFJ55GeKXuVFU"
 uri = "file://FINAL-android-fix.zip"
 type = "unspecified"
 title = "FINAL Android Fix — All 4 files (one APK build needed)"
+logical_id = "867bde6e-d333-4ca0-b73a-6ab978c4152d"
 
 [[outputs]]
 id = "JoJYQYg6EunXnDzQAaAp-"
 uri = "file://adaptalyfe-final.zip"
 type = "unspecified"
 title = "adaptalyfe-final.zip - Complete project with all Apple rejection fixes (14MB)"
+logical_id = "919b8757-3798-4d5c-b340-5ddb1857bb8a"
 
 [[outputs]]
 id = "GZmALdfBo3S9wFeKewgwl"
 uri = "file://attached_assets/promo_images/promo_basic_1024.png"
 type = "image"
 title = "Basic Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "89313e68-2637-4a0d-9532-1105db17df6a"
 
 [[outputs]]
 id = "eaAxee7Jp3r2RbO0nFw1F"
 uri = "file://attached_assets/promo_images/promo_premium_1024.png"
 type = "image"
 title = "Premium Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "46a7996f-a35f-4c12-97b1-a31807dcaf44"
 
 [[outputs]]
 id = "X7QEppAbn2ex02UnIEfsY"
 uri = "file://attached_assets/promo_images/promo_family_1024.png"
 type = "image"
 title = "Family Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "3fe987cf-f28d-4c2f-ab39-b4fc53c19aa4"
 
 [[outputs]]
 id = "PDQDRPJkzeaOkfhgEDb9S"
 uri = "file://attached_assets/promo_images/adaptalyfe_promo_images.zip"
 type = "unspecified"
 title = "All 3 Promotional Images (ZIP)"
+logical_id = "9874c804-d994-42cc-a625-858448935a15"
 
 [[outputs]]
 id = "X7SzQl8wzb0F37Icq5wOL"
 uri = "file://TECH_STACK_AND_CODE_FLOW.md"
 type = "text"
 title = "Adaptalyfe — Tech Stack & Code Flow Reference"
+logical_id = "906ba525-3023-470b-99e6-81c7ef137592"
 
 [[outputs]]
 id = "5Z5vKi6VOTPunuZpLvzBZ"
@@ -85,3 +98,18 @@ uri = "file://adaptalyfe-android-billing9-plugin-fix.zip"
 type = "unspecified"
 title = "Android Billing 9 Plugin Fix"
 description = "Replacement GooglePlayBillingPlugin.java updated for Google Play Billing Library 9.0.0."
+logical_id = "907d2f89-73e3-46f5-b665-6333da56c98b"
+
+[[outputs]]
+id = "D7rWzXV9InE6mlUmYkKqR"
+uri = "file://backups/adaptalyfe-production-backup-20260903-062100.zip"
+type = "unspecified"
+title = "AdaptaLyfe production database backup"
+description = "Verified ZIP backup of the live Railway/Replit production PostgreSQL database. Includes a PostgreSQL custom-format dump, README restore notes, SHA-256 checksum, and 514 validated archive entries."
+logical_id = "afbf2a77-d434-4838-b26c-9ec4c5eeb5cb"
+content_hash = "sha256:741a2098b7b0bc843f11320f5de3e2af816924a5a8f6b32d28b306f13fd35c0c"
+size = 4722915
+mtime_ms = 1788416470020
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/afbf2a77-d434-4838-b26c-9ec4c5eeb5cb/cef13cf2-1785-40c5-a172-e90679c39075"
+storage_version_token = "1788416479527806"
+content_type = "application/octet-stream"
