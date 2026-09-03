@@ -14,6 +14,11 @@ import {
   buildAppointmentTransitionResponse,
   isAppointmentTransitionRequest,
 } from "./appointment-transitions";
+import {
+  buildMedicationHealthResponse,
+  isExplicitMedicalInformationRequest,
+  isMedicationHealthRequest,
+} from "./medication-health";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2300,7 +2305,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const context = await buildAdaptAIContext(
         userId,
         { name: typeof req.session.user?.name === "string" ? req.session.user.name : "" },
-        clientTime
+        clientTime,
+        storage,
+        { includeMedicalInfo: isExplicitMedicalInformationRequest(message) }
       );
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
@@ -2308,6 +2315,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (message.trim().toLowerCase() !== "what's next?" ||
             Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
         ? buildAppointmentTransitionResponse(message, context)
+        : isMedicationHealthRequest(message)
+        ? buildMedicationHealthResponse(message, context)
         : isNextActionRequest(message)
         ? buildNextAction(context)
         : isTasksRoutinesRequest(message)

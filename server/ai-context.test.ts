@@ -42,7 +42,75 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     },
     getMedicationsByUser: async (userId: number) => {
       assertAuthenticatedScope(userId);
-      return [];
+      return [
+        {
+          userId: authenticatedUserId,
+          medicationName: "Own Medication",
+          dosage: "10mg",
+          instructions: "Take with breakfast",
+          isActive: true,
+          reminderEnabled: true,
+        },
+        {
+          userId: 999,
+          medicationName: "Other User Medication",
+          dosage: "999mg",
+          instructions: "private",
+          isActive: true,
+          reminderEnabled: true,
+        },
+      ];
+    },
+    getAllergiesByUser: async (userId: number) => {
+      assertAuthenticatedScope(userId);
+      return [
+        {
+          userId: authenticatedUserId,
+          allergen: "Own Allergy",
+          severity: "moderate",
+          reaction: "Own reaction",
+        },
+        {
+          userId: 999,
+          allergen: "Other User Allergy",
+          severity: "severe",
+          reaction: "private",
+        },
+      ];
+    },
+    getMedicalConditionsByUser: async (userId: number) => {
+      assertAuthenticatedScope(userId);
+      return [
+        {
+          userId: authenticatedUserId,
+          condition: "Own Condition",
+          status: "active",
+          diagnosedDate: null,
+        },
+        {
+          userId: 999,
+          condition: "Other User Condition",
+          status: "active",
+          diagnosedDate: null,
+        },
+      ];
+    },
+    getAdverseMedicationsByUser: async (userId: number) => {
+      assertAuthenticatedScope(userId);
+      return [
+        {
+          userId: authenticatedUserId,
+          medicationName: "Own Medication",
+          reaction: "Own reaction",
+          severity: "mild",
+        },
+        {
+          userId: 999,
+          medicationName: "Other User Medication",
+          reaction: "private",
+          severity: "severe",
+        },
+      ];
     },
     getSavingsGoalsByUser: async (userId: number) => {
       assertAuthenticatedScope(userId);
@@ -107,7 +175,8 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     authenticatedUserId,
     { name: "Alex Johnson" },
     { localDate: "2026-09-03", localTime: "09:30", timezone: "Asia/Calcutta" },
-    contextStorage
+    contextStorage,
+    { includeMedicalInfo: true }
   );
 
   assert.ok(calledUserIds.length > 0);
@@ -117,7 +186,21 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
   assert.equal(context.tasks?.incomplete[0]?.title, "Take a walk");
   assert.equal(context.preferences?.behavior?.preferredTaskTime, "morning");
   assert.equal(context.preferences?.accessibility?.highContrast, true);
+  assert.deepEqual(context.medications?.recorded?.map((item) => item.medicationName), [
+    "Own Medication",
+  ]);
+  assert.deepEqual(context.medical?.conditions.map((item) => item.condition), [
+    "Own Condition",
+  ]);
+  assert.deepEqual(context.medical?.allergies.map((item) => item.allergen), ["Own Allergy"]);
+  assert.deepEqual(
+    context.medical?.adverseMedications.map((item) => item.medicationName),
+    ["Own Medication"]
+  );
 
   const serializedContext = JSON.stringify(context);
-  assert.doesNotMatch(serializedContext, /userId|password|notificationToken|privateContact/);
+  assert.doesNotMatch(
+    serializedContext,
+    /userId|password|notificationToken|privateContact|Other User/
+  );
 });

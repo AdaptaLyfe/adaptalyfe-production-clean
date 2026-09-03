@@ -21,10 +21,13 @@
 import { storage, type IStorage } from "./storage.js";
 import type {
   Appointment,
+  AdverseMedication,
+  Allergy,
   Bill,
   CalendarEvent,
   DailyTask,
   MealPlan,
+  MedicalCondition,
   Medication,
   Reward,
   SavingsGoal,
@@ -77,7 +80,15 @@ export interface AdaptAIContext {
     upcoming?: AiAppointment;
   };
   medications?: {
+    /** All active medications recorded for this authenticated user. */
+    recorded?: AiMedication[];
+    /** Recorded medications whose reminderEnabled flag is true. */
     scheduledToday: AiMedication[];
+  };
+  medical?: {
+    conditions: AiMedicalCondition[];
+    allergies: AiAllergy[];
+    adverseMedications: AiAdverseMedication[];
   };
   goals?: AiGoal[];
   mood?: AiMood[];
@@ -208,6 +219,24 @@ export interface AiMedication {
   dosage?: string;
   instructions?: string;
   reminderEnabled: boolean;
+}
+
+export interface AiMedicalCondition {
+  condition: string;
+  status: string;
+  diagnosedDate?: string;
+}
+
+export interface AiAllergy {
+  allergen: string;
+  severity: string;
+  reaction?: string;
+}
+
+export interface AiAdverseMedication {
+  medicationName: string;
+  reaction: string;
+  severity: string;
 }
 
 export interface AiGoal {
@@ -493,9 +522,13 @@ export function mapAccessibilityToContext(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export function mapMedicationsToContext(medications: Medication[]): AiMedication[] {
+export function mapMedicationsToContext(
+  medications: Medication[],
+  userId?: number
+): AiMedication[] {
   return medications
-    .filter((medication) => medication.isActive !== false && medication.reminderEnabled !== false)
+    .filter((medication) => userId === undefined || medication.userId === userId)
+    .filter((medication) => medication.isActive !== false)
     .slice(0, 20)
     .map((medication) => ({
       medicationName: medication.medicationName,
@@ -504,6 +537,50 @@ export function mapMedicationsToContext(medications: Medication[]): AiMedication
         ? { instructions: safeText(medication.instructions, 200) }
         : {}),
       reminderEnabled: medication.reminderEnabled !== false,
+    }));
+}
+
+export function mapMedicalConditionsToContext(
+  conditions: MedicalCondition[],
+  userId?: number
+): AiMedicalCondition[] {
+  return conditions
+    .filter((condition) => userId === undefined || condition.userId === userId)
+    .slice(0, 20)
+    .map((condition) => ({
+      condition: condition.condition,
+      status: condition.status,
+      ...(condition.diagnosedDate
+        ? { diagnosedDate: dateOnly(condition.diagnosedDate) }
+        : {}),
+    }));
+}
+
+export function mapAllergiesToContext(
+  allergies: Allergy[],
+  userId?: number
+): AiAllergy[] {
+  return allergies
+    .filter((allergy) => userId === undefined || allergy.userId === userId)
+    .slice(0, 20)
+    .map((allergy) => ({
+      allergen: allergy.allergen,
+      severity: allergy.severity,
+      ...(safeText(allergy.reaction, 200) ? { reaction: safeText(allergy.reaction, 200) } : {}),
+    }));
+}
+
+export function mapAdverseMedicationsToContext(
+  adverseMedications: AdverseMedication[],
+  userId?: number
+): AiAdverseMedication[] {
+  return adverseMedications
+    .filter((entry) => userId === undefined || entry.userId === userId)
+    .slice(0, 20)
+    .map((entry) => ({
+      medicationName: entry.medicationName,
+      reaction: entry.reaction,
+      severity: entry.severity,
     }));
 }
 
@@ -731,6 +808,9 @@ type AdaptAIContextStorage = Pick<
   | "getAppointmentsByDate"
   | "getNextAppointment"
   | "getMedicationsByUser"
+  | "getAllergiesByUser"
+  | "getMedicalConditionsByUser"
+  | "getAdverseMedicationsByUser"
   | "getSavingsGoalsByUser"
   | "getRecentMoodEntriesByUser"
   | "getRecentSleepSessionsByUser"
@@ -786,7 +866,8 @@ export async function buildAdaptAIContext(
   userId: number,
   sessionUser: SafeSessionIdentity,
   clientTime?: { localDate?: string; localTime?: string; timezone?: string },
-  contextStorage: AdaptAIContextStorage = storage
+  contextStorage: AdaptAIContextStorage = storage,
+  options: { includeMedicalInfo?: boolean } = {}
 ): Promise<AdaptAIContext> {
   if (!Number.isInteger(userId) || userId < 1) {
     throw new Error("An authenticated user ID is required to build AdaptAI context");
@@ -812,6 +893,9 @@ export async function buildAdaptAIContext(
     rawAppointments,
     rawUpcomingAppointment,
     rawMedications,
+    rawAllergies,
+    rawMedicalConditions,
+    rawAdverseMedications,
     rawGoals,
     rawMood,
     rawSleep,
@@ -832,6 +916,19 @@ export async function buildAdaptAIContext(
       contextStorage.getNextAppointment(userId, `${date}T${time}:00`)
     ),
     loadContextSection("medications", () => contextStorage.getMedicationsByUser(userId)),
+    options.includeMedicalInfo
+      ? loadContextSection("allergies", () => contextStorage.getAllergiesByUser(userId))
+      : Promise.resolve(undefined),
+    options.includeMedicalInfo
+      ? loadContextSection("medical conditions", () =>
+          contextStorage.getMedicalConditionsByUser(userId)
+        )
+      : Promise.resolve(undefined),
+    options.includeMedicalInfo
+      ? loadContextSection("adverse medication reactions", () =>
+          contextStorage.getAdverseMedicationsByUser(userId)
+        )
+      : Promise.resolve(undefined),
     loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId)),
     loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7)),
     loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7)),
@@ -862,7 +959,14 @@ export async function buildAdaptAIContext(
   const upcomingAppointment = rawUpcomingAppointment
     ? mapAppointmentsToContext([rawUpcomingAppointment])[0]
     : undefined;
-  const medications = rawMedications ? mapMedicationsToContext(rawMedications) : [];
+  const medications = rawMedications ? mapMedicationsToContext(rawMedications, userId) : [];
+  const medicalConditions = rawMedicalConditions
+    ? mapMedicalConditionsToContext(rawMedicalConditions, userId)
+    : [];
+  const allergies = rawAllergies ? mapAllergiesToContext(rawAllergies, userId) : [];
+  const adverseMedications = rawAdverseMedications
+    ? mapAdverseMedicationsToContext(rawAdverseMedications, userId)
+    : [];
   const goals = rawGoals ? mapGoalsToContext(rawGoals, date) : [];
   const mood = rawMood ? mapMoodToContext(rawMood) : [];
   const sleep = rawSleep ? mapSleepToContext(rawSleep) : [];
@@ -902,7 +1006,22 @@ export async function buildAdaptAIContext(
     };
   }
 
-  if (medications.length > 0) context.medications = { scheduledToday: medications };
+  if (medications.length > 0) {
+    context.medications = {
+      recorded: medications,
+      scheduledToday: medications.filter((medication) => medication.reminderEnabled),
+    };
+  }
+  if (
+    options.includeMedicalInfo &&
+    (medicalConditions.length > 0 || allergies.length > 0 || adverseMedications.length > 0)
+  ) {
+    context.medical = {
+      conditions: medicalConditions,
+      allergies,
+      adverseMedications,
+    };
+  }
   if (goals.length > 0) context.goals = goals;
   if (mood.length > 0) context.mood = mood;
   if (sleep.length > 0) context.sleep = sleep;

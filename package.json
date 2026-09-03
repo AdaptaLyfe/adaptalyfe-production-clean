@@ -14,6 +14,7 @@
     "test:next-action": "tsx --test server/next-action.test.ts",
     "test:tasks-routines": "tsx --test server/tasks-routines.test.ts",
     "test:appointment-transitions": "tsx --test server/appointment-transitions.test.ts",
+    "test:medication-health": "tsx --test server/medication-health.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
