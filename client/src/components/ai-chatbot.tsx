@@ -150,8 +150,23 @@ export default function AIChatbot() {
   ];
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ message, userId }: { message: string; userId: number }) => {
-      const response = await apiRequest("POST", "/api/chat", { message, userId });
+    mutationFn: async ({
+      message,
+      localDate,
+      localTime,
+      timezone,
+    }: {
+      message: string;
+      localDate: string;
+      localTime: string;
+      timezone?: string;
+    }) => {
+      const response = await apiRequest("POST", "/api/chat", {
+        message,
+        localDate,
+        localTime,
+        timezone,
+      });
       return await response.json();
     },
     onSuccess: (data: any) => {
@@ -211,9 +226,12 @@ export default function AIChatbot() {
     setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
 
+    const now = new Date();
     sendMessageMutation.mutate({
       message: message,
-      userId: user.id
+      localDate: getLocalDateKey(now),
+      localTime: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
   }, [user?.id, sendMessageMutation]);
 

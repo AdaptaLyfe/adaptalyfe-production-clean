@@ -18,9 +18,27 @@
  *  Step 9  (current) — adds safe behavior preference subset
  */
 
-import { storage } from "./storage.js";
-import type { DailyTask, Appointment, CalendarEvent, UserPreferences } from "../shared/schema.js";
+import { storage, type IStorage } from "./storage.js";
+import type {
+  Appointment,
+  Bill,
+  CalendarEvent,
+  DailyTask,
+  MealPlan,
+  Medication,
+  Reward,
+  SavingsGoal,
+  ShoppingList,
+  SleepSession,
+  UserPreferences,
+  UserAchievement,
+  MoodEntry,
+  PointsTransaction,
+  UserPointsBalance,
+} from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
+
+const MAX_DISPLAY_NAME_LENGTH = 80;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +49,54 @@ import type { DailyGuideContext } from "./ai-service.js";
 export interface SafeSessionIdentity {
   /** Full display name from the users table (e.g. "Alex Johnson") */
   name: string;
+}
+
+/**
+ * The structured, user-scoped context supplied to the AdaptAI chat flow.
+ *
+ * Every field is a deliberately small, AI-safe projection of existing rows.
+ * Internal IDs, auth data, account numbers, payment links, and free-form
+ * secrets are never part of this type.
+ */
+export interface AdaptAIContext {
+  identity: {
+    displayName: string;
+  };
+  today: {
+    date: string;
+    time: string;
+    timezone: string;
+  };
+  tasks?: {
+    today: AiTask[];
+    incomplete: AiTask[];
+    completed: AiTask[];
+  };
+  appointments?: {
+    today?: AiAppointment[];
+    upcoming?: AiAppointment;
+  };
+  medications?: {
+    scheduledToday: AiMedication[];
+  };
+  goals?: AiGoal[];
+  mood?: AiMood[];
+  sleep?: AiSleep[];
+  meals?: AiMeal[];
+  shopping?: AiShoppingItem[];
+  finance?: {
+    due: AiBill[];
+  };
+  progress?: {
+    points?: AiPointsBalance;
+    recentAchievements?: AiAchievement[];
+    recentRewards?: AiReward[];
+    recentActivity?: AiPointsActivity[];
+  };
+  preferences?: {
+    behavior?: AiPreferences;
+    accessibility?: AiAccessibility;
+  };
 }
 
 /**
@@ -128,12 +194,102 @@ export interface AiPreferences {
   supportLevel?: string;
 }
 
+export interface AiAccessibility {
+  highContrast?: boolean;
+  voiceEnabled?: boolean;
+  voiceSpeed?: number;
+  textSize?: string;
+  reducedMotion?: boolean;
+  screenReader?: boolean;
+}
+
+export interface AiMedication {
+  medicationName: string;
+  dosage?: string;
+  instructions?: string;
+  reminderEnabled: boolean;
+}
+
+export interface AiGoal {
+  title: string;
+  description?: string;
+  category: string;
+  priority: string;
+  targetDate?: string;
+  isDueToday: boolean;
+  isCompleted: boolean;
+}
+
+export interface AiMood {
+  mood: number;
+  date: string;
+}
+
+export interface AiSleep {
+  date: string;
+  totalSleepDurationMinutes?: number;
+  sleepScore?: number;
+  quality?: string;
+}
+
+export interface AiMeal {
+  mealType: string;
+  mealName: string;
+  plannedDate: string;
+  isCompleted: boolean;
+  cookingTimeMinutes?: number;
+}
+
+export interface AiShoppingItem {
+  itemName: string;
+  category: string;
+  quantity?: string;
+  estimatedCost?: number;
+}
+
+export interface AiBill {
+  name: string;
+  amount: number;
+  dueDayOfMonth: number;
+  category: string;
+  isPaid: boolean;
+}
+
+export interface AiPointsBalance {
+  availablePoints: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+}
+
+export interface AiAchievement {
+  title: string;
+  category: string;
+  points: number;
+  earnedAt?: string;
+}
+
+export interface AiReward {
+  title: string;
+  category: string;
+  pointsRequired: number;
+}
+
+export interface AiPointsActivity {
+  points: number;
+  transactionType: string;
+  createdAt?: string;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Extract a friendly first name from a full name string. */
 function extractFirstName(fullName: string): string {
   const trimmed = fullName.trim();
   return trimmed.split(/\s+/)[0] || trimmed;
+}
+
+function isEmailAddress(value: string): boolean {
+  return value.includes("@");
 }
 
 /** Normalize a stored scheduled_time value to HH:MM. */
@@ -170,7 +326,24 @@ function safeString(obj: unknown, key: string): string | undefined {
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return undefined;
   const val = (obj as Record<string, unknown>)[key];
   if (typeof val !== "string" || val.trim() === "") return undefined;
-  return val;
+  return val.trim().slice(0, 100);
+}
+
+function safeText(value: string | null | undefined, maxLength = 200): string | undefined {
+  if (typeof value !== "string" || value.trim() === "") return undefined;
+  return value.trim().slice(0, maxLength);
+}
+
+function dateOnly(value: Date | string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const parsed = toDate(value);
+  return parsed ? parsed.toISOString().slice(0, 10) : undefined;
+}
+
+function isoDate(value: Date | string | null | undefined): string | undefined {
+  const parsed = toDate(value);
+  return parsed ? parsed.toISOString() : undefined;
 }
 
 // ─── Task context builder ──────────────────────────────────────────────────────
@@ -294,6 +467,157 @@ export function mapPreferencesToContext(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
+/** Extract only presentation and interaction settings that can help AdaptAI. */
+export function mapAccessibilityToContext(
+  prefs: UserPreferences | undefined | null
+): AiAccessibility | undefined {
+  if (!prefs || !prefs.accessibilitySettings) return undefined;
+
+  const source = prefs.accessibilitySettings;
+  if (!source || typeof source !== "object" || Array.isArray(source)) return undefined;
+
+  const result: AiAccessibility = {};
+  const values = source as Record<string, unknown>;
+
+  if (typeof values.highContrast === "boolean") result.highContrast = values.highContrast;
+  if (typeof values.voiceEnabled === "boolean") result.voiceEnabled = values.voiceEnabled;
+  if (typeof values.voiceSpeed === "number" && Number.isFinite(values.voiceSpeed)) {
+    result.voiceSpeed = values.voiceSpeed;
+  }
+  if (typeof values.textSize === "string" && values.textSize.trim()) {
+    result.textSize = values.textSize.trim().slice(0, 30);
+  }
+  if (typeof values.reducedMotion === "boolean") result.reducedMotion = values.reducedMotion;
+  if (typeof values.screenReader === "boolean") result.screenReader = values.screenReader;
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+export function mapMedicationsToContext(medications: Medication[]): AiMedication[] {
+  return medications
+    .filter((medication) => medication.isActive !== false && medication.reminderEnabled !== false)
+    .slice(0, 20)
+    .map((medication) => ({
+      medicationName: medication.medicationName,
+      ...(safeText(medication.dosage, 100) ? { dosage: safeText(medication.dosage, 100) } : {}),
+      ...(safeText(medication.instructions, 200)
+        ? { instructions: safeText(medication.instructions, 200) }
+        : {}),
+      reminderEnabled: medication.reminderEnabled !== false,
+    }));
+}
+
+export function mapGoalsToContext(goals: SavingsGoal[], todayStr: string): AiGoal[] {
+  return goals
+    .filter((goal) => goal.isActive !== false)
+    .slice(0, 20)
+    .map((goal) => {
+      const targetDate = dateOnly(goal.targetDate);
+      return {
+        title: goal.title,
+        ...(safeText(goal.description, 200) ? { description: safeText(goal.description, 200) } : {}),
+        category: goal.category,
+        priority: goal.priority,
+        ...(targetDate ? { targetDate } : {}),
+        isDueToday: targetDate === todayStr,
+        isCompleted: goal.isCompleted ?? false,
+      };
+    });
+}
+
+export function mapMoodToContext(entries: MoodEntry[]): AiMood[] {
+  return entries
+    .slice(0, 7)
+    .map((entry) => ({
+      mood: entry.mood,
+      date: isoDate(entry.entryDate) ?? "",
+    }))
+    .filter((entry) => entry.date !== "");
+}
+
+export function mapSleepToContext(sessions: SleepSession[]): AiSleep[] {
+  return sessions
+    .slice(0, 7)
+    .map((session) => ({
+      date: dateOnly(session.sleepDate) ?? "",
+      ...(session.totalSleepDuration != null
+        ? { totalSleepDurationMinutes: session.totalSleepDuration }
+        : {}),
+      ...(session.sleepScore != null ? { sleepScore: session.sleepScore } : {}),
+      ...(safeText(session.quality, 30) ? { quality: safeText(session.quality, 30) } : {}),
+    }))
+    .filter((session) => session.date !== "");
+}
+
+export function mapMealsToContext(meals: MealPlan[]): AiMeal[] {
+  return meals.slice(0, 12).map((meal) => ({
+    mealType: meal.mealType,
+    mealName: meal.mealName,
+    plannedDate: meal.plannedDate,
+    isCompleted: meal.isCompleted ?? false,
+    ...(meal.cookingTime != null ? { cookingTimeMinutes: meal.cookingTime } : {}),
+  }));
+}
+
+export function mapShoppingToContext(items: ShoppingList[]): AiShoppingItem[] {
+  return items.slice(0, 30).map((item) => ({
+    itemName: item.itemName,
+    category: item.category,
+    ...(safeText(item.quantity, 60) ? { quantity: safeText(item.quantity, 60) } : {}),
+    ...(item.estimatedCost != null ? { estimatedCost: item.estimatedCost } : {}),
+  }));
+}
+
+export function mapBillsToContext(bills: Bill[]): AiBill[] {
+  return bills.slice(0, 20).map((bill) => ({
+    name: bill.name,
+    amount: bill.amount,
+    dueDayOfMonth: bill.dueDate,
+    category: bill.category,
+    isPaid: bill.isPaid ?? false,
+  }));
+}
+
+export function mapPointsBalanceToContext(
+  balance: UserPointsBalance | undefined
+): AiPointsBalance | undefined {
+  if (!balance) return undefined;
+  return {
+    availablePoints: balance.availablePoints ?? 0,
+    lifetimeEarned: balance.lifetimeEarned ?? 0,
+    lifetimeSpent: balance.lifetimeSpent ?? 0,
+  };
+}
+
+export function mapAchievementsToContext(achievements: UserAchievement[]): AiAchievement[] {
+  return achievements.slice(0, 5).map((achievement) => ({
+    title: achievement.title,
+    category: achievement.category,
+    points: achievement.points ?? 0,
+    ...(isoDate(achievement.earnedAt) ? { earnedAt: isoDate(achievement.earnedAt) } : {}),
+  }));
+}
+
+export function mapRewardsToContext(rewards: Reward[]): AiReward[] {
+  return rewards.slice(0, 5).map((reward) => ({
+    title: reward.title,
+    category: reward.category,
+    pointsRequired: reward.pointsRequired,
+  }));
+}
+
+export function mapPointsActivityToContext(
+  transactions: PointsTransaction[]
+): AiPointsActivity[] {
+  return transactions.slice(0, 10).map((transaction) => ({
+    points: transaction.points,
+    transactionType: transaction.transactionType,
+    ...(isoDate(transaction.createdAt)
+      ? { createdAt: isoDate(transaction.createdAt) }
+      : {}),
+  }));
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 /**
@@ -396,6 +720,211 @@ export async function buildDailyGuideContext(
     calendarEvents,
     ...(preferences !== undefined ? { preferences } : {}),
   };
+
+  return context;
+}
+
+type AdaptAIContextStorage = Pick<
+  IStorage,
+  | "getUserById"
+  | "getDailyTasksByUser"
+  | "getAppointmentsByDate"
+  | "getNextAppointment"
+  | "getMedicationsByUser"
+  | "getSavingsGoalsByUser"
+  | "getRecentMoodEntriesByUser"
+  | "getRecentSleepSessionsByUser"
+  | "getMealPlansByDate"
+  | "getActiveShoppingItems"
+  | "getRelevantBillsByUser"
+  | "getExistingUserPointsBalance"
+  | "getRecentUserAchievements"
+  | "getActiveRewardsByUser"
+  | "getRecentPointsTransactionsByUser"
+  | "getUserPreferences"
+>;
+
+async function loadContextSection<T>(
+  label: string,
+  loader: () => Promise<T>
+): Promise<T | undefined> {
+  try {
+    return await loader();
+  } catch (error) {
+    // A missing optional data source should not prevent chat from working.
+    // Do not log returned records or user-entered values.
+    console.warn(
+      `[ai-context] Unable to load ${label}:`,
+      error instanceof Error ? error.message : String(error)
+    );
+    return undefined;
+  }
+}
+
+function resolveDisplayName(
+  sessionUser: SafeSessionIdentity,
+  storedName: string | null | undefined
+): string {
+  const candidate = storedName?.trim() || sessionUser.name?.trim() || "";
+  if (!candidate || isEmailAddress(candidate)) return "there";
+
+  const cleaned = candidate.replace(/[^\p{L}\p{N}' -]/gu, " ").replace(/\s+/g, " ").trim();
+  return cleaned.slice(0, MAX_DISPLAY_NAME_LENGTH) || "there";
+}
+
+/**
+ * Build the complete AdaptAI context for one authenticated user.
+ *
+ * This function accepts the authenticated user ID from the route, never a
+ * requested target ID. Every data read is delegated to a storage method that
+ * includes that user ID in its query. Caregiver-to-user context switching is
+ * intentionally not supported here; a caregiver's chat can only see the
+ * caregiver's own records until an explicitly permission-checked target flow
+ * is designed.
+ */
+export async function buildAdaptAIContext(
+  userId: number,
+  sessionUser: SafeSessionIdentity,
+  clientTime?: { localDate?: string; localTime?: string; timezone?: string },
+  contextStorage: AdaptAIContextStorage = storage
+): Promise<AdaptAIContext> {
+  if (!Number.isInteger(userId) || userId < 1) {
+    throw new Error("An authenticated user ID is required to build AdaptAI context");
+  }
+
+  const serverTime = getCurrentTimeContext();
+  const isValidDate = (value?: string) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const isValidTime = (value?: string) => !!value && /^\d{2}:\d{2}$/.test(value);
+  const date = isValidDate(clientTime?.localDate)
+    ? clientTime!.localDate!
+    : serverTime.date;
+  const time = isValidTime(clientTime?.localTime)
+    ? clientTime!.localTime!
+    : serverTime.time;
+  const timezone = clientTime?.timezone?.trim().slice(0, 80) || serverTime.timezone;
+
+  const storedUser = await loadContextSection("identity", () =>
+    contextStorage.getUserById(userId)
+  );
+
+  const [
+    rawTasks,
+    rawAppointments,
+    rawUpcomingAppointment,
+    rawMedications,
+    rawGoals,
+    rawMood,
+    rawSleep,
+    rawMeals,
+    rawShopping,
+    rawBills,
+    pointsBalance,
+    recentAchievements,
+    activeRewards,
+    recentPointsActivity,
+    rawPreferences,
+  ] = await Promise.all([
+    loadContextSection("tasks", () => contextStorage.getDailyTasksByUser(userId)),
+    loadContextSection("today's appointments", () =>
+      contextStorage.getAppointmentsByDate(userId, date)
+    ),
+    loadContextSection("upcoming appointment", () =>
+      contextStorage.getNextAppointment(userId, `${date}T${time}:00`)
+    ),
+    loadContextSection("medications", () => contextStorage.getMedicationsByUser(userId)),
+    loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId)),
+    loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7)),
+    loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7)),
+    loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date)),
+    loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId)),
+    loadContextSection("finance", () =>
+      contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
+    ),
+    loadContextSection("points balance", () =>
+      contextStorage.getExistingUserPointsBalance(userId)
+    ),
+    loadContextSection("recent achievements", () =>
+      contextStorage.getRecentUserAchievements(userId, 5)
+    ),
+    loadContextSection("active rewards", () =>
+      contextStorage.getActiveRewardsByUser(userId, 5)
+    ),
+    loadContextSection("recent points activity", () =>
+      contextStorage.getRecentPointsTransactionsByUser(userId, 10)
+    ),
+    loadContextSection("preferences", () => contextStorage.getUserPreferences(userId)),
+  ]);
+
+  const todayTasks = rawTasks ? mapTasksToContext(rawTasks, date) : [];
+  const todayAppointments = rawAppointments
+    ? mapAppointmentsToContext(rawAppointments)
+    : [];
+  const upcomingAppointment = rawUpcomingAppointment
+    ? mapAppointmentsToContext([rawUpcomingAppointment])[0]
+    : undefined;
+  const medications = rawMedications ? mapMedicationsToContext(rawMedications) : [];
+  const goals = rawGoals ? mapGoalsToContext(rawGoals, date) : [];
+  const mood = rawMood ? mapMoodToContext(rawMood) : [];
+  const sleep = rawSleep ? mapSleepToContext(rawSleep) : [];
+  const meals = rawMeals ? mapMealsToContext(rawMeals) : [];
+  const shopping = rawShopping ? mapShoppingToContext(rawShopping) : [];
+  const dueBills = rawBills ? mapBillsToContext(rawBills) : [];
+  const behaviorPreferences = mapPreferencesToContext(rawPreferences);
+  const accessibility = mapAccessibilityToContext(rawPreferences);
+  const points = mapPointsBalanceToContext(pointsBalance);
+  const achievements = recentAchievements
+    ? mapAchievementsToContext(recentAchievements)
+    : [];
+  const rewards = activeRewards ? mapRewardsToContext(activeRewards) : [];
+  const pointsActivity = recentPointsActivity
+    ? mapPointsActivityToContext(recentPointsActivity)
+    : [];
+
+  const context: AdaptAIContext = {
+    identity: {
+      displayName: resolveDisplayName(sessionUser, storedUser?.name),
+    },
+    today: { date, time, timezone },
+  };
+
+  if (todayTasks.length > 0) {
+    context.tasks = {
+      today: todayTasks,
+      incomplete: todayTasks.filter((task) => !task.isCompleted),
+      completed: todayTasks.filter((task) => task.isCompleted),
+    };
+  }
+
+  if (todayAppointments.length > 0 || upcomingAppointment) {
+    context.appointments = {
+      ...(todayAppointments.length > 0 ? { today: todayAppointments } : {}),
+      ...(upcomingAppointment ? { upcoming: upcomingAppointment } : {}),
+    };
+  }
+
+  if (medications.length > 0) context.medications = { scheduledToday: medications };
+  if (goals.length > 0) context.goals = goals;
+  if (mood.length > 0) context.mood = mood;
+  if (sleep.length > 0) context.sleep = sleep;
+  if (meals.length > 0) context.meals = meals;
+  if (shopping.length > 0) context.shopping = shopping;
+  if (dueBills.length > 0) context.finance = { due: dueBills };
+
+  if (points || achievements.length > 0 || rewards.length > 0 || pointsActivity.length > 0) {
+    context.progress = {
+      ...(points ? { points } : {}),
+      ...(achievements.length > 0 ? { recentAchievements: achievements } : {}),
+      ...(rewards.length > 0 ? { recentRewards: rewards } : {}),
+      ...(pointsActivity.length > 0 ? { recentActivity: pointsActivity } : {}),
+    };
+  }
+
+  if (behaviorPreferences || accessibility) {
+    context.preferences = {
+      ...(behaviorPreferences ? { behavior: behaviorPreferences } : {}),
+      ...(accessibility ? { accessibility } : {}),
+    };
+  }
 
   return context;
 }

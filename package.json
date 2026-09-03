@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production node dist/production.js",
     "check": "tsc",
     "test:chatbot-greeting": "tsx --test client/src/lib/chatbot-greeting.test.ts",
+    "test:adaptai-context": "tsx --test server/ai-context.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

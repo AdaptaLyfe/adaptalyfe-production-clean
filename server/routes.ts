@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { buildDailyGuideContext } from "./ai-context";
-import { generateDailyGuide } from "./ai-service";
+import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
+import { generateAdaptAIChatResponse, generateDailyGuide } from "./ai-service";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2271,75 +2271,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Chatbot API endpoints
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", requireAuth, async (req: any, res) => {
     try {
-      const { message, userId } = req.body;
+      const { message } = req.body ?? {};
       
-      if (!message || !userId) {
-        return res.status(400).json({ error: "Message and userId are required" });
+      if (typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ error: "Message is required" });
       }
 
-      // Get user data for context
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      // Create enhanced system prompt with user context
-      const systemPrompt = `You are AdaptAI, a supportive AI assistant for AdaptaLyfe, an app designed to help individuals with developmental disabilities build independence and confidence.
-
-User context:
-- Name: ${user.name || user.username}
-- Subscription: ${user.subscriptionTier || 'basic'}
-
-Core Guidelines:
-- Use simple, clear language that's easy to understand
-- Be encouraging, patient, and genuinely supportive
-- Focus on building independence, confidence, and life skills
-- Break complex tasks into simple, manageable steps
-- Celebrate small wins and progress
-- Be warm and friendly, like a helpful friend
-
-Response Style:
-- Keep responses helpful but concise (2-4 sentences when possible)
-- Use bullet points for step-by-step instructions
-- Offer specific, actionable advice
-- Ask follow-up questions to be more helpful
-- Use positive, encouraging language
-
-Special Situations:
-- If the user seems distressed, provide emotional support and suggest contacting their caregiver
-- For medical questions, remind them to consult healthcare professionals
-- For app-specific questions, guide them to the relevant features
-- If they share accomplishments, celebrate with them enthusiastically
-
-App Features to Reference:
-- Daily Tasks for planning and tracking activities
-- Financial section for budgeting and bill management
-- Mood Tracking for emotional wellness
-- Medical/Pharmacy for health management
-- Caregiver features for staying connected
-- Meal Planning for nutrition and cooking
-- Calendar for appointments and scheduling
-
-User message: "${message}"
-
-Provide a helpful, encouraging response:`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
-        max_tokens: 400,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.3,
-      });
-
-      const response = completion.choices[0]?.message?.content || "I'm here to help! Could you ask me again?";
+      // The authenticated session is the only source of user identity.
+      // Client-provided userId values are intentionally ignored.
+      const userId: number = req.session.userId;
+      const clientTime = {
+        localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
+        localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
+        timezone: typeof req.body?.timezone === "string" ? req.body.timezone : undefined,
+      };
+      const context = await buildAdaptAIContext(
+        userId,
+        { name: typeof req.session.user?.name === "string" ? req.session.user.name : "" },
+        clientTime
+      );
+      const response = await generateAdaptAIChatResponse(message, context);
       
       res.json({ 
         message: response,

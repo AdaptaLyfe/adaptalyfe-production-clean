@@ -6,3 +6,4 @@
 - [Validation baseline](validation-baseline.md) — the full TypeScript check has unrelated legacy failures; use focused checks plus the production build for this area.
 - [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.
 - [Mobile invitation entry](mobile-invitation-entry.md) — native deep links may omit or contain stale codes, so mobile acceptance must always expose editable code entry and verification.
+- [AdaptAI context boundaries](adaptai-context.md) — server-built allowlists and authenticated user scope prevent cross-user or unnecessary sensitive data from reaching AI.

@@ -85,6 +85,7 @@ export interface IStorage {
   
   // Bills
   getBillsByUser(userId: number): Promise<Bill[]>;
+  getRelevantBillsByUser(userId: number, dayOfMonth: number, daysAhead?: number): Promise<Bill[]>;
   getBill(billId: number): Promise<Bill | undefined>;
   createBill(bill: InsertBill): Promise<Bill>;
   updateBill(billId: number, updates: Partial<Bill>): Promise<Bill | undefined>;
@@ -92,6 +93,7 @@ export interface IStorage {
   
   // Mood Entries
   getMoodEntriesByUser(userId: number): Promise<MoodEntry[]>;
+  getRecentMoodEntriesByUser(userId: number, limit?: number): Promise<MoodEntry[]>;
   createMoodEntry(entry: InsertMoodEntry): Promise<MoodEntry>;
   getTodayMoodEntry(userId: number): Promise<MoodEntry | undefined>;
   
@@ -145,6 +147,8 @@ export interface IStorage {
   
   // Appointments
   getAppointmentsByUser(userId: number): Promise<Appointment[]>;
+  getAppointmentsByDate(userId: number, date: string): Promise<Appointment[]>;
+  getNextAppointment(userId: number, fromDate: string): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointmentCompletion(appointmentId: number, isCompleted: boolean): Promise<Appointment | undefined>;
   getUpcomingAppointments(userId: number): Promise<Appointment[]>;
@@ -253,6 +257,7 @@ export interface IStorage {
   
   // Enhanced Achievements
   getUserAchievements(userId: number): Promise<UserAchievement[]>;
+  getRecentUserAchievements(userId: number, limit?: number): Promise<UserAchievement[]>;
   createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement>;
   
   // Streak Tracking
@@ -331,6 +336,7 @@ export interface IStorage {
 
   // Sleep Tracking
   getSleepSessionsByUser(userId: number): Promise<SleepSession[]>;
+  getRecentSleepSessionsByUser(userId: number, limit?: number): Promise<SleepSession[]>;
   getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined>;
   createSleepSession(session: InsertSleepSession): Promise<SleepSession>;
   updateSleepSession(sessionId: number, updates: Partial<InsertSleepSession>): Promise<SleepSession | undefined>;
@@ -339,6 +345,14 @@ export interface IStorage {
   // Health Metrics
   getHealthMetricsByUser(userId: number, metricType?: string, startDate?: string, endDate?: string): Promise<HealthMetric[]>;
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
+
+  // Rewards and points
+  getRewardsByUser(userId: number): Promise<Reward[]>;
+  getActiveRewardsByUser(userId: number, limit?: number): Promise<Reward[]>;
+  getUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined>;
+  getExistingUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined>;
+  getPointsTransactions(userId: number): Promise<PointsTransaction[]>;
+  getRecentPointsTransactionsByUser(userId: number, limit?: number): Promise<PointsTransaction[]>;
 
   // Organization Codes
   getAllOrgCodes(): Promise<OrganizationCode[]>;
@@ -727,6 +741,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(bills).where(eq(bills.userId, userId));
   }
 
+  async getRelevantBillsByUser(
+    userId: number,
+    dayOfMonth: number,
+    daysAhead = 7
+  ): Promise<Bill[]> {
+    const latestRelevantDay = Math.min(31, Math.max(1, dayOfMonth) + Math.max(0, daysAhead));
+
+    return await db
+      .select()
+      .from(bills)
+      .where(
+        and(
+          eq(bills.userId, userId),
+          or(eq(bills.isPaid, false), isNull(bills.isPaid)),
+          lte(bills.dueDate, latestRelevantDay)
+        )
+      )
+      .orderBy(bills.dueDate)
+      .limit(20);
+  }
+
   async getBill(billId: number): Promise<Bill | undefined> {
     const [bill] = await db.select().from(bills).where(eq(bills.id, billId));
     return bill || undefined;
@@ -825,6 +860,15 @@ export class DatabaseStorage implements IStorage {
 
   async getMoodEntriesByUser(userId: number): Promise<MoodEntry[]> {
     return await db.select().from(moodEntries).where(eq(moodEntries.userId, userId));
+  }
+
+  async getRecentMoodEntriesByUser(userId: number, limit = 7): Promise<MoodEntry[]> {
+    return await db
+      .select()
+      .from(moodEntries)
+      .where(eq(moodEntries.userId, userId))
+      .orderBy(desc(moodEntries.entryDate))
+      .limit(Math.max(1, Math.min(limit, 30)));
   }
 
   async createMoodEntry(insertEntry: InsertMoodEntry): Promise<MoodEntry> {
@@ -1103,6 +1147,35 @@ export class DatabaseStorage implements IStorage {
 
   async getAppointmentsByUser(userId: number): Promise<Appointment[]> {
     return await db.select().from(appointments).where(eq(appointments.userId, userId));
+  }
+
+  async getAppointmentsByDate(userId: number, date: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          sql`${appointments.appointmentDate} LIKE ${`${date}%`}`
+        )
+      )
+      .orderBy(appointments.appointmentDate);
+  }
+
+  async getNextAppointment(userId: number, fromDate: string): Promise<Appointment | undefined> {
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          eq(appointments.isCompleted, false),
+          gte(appointments.appointmentDate, fromDate)
+        )
+      )
+      .orderBy(appointments.appointmentDate)
+      .limit(1);
+    return appointment;
   }
 
   async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
@@ -1815,6 +1888,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(userAchievements.earnedAt));
   }
 
+  async getRecentUserAchievements(userId: number, limit = 5): Promise<UserAchievement[]> {
+    return await db
+      .select()
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId))
+      .orderBy(desc(userAchievements.earnedAt))
+      .limit(Math.max(1, Math.min(limit, 20)));
+  }
+
   async createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement> {
     const [created] = await db.insert(userAchievements).values(achievement).returning();
     return created;
@@ -2389,6 +2471,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(sleepSessions.sleepDate));
   }
 
+  async getRecentSleepSessionsByUser(userId: number, limit = 7): Promise<SleepSession[]> {
+    return await db
+      .select()
+      .from(sleepSessions)
+      .where(eq(sleepSessions.userId, userId))
+      .orderBy(desc(sleepSessions.sleepDate))
+      .limit(Math.max(1, Math.min(limit, 30)));
+  }
+
   async getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined> {
     const [session] = await db.select().from(sleepSessions)
       .where(
@@ -2461,6 +2552,15 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(rewards).where(eq(rewards.userId, userId));
   }
 
+  async getActiveRewardsByUser(userId: number, limit = 5): Promise<Reward[]> {
+    return await db
+      .select()
+      .from(rewards)
+      .where(and(eq(rewards.userId, userId), eq(rewards.isActive, true)))
+      .orderBy(desc(rewards.createdAt))
+      .limit(Math.max(1, Math.min(limit, 20)));
+  }
+
   async getRewardsByCaregiver(caregiverId: number): Promise<Reward[]> {
     return await db.select().from(rewards).where(eq(rewards.caregiverId, caregiverId));
   }
@@ -2495,6 +2595,14 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newBalance;
     }
+    return balance;
+  }
+
+  async getExistingUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined> {
+    const [balance] = await db
+      .select()
+      .from(userPointsBalance)
+      .where(eq(userPointsBalance.userId, userId));
     return balance;
   }
 
@@ -2539,6 +2647,15 @@ export class DatabaseStorage implements IStorage {
       .from(pointsTransactions)
       .where(eq(pointsTransactions.userId, userId))
       .orderBy(desc(pointsTransactions.createdAt));
+  }
+
+  async getRecentPointsTransactionsByUser(userId: number, limit = 10): Promise<PointsTransaction[]> {
+    return await db
+      .select()
+      .from(pointsTransactions)
+      .where(eq(pointsTransactions.userId, userId))
+      .orderBy(desc(pointsTransactions.createdAt))
+      .limit(Math.max(1, Math.min(limit, 30)));
   }
 
   async getPointsTransactionsByUser(userId: number): Promise<PointsTransaction[]> {
