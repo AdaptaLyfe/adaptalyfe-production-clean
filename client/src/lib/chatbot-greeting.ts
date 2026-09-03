@@ -1,10 +1,77 @@
 const CHATBOT_GREETING_STORAGE_PREFIX = "adaptalyfe:chatbot:last-greeting-date";
+const MAX_DISPLAY_NAME_LENGTH = 60;
+const TECHNICAL_USERNAME_PATTERN =
+  /^(?:user|userid|account|member|guest|admin|test|demo|unknown)(?:\s*\d*)?$/i;
 
 // This fallback only covers environments where localStorage is unavailable.
 // Normal browser and Capacitor WebView sessions persist through localStorage.
 const inMemoryGreetingDates = new Map<string, string>();
 
 export type GreetingPeriod = "morning" | "afternoon" | "evening" | "night";
+
+function isEmailAddress(value: string): boolean {
+  return value.includes("@");
+}
+
+function looksLikeTechnicalIdentifier(value: string): boolean {
+  const compactValue = value.replace(/[\s_.-]/g, "");
+  const isLongIdentifier = compactValue.length >= 24 && /^\p{L}?\p{N}+$/u.test(compactValue);
+
+  return TECHNICAL_USERNAME_PATTERN.test(value) || isLongIdentifier;
+}
+
+function splitReadableWords(value: string): string[] {
+  return value
+    .replace(/([\p{Ll}\p{N}])([\p{Lu}])/gu, "$1 $2")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function formatReadableName(value: string): string | null {
+  let cleaned = value.trim();
+  if (!cleaned || isEmailAddress(cleaned)) return null;
+
+  // A trailing number sequence is commonly a username suffix. Keep digits
+  // elsewhere because they may be meaningful in a real name.
+  cleaned = cleaned.replace(/(?:[\s_.-]*\d+)+$/u, "").trim();
+  cleaned = cleaned.replace(/^[\d\s_.-]+/u, "").trim();
+  cleaned = cleaned.replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+  if (
+    !cleaned ||
+    /^\d+$/u.test(cleaned) ||
+    looksLikeTechnicalIdentifier(cleaned)
+  ) {
+    return null;
+  }
+
+  const words = splitReadableWords(cleaned)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+
+  if (!words) return null;
+  return words.slice(0, MAX_DISPLAY_NAME_LENGTH).trim() || null;
+}
+
+/**
+ * Returns the safest human-readable name for chatbot messages.
+ *
+ * A real profile/display name is preferred. Usernames are only used as a
+ * fallback and are cleaned so numeric suffixes, separators, emails, and
+ * technical identifiers never appear in the greeting.
+ */
+export function getDisplayName(
+  username: unknown,
+  profileName?: unknown,
+): string | null {
+  if (typeof profileName === "string") {
+    const formattedProfileName = formatReadableName(profileName);
+    if (formattedProfileName) return formattedProfileName;
+  }
+
+  if (typeof username !== "string") return null;
+  return formatReadableName(username);
+}
 
 export function getLocalDateKey(date: Date = new Date()): string {
   const year = date.getFullYear();

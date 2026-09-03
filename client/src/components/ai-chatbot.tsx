@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
   claimDailyChatbotGreeting,
+  getDisplayName,
   getLocalDateKey,
 } from "@/lib/chatbot-greeting";
 import {
@@ -235,7 +236,12 @@ export default function AIChatbot() {
     if (!claimDailyChatbotGreeting(user.id, openedAt)) return;
 
     const dailySummary = buildChatbotDailySummary(
-      user.name,
+      getDisplayName(
+        user.username,
+        user.displayName ||
+          user.name ||
+          [user.firstName, user.lastName].filter(Boolean).join(" "),
+      ),
       tasks,
       appointments,
       calendarEvents,
