@@ -2,6 +2,8 @@ const CHATBOT_GREETING_STORAGE_PREFIX = "adaptalyfe:chatbot:last-greeting-date";
 const MAX_DISPLAY_NAME_LENGTH = 60;
 const TECHNICAL_USERNAME_PATTERN =
   /^(?:user|userid|account|member|guest|admin|test|demo|unknown)(?:\s*\d*)?$/i;
+const UUID_PATTERN =
+  /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i;
 
 // This fallback only covers environments where localStorage is unavailable.
 // Normal browser and Capacitor WebView sessions persist through localStorage.
@@ -15,14 +17,29 @@ function isEmailAddress(value: string): boolean {
 
 function looksLikeTechnicalIdentifier(value: string): boolean {
   const compactValue = value.replace(/[\s_.-]/g, "");
-  const isLongIdentifier = compactValue.length >= 24 && /^\p{L}?\p{N}+$/u.test(compactValue);
+  const digitCount = (compactValue.match(/\d/g) || []).length;
+  const isLongIdentifier =
+    compactValue.length >= 24 &&
+    /^\p{L}?\p{N}+$/u.test(compactValue);
+  const isDenseIdentifier =
+    compactValue.length >= 20 &&
+    digitCount >= 6 &&
+    digitCount / compactValue.length >= 0.25;
 
-  return TECHNICAL_USERNAME_PATTERN.test(value) || isLongIdentifier;
+  return (
+    UUID_PATTERN.test(value) ||
+    TECHNICAL_USERNAME_PATTERN.test(value) ||
+    isLongIdentifier ||
+    isDenseIdentifier
+  );
 }
 
 function splitReadableWords(value: string): string[] {
   return value
-    .replace(/([\p{Ll}\p{N}])([\p{Lu}])/gu, "$1 $2")
+    // Split conventional camelCase and digit-to-word boundaries without
+    // treating stylized casing such as "eTHAN" as separate words.
+    .replace(/([\p{Ll}])([\p{Lu}][\p{Ll}])/gu, "$1 $2")
+    .replace(/([\p{N}])([\p{Lu}])/gu, "$1 $2")
     .split(/\s+/)
     .filter(Boolean);
 }
@@ -30,12 +47,15 @@ function splitReadableWords(value: string): string[] {
 function formatReadableName(value: string): string | null {
   let cleaned = value.trim();
   if (!cleaned || isEmailAddress(cleaned)) return null;
+  if (looksLikeTechnicalIdentifier(cleaned)) return null;
 
+  // Normalize separators before handling suffixes so values such as
+  // "Ethan-123!!!" are treated the same as "Ethan-123".
+  cleaned = cleaned.replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   // A trailing number sequence is commonly a username suffix. Keep digits
   // elsewhere because they may be meaningful in a real name.
-  cleaned = cleaned.replace(/(?:[\s_.-]*\d+)+$/u, "").trim();
-  cleaned = cleaned.replace(/^[\d\s_.-]+/u, "").trim();
-  cleaned = cleaned.replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  cleaned = cleaned.replace(/(?:\s*\d+)+$/u, "").trim();
+  cleaned = cleaned.replace(/^[\d\s]+/u, "").trim();
 
   if (
     !cleaned ||
