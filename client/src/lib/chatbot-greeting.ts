@@ -4,7 +4,7 @@ const CHATBOT_GREETING_STORAGE_PREFIX = "adaptalyfe:chatbot:last-greeting-date";
 // Normal browser and Capacitor WebView sessions persist through localStorage.
 const inMemoryGreetingDates = new Map<string, string>();
 
-export type GreetingPeriod = "Morning" | "Afternoon" | "Evening" | "Night";
+export type GreetingPeriod = "morning" | "afternoon" | "evening" | "night";
 
 export function getLocalDateKey(date: Date = new Date()): string {
   const year = date.getFullYear();
@@ -17,10 +17,10 @@ export function getLocalDateKey(date: Date = new Date()): string {
 export function getGreetingPeriod(date: Date = new Date()): GreetingPeriod {
   const hour = date.getHours();
 
-  if (hour >= 5 && hour < 12) return "Morning";
-  if (hour >= 12 && hour < 17) return "Afternoon";
-  if (hour >= 17 && hour < 21) return "Evening";
-  return "Night";
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 21) return "evening";
+  return "night";
 }
 
 export function getChatbotGreeting(

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSafeRef } from "@/hooks/useSafeRef";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,15 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
   claimDailyChatbotGreeting,
-  getChatbotGreeting,
   getLocalDateKey,
 } from "@/lib/chatbot-greeting";
+import {
+  buildChatbotDailySummary,
+  type ChatbotDailySummary,
+} from "@/lib/chatbot-daily-summary";
 import { useSubscription } from "@/hooks/useSubscription";
 import { ChatInput } from "@/components/chat-input";
+import type { Appointment, CalendarEvent, DailyTask } from "@shared/schema";
 import { 
   Bot, 
   Send, 
@@ -29,6 +33,7 @@ import {
   Sparkles,
   Crown,
   Lock,
+  CheckCircle2,
   Minimize2,
   Maximize2,
   X
@@ -39,7 +44,8 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'suggestion' | 'encouragement' | 'daily-greeting';
+  type?: 'text' | 'suggestion' | 'encouragement' | 'daily-summary';
+  dailySummary?: ChatbotDailySummary;
 }
 
 interface QuickSuggestion {
@@ -50,15 +56,7 @@ interface QuickSuggestion {
 }
 
 export default function AIChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm AdaptAI, your personal AI assistant. I'm here to help you succeed and build confidence every day!\n\nI can help you with:\n• Planning daily tasks and routines\n• Managing money and budgets\n• Understanding medications and health\n• Learning new life skills\n• Connecting with your support team\n• Handling difficult emotions\n• Using AdaptaLyfe features\n\nWhat would you like to work on today? You can type a question or choose from the suggestions below!",
-      timestamp: new Date(),
-      type: 'text'
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [showFullChat, setShowFullChat] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -70,6 +68,22 @@ export default function AIChatbot() {
   const { data: user } = useQuery({
     queryKey: ["/api/user"],
   }) as { data: any };
+  const { data: taskData, isFetched: tasksFetched } = useQuery<DailyTask[]>({
+    queryKey: ["/api/daily-tasks"],
+  });
+  const { data: appointmentData, isFetched: appointmentsFetched } = useQuery<Appointment[]>({
+    queryKey: ["/api/appointments"],
+  });
+  const { data: calendarEventData, isFetched: calendarEventsFetched } = useQuery<CalendarEvent[]>({
+    queryKey: ["/api/calendar-events"],
+  });
+  const dailySummaryAttemptRef = useRef<string | null>(null);
+
+  const tasks = Array.isArray(taskData) ? taskData : [];
+  const appointments = Array.isArray(appointmentData) ? appointmentData : [];
+  const calendarEvents = Array.isArray(calendarEventData) ? calendarEventData : [];
+  const dailyDataReady =
+    tasksFetched && appointmentsFetched && calendarEventsFetched;
 
   const quickSuggestions: QuickSuggestion[] = [
     {
@@ -207,36 +221,57 @@ export default function AIChatbot() {
   };
 
   const openChat = useCallback(() => {
-    const openedAt = new Date();
-
-    if (user?.id && claimDailyChatbotGreeting(user.id, openedAt)) {
-      const greetingMessage: ChatMessage = {
-        id: `daily-greeting-${user.id}-${openedAt.getTime()}`,
-        role: "assistant",
-        content: getChatbotGreeting(user.name, openedAt),
-        timestamp: openedAt,
-        type: "daily-greeting",
-      };
-      const greetingDate = getLocalDateKey(openedAt);
-
-      setMessages((previousMessages) => {
-        // Protect against duplicate messages if the open action is triggered
-        // more than once before React finishes the state update.
-        if (
-          previousMessages.some((message) =>
-            message.type === "daily-greeting" &&
-            getLocalDateKey(message.timestamp) === greetingDate
-          )
-        ) {
-          return previousMessages;
-        }
-
-        return [...previousMessages, greetingMessage];
-      });
-    }
-
     setIsOpen(true);
-  }, [user?.id, user?.name]);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !user?.id || !dailyDataReady) return;
+
+    const openedAt = new Date();
+    const summaryKey = `${user.id}:${getLocalDateKey(openedAt)}`;
+    if (dailySummaryAttemptRef.current === summaryKey) return;
+    dailySummaryAttemptRef.current = summaryKey;
+
+    if (!claimDailyChatbotGreeting(user.id, openedAt)) return;
+
+    const dailySummary = buildChatbotDailySummary(
+      user.name,
+      tasks,
+      appointments,
+      calendarEvents,
+      openedAt,
+    );
+
+    setMessages((previousMessages) => {
+      if (
+        previousMessages.some(
+          (message) => message.dailySummary?.dateKey === dailySummary.dateKey,
+        )
+      ) {
+        return previousMessages;
+      }
+
+      return [
+        ...previousMessages,
+        {
+          id: `daily-summary-${user.id}-${openedAt.getTime()}`,
+          role: "assistant",
+          content: dailySummary.content,
+          timestamp: openedAt,
+          type: "daily-summary",
+          dailySummary,
+        },
+      ];
+    });
+  }, [
+    appointments,
+    calendarEvents,
+    dailyDataReady,
+    isOpen,
+    tasks,
+    user?.id,
+    user?.name,
+  ]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -255,6 +290,52 @@ export default function AIChatbot() {
       default:
         return <Bot className="w-3 h-3 text-blue-500" />;
     }
+  };
+
+  const renderMessageBody = (message: ChatMessage) => {
+    if (!message.dailySummary) {
+      return message.content;
+    }
+
+    return (
+      <div className="space-y-3">
+        <p className="font-semibold text-slate-900">{message.dailySummary.greeting}</p>
+        <p>{message.dailySummary.countMessage}</p>
+        {message.dailySummary.items.length > 0 && (
+          <div className="space-y-2">
+            {message.dailySummary.items.map((item) => (
+              <div
+                key={item.id}
+                className={`flex items-start gap-2 rounded-lg border px-2.5 py-2 ${
+                  item.completed
+                    ? "border-green-100 bg-green-50/70"
+                    : "border-slate-100 bg-white"
+                }`}
+              >
+                <CheckCircle2
+                  className={`mt-0.5 h-4 w-4 shrink-0 ${
+                    item.completed ? "text-green-600" : "text-blue-500"
+                  }`}
+                  aria-hidden="true"
+                />
+                <span
+                  className={
+                    item.completed
+                      ? "text-slate-500 line-through"
+                      : "text-slate-800"
+                  }
+                >
+                  <span className="font-medium">{item.time}</span>
+                  {" – "}
+                  {item.title}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="font-medium text-blue-700">{message.dailySummary.offer}</p>
+      </div>
+    );
   };
 
   const CompactChat = () => {
@@ -312,7 +393,7 @@ export default function AIChatbot() {
                       ? 'bg-blue-600 text-white ml-auto' 
                       : 'bg-white text-gray-900 border border-gray-200'
                   }`}>
-                    {message.content}
+                    {renderMessageBody(message)}
                   </div>
                 </div>
               ))}
@@ -391,7 +472,9 @@ export default function AIChatbot() {
                       ? 'bg-blue-600 text-white ml-auto' 
                       : 'bg-white text-gray-900 border border-gray-200'
                   }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                     <div className="text-sm whitespace-pre-wrap">
+                       {renderMessageBody(message)}
+                     </div>
                     <p className="text-xs opacity-70 mt-1">
                       {formatTime(message.timestamp)}
                     </p>
