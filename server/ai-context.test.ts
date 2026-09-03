@@ -116,6 +116,27 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
       assertAuthenticatedScope(userId);
       return [];
     },
+    getTransitionSkillsByUser: async (userId: number) => {
+      assertAuthenticatedScope(userId);
+      return [
+        {
+          userId: authenticatedUserId,
+          skillCategory: "independent_living",
+          skillName: "Own Skill",
+          currentLevel: 2,
+          targetLevel: 5,
+          milestones: ["Own milestone"],
+        },
+        {
+          userId: 999,
+          skillCategory: "independent_living",
+          skillName: "Other User Skill",
+          currentLevel: 5,
+          targetLevel: 5,
+          milestones: ["private"],
+        },
+      ];
+    },
     getRecentMoodEntriesByUser: async (userId: number) => {
       assertAuthenticatedScope(userId);
       return [];
@@ -197,6 +218,10 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     context.medical?.adverseMedications.map((item) => item.medicationName),
     ["Own Medication"]
   );
+  assert.deepEqual(context.progress?.skills?.map((item) => item.skillName), ["Own Skill"]);
+  assert.deepEqual(context.progress?.skills?.[0]?.milestones.map((item) => item.title), [
+    "Own milestone",
+  ]);
 
   const serializedContext = JSON.stringify(context);
   assert.doesNotMatch(

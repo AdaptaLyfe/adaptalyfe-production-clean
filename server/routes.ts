@@ -19,6 +19,10 @@ import {
   isExplicitMedicalInformationRequest,
   isMedicationHealthRequest,
 } from "./medication-health";
+import {
+  buildGoalsProgressRewardsResponse,
+  isGoalsProgressRewardsRequest,
+} from "./goals-progress-rewards";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2317,6 +2321,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? buildAppointmentTransitionResponse(message, context)
         : isMedicationHealthRequest(message)
         ? buildMedicationHealthResponse(message, context)
+        : isGoalsProgressRewardsRequest(message) &&
+          !message.trim().toLowerCase().includes("how am i doing today")
+        ? buildGoalsProgressRewardsResponse(message, context)
         : isNextActionRequest(message)
         ? buildNextAction(context)
         : isTasksRoutinesRequest(message)

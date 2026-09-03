@@ -33,6 +33,7 @@ import type {
   SavingsGoal,
   ShoppingList,
   SleepSession,
+  TransitionSkill,
   UserPreferences,
   UserAchievement,
   MoodEntry,
@@ -103,6 +104,7 @@ export interface AdaptAIContext {
     recentAchievements?: AiAchievement[];
     recentRewards?: AiReward[];
     recentActivity?: AiPointsActivity[];
+    skills?: AiSkill[];
   };
   preferences?: {
     behavior?: AiPreferences;
@@ -244,9 +246,26 @@ export interface AiGoal {
   description?: string;
   category: string;
   priority: string;
+  targetAmount?: number;
+  currentAmount?: number;
   targetDate?: string;
   isDueToday: boolean;
   isCompleted: boolean;
+}
+
+export interface AiSkillMilestone {
+  title: string;
+  isCompleted: boolean;
+}
+
+export interface AiSkill {
+  skillCategory: string;
+  skillName: string;
+  description?: string;
+  currentLevel: number;
+  targetLevel: number;
+  milestones: AiSkillMilestone[];
+  lastPracticed?: string;
 }
 
 export interface AiMood {
@@ -294,6 +313,7 @@ export interface AiAchievement {
   title: string;
   category: string;
   points: number;
+  description?: string;
   earnedAt?: string;
 }
 
@@ -301,11 +321,13 @@ export interface AiReward {
   title: string;
   category: string;
   pointsRequired: number;
+  description?: string;
 }
 
 export interface AiPointsActivity {
   points: number;
   transactionType: string;
+  description?: string;
   createdAt?: string;
 }
 
@@ -584,8 +606,13 @@ export function mapAdverseMedicationsToContext(
     }));
 }
 
-export function mapGoalsToContext(goals: SavingsGoal[], todayStr: string): AiGoal[] {
+export function mapGoalsToContext(
+  goals: SavingsGoal[],
+  todayStr: string,
+  userId?: number
+): AiGoal[] {
   return goals
+    .filter((goal) => userId === undefined || goal.userId === userId)
     .filter((goal) => goal.isActive !== false)
     .slice(0, 20)
     .map((goal) => {
@@ -595,6 +622,8 @@ export function mapGoalsToContext(goals: SavingsGoal[], todayStr: string): AiGoa
         ...(safeText(goal.description, 200) ? { description: safeText(goal.description, 200) } : {}),
         category: goal.category,
         priority: goal.priority,
+        ...(goal.targetAmount != null ? { targetAmount: goal.targetAmount } : {}),
+        ...(goal.currentAmount != null ? { currentAmount: goal.currentAmount } : {}),
         ...(targetDate ? { targetDate } : {}),
         isDueToday: targetDate === todayStr,
         isCompleted: goal.isCompleted ?? false,
@@ -666,33 +695,108 @@ export function mapPointsBalanceToContext(
   };
 }
 
-export function mapAchievementsToContext(achievements: UserAchievement[]): AiAchievement[] {
-  return achievements.slice(0, 5).map((achievement) => ({
-    title: achievement.title,
-    category: achievement.category,
-    points: achievement.points ?? 0,
-    ...(isoDate(achievement.earnedAt) ? { earnedAt: isoDate(achievement.earnedAt) } : {}),
-  }));
+export function mapTransitionSkillsToContext(
+  skills: TransitionSkill[],
+  userId?: number
+): AiSkill[] {
+  return skills
+    .filter((skill) => userId === undefined || skill.userId === userId)
+    .slice(0, 20)
+    .map((skill) => {
+      const rawMilestones = Array.isArray(skill.milestones) ? skill.milestones : [];
+      const milestones = rawMilestones
+        .map((milestone): AiSkillMilestone | undefined => {
+          if (typeof milestone === "string" && milestone.trim()) {
+            return { title: milestone.trim().slice(0, 160), isCompleted: true };
+          }
+          if (!milestone || typeof milestone !== "object" || Array.isArray(milestone)) {
+            return undefined;
+          }
+
+          const source = milestone as Record<string, unknown>;
+          const title =
+            typeof source.title === "string"
+              ? source.title
+              : typeof source.name === "string"
+                ? source.name
+                : undefined;
+          if (!title?.trim()) return undefined;
+          const isCompleted =
+            typeof source.isCompleted === "boolean"
+              ? source.isCompleted
+              : typeof source.completed === "boolean"
+                ? source.completed
+                : true;
+          return { title: title.trim().slice(0, 160), isCompleted };
+        })
+        .filter((milestone): milestone is AiSkillMilestone => milestone !== undefined)
+        .slice(0, 20);
+
+      return {
+        skillCategory: skill.skillCategory,
+        skillName: skill.skillName,
+        ...(safeText(skill.description, 200)
+          ? { description: safeText(skill.description, 200) }
+          : {}),
+        currentLevel: skill.currentLevel ?? 1,
+        targetLevel: skill.targetLevel ?? 5,
+        milestones,
+        ...(isoDate(skill.lastPracticed)
+          ? { lastPracticed: isoDate(skill.lastPracticed) }
+          : {}),
+      };
+    });
 }
 
-export function mapRewardsToContext(rewards: Reward[]): AiReward[] {
-  return rewards.slice(0, 5).map((reward) => ({
-    title: reward.title,
-    category: reward.category,
-    pointsRequired: reward.pointsRequired,
-  }));
+export function mapAchievementsToContext(
+  achievements: UserAchievement[],
+  userId?: number
+): AiAchievement[] {
+  return achievements
+    .filter((achievement) => userId === undefined || achievement.userId === userId)
+    .slice(0, 5)
+    .map((achievement) => ({
+      title: achievement.title,
+      category: achievement.category,
+      points: achievement.points ?? 0,
+      ...(safeText(achievement.description, 200)
+        ? { description: safeText(achievement.description, 200) }
+        : {}),
+      ...(isoDate(achievement.earnedAt) ? { earnedAt: isoDate(achievement.earnedAt) } : {}),
+    }));
+}
+
+export function mapRewardsToContext(rewards: Reward[], userId?: number): AiReward[] {
+  return rewards
+    .filter((reward) => userId === undefined || reward.userId === userId)
+    .slice(0, 5)
+    .map((reward) => ({
+      title: reward.title,
+      category: reward.category,
+      pointsRequired: reward.pointsRequired,
+      ...(safeText(reward.description, 200)
+        ? { description: safeText(reward.description, 200) }
+        : {}),
+    }));
 }
 
 export function mapPointsActivityToContext(
-  transactions: PointsTransaction[]
+  transactions: PointsTransaction[],
+  userId?: number
 ): AiPointsActivity[] {
-  return transactions.slice(0, 10).map((transaction) => ({
-    points: transaction.points,
-    transactionType: transaction.transactionType,
-    ...(isoDate(transaction.createdAt)
-      ? { createdAt: isoDate(transaction.createdAt) }
-      : {}),
-  }));
+  return transactions
+    .filter((transaction) => userId === undefined || transaction.userId === userId)
+    .slice(0, 10)
+    .map((transaction) => ({
+      points: transaction.points,
+      transactionType: transaction.transactionType,
+      ...(safeText(transaction.description, 200)
+        ? { description: safeText(transaction.description, 200) }
+        : {}),
+      ...(isoDate(transaction.createdAt)
+        ? { createdAt: isoDate(transaction.createdAt) }
+        : {}),
+    }));
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -812,6 +916,7 @@ type AdaptAIContextStorage = Pick<
   | "getMedicalConditionsByUser"
   | "getAdverseMedicationsByUser"
   | "getSavingsGoalsByUser"
+  | "getTransitionSkillsByUser"
   | "getRecentMoodEntriesByUser"
   | "getRecentSleepSessionsByUser"
   | "getMealPlansByDate"
@@ -897,6 +1002,7 @@ export async function buildAdaptAIContext(
     rawMedicalConditions,
     rawAdverseMedications,
     rawGoals,
+    rawSkills,
     rawMood,
     rawSleep,
     rawMeals,
@@ -930,6 +1036,7 @@ export async function buildAdaptAIContext(
         )
       : Promise.resolve(undefined),
     loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId)),
+    loadContextSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId)),
     loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7)),
     loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7)),
     loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date)),
@@ -967,7 +1074,8 @@ export async function buildAdaptAIContext(
   const adverseMedications = rawAdverseMedications
     ? mapAdverseMedicationsToContext(rawAdverseMedications, userId)
     : [];
-  const goals = rawGoals ? mapGoalsToContext(rawGoals, date) : [];
+  const goals = rawGoals ? mapGoalsToContext(rawGoals, date, userId) : [];
+  const skills = rawSkills ? mapTransitionSkillsToContext(rawSkills, userId) : [];
   const mood = rawMood ? mapMoodToContext(rawMood) : [];
   const sleep = rawSleep ? mapSleepToContext(rawSleep) : [];
   const meals = rawMeals ? mapMealsToContext(rawMeals) : [];
@@ -977,11 +1085,11 @@ export async function buildAdaptAIContext(
   const accessibility = mapAccessibilityToContext(rawPreferences);
   const points = mapPointsBalanceToContext(pointsBalance);
   const achievements = recentAchievements
-    ? mapAchievementsToContext(recentAchievements)
+    ? mapAchievementsToContext(recentAchievements, userId)
     : [];
-  const rewards = activeRewards ? mapRewardsToContext(activeRewards) : [];
+  const rewards = activeRewards ? mapRewardsToContext(activeRewards, userId) : [];
   const pointsActivity = recentPointsActivity
-    ? mapPointsActivityToContext(recentPointsActivity)
+    ? mapPointsActivityToContext(recentPointsActivity, userId)
     : [];
 
   const context: AdaptAIContext = {
@@ -1029,12 +1137,19 @@ export async function buildAdaptAIContext(
   if (shopping.length > 0) context.shopping = shopping;
   if (dueBills.length > 0) context.finance = { due: dueBills };
 
-  if (points || achievements.length > 0 || rewards.length > 0 || pointsActivity.length > 0) {
+  if (
+    points ||
+    achievements.length > 0 ||
+    rewards.length > 0 ||
+    pointsActivity.length > 0 ||
+    skills.length > 0
+  ) {
     context.progress = {
       ...(points ? { points } : {}),
       ...(achievements.length > 0 ? { recentAchievements: achievements } : {}),
       ...(rewards.length > 0 ? { recentRewards: rewards } : {}),
       ...(pointsActivity.length > 0 ? { recentActivity: pointsActivity } : {}),
+      ...(skills.length > 0 ? { skills } : {}),
     };
   }
 
