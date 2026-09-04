@@ -107,6 +107,7 @@ export interface IStorage {
   // Notifications
   getNotificationsByUser(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
+  createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined>;
   markNotificationAsRead(notificationId: number, userId: number): Promise<void>;
   
   // User Preferences
@@ -248,6 +249,7 @@ export interface IStorage {
   getNotificationsByUser(userId: number): Promise<Notification[]>;
   getUnreadNotifications(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
+  createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined>;
   markNotificationRead(notificationId: number): Promise<Notification | undefined>;
   scheduleNotification(notification: InsertNotification): Promise<Notification>;
   
@@ -938,6 +940,17 @@ export class DatabaseStorage implements IStorage {
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
     const [result] = await db.insert(notifications).values(notification).returning();
+    return result;
+  }
+
+  async createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined> {
+    const [result] = await db
+      .insert(notifications)
+      .values(notification)
+      .onConflictDoNothing({
+        target: [notifications.userId, notifications.dedupeKey],
+      })
+      .returning();
     return result;
   }
 

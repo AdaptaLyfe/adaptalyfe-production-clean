@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -997,9 +997,15 @@ export const notifications = pgTable("notifications", {
   scheduledFor: timestamp("scheduled_for"),
   sentAt: timestamp("sent_at"),
   relatedId: integer("related_id"), // Related task/appointment ID
+  dedupeKey: text("dedupe_key"), // Stable key for idempotent proactive guidance
   priority: text("priority").default("normal"), // "low", "normal", "high", "urgent"
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userDedupeKey: uniqueIndex("notifications_user_dedupe_key").on(
+    table.userId,
+    table.dedupeKey,
+  ),
+}));
 
 // User Preferences for Smart Features
 export const userPreferences = pgTable("user_preferences", {
