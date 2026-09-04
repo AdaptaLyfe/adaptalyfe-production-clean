@@ -38,6 +38,7 @@ import {
   isFinanceRequest,
   shouldIncludeFinanceContext,
 } from "./finance";
+import { buildCaregiverContextResponse } from "./caregiver-context";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2313,9 +2314,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Message is required" });
       }
 
-      // The authenticated session is the only source of user identity.
-      // Client-provided userId values are intentionally ignored.
-      const userId: number = req.session.userId;
+      // The authenticated session is always the viewer identity. A caregiver
+      // may request a care recipient only through the permission-checked
+      // careRecipientId path; arbitrary userId values remain ignored.
+      const viewerUserId: number = req.session.userId;
+      const requestedCareRecipientId = req.body?.careRecipientId;
+      const userId =
+        requestedCareRecipientId === undefined
+          ? viewerUserId
+          : Number(requestedCareRecipientId);
+      if (!Number.isInteger(userId) || userId < 1) {
+        return res.status(400).json({ error: "careRecipientId must be a valid user ID" });
+      }
       const clientTime = {
         localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
         localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
@@ -2334,10 +2344,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             shouldIncludeMealsGroceryContext(message) || isTodayBriefingRequest(message),
           includeFinance:
             shouldIncludeFinanceContext(message) || isTodayBriefingRequest(message),
+          viewerUserId,
         }
       );
+      const caregiverResponse = buildCaregiverContextResponse(message, context);
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
+        : caregiverResponse
+        ? caregiverResponse
         : isMealsGroceryRequest(message)
         ? buildMealsGroceryResponse(message, context)
         : isFinanceRequest(message)
@@ -2367,6 +2381,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error in chat endpoint:", error);
       
       // Handle OpenAI quota exceeded or rate limiting
+      if (error?.message === "AdaptAI caregiver access denied") {
+        return res.status(403).json({
+          error: "AdaptAI is not authorized to access that care recipient.",
+          type: "permission_denied",
+        });
+      }
       if (error.status === 429 || error.code === 'insufficient_quota') {
         // Provide helpful fallback responses based on common queries
         const fallbackResponse = getFallbackResponse(req.body.message);

@@ -1,4 +1,5 @@
 import type { AdaptAIContext, AiAppointment, AiTask } from "./ai-context.js";
+import { buildCaregiverContextNote } from "./caregiver-context.js";
 import { buildFinanceContextNote } from "./finance.js";
 import { buildMealsGroceryContextNote } from "./meals-grocery.js";
 import { buildMoodSleepContextNote } from "./mood-sleep.js";
@@ -180,6 +181,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   const wellbeingNote = buildMoodSleepContextNote(context);
   const mealsGroceryNote = buildMealsGroceryContextNote(context);
   const financeNote = buildFinanceContextNote(context);
+  const caregiverNote = buildCaregiverContextNote(context);
 
   if (sortedItems.length === 0) {
     const progress = formatCompletedProgress(context);
@@ -188,6 +190,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
       ...(wellbeingNote ? ["", wellbeingNote] : []),
       ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
       ...(financeNote ? ["", financeNote] : []),
+      ...(caregiverNote ? ["", caregiverNote] : []),
       "",
       "You don’t have anything else planned today.",
       ...(progress ? [progress] : []),
@@ -208,6 +211,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
     ...(wellbeingNote ? ["", wellbeingNote] : []),
     ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
     ...(financeNote ? ["", financeNote] : []),
+    ...(caregiverNote ? ["", caregiverNote] : []),
     "",
     `You have ${itemCount} ${itemCount === 1 ? "thing" : "things"} planned today:`,
     "",

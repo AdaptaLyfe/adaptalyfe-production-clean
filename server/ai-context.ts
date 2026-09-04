@@ -5,8 +5,9 @@
  * into a safe, explicitly-whitelisted context for the AI service.
  *
  * Security rules (enforced here, not in the AI service):
- *  - Never accepts a userId from the frontend
- *  - Never queries another user's data
+ *  - Never trusts an arbitrary frontend userId as authorization
+ *  - Never queries another user's data without an active relationship and
+ *    permission check
  *  - Never returns sensitive fields (passwords, tokens, payment IDs, etc.)
  *  - Never modifies the database (read-only storage calls only)
  *
@@ -27,6 +28,9 @@ import type {
   BudgetCategory,
   BudgetEntry,
   CalendarEvent,
+  CaregiverPermission,
+  CareRelationship,
+  LockedUserSetting,
   DailyTask,
   MealPlan,
   MedicalCondition,
@@ -115,6 +119,25 @@ export interface AdaptAIContext {
     behavior?: AiPreferences;
     accessibility?: AiAccessibility;
   };
+  caregiverContext?: {
+    role: "care_recipient" | "caregiver" | "authorized_user";
+    relationship?: string;
+    isPrimary?: boolean;
+    permittedAreas: CaregiverContextArea[];
+    restrictedAreas: CaregiverContextArea[];
+  };
+}
+
+export type CaregiverContextArea = "progress" | "mood" | "medical" | "financial";
+
+export interface AdaptAIAccessScope {
+  viewerUserId: number;
+  subjectUserId: number;
+  role: "care_recipient" | "caregiver" | "authorized_user";
+  relationship?: string;
+  isPrimary?: boolean;
+  permittedAreas: CaregiverContextArea[];
+  restrictedAreas: CaregiverContextArea[];
 }
 
 /**
@@ -999,7 +1022,7 @@ export async function buildDailyGuideContext(
   return context;
 }
 
-type AdaptAIContextStorage = Pick<
+export type AdaptAIContextStorage = Pick<
   IStorage,
   | "getUserById"
   | "getDailyTasksByUser"
@@ -1024,7 +1047,124 @@ type AdaptAIContextStorage = Pick<
   | "getActiveRewardsByUser"
   | "getRecentPointsTransactionsByUser"
   | "getUserPreferences"
+   | "getCareRelationshipsByCaregiver"
+   | "getCaregiverPermissions"
+   | "getLockedUserSettings"
 >;
+
+const caregiverPermissionByArea: Record<CaregiverContextArea, string> = {
+  progress: "view_progress",
+  mood: "view_mood",
+  medical: "view_medical",
+  financial: "view_financial",
+};
+
+const lockedSettingKeysByArea: Record<CaregiverContextArea, string[]> = {
+  progress: ["progressSharing", "progress_sharing", "view_progress"],
+  mood: ["moodSharing", "mood_sharing", "view_mood"],
+  medical: [
+    "medicalDataSharing",
+    "medical_data_sharing",
+    "medicalInformation",
+    "medical_information",
+    "view_medical",
+  ],
+  financial: [
+    "financialDataSharing",
+    "financial_data_sharing",
+    "financialInformation",
+    "financial_information",
+    "view_financial",
+  ],
+};
+
+function isLockedAndHidden(
+  settings: LockedUserSetting[],
+  area: CaregiverContextArea
+): boolean {
+  const keys = lockedSettingKeysByArea[area];
+  return settings.some(
+    (setting) =>
+      setting.isLocked === true &&
+      setting.canUserView === false &&
+      keys.includes(setting.settingKey)
+  );
+}
+
+function explicitPermission(
+  permissions: CaregiverPermission[],
+  permissionType: string
+): CaregiverPermission | undefined {
+  return permissions.find((permission) => permission.permissionType === permissionType);
+}
+
+/**
+ * Resolve access for the authenticated viewer before any subject records are read.
+ * A subject ID is only accepted when it is the viewer's own ID or an active
+ * care relationship explicitly authorizes the viewer.
+ */
+export async function resolveAdaptAIAccess(
+  viewerUserId: number,
+  subjectUserId: number,
+  contextStorage: Pick<
+    AdaptAIContextStorage,
+    "getCareRelationshipsByCaregiver" | "getCaregiverPermissions" | "getLockedUserSettings"
+  >
+): Promise<AdaptAIAccessScope> {
+  if (!Number.isInteger(viewerUserId) || viewerUserId < 1) {
+    throw new Error("An authenticated viewer ID is required");
+  }
+  if (!Number.isInteger(subjectUserId) || subjectUserId < 1) {
+    throw new Error("A valid care recipient ID is required");
+  }
+
+  if (viewerUserId === subjectUserId) {
+    return {
+      viewerUserId,
+      subjectUserId,
+      role: "care_recipient",
+      permittedAreas: ["progress", "mood", "medical", "financial"],
+      restrictedAreas: [],
+    };
+  }
+
+  const relationships = await contextStorage.getCareRelationshipsByCaregiver(viewerUserId);
+  const relationship = relationships.find(
+    (candidate) =>
+      candidate.caregiverId === viewerUserId &&
+      candidate.userId === subjectUserId &&
+      candidate.isActive !== false
+  );
+  if (!relationship) {
+    throw new Error("AdaptAI caregiver access denied");
+  }
+
+  const [permissions, lockedSettings] = await Promise.all([
+    contextStorage.getCaregiverPermissions(subjectUserId, viewerUserId),
+    contextStorage.getLockedUserSettings(subjectUserId),
+  ]);
+  const permittedAreas = (Object.keys(caregiverPermissionByArea) as CaregiverContextArea[]).filter(
+    (area) => {
+      const permission = explicitPermission(permissions, caregiverPermissionByArea[area]);
+      const granted = permission
+        ? permission.isGranted !== false
+        : relationship.isPrimary === true;
+      return granted && !isLockedAndHidden(lockedSettings, area);
+    }
+  );
+
+  return {
+    viewerUserId,
+    subjectUserId,
+    role: relationship.isPrimary === true ? "caregiver" : "authorized_user",
+    relationship: relationship.relationship,
+    isPrimary: relationship.isPrimary === true,
+    permittedAreas,
+    restrictedAreas: (Object.keys(caregiverPermissionByArea) as CaregiverContextArea[]).filter(
+      (area) => !permittedAreas.includes(area)
+    ),
+  };
+}
 
 async function loadContextSection<T>(
   label: string,
@@ -1057,12 +1197,10 @@ function resolveDisplayName(
 /**
  * Build the complete AdaptAI context for one authenticated user.
  *
- * This function accepts the authenticated user ID from the route, never a
- * requested target ID. Every data read is delegated to a storage method that
- * includes that user ID in its query. Caregiver-to-user context switching is
- * intentionally not supported here; a caregiver's chat can only see the
- * caregiver's own records until an explicitly permission-checked target flow
- * is designed.
+ * The route supplies the requested subject only after the authenticated viewer
+ * is retained separately as viewerUserId. Every cross-user data read is
+ * preceded by resolveAdaptAIAccess and delegated to a storage method scoped to
+ * the authorized subject.
  */
 export async function buildAdaptAIContext(
   userId: number,
@@ -1074,6 +1212,7 @@ export async function buildAdaptAIContext(
     includeMoodSleep?: boolean;
     includeMealsGrocery?: boolean;
     includeFinance?: boolean;
+    viewerUserId?: number;
   } = {}
 ): Promise<AdaptAIContext> {
   if (!Number.isInteger(userId) || userId < 1) {
@@ -1090,6 +1229,19 @@ export async function buildAdaptAIContext(
     ? clientTime!.localTime!
     : serverTime.time;
   const timezone = clientTime?.timezone?.trim().slice(0, 80) || serverTime.timezone;
+  const accessScope = await resolveAdaptAIAccess(
+    options.viewerUserId ?? userId,
+    userId,
+    contextStorage
+  );
+  const isCareRecipientContext = accessScope.role === "care_recipient";
+  const canView = (area: CaregiverContextArea) =>
+    isCareRecipientContext || accessScope.permittedAreas.includes(area);
+  const canLoadFinance = canView("financial") && options.includeFinance;
+  const canLoadRelevantFinance = canView("financial") && isCareRecipientContext;
+  const canLoadMood = canView("mood") && options.includeMoodSleep;
+  const canLoadMedical = canView("medical");
+  const canLoadProgress = canView("progress");
 
   const storedUser = await loadContextSection("identity", () =>
     contextStorage.getUserById(userId)
@@ -1118,67 +1270,94 @@ export async function buildAdaptAIContext(
     recentPointsActivity,
     rawPreferences,
   ] = await Promise.all([
-    loadContextSection("tasks", () => contextStorage.getDailyTasksByUser(userId)),
-    loadContextSection("today's appointments", () =>
-      contextStorage.getAppointmentsByDate(userId, date)
-    ),
-    loadContextSection("upcoming appointment", () =>
-      contextStorage.getNextAppointment(userId, `${date}T${time}:00`)
-    ),
-    loadContextSection("medications", () => contextStorage.getMedicationsByUser(userId)),
+    canLoadProgress
+      ? loadContextSection("tasks", () => contextStorage.getDailyTasksByUser(userId))
+      : Promise.resolve(undefined),
+    canLoadMedical
+      ? loadContextSection("today's appointments", () =>
+          contextStorage.getAppointmentsByDate(userId, date)
+        )
+      : Promise.resolve(undefined),
+    canLoadMedical
+      ? loadContextSection("upcoming appointment", () =>
+          contextStorage.getNextAppointment(userId, `${date}T${time}:00`)
+        )
+      : Promise.resolve(undefined),
+    canLoadMedical
+      ? loadContextSection("medications", () => contextStorage.getMedicationsByUser(userId))
+      : Promise.resolve(undefined),
     options.includeMedicalInfo
+      && canLoadMedical
       ? loadContextSection("allergies", () => contextStorage.getAllergiesByUser(userId))
       : Promise.resolve(undefined),
     options.includeMedicalInfo
+      && canLoadMedical
       ? loadContextSection("medical conditions", () =>
           contextStorage.getMedicalConditionsByUser(userId)
         )
       : Promise.resolve(undefined),
     options.includeMedicalInfo
+      && canLoadMedical
       ? loadContextSection("adverse medication reactions", () =>
           contextStorage.getAdverseMedicationsByUser(userId)
         )
       : Promise.resolve(undefined),
-    loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId)),
-    loadContextSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId)),
-    options.includeMoodSleep
+    canView("financial") && (isCareRecipientContext || canLoadFinance)
+      ? loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId))
+      : Promise.resolve(undefined),
+    canLoadProgress
+      ? loadContextSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId))
+      : Promise.resolve(undefined),
+    canLoadMood
       ? loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7))
       : Promise.resolve(undefined),
-    options.includeMoodSleep
+    canLoadMood
       ? loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7))
       : Promise.resolve(undefined),
-    options.includeMealsGrocery
+    isCareRecipientContext && options.includeMealsGrocery
       ? loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date))
       : Promise.resolve(undefined),
-    options.includeMealsGrocery
+    isCareRecipientContext && options.includeMealsGrocery
       ? loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId))
       : Promise.resolve(undefined),
-    options.includeFinance
+    canLoadFinance
       ? loadContextSection("all bills", () => contextStorage.getBillsByUser(userId))
-      : loadContextSection("finance", () =>
+      : canLoadRelevantFinance
+        ? loadContextSection("finance", () =>
           contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
-        ),
-    options.includeFinance
+          )
+        : Promise.resolve(undefined),
+    canLoadFinance
       ? loadContextSection("budget entries", () => contextStorage.getBudgetEntriesByUser(userId))
       : Promise.resolve(undefined),
-    options.includeFinance
+    canLoadFinance
       ? loadContextSection("budget categories", () =>
           contextStorage.getBudgetCategoriesByUser(userId)
         )
       : Promise.resolve(undefined),
-    loadContextSection("points balance", () =>
-      contextStorage.getExistingUserPointsBalance(userId)
-    ),
-    loadContextSection("recent achievements", () =>
-      contextStorage.getRecentUserAchievements(userId, 5)
-    ),
-    loadContextSection("active rewards", () =>
-      contextStorage.getActiveRewardsByUser(userId, 5)
-    ),
-    loadContextSection("recent points activity", () =>
-      contextStorage.getRecentPointsTransactionsByUser(userId, 10)
-    ),
-    loadContextSection("preferences", () => contextStorage.getUserPreferences(userId)),
+    canLoadProgress
+      ? loadContextSection("points balance", () =>
+          contextStorage.getExistingUserPointsBalance(userId)
+        )
+      : Promise.resolve(undefined),
+    canLoadProgress
+      ? loadContextSection("recent achievements", () =>
+          contextStorage.getRecentUserAchievements(userId, 5)
+        )
+      : Promise.resolve(undefined),
+    canLoadProgress
+      ? loadContextSection("active rewards", () =>
+          contextStorage.getActiveRewardsByUser(userId, 5)
+        )
+      : Promise.resolve(undefined),
+    canLoadProgress
+      ? loadContextSection("recent points activity", () =>
+          contextStorage.getRecentPointsTransactionsByUser(userId, 10)
+        )
+      : Promise.resolve(undefined),
+    isCareRecipientContext
+      ? loadContextSection("preferences", () => contextStorage.getUserPreferences(userId))
+      : Promise.resolve(undefined),
   ]);
 
   const todayTasks = rawTasks ? mapTasksToContext(rawTasks, date) : [];
@@ -1228,6 +1407,17 @@ export async function buildAdaptAIContext(
       displayName: resolveDisplayName(sessionUser, storedUser?.name),
     },
     today: { date, time, timezone },
+    caregiverContext: {
+      role: accessScope.role,
+      ...(accessScope.relationship
+        ? { relationship: accessScope.relationship }
+        : {}),
+      ...(accessScope.isPrimary !== undefined
+        ? { isPrimary: accessScope.isPrimary }
+        : {}),
+      permittedAreas: accessScope.permittedAreas,
+      restrictedAreas: accessScope.restrictedAreas,
+    },
   };
 
   if (todayTasks.length > 0) {

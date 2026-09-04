@@ -56,7 +56,7 @@ interface QuickSuggestion {
   icon: React.ReactNode;
 }
 
-export default function AIChatbot() {
+export default function AIChatbot({ careRecipientId }: { careRecipientId?: number } = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [showFullChat, setShowFullChat] = useState(false);
@@ -166,6 +166,7 @@ export default function AIChatbot() {
         localDate,
         localTime,
         timezone,
+        ...(careRecipientId ? { careRecipientId } : {}),
       });
       return await response.json();
     },
