@@ -139,11 +139,37 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     },
     getRecentMoodEntriesByUser: async (userId: number) => {
       assertAuthenticatedScope(userId);
-      return [];
+      return [
+        {
+          userId: authenticatedUserId,
+          mood: 2,
+          entryDate: new Date("2026-09-03T09:00:00Z"),
+        },
+        {
+          userId: 999,
+          mood: 1,
+          entryDate: new Date("2026-09-03T09:00:00Z"),
+        },
+      ];
     },
     getRecentSleepSessionsByUser: async (userId: number) => {
       assertAuthenticatedScope(userId);
-      return [];
+      return [
+        {
+          userId: authenticatedUserId,
+          sleepDate: "2026-09-03",
+          totalSleepDuration: 300,
+          sleepScore: 55,
+          quality: "poor",
+        },
+        {
+          userId: 999,
+          sleepDate: "2026-09-03",
+          totalSleepDuration: 120,
+          sleepScore: 10,
+          quality: "poor",
+        },
+      ];
     },
     getMealPlansByDate: async (userId: number) => {
       assertAuthenticatedScope(userId);
@@ -197,7 +223,7 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     { name: "Alex Johnson" },
     { localDate: "2026-09-03", localTime: "09:30", timezone: "Asia/Calcutta" },
     contextStorage,
-    { includeMedicalInfo: true }
+    { includeMedicalInfo: true, includeMoodSleep: true }
   );
 
   assert.ok(calledUserIds.length > 0);
@@ -222,6 +248,8 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
   assert.deepEqual(context.progress?.skills?.[0]?.milestones.map((item) => item.title), [
     "Own milestone",
   ]);
+  assert.deepEqual(context.mood?.map((item) => item.mood), [2]);
+  assert.deepEqual(context.sleep?.map((item) => item.totalSleepDurationMinutes), [300]);
 
   const serializedContext = JSON.stringify(context);
   assert.doesNotMatch(

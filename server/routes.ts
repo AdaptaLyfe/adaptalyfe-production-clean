@@ -5,6 +5,11 @@ import { storage } from "./storage";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import { generateAdaptAIChatResponse, generateDailyGuide } from "./ai-service";
 import { buildTodayBriefing, isTodayBriefingRequest } from "./today-briefing";
+import {
+  buildMoodSleepResponse,
+  isMoodSleepRequest,
+  shouldIncludeMoodSleepContext,
+} from "./mood-sleep";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   buildTasksRoutinesResponse,
@@ -2311,7 +2316,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { name: typeof req.session.user?.name === "string" ? req.session.user.name : "" },
         clientTime,
         storage,
-        { includeMedicalInfo: isExplicitMedicalInformationRequest(message) }
+        {
+          includeMedicalInfo: isExplicitMedicalInformationRequest(message),
+          includeMoodSleep:
+            shouldIncludeMoodSleepContext(message) || isTodayBriefingRequest(message),
+        }
       );
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
@@ -2321,6 +2330,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? buildAppointmentTransitionResponse(message, context)
         : isMedicationHealthRequest(message)
         ? buildMedicationHealthResponse(message, context)
+        : isMoodSleepRequest(message)
+        ? buildMoodSleepResponse(message, context)
         : isGoalsProgressRewardsRequest(message) &&
           !message.trim().toLowerCase().includes("how am i doing today")
         ? buildGoalsProgressRewardsResponse(message, context)

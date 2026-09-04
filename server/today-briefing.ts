@@ -1,4 +1,5 @@
 import type { AdaptAIContext, AiAppointment, AiTask } from "./ai-context.js";
+import { buildMoodSleepContextNote } from "./mood-sleep.js";
 
 const MAX_BRIEFING_ITEMS = 12;
 
@@ -159,11 +160,13 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
 
   const sortedItems = sortBriefingItems(items);
   const greeting = `${greetingForTime(context.today.time)}, ${context.identity.displayName}.`;
+  const wellbeingNote = buildMoodSleepContextNote(context);
 
   if (sortedItems.length === 0) {
     const progress = formatCompletedProgress(context);
     return [
       greeting,
+      ...(wellbeingNote ? ["", wellbeingNote] : []),
       "",
       "You don’t have anything else planned today.",
       ...(progress ? [progress] : []),
@@ -181,6 +184,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
 
   return [
     greeting,
+    ...(wellbeingNote ? ["", wellbeingNote] : []),
     "",
     `You have ${itemCount} ${itemCount === 1 ? "thing" : "things"} planned today:`,
     "",

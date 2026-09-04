@@ -631,8 +631,9 @@ export function mapGoalsToContext(
     });
 }
 
-export function mapMoodToContext(entries: MoodEntry[]): AiMood[] {
+export function mapMoodToContext(entries: MoodEntry[], userId?: number): AiMood[] {
   return entries
+    .filter((entry) => userId === undefined || entry.userId === userId)
     .slice(0, 7)
     .map((entry) => ({
       mood: entry.mood,
@@ -641,8 +642,9 @@ export function mapMoodToContext(entries: MoodEntry[]): AiMood[] {
     .filter((entry) => entry.date !== "");
 }
 
-export function mapSleepToContext(sessions: SleepSession[]): AiSleep[] {
+export function mapSleepToContext(sessions: SleepSession[], userId?: number): AiSleep[] {
   return sessions
+    .filter((session) => userId === undefined || session.userId === userId)
     .slice(0, 7)
     .map((session) => ({
       date: dateOnly(session.sleepDate) ?? "",
@@ -972,7 +974,7 @@ export async function buildAdaptAIContext(
   sessionUser: SafeSessionIdentity,
   clientTime?: { localDate?: string; localTime?: string; timezone?: string },
   contextStorage: AdaptAIContextStorage = storage,
-  options: { includeMedicalInfo?: boolean } = {}
+  options: { includeMedicalInfo?: boolean; includeMoodSleep?: boolean } = {}
 ): Promise<AdaptAIContext> {
   if (!Number.isInteger(userId) || userId < 1) {
     throw new Error("An authenticated user ID is required to build AdaptAI context");
@@ -1037,8 +1039,12 @@ export async function buildAdaptAIContext(
       : Promise.resolve(undefined),
     loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId)),
     loadContextSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId)),
-    loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7)),
-    loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7)),
+    options.includeMoodSleep
+      ? loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7))
+      : Promise.resolve(undefined),
+    options.includeMoodSleep
+      ? loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7))
+      : Promise.resolve(undefined),
     loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date)),
     loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId)),
     loadContextSection("finance", () =>
@@ -1076,8 +1082,8 @@ export async function buildAdaptAIContext(
     : [];
   const goals = rawGoals ? mapGoalsToContext(rawGoals, date, userId) : [];
   const skills = rawSkills ? mapTransitionSkillsToContext(rawSkills, userId) : [];
-  const mood = rawMood ? mapMoodToContext(rawMood) : [];
-  const sleep = rawSleep ? mapSleepToContext(rawSleep) : [];
+  const mood = rawMood ? mapMoodToContext(rawMood, userId) : [];
+  const sleep = rawSleep ? mapSleepToContext(rawSleep, userId) : [];
   const meals = rawMeals ? mapMealsToContext(rawMeals) : [];
   const shopping = rawShopping ? mapShoppingToContext(rawShopping) : [];
   const dueBills = rawBills ? mapBillsToContext(rawBills) : [];
