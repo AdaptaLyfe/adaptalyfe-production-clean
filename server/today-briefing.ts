@@ -1,4 +1,5 @@
 import type { AdaptAIContext, AiAppointment, AiTask } from "./ai-context.js";
+import { buildFinanceContextNote } from "./finance.js";
 import { buildMealsGroceryContextNote } from "./meals-grocery.js";
 import { buildMoodSleepContextNote } from "./mood-sleep.js";
 
@@ -145,9 +146,24 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   }
 
   for (const bill of context.finance?.due ?? []) {
+    const title =
+      bill.dueStatus === "overdue"
+        ? `Overdue bill: ${bill.name}`
+        : bill.dueStatus === "due_today"
+          ? `Bill due today: ${bill.name}`
+          : bill.dueStatus === "due_soon"
+            ? `Bill due soon: ${bill.name}`
+            : `Bill due: ${bill.name}`;
     items.push({
-      title: `Bill due: ${bill.name}`,
-      sortPriority: 50,
+      title,
+      sortPriority:
+        bill.dueStatus === "overdue"
+          ? 5
+          : bill.dueStatus === "due_today"
+            ? 8
+            : bill.dueStatus === "due_soon"
+              ? 12
+              : 50,
     });
   }
 
@@ -163,6 +179,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   const greeting = `${greetingForTime(context.today.time)}, ${context.identity.displayName}.`;
   const wellbeingNote = buildMoodSleepContextNote(context);
   const mealsGroceryNote = buildMealsGroceryContextNote(context);
+  const financeNote = buildFinanceContextNote(context);
 
   if (sortedItems.length === 0) {
     const progress = formatCompletedProgress(context);
@@ -170,6 +187,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
       greeting,
       ...(wellbeingNote ? ["", wellbeingNote] : []),
       ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
+      ...(financeNote ? ["", financeNote] : []),
       "",
       "You don’t have anything else planned today.",
       ...(progress ? [progress] : []),
@@ -189,6 +207,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
     greeting,
     ...(wellbeingNote ? ["", wellbeingNote] : []),
     ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
+    ...(financeNote ? ["", financeNote] : []),
     "",
     `You have ${itemCount} ${itemCount === 1 ? "thing" : "things"} planned today:`,
     "",

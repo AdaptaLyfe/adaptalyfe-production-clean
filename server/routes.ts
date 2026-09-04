@@ -33,6 +33,11 @@ import {
   isMealsGroceryRequest,
   shouldIncludeMealsGroceryContext,
 } from "./meals-grocery";
+import {
+  buildFinanceResponse,
+  isFinanceRequest,
+  shouldIncludeFinanceContext,
+} from "./finance";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -2327,12 +2332,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             shouldIncludeMoodSleepContext(message) || isTodayBriefingRequest(message),
           includeMealsGrocery:
             shouldIncludeMealsGroceryContext(message) || isTodayBriefingRequest(message),
+          includeFinance:
+            shouldIncludeFinanceContext(message) || isTodayBriefingRequest(message),
         }
       );
       const response = isTodayBriefingRequest(message)
         ? buildTodayBriefing(context)
         : isMealsGroceryRequest(message)
         ? buildMealsGroceryResponse(message, context)
+        : isFinanceRequest(message)
+        ? buildFinanceResponse(message, context)
         : isAppointmentTransitionRequest(message) &&
           (message.trim().toLowerCase() !== "what's next?" ||
             Boolean(context.appointments?.today?.length || context.appointments?.upcoming))

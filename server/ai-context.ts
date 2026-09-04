@@ -24,6 +24,8 @@ import type {
   AdverseMedication,
   Allergy,
   Bill,
+  BudgetCategory,
+  BudgetEntry,
   CalendarEvent,
   DailyTask,
   MealPlan,
@@ -98,6 +100,9 @@ export interface AdaptAIContext {
   shopping?: AiShoppingItem[];
   finance?: {
     due: AiBill[];
+    bills?: AiBill[];
+    budgetEntries?: AiBudgetEntry[];
+    budgetCategories?: AiBudgetCategory[];
   };
   progress?: {
     points?: AiPointsBalance;
@@ -301,6 +306,21 @@ export interface AiBill {
   dueDayOfMonth: number;
   category: string;
   isPaid: boolean;
+  dueStatus: "overdue" | "due_today" | "due_soon" | "upcoming" | "paid";
+  daysUntilDue?: number;
+}
+
+export interface AiBudgetEntry {
+  category: string;
+  amount: number;
+  type: string;
+  entryDate?: string;
+}
+
+export interface AiBudgetCategory {
+  name: string;
+  type: string;
+  budgetedAmount: number;
 }
 
 export interface AiPointsBalance {
@@ -683,14 +703,79 @@ export function mapShoppingToContext(items: ShoppingList[], userId?: number): Ai
     }));
 }
 
-export function mapBillsToContext(bills: Bill[]): AiBill[] {
-  return bills.slice(0, 20).map((bill) => ({
-    name: bill.name,
-    amount: bill.amount,
-    dueDayOfMonth: bill.dueDate,
-    category: bill.category,
-    isPaid: bill.isPaid ?? false,
-  }));
+function billTiming(
+  dueDayOfMonth: number,
+  todayStr: string
+): { dueStatus: AiBill["dueStatus"]; daysUntilDue?: number } {
+  const today = new Date(`${todayStr}T00:00:00.000Z`);
+  if (!Number.isFinite(today.getTime()) || !Number.isInteger(dueDayOfMonth)) {
+    return { dueStatus: "upcoming" };
+  }
+
+  const dueDate = new Date(Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    Math.min(Math.max(dueDayOfMonth, 1), 31)
+  ));
+  const daysUntilDue = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
+
+  if (daysUntilDue < 0) return { dueStatus: "overdue", daysUntilDue };
+  if (daysUntilDue === 0) return { dueStatus: "due_today", daysUntilDue };
+  if (daysUntilDue <= 7) return { dueStatus: "due_soon", daysUntilDue };
+  return { dueStatus: "upcoming", daysUntilDue };
+}
+
+export function mapBillsToContext(
+  bills: Bill[],
+  todayStr = new Date().toISOString().slice(0, 10),
+  userId?: number
+): AiBill[] {
+  return bills
+    .filter((bill) => userId === undefined || bill.userId === userId)
+    .slice(0, 50)
+    .map((bill) => {
+      const isPaid = bill.isPaid ?? false;
+      const timing = billTiming(bill.dueDate, todayStr);
+      return {
+        name: bill.name,
+        amount: bill.amount,
+        dueDayOfMonth: bill.dueDate,
+        category: bill.category,
+        isPaid,
+        dueStatus: isPaid ? "paid" : timing.dueStatus,
+        ...(timing.daysUntilDue !== undefined ? { daysUntilDue: timing.daysUntilDue } : {}),
+      };
+    });
+}
+
+export function mapBudgetEntriesToContext(
+  entries: BudgetEntry[],
+  userId?: number
+): AiBudgetEntry[] {
+  return entries
+    .filter((entry) => userId === undefined || entry.userId === userId)
+    .slice(0, 100)
+    .map((entry) => ({
+      category: entry.category,
+      amount: entry.amount,
+      type: entry.type,
+      ...(dateOnly(entry.entryDate) ? { entryDate: dateOnly(entry.entryDate) } : {}),
+    }));
+}
+
+export function mapBudgetCategoriesToContext(
+  categories: BudgetCategory[],
+  userId?: number
+): AiBudgetCategory[] {
+  return categories
+    .filter((category) => userId === undefined || category.userId === userId)
+    .filter((category) => category.isActive !== false)
+    .slice(0, 50)
+    .map((category) => ({
+      name: category.name,
+      type: category.type,
+      budgetedAmount: category.budgetedAmount ?? 0,
+    }));
 }
 
 export function mapPointsBalanceToContext(
@@ -928,9 +1013,12 @@ type AdaptAIContextStorage = Pick<
   | "getTransitionSkillsByUser"
   | "getRecentMoodEntriesByUser"
   | "getRecentSleepSessionsByUser"
+   | "getBillsByUser"
   | "getMealPlansByDate"
   | "getActiveShoppingItems"
   | "getRelevantBillsByUser"
+   | "getBudgetEntriesByUser"
+   | "getBudgetCategoriesByUser"
   | "getExistingUserPointsBalance"
   | "getRecentUserAchievements"
   | "getActiveRewardsByUser"
@@ -985,6 +1073,7 @@ export async function buildAdaptAIContext(
     includeMedicalInfo?: boolean;
     includeMoodSleep?: boolean;
     includeMealsGrocery?: boolean;
+    includeFinance?: boolean;
   } = {}
 ): Promise<AdaptAIContext> {
   if (!Number.isInteger(userId) || userId < 1) {
@@ -1021,6 +1110,8 @@ export async function buildAdaptAIContext(
     rawMeals,
     rawShopping,
     rawBills,
+    rawBudgetEntries,
+    rawBudgetCategories,
     pointsBalance,
     recentAchievements,
     activeRewards,
@@ -1062,9 +1153,19 @@ export async function buildAdaptAIContext(
     options.includeMealsGrocery
       ? loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId))
       : Promise.resolve(undefined),
-    loadContextSection("finance", () =>
-      contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
-    ),
+    options.includeFinance
+      ? loadContextSection("all bills", () => contextStorage.getBillsByUser(userId))
+      : loadContextSection("finance", () =>
+          contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
+        ),
+    options.includeFinance
+      ? loadContextSection("budget entries", () => contextStorage.getBudgetEntriesByUser(userId))
+      : Promise.resolve(undefined),
+    options.includeFinance
+      ? loadContextSection("budget categories", () =>
+          contextStorage.getBudgetCategoriesByUser(userId)
+        )
+      : Promise.resolve(undefined),
     loadContextSection("points balance", () =>
       contextStorage.getExistingUserPointsBalance(userId)
     ),
@@ -1101,7 +1202,16 @@ export async function buildAdaptAIContext(
   const sleep = rawSleep ? mapSleepToContext(rawSleep, userId) : [];
   const meals = rawMeals ? mapMealsToContext(rawMeals, userId) : [];
   const shopping = rawShopping ? mapShoppingToContext(rawShopping, userId) : [];
-  const dueBills = rawBills ? mapBillsToContext(rawBills) : [];
+  const allBills = rawBills ? mapBillsToContext(rawBills, date, userId) : [];
+  const dueBills = allBills.filter(
+    (bill) => !bill.isPaid && bill.dueStatus !== "upcoming"
+  );
+  const budgetEntries = rawBudgetEntries
+    ? mapBudgetEntriesToContext(rawBudgetEntries, userId)
+    : [];
+  const budgetCategories = rawBudgetCategories
+    ? mapBudgetCategoriesToContext(rawBudgetCategories, userId)
+    : [];
   const behaviorPreferences = mapPreferencesToContext(rawPreferences);
   const accessibility = mapAccessibilityToContext(rawPreferences);
   const points = mapPointsBalanceToContext(pointsBalance);
@@ -1156,7 +1266,25 @@ export async function buildAdaptAIContext(
   if (sleep.length > 0) context.sleep = sleep;
   if (meals.length > 0) context.meals = meals;
   if (shopping.length > 0) context.shopping = shopping;
-  if (dueBills.length > 0) context.finance = { due: dueBills };
+  if (dueBills.length > 0 || (options.includeFinance && allBills.length > 0)) {
+    context.finance = {
+      due: dueBills,
+      ...(options.includeFinance && allBills.length > 0 ? { bills: allBills } : {}),
+      ...(options.includeFinance && budgetEntries.length > 0 ? { budgetEntries } : {}),
+      ...(options.includeFinance && budgetCategories.length > 0
+        ? { budgetCategories }
+        : {}),
+    };
+  } else if (
+    options.includeFinance &&
+    (budgetEntries.length > 0 || budgetCategories.length > 0)
+  ) {
+    context.finance = {
+      due: [],
+      ...(budgetEntries.length > 0 ? { budgetEntries } : {}),
+      ...(budgetCategories.length > 0 ? { budgetCategories } : {}),
+    };
+  }
 
   if (
     points ||
