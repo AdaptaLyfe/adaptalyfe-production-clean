@@ -42,9 +42,9 @@ function storageFor(existingTask = task()) {
       calls.push({ method: "getTaskById", args: [taskId] });
       return existingTask.id === taskId ? existingTask : undefined;
     },
-    updateTaskCompletion: async (taskId: number, isCompleted: boolean) => {
-      calls.push({ method: "updateTaskCompletion", args: [taskId, isCompleted] });
-      return task({ ...existingTask, isCompleted, completedAt: new Date() });
+    completeDailyTaskIfIncomplete: async (taskId: number, userId: number) => {
+      calls.push({ method: "completeDailyTaskIfIncomplete", args: [taskId, userId] });
+      return task({ ...existingTask, isCompleted: true, completedAt: new Date() });
     },
     updateUserPoints: async (...args: unknown[]) => {
       calls.push({ method: "updateUserPoints", args });
@@ -146,7 +146,7 @@ test("verifies ownership before completing a task and awards points only after s
   assert.equal(result.message, "Marked “Buy milk” as complete.");
   assert.deepEqual(
     ownedStorage.calls.map((call) => call.method),
-    ["getTaskById", "updateTaskCompletion", "updateUserPoints"],
+    ["getTaskById", "completeDailyTaskIfIncomplete", "updateUserPoints"],
   );
 
   const otherUsersTaskStorage = storageFor(task({ id: 12, userId: 8 }));
@@ -185,6 +185,44 @@ test("does not complete an already completed task", async () => {
   assert.deepEqual(
     storage.calls.map((call) => call.method),
     ["getTaskById"],
+  );
+});
+
+test("does not award points when a concurrent completion loses the atomic update", async () => {
+  const storage = storageFor(task({ isCompleted: false }));
+  let completionAttempts = 0;
+  storage.completeDailyTaskIfIncomplete = async (taskId: number, userId: number) => {
+    completionAttempts += 1;
+    storage.calls.push({
+      method: "completeDailyTaskIfIncomplete",
+      args: [taskId, userId],
+    });
+    return completionAttempts === 1
+      ? task({ isCompleted: true, completedAt: new Date() })
+      : undefined;
+  };
+
+  await executeAdaptAIAction(
+    { action: "complete_task", parameters: { taskId: 12 } },
+    7,
+    storage,
+    { confirmed: true },
+  );
+  await assert.rejects(
+    () =>
+      executeAdaptAIAction(
+        { action: "complete_task", parameters: { taskId: 12 } },
+        7,
+        storage,
+        { confirmed: true },
+      ),
+    (error: unknown) =>
+      error instanceof AdaptAIActionError && error.code === "already_completed",
+  );
+
+  assert.equal(
+    storage.calls.filter((call) => call.method === "updateUserPoints").length,
+    1,
   );
 });
 

@@ -121,6 +121,10 @@ export interface AdaptAIContext {
     behavior?: AiPreferences;
     accessibility?: AiAccessibility;
   };
+  /** Static section labels that could not be loaded; never contains record data. */
+  dataAvailability?: {
+    unavailableSections: string[];
+  };
   caregiverContext?: {
     role: "care_recipient" | "caregiver" | "authorized_user";
     relationship?: string;
@@ -442,6 +446,49 @@ function getCurrentTimeContext(): { date: string; time: string; timezone: string
   };
 }
 
+function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function isValidClockTime(value: string): boolean {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false;
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+function isValidTimezone(value: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeAiClientTime(
+  clientTime?: { localDate?: string; localTime?: string; timezone?: string }
+): { date: string; time: string; timezone: string } {
+  const serverTime = getCurrentTimeContext();
+  const date =
+    typeof clientTime?.localDate === "string" && isValidDateOnly(clientTime.localDate)
+      ? clientTime.localDate
+      : serverTime.date;
+  const time =
+    typeof clientTime?.localTime === "string" && isValidClockTime(clientTime.localTime)
+      ? clientTime.localTime
+      : serverTime.time;
+  const timezone =
+    typeof clientTime?.timezone === "string" &&
+    clientTime.timezone.trim().length <= 80 &&
+    isValidTimezone(clientTime.timezone.trim())
+      ? clientTime.timezone.trim()
+      : serverTime.timezone;
+
+  return { date, time, timezone };
+}
+
 /** Coerce a Drizzle timestamp column value to Date or null. */
 function toDate(val: Date | string | null | undefined): Date | null {
   if (!val) return null;
@@ -485,11 +532,11 @@ function isoDate(value: Date | string | null | undefined): string | undefined {
 export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[] {
   return tasks
     .filter((task) => {
-      if (!task.dueDate) return true;
-      const dueDateStr = new Date(task.dueDate).toISOString().slice(0, 10);
-      return dueDateStr <= todayStr;
+      const dueDateStr = dateOnly(task.dueDate);
+      return !dueDateStr || dueDateStr <= todayStr;
     })
     .map((task): AiTask => {
+      const dueDate = dateOnly(task.dueDate);
       const result: AiTask = {
         title: task.title,
         category: task.category,
@@ -500,9 +547,7 @@ export function mapTasksToContext(tasks: DailyTask[], todayStr: string): AiTask[
       if (task.description) result.description = task.description;
       const st = normalizeScheduledTime(task.scheduledTime as string | null);
       if (st) result.scheduledTime = st;
-      if (task.dueDate) {
-        result.dueDate = new Date(task.dueDate).toISOString().slice(0, 10);
-      }
+      if (dueDate) result.dueDate = dueDate;
       return result;
     });
 }
@@ -797,6 +842,20 @@ export function mapMedicationsToContext(
       ...(safeText(medication.instructions, 200)
         ? { instructions: safeText(medication.instructions, 200) }
         : {}),
+      reminderEnabled: medication.reminderEnabled !== false,
+    }));
+}
+
+export function mapMedicationRemindersToContext(
+  medications: Medication[],
+  userId?: number
+): AiMedication[] {
+  return medications
+    .filter((medication) => userId === undefined || medication.userId === userId)
+    .filter((medication) => medication.isActive !== false)
+    .slice(0, 20)
+    .map((medication) => ({
+      medicationName: medication.medicationName,
       reminderEnabled: medication.reminderEnabled !== false,
     }));
 }
@@ -1385,7 +1444,8 @@ export async function resolveAdaptAIAccess(
 
 async function loadContextSection<T>(
   label: string,
-  loader: () => Promise<T>
+  loader: () => Promise<T>,
+  onUnavailable?: () => void,
 ): Promise<T | undefined> {
   try {
     return await loader();
@@ -1396,6 +1456,7 @@ async function loadContextSection<T>(
       `[ai-context] Unable to load ${label}:`,
       error instanceof Error ? error.message : String(error)
     );
+    onUnavailable?.();
     return undefined;
   }
 }
@@ -1426,6 +1487,9 @@ export async function buildAdaptAIContext(
   contextStorage: AdaptAIContextStorage = storage,
   options: {
     includeMedicalInfo?: boolean;
+    includeAppointments?: boolean;
+    includeMedicationInfo?: boolean;
+    includeMedicationReminders?: boolean;
     includeMoodSleep?: boolean;
     includeMealsGrocery?: boolean;
     includeFinance?: boolean;
@@ -1436,16 +1500,7 @@ export async function buildAdaptAIContext(
     throw new Error("An authenticated user ID is required to build AdaptAI context");
   }
 
-  const serverTime = getCurrentTimeContext();
-  const isValidDate = (value?: string) => !!value && /^\d{4}-\d{2}-\d{2}$/.test(value);
-  const isValidTime = (value?: string) => !!value && /^\d{2}:\d{2}$/.test(value);
-  const date = isValidDate(clientTime?.localDate)
-    ? clientTime!.localDate!
-    : serverTime.date;
-  const time = isValidTime(clientTime?.localTime)
-    ? clientTime!.localTime!
-    : serverTime.time;
-  const timezone = clientTime?.timezone?.trim().slice(0, 80) || serverTime.timezone;
+  const { date, time, timezone } = normalizeAiClientTime(clientTime);
   const accessScope = await resolveAdaptAIAccess(
     options.viewerUserId ?? userId,
     userId,
@@ -1458,9 +1513,18 @@ export async function buildAdaptAIContext(
   const canLoadRelevantFinance = canView("financial") && isCareRecipientContext;
   const canLoadMood = canView("mood") && options.includeMoodSleep;
   const canLoadMedical = canView("medical");
+  const shouldLoadAppointments =
+    canLoadMedical && (options.includeAppointments ?? true);
+  const shouldLoadMedicationInfo =
+    canLoadMedical && (options.includeMedicationInfo ?? true);
+  const shouldLoadMedicationReminders =
+    canLoadMedical && (options.includeMedicationReminders ?? false);
   const canLoadProgress = canView("progress");
+  const unavailableSections: string[] = [];
+  const loadSection = <T>(label: string, loader: () => Promise<T>) =>
+    loadContextSection(label, loader, () => unavailableSections.push(label));
 
-  const storedUser = await loadContextSection("identity", () =>
+  const storedUser = await loadSection("identity", () =>
     contextStorage.getUserById(userId)
   );
 
@@ -1488,92 +1552,92 @@ export async function buildAdaptAIContext(
     rawPreferences,
   ] = await Promise.all([
     canLoadProgress
-      ? loadContextSection("tasks", () => contextStorage.getDailyTasksByUser(userId))
+       ? loadSection("tasks", () => contextStorage.getDailyTasksByUser(userId))
       : Promise.resolve(undefined),
-    canLoadMedical
-      ? loadContextSection("today's appointments", () =>
+    shouldLoadAppointments
+       ? loadSection("today's appointments", () =>
           contextStorage.getAppointmentsByDate(userId, date)
         )
       : Promise.resolve(undefined),
-    canLoadMedical
-      ? loadContextSection("upcoming appointment", () =>
+    shouldLoadAppointments
+       ? loadSection("upcoming appointment", () =>
           contextStorage.getNextAppointment(userId, `${date}T${time}:00`)
         )
       : Promise.resolve(undefined),
-    canLoadMedical
-      ? loadContextSection("medications", () => contextStorage.getMedicationsByUser(userId))
+    shouldLoadMedicationInfo || shouldLoadMedicationReminders
+       ? loadSection("medications", () => contextStorage.getMedicationsByUser(userId))
       : Promise.resolve(undefined),
     options.includeMedicalInfo
       && canLoadMedical
-      ? loadContextSection("allergies", () => contextStorage.getAllergiesByUser(userId))
+       ? loadSection("allergies", () => contextStorage.getAllergiesByUser(userId))
       : Promise.resolve(undefined),
     options.includeMedicalInfo
       && canLoadMedical
-      ? loadContextSection("medical conditions", () =>
+       ? loadSection("medical conditions", () =>
           contextStorage.getMedicalConditionsByUser(userId)
         )
       : Promise.resolve(undefined),
     options.includeMedicalInfo
       && canLoadMedical
-      ? loadContextSection("adverse medication reactions", () =>
+       ? loadSection("adverse medication reactions", () =>
           contextStorage.getAdverseMedicationsByUser(userId)
         )
       : Promise.resolve(undefined),
     canView("financial") && (isCareRecipientContext || canLoadFinance)
-      ? loadContextSection("goals", () => contextStorage.getSavingsGoalsByUser(userId))
+       ? loadSection("goals", () => contextStorage.getSavingsGoalsByUser(userId))
       : Promise.resolve(undefined),
     canLoadProgress
-      ? loadContextSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId))
+       ? loadSection("transition skills", () => contextStorage.getTransitionSkillsByUser(userId))
       : Promise.resolve(undefined),
     canLoadMood
-      ? loadContextSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7))
+       ? loadSection("mood", () => contextStorage.getRecentMoodEntriesByUser(userId, 7))
       : Promise.resolve(undefined),
     canLoadMood
-      ? loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7))
+       ? loadSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7))
       : Promise.resolve(undefined),
     isCareRecipientContext && options.includeMealsGrocery
-      ? loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date))
+       ? loadSection("meals", () => contextStorage.getMealPlansByDate(userId, date))
       : Promise.resolve(undefined),
     isCareRecipientContext && options.includeMealsGrocery
-      ? loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId))
+       ? loadSection("shopping", () => contextStorage.getActiveShoppingItems(userId))
       : Promise.resolve(undefined),
     canLoadFinance
-      ? loadContextSection("all bills", () => contextStorage.getBillsByUser(userId))
+       ? loadSection("all bills", () => contextStorage.getBillsByUser(userId))
       : canLoadRelevantFinance
-        ? loadContextSection("finance", () =>
+         ? loadSection("finance", () =>
           contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
           )
         : Promise.resolve(undefined),
     canLoadFinance
-      ? loadContextSection("budget entries", () => contextStorage.getBudgetEntriesByUser(userId))
+       ? loadSection("budget entries", () => contextStorage.getBudgetEntriesByUser(userId))
       : Promise.resolve(undefined),
     canLoadFinance
-      ? loadContextSection("budget categories", () =>
+       ? loadSection("budget categories", () =>
           contextStorage.getBudgetCategoriesByUser(userId)
         )
       : Promise.resolve(undefined),
     canLoadProgress
-      ? loadContextSection("points balance", () =>
+       ? loadSection("points balance", () =>
           contextStorage.getExistingUserPointsBalance(userId)
         )
       : Promise.resolve(undefined),
     canLoadProgress
-      ? loadContextSection("recent achievements", () =>
+       ? loadSection("recent achievements", () =>
           contextStorage.getRecentUserAchievements(userId, 5)
         )
       : Promise.resolve(undefined),
     canLoadProgress
-      ? loadContextSection("active rewards", () =>
+       ? loadSection("active rewards", () =>
           contextStorage.getActiveRewardsByUser(userId, 5)
         )
       : Promise.resolve(undefined),
     canLoadProgress
-      ? loadContextSection("recent points activity", () =>
+       ? loadSection("recent points activity", () =>
           contextStorage.getRecentPointsTransactionsByUser(userId, 10)
         )
       : Promise.resolve(undefined),
     isCareRecipientContext
-      ? loadContextSection("preferences", () => contextStorage.getUserPreferences(userId))
+       ? loadSection("preferences", () => contextStorage.getUserPreferences(userId))
       : Promise.resolve(undefined),
   ]);
 
@@ -1584,7 +1648,11 @@ export async function buildAdaptAIContext(
   const upcomingAppointment = rawUpcomingAppointment
     ? mapAppointmentsToContext([rawUpcomingAppointment])[0]
     : undefined;
-  const medications = rawMedications ? mapMedicationsToContext(rawMedications, userId) : [];
+  const medications = rawMedications
+    ? shouldLoadMedicationInfo
+      ? mapMedicationsToContext(rawMedications, userId)
+      : mapMedicationRemindersToContext(rawMedications, userId)
+    : [];
   const medicalConditions = rawMedicalConditions
     ? mapMedicalConditionsToContext(rawMedicalConditions, userId)
     : [];
@@ -1639,6 +1707,12 @@ export async function buildAdaptAIContext(
       restrictedAreas: accessScope.restrictedAreas,
     },
   };
+
+  if (unavailableSections.length > 0) {
+    context.dataAvailability = {
+      unavailableSections: [...new Set(unavailableSections)],
+    };
+  }
 
   if (todayTasks.length > 0) {
     context.tasks = {

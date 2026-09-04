@@ -204,6 +204,9 @@ export function buildNextAction(context: AdaptAIContext): string {
   const candidate = buildCandidates(context)[0];
 
   if (!candidate) {
+    if (context.dataAvailability?.unavailableSections.length) {
+      return "I couldn't load all of your planning information right now, so I can't confirm that nothing is urgent. Please try again in a moment.";
+    }
     return "You don't have anything urgent right now. You're all caught up for now.";
   }
 

@@ -202,7 +202,7 @@ export async function executeAdaptAIAction(
     IStorage,
     | "createDailyTask"
     | "getTaskById"
-    | "updateTaskCompletion"
+    | "completeDailyTaskIfIncomplete"
     | "updateUserPoints"
   >,
   options: { confirmed: boolean },
@@ -270,9 +270,16 @@ export async function executeAdaptAIAction(
     );
   }
 
-  const task = await storage.updateTaskCompletion(existingTask.id, true);
+  const task = await storage.completeDailyTaskIfIncomplete(
+    existingTask.id,
+    authenticatedUserId,
+  );
   if (!task) {
-    throw new AdaptAIActionError("Task not found.", "not_found", 404);
+    throw new AdaptAIActionError(
+      `“${existingTask.title}” is already marked complete.`,
+      "already_completed",
+      422,
+    );
   }
 
   if (existingTask.pointValue && existingTask.pointValue > 0) {

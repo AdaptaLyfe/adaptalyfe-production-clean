@@ -187,6 +187,10 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   const mealsGroceryNote = buildMealsGroceryContextNote(context);
   const financeNote = buildFinanceContextNote(context);
   const caregiverNote = buildCaregiverContextNote(context);
+  const incompleteDataNote =
+    context.dataAvailability?.unavailableSections.length
+      ? "Some information could not be loaded right now, so this briefing may be incomplete."
+      : undefined;
 
   if (sortedItems.length === 0) {
     const progress = formatCompletedProgress(context);
@@ -196,8 +200,11 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
       ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
       ...(financeNote ? ["", financeNote] : []),
       ...(caregiverNote ? ["", caregiverNote] : []),
+      ...(incompleteDataNote ? ["", incompleteDataNote] : []),
       "",
-      "You don’t have anything else planned today.",
+      incompleteDataNote
+        ? "I can’t confirm that there is nothing else planned."
+        : "You don’t have anything else planned today.",
       ...(progress ? [progress] : []),
       emptyDayNextAction(context),
       "",
@@ -222,6 +229,7 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
     ...(mealsGroceryNote ? ["", mealsGroceryNote] : []),
     ...(financeNote ? ["", financeNote] : []),
     ...(caregiverNote ? ["", caregiverNote] : []),
+    ...(incompleteDataNote ? ["", incompleteDataNote] : []),
     "",
     `You have ${itemCount} ${itemCount === 1 ? "thing" : "things"} planned today:`,
     "",

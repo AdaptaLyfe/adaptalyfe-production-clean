@@ -50,6 +50,10 @@ function recordedMedications(context: AdaptAIContext): AiMedication[] {
   return context.medications?.recorded ?? context.medications?.scheduledToday ?? [];
 }
 
+function contextSectionUnavailable(context: AdaptAIContext, section: string): boolean {
+  return context.dataAvailability?.unavailableSections.includes(section) ?? false;
+}
+
 function medicationLabel(medication: AiMedication): string {
   const dosage = medication.dosage ? ` — dosage recorded as ${medication.dosage}` : "";
   const instructions = medication.instructions
@@ -61,6 +65,9 @@ function medicationLabel(medication: AiMedication): string {
 function medicationSummary(context: AdaptAIContext): string {
   const medications = recordedMedications(context);
   if (medications.length === 0) {
+    if (contextSectionUnavailable(context, "medications")) {
+      return "I couldn't load your medication records right now. Please try again in a moment.";
+    }
     return "I don't see any active medications recorded in Adaptalyfe.";
   }
 
@@ -72,6 +79,9 @@ function medicationSummary(context: AdaptAIContext): string {
 function reminderSummary(context: AdaptAIContext): string {
   const medications = context.medications?.scheduledToday ?? [];
   if (medications.length === 0) {
+    if (contextSectionUnavailable(context, "medications")) {
+      return "I couldn't load your medication reminders right now. Please try again in a moment.";
+    }
     return "I don't see a medication reminder enabled in your Adaptalyfe records.";
   }
 
@@ -110,6 +120,9 @@ function missedMedicationResponse(context: AdaptAIContext): string {
     isMissedMedicationTask(task, context)
   );
   if (missedTasks.length === 0) {
+    if (contextSectionUnavailable(context, "tasks")) {
+      return "I couldn't load your daily tasks right now, so I can't confirm whether a medication task was missed.";
+    }
     return "I don't see an incomplete medication task or reminder whose recorded due time has passed.";
   }
 
@@ -135,6 +148,13 @@ function formatTime(time: string): string {
 function storedMedicalSummary(context: AdaptAIContext): string {
   const medical = context.medical;
   if (!medical) {
+    if (
+      ["allergies", "medical conditions", "adverse medication reactions"].some(
+        (section) => contextSectionUnavailable(context, section),
+      )
+    ) {
+      return "I couldn't load all of your medical records right now. Please try again in a moment.";
+    }
     return "I don't see any medical conditions, allergies, or adverse medication reactions recorded in Adaptalyfe.";
   }
 
@@ -157,7 +177,11 @@ function storedMedicalSummary(context: AdaptAIContext): string {
 
   return sections.length > 0
     ? `Here is the medical information recorded in Adaptalyfe: ${sections.join(". ")}.`
-    : "I don't see any medical conditions, allergies, or adverse medication reactions recorded in Adaptalyfe.";
+    : ["allergies", "medical conditions", "adverse medication reactions"].some(
+        (section) => contextSectionUnavailable(context, section),
+      )
+      ? "I couldn't load all of your medical records right now. Please try again in a moment."
+      : "I don't see any medical conditions, allergies, or adverse medication reactions recorded in Adaptalyfe.";
 }
 
 function formatCondition(condition: AiMedicalCondition): string {

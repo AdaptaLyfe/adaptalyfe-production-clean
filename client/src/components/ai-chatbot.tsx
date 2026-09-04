@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
+  claimDailyChatbotGreeting,
   getChatbotGreeting,
   getDisplayName,
   getLocalDateKey,
@@ -277,6 +278,7 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
   const [isTyping, setIsTyping] = useState(false);
   const [showFullChat, setShowFullChat] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [showDailyGreeting, setShowDailyGreeting] = useState(true);
   const messagesEndRef = useSafeRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -292,6 +294,7 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
         [user?.firstName, user?.lastName].filter(Boolean).join(" "),
     ),
   );
+  const welcomeGreeting = showDailyGreeting ? dailyGreeting : "Welcome back";
 
   const sendMessageMutation = useMutation({
     mutationFn: async ({
@@ -366,7 +369,8 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
       action: ProposedAction;
     }) => {
       const response = await apiRequest("POST", "/api/ai/actions/execute", {
-        ...action,
+        action: action.action,
+        parameters: action.parameters,
         confirmed: true,
       });
       return (await response.json()) as { message: string };
@@ -474,6 +478,12 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
   const openChat = useCallback(() => {
     setIsOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      setShowDailyGreeting(claimDailyChatbotGreeting(user.id));
+    }
+  }, [isOpen, user?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -611,7 +621,7 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
           <div className="space-y-3">
             {messages.length === 0 ? (
               <WelcomeState
-                greeting={dailyGreeting}
+                greeting={welcomeGreeting}
                 onSelect={handleQuickSuggestion}
                 compact
                 disabled={sendMessageMutation.isPending}
@@ -684,7 +694,7 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
           <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 py-5 sm:px-8 sm:py-8">
             {messages.length === 0 ? (
               <WelcomeState
-                greeting={dailyGreeting}
+                greeting={welcomeGreeting}
                 onSelect={handleQuickSuggestion}
                 disabled={sendMessageMutation.isPending}
               />

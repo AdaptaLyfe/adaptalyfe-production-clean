@@ -2322,6 +2322,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ error: "Message is required" });
       }
+      if (message.trim().length > 4000) {
+        return res.status(400).json({ error: "Message is too long" });
+      }
 
       // The authenticated session is always the viewer identity. A caregiver
       // may request a care recipient only through the permission-checked
@@ -2335,6 +2338,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!Number.isInteger(userId) || userId < 1) {
         return res.status(400).json({ error: "careRecipientId must be a valid user ID" });
       }
+      const todayBriefingRequested = isTodayBriefingRequest(message);
+      const appointmentRequested = isAppointmentTransitionRequest(message);
+      const medicationRequested = isMedicationHealthRequest(message);
+      const nextActionRequested = isNextActionRequest(message);
       const clientTime = {
         localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
         localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
@@ -2347,12 +2354,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         storage,
         {
           includeMedicalInfo: isExplicitMedicalInformationRequest(message),
+          includeAppointments:
+            todayBriefingRequested || appointmentRequested || nextActionRequested,
+          includeMedicationInfo: medicationRequested,
+          includeMedicationReminders: todayBriefingRequested || nextActionRequested,
           includeMoodSleep:
-            shouldIncludeMoodSleepContext(message) || isTodayBriefingRequest(message),
+            shouldIncludeMoodSleepContext(message) || todayBriefingRequested,
           includeMealsGrocery:
-            shouldIncludeMealsGroceryContext(message) || isTodayBriefingRequest(message),
-          includeFinance:
-            shouldIncludeFinanceContext(message) || isTodayBriefingRequest(message),
+            shouldIncludeMealsGroceryContext(message) || todayBriefingRequested,
+          includeFinance: shouldIncludeFinanceContext(message) || todayBriefingRequested,
           viewerUserId,
         }
       );
@@ -2363,8 +2373,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const caregiverResponse = buildCaregiverContextResponse(message, context);
       let response: string;
       let action;
+      let responseType = "text";
+      let notice: string | undefined;
 
-      if (isTodayBriefingRequest(message)) {
+      if (todayBriefingRequested) {
         response = buildTodayBriefing(context);
       } else if (caregiverResponse) {
         response = caregiverResponse;
@@ -2378,7 +2390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
       ) {
         response = buildAppointmentTransitionResponse(message, context);
-      } else if (isMedicationHealthRequest(message)) {
+      } else if (medicationRequested) {
         response = buildMedicationHealthResponse(message, context);
       } else if (isMoodSleepRequest(message)) {
         response = buildMoodSleepResponse(message, context);
@@ -2402,11 +2414,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         response = chatTurn.message;
         action = chatTurn.action;
+        if (chatTurn.fallback) {
+          responseType = "fallback";
+          notice = "AdaptAI is temporarily unavailable. Showing safe guidance instead.";
+        }
       }
       
       res.json({ 
         message: response,
-        type: "text",
+        type: responseType,
+        ...(notice ? { notice } : {}),
         ...(action
           ? {
               action,
@@ -2426,7 +2443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (error.status === 429 || error.code === 'insufficient_quota') {
         // Provide helpful fallback responses based on common queries
-        const fallbackResponse = getFallbackResponse(req.body.message);
+        const fallbackResponse = getFallbackResponse(req.body.message).replace(/\*\*/g, "");
         res.json({ 
           message: fallbackResponse,
           type: "fallback",

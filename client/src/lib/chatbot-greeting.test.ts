@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getDisplayName } from "./chatbot-greeting";
+import {
+  claimDailyChatbotGreeting,
+  getChatbotGreeting,
+  getDisplayName,
+} from "./chatbot-greeting";
 
 test("formats requested username examples", () => {
   const examples = [
@@ -43,4 +47,21 @@ test("rejects unsafe or non-human username fallbacks", () => {
 test("cleans spaces and special characters", () => {
   assert.equal(getDisplayName("  eTHAN-123!!!  "), "Ethan");
   assert.equal(getDisplayName("Ethan...Smith123"), "Ethan Smith");
+});
+
+test("uses the resolved human display name in the first greeting", () => {
+  assert.equal(
+    getChatbotGreeting(getDisplayName("ethan123", "Ethan Smith"), new Date(2026, 8, 4, 9)),
+    "Good morning, Ethan Smith 👋",
+  );
+});
+
+test("claims a greeting once per user and local day", () => {
+  const userId = `greeting-test-${Date.now()}`;
+  const firstDay = new Date(2026, 8, 4, 9);
+  const nextDay = new Date(2026, 8, 5, 9);
+
+  assert.equal(claimDailyChatbotGreeting(userId, firstDay), true);
+  assert.equal(claimDailyChatbotGreeting(userId, firstDay), false);
+  assert.equal(claimDailyChatbotGreeting(userId, nextDay), true);
 });

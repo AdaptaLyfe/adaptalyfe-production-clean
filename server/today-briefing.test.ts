@@ -26,6 +26,17 @@ test("recognizes natural-language Today Briefing requests", () => {
   assert.equal(isTodayBriefingRequest("What happened today?"), false);
 });
 
+test("does not report an empty day when a context section failed", () => {
+  const briefing = buildTodayBriefing(
+    baseContext({
+      dataAvailability: { unavailableSections: ["tasks", "today's appointments"] },
+    }),
+  );
+
+  assert.match(briefing, /could not be loaded/i);
+  assert.match(briefing, /can(?:'|’)t confirm that there is nothing else planned/i);
+});
+
 test("sorts multiple time-based events chronologically", () => {
   const briefing = buildTodayBriefing(
     baseContext({

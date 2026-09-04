@@ -81,6 +81,7 @@ export interface IStorage {
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
   updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined>;
+  completeDailyTaskIfIncomplete(taskId: number, userId: number): Promise<DailyTask | undefined>;
   deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
   // Bills
@@ -728,6 +729,27 @@ export class DatabaseStorage implements IStorage {
         completedAt: isCompleted ? new Date() : null 
       })
       .where(eq(dailyTasks.id, taskId))
+      .returning();
+    return task || undefined;
+  }
+
+  async completeDailyTaskIfIncomplete(
+    taskId: number,
+    userId: number,
+  ): Promise<DailyTask | undefined> {
+    const [task] = await db
+      .update(dailyTasks)
+      .set({
+        isCompleted: true,
+        completedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(dailyTasks.id, taskId),
+          eq(dailyTasks.userId, userId),
+          or(eq(dailyTasks.isCompleted, false), isNull(dailyTasks.isCompleted)),
+        ),
+      )
       .returning();
     return task || undefined;
   }

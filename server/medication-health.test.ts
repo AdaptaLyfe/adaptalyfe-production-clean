@@ -47,6 +47,15 @@ const context = (
     : undefined,
 });
 
+test("does not report no medication when the medication section failed", () => {
+  const response = buildMedicationHealthResponse("What medications do I take?", {
+    ...context(),
+    dataAvailability: { unavailableSections: ["medications"] },
+  });
+
+  assert.match(response, /couldn't load your medication records/i);
+});
+
 test("recognizes medication requests and explicit medical-record requests", () => {
   assert.equal(isMedicationHealthRequest("What medications are recorded?"), true);
   assert.equal(isMedicationHealthRequest("Did I miss my medication reminder?"), true);

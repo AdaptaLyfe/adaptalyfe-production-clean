@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildAdaptAIContext,
+  mapMedicationRemindersToContext,
+  mapTasksToContext,
   mapCommunicationProfile,
   mapPreferencesToContext,
+  normalizeAiClientTime,
 } from "./ai-context.js";
 
 test("maps explicit communication preferences into a presentation-only profile", () => {
@@ -327,6 +330,7 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
   assert.equal(context.identity.displayName, "Alex Johnson");
   assert.equal(context.today.date, "2026-09-03");
   assert.equal(context.tasks?.incomplete[0]?.title, "Take a walk");
+  assert.equal(context.dataAvailability, undefined);
   assert.equal(context.preferences?.behavior?.preferredTaskTime, "morning");
   assert.equal(context.preferences?.accessibility?.highContrast, true);
   assert.deepEqual(context.medications?.recorded?.map((item) => item.medicationName), [
@@ -352,4 +356,110 @@ test("buildAdaptAIContext uses only the authenticated user's storage scope", asy
     serializedContext,
     /userId|password|notificationToken|privateContact|Other User/
   );
+
+  const minimalContext = await buildAdaptAIContext(
+    authenticatedUserId,
+    { name: "Alex Johnson" },
+    { localDate: "2026-09-03", localTime: "09:30", timezone: "Asia/Calcutta" },
+    contextStorage,
+    {
+      includeMedicalInfo: false,
+      includeAppointments: false,
+      includeMedicationInfo: false,
+      includeMedicationReminders: false,
+      includeMoodSleep: false,
+      viewerUserId: authenticatedUserId,
+    },
+  );
+  assert.equal(minimalContext.appointments, undefined);
+  assert.equal(minimalContext.medications, undefined);
+
+  const failedTasksStorage = {
+    ...contextStorage,
+    getDailyTasksByUser: async () => {
+      throw new Error("temporary task store failure");
+    },
+  };
+  const failedContext = await buildAdaptAIContext(
+    authenticatedUserId,
+    { name: "Alex Johnson" },
+    { localDate: "2026-09-03", localTime: "09:30", timezone: "Asia/Calcutta" },
+    failedTasksStorage,
+    { viewerUserId: authenticatedUserId },
+  );
+  assert.equal(failedContext.tasks, undefined);
+  assert.deepEqual(failedContext.dataAvailability, {
+    unavailableSections: ["tasks"],
+  });
+});
+
+test("rejects malformed client clocks, dates, and timezones", () => {
+  assert.deepEqual(
+    normalizeAiClientTime({
+      localDate: "2026-02-30",
+      localTime: "99:99",
+      timezone: "Not/A_Timezone",
+    }),
+    {
+      date: new Date().toISOString().slice(0, 10),
+      time: new Date().toISOString().slice(11, 16),
+      timezone: "UTC",
+    },
+  );
+
+  assert.deepEqual(
+    normalizeAiClientTime({
+      localDate: "2026-09-03",
+      localTime: "09:30",
+      timezone: "Asia/Calcutta",
+    }),
+    {
+      date: "2026-09-03",
+      time: "09:30",
+      timezone: "Asia/Calcutta",
+    },
+  );
+});
+
+test("does not crash or expose an invalid task date", () => {
+  const context = mapTasksToContext(
+    [
+      {
+        id: 1,
+        userId: 42,
+        title: "Safe task",
+        description: "",
+        category: "daily",
+        frequency: "daily",
+        estimatedMinutes: 15,
+        scheduledTime: null,
+        isCompleted: false,
+        dueDate: "not-a-date",
+      } as any,
+    ],
+    "2026-09-03",
+  );
+
+  assert.equal(context[0]?.title, "Safe task");
+  assert.equal("dueDate" in (context[0] ?? {}), false);
+});
+
+test("reminder-only medication context excludes dosage and instructions", () => {
+  const context = mapMedicationRemindersToContext([
+    {
+      userId: 42,
+      medicationName: "Own Medication",
+      dosage: "10mg",
+      instructions: "Take with breakfast",
+      isActive: true,
+      reminderEnabled: true,
+    },
+  ] as any, 42);
+
+  assert.deepEqual(context, [
+    {
+      medicationName: "Own Medication",
+      reminderEnabled: true,
+    },
+  ]);
 });

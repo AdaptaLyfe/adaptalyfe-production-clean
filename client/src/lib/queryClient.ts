@@ -127,10 +127,44 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly type?: string;
+
+  constructor(
+    status: number,
+    message: string,
+    details?: { code?: string; type?: string },
+  ) {
+    super(`${status}: ${message}`);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = details?.code;
+    this.type = details?.type;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let payload: { error?: unknown; code?: unknown; type?: unknown } | undefined;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      // Preserve the existing text fallback for non-JSON error responses.
+    }
+
+    const message =
+      typeof payload?.error === "string" ? payload.error : text;
+    throw new ApiError(
+      res.status,
+      message,
+      {
+        code: typeof payload?.code === "string" ? payload.code : undefined,
+        type: typeof payload?.type === "string" ? payload.type : undefined,
+      },
+    );
   }
 }
 

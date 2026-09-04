@@ -25,6 +25,17 @@ test("recognizes Next Action requests", () => {
   assert.equal(isNextActionRequest("What do I need to do today?"), false);
 });
 
+test("does not claim everything is caught up when planning data failed", () => {
+  const response = buildNextAction(
+    baseContext({
+      dataAvailability: { unavailableSections: ["tasks"] },
+    }),
+  );
+
+  assert.match(response, /couldn't load all of your planning information/i);
+  assert.doesNotMatch(response, /all caught up/i);
+});
+
 test("prioritizes an overdue task over an appointment and reminder", () => {
   const response = buildNextAction(
     baseContext({
