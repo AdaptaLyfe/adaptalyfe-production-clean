@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -42,7 +42,27 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   type?: "text" | "fallback" | "suggestion" | "encouragement";
+  action?: ProposedAction;
+  actionStatus?: ActionStatus;
 }
+
+type ProposedAction =
+  | {
+      action: "create_task";
+      parameters: {
+        title: string;
+        dueDate?: string;
+        dueTime?: string;
+      };
+    }
+  | {
+      action: "complete_task";
+      parameters: {
+        taskId: number;
+      };
+    };
+
+type ActionStatus = "pending" | "executing" | "completed" | "cancelled" | "failed";
 
 interface QuickSuggestion {
   id: string;
@@ -90,6 +110,13 @@ const followUpSuggestions: QuickSuggestion[] = [
     icon: <CalendarDays className="h-4 w-4" />,
   },
 ];
+
+function actionLabel(action: ProposedAction): string {
+  if (action.action === "create_task") {
+    return `Add “${action.parameters.title}”`;
+  }
+  return "Mark this daily task complete";
+}
 
 function AssistantAvatar({ compact = false }: { compact?: boolean }) {
   return (
@@ -252,6 +279,7 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
   const [isOpen, setIsOpen] = useState(false);
   const messagesEndRef = useSafeRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { isPremium } = useSubscription();
   const { data: user } = useQuery({
     queryKey: ["/api/user"],
@@ -293,6 +321,8 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
         content: data.message || "I'm here to help you with any questions.",
         timestamp: new Date(),
         type: data.type === "fallback" ? "fallback" : "text",
+        action: data.action,
+        actionStatus: data.action ? "pending" : undefined,
       };
 
       if (data.notice) {
@@ -326,6 +356,86 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
       ]);
     },
   });
+
+  const executeActionMutation = useMutation({
+    mutationFn: async ({
+      messageId,
+      action,
+    }: {
+      messageId: string;
+      action: ProposedAction;
+    }) => {
+      const response = await apiRequest("POST", "/api/ai/actions/execute", {
+        ...action,
+        confirmed: true,
+      });
+      return (await response.json()) as { message: string };
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/points/balance"] });
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === variables.messageId
+            ? {
+                ...message,
+                content: data.message,
+                actionStatus: "completed",
+              }
+            : message,
+        ),
+      );
+    },
+    onError: (error: any, variables) => {
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === variables.messageId
+            ? {
+                ...message,
+                content:
+                  error.message?.includes("already marked complete")
+                    ? error.message.split(": ").slice(1).join(": ")
+                    : "I couldn't complete that task action. Please try again.",
+                actionStatus: "failed",
+              }
+            : message,
+        ),
+      );
+      toast({
+        title: "Action not completed",
+        description: "Your daily task was not changed.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleConfirmAction = useCallback(
+    (messageId: string, action: ProposedAction) => {
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === messageId
+            ? { ...message, actionStatus: "executing" }
+            : message,
+        ),
+      );
+      executeActionMutation.mutate({ messageId, action });
+    },
+    [executeActionMutation],
+  );
+
+  const handleCancelAction = useCallback((messageId: string) => {
+    setMessages((previous) =>
+      previous.map((message) =>
+        message.id === messageId
+          ? {
+              ...message,
+              content: "No changes made.",
+              actionStatus: "cancelled",
+            }
+          : message,
+      ),
+    );
+  }, []);
 
   const handleSendMessage = useCallback(
     (message: string) => {
@@ -394,6 +504,46 @@ export default function AIChatbot({ careRecipientId }: { careRecipientId?: numbe
             <AssistantMessageBody content={message.content} />
           ) : (
             <p className="text-sm leading-6">{message.content}</p>
+          )}
+          {isAssistant && message.action && (
+            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+              <p className="text-xs font-semibold text-emerald-900">
+                {message.actionStatus === "completed"
+                  ? "Done"
+                  : message.actionStatus === "cancelled"
+                    ? "Cancelled"
+                    : message.actionStatus === "failed"
+                      ? "Not completed"
+                      : "Please confirm"}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-emerald-800">
+                {actionLabel(message.action)}
+              </p>
+              {message.actionStatus === "pending" && (
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-8 rounded-lg bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
+                    onClick={() => handleConfirmAction(message.id, message.action!)}
+                  >
+                    Confirm
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-lg border-emerald-200 px-3 text-xs text-emerald-800"
+                    onClick={() => handleCancelAction(message.id)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+              {message.actionStatus === "executing" && (
+                <p className="mt-2 text-xs text-emerald-700">Making that change…</p>
+              )}
+            </div>
           )}
           <p
             className={`mt-2 text-[10px] ${

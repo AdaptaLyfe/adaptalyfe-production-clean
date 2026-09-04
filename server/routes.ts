@@ -3,7 +3,16 @@ import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
-import { generateAdaptAIChatResponse, generateDailyGuide } from "./ai-service";
+import {
+  generateAdaptAIChatTurn,
+  generateDailyGuide,
+} from "./ai-service";
+import {
+  AdaptAIActionError,
+  buildActionContext,
+  executeAdaptAIAction,
+  isPotentialTaskActionRequest,
+} from "./ai-actions";
 import { buildTodayBriefing, isTodayBriefingRequest } from "./today-briefing";
 import {
   buildMoodSleepResponse,
@@ -2347,35 +2356,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
           viewerUserId,
         }
       );
+      const actionContext =
+        userId === viewerUserId
+          ? buildActionContext(await storage.getDailyTasksByUser(viewerUserId))
+          : undefined;
       const caregiverResponse = buildCaregiverContextResponse(message, context);
-      const response = isTodayBriefingRequest(message)
-        ? buildTodayBriefing(context)
-        : caregiverResponse
-        ? caregiverResponse
-        : isMealsGroceryRequest(message)
-        ? buildMealsGroceryResponse(message, context)
-        : isFinanceRequest(message)
-        ? buildFinanceResponse(message, context)
-        : isAppointmentTransitionRequest(message) &&
-          (message.trim().toLowerCase() !== "what's next?" ||
-            Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
-        ? buildAppointmentTransitionResponse(message, context)
-        : isMedicationHealthRequest(message)
-        ? buildMedicationHealthResponse(message, context)
-        : isMoodSleepRequest(message)
-        ? buildMoodSleepResponse(message, context)
-        : isGoalsProgressRewardsRequest(message) &&
-          !message.trim().toLowerCase().includes("how am i doing today")
-        ? buildGoalsProgressRewardsResponse(message, context)
-        : isNextActionRequest(message)
-        ? buildNextAction(context)
-        : isTasksRoutinesRequest(message)
-        ? buildTasksRoutinesResponse(message, context)
-        : await generateAdaptAIChatResponse(message, context);
+      let response: string;
+      let action;
+
+      if (isTodayBriefingRequest(message)) {
+        response = buildTodayBriefing(context);
+      } else if (caregiverResponse) {
+        response = caregiverResponse;
+      } else if (isMealsGroceryRequest(message)) {
+        response = buildMealsGroceryResponse(message, context);
+      } else if (isFinanceRequest(message)) {
+        response = buildFinanceResponse(message, context);
+      } else if (
+        isAppointmentTransitionRequest(message) &&
+        (message.trim().toLowerCase() !== "what's next?" ||
+          Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
+      ) {
+        response = buildAppointmentTransitionResponse(message, context);
+      } else if (isMedicationHealthRequest(message)) {
+        response = buildMedicationHealthResponse(message, context);
+      } else if (isMoodSleepRequest(message)) {
+        response = buildMoodSleepResponse(message, context);
+      } else if (
+        isGoalsProgressRewardsRequest(message) &&
+        !message.trim().toLowerCase().includes("how am i doing today")
+      ) {
+        response = buildGoalsProgressRewardsResponse(message, context);
+      } else if (isNextActionRequest(message)) {
+        response = buildNextAction(context);
+      } else if (
+        isTasksRoutinesRequest(message) &&
+        !isPotentialTaskActionRequest(message)
+      ) {
+        response = buildTasksRoutinesResponse(message, context);
+      } else {
+        const chatTurn = await generateAdaptAIChatTurn(
+          message,
+          context,
+          actionContext,
+        );
+        response = chatTurn.message;
+        action = chatTurn.action;
+      }
       
       res.json({ 
         message: response,
-        type: "text"
+        type: "text",
+        ...(action
+          ? {
+              action,
+              actionRequiresConfirmation: true,
+            }
+          : {}),
       });
     } catch (error: any) {
       console.error("Error in chat endpoint:", error);
@@ -2401,6 +2438,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: "general_error"
         });
       }
+    }
+  });
+
+  // Controlled AdaptAI action execution. This endpoint never accepts a table,
+  // SQL statement, storage method, or target user from the client.
+  app.post("/api/ai/actions/execute", requireAuth, async (req: any, res) => {
+    try {
+      const authenticatedUserId: number = req.session.userId;
+      const result = await executeAdaptAIAction(
+        {
+          action: req.body?.action,
+          parameters: req.body?.parameters,
+        },
+        authenticatedUserId,
+        storage,
+        { confirmed: req.body?.confirmed === true },
+      );
+      return res.json(result);
+    } catch (error: any) {
+      if (error instanceof AdaptAIActionError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+        });
+      }
+      console.error("Error executing AdaptAI action:", error);
+      return res.status(500).json({
+        error: "I couldn't complete that task action right now.",
+        code: "action_execution_failed",
+      });
     }
   });
 

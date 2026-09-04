@@ -15,6 +15,13 @@
 import OpenAI from "openai";
 import { z } from "zod";
 import type { AdaptAIContext, AiCommunicationProfile } from "./ai-context.js";
+import {
+  getActionProposalMessage,
+  parseAdaptAIAction,
+  validateActionProposal,
+  type AdaptAIActionContext,
+  type AdaptAIActionRequest,
+} from "./ai-actions.js";
 
 // ─── Response schema ──────────────────────────────────────────────────────────
 
@@ -349,6 +356,146 @@ export async function generateAdaptAIChatResponse(
     completion.choices[0]?.message?.content ||
     "I'm here to help! Could you ask me again?"
   );
+}
+
+const ADAPTAI_ACTION_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "create_task",
+      description:
+        "Propose creating one daily task for the authenticated user. Never use this for medications, medical records, payments, or any other data.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: {
+            type: "string",
+            description: "A short, concrete task title.",
+          },
+          dueDate: {
+            type: "string",
+            description:
+              "Optional due date in YYYY-MM-DD format. Resolve relative dates using the current date in the context.",
+          },
+          dueTime: {
+            type: "string",
+            description: "Optional scheduled time in 24-hour HH:MM format.",
+          },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "complete_task",
+      description:
+        "Propose marking one existing incomplete daily task complete. Use only an id from the provided authenticated user's task targets.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          taskId: {
+            type: "integer",
+            description: "The id of the matching daily task target.",
+          },
+        },
+        required: ["taskId"],
+      },
+    },
+  },
+] as const;
+
+export interface AdaptAIChatTurn {
+  message: string;
+  action?: AdaptAIActionRequest;
+}
+
+/**
+ * Generate a chat turn that may contain one of the explicitly registered
+ * AdaptAI actions. Tool calls are proposals only: execution happens in the
+ * server-side action registry after an explicit user confirmation.
+ */
+export async function generateAdaptAIChatTurn(
+  message: string,
+  context: AdaptAIContext,
+  actionContext?: AdaptAIActionContext,
+): Promise<AdaptAIChatTurn> {
+  const client = getClient();
+  if (!client) {
+    const error = new Error("OPENAI_API_KEY is not configured");
+    (error as Error & { code?: string }).code = "ai_not_configured";
+    throw error;
+  }
+
+  const canProposeActions = Boolean(actionContext);
+  const actionPrompt = canProposeActions
+    ? `\n\nControlled application actions:
+- You may request only the registered create_task and complete_task tools.
+- A tool call is only a proposal. The server will ask the user for confirmation before any change.
+- Never claim that a task was created or completed; phrase the response as a confirmation question.
+- Use create_task only when the task title is clear. Convert relative dates using today.date.
+- Use complete_task only when one provided task target clearly matches the user's request. If none or more than one matches, ask a clarifying question instead.
+- Never request actions for medications, medical records, payments, finances, caregivers, or arbitrary data.
+
+Authenticated user's daily task targets for complete_task:
+${JSON.stringify(actionContext)}`
+    : `\n\nControlled application actions are unavailable for this conversation. Do not request or claim any write action.`;
+
+  const completion = await client.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      {
+        role: "system",
+        content: `${buildAdaptAIChatSystemPrompt(context)}${actionPrompt}`,
+      },
+      { role: "user", content: message.trim().slice(0, 4000) },
+    ],
+    ...(canProposeActions
+      ? {
+          tools: ADAPTAI_ACTION_TOOLS,
+          tool_choice: "auto" as const,
+        }
+      : {}),
+    max_tokens: 400,
+    temperature: 0.7,
+    top_p: 0.9,
+    frequency_penalty: 0.3,
+    presence_penalty: 0.3,
+  });
+
+  const assistantMessage = completion.choices[0]?.message;
+  const toolCall = assistantMessage?.tool_calls?.find(
+    (call) => call.type === "function",
+  );
+
+  if (toolCall?.type === "function" && canProposeActions) {
+    try {
+      const action = parseAdaptAIAction({
+        action: toolCall.function.name,
+        parameters: JSON.parse(toolCall.function.arguments || "{}"),
+      });
+      validateActionProposal(action, actionContext);
+      return {
+        message: getActionProposalMessage(action, actionContext),
+        action,
+      };
+    } catch (error) {
+      console.warn("AdaptAI returned an invalid action proposal:", error);
+      return {
+        message:
+          "I can help with that, but I need a little more detail before I make any change.",
+      };
+    }
+  }
+
+  return {
+    message:
+      assistantMessage?.content ||
+      "I'm here to help! Could you ask me again?",
+  };
 }
 
 /** Exposed for focused tests and to keep prompt construction deterministic. */
