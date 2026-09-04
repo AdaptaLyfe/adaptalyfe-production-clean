@@ -17,6 +17,7 @@
     "test:medication-health": "tsx --test server/medication-health.test.ts",
     "test:goals-progress-rewards": "tsx --test server/goals-progress-rewards.test.ts",
     "test:mood-sleep": "tsx --test server/mood-sleep.test.ts",
+    "test:meals-grocery": "tsx --test server/meals-grocery.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

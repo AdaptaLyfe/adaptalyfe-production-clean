@@ -657,23 +657,30 @@ export function mapSleepToContext(sessions: SleepSession[], userId?: number): Ai
     .filter((session) => session.date !== "");
 }
 
-export function mapMealsToContext(meals: MealPlan[]): AiMeal[] {
-  return meals.slice(0, 12).map((meal) => ({
+export function mapMealsToContext(meals: MealPlan[], userId?: number): AiMeal[] {
+  return meals
+    .filter((meal) => userId === undefined || meal.userId === userId)
+    .slice(0, 12)
+    .map((meal) => ({
     mealType: meal.mealType,
     mealName: meal.mealName,
     plannedDate: meal.plannedDate,
     isCompleted: meal.isCompleted ?? false,
     ...(meal.cookingTime != null ? { cookingTimeMinutes: meal.cookingTime } : {}),
-  }));
+    }));
 }
 
-export function mapShoppingToContext(items: ShoppingList[]): AiShoppingItem[] {
-  return items.slice(0, 30).map((item) => ({
+export function mapShoppingToContext(items: ShoppingList[], userId?: number): AiShoppingItem[] {
+  return items
+    .filter((item) => userId === undefined || item.userId === userId)
+    .filter((item) => item.isPurchased !== true)
+    .slice(0, 30)
+    .map((item) => ({
     itemName: item.itemName,
     category: item.category,
     ...(safeText(item.quantity, 60) ? { quantity: safeText(item.quantity, 60) } : {}),
     ...(item.estimatedCost != null ? { estimatedCost: item.estimatedCost } : {}),
-  }));
+    }));
 }
 
 export function mapBillsToContext(bills: Bill[]): AiBill[] {
@@ -974,7 +981,11 @@ export async function buildAdaptAIContext(
   sessionUser: SafeSessionIdentity,
   clientTime?: { localDate?: string; localTime?: string; timezone?: string },
   contextStorage: AdaptAIContextStorage = storage,
-  options: { includeMedicalInfo?: boolean; includeMoodSleep?: boolean } = {}
+  options: {
+    includeMedicalInfo?: boolean;
+    includeMoodSleep?: boolean;
+    includeMealsGrocery?: boolean;
+  } = {}
 ): Promise<AdaptAIContext> {
   if (!Number.isInteger(userId) || userId < 1) {
     throw new Error("An authenticated user ID is required to build AdaptAI context");
@@ -1045,8 +1056,12 @@ export async function buildAdaptAIContext(
     options.includeMoodSleep
       ? loadContextSection("sleep", () => contextStorage.getRecentSleepSessionsByUser(userId, 7))
       : Promise.resolve(undefined),
-    loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date)),
-    loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId)),
+    options.includeMealsGrocery
+      ? loadContextSection("meals", () => contextStorage.getMealPlansByDate(userId, date))
+      : Promise.resolve(undefined),
+    options.includeMealsGrocery
+      ? loadContextSection("shopping", () => contextStorage.getActiveShoppingItems(userId))
+      : Promise.resolve(undefined),
     loadContextSection("finance", () =>
       contextStorage.getRelevantBillsByUser(userId, Number(date.slice(8, 10)), 7)
     ),
@@ -1084,8 +1099,8 @@ export async function buildAdaptAIContext(
   const skills = rawSkills ? mapTransitionSkillsToContext(rawSkills, userId) : [];
   const mood = rawMood ? mapMoodToContext(rawMood, userId) : [];
   const sleep = rawSleep ? mapSleepToContext(rawSleep, userId) : [];
-  const meals = rawMeals ? mapMealsToContext(rawMeals) : [];
-  const shopping = rawShopping ? mapShoppingToContext(rawShopping) : [];
+  const meals = rawMeals ? mapMealsToContext(rawMeals, userId) : [];
+  const shopping = rawShopping ? mapShoppingToContext(rawShopping, userId) : [];
   const dueBills = rawBills ? mapBillsToContext(rawBills) : [];
   const behaviorPreferences = mapPreferencesToContext(rawPreferences);
   const accessibility = mapAccessibilityToContext(rawPreferences);
