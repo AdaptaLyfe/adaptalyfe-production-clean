@@ -208,17 +208,21 @@ export function buildNextAction(context: AdaptAIContext): string {
   }
 
   const described = describeCandidate(candidate);
+  const finish = (response: string) =>
+    context.communicationProfile?.communicationPreferences.useStepByStep
+      ? `1. ${response}`
+      : response;
   if (candidate.priority <= 50) {
     const opening =
       candidate.detail === "overdue"
         ? "Start with this overdue item"
         : "The next important thing is";
-    return `${opening} ${described}.`;
+    return finish(`${opening} ${described}.`);
   }
 
   if (candidate.kind === "goal") {
-    return `You don't have anything urgent right now. A useful next step is ${described}.`;
+    return finish(`You don't have anything urgent right now. A useful next step is ${described}.`);
   }
 
-  return `You don't have anything urgent right now. Your next planned item is ${described}.`;
+  return finish(`You don't have anything urgent right now. Your next planned item is ${described}.`);
 }

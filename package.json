@@ -10,6 +10,7 @@
     "check": "tsc",
     "test:chatbot-greeting": "tsx --test client/src/lib/chatbot-greeting.test.ts",
     "test:adaptai-context": "tsx --test server/ai-context.test.ts",
+    "test:ai-service": "tsx --test server/ai-service.test.ts",
     "test:today-briefing": "tsx --test server/today-briefing.test.ts",
     "test:next-action": "tsx --test server/next-action.test.ts",
     "test:tasks-routines": "tsx --test server/tasks-routines.test.ts",

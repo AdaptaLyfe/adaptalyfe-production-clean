@@ -72,6 +72,8 @@ export interface AdaptAIContext {
   identity: {
     displayName: string;
   };
+  /** Explicit, presentation-only communication preferences for AdaptAI. */
+  communicationProfile: AiCommunicationProfile;
   today: {
     date: string;
     time: string;
@@ -238,10 +240,47 @@ export interface AiPreferences {
 export interface AiAccessibility {
   highContrast?: boolean;
   voiceEnabled?: boolean;
+  voiceOutput?: boolean;
   voiceSpeed?: number;
   textSize?: string;
+  largerText?: boolean;
   reducedMotion?: boolean;
   screenReader?: boolean;
+  simpleLanguage?: boolean;
+}
+
+export type AiDetailLevel = "concise" | "standard" | "detailed";
+export type AiCommunicationTone = "warm" | "gentle" | "encouraging" | "direct" | "neutral";
+
+/**
+ * Normalized communication instructions for presentation only.
+ *
+ * Every value is either an explicit allowlisted preference or a neutral
+ * default. This profile must never be used to infer a diagnosis, disability,
+ * or any other clinical trait.
+ */
+export interface AiCommunicationProfile {
+  preferredName: string;
+  communicationPreferences: {
+    simpleLanguage: boolean;
+    tone: AiCommunicationTone;
+    useStepByStep: boolean;
+  };
+  detailLevel: AiDetailLevel;
+  accessibilityPreferences: {
+    screenReader: boolean;
+    largerText: boolean;
+    voiceOutput: boolean;
+    reducedMotion: boolean;
+    highContrast: boolean;
+  };
+  routinePreferences: {
+    preferredTaskTime?: string;
+    reminderStyle?: string;
+    motivationLevel?: string;
+    complexityPreference?: string;
+    supportLevel?: string;
+  };
 }
 
 export interface AiMedication {
@@ -544,12 +583,23 @@ export function mapPreferencesToContext(
 
   const result: AiPreferences = {};
 
-  // Extract only the known safe string fields, one at a time.
-  const preferredTaskTime  = safeString(bp, "preferredTaskTime");
-  const reminderStyle      = safeString(bp, "reminderStyle");
-  const motivationLevel    = safeString(bp, "motivationLevel");
-  const complexityPreference = safeString(bp, "complexityPreference");
-  const supportLevel       = safeString(bp, "supportLevel");
+  // Extract only known, user-selectable values. Unknown strings are not
+  // passed to the model because JSONB may contain arbitrary legacy text.
+  const preferredTaskTime = safeEnumString(bp, "preferredTaskTime", [
+    "morning", "afternoon", "evening",
+  ]);
+  const reminderStyle = safeEnumString(bp, "reminderStyle", [
+    "gentle", "standard", "urgent", "firm", "direct",
+  ]);
+  const motivationLevel = safeEnumString(bp, "motivationLevel", [
+    "low", "moderate", "medium", "high",
+  ]);
+  const complexityPreference = safeEnumString(bp, "complexityPreference", [
+    "simple", "moderate", "challenging", "detailed",
+  ]);
+  const supportLevel = safeEnumString(bp, "supportLevel", [
+    "minimal", "standard", "enhanced",
+  ]);
 
   if (preferredTaskTime)   result.preferredTaskTime   = preferredTaskTime;
   if (reminderStyle)       result.reminderStyle       = reminderStyle;
@@ -573,18 +623,164 @@ export function mapAccessibilityToContext(
   const result: AiAccessibility = {};
   const values = source as Record<string, unknown>;
 
-  if (typeof values.highContrast === "boolean") result.highContrast = values.highContrast;
-  if (typeof values.voiceEnabled === "boolean") result.voiceEnabled = values.voiceEnabled;
+  const highContrast = firstBoolean(values, ["highContrast", "highContrastMode"]);
+  if (highContrast !== undefined) result.highContrast = highContrast;
+  const voiceOutput = firstBoolean(values, [
+    "voiceOutput", "voiceEnabled", "textToSpeechEnabled", "textToSpeech", "voiceGuidance",
+  ]);
+  if (voiceOutput !== undefined) {
+    result.voiceOutput = voiceOutput;
+    result.voiceEnabled = voiceOutput;
+  }
   if (typeof values.voiceSpeed === "number" && Number.isFinite(values.voiceSpeed)) {
     result.voiceSpeed = values.voiceSpeed;
   }
-  if (typeof values.textSize === "string" && values.textSize.trim()) {
-    result.textSize = values.textSize.trim().slice(0, 30);
+  const textSize = firstString(values, ["textSize", "fontSize"]);
+  if (textSize) {
+    result.textSize = textSize;
+    result.largerText = ["large", "extra_large", "extra-large", "xl"].includes(
+      textSize.toLowerCase()
+    );
   }
+  const largerText = firstBoolean(values, ["largerText", "largeText"]);
+  if (largerText !== undefined) result.largerText = largerText;
   if (typeof values.reducedMotion === "boolean") result.reducedMotion = values.reducedMotion;
   if (typeof values.screenReader === "boolean") result.screenReader = values.screenReader;
+  const simpleLanguage = firstBoolean(values, ["simpleLanguage", "simpleLanguageMode"]);
+  if (simpleLanguage !== undefined) result.simpleLanguage = simpleLanguage;
 
   return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function safeEnumString(
+  obj: unknown,
+  key: string,
+  allowed: readonly string[]
+): string | undefined {
+  const value = safeString(obj, key);
+  return value && allowed.includes(value) ? value : undefined;
+}
+
+function safeBoolean(obj: unknown, key: string): boolean | undefined {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return undefined;
+  const value = (obj as Record<string, unknown>)[key];
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function firstBoolean(
+  obj: Record<string, unknown>,
+  keys: readonly string[]
+): boolean | undefined {
+  for (const key of keys) {
+    const value = safeBoolean(obj, key);
+    if (value !== undefined) return value;
+  }
+  return undefined;
+}
+
+function firstString(
+  obj: Record<string, unknown>,
+  keys: readonly string[]
+): string | undefined {
+  for (const key of keys) {
+    const value = safeString(obj, key);
+    if (value) return value;
+  }
+  return undefined;
+}
+
+function normalizeDetailLevel(
+  behaviorPatterns: unknown
+): AiDetailLevel {
+  const explicit = safeEnumString(behaviorPatterns, "detailLevel", [
+    "concise", "standard", "detailed",
+  ]) ?? safeEnumString(behaviorPatterns, "responseLength", [
+    "concise", "standard", "detailed",
+  ]);
+  if (explicit) return explicit as AiDetailLevel;
+
+  const complexity = safeEnumString(behaviorPatterns, "complexityPreference", [
+    "simple", "moderate", "challenging", "detailed",
+  ]);
+  if (complexity === "simple" || complexity === "concise") return "concise";
+  if (complexity === "challenging" || complexity === "detailed") return "detailed";
+  return "standard";
+}
+
+/**
+ * Build a normalized, presentation-only profile from explicit settings.
+ * Exported so the allowlist and neutral defaults can be tested without DB IO.
+ */
+export function mapCommunicationProfile(
+  prefs: UserPreferences | undefined | null,
+  fallbackName: string
+): AiCommunicationProfile {
+  const behaviorPatterns = prefs?.behaviorPatterns;
+  const mappedAccessibility = mapAccessibilityToContext(prefs);
+  const mappedBehavior = mapPreferencesToContext(prefs);
+  const explicitPreferredName = safeString(behaviorPatterns, "preferredName");
+  const normalizedExplicitName = explicitPreferredName
+    ? resolveDisplayName({ name: explicitPreferredName }, undefined)
+    : "there";
+  const preferredName =
+    normalizedExplicitName !== "there"
+      ? normalizedExplicitName
+      : resolveDisplayName({ name: fallbackName }, undefined);
+
+  const simpleLanguage =
+    safeBoolean(behaviorPatterns, "simpleLanguage") ??
+    safeBoolean(behaviorPatterns, "simpleLanguageMode") ??
+    mappedAccessibility?.simpleLanguage ??
+    false;
+  const supportLevel = safeEnumString(behaviorPatterns, "supportLevel", [
+    "minimal", "standard", "enhanced",
+  ]);
+  const explicitTone = safeEnumString(behaviorPatterns, "communicationTone", [
+    "warm", "gentle", "encouraging", "direct", "neutral",
+  ]) ?? safeEnumString(behaviorPatterns, "tone", [
+    "warm", "gentle", "encouraging", "direct", "neutral",
+  ]);
+  const tone = explicitTone ?? "warm";
+
+  return {
+    preferredName,
+    communicationPreferences: {
+      simpleLanguage,
+      tone,
+      useStepByStep:
+        safeBoolean(behaviorPatterns, "useStepByStep") ??
+        safeBoolean(behaviorPatterns, "stepByStep") ??
+        supportLevel === "enhanced",
+    },
+    detailLevel: normalizeDetailLevel(behaviorPatterns),
+    accessibilityPreferences: {
+      screenReader: mappedAccessibility?.screenReader ?? false,
+      largerText: mappedAccessibility?.largerText ?? false,
+      voiceOutput:
+        mappedAccessibility?.voiceOutput ??
+        mappedAccessibility?.voiceEnabled ??
+        false,
+      reducedMotion: mappedAccessibility?.reducedMotion ?? false,
+      highContrast: mappedAccessibility?.highContrast ?? false,
+    },
+    routinePreferences: {
+      ...(mappedBehavior?.preferredTaskTime
+        ? { preferredTaskTime: mappedBehavior.preferredTaskTime }
+        : {}),
+      ...(mappedBehavior?.reminderStyle
+        ? { reminderStyle: mappedBehavior.reminderStyle }
+        : {}),
+      ...(mappedBehavior?.motivationLevel
+        ? { motivationLevel: mappedBehavior.motivationLevel }
+        : {}),
+      ...(mappedBehavior?.complexityPreference
+        ? { complexityPreference: mappedBehavior.complexityPreference }
+        : {}),
+      ...(mappedBehavior?.supportLevel
+        ? { supportLevel: mappedBehavior.supportLevel }
+        : {}),
+    },
+  };
 }
 
 export function mapMedicationsToContext(
@@ -938,13 +1134,31 @@ export async function buildDailyGuideContext(
   if (!userId || typeof userId !== "number" || userId < 1) {
     console.warn("[ai-context] Invalid userId received:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [], appointments: [], calendarEvents: [] };
+    return {
+      userName: "there",
+      date,
+      time,
+      timezone,
+      tasks: [],
+      appointments: [],
+      calendarEvents: [],
+      communicationProfile: mapCommunicationProfile(undefined, "there"),
+    };
   }
 
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
     console.warn("[ai-context] Missing or invalid session name for userId:", userId);
     const { date, time, timezone } = getCurrentTimeContext();
-    return { userName: "there", date, time, timezone, tasks: [], appointments: [], calendarEvents: [] };
+    return {
+      userName: "there",
+      date,
+      time,
+      timezone,
+      tasks: [],
+      appointments: [],
+      calendarEvents: [],
+      communicationProfile: mapCommunicationProfile(undefined, "there"),
+    };
   }
 
   // ── Safe identity ──────────────────────────────────────────────────────────
@@ -996,11 +1210,13 @@ export async function buildDailyGuideContext(
 
   // ── User preferences (Step 9) ─────────────────────────────────────────────
   // getUserPreferences is strictly read-only (db.select() only — verified).
-  // Only behavior_patterns fields are extracted; other JSONB columns excluded.
+  // Only allowlisted behavior/accessibility fields are extracted.
   let preferences: AiPreferences | undefined;
+  let communicationProfile = mapCommunicationProfile(undefined, userName);
   try {
     const rawPrefs = await storage.getUserPreferences(userId);
     preferences = mapPreferencesToContext(rawPrefs);
+    communicationProfile = mapCommunicationProfile(rawPrefs, userName);
   } catch (err) {
     console.warn("[ai-context] Failed to fetch preferences for userId", userId, "—",
       err instanceof Error ? err.message : String(err));
@@ -1016,6 +1232,7 @@ export async function buildDailyGuideContext(
     tasks,
     appointments,
     calendarEvents,
+    communicationProfile,
     ...(preferences !== undefined ? { preferences } : {}),
   };
 
@@ -1393,6 +1610,8 @@ export async function buildAdaptAIContext(
     : [];
   const behaviorPreferences = mapPreferencesToContext(rawPreferences);
   const accessibility = mapAccessibilityToContext(rawPreferences);
+  const displayName = resolveDisplayName(sessionUser, storedUser?.name);
+  const communicationProfile = mapCommunicationProfile(rawPreferences, displayName);
   const points = mapPointsBalanceToContext(pointsBalance);
   const achievements = recentAchievements
     ? mapAchievementsToContext(recentAchievements, userId)
@@ -1404,8 +1623,9 @@ export async function buildAdaptAIContext(
 
   const context: AdaptAIContext = {
     identity: {
-      displayName: resolveDisplayName(sessionUser, storedUser?.name),
+      displayName,
     },
+    communicationProfile,
     today: { date, time, timezone },
     caregiverContext: {
       role: accessScope.role,

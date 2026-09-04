@@ -204,7 +204,8 @@ function nextAppointmentResponse(context: AdaptAIContext): string {
 }
 
 function comingUpResponse(context: AdaptAIContext): string {
-  const upcoming = upcomingAppointments(context).slice(0, 3);
+  const itemLimit = context.communicationProfile?.detailLevel === "concise" ? 1 : 3;
+  const upcoming = upcomingAppointments(context).slice(0, itemLimit);
   if (upcoming.length === 0) {
     return "I don't see any upcoming appointments in your schedule.";
   }

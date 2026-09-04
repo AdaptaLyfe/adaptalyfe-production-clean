@@ -97,6 +97,9 @@ function formatCompletedProgress(context: AdaptAIContext): string | undefined {
   const completed = context.tasks?.completed ?? [];
   if (completed.length === 0) return undefined;
 
+  if (context.communicationProfile?.detailLevel === "concise") {
+    return `You’ve already completed ${completed.length === 1 ? "a task" : `${completed.length} tasks`}.`;
+  }
   const titles = completed.slice(0, 3).map((task) => task.title).join(", ");
   const suffix = completed.length > 3 ? ` and ${completed.length - 3} more` : "";
   return `You’ve already completed ${completed.length === 1 ? "a task" : `${completed.length} tasks`}: ${titles}${suffix}.`;
@@ -177,7 +180,9 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   }
 
   const sortedItems = sortBriefingItems(items);
-  const greeting = `${greetingForTime(context.today.time)}, ${context.identity.displayName}.`;
+  const displayName =
+    context.communicationProfile?.preferredName || context.identity.displayName;
+  const greeting = `${greetingForTime(context.today.time)}, ${displayName}.`;
   const wellbeingNote = buildMoodSleepContextNote(context);
   const mealsGroceryNote = buildMealsGroceryContextNote(context);
   const financeNote = buildFinanceContextNote(context);
@@ -203,7 +208,12 @@ export function buildTodayBriefing(context: AdaptAIContext): string {
   const itemCount = sortedItems.length;
   const lines = sortedItems.map((item) => {
     const timeLabel = item.timeLabel ?? "Anytime";
-    return `✓ ${timeLabel} — ${item.title}`;
+    const marker =
+      context.communicationProfile?.accessibilityPreferences.screenReader ||
+      context.communicationProfile?.accessibilityPreferences.voiceOutput
+        ? ""
+        : "✓ ";
+    return `${marker}${timeLabel} — ${item.title}`;
   });
 
   return [

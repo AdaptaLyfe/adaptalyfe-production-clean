@@ -105,6 +105,56 @@ test("renders an empty day naturally and suggests a data-based next action", () 
   assert.match(briefing, /make a little progress on your goal: Save for a bicycle/i);
 });
 
+test("uses the preferred name and concise presentation profile without changing facts", () => {
+  const briefing = buildTodayBriefing(
+    baseContext({
+      communicationProfile: {
+        preferredName: "Sam",
+        communicationPreferences: {
+          simpleLanguage: true,
+          tone: "gentle",
+          useStepByStep: false,
+        },
+        detailLevel: "concise",
+        accessibilityPreferences: {
+          screenReader: true,
+          largerText: false,
+          voiceOutput: false,
+          reducedMotion: false,
+          highContrast: false,
+        },
+        routinePreferences: {},
+      },
+      tasks: {
+        today: [
+          {
+            title: "Take a walk",
+            category: "health",
+            isCompleted: true,
+            frequency: "daily",
+            estimatedMinutes: 20,
+          },
+        ],
+        incomplete: [],
+        completed: [
+          {
+            title: "Take a walk",
+            category: "health",
+            isCompleted: true,
+            frequency: "daily",
+            estimatedMinutes: 20,
+          },
+        ],
+      },
+    })
+  );
+
+  assert.match(briefing, /Good morning, Sam\./);
+  assert.match(briefing, /already completed a task/i);
+  assert.doesNotMatch(briefing, /Take a walk/);
+  assert.doesNotMatch(briefing, /✓/);
+});
+
 test("does not list completed tasks when active work is available", () => {
   const briefing = buildTodayBriefing(
     baseContext({
