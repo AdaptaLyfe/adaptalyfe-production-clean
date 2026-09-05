@@ -19,7 +19,6 @@ const CaregiverModule = lazy(() => import("@/components/caregiver-module"));
 const AppointmentsModule = lazy(() => import("@/components/appointments-module"));
 const DashboardCustomizer = lazy(() => import("@/components/dashboard-customizer"));
 const MoodRequirementModal = lazy(() => import("@/components/mood-requirement-modal"));
-const AIChatbot = lazy(() => import("@/components/ai-chatbot"));
 const HealthWellnessModule = lazy(() => import("@/components/health-wellness-module"));
 const AccessibilitySettingsModule = lazy(() => import("@/components/accessibility-settings-module"));
 const LifeSkillsModule = lazy(() => import("@/components/life-skills-module"));
@@ -276,11 +275,6 @@ export default function Dashboard() {
           </Droppable>
         </DragDropContext>
       </div>
-
-      {/* AI Chatbot */}
-      <Suspense fallback={null}>
-        <AIChatbot />
-      </Suspense>
 
       {/* Modals disabled - customizer removed */}
 

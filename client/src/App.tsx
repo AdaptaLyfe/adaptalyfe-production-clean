@@ -82,6 +82,7 @@ import PersonalDocuments from "@/pages/personal-documents";
 import RewardsPage from "@/pages/rewards";
 import SleepTracking from "@/pages/sleep-tracking";
 import PrivacyPolicy from "@/pages/privacy-policy";
+const AIChatbot = React.lazy(() => import("@/components/ai-chatbot"));
 
 // Simple Route Component - no authentication required
 function SimpleRoute({ component: Component }: { component: React.ComponentType }) {
@@ -362,6 +363,13 @@ function App() {
         <Route path="*" component={NotFound} />
       </Switch>
       </main>
+
+      {/* Keep one AdaptAI instance mounted across Home and Daily Tasks navigation. */}
+      {(location === "/dashboard" || location === "/daily-tasks") && (
+        <React.Suspense fallback={null}>
+          <AIChatbot />
+        </React.Suspense>
+      )}
       
       {/* Mobile bottom navigation - only show on authenticated pages */}
        {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <MobileBottomNavigation />}

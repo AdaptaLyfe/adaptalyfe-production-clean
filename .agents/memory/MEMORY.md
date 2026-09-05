@@ -9,3 +9,4 @@
 - [AdaptAI context boundaries](adaptai-context.md) — server-built allowlists and authenticated user scope prevent cross-user or unnecessary sensitive data from reaching AI.
 - [AdaptAI action safety](adaptai-action-safety.md) — state changes must use explicit Zod actions, authenticated ownership checks, and confirmation before execution.
 - [Proactive guidance safety](proactive-guidance.md) — one best user-scoped candidate per worker pass, explicit preferences, and stable occurrence deduplication prevent notification floods.
+- [Shared chatbot surface](shared-chatbot-surface.md) — mount the single chatbot instance in the app shell so route changes preserve its conversation state.
