@@ -15,6 +15,14 @@ class AuthRepository {
   final AuthApi api;
   final LocalStorage localStorage;
 
+  Future<bool> hasSessionToken() {
+    return localStorage.hasSessionToken();
+  }
+
+  Future<void> clearLocalSession() {
+    return localStorage.clearSessionToken();
+  }
+
   Future<UserModel> login({
     required String username,
     required String password,
