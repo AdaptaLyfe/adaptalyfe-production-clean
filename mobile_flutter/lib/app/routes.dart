@@ -8,6 +8,9 @@ import '../features/auth/data/auth_api.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
+import '../features/home/bloc/home_bloc.dart';
+import '../features/home/bloc/home_event.dart';
+import '../features/home/data/home_repository.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/splash/bloc/splash_bloc.dart';
 import '../features/splash/bloc/splash_event.dart';
@@ -44,7 +47,11 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/home',
-      builder: (context, state) => const HomeScreen(),
+      builder: (context, state) => BlocProvider(
+        create: (_) => HomeBloc(_createHomeRepository())
+          ..add(const HomeStarted()),
+        child: const HomeScreen(),
+      ),
     ),
   ],
 );
@@ -55,5 +62,12 @@ AuthRepository _createAuthRepository() {
   return AuthRepository(
     api: AuthApi(apiClient),
     localStorage: localStorage,
+  );
+}
+
+HomeRepository _createHomeRepository() {
+  final localStorage = LocalStorage();
+  return HomeRepository(
+    ApiClient(localStorage: localStorage),
   );
 }
