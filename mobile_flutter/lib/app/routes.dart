@@ -12,6 +12,11 @@ import '../features/auth/data/auth_api.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
+import '../features/daily_tasks/bloc/daily_tasks_bloc.dart';
+import '../features/daily_tasks/bloc/daily_tasks_event.dart';
+import '../features/daily_tasks/data/daily_tasks_api.dart';
+import '../features/daily_tasks/data/daily_tasks_repository.dart';
+import '../features/daily_tasks/presentation/daily_tasks_screen.dart';
 import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_repository.dart';
@@ -38,7 +43,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         return '/home';
       }
 
-      if (location == '/home' && authState is! Authenticated) {
+      final isProtectedRoute =
+          location == '/home' || location == '/daily-tasks';
+
+      if (isProtectedRoute && authState is! Authenticated) {
         if (authState is Unauthenticated) {
           return '/login';
         }
@@ -75,6 +83,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const HomeScreen(),
         ),
       ),
+      GoRoute(
+        path: '/daily-tasks',
+        builder: (context, state) => BlocProvider(
+          create: (_) => DailyTasksBloc(_createDailyTasksRepository())
+            ..add(const DailyTasksStarted()),
+          child: const DailyTasksScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -106,5 +122,14 @@ HomeRepository _createHomeRepository() {
   final localStorage = LocalStorage();
   return HomeRepository(
     ApiClient(localStorage: localStorage),
+  );
+}
+
+DailyTasksRepository _createDailyTasksRepository() {
+  final localStorage = LocalStorage();
+  return DailyTasksRepository(
+    DailyTasksApi(
+      ApiClient(localStorage: localStorage),
+    ),
   );
 }

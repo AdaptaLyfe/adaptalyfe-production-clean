@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../models/user_model.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -512,7 +513,7 @@ class _MobileBottomNavigation extends StatelessWidget {
               icon: Icons.check_box_outlined,
               label: 'Tasks',
               activeColor: const Color(0xFF16A34A),
-              onTap: () => _showUnavailable(context),
+              onTap: () => context.push('/daily-tasks'),
             ),
             _NavigationItem(
               icon: Icons.attach_money_rounded,
@@ -643,7 +644,10 @@ class _HomeDrawer extends StatelessWidget {
             _DrawerItem(
               icon: Icons.check_box_outlined,
               label: 'Daily Tasks',
-              onTap: () => _showUnavailable(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/daily-tasks');
+              },
             ),
             _DrawerItem(
               icon: Icons.attach_money_rounded,
