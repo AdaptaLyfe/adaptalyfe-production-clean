@@ -26,6 +26,11 @@ import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/mood/bloc/mood_bloc.dart';
+import '../features/mood/bloc/mood_event.dart';
+import '../features/mood/data/mood_api.dart';
+import '../features/mood/data/mood_repository.dart';
+import '../features/mood/presentation/mood_tracking_screen.dart';
 import '../features/notifications/bloc/notifications_bloc.dart';
 import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
@@ -57,7 +62,8 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/home' ||
           location == '/daily-tasks' ||
           location == '/notifications' ||
-          location == '/financial';
+          location == '/financial' ||
+          location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
         if (authState is Unauthenticated) {
@@ -120,6 +126,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const FinancialScreen(),
         ),
       ),
+      GoRoute(
+        path: '/mood-tracking',
+        builder: (context, state) => BlocProvider(
+          create: (_) => MoodBloc(_createMoodRepository())
+            ..add(const MoodStarted()),
+          child: const MoodTrackingScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -176,6 +190,15 @@ FinancialRepository _createFinancialRepository() {
   final localStorage = LocalStorage();
   return FinancialRepository(
     FinancialApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+MoodRepository _createMoodRepository() {
+  final localStorage = LocalStorage();
+  return MoodRepository(
+    MoodApi(
       ApiClient(localStorage: localStorage),
     ),
   );

@@ -530,7 +530,7 @@ class _MobileBottomNavigation extends StatelessWidget {
               icon: Icons.favorite_outline_rounded,
               label: 'Mood',
               activeColor: const Color(0xFF9333EA),
-              onTap: () => _showUnavailable(context),
+              onTap: () => context.push('/mood-tracking'),
             ),
             _NavigationItem(
               icon: Icons.menu_rounded,
@@ -673,7 +673,10 @@ class _HomeDrawer extends StatelessWidget {
             _DrawerItem(
               icon: Icons.favorite_outline_rounded,
               label: 'Mood Check-ins',
-              onTap: () => _showUnavailable(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/mood-tracking');
+              },
             ),
             _DrawerItem(
               icon: Icons.calendar_month_outlined,

@@ -114,7 +114,8 @@ class _MoodBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.isLoading && !state.hasData) {
+    if (state.status == MoodStatus.initial ||
+        (state.isLoading && !state.hasData)) {
       return const _MoodLoading();
     }
 
@@ -168,13 +169,14 @@ class _MoodBody extends StatelessWidget {
 
   Future<void> _refresh(BuildContext context) async {
     final bloc = context.read<MoodBloc>();
-    bloc.add(const RefreshMood());
-    await bloc.stream.firstWhere(
+    final completion = bloc.stream.firstWhere(
       (nextState) =>
           (nextState.status == MoodStatus.loaded ||
               nextState.status == MoodStatus.failure) &&
           !nextState.isSubmitting,
     );
+    bloc.add(const RefreshMood());
+    await completion;
   }
 }
 
@@ -457,7 +459,7 @@ class _CheckInForm extends StatelessWidget {
         if (isRequired) ...[
           const SizedBox(height: 8),
           const Text(
-            'Daily mood check-in is available from navigation and is not blocking.',
+            'Daily mood check-in helps you notice patterns in your wellbeing.',
             style: TextStyle(
               color: Color(0xFFB91C1C),
               fontSize: 12,

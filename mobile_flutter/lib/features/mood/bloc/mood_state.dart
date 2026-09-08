@@ -32,7 +32,8 @@ class MoodState extends Equatable {
 
   bool get isLoading => status == MoodStatus.loading;
   bool get hasData => entries.isNotEmpty || todayMood != null;
-  bool get isMoodRequired => !isLoading && todayMood == null;
+  bool get isMoodRequired =>
+      status == MoodStatus.loaded && todayMood == null;
 
   double get averageMood {
     if (entries.isEmpty) return 0;
