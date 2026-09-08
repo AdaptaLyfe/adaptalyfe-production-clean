@@ -49,7 +49,7 @@ class ApiException implements Exception {
   @override
   String toString() {
     final code = statusCode == null ? '' : ' ($statusCode)';
-    return 'ApiException${code}: $message';
+    return 'ApiException$code: $message';
   }
 }
 

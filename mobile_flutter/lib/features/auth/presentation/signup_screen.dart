@@ -456,7 +456,9 @@ class _SignupCard extends StatelessWidget {
               const SizedBox(height: 20),
               CheckboxListTile(
                 value: agreeToTerms,
-                onChanged: isLoading ? null : onTermsChanged,
+                onChanged: isLoading
+                    ? null
+                    : (value) => onTermsChanged(value ?? false),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text.rich(
@@ -482,7 +484,9 @@ class _SignupCard extends StatelessWidget {
               ),
               CheckboxListTile(
                 value: subscribeNewsletter,
-                onChanged: isLoading ? null : onNewsletterChanged,
+                onChanged: isLoading
+                    ? null
+                    : (value) => onNewsletterChanged(value ?? false),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
                 title: const Text(

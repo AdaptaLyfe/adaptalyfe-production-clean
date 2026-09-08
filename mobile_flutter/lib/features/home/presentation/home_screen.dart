@@ -139,10 +139,10 @@ class _HomeBody extends StatelessWidget {
             if (state is HomeInitial || state is HomeLoading)
               const _HomeLoadingCard()
             else if (state is HomeLoaded)
-              _UserGreetingCard(user: state.user)
+              _UserGreetingCard(user: (state as HomeLoaded).user)
             else if (state is HomeError)
               _HomeErrorCard(
-                message: state.message,
+                message: (state as HomeError).message,
                 onRetry: () {
                   context.read<HomeBloc>().add(const RefreshHome());
                 },
