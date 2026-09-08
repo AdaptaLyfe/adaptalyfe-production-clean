@@ -113,3 +113,17 @@ mtime_ms = 1788416470020
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/afbf2a77-d434-4838-b26c-9ec4c5eeb5cb/cef13cf2-1785-40c5-a172-e90679c39075"
 storage_version_token = "1788416479527806"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "SRIBijOqD2DXUtDVHjsj-"
+uri = "file://exports/adaptalyfe_flutter_phase1.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Phase 1"
+description = "Complete mobile_flutter Flutter project with Splash, Login, Signup, Home, authentication flow, assets, and Android/iOS scaffolds. Generated build and cache directories are excluded."
+logical_id = "7981e44f-db7f-4b04-bc84-a25a98984239"
+content_hash = "sha256:151c7091e4f897e19fcdb3687c1622dc2db65240f55d2ac724284bb59be7b7a4"
+size = 146813
+mtime_ms = 1788867776925
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7981e44f-db7f-4b04-bc84-a25a98984239/7d9b7a1d-0f4e-4999-90d8-d23e50dee2a4"
+storage_version_token = "1788867782793001"
+content_type = "application/octet-stream"
