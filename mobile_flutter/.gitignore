@@ -1,0 +1,22 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+
+# Flutter-generated local configuration
+android/local.properties
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+# Operating system files
+.DS_Store
+Thumbs.db
