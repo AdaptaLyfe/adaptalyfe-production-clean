@@ -1,1 +1,2 @@
 - [Legacy Zod migration compatibility](legacy-zod-migration.md) — preserve legacy Drizzle/Zod majors when helper rewrites make runtime schema omission stricter.
+- [Post-merge database setup](post-merge-drizzle.md) — headless setup must avoid Drizzle push because table-rename resolution can still prompt with force.
