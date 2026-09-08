@@ -17,6 +17,11 @@ import '../features/daily_tasks/bloc/daily_tasks_event.dart';
 import '../features/daily_tasks/data/daily_tasks_api.dart';
 import '../features/daily_tasks/data/daily_tasks_repository.dart';
 import '../features/daily_tasks/presentation/daily_tasks_screen.dart';
+import '../features/financial/bloc/financial_bloc.dart';
+import '../features/financial/bloc/financial_event.dart';
+import '../features/financial/data/financial_api.dart';
+import '../features/financial/data/financial_repository.dart';
+import '../features/financial/presentation/financial_screen.dart';
 import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_repository.dart';
@@ -51,7 +56,8 @@ GoRouter createAppRouter(AuthBloc authBloc) {
       final isProtectedRoute =
           location == '/home' ||
           location == '/daily-tasks' ||
-          location == '/notifications';
+          location == '/notifications' ||
+          location == '/financial';
 
       if (isProtectedRoute && authState is! Authenticated) {
         if (authState is Unauthenticated) {
@@ -106,6 +112,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const NotificationsScreen(),
         ),
       ),
+      GoRoute(
+        path: '/financial',
+        builder: (context, state) => BlocProvider(
+          create: (_) => FinancialBloc(_createFinancialRepository())
+            ..add(const FinancialStarted()),
+          child: const FinancialScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -153,6 +167,15 @@ NotificationsRepository _createNotificationsRepository() {
   final localStorage = LocalStorage();
   return NotificationsRepository(
     NotificationsApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+FinancialRepository _createFinancialRepository() {
+  final localStorage = LocalStorage();
+  return FinancialRepository(
+    FinancialApi(
       ApiClient(localStorage: localStorage),
     ),
   );

@@ -524,7 +524,7 @@ class _MobileBottomNavigation extends StatelessWidget {
               icon: Icons.attach_money_rounded,
               label: 'Money',
               activeColor: const Color(0xFF2563EB),
-              onTap: () => _showUnavailable(context),
+              onTap: () => context.push('/financial'),
             ),
             _NavigationItem(
               icon: Icons.favorite_outline_rounded,
@@ -665,7 +665,10 @@ class _HomeDrawer extends StatelessWidget {
             _DrawerItem(
               icon: Icons.attach_money_rounded,
               label: 'Financial',
-              onTap: () => _showUnavailable(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/financial');
+              },
             ),
             _DrawerItem(
               icon: Icons.favorite_outline_rounded,
