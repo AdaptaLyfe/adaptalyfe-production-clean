@@ -186,7 +186,7 @@ class ApiClient {
   }
 
   Future<Map<String, String>> _requestHeaders() async {
-    final token = await _localStorage.readSessionToken();
+    final token = await _localStorage.getSessionToken();
     final headers = <String, String>{
       // The existing backend uses this marker to return native bearer
       // sessions from login and registration.
