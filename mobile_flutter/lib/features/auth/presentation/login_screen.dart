@@ -24,9 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController _passwordController;
   late final TextEditingController _invitationCodeController;
 
-  bool get _hasInvitationCode =>
-      _invitationCodeController.text.trim().isNotEmpty;
-
   @override
   void initState() {
     super.initState();
