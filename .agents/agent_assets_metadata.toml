@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "O6ZOIeXQnH-ADZpxv-ZYn"
+uri = "file://deliverables/adaptalyfe-flutter-source.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Source"
+description = "Sanitized source ZIP containing the Flutter mobile app plus the preserved project source structure, excluding secrets, caches, builds, logs, and prior archives."
+logical_id = "44f9ae67-e400-44dc-910e-13066c7bb021"
+content_hash = "sha256:d1db6a3c372398d53c3390278fc02d6d2996f64cfff1d60fdac6e66c78310518"
+size = 5040174
+mtime_ms = 1788857562975
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/44f9ae67-e400-44dc-910e-13066c7bb021/c4a8f25d-b585-42e3-913a-77ae0d55cd89"
+storage_version_token = "1788857611419112"
+content_type = "application/octet-stream"

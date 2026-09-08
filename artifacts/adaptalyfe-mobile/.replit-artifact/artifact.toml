@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Adaptalyfe Mobile"
+description = "The native mobile companion for Adaptalyfe, providing secure account access and a mobile home for daily planning, health, finances, routines, and support."
+version = "1.0.0"
+id = "artifacts/adaptalyfe-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 19271
+
+[services.development]
+run = "pnpm --filter @workspace/adaptalyfe-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/adaptalyfe-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/adaptalyfe-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "19271"
+BASE_PATH = "/mobile/"
