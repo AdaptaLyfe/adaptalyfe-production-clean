@@ -3,30 +3,47 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../bloc/splash_bloc.dart';
-import '../bloc/splash_event.dart';
-import '../bloc/splash_state.dart';
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_event.dart';
+import '../../auth/bloc/auth_state.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final authBloc = context.read<AuthBloc>();
+    if (authBloc.state is AuthInitial) {
+      authBloc.add(const CheckAuthentication());
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocListener<SplashBloc, SplashState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is SplashAuthenticated) {
+        if (state is Authenticated) {
           context.go('/home');
-        } else if (state is SplashUnauthenticated) {
+        } else if (state is Unauthenticated) {
           context.go('/login');
         }
       },
-      child: BlocBuilder<SplashBloc, SplashState>(
+      child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
+          final isError = state is AuthError;
+          final errorMessage = isError ? state.message : null;
+
           return _SplashView(
-            state: state,
-            onRetry: () => context.read<SplashBloc>().add(
-                  const SplashStarted(),
-                ),
+            errorMessage: errorMessage,
+            onRetry: () {
+              context.read<AuthBloc>().add(const CheckAuthentication());
+            },
             onContinueToLogin: () => context.go('/login'),
           );
         },
@@ -37,20 +54,17 @@ class SplashScreen extends StatelessWidget {
 
 class _SplashView extends StatelessWidget {
   const _SplashView({
-    required this.state,
+    required this.errorMessage,
     required this.onRetry,
     required this.onContinueToLogin,
   });
 
-  final SplashState state;
+  final String? errorMessage;
   final VoidCallback onRetry;
   final VoidCallback onContinueToLogin;
 
   @override
   Widget build(BuildContext context) {
-    final isError = state is SplashError;
-    final errorMessage = isError ? (state as SplashError).message : null;
-
     return AnnotatedRegion(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.white,
@@ -92,7 +106,7 @@ class _SplashView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  if (isError) ...[
+                  if (errorMessage != null) ...[
                     Text(
                       errorMessage!,
                       textAlign: TextAlign.center,

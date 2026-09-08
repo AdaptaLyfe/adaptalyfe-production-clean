@@ -22,6 +22,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       final user = await repository.getCurrentUser();
       emit(HomeLoaded(user));
+    } on ApiException catch (error) {
+      emit(
+        HomeError(
+          error.message,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+        ),
+      );
     } catch (error) {
       emit(HomeError(_messageFor(error)));
     }

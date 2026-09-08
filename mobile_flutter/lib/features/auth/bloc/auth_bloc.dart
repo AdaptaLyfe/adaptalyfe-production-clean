@@ -57,7 +57,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthentication event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthLoading());
+    emit(const AuthChecking());
 
     if (!await repository.hasSessionToken()) {
       emit(const Unauthenticated());
@@ -88,10 +88,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       await repository.logout();
-      emit(const Unauthenticated());
     } catch (error) {
-      emit(AuthError(_messageFor(error)));
+      // The repository clears the local session in its finally block. A
+      // failed server-side logout must not keep the user inside Home.
     }
+
+    emit(const Unauthenticated());
   }
 
   String _messageFor(Object error) {

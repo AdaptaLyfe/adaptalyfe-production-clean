@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../models/user_model.dart';
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_event.dart';
+import '../../auth/bloc/auth_state.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
@@ -14,6 +17,13 @@ class HomeScreen extends StatelessWidget {
     return BlocConsumer<HomeBloc, HomeState>(
       listener: (context, state) {
         if (state is HomeError) {
+          if (state.sessionInvalid) {
+            final authBloc = context.read<AuthBloc>();
+            authBloc.add(const CheckAuthentication());
+            context.go('/splash');
+            return;
+          }
+
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -597,6 +607,10 @@ class _HomeDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggingOut = context.select<AuthBloc, bool>(
+      (state) => state is AuthLoading,
+    );
+
     return Drawer(
       child: SafeArea(
         child: ListView(
@@ -657,6 +671,19 @@ class _HomeDrawer extends StatelessWidget {
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),
+            ),
+            const Divider(height: 24),
+            _DrawerItem(
+              icon: Icons.logout_rounded,
+              label: isLoggingOut ? 'Logging out…' : 'Log out',
+              onTap: isLoggingOut
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      context.read<AuthBloc>().add(
+                            const LogoutRequested(),
+                          );
+                    },
             ),
           ],
         ),

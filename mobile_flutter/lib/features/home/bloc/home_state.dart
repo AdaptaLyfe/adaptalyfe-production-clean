@@ -27,10 +27,14 @@ final class HomeLoaded extends HomeState {
 }
 
 final class HomeError extends HomeState {
-  const HomeError(this.message);
+  const HomeError(
+    this.message, {
+    this.sessionInvalid = false,
+  });
 
   final String message;
+  final bool sessionInvalid;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, sessionInvalid];
 }
