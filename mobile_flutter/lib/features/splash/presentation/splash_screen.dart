@@ -19,8 +19,17 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     final authBloc = context.read<AuthBloc>();
-    if (authBloc.state is AuthInitial) {
+    final state = authBloc.state;
+    if (state is AuthInitial) {
       authBloc.add(const CheckAuthentication());
+    } else if (state is Unauthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/login');
+      });
+    } else if (state is Authenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/home');
+      });
     }
   }
 

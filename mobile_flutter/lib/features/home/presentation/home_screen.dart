@@ -18,9 +18,7 @@ class HomeScreen extends StatelessWidget {
       listener: (context, state) {
         if (state is HomeError) {
           if (state.sessionInvalid) {
-            final authBloc = context.read<AuthBloc>();
-            authBloc.add(const CheckAuthentication());
-            context.go('/splash');
+            context.read<AuthBloc>().add(const CheckAuthentication());
             return;
           }
 

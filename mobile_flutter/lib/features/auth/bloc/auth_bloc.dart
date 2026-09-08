@@ -88,7 +88,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       await repository.logout();
-    } catch (error) {
+    } catch (_) {
       // The repository clears the local session in its finally block. A
       // failed server-side logout must not keep the user inside Home.
     }
