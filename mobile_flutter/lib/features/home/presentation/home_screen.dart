@@ -87,6 +87,11 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
+          tooltip: 'Open notifications',
+          onPressed: () => context.push('/notifications'),
+          icon: const Icon(Icons.notifications_none_rounded),
+        ),
+        IconButton(
           tooltip: 'Refresh dashboard',
           onPressed: () {
             context.read<HomeBloc>().add(const RefreshHome());
@@ -647,6 +652,14 @@ class _HomeDrawer extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).pop();
                 context.push('/daily-tasks');
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.notifications_none_rounded,
+              label: 'Notifications',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/notifications');
               },
             ),
             _DrawerItem(

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
 import '../data/notifications_repository.dart';
+import '../models/notification_model.dart';
 import 'notifications_event.dart';
 import 'notifications_state.dart';
 
@@ -62,9 +63,13 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     MarkNotificationRead event,
     Emitter<NotificationsState> emit,
   ) async {
-    final notification = state.notifications
-        .where((item) => item.id == event.notificationId)
-        .firstOrNull;
+    NotificationModel? notification;
+    for (final item in state.notifications) {
+      if (item.id == event.notificationId) {
+        notification = item;
+        break;
+      }
+    }
     if (notification == null || notification.isRead) return;
 
     emit(
@@ -80,7 +85,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       final updatedNotifications = state.notifications
           .map(
             (item) => item.id == event.notificationId
-                ? NotificationModelCopy.markRead(item)
+                ? item.copyWith(isRead: true)
                 : item,
           )
           .toList();
@@ -124,18 +129,4 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     if (error is FormatException) return error.message;
     return 'Unable to load your notifications. Please try again.';
   }
-}
-
-class NotificationModelCopy {
-  const NotificationModelCopy._();
-
-  static dynamic markRead(dynamic notification) {
-    return _MarkedNotification(notification);
-  }
-}
-
-class _MarkedNotification {
-  const _MarkedNotification(this.source);
-
-  final dynamic source;
 }

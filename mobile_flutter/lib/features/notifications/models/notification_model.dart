@@ -43,6 +43,24 @@ class NotificationModel extends Equatable {
   final int? relatedId;
   final DateTime? createdAt;
 
+  NotificationModel copyWith({
+    bool? isRead,
+  }) {
+    return NotificationModel(
+      id: id,
+      userId: userId,
+      type: type,
+      title: title,
+      message: message,
+      isRead: isRead ?? this.isRead,
+      priority: priority,
+      scheduledFor: scheduledFor,
+      sentAt: sentAt,
+      relatedId: relatedId,
+      createdAt: createdAt,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

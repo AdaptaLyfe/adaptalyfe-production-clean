@@ -21,6 +21,11 @@ import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/notifications/bloc/notifications_bloc.dart';
+import '../features/notifications/bloc/notifications_event.dart';
+import '../features/notifications/data/notifications_api.dart';
+import '../features/notifications/data/notifications_repository.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
@@ -44,7 +49,9 @@ GoRouter createAppRouter(AuthBloc authBloc) {
       }
 
       final isProtectedRoute =
-          location == '/home' || location == '/daily-tasks';
+          location == '/home' ||
+          location == '/daily-tasks' ||
+          location == '/notifications';
 
       if (isProtectedRoute && authState is! Authenticated) {
         if (authState is Unauthenticated) {
@@ -91,6 +98,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const DailyTasksScreen(),
         ),
       ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => BlocProvider(
+          create: (_) => NotificationsBloc(_createNotificationsRepository())
+            ..add(const NotificationsStarted()),
+          child: const NotificationsScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -129,6 +144,15 @@ DailyTasksRepository _createDailyTasksRepository() {
   final localStorage = LocalStorage();
   return DailyTasksRepository(
     DailyTasksApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+NotificationsRepository _createNotificationsRepository() {
+  final localStorage = LocalStorage();
+  return NotificationsRepository(
+    NotificationsApi(
       ApiClient(localStorage: localStorage),
     ),
   );
