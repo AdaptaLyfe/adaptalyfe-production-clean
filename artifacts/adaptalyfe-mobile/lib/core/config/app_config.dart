@@ -1,9 +1,10 @@
 class AppConfig {
   const AppConfig._();
 
-  /// Emulator-only default; configure a real deployment at build time.
+  /// Existing Adaptalyfe API from the mobile integration documentation.
+  /// Override with --dart-define=API_BASE_URL=... for local development.
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:5000',
+    defaultValue: 'https://staging.getadaptalyfeapp.com',
   );
 }

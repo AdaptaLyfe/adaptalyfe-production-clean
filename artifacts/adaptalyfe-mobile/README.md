@@ -8,10 +8,10 @@ Install Flutter stable (Dart 3.3+), then:
 
 ```sh
 flutter pub get
-flutter run --dart-define=API_BASE_URL=https://your-api.example
+flutter run --dart-define=API_BASE_URL=https://staging.getadaptalyfeapp.com
 ```
 
-`API_BASE_URL` must be an `http(s)` origin without a trailing slash. The intentionally safe development default is `http://10.0.2.2:5000` (Android emulator); use your machine LAN address for a physical device or `http://127.0.0.1:5000` for iOS Simulator. No production domain or credentials are embedded in the app.
+`API_BASE_URL` must be an `http(s)` origin without a trailing slash. The default is the existing Adaptalyfe API documented for this app. For local development, use `http://10.0.2.2:5000` (Android emulator), your machine LAN address for a physical device, or `http://127.0.0.1:5000` for iOS Simulator. No credentials are embedded in the app.
 
 Run checks with `flutter analyze` and `flutter test`; build with `flutter build apk` or `flutter build ipa`.
 

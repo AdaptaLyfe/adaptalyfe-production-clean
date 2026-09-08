@@ -1,0 +1,140 @@
+Adaptalyfe Flutter — Android & iOS Documentation 
+Overview
+The Adaptalyfe mobile application will be built using:
+
+
+Layer
+Technology 
+Mobile Framework 
+Flutter 
+Language 
+Dart 
+State Management 
+BLoC 
+Backend 
+Existing Node.js + Express API 
+Database 
+Existing PostgreSQL 
+Authentication 
+Existing session-token API 
+Platform
+Android + iOS
+JSON Serialization
+json_serializable / manual models
+Local Storage 
+FlutterSecureStorage
+Architecture
+Feature-based Clean Architecture
+HTTP Client
+Dio
+Navigation
+GoRouter
+Dependency Injection
+GetIt
+API
+REST API
+
+Important
+The Flutter application will use the existing backend and API flow.
+No new authentication backend is required.
+Production API:
+https://staging.getadaptalyfeapp.com/
+
+The existing backend uses:
+POST /api/login
+POST /api/register
+POST /api/logout
+GET  /api/user
+The existing login flow validates credentials, creates a session, and returns a session token and user information. The frontend stores the token for subsequent authenticated requests.
+Application Flow
+App Launch
+    ↓
+Splash Screen
+    ↓
+Check Stored Session Token
+    ↓
+┌─────────────────────┐
+│ Token exists?       │
+└─────────────────────┘
+       ↓ Yes                 ↓ No
+       ↓                     ↓
+   GET /api/user          Login Screen
+       ↓
+ ┌───────────────┐
+ │ Valid Session │
+ └───────────────┘
+       ↓
+   Home Screen
+The existing web application follows the same basic principle: it reads the stored session token and checks /api/user before allowing access to protected screens.
+Architecture :-
+Flutter App
+│
+├── Presentation
+│   ├── Pages / Screens
+│   ├── Widgets
+│   └── BLoC
+│
+├── Domain
+│   ├── Entities
+│   └── Repository Interfaces
+│
+├── Data
+│   ├── Models
+│   ├── Repository Implementations
+│   └── Remote Data Source
+│
+├── Core
+│   ├── Network
+│   ├── Constants
+│   ├── Routes
+│   ├── Theme
+│   └── Utils
+│
+└── main.dart
+
+Splash Screen 
+
+Purpose
+The Splash Screen is the first screen displayed when the mobile application starts.
+Responsibilities
+Display application logo
+Initialize application
+Check locally stored session token
+Validate existing session
+Navigate to Login or Home
+Flow
+SplashScreen
+     ↓
+SplashBloc
+     ↓
+Read session token
+     ↓
+Token available?
+     ↓
+GET /api/user
+     ↓
+Valid?
+ ┌───┴────┐
+Yes       No
+ ↓         ↓
+Home     Login
+BLoC
+Event
+SplashStarted
+States
+SplashInitial
+SplashLoading
+SplashAuthenticated
+SplashUnauthenticated
+SplashError
+BLoC Responsibility
+SplashBloc
+   ↓
+LocalStorage
+   ↓
+Session Token
+   ↓
+AuthRepository
+   ↓
+GET /api/user
+The existing backend's /api/user endpoint is the source used to determine whether the current session is authenticated.
