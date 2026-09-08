@@ -14,3 +14,17 @@ mtime_ms = 1788857562975
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/44f9ae67-e400-44dc-910e-13066c7bb021/c4a8f25d-b585-42e3-913a-77ae0d55cd89"
 storage_version_token = "1788857611419112"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "SpOLUQwXjf_VyDL84iee_"
+uri = "file://exports/adaptalyfe-source.zip"
+type = "unspecified"
+title = "Adaptalyfe source code ZIP"
+description = "Complete Adaptalyfe workspace source including the Flutter Android/iOS mobile app, existing web/API code, native project files, and configuration. Dependencies, build output, attachments, local state, and environment/secret files are excluded. Flutter analyze and tests passed."
+logical_id = "26bb6b64-78a6-434e-a770-48edb4c8e736"
+content_hash = "sha256:be63ae86e676e4909fc697ed54a5bdcf8d5a04817cc7b9365e643a8c55e3673c"
+size = 8004999
+mtime_ms = 1788861240305
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/26bb6b64-78a6-434e-a770-48edb4c8e736/fb618ac9-b7b7-4ced-80b1-c80fefa3a103"
+storage_version_token = "1788861246757361"
+content_type = "application/octet-stream"
