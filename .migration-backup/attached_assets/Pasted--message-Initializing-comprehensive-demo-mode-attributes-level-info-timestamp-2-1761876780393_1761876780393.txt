@@ -1,0 +1,53 @@
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:05:46.839230216Z"}
+{"message":"file:///app/node_modules/openai/client.mjs:83","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839236898Z"}
+{"message":"            throw new Errors.OpenAIError(\"The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).\");","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839242833Z"}
+{"message":"                  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839248752Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839254977Z"}
+{"message":"OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839262242Z"}
+{"message":"    at new OpenAI (file:///app/node_modules/openai/client.mjs:83:19)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839268386Z"}
+{"message":"    at file:///app/dist/production.js:5350:14","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839274109Z"}
+{"message":"    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839281771Z"}
+{"message":"    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.839288092Z"}
+{"message":"    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:122:5)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.840715819Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.840724160Z"}
+{"message":"Node.js v20.18.1","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:46.840730587Z"}
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:05:48.796707227Z"}
+{"message":"file:///app/node_modules/openai/client.mjs:83","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796711717Z"}
+{"message":"            throw new Errors.OpenAIError(\"The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).\");","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796716150Z"}
+{"message":"                  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796721302Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796726564Z"}
+{"message":"OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796815161Z"}
+{"message":"    at new OpenAI (file:///app/node_modules/openai/client.mjs:83:19)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796822530Z"}
+{"message":"    at file:///app/dist/production.js:5350:14","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796828051Z"}
+{"message":"    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796832901Z"}
+{"message":"    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796838257Z"}
+{"message":"    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:122:5)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796843011Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796848068Z"}
+{"message":"Node.js v20.18.1","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:48.796853711Z"}
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:05:51.706760078Z"}
+{"message":"file:///app/node_modules/openai/client.mjs:83","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706764059Z"}
+{"message":"            throw new Errors.OpenAIError(\"The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).\");","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706768818Z"}
+{"message":"                  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706774328Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706782661Z"}
+{"message":"OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706786992Z"}
+{"message":"    at new OpenAI (file:///app/node_modules/openai/client.mjs:83:19)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706790735Z"}
+{"message":"    at file:///app/dist/production.js:5350:14","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706795063Z"}
+{"message":"    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706799792Z"}
+{"message":"    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706809585Z"}
+{"message":"    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:122:5)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706813633Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706817337Z"}
+{"message":"Node.js v20.18.1","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:51.706821194Z"}
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:05:54.963623294Z"}
+{"message":"file:///app/node_modules/openai/client.mjs:83","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963651543Z"}
+{"message":"            throw new Errors.OpenAIError(\"The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).\");","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963659861Z"}
+{"message":"                  ^","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963666502Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963677228Z"}
+{"message":"OpenAIError: The OPENAI_API_KEY environment variable is missing or empty; either provide it, or instantiate the OpenAI client with an apiKey option, like new OpenAI({ apiKey: 'My API Key' }).","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963684575Z"}
+{"message":"    at new OpenAI (file:///app/node_modules/openai/client.mjs:83:19)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963692585Z"}
+{"message":"    at file:///app/dist/production.js:5350:14","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963698983Z"}
+{"message":"    at ModuleJob.run (node:internal/modules/esm/module_job:234:25)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963705547Z"}
+{"message":"    at async ModuleLoader.import (node:internal/modules/esm/loader:473:24)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963710833Z"}
+{"message":"    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:122:5)","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963717272Z"}
+{"message":"","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963723989Z"}
+{"message":"Node.js v20.18.1","attributes":{"level":"error"},"timestamp":"2025-10-31T02:05:54.963730915Z"}
+{"message":"Stopping Container","attributes":{"level":"info"},"timestamp":"2025-10-31T02:12:26.000000000Z"}

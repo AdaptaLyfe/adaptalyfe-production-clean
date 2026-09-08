@@ -1,0 +1,144 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
+import type { User } from "@shared/schema";
+
+export interface SubscriptionData {
+  id: number;
+  planType: string;
+  status: string;
+  trialDaysLeft: number | null;
+  features: {
+    wearableDevices: boolean;
+    mealPlanning: boolean;
+    medicationManagement: boolean;
+    locationSafety: boolean;
+    advancedAnalytics: boolean;
+    prioritySupport: boolean;
+  };
+}
+
+export function useSubscriptionEnforcement() {
+  const [location, setLocation] = useLocation();
+  
+  // Skip enforcement on auth pages
+  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
+  
+  const { data: user } = useQuery<User>({ 
+    queryKey: ["/api/user"],
+    enabled: !isAuthPage 
+  });
+  const { data: subscription } = useQuery<SubscriptionData>({ 
+    queryKey: ["/api/subscription"],
+    enabled: !isAuthPage 
+  });
+  const { data: orgMembership } = useQuery<any>({ 
+    queryKey: ["/api/org-codes/my"],
+    enabled: !isAuthPage 
+  });
+
+  useEffect(() => {
+    if (isAuthPage || !user || !subscription) return;
+
+    // Admin users get full access without restrictions
+    const isAdmin = user.accountType === 'admin' || user.username === 'admin';
+    if (isAdmin) return;
+
+    // Users with active org membership get full access
+    if (orgMembership && orgMembership.status === 'active') return;
+
+    // Pages that should always be accessible (even after trial expires)
+    const alwaysAccessible = ['/subscription', '/pricing', '/settings'];
+    const isAlwaysAccessible = alwaysAccessible.some(route => location.startsWith(route));
+
+    // BULLETPROOF active-subscription check: trust subscriptionStatus from the user
+    // record as the single source of truth. Stripe, Apple, and Google webhooks are
+    // responsible for updating this field to 'cancelled' / 'past_due' when a charge
+    // fails or a subscription lapses. If it says 'active', that is definitive —
+    // we do NOT additionally require stripeSubscriptionId or a non-expired
+    // subscriptionExpiresAt, because those fields can be null/stale for perfectly
+    // valid subscribers (e.g. subscriptionExpiresAt not refreshed after monthly
+    // renewal, or a manually-activated account with no Stripe record).
+    const userHasActiveSub = (user as any).subscriptionStatus === 'active';
+
+    if (userHasActiveSub) {
+      // Active subscriber — never redirect them away from any route.
+      return;
+    }
+
+    // If trial expired and no active subscription, block ALL app routes
+    const trialExpired = subscription.status === 'expired' ||
+        (subscription.status !== 'active' && subscription.status !== 'trialing');
+
+    if (trialExpired && !isAlwaysAccessible) {
+      setLocation('/subscription');
+      return;
+    }
+
+    // For users still in trial or with active subscription, check premium-specific features
+    const premiumRoutes = [
+      '/wearable-devices',
+      '/meal-planning',
+      '/medication-management',
+      '/analytics',
+      '/pharmacy'
+    ];
+
+    const isPremiumRoute = premiumRoutes.some(route => location.startsWith(route));
+    
+    if (isPremiumRoute) {
+      const routeFeatureMap: Record<string, keyof SubscriptionData['features']> = {
+        '/wearable-devices': 'wearableDevices',
+        '/meal-planning': 'mealPlanning',
+        '/medication-management': 'medicationManagement',
+        '/analytics': 'advancedAnalytics',
+        '/pharmacy': 'medicationManagement'
+      };
+
+      const currentRouteFeature = Object.entries(routeFeatureMap).find(([route]) => 
+        location.startsWith(route)
+      )?.[1];
+
+      if (currentRouteFeature && !subscription.features[currentRouteFeature]) {
+        setLocation('/subscription');
+      }
+    }
+  }, [location, user, subscription, setLocation]);
+
+  const isAdmin = user?.accountType === 'admin' || user?.username === 'admin';
+  const hasOrgAccess = orgMembership && orgMembership.status === 'active';
+
+  return {
+    subscription,
+    orgMembership,
+    isPremiumUser: isAdmin || hasOrgAccess || subscription?.status === 'active' || 
+                   (subscription?.status === 'trialing' && (subscription?.trialDaysLeft || 0) > 0),
+    hasFeature: (feature: keyof SubscriptionData['features']) => 
+      isAdmin || hasOrgAccess || subscription?.features[feature] || false
+  };
+}
+
+export function checkFeatureAccess(feature: keyof SubscriptionData['features'], subscription?: SubscriptionData): boolean {
+  if (!subscription) return false;
+  
+  // If trial expired and no active subscription
+  if (subscription.status === 'expired' || 
+      (subscription.status !== 'active' && subscription.trialDaysLeft === 0)) {
+    return false;
+  }
+
+  return subscription.features[feature];
+}
+
+export function getPremiumPromptMessage(feature: string): string {
+  const messages: Record<string, string> = {
+    wearableDevices: "Connect wearable devices to track your health metrics in real-time. Upgrade to Premium to unlock this feature.",
+    mealPlanning: "Create personalized meal plans and shopping lists. Upgrade to Premium to access advanced meal planning.",
+    medicationManagement: "Track medications, set reminders, and manage your pharmacy information. Upgrade to Premium to unlock medication management.",
+    locationSafety: "Set up safe zones and get location-based alerts. Upgrade to Family plan to access advanced safety features.",
+    advancedAnalytics: "View detailed analytics and progress reports. Upgrade to Family plan to unlock advanced analytics.",
+    prioritySupport: "Get priority customer support and assistance. Upgrade to Premium to access priority support."
+  };
+
+  return messages[feature] || "This is a premium feature. Upgrade your subscription to unlock it.";
+}

@@ -1,0 +1,428 @@
+STEP 7 IS APPROVED.
+
+Proceed with STEP 8 ONLY: add relevant calendar events to the existing AI context.
+
+Do not proceed to Step 9 or any later step.
+
+Do not add user preferences yet.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+Do not modify the dashboard.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create migrations.
+
+==================================================
+CURRENT CONTEXT
+==================================================
+
+server/ai-context.ts currently contains:
+
+- userName
+- date
+- time
+- timezone
+- tasks
+- appointments
+
+Steps 1–7 have been tested successfully.
+
+Do not break existing task or appointment behavior.
+
+==================================================
+MANDATORY PRE-IMPLEMENTATION SAFETY CHECK
+==================================================
+
+Before writing code, inspect:
+
+storage.getCalendarEventsByUser(userId)
+
+and the CalendarEvent schema/type.
+
+Confirm:
+
+1. The method is strictly read-only.
+2. It performs no INSERT.
+3. It performs no UPDATE.
+4. It performs no DELETE.
+5. It performs no migrations.
+6. It has no unexpected side effects.
+7. It is scoped to the supplied userId.
+8. It cannot return another user's private calendar events.
+
+If any write or unexpected side effect is discovered:
+
+STOP.
+
+Do not implement calendar context.
+
+Report the issue for review.
+
+==================================================
+CALENDAR DATE/TIME INSPECTION
+==================================================
+
+Inspect exactly how calendar events store:
+
+- start date/time
+- end date/time
+- all-day status
+- recurrence
+- timezone, if any
+
+Determine the actual database field types and formats.
+
+Do not assume they are the same as appointments.
+
+Do not invent timezone information.
+
+Do not change the database schema.
+
+Do not change existing calendar behavior.
+
+==================================================
+CALENDAR SCOPE
+==================================================
+
+IMPORTANT:
+
+Do NOT pass the user's entire calendar history to the AI.
+
+The Daily Guide should only receive calendar events relevant to the Daily Guide's current context.
+
+At minimum, determine events occurring today.
+
+If the existing application's date/time representation makes "today" ambiguous because of missing timezone information:
+
+STOP and report the ambiguity rather than silently inventing a timezone.
+
+If the existing application's conventions allow safe filtering, use those conventions.
+
+Prefer filtering as early as possible so unnecessary calendar data is never sent to the AI.
+
+If getCalendarEventsByUser() returns all events, do NOT simply map every returned event into the AI context.
+
+==================================================
+DATE/TIME SAFETY
+==================================================
+
+The current AI context uses:
+
+timezone: "UTC"
+
+because no reliable per-user timezone exists in the database.
+
+Do NOT add a timezone column.
+
+Do NOT modify the schema.
+
+Do NOT invent a timezone suffix.
+
+Do not reinterpret stored local times without evidence.
+
+If calendar events contain timezone information, inspect and preserve it appropriately.
+
+If they do not contain timezone information, use the existing application convention and clearly document the limitation.
+
+Be especially careful around:
+
+- midnight
+- all-day events
+- multi-day events
+- start/end boundaries
+
+==================================================
+CALENDAR WHITELIST
+==================================================
+
+Do NOT pass complete CalendarEvent database objects to the AI.
+
+Use an explicit whitelist.
+
+Initially consider only fields necessary for Daily Guide guidance, such as:
+
+- title
+- startDate
+- endDate
+- allDay
+- category
+- location
+- description
+
+Include another field only if there is a clear reason.
+
+Do NOT include:
+
+- internal database ID
+- userId
+- color unless genuinely useful
+- reminder metadata
+- recurrence rules unless specifically needed
+- createdAt
+- updatedAt
+- internal audit fields
+- authentication information
+- payment information
+- security information
+- unrelated database fields
+
+Use clean camelCase names in the AI context.
+
+==================================================
+USER ISOLATION
+==================================================
+
+The only allowed calendar source is the authenticated user's existing calendar data.
+
+The user ID must come from:
+
+req.session.userId
+
+Do not accept userId from the frontend.
+
+Do not create another authentication mechanism.
+
+Do not retrieve caregiver calendar data.
+
+Do not retrieve organization-wide calendar data.
+
+Do not retrieve another user's events.
+
+Do not include userId in the AI context.
+
+Do not include internal event IDs in the AI context.
+
+==================================================
+USER-ENTERED CONTENT
+==================================================
+
+Calendar titles and descriptions are legitimate user-entered content.
+
+Do not incorrectly treat words such as:
+
+- doctor
+- medication
+- therapy
+- school
+- health
+
+inside title/description values as security leaks.
+
+Security tests should validate the field structure and whitelist.
+
+They should not reject legitimate user content merely because of specific words.
+
+==================================================
+AI
+==================================================
+
+Do NOT call OpenAI during STEP 8.
+
+The flow remains:
+
+Authenticated user
+        ↓
+userId
+        ↓
+Existing calendar storage
+        ↓
+Safe date filtering
+        ↓
+Explicit field whitelist
+        ↓
+ai-context.ts
+
+No OpenAI.
+
+==================================================
+DATABASE SAFETY
+==================================================
+
+Calendar retrieval must be read-only.
+
+No:
+
+INSERT
+UPDATE
+DELETE
+migration
+schema change
+
+Do not modify calendar events.
+
+Do not create events.
+
+Do not delete events.
+
+Do not change reminders.
+
+Do not modify recurrence.
+
+==================================================
+TESTING
+==================================================
+
+Create focused STEP 8 tests.
+
+Test at minimum:
+
+1. getCalendarEventsByUser() is confirmed read-only.
+
+2. Calendar query is user-scoped.
+
+3. Another user's events cannot enter the context.
+
+4. Only relevant current-day events are included.
+
+5. Past irrelevant events are excluded.
+
+6. Far-future irrelevant events are excluded.
+
+7. All-day events are handled correctly.
+
+8. Multi-day events are handled correctly.
+
+9. Start/end times are preserved correctly.
+
+10. Date filtering follows the existing application date/time convention.
+
+11. No timezone information is invented.
+
+12. Only approved calendar fields are included.
+
+13. Internal ID is excluded.
+
+14. userId is excluded.
+
+15. Reminder metadata is excluded unless explicitly approved.
+
+16. Recurrence metadata is excluded unless explicitly required.
+
+17. Payment information is excluded.
+
+18. Authentication information is excluded.
+
+19. Security information is excluded.
+
+20. Existing task context remains unchanged.
+
+21. Existing appointment context remains unchanged.
+
+22. Empty calendar result returns [].
+
+23. No database writes occur.
+
+24. No migrations occur.
+
+25. OpenAI is not called.
+
+26. Authentication is not modified.
+
+27. Payments/subscriptions are not modified.
+
+28. Caregiver functionality is not modified.
+
+29. TypeScript/build checks pass.
+
+Use synthetic/mock calendar events for unit tests where possible.
+
+If a live DB test is necessary, keep it read-only and do not print real event details into logs or the final report.
+
+==================================================
+FILES
+==================================================
+
+Expected:
+
+MODIFY:
+server/ai-context.ts
+
+Possibly create:
+
+scripts/test-ai-context-step8.ts
+
+Do not modify:
+
+server/storage.ts
+server/db.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a genuine issue is discovered.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover any unrelated issue:
+
+STOP and report it.
+
+Do not automatically fix:
+
+- timezone architecture
+- calendar architecture
+- authentication
+- payments
+- database configuration
+- unrelated TypeScript errors
+- caregiver functionality
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 8 is complete, STOP.
+
+Report:
+
+1. STEP 8 status
+2. Storage method used
+3. Whether it is strictly read-only
+4. Exact CalendarEvent schema relevant to AI
+5. Actual date/time storage format
+6. How current-day events were determined
+7. How all-day events were handled
+8. How multi-day events were handled
+9. Timezone behavior
+10. Exact fields included
+11. Exact fields excluded
+12. User isolation result
+13. Database writes — expected NO
+14. Migrations — expected NO
+15. OpenAI calls — expected NO
+16. Authentication changes — expected NO
+17. Payment/subscription changes — expected NO
+18. Caregiver changes — expected NO
+19. Files created
+20. Files modified
+21. Test count
+22. Test results
+23. Any warnings or risks
+
+IMPORTANT:
+
+Do not proceed to user preferences.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+STOP and wait for my approval.

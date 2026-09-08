@@ -1,0 +1,69 @@
+Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/subscription:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/user:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/mood-entries/today:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/mood-entries/today:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/subscription:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/daily-tasks:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+block-error-modal.js?v=2:20 TypeError: Cannot read properties of null (reading 'filter')
+    at fte (index-BkRAiqZv.js:785:20126)
+    at Zw (index-BkRAiqZv.js:38:17018)
+    at bb (index-BkRAiqZv.js:40:3139)
+    at L5 (index-BkRAiqZv.js:40:44833)
+    at R5 (index-BkRAiqZv.js:40:39790)
+    at WB (index-BkRAiqZv.js:40:39718)
+    at jg (index-BkRAiqZv.js:40:39570)
+    at Ab (index-BkRAiqZv.js:40:35934)
+    at x2 (index-BkRAiqZv.js:40:36738)
+    at Xo (index-BkRAiqZv.js:38:3279)
+console.error @ block-error-modal.js?v=2:20Understand this error
+block-error-modal.js?v=2:20 TypeError: Cannot read properties of null (reading 'filter')
+    at fte (index-BkRAiqZv.js:785:20126)
+    at Zw (index-BkRAiqZv.js:38:17018)
+    at bb (index-BkRAiqZv.js:40:3139)
+    at L5 (index-BkRAiqZv.js:40:44833)
+    at R5 (index-BkRAiqZv.js:40:39790)
+    at WB (index-BkRAiqZv.js:40:39718)
+    at jg (index-BkRAiqZv.js:40:39570)
+    at Ab (index-BkRAiqZv.js:40:35934)
+    at x2 (index-BkRAiqZv.js:40:36738)
+    at Xo (index-BkRAiqZv.js:38:3279)
+console.error @ block-error-modal.js?v=2:20Understand this error
+block-error-modal.js?v=2:20 Error Boundary caught an error: TypeError: Cannot read properties of null (reading 'filter')
+    at fte (index-BkRAiqZv.js:785:20126)
+    at Zw (index-BkRAiqZv.js:38:17018)
+    at bb (index-BkRAiqZv.js:40:3139)
+    at L5 (index-BkRAiqZv.js:40:44833)
+    at R5 (index-BkRAiqZv.js:40:39790)
+    at WB (index-BkRAiqZv.js:40:39718)
+    at jg (index-BkRAiqZv.js:40:39570)
+    at Ab (index-BkRAiqZv.js:40:35934)
+    at x2 (index-BkRAiqZv.js:40:36738)
+    at Xo (index-BkRAiqZv.js:38:3279) Object
+console.error @ block-error-modal.js?v=2:20Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/user:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error
+f0feebb6-5db0-4265-92fd-0ed04d7aec9a-00-tpbqabot0m1.spock.replit.dev/api/bills:1 
+        
+        
+       Failed to load resource: the server responded with a status of 401 (Unauthorized)Understand this error

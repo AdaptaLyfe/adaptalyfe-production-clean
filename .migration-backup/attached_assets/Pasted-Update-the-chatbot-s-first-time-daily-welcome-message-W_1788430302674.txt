@@ -1,0 +1,64 @@
+Update the chatbot's **first-time daily welcome message**.
+
+When the user opens the chatbot for the **first time each day**, show a personalized daily summary like this:
+
+**Good morning, Ethan 👋**
+
+**You have 3 things planned today.**
+
+☑️ **9:00 AM** – Take medication
+☑️ **2:30 PM** – Appointment
+☑️ **5:00 PM** – Pick up groceries
+
+**Want me to help you plan today?**
+
+### Dynamic behavior
+
+1. Get the user's name from the existing user profile.
+2. Dynamically determine:
+
+   * Good morning
+   * Good afternoon
+   * Good evening
+   * Good night
+3. Get today's events/tasks from the existing database/API.
+4. Show the total number of planned items dynamically.
+
+   * 3 items → "You have 3 things planned today."
+   * 1 item → "You have 1 thing planned today."
+   * 0 items → "You don't have anything planned today."
+5. Display today's tasks/events in chronological order.
+6. Each item should show:
+
+   * Tick/checkmark icon
+   * Time
+   * Task/event name
+7. Use the user's local/device timezone.
+8. Show this daily summary **only on the first chatbot opening of each day**.
+9. If the user closes and reopens the chatbot on the same day, do not show the welcome summary again.
+10. On the next calendar day, show the new day's summary automatically.
+11. If a task is already completed, display it using the existing completed-task UI/state.
+12. Do not create duplicate messages when refreshing, reopening, or navigating between screens.
+13. Use the existing chatbot, task, event, and user data architecture. Do not create duplicate APIs or a separate data system.
+
+### Important
+
+The chatbot should feel like a **personal daily assistant**, not just a normal chatbox.
+
+The flow should be:
+
+**Greeting → Today's summary → Tasks/Events → Offer help**
+
+Example:
+
+Good morning, Ethan 👋
+
+You have 3 things planned today.
+
+☑️ 9:00 AM – Take medication
+☑️ 2:30 PM – Appointment
+☑️ 5:00 PM – Pick up groceries
+
+Want me to help you plan today?
+
+Make the UI clean, friendly, easy to scan, and consistent with the existing application's design system.

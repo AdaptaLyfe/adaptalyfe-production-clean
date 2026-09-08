@@ -1,0 +1,436 @@
+STEP 6 IS APPROVED.
+
+Proceed with STEP 7 ONLY: add the authenticated user's relevant appointments to the existing AI context.
+
+Do not proceed to Step 8 or any later step.
+
+Do not add calendar events yet.
+
+Do not add user preferences yet.
+
+Do not call OpenAI.
+
+Do not create the Daily Guide API.
+
+Do not modify the dashboard.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create migrations.
+
+==================================================
+CURRENT CONTEXT
+==================================================
+
+server/ai-context.ts currently produces:
+
+{
+  userName,
+  date,
+  time,
+  timezone,
+  tasks
+}
+
+This has passed the previous context integrity tests.
+
+Do not break or change the existing task behavior.
+
+==================================================
+APPOINTMENT SOURCE
+==================================================
+
+Before writing code, inspect these existing storage methods:
+
+- getAppointmentsByUser(userId)
+- getUpcomingAppointments(userId)
+
+Determine which existing method is the safest and most appropriate for the Daily Guide.
+
+Prefer reusing an existing method rather than creating a duplicate SQL query.
+
+Do not modify server/storage.ts unless there is a concrete technical problem.
+
+==================================================
+MANDATORY SAFETY CHECK
+==================================================
+
+Before using the appointment method, inspect its implementation.
+
+Confirm:
+
+1. It is strictly read-only.
+2. It does not perform INSERT.
+3. It does not perform UPDATE.
+4. It does not perform DELETE.
+5. It does not perform migrations.
+6. It does not trigger unrelated side effects.
+7. It is scoped to the authenticated userId.
+8. It does not return another user's appointments.
+
+If the chosen method has any write behavior or unexpected side effect:
+
+STOP.
+
+Do not implement the AI appointment context.
+
+Report the issue for review.
+
+==================================================
+APPOINTMENT SCOPE
+==================================================
+
+The Daily Guide should initially receive appointments that are relevant to the current day/upcoming schedule.
+
+Do not blindly send the user's entire appointment history to the AI.
+
+Prefer an existing storage method that already filters to upcoming appointments if that behavior matches the Daily Guide requirement.
+
+Inspect the exact date filtering used by the existing method.
+
+Do not invent a new appointment date system.
+
+Do not silently change existing appointment semantics.
+
+If additional filtering is required to identify today's appointments, use the application's existing date/time conventions.
+
+==================================================
+TIMEZONE
+==================================================
+
+The current AI context uses:
+
+timezone: "UTC"
+
+because the existing application/database does not currently expose a reliable per-user timezone.
+
+Do NOT add a new timezone column.
+
+Do NOT modify the database schema.
+
+Do NOT invent a timezone.
+
+Preserve the existing appointment date/time values accurately.
+
+Before implementation, inspect whether appointment dates are stored as:
+
+- timestamp
+- date
+- time
+- string
+- another format
+
+Report the actual format.
+
+If conversion to the AI context is needed, normalize it consistently without changing the underlying database value.
+
+Be particularly careful with appointments near midnight or date boundaries.
+
+==================================================
+APPOINTMENT WHITELIST
+==================================================
+
+Do NOT pass complete Appointment objects to the AI.
+
+Use an explicit whitelist.
+
+Initially include only fields useful for Daily Guide guidance.
+
+Recommended fields:
+
+- title
+- appointmentDate
+- provider
+- location
+- description
+
+Include other fields only if there is a clear Daily Guide reason.
+
+Do NOT include:
+
+- internal database ID
+- userId
+- createdAt
+- updatedAt
+- reminder metadata
+- internal audit fields
+- authentication information
+- payment information
+- security information
+- unrelated database fields
+
+Do not pass the complete database object through.
+
+Use clean AI-context field names.
+
+==================================================
+EXAMPLE
+==================================================
+
+Conceptually:
+
+{
+  userName: "Alex",
+  date: "2026-08-11",
+  time: "18:38",
+  timezone: "UTC",
+
+  tasks: [
+    ...
+  ],
+
+  appointments: [
+    {
+      title: "Dentist appointment",
+      appointmentDate: "2026-08-12T15:00:00",
+      provider: "Example Dental",
+      location: "123 Main Street",
+      description: "Regular checkup"
+    }
+  ]
+}
+
+This is only an example.
+
+Use the actual application's appointment data structure.
+
+Do not invent values.
+
+==================================================
+SECURITY / USER ISOLATION
+==================================================
+
+Every appointment must belong to the authenticated user.
+
+The context service must receive the server-derived userId.
+
+Do not accept userId from the frontend.
+
+Do not allow the frontend to request another user's appointment data.
+
+Do not include userId in the AI context.
+
+Do not include internal appointment IDs in the AI context.
+
+Do not retrieve caregiver appointments.
+
+Do not retrieve organization-wide appointment data unless it is already explicitly part of the authenticated user's own appointment query.
+
+==================================================
+SENSITIVE DATA
+==================================================
+
+Appointment descriptions and provider/location fields are user-entered data.
+
+Do not reject legitimate words merely because they contain terms such as:
+
+- medication
+- doctor
+- health
+- therapy
+
+Those may be legitimate appointment information.
+
+The security test should verify the STRUCTURE and FIELD WHITELIST.
+
+It should not incorrectly reject legitimate user-entered text.
+
+However, do not intentionally add medical records or unrelated health information to the context.
+
+Only include appointment fields that are actually stored by the appointment record and useful for scheduling guidance.
+
+==================================================
+AI
+==================================================
+
+Do NOT call OpenAI in STEP 7.
+
+The flow must remain:
+
+Authenticated user
+        ↓
+userId
+        ↓
+Existing appointment storage method
+        ↓
+Explicit whitelist
+        ↓
+ai-context.ts
+
+No OpenAI call.
+
+==================================================
+DATABASE SAFETY
+==================================================
+
+Only read existing appointment data.
+
+No:
+
+INSERT
+UPDATE
+DELETE
+migration
+schema change
+
+Do not modify any appointment.
+
+Do not mark appointments completed.
+
+Do not change reminders.
+
+Do not change appointment status.
+
+Do not modify any existing records.
+
+==================================================
+TESTING
+==================================================
+
+Create focused STEP 7 tests.
+
+Test at minimum:
+
+1. Correct storage method is used.
+
+2. Storage method is confirmed read-only.
+
+3. Appointments are scoped to userId.
+
+4. Another user's appointments cannot enter the context.
+
+5. Only approved appointment fields are included.
+
+6. Internal appointment ID is excluded.
+
+7. userId is excluded.
+
+8. Created/updated metadata is excluded.
+
+9. Reminder metadata is excluded unless explicitly approved.
+
+10. Payment information is excluded.
+
+11. Authentication information is excluded.
+
+12. Security information is excluded.
+
+13. Appointment date/time is preserved correctly.
+
+14. Date/time normalization is correct.
+
+15. Today's/upcoming appointment filtering is correct.
+
+16. Empty appointment list returns [].
+
+17. Existing task context remains unchanged.
+
+18. No database writes occur.
+
+19. No migrations occur.
+
+20. OpenAI is not called.
+
+21. Authentication is not modified.
+
+22. Payments/subscriptions are not modified.
+
+23. Caregiver functionality is not modified.
+
+24. TypeScript/build checks pass.
+
+If possible, use mock/synthetic appointment data for unit tests.
+
+If a live database test is required, use read-only access and do not print real appointment details in logs or the final report.
+
+==================================================
+FILES
+==================================================
+
+Expected:
+
+MODIFY:
+server/ai-context.ts
+
+Possibly create a temporary focused test script.
+
+Do not modify:
+
+server/storage.ts
+server/db.ts
+server/routes.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a genuine issue is discovered.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover any unrelated issue:
+
+STOP and report it.
+
+Do not automatically fix:
+
+- timezone architecture
+- existing appointment logic
+- authentication
+- payment configuration
+- database configuration
+- unrelated TypeScript errors
+- existing caregiver functionality
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 7 is complete, STOP.
+
+Report:
+
+1. STEP 7 status
+2. Storage method selected
+3. Why it was selected
+4. Whether it is strictly read-only
+5. Exact appointment fields included
+6. Exact appointment fields excluded
+7. How today's/upcoming appointments were determined
+8. Actual appointment date/time storage format
+9. Date/time normalization behavior
+10. Timezone considerations
+11. User isolation result
+12. Database writes — expected NO
+13. Migrations — expected NO
+14. OpenAI calls — expected NO
+15. Authentication changes — expected NO
+16. Payment/subscription changes — expected NO
+17. Caregiver changes — expected NO
+18. Files created
+19. Files modified
+20. Test count
+21. Test results
+22. Any warnings or risks
+
+IMPORTANT:
+
+Do not proceed to calendar events.
+
+Do not add preferences.
+
+Do not call OpenAI.
+
+STOP and wait for my approval.

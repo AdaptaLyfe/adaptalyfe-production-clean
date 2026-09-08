@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Adaptalyfe"
+description = "The existing Adaptalyfe web application for daily planning, health, finances, routines, and caregiver support, preserved as the primary web experience in the multi-app workspace."
+version = "1.0.0"
+id = "artifacts/adaptalyfe-web"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22438
+
+[services.development]
+run = "pnpm --filter @workspace/adaptalyfe-web run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/adaptalyfe-web", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/adaptalyfe-web/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22438"
+BASE_PATH = "/"

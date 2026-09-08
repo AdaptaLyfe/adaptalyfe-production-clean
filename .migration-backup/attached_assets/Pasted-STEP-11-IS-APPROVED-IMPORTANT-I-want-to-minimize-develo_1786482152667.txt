@@ -1,0 +1,258 @@
+STEP 11 IS APPROVED.
+
+IMPORTANT:
+I want to minimize development iterations and paid Replit usage.
+
+Therefore STEP 12 must be a COMPLETE BACKEND STAGING VERIFICATION in one step.
+
+Do NOT create additional architecture.
+Do NOT add new database tables.
+Do NOT add new AI features.
+Do NOT add chat.
+Do NOT add caregiver AI.
+Do NOT add AI actions.
+Do NOT modify authentication.
+Do NOT modify payments/subscriptions.
+Do NOT modify caregiver functionality.
+Do NOT modify the database schema.
+
+The backend implementation is already complete:
+
+POST /api/ai/daily-guide
+
+==================================================
+STEP 12 OBJECTIVE
+==================================================
+
+Verify the complete backend Daily Guide flow end-to-end in the staging environment before any frontend work begins.
+
+The expected flow is:
+
+Authenticated staging user
+        ↓
+requireAuth
+        ↓
+req.session.userId
+        ↓
+buildDailyGuideContext()
+        ↓
+safe validated context
+        ↓
+generateDailyGuide()
+        ↓
+OpenAI
+        ↓
+Zod validation
+        ↓
+structured DailyGuideResponse
+        ↓
+POST response
+
+Do not change this architecture.
+
+==================================================
+1. VERIFY EXISTING BACKEND
+==================================================
+
+Inspect the final implementation of:
+
+server/routes.ts
+server/ai-context.ts
+server/ai-service.ts
+
+Confirm:
+
+- endpoint exists
+- endpoint uses requireAuth
+- identity comes from req.session.userId
+- request body cannot override identity
+- context comes from buildDailyGuideContext()
+- AI call comes from generateDailyGuide()
+- AI response is Zod validated
+- fallback exists
+- no AI tools/function calling exist
+- AI cannot write to the database
+- AI has no database credentials
+
+Do not modify these files unless a genuine blocking bug is found.
+
+==================================================
+2. REAL STAGING USER TEST
+==================================================
+
+Use the existing staging/demo authentication mechanism.
+
+Do NOT create a new user.
+
+Do NOT modify any real user's data.
+
+Use a safe existing staging/demo account.
+
+Make one real authenticated request to:
+
+POST /api/ai/daily-guide
+
+The request must use the existing authentication mechanism.
+
+Do not send a userId in the request body.
+
+Verify the server obtains the identity from the authenticated session.
+
+==================================================
+3. VERIFY REAL AI RESPONSE
+==================================================
+
+Confirm that OpenAI receives only the validated Daily Guide context.
+
+Do NOT log the full context.
+
+Do NOT log the API key.
+
+Do NOT log authentication tokens.
+
+Do NOT expose user-sensitive data in logs.
+
+Verify that the response:
+
+- is valid JSON
+- matches DailyGuideResponseSchema
+- contains the expected structured fields
+- does not contain arbitrary raw model output
+- does not contain database IDs
+- does not contain userId
+- does not contain credentials
+- does not contain payment information
+
+==================================================
+4. VERIFY FALLBACK
+==================================================
+
+Verify the existing fallback behavior still works.
+
+Do not intentionally consume credits unnecessarily.
+
+Use mocks/stubs where possible to test:
+
+- provider error
+- timeout
+- invalid AI response
+- malformed JSON
+
+The production endpoint must never expose raw OpenAI errors.
+
+==================================================
+5. DATABASE SAFETY
+==================================================
+
+Confirm the complete request performs only SELECT/read operations.
+
+There must be:
+
+NO INSERT
+NO UPDATE
+NO DELETE
+NO migration
+
+Do not create test records.
+
+Do not modify:
+
+- tasks
+- appointments
+- calendar events
+- preferences
+- users
+- subscriptions
+- payments
+
+==================================================
+6. AUTHENTICATION SAFETY
+==================================================
+
+Verify:
+
+- unauthenticated request → 401
+- authenticated request → allowed
+- request-body userId is ignored
+- authenticated session remains the only identity source
+
+Do not modify requireAuth.
+
+==================================================
+7. EXISTING APP REGRESSION CHECK
+==================================================
+
+Run the appropriate TypeScript/build/server checks.
+
+Confirm existing application startup remains healthy.
+
+Do not fix unrelated pre-existing errors.
+
+In particular, do not touch:
+
+client/src/pages/caregiver-dashboard-broken.tsx
+
+unless it directly prevents the Daily Guide endpoint from running.
+
+==================================================
+8. PRODUCTION SAFETY
+==================================================
+
+This is staging only.
+
+Do NOT:
+
+- change Railway production
+- change production environment variables
+- change production database
+- change production authentication
+- change production payments
+- push production changes
+- run migrations against production
+
+==================================================
+9. CLEANUP
+==================================================
+
+Review all temporary STEP 1–11 test scripts.
+
+Do NOT delete useful permanent tests.
+
+If scripts are clearly temporary validation scripts and are no longer needed, identify them.
+
+Do not delete anything unless it is clearly marked temporary and safe to remove.
+
+==================================================
+10. FINAL REPORT
+==================================================
+
+Report:
+
+1. Backend endpoint status
+2. Real staging request result
+3. Authentication result
+4. Context generation result
+5. OpenAI result
+6. Zod validation result
+7. Fallback result
+8. Database read/write result
+9. Regression/build result
+10. Production safety result
+11. Temporary test scripts found
+12. Files modified during STEP 12
+13. Any bugs found
+14. Any warnings
+
+IMPORTANT:
+
+If everything passes, STOP.
+
+Do NOT build frontend UI in STEP 12.
+
+Do NOT modify dashboard.tsx.
+
+Do NOT create DailyGuideCard.
+
+Do NOT create useDailyGuide.
+
+Wait for approval for STEP 13.

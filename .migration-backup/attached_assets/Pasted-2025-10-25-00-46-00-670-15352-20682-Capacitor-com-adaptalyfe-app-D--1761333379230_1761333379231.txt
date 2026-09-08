@@ -1,0 +1,97 @@
+2025-10-25 00:46:00.670 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/dashboard
+2025-10-25 00:46:00.740 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/force-hide-errors.css
+2025-10-25 00:46:00.744 15352-20683 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/block-error-modal.js?v=2
+2025-10-25 00:46:00.747 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/assets/index-OSiMQTfY.js
+2025-10-25 00:46:00.752 15352-20683 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/assets/index-DHtvN_cd.css
+2025-10-25 00:46:00.768 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/block-error-modal.js?v=2 - Line 95 - Msg: Vite error blocker activated (app dialogs unaffected)
+2025-10-25 00:46:01.130 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Starting Adaptalyfe app...
+2025-10-25 00:46:01.131 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: React version: 18.3.1
+2025-10-25 00:46:01.132 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Current URL: https://localhost/dashboard
+2025-10-25 00:46:01.134 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: User agent: Mozilla/5.0 (Linux; Android 13; IV2201 Build/TP1A.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/141.0.7390.97 Mobile Safari/537.36
+2025-10-25 00:46:01.135 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Screen size: 360 x 800
+2025-10-25 00:46:01.136 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Platform: android
+2025-10-25 00:46:01.137 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Is native mobile: true
+2025-10-25 00:46:01.138 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Mobile device detected: true
+2025-10-25 00:46:01.139 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Creating React root and rendering app...
+2025-10-25 00:46:01.140 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Applying mobile-specific optimizations
+2025-10-25 00:46:01.141 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: App rendered successfully
+2025-10-25 00:46:01.142 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Initializing mobile app features...
+2025-10-25 00:46:01.143 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Initializing mobile app for android
+2025-10-25 00:46:01.150 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218675, pluginId: StatusBar, methodName: setStyle
+2025-10-25 00:46:01.150 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218675, pluginId: StatusBar, methodName: setStyle, methodData: {"style":"DARK"}
+2025-10-25 00:46:01.152 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/user
+2025-10-25 00:46:01.154 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/subscription
+2025-10-25 00:46:01.166 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File:  - Line 333 - Msg: undefined
+2025-10-25 00:46:01.167 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218676, pluginId: StatusBar, methodName: setBackgroundColor
+2025-10-25 00:46:01.167 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218676, pluginId: StatusBar, methodName: setBackgroundColor, methodData: {"color":"#ffffff"}
+2025-10-25 00:46:01.194 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File:  - Line 333 - Msg: undefined
+2025-10-25 00:46:01.194 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Mobile app initialized successfully
+2025-10-25 00:46:01.195 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 870 - Msg: Mobile app features initialized
+2025-10-25 00:46:01.232 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.233 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.240 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218677, pluginId: Keyboard, methodName: addListener
+2025-10-25 00:46:01.240 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218677, pluginId: Keyboard, methodName: addListener, methodData: {"eventName":"keyboardWillShow"}
+2025-10-25 00:46:01.241 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218678, pluginId: Keyboard, methodName: addListener
+2025-10-25 00:46:01.241 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218678, pluginId: Keyboard, methodName: addListener, methodData: {"eventName":"keyboardWillHide"}
+2025-10-25 00:46:01.243 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218679, pluginId: App, methodName: addListener
+2025-10-25 00:46:01.243 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218679, pluginId: App, methodName: addListener, methodData: {"eventName":"appStateChange"}
+2025-10-25 00:46:01.244 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218680, pluginId: App, methodName: addListener
+2025-10-25 00:46:01.244 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218680, pluginId: App, methodName: addListener, methodData: {"eventName":"backButton"}
+2025-10-25 00:46:01.244 15352-15352 Quality                 com.adaptalyfe.app                   I  Skipped: true 2 cost 36.233063 refreshRate 16730028 bit true processName com.adaptalyfe.app
+2025-10-25 00:46:01.331 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/dashboard - Line 32 - Msg: SW registered:  [object ServiceWorkerRegistration]
+2025-10-25 00:46:01.774 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:01.776 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:01.776 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:01.818 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:01.818 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:01.819 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:01.867 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/user
+2025-10-25 00:46:01.871 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/subscription
+2025-10-25 00:46:01.872 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/daily-tasks
+2025-10-25 00:46:01.885 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/mood-entries/today
+2025-10-25 00:46:01.974 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.975 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.975 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.975 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.976 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.976 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:01.990 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Making query to: /api/bills
+2025-10-25 00:46:01.991 15352-15352 Quality                 com.adaptalyfe.app                   I  Skipped: true 2 cost 46.92334 refreshRate 16734016 bit true processName com.adaptalyfe.app
+2025-10-25 00:46:02.005 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.006 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.006 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.006 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.173 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:02.175 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:02.176 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:02.208 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:02.209 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:02.210 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:02.506 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:02.506 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:02.507 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:02.509 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:02.509 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:02.510 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:02.536 15352-15352 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: TypeError: Cannot read properties of null (reading 'filter')
+2025-10-25 00:46:02.540 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 728 - Msg: Mood check - todayMood: null lastCheck: null today: Sat Oct 25 2025
+2025-10-25 00:46:02.540 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 728 - Msg: Mood check available via navigation
+2025-10-25 00:46:02.542 15352-15352 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: TypeError: Cannot read properties of null (reading 'filter')
+2025-10-25 00:46:02.542 15352-15352 Capacitor/Console       com.adaptalyfe.app                   E  File: https://localhost/block-error-modal.js?v=2 - Line 20 - Msg: Error Boundary caught an error: TypeError: Cannot read properties of null (reading 'filter') [object Object]
+2025-10-25 00:46:02.542 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 845 - Msg: Error logged for analytics: [object Object]
+2025-10-25 00:46:02.578 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.579 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.579 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.579 15352-20659 GPUAUX                  com.adaptalyfe.app                   E  [AUX]GuiExtAuxCheckAuxPath:674: Null anb
+2025-10-25 00:46:02.744 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response status: 401
+2025-10-25 00:46:02.745 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Query response headers: [object Object]
+2025-10-25 00:46:02.746 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File: https://localhost/assets/index-OSiMQTfY.js - Line 655 - Msg: Returning null due to 401
+2025-10-25 00:46:03.182 15352-15352 Capacitor/Plugin        com.adaptalyfe.app                   V  To native (Capacitor plugin): callbackId: 63218681, pluginId: SplashScreen, methodName: hide
+2025-10-25 00:46:03.182 15352-15352 Capacitor               com.adaptalyfe.app                   V  callback: 63218681, pluginId: SplashScreen, methodName: hide, methodData: {}
+2025-10-25 00:46:03.189 15352-15352 Capacitor/Console       com.adaptalyfe.app                   I  File:  - Line 333 - Msg: undefined
+2025-10-25 00:46:04.138 15352-20682 Capacitor               com.adaptalyfe.app                   D  Handling local request: https://localhost/sw.js

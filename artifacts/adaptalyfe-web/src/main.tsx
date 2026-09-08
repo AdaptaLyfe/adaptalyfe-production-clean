@@ -1,0 +1,258 @@
+import React from "react";
+import { createRoot } from "react-dom/client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { queryClient } from "@/lib/queryClient";
+import App from "./App";
+import "./index.css";
+import "./colors.css";
+
+// Inline mobile utilities to avoid import issues in production build
+function isNativeMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const cap = (window as any).Capacitor;
+    return cap?.isNativePlatform?.() ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function getPlatform(): 'ios' | 'android' | 'web' {
+  if (typeof window === 'undefined') return 'web';
+  try {
+    const cap = (window as any).Capacitor;
+    const platform = cap?.getPlatform?.() ?? 'web';
+    if (platform === 'ios') return 'ios';
+    if (platform === 'android') return 'android';
+    return 'web';
+  } catch {
+    return 'web';
+  }
+}
+
+async function initializeMobileApp(): Promise<void> {
+  const platform = getPlatform();
+  
+  // Apply platform-specific body class and status bar padding
+  if (platform === 'android') {
+    document.documentElement.style.setProperty('--android-status-bar-height', '28px');
+    document.body.classList.add('android-native');
+  }
+  if (platform === 'ios') {
+    document.body.classList.add('ios-native');
+  }
+  
+  if (!isNativeMobile()) return;
+  
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    await StatusBar.setStyle({ style: Style.Dark });
+    await StatusBar.setBackgroundColor({ color: '#ffffff' });
+    
+    // Get actual status bar height on Android
+    if (platform === 'android') {
+      const info = await StatusBar.getInfo();
+      if (info && info.visible) {
+        // Use 28px as reliable Android status bar height
+        document.documentElement.style.setProperty('--android-status-bar-height', '28px');
+      }
+    }
+  } catch (e) { console.log('StatusBar not available'); }
+
+  try {
+    const { Keyboard } = await import('@capacitor/keyboard');
+    Keyboard.addListener('keyboardWillShow', () => document.body.classList.add('keyboard-visible'));
+    Keyboard.addListener('keyboardWillHide', () => document.body.classList.remove('keyboard-visible'));
+  } catch (e) { console.log('Keyboard not available'); }
+
+  try {
+    const { App } = await import('@capacitor/app');
+    const authPages = ['/', '/login', '/register', '/landing', ''];
+    
+    // Clear history after login - run once when dashboard loads after login
+    const justLoggedIn = sessionStorage.getItem('just_logged_in');
+    if (justLoggedIn) {
+      sessionStorage.removeItem('just_logged_in');
+      // Replace the entire history with just dashboard
+      window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+      console.log('🔄 History cleared after login');
+    }
+    
+    // Global popstate listener - ALWAYS intercept navigation to auth pages when authenticated
+    window.addEventListener('popstate', (event) => {
+      const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
+      const currentPath = window.location.pathname;
+      
+      // If authenticated and on an auth page, immediately redirect to dashboard
+      if (hasSession && authPages.includes(currentPath)) {
+        console.log('🔄 Intercepted navigation to auth page, forcing dashboard');
+        event.preventDefault();
+        window.history.replaceState({ page: 'dashboard' }, '', '/dashboard');
+        // Force React Router to update
+        window.dispatchEvent(new Event('popstate'));
+        return;
+      }
+    });
+    
+    App.addListener('backButton', ({ canGoBack }) => {
+      const currentPath = window.location.pathname;
+      const isOnDashboard = currentPath === '/dashboard';
+      const hasSession = !!localStorage.getItem('adaptalyfe_session_token');
+      
+      // If user is authenticated and on dashboard, exit app
+      if (hasSession && isOnDashboard) {
+        App.exitApp();
+        return;
+      }
+      
+      // If authenticated, check if we should allow back navigation
+      if (hasSession) {
+        // Get current history length - if it's 1 or we just logged in, exit
+        if (window.history.length <= 2) {
+          window.location.replace('/dashboard');
+          return;
+        }
+        
+        // Allow back, but the popstate listener will catch auth page navigation
+        window.history.back();
+        
+        // After a small delay, check if we ended up on an auth page
+        setTimeout(() => {
+          const newPath = window.location.pathname;
+          if (authPages.includes(newPath)) {
+            window.location.replace('/dashboard');
+          }
+        }, 50);
+        return;
+      }
+      
+      if (canGoBack) window.history.back();
+      else App.exitApp();
+    });
+  } catch (e) { console.log('App not available'); }
+}
+
+console.log("Starting Adaptalyfe app...");
+console.log("React version:", React.version);
+console.log("Current URL:", window.location.href);
+console.log("User agent:", navigator.userAgent);
+console.log("Screen size:", screen.width, "x", screen.height);
+console.log("Platform:", getPlatform());
+console.log("Is native mobile:", isNativeMobile());
+
+const container = document.getElementById("root");
+if (!container) {
+  throw new Error("Failed to find the root element");
+}
+
+// Check for mobile browser compatibility issues
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+console.log("Mobile device detected:", isMobile);
+
+// Polyfills for mobile compatibility
+if (!window.URLSearchParams && (window as any).URL) {
+  console.log("Adding URLSearchParams polyfill for mobile");
+  // Basic URLSearchParams polyfill for older mobile browsers
+  (window as any).URLSearchParams = function(this: any, search: string) {
+    const params: Record<string, string> = {};
+    if (search) {
+      search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str, key, value) {
+        params[key] = decodeURIComponent(value);
+        return str;
+      });
+    }
+    this.get = function(key: string) { return params[key] || null; };
+    return this;
+  };
+}
+
+try {
+  const root = createRoot(container);
+  console.log("Creating React root and rendering app...");
+  
+  // Add mobile-specific rendering
+  if (isMobile) {
+    console.log("Applying mobile-specific optimizations");
+    // Prevent zoom on input focus — MUST keep viewport-fit=cover for iOS safe area insets
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport) {
+      metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+    }
+  }
+  
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <App />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+  console.log("App rendered successfully");
+
+  // Double requestAnimationFrame guarantees React has completed its FIRST PAINT
+  // before we remove any loading overlays. Without this, the native splash and
+  // HTML loading screen disappear while the WebView is still white (React 18
+  // concurrent rendering schedules work asynchronously after root.render()).
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      console.log("First paint confirmed — hiding loading screens");
+
+      // Hide the HTML loading screen (green spinner overlay in index.html)
+      if (typeof (window as any).__hideAppLoading === 'function') {
+        (window as any).__hideAppLoading();
+      }
+
+      // Hide the native Capacitor splash screen.
+      // launchAutoHide:false in capacitor.config.json keeps it visible until
+      // we call this explicitly — NOW we know React has painted.
+      if (isNativeMobile()) {
+        import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+          SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+        }).catch(() => {});
+      }
+    });
+  });
+
+  // Initialize other mobile app features (status bar, keyboard, back button, etc.)
+  if (isNativeMobile()) {
+    console.log("Initializing mobile app features...");
+    initializeMobileApp().then(() => {
+      console.log("Mobile app features initialized");
+    }).catch((error) => {
+      console.error("Failed to initialize mobile app features:", error);
+    });
+  }
+} catch (error) {
+  console.error("Error rendering app:", error);
+  // Hide splash screen even on error so it doesn't stay forever
+  try {
+    import('@capacitor/splash-screen').then(({ SplashScreen }) => {
+      SplashScreen.hide({ fadeOutDuration: 100 }).catch(() => {});
+    }).catch(() => {});
+  } catch {}
+  if (typeof (window as any).__hideAppLoading === 'function') {
+    (window as any).__hideAppLoading();
+  }
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorDetails = isMobile ? 
+    `Mobile device: ${navigator.userAgent}. Error: ${errorMessage}` : 
+    `Desktop device. Error: ${errorMessage}`;
+  
+  document.body.innerHTML = `
+    <div style="min-height: 100vh; background: linear-gradient(to bottom right, #e0f2fe, #f3e8ff, #f0fdfa); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+      <div style="text-align: center; background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); max-width: 90vw; width: 28rem;">
+        <h2 style="font-size: 1.5rem; font-weight: bold; color: #dc2626; margin-bottom: 1rem;">App Loading Error</h2>
+        <p style="color: #4b5563; margin-bottom: 1rem;">Failed to start the application on ${isMobile ? 'mobile' : 'desktop'} device.</p>
+        <div style="background: #f3f4f6; padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem; font-size: 0.875rem; text-align: left; overflow-wrap: break-word;">
+          ${errorDetails}
+        </div>
+        <button onclick="window.location.reload()" style="background: #2563eb; color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; border: none; cursor: pointer; font-size: 1rem;">
+          Reload Page
+        </button>
+      </div>
+    </div>
+  `;
+}

@@ -1,0 +1,165 @@
+STEP 5 IS APPROVED.
+
+Proceed with STEP 6 ONLY: perform a final integrity/security test of the current AI context containing user identity, time context, and daily tasks.
+
+IMPORTANT:
+
+Do NOT add appointments.
+
+Do NOT add calendar events.
+
+Do NOT add user preferences.
+
+Do NOT call OpenAI.
+
+Do NOT create the Daily Guide API.
+
+Do NOT modify the dashboard.
+
+Do NOT modify authentication.
+
+Do NOT modify authorization.
+
+Do NOT modify payments.
+
+Do NOT modify subscriptions.
+
+Do NOT modify caregiver functionality.
+
+Do NOT modify the database schema.
+
+Do NOT create migrations.
+
+Do NOT change the existing task retrieval logic.
+
+==================================================
+CURRENT CONTEXT
+==================================================
+
+The current server/ai-context.ts should contain:
+
+- userName
+- date
+- time
+- timezone
+- tasks
+
+The task data is obtained through the existing:
+
+storage.getDailyTasksByUser(userId)
+
+The method was inspected and confirmed to be strictly read-only.
+
+Do not modify that method.
+
+==================================================
+STEP 6 PURPOSE
+==================================================
+
+This is a validation-only step.
+
+We want to prove that the combined context is still safe before adding another data source.
+
+Verify that the resulting context:
+
+1. Contains userName.
+2. Contains date.
+3. Contains time.
+4. Contains timezone.
+5. Contains tasks.
+6. Contains no appointments.
+7. Contains no calendarEvents.
+8. Contains no preferences.
+9. Contains no medical data.
+10. Contains no financial data.
+11. Contains no payment information.
+12. Contains no authentication information.
+13. Contains no session information.
+14. Contains no database IDs.
+15. Contains no userId in the AI context.
+16. Contains no password/security fields.
+17. Contains only the approved task fields.
+18. Preserves task completion status.
+19. Preserves normalized task time.
+20. Preserves empty task behavior.
+21. Does not modify the database.
+22. Does not call OpenAI.
+
+==================================================
+USER ISOLATION
+==================================================
+
+Verify that the context is constructed only for the authenticated userId supplied by the existing server-side authentication flow.
+
+The frontend must never be able to select an arbitrary userId.
+
+Do not change authentication to perform this test.
+
+==================================================
+TESTING
+==================================================
+
+Use mock/synthetic storage data where possible.
+
+If a live database test is used:
+
+- perform read-only operations only
+- do not log actual user task content
+- do not expose user information in the final report
+- do not modify any database record
+
+Run the existing TypeScript checks as appropriate.
+
+Run the focused context integrity test.
+
+==================================================
+NO CODE CHANGES EXPECTED
+==================================================
+
+Prefer making ZERO production/application code changes in STEP 6.
+
+If a test file is needed, it may be created.
+
+Do not modify:
+
+server/db.ts
+server/storage.ts
+server/routes.ts
+server/ai-context.ts
+authentication files
+payment files
+subscription files
+dashboard files
+
+unless a genuine issue is discovered.
+
+If a genuine issue is discovered, STOP and report it rather than making unrelated changes.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 6 is complete, STOP.
+
+Report:
+
+1. Test count
+2. Tests passed
+3. Tests failed
+4. Current context fields
+5. Confirmed excluded fields
+6. User isolation result
+7. Database writes
+8. OpenAI calls
+9. Authentication changes
+10. Payment/subscription changes
+11. Caregiver changes
+12. Files created
+13. Files modified
+14. Any warnings
+
+IMPORTANT:
+
+Do not proceed to appointments.
+
+Wait for my approval before STEP 7.

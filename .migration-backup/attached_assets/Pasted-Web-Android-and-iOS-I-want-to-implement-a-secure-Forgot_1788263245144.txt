@@ -1,0 +1,54 @@
+Web, Android, and iOS. I want to implement a secure Forgot Password / Reset Password feature using SendGrid for sending reset emails.
+
+Before making changes:
+
+Inspect the existing project architecture, authentication flow, backend, database, and current login/signup screens.
+Reuse the existing authentication and database structure wherever possible.
+Do not change or break any existing functionality.
+
+Implement:
+
+Forgot Password
+Add/verify a "Forgot Password?" option on the login screen.
+User enters their registered email.
+Call the backend/API to request a password reset.
+Generate a secure, random, single-use reset token.
+Store the token securely with an expiry time (e.g. 30 minutes).
+Send the reset email using SendGrid.
+Keep the SendGrid API key only on the backend/server using environment variables. NEVER expose it in Flutter/Web/mobile code.
+Use the verified SendGrid sender email.
+Reset Password
+Create a Reset Password screen/page.
+Open it from the email reset link.
+Validate the token and expiry on the backend.
+Allow the user to enter and confirm a new password.
+Update the password securely.
+Invalidate/delete the reset token after successful use.
+Show proper success and error messages.
+Web + Android + iOS
+Make the reset link work on Web.
+For Android/iOS, use the project's existing deep-link/universal-link setup if available.
+If deep linking is not currently configured, identify what is required and implement it without affecting existing navigation.
+Security
+Never send or display the existing password.
+Never expose the SendGrid API key to the client.
+Use secure password hashing if passwords are stored by the application.
+Reset tokens must be random, single-use, and expire.
+Do not reveal whether an email exists in the system; use a generic response such as "If this email is registered, you will receive a reset link."
+SendGrid configuration
+
+Use environment variables such as:
+SENDGRID_API_KEY
+SENDGRID_FROM_EMAIL
+SENDGRID_FROM_NAME
+APP_RESET_PASSWORD_URL
+
+Do not hardcode these values.
+
+After implementation:
+
+Test the complete flow from Forgot Password → email → Reset Password → new password → login.
+Test invalid/expired/used tokens.
+Test Web, Android, and iOS behavior.
+Do not modify unrelated features.
+Clearly tell me which files were changed and what environment variables I need to add.

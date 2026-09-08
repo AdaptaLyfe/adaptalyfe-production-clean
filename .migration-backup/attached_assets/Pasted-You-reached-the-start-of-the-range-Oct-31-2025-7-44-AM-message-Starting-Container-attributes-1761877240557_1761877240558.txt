@@ -1,0 +1,21 @@
+You reached the start of the range
+Oct 31, 2025, 7:44 AM
+{"message":"Starting Container","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:32.000000000Z"}
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.578986056Z"}
+{"message":"🏭 Production mode activated","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.578990086Z"}
+{"message":"✅ Demo mode disabled","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.578993784Z"}
+{"message":"✅ Auto-login disabled","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.578997554Z"}
+{"message":"✅ Real user registration enabled","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.579001157Z"}
+{"message":"🏭 Production mode - skipping demo data initialization","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.579004930Z"}
+{"message":"Warning: connect.session() MemoryStore is not","attributes":{"level":"error"},"timestamp":"2025-10-31T02:16:33.579009146Z"}
+{"message":"designed for a production environment, as it will leak","attributes":{"level":"error"},"timestamp":"2025-10-31T02:16:33.579013652Z"}
+{"message":"memory, and will not scale past a single process.","attributes":{"level":"error"},"timestamp":"2025-10-31T02:16:33.579017162Z"}
+{"message":"🚀 Initializing comprehensive demo mode...","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.579020894Z"}
+{"message":"📝 Demo data already exists, skipping initialization","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.644469627Z"}
+{"message":"📝 Demo data already exists, skipping initialization","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.809944819Z"}
+{"message":"Setting up production static file serving","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.809950501Z"}
+{"message":"🚀 AdaptaLyfe server running on port 8080 in PRODUCTION mode","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.812203983Z"}
+{"message":"2:16:33 AM [express] serving on port 8080","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.833468111Z"}
+{"message":"🔔 Task Reminder Service started","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.833473208Z"}
+{"message":"🔔 Task reminder service initialized","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:33.833478620Z"}
+{"message":"2:16:34 AM [express] GET /api/health 200 in 4ms :: {\"status\":\"OK\",\"environment\":\"production\",\"timest…","attributes":{"level":"info"},"timestamp":"2025-10-31T02:16:34.597832469Z"}

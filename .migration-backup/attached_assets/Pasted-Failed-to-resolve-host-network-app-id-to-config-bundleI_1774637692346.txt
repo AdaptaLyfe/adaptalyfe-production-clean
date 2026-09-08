@@ -1,0 +1,44 @@
+Failed to resolve host network app id to config: bundleID: com.apple.WebKit.Networking instance ID: Optional([_EXExtensionInstanceIdentifier: 3A0791F8-7BA3-4E07-B8AA-180658F2D5B5])
+KeyboardPlugin: resize mode - native
+⚡️  Loading app at https://app.getadaptalyfeapp.com...
+Networking process (0x11306c100) took 1.868565 seconds to launch
+WebContent process (0x11302c680) took 1.763507 seconds to launch
+GPU process (0x11309c1f0) took 1.748383 seconds to launch
+SplashScreen.hideSplash: SplashScreen was automatically hidden after default timeout. You should call `SplashScreen.hide()` as soon as your web app is loaded (or increase the timeout). Read more at https://capacitorjs.com/docs/apis/splash-screen#hiding-the-splash-screen
+Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 "((target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.rendering AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))" UserInfo={NSLocalizedFailureReason=((target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.rendering AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.networking AND target is not running or doesn't have entitlement com.apple.developer.web-browser-engine.webcontent))}>
+0x113058780 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'XPCConnectionTerminationWatchdog' for process with PID=6798, error: (null)
+Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000c9ed30 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}
+Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000c9ed90 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}
+⚡️  [log] - Vite error blocker activated (app dialogs unaffected)
+⚡️  WebView loaded
+⚡️  [log] - Starting Adaptalyfe app...
+⚡️  [log] - React version: 18.3.1
+⚡️  [log] - Current URL: https://app.getadaptalyfeapp.com/
+⚡️  [log] - User agent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148
+⚡️  [log] - Screen size: 402 x 874
+⚡️  [log] - Platform: ios
+⚡️  [log] - Is native mobile: true
+⚡️  [log] - Mobile device detected: true
+⚡️  [log] - Creating React root and rendering app...
+⚡️  [log] - Applying mobile-specific optimizations
+⚡️  [log] - App rendered successfully
+⚡️  [log] - Initializing mobile app features...
+⚡️  [log] - Making query to: /api/user
+⚡️  [log] - Firebase Analytics skipped: missing configuration
+⚡️  [log] - 🚫 App startup: No session token, user not authenticated
+⚡️  [log] - Landing page loaded - URL: https://app.getadaptalyfeapp.com/
+⚡️  [log] - Invitation code detected: null
+⚡️  [log] - Query response status: 401
+⚡️  [log] - Query response headers: {"access-control-allow-credentials":"true","cache-control":"no-store, no-cache, must-revalidate, proxy-revalidate","content-length":"51","content-security-policy":"default-src 'self';style-src 'self' 'unsafe-inline';script-src 'self' 'unsafe-inline' https://js.stripe.com;img-src 'self' data: https:;connect-src 'self' https: https://api.stripe.com;font-src 'self';object-src 'none';media-src 'self';frame-src https://js.stripe.com https://hooks.stripe.com;base-uri 'self';form-action 'self';frame-ancestors 'self';script-src-attr 'none';upgrade-insecure-requests","content-type":"application/json; charset=utf-8","cross-origin-opener-policy":"same-origin","cross-origin-resource-policy":"same-origin","date":"Fri, 27 Mar 2026 18:22:36 GMT","etag":"W/\"33-e8ySvbK6Go2voM+fnM71sQ4j42U\"","expires":"0","origin-agent-cluster":"?1","pragma":"no-cache","ratelimit-limit":"500","ratelimit-policy":"500;w=900","ratelimit-remaining":"499","ratelimit-reset":"900","referrer-policy":"no-referrer","server":"railway-edge","strict-transport-security":"max-age=31536000; includeSubDomains","surrogate-control":"no-store","vary":"Origin","x-cache":"MISS","x-cache-hits":"0","x-content-type-options":"nosniff","x-dns-prefetch-control":"off","x-download-options":"noopen","x-frame-options":"SAMEORIGIN","x-permitted-cross-domain-policies":"none","x-railway-cdn-edge":"fastly/cache-bom-vanm7210055-BOM","x-railway-edge":"railway/asia-southeast1-eqsg3a","x-railway-request-id":"hVdw5ta4RSO1Bv-eV7rehQ","x-served-by":"cache-bom-vanm7210055-BOM","x-xss-protection":"0"}
+⚡️  [log] - Returning null due to 401
+⚡️  To Native ->  StatusBar setStyle 70481168
+⚡️  TO JS {}
+⚡️  To Native ->  StatusBar setBackgroundColor 70481169
+⚡️  TO JS undefined
+⚡️  To Native ->  SplashScreen hide 70481170
+⚡️  TO JS undefined
+⚡️  To Native ->  Keyboard addListener 70481171
+⚡️  To Native ->  Keyboard addListener 70481172
+⚡️  To Native ->  App addListener 70481173
+⚡️  [log] - Mobile app features initialized
+Failed to terminate process: Error Domain=com.apple.extensionKit.errorDomain Code=18 "(null)" UserInfo={NSUnderlyingError=0x600000c9b990 {Error Domain=RBSRequestErrorDomain Code=3 "No such process found" UserInfo={NSLocalizedFailureReason=No such process found}}}

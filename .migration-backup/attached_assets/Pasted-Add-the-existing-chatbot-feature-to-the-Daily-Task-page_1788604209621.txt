@@ -1,0 +1,137 @@
+Add the existing chatbot feature to the **Daily Task page** as well as the **Home page**.
+
+### Requirement
+
+The user must be able to open the **same chatbot** from:
+
+1. Home page
+2. Daily Task page
+
+### Important
+
+Do NOT create two separate chatbot systems.
+
+Use **one shared/reusable chatbot component** and one conversation state/history.
+
+### Home Page
+
+* Keep the existing chatbot button and functionality unchanged.
+* User can open the chatbot normally.
+
+### Daily Task Page
+
+* Add the same chatbot button/floating chat icon to the Daily Task page.
+* Match the existing chatbot button design, size, position, and styling from the Home page.
+* When the user taps it, open the exact same chatbot UI.
+
+### Shared Chat State
+
+The chatbot must maintain the same conversation regardless of which page the user opens it from.
+
+Example:
+
+Home:
+User opens chatbot → sends "Help me plan my day"
+
+Then navigates to Daily Task:
+User opens chatbot → the previous conversation should still be available.
+
+Daily Task:
+User sends another message → when they return to Home, the same conversation should be available.
+
+Do not reset or duplicate the conversation when navigating between pages.
+
+### Daily Greeting
+
+Keep the existing daily greeting logic.
+
+When the chatbot is opened for the first time that day:
+
+**Good morning, Ethan 👋**
+
+**You have 3 things planned today.**
+
+☑️ 9:00 AM – Take medication
+☑️ 2:30 PM – Appointment
+☑️ 5:00 PM – Pick up groceries
+
+**Want me to help you plan today?**
+
+The greeting should appear only once per day, regardless of whether the user first opens the chatbot from Home or Daily Task.
+
+Example:
+
+* First open from Home → greeting appears.
+* Close chatbot.
+* Open from Daily Task → greeting does NOT appear again.
+* Next day → greeting appears again on the first chatbot opening from either page.
+
+### Daily Task Integration
+
+Because the chatbot is available on the Daily Task page, it should be aware of the user's current tasks/events using the existing task/event data.
+
+For example, if the Daily Task page contains:
+
+* 9:00 AM – Take medication
+* 2:30 PM – Appointment
+* 5:00 PM – Pick up groceries
+
+The chatbot should use the same existing data rather than creating duplicate task data.
+
+### Architecture
+
+Please inspect the existing project before making changes.
+
+Create/reuse a shared chatbot component, for example:
+
+`Chatbot`
+
+or
+
+`ChatbotWidget`
+
+The Home page and Daily Task page should both call the same component.
+
+Use the existing:
+
+* Authentication/user data
+* Chat state
+* Chat history
+* Task/event data
+* Database/API
+* Existing UI/theme
+
+Do not duplicate APIs, database tables, chatbot logic, or task logic.
+
+### Navigation behavior
+
+Make sure:
+
+* Opening chatbot from Home works.
+* Opening chatbot from Daily Task works.
+* Navigating between Home and Daily Task does not lose chat history.
+* Closing and reopening the chatbot does not create duplicate messages.
+* Refreshing the page does not create duplicate daily greetings.
+* The chatbot remains responsive on desktop and mobile.
+* Existing Home page functionality must continue working exactly as before.
+
+### Final acceptance test
+
+Test this complete flow:
+
+1. Login as Ethan.
+2. Open Home.
+3. Open chatbot.
+4. Verify daily greeting appears.
+5. Send a message.
+6. Close chatbot.
+7. Navigate to Daily Task.
+8. Open chatbot.
+9. Verify the previous conversation is still there.
+10. Verify the daily greeting is NOT duplicated.
+11. Send another message.
+12. Navigate back to Home.
+13. Open chatbot.
+14. Verify both messages/conversation are still available.
+
+Implement this using the existing project architecture and avoid unnecessary changes to unrelated features.

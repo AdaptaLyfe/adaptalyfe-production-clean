@@ -1,0 +1,619 @@
+STEP 10 IS APPROVED.
+
+Proceed with STEP 11 ONLY: implement the READ-ONLY Daily Guide backend endpoint using the already validated AI context and existing AI service.
+
+This is the first step where the application may make a real OpenAI request.
+
+Do not proceed to frontend integration.
+
+Do not modify the dashboard.
+
+Do not create the Daily Guide UI.
+
+Do not create chat.
+
+Do not create caregiver AI.
+
+Do not create AI actions.
+
+Do not allow AI to modify user data.
+
+Do not add medical AI.
+
+Do not add financial AI.
+
+Do not modify authentication.
+
+Do not modify authorization.
+
+Do not modify payments.
+
+Do not modify subscriptions.
+
+Do not modify caregiver functionality.
+
+Do not modify the database schema.
+
+Do not create migrations.
+
+==================================================
+APPROVED ARCHITECTURE
+==================================================
+
+The existing architecture is:
+
+Frontend
+    ↓
+Existing authentication
+    ↓
+Existing Express backend
+    ↓
+Existing storage
+    ↓
+AI Context Service
+    ↓
+AI Service
+    ↓
+Structured Daily Guide response
+    ↓
+Frontend later
+
+The current safe context has already passed STEP 10 with:
+
+45/45 tests passed.
+
+The context contains only:
+
+- userName
+- date
+- time
+- timezone
+- tasks
+- appointments
+- calendarEvents
+- safe preferences
+
+Do not add any additional data sources in this step.
+
+==================================================
+AUTHENTICATION
+==================================================
+
+Reuse the existing authentication system exactly as it exists.
+
+Use:
+
+requireAuth
+
+and:
+
+req.session.userId
+
+as the authenticated identity.
+
+The endpoint must NOT accept userId from the request body.
+
+Do not allow:
+
+POST /api/ai/daily-guide
+
+with:
+
+{
+  userId: 123
+}
+
+to determine whose data is used.
+
+The server-side authenticated session is the ONLY source of identity.
+
+Do not modify:
+
+requireAuth
+
+session handling
+
+Bearer token handling
+
+cookie authentication
+
+existing authentication middleware
+
+==================================================
+ENDPOINT
+==================================================
+
+Create:
+
+POST /api/ai/daily-guide
+
+Protect it with the existing requireAuth middleware.
+
+Conceptual flow:
+
+app.post(
+  "/api/ai/daily-guide",
+  requireAuth,
+  async (req, res) => {
+    const userId = req.session.userId;
+
+    const context = await buildDailyGuideContext(userId);
+
+    const guide = await generateDailyGuide(context);
+
+    return res.json(guide);
+  }
+);
+
+Use the actual project's existing route conventions.
+
+Do not blindly copy the example if the existing routes.ts pattern differs.
+
+==================================================
+CONTEXT
+==================================================
+
+The endpoint must use:
+
+buildDailyGuideContext(userId)
+
+from:
+
+server/ai-context.ts
+
+Do NOT recreate database queries inside the route.
+
+Do NOT manually assemble tasks.
+
+Do NOT manually assemble appointments.
+
+Do NOT manually assemble calendar events.
+
+Do NOT manually assemble preferences.
+
+The context service is the single boundary responsible for assembling safe AI input.
+
+==================================================
+AI SERVICE
+==================================================
+
+Reuse the existing:
+
+server/ai-service.ts
+
+and:
+
+generateDailyGuide(context)
+
+Do not create a second OpenAI client.
+
+Do not create another AI wrapper.
+
+Do not expose OPENAI_API_KEY to the frontend.
+
+The API key must remain server-side in:
+
+process.env.OPENAI_API_KEY
+
+==================================================
+AI MODEL
+==================================================
+
+Use the model already configured in:
+
+server/ai-service.ts
+
+Do not change the model unless there is a concrete technical reason.
+
+Do not add another AI provider.
+
+Do not add another SDK.
+
+==================================================
+AI INSTRUCTIONS
+==================================================
+
+The Daily Guide is NOT a generic chatbot.
+
+The AI's job is to interpret the provided structured context and answer:
+
+"What do I need to know right now?"
+
+The AI should produce concise, simple, actionable guidance.
+
+The response should be appropriate for the Adaptalyfe experience.
+
+The AI should NOT invent information.
+
+The AI should ONLY use information present in the supplied context.
+
+If information is missing, it must not fabricate it.
+
+For example:
+
+If there is no appointment:
+
+Do not invent an appointment.
+
+If there are no tasks:
+
+Do not invent tasks.
+
+If there is no preference:
+
+Do not invent a preference.
+
+==================================================
+READ-ONLY AI
+==================================================
+
+The AI is informational only.
+
+The AI must NOT:
+
+- create tasks
+- complete tasks
+- delete tasks
+- edit tasks
+- create appointments
+- edit appointments
+- delete appointments
+- modify calendar events
+- modify preferences
+- send messages
+- send notifications
+- modify medications
+- modify medical records
+- modify financial data
+- access payment systems
+- access bank accounts
+- access credentials
+
+There must be NO AI tool/function calling in this step.
+
+The AI receives context and returns guidance only.
+
+==================================================
+RESPONSE FORMAT
+==================================================
+
+Use the existing Zod-validated DailyGuideResponse structure in:
+
+server/ai-service.ts
+
+Do not return arbitrary model-generated JSON directly to the frontend.
+
+The response must pass the existing Zod validation before it leaves the server.
+
+If the AI returns invalid JSON or an invalid structure:
+
+use the existing safe fallback behavior.
+
+Do not expose raw OpenAI errors to the frontend.
+
+==================================================
+ERROR HANDLING
+==================================================
+
+The endpoint must fail safely.
+
+If:
+
+- OpenAI is unavailable
+- API credits are exhausted
+- OpenAI returns an error
+- response parsing fails
+- Zod validation fails
+- context building fails
+
+the existing safe fallback behavior should be returned.
+
+The application must NOT crash.
+
+Do not expose:
+
+- API keys
+- provider credentials
+- raw provider errors
+- internal stack traces
+- database connection strings
+
+to the frontend.
+
+==================================================
+HTTP RESPONSE
+==================================================
+
+Use appropriate status handling consistent with the existing application.
+
+Unauthenticated request:
+
+401
+
+Authenticated request with a valid context:
+
+200
+
+AI/provider failure:
+
+Use the existing safe fallback strategy.
+
+Do not leak internal errors.
+
+Do not invent a new error format if the existing application already has one.
+
+==================================================
+DATABASE
+==================================================
+
+The endpoint is READ-ONLY.
+
+The request may perform SELECT operations through the existing context service.
+
+It must NOT perform:
+
+INSERT
+UPDATE
+DELETE
+migration
+schema changes
+
+The AI must never be given a database connection.
+
+The AI must never receive DATABASE_URL.
+
+The AI must never receive database credentials.
+
+==================================================
+RATE / COST SAFETY
+==================================================
+
+Do not build an unlimited automatic AI loop.
+
+The endpoint should only execute when explicitly requested by the client.
+
+Do not create:
+
+- polling
+- recursive calls
+- background AI loops
+- automatic retries that could multiply API cost
+
+Use the existing AI service timeout and error handling.
+
+Do not introduce a new rate-limiting architecture in this step unless the existing backend already provides a simple reusable mechanism.
+
+If the existing global rate limiter automatically protects the endpoint, reuse it.
+
+==================================================
+LOGGING
+==================================================
+
+Do not log:
+
+- OPENAI_API_KEY
+- full AI context
+- task content
+- appointment content
+- calendar descriptions
+- preference values
+- user IDs
+- authentication tokens
+- provider credentials
+
+If logging is necessary, log only safe operational information such as:
+
+"Daily Guide request received"
+
+"Daily Guide generated successfully"
+
+"Daily Guide provider unavailable"
+
+Do not log sensitive request/response payloads.
+
+==================================================
+SECURITY
+==================================================
+
+Verify:
+
+1. Endpoint requires authentication.
+2. userId comes only from req.session.userId.
+3. Request body cannot override userId.
+4. Context remains user-scoped.
+5. Existing permission system remains unchanged.
+6. AI receives only validated context.
+7. API key remains server-side.
+8. AI cannot access the database.
+9. AI cannot perform actions.
+10. AI cannot modify user data.
+11. Raw provider errors are not exposed.
+12. Sensitive context is not logged.
+
+==================================================
+TESTING
+==================================================
+
+Create focused STEP 11 tests.
+
+Test at minimum:
+
+1. Authenticated request reaches the endpoint.
+
+2. Unauthenticated request returns 401.
+
+3. Request body userId cannot override req.session.userId.
+
+4. Correct authenticated user is used.
+
+5. buildDailyGuideContext() is called with server-derived userId.
+
+6. No direct database queries are added to the route.
+
+7. generateDailyGuide() receives only the validated context.
+
+8. OpenAI API key is never sent to frontend.
+
+9. Valid AI response passes Zod validation.
+
+10. Invalid AI response uses safe fallback.
+
+11. OpenAI 429/error uses safe fallback.
+
+12. OpenAI timeout uses safe fallback.
+
+13. No raw provider error reaches frontend.
+
+14. No AI tool/function calling exists.
+
+15. No AI write operation exists.
+
+16. No database writes occur.
+
+17. No migrations occur.
+
+18. No authentication changes occur.
+
+19. No payment changes occur.
+
+20. No subscription changes occur.
+
+21. No caregiver changes occur.
+
+22. No sensitive context is logged.
+
+23. Existing application routes remain functional.
+
+24. TypeScript passes.
+
+25. Server starts successfully.
+
+IMPORTANT:
+
+Do not use the real production database to create test records.
+
+Use mocks where possible.
+
+If a real OpenAI request is used:
+
+- do not print the prompt
+- do not print the context
+- do not print the API key
+- do not print the AI response if it contains user data
+
+==================================================
+PRODUCTION SAFETY
+==================================================
+
+This work is being performed on the staging/AI branch/environment.
+
+Do NOT:
+
+- modify Railway production configuration
+- modify production database
+- modify production environment variables
+- modify production payment configuration
+- modify production authentication configuration
+
+The existing live application must remain untouched.
+
+==================================================
+FILES
+==================================================
+
+Expected:
+
+MODIFY:
+
+server/routes.ts
+
+Possibly:
+
+server/ai-service.ts
+
+ONLY if the existing service needs a minimal change to support the endpoint.
+
+Do not modify:
+
+server/storage.ts
+server/db.ts
+authentication files
+payment files
+subscription files
+caregiver files
+dashboard files
+
+unless a genuine blocking issue is discovered.
+
+Do not create unnecessary files.
+
+Do not add dependencies.
+
+==================================================
+IMPORTANT OPENAI BILLING CONTEXT
+==================================================
+
+OPENAI_API_KEY has already been configured and the OpenAI connection was previously tested.
+
+The previous test confirmed:
+
+- SDK initializes
+- API key is recognized
+- OpenAI endpoint is reachable
+
+The earlier failure was due to insufficient OpenAI credits.
+
+Credits will now be available for this implementation/test.
+
+Do not change the API key.
+
+Do not print the API key.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After STEP 11 is complete, STOP.
+
+Report:
+
+1. STEP 11 status
+2. Endpoint created
+3. Authentication mechanism used
+4. How user identity is obtained
+5. Context service used
+6. AI service used
+7. Model used
+8. Response schema used
+9. Error/fallback behavior
+10. Whether AI can modify data
+11. Whether AI has database access
+12. Whether AI has tool/function calling
+13. Database writes
+14. Migrations
+15. Authentication changes
+16. Payment/subscription changes
+17. Caregiver changes
+18. Files created
+19. Files modified
+20. Dependencies added/changed
+21. Test count
+22. Test results
+23. Any warnings
+24. Any risks
+
+IMPORTANT:
+
+Do NOT implement frontend integration.
+
+Do NOT modify dashboard.tsx.
+
+Do NOT create DailyGuideCard.
+
+Do NOT create useDailyGuide.ts.
+
+Do NOT add chat.
+
+Do NOT add AI actions.
+
+STOP after STEP 11 and wait for my approval.

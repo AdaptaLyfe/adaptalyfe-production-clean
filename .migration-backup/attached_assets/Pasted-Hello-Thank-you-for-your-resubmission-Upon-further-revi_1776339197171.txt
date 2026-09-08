@@ -1,0 +1,90 @@
+Hello,
+
+Thank you for your resubmission. Upon further review, we identified additional issues that need your attention. See below for more information.
+
+If you have any questions, we are here to help. Reply to this message in App Store Connect and let us know.
+
+Review Environment
+Submission ID: 49bcc08e-123a-4bee-bb6b-c035262155c2
+Review date: April 15, 2026
+Review Device: iPhone 17 Pro Max and iPad Air 11-inch (M3)
+Version reviewed: 1.0
+
+Guideline 2.1(b) - Performance - App Completeness
+
+Issue Description
+
+The In-App Purchase products in the app exhibited one or more bugs which create a poor user experience. Specifically, an error occurs when we attempted to purchase the subscriptions. Review the details and resources below to troubleshoot this issue.
+
+Review device details: 
+
+- Device type: iPhone 17 Pro Max and iPad Air 11-inch (M3) 
+- OS version: iOS 26.4.1 and iPadOS 26.4.1
+
+Next Steps
+
+Apple reviews In-App Purchase products in the sandbox and the In-App Purchase products do not need prior approval to function in review. Review the product configurations, complete any missing information, and test them in the sandbox.
+
+To offer In-App Purchases in the app, the Account Holder must also accept the Paid Apps Agreement in the Business section of App Store Connect. Confirm you have a Paid Apps Agreement in effect.
+
+If you still need assistance after completing the steps and reviewing the resources, visit the Apple Developer Forums. If you can’t find an answer from an existing thread, start a new thread with your question to get guidance from Apple engineers and other developers.
+
+Resources
+
+Learn more about app completeness requirements in guideline 2.1(b).
+Guideline 2.1(b) - Performance - App Completeness
+
+Issue Description
+
+We are unable to complete the review of the app because one or more of the In-App Purchase products have not been submitted for review.
+
+Specifically, the app includes references to subscriptions but the associated In-App Purchase products have not been submitted for review. 
+
+
+Next Steps
+
+To resolve this issue, please be sure to take action and submit your In-App Purchases and upload a new binary in App Store Connect so we can proceed with our review. 
+
+Note you must provide an App Review screenshot in App Store Connect in order to submit In-App Purchases for review. Learn more about required In-App Purchase metadata.
+
+Resources 
+
+- Learn more about how to offer In-App Purchases.
+- Learn more about submitting In-App Purchases and subscriptions to App Review.
+Guideline 2.1 - Information Needed
+
+The app uses the AppTrackingTransparency framework, but we are unable to locate the App Tracking Transparency permission request when reviewed on iOS 26.4.1 and iPadOS 26.4.1.
+
+Next Steps
+
+If App Tracking Transparency is implemented but the permission request is not appearing on devices running the latest operating system, review the available documentation and confirm it has been correctly implemented. The request should appear before any data is collected that could be used to track the user.
+
+Once the permission request is appearing as expected, or if it is already in place, reply to this message with a screen recording captured on a physical device that demonstrates:
+
+- Launching the app from a fresh install or after resetting tracking permissions
+- The App Tracking Transparency permission request appearing before any tracking data is collected
+- The user flow that follows the permission request
+
+Include the recording in the Notes field of the App Review Information section in App Store Connect for future submissions.
+
+If your app does not track users, update your app privacy information in App Store Connect to not declare tracking. You must have the Account Holder or Admin role to update app privacy information.
+
+Resources
+
+- Tracking is linking data collected from the app with third-party data for advertising purposes, or sharing the collected data with a data broker. Learn more about tracking.
+- See Frequently Asked Questions about the requirements for apps that track users.
+- Review developer documentation for App Tracking Transparency.
+Support
+- Reply to this message in your preferred language if you need assistance. If you need additional support, use the Contact Us module.
+- Consult with fellow developers and Apple engineers on the Apple Developer Forums.
+- Request an App Review Appointment at Meet with Apple to discuss your app's review. Appointments subject to availability during your local business hours on Tuesdays and Thursdays.
+- Provide feedback on this message and your review experience by completing a short survey.
+
+Request a phone call from App Review
+
+At your request, we can arrange for an Apple Representative to call you within the next three to five business days to discuss your App Review issue.
+
+Request a call to discuss your app's review
+Reply to App Review
+
+Date Submitted

@@ -1,0 +1,399 @@
+STEP 1 IS APPROVED.
+
+Proceed with STEP 2 ONLY: test the AI provider connection with a minimal, safe, synthetic test.
+
+IMPORTANT ENVIRONMENT CONTEXT:
+
+This Replit project is currently a clone of the existing Adaptalyfe application and contains the same existing environment configuration used by the live Adaptalyfe application.
+
+The project currently contains existing secrets/configuration such as:
+
+- NEON_DATABASE_URL
+- SESSION_SECRET
+- STRIPE_SECRET_KEY
+- STRIPE_PUBLIC_KEY
+- PLAID_CLIENT_ID
+- PLAID_SECRET
+- BANKING_ENCRYPTION_KEY
+- other existing Adaptalyfe secrets
+
+OPENAI_API_KEY has now also been added to Replit Secrets.
+
+DO NOT modify, rename, replace, delete, rotate, or "fix" any existing secret.
+
+DO NOT change:
+
+- NEON_DATABASE_URL
+- SESSION_SECRET
+- Stripe configuration
+- Plaid configuration
+- banking configuration
+- authentication configuration
+- payment configuration
+- subscription configuration
+- production configuration
+
+The fact that staging currently shares existing environment/database configuration with the live application means we must be especially strict about what this step is allowed to access.
+
+==================================================
+STEP 2 SCOPE
+==================================================
+
+The ONLY purpose of this step is to verify that:
+
+server/ai-service.ts
+
+can successfully communicate with OpenAI using:
+
+OPENAI_API_KEY
+
+Nothing else should be connected.
+
+==================================================
+STRICT SAFETY REQUIREMENTS
+==================================================
+
+For STEP 2:
+
+DO NOT access the database.
+
+DO NOT initialize the database.
+
+DO NOT query PostgreSQL.
+
+DO NOT use NEON_DATABASE_URL.
+
+DO NOT call server/storage.ts.
+
+DO NOT call any existing Adaptalyfe API endpoint.
+
+DO NOT retrieve any real user data.
+
+DO NOT retrieve any caregiver data.
+
+DO NOT access authentication/session information.
+
+DO NOT access Stripe.
+
+DO NOT access Apple subscription functionality.
+
+DO NOT access Google Play subscription functionality.
+
+DO NOT access Plaid.
+
+DO NOT access banking data.
+
+DO NOT access medical data.
+
+DO NOT access financial data.
+
+DO NOT access private documents.
+
+DO NOT access messages.
+
+DO NOT access notifications.
+
+DO NOT modify any existing database record.
+
+DO NOT create database migrations.
+
+DO NOT modify the database schema.
+
+DO NOT modify authentication.
+
+DO NOT modify authorization.
+
+DO NOT modify payments.
+
+DO NOT modify subscriptions.
+
+DO NOT modify caregiver functionality.
+
+DO NOT modify the dashboard.
+
+DO NOT create the Daily Guide API endpoint.
+
+DO NOT create ai-context.ts.
+
+DO NOT connect the AI service to existing application routes.
+
+DO NOT proceed to STEP 3 or any later step.
+
+==================================================
+SYNTHETIC TEST DATA ONLY
+==================================================
+
+Use completely fake test data.
+
+Do NOT use any real Adaptalyfe user information.
+
+Use a minimal synthetic context such as:
+
+{
+  user: {
+    firstName: "TestUser"
+  },
+  date: "2026-08-10",
+  time: "10:00",
+  timezone: "UTC",
+  tasks: [],
+  appointments: [],
+  calendarEvents: [],
+  preferences: {}
+}
+
+This data must not come from the database, session, authentication system, or any existing Adaptalyfe user.
+
+==================================================
+TEST OBJECTIVES
+==================================================
+
+Verify the following:
+
+1. OPENAI_API_KEY is available to the server-side process.
+
+2. The existing OpenAI SDK version already installed in the project can initialize successfully.
+
+3. server/ai-service.ts can communicate with OpenAI.
+
+4. The configured model can successfully process the synthetic context.
+
+5. OpenAI returns a response.
+
+6. The response can be parsed successfully.
+
+7. The existing Zod validation in ai-service.ts accepts the response.
+
+8. generateDailyGuide() returns the expected DailyGuideResponse structure.
+
+9. The safe fallback behavior works when the AI provider is unavailable or an error occurs.
+
+10. The application/server remains healthy after the test.
+
+==================================================
+AI KEY SECURITY
+==================================================
+
+OPENAI_API_KEY must remain server-side.
+
+Never:
+
+- print the API key
+- log the API key
+- return the API key
+- expose the API key to the frontend
+- put the API key into source code
+- commit the API key to GitHub
+- put the API key into client-side code
+
+Only verify that the key exists.
+
+If logging is necessary, use something like:
+
+OPENAI_API_KEY configured: true
+
+Never print the actual value.
+
+==================================================
+TEST IMPLEMENTATION
+==================================================
+
+Use the smallest and safest testing approach possible.
+
+If a temporary development/staging-only test script is sufficient, prefer that.
+
+If you create temporary test code or a temporary test route:
+
+- clearly mark it as temporary
+- keep it server-side
+- do not expose secrets
+- do not access the database
+- do not expose it publicly if avoidable
+- remove it after testing if it is no longer needed
+
+Do not add unnecessary dependencies.
+
+Reuse the existing OpenAI SDK already installed in the project.
+
+Do not upgrade or downgrade the OpenAI SDK for this step.
+
+==================================================
+MODEL
+==================================================
+
+Use the model already configured by server/ai-service.ts for this first test.
+
+The current implementation reports:
+
+gpt-4o-mini
+
+Do not change the model during this step unless there is a concrete technical reason that prevents the test from working.
+
+If the model/API returns an error, report the exact non-sensitive error and STOP.
+
+Do not redesign the AI service.
+
+==================================================
+FALLBACK TEST
+==================================================
+
+Also verify that the AI service fails safely.
+
+The application must not crash if:
+
+- OPENAI_API_KEY is missing
+- OpenAI is unavailable
+- the request times out
+- OpenAI returns invalid output
+- the response fails Zod validation
+
+The service should return the existing safe fallback behavior defined in server/ai-service.ts.
+
+Do not intentionally modify production secrets to test the missing-key case.
+
+If testing the fallback requires mocking or a local test, use a safe isolated test instead.
+
+==================================================
+DATABASE SAFETY
+==================================================
+
+This is extremely important:
+
+Even though this Replit environment currently contains NEON_DATABASE_URL and is a clone of the live Adaptalyfe environment, STEP 2 MUST NOT TOUCH THE DATABASE IN ANY WAY.
+
+There should be zero database queries during this step.
+
+The expected flow is:
+
+Synthetic Test Data
+        ↓
+server/ai-service.ts
+        ↓
+OpenAI
+        ↓
+Structured Response
+        ↓
+Zod Validation
+        ↓
+Test Result
+
+NOT:
+
+User
+        ↓
+Authentication
+        ↓
+Database
+        ↓
+AI
+
+That architecture comes later in STEP 3.
+
+==================================================
+NO UNRELATED FIXES
+==================================================
+
+If you discover unrelated issues such as:
+
+- DATABASE_URL vs NEON_DATABASE_URL
+- existing authentication configuration issues
+- existing payment issues
+- existing build warnings
+- existing application problems
+
+DO NOT fix them during STEP 2.
+
+Report them separately under:
+
+"Unrelated issues discovered"
+
+We will review them before STEP 3 if they are relevant.
+
+==================================================
+STOP CONDITION
+==================================================
+
+After STEP 2 is complete, STOP.
+
+Do NOT implement:
+
+- ai-context.ts
+- database integration
+- user context
+- task context
+- appointment context
+- calendar context
+- preferences context
+- /api/ai/daily-guide
+- useDailyGuide.ts
+- DailyGuideCard
+- dashboard integration
+- caregiver AI
+- AI actions
+- AI memory
+- medical AI
+- financial AI
+- RAG
+- vector database
+- AI database tables
+
+Those belong to future steps.
+
+==================================================
+FINAL REPORT
+==================================================
+
+After completing STEP 2, provide a concise report containing:
+
+1. STEP 2 status:
+   PASS / FAIL
+
+2. Files created
+
+3. Files modified
+
+4. Dependencies added/changed
+
+5. OpenAI SDK version used
+
+6. Model used
+
+7. Whether OPENAI_API_KEY was detected
+   Do NOT reveal the key.
+
+8. Whether the OpenAI connection succeeded
+
+9. Whether the synthetic request succeeded
+
+10. Whether the response passed Zod validation
+
+11. Whether the expected DailyGuideResponse structure was returned
+
+12. Whether fallback/error handling was tested
+
+13. Whether any database connection/query occurred
+    Expected: NO
+
+14. Whether authentication was accessed
+    Expected: NO
+
+15. Whether payment/subscription systems were accessed
+    Expected: NO
+
+16. Whether caregiver functionality was accessed
+    Expected: NO
+
+17. Whether any existing database records were modified
+    Expected: NO
+
+18. Server health after testing
+
+19. Any unrelated issues discovered
+
+20. Any risks or warnings
+
+IMPORTANT:
+
+Do not proceed to STEP 3.
+
+Wait for my explicit approval before making any further changes.
