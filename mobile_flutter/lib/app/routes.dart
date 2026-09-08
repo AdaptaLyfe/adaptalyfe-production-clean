@@ -26,6 +26,11 @@ import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/medical/bloc/medical_bloc.dart';
+import '../features/medical/bloc/medical_event.dart';
+import '../features/medical/data/medical_api.dart';
+import '../features/medical/data/medical_repository.dart';
+import '../features/medical/presentation/medical_screen.dart';
 import '../features/mood/bloc/mood_bloc.dart';
 import '../features/mood/bloc/mood_event.dart';
 import '../features/mood/data/mood_api.dart';
@@ -63,6 +68,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/daily-tasks' ||
           location == '/notifications' ||
           location == '/financial' ||
+          location == '/medical' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -134,6 +140,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const MoodTrackingScreen(),
         ),
       ),
+      GoRoute(
+        path: '/medical',
+        builder: (context, state) => BlocProvider(
+          create: (_) => MedicalBloc(_createMedicalRepository())
+            ..add(const MedicalStarted()),
+          child: const MedicalScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -199,6 +213,15 @@ MoodRepository _createMoodRepository() {
   final localStorage = LocalStorage();
   return MoodRepository(
     MoodApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+MedicalRepository _createMedicalRepository() {
+  final localStorage = LocalStorage();
+  return MedicalRepository(
+    MedicalApi(
       ApiClient(localStorage: localStorage),
     ),
   );

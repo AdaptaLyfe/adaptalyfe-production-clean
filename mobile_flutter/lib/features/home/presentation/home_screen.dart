@@ -686,7 +686,10 @@ class _HomeDrawer extends StatelessWidget {
             _DrawerItem(
               icon: Icons.medical_services_outlined,
               label: 'Health Records',
-              onTap: () => _showUnavailable(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/medical');
+              },
             ),
             _DrawerItem(
               icon: Icons.support_agent_rounded,
