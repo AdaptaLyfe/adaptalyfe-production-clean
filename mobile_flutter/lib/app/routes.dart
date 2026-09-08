@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../core/network/api_client.dart';
 import '../core/storage/local_storage.dart';
+import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/auth/data/auth_repository.dart';
-import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
 import '../features/home/presentation/home_screen.dart';
@@ -35,7 +35,12 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/signup',
-      builder: (context, state) => const SignupScreen(),
+      builder: (context, state) => BlocProvider(
+        create: (_) => AuthBloc(_createAuthRepository()),
+        child: SignupScreen(
+          initialInvitationCode: state.uri.queryParameters['code'],
+        ),
+      ),
     ),
     GoRoute(
       path: '/home',
