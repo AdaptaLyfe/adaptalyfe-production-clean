@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdaptaLyfe - Fresh Project Download</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+            line-height: 1.6; color: #1e293b; background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin: 40px 0; }
+        .logo { 
+            width: 80px; height: 80px; margin: 0 auto 20px; 
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 20px; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: white; font-weight: bold;
+        }
+        .header h1 { color: #22c55e; font-size: 3rem; margin-bottom: 10px; font-weight: 700; }
+        .header p { color: #64748b; font-size: 1.2rem; margin-bottom: 20px; }
+        .status-badge { 
+            display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); 
+            color: white; padding: 8px 20px; border-radius: 25px; 
+            font-size: 0.9rem; font-weight: 600; text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+        .download-section { 
+            background: white; border-radius: 20px; padding: 40px; margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;
+        }
+        .download-section h2 { color: #1e293b; margin-bottom: 20px; font-size: 1.8rem; }
+        .downloads { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 30px 0; }
+        .download-card { 
+            background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 15px; 
+            padding: 25px; text-align: center; transition: all 0.3s ease;
+        }
+        .download-card:hover { 
+            border-color: #22c55e; transform: translateY(-5px); 
+            box-shadow: 0 10px 25px rgba(34, 197, 94, 0.2);
+        }
+        .download-btn { 
+            display: inline-block; background: linear-gradient(135deg, #22c55e, #16a34a); 
+            color: white; padding: 15px 30px; border-radius: 12px; text-decoration: none;
+            font-weight: 600; transition: all 0.3s ease; margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+        .download-btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+        }
+        .secondary-btn { 
+            background: linear-gradient(135deg, #3b82f6, #2563eb); 
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        .secondary-btn:hover { 
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+        .file-size { color: #64748b; font-size: 0.9rem; margin-top: 10px; }
+        .features-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 25px; margin: 40px 0;
+        }
+        .feature-card { 
+            background: white; padding: 25px; border-radius: 15px; 
+            border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .feature-card h3 { color: #1e293b; margin-bottom: 15px; font-size: 1.3rem; }
+        .feature-list { list-style: none; }
+        .feature-list li { 
+            padding: 8px 0; border-bottom: 1px solid #f1f5f9; 
+            color: #475569; position: relative; padding-left: 25px;
+        }
+        .feature-list li:before { 
+            content: "✓"; position: absolute; left: 0; 
+            color: #22c55e; font-weight: bold;
+        }
+        .instructions { 
+            background: linear-gradient(135deg, #fef3c7, #fde68a); 
+            border: 1px solid #f59e0b; border-radius: 15px; 
+            padding: 25px; margin: 30px 0;
+        }
+        .instructions h3 { color: #92400e; margin-bottom: 15px; font-size: 1.4rem; }
+        .code-block { 
+            background: #1e293b; color: #f1f5f9; padding: 20px; 
+            border-radius: 10px; font-family: 'Monaco', 'Menlo', monospace; 
+            margin: 15px 0; overflow-x: auto;
+        }
+        .highlight { background: linear-gradient(135deg, #ddd6fe, #c4b5fd); padding: 20px; border-radius: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">A</div>
+            <h1>AdaptaLyfe</h1>
+            <p>Complete Neurodevelopmental Support Application</p>
+            <div class="status-badge">Production Ready</div>
+        </div>
+
+        <div class="download-section">
+            <h2>🚀 Fresh Project Download</h2>
+            <p>Get the complete AdaptaLyfe source code with all features, mobile configuration, and production-ready setup.</p>
+            
+            <div class="downloads">
+                <div class="download-card">
+                    <h3>Core Source (Small)</h3>
+                    <p>Essential source code only - faster download</p>
+                    <a href="./adaptalyfe-core-20250731-1706.zip" class="download-btn" download>
+                        Download Core
+                    </a>
+                    <div class="file-size">Lightweight package</div>
+                </div>
+                
+                <div class="download-card">
+                    <h3>Complete Package</h3>
+                    <p>Full project with all assets and configurations</p>
+                    <a href="./adaptalyfe-source-20250731-1703.tar.gz" class="download-btn secondary-btn" download>
+                        Download Complete
+                    </a>
+                    <div class="file-size">2.3 GB TAR.GZ</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 Quick Setup Instructions</h3>
+            <p>After downloading, extract the files and run these commands:</p>
+            <div class="code-block">
+npm install<br>
+npm run db:push<br>
+npm run dev
+            </div>
+        </div>
+
+        <div class="highlight">
+            <h3>🏗️ Mobile App Generation</h3>
+            <p>For Android APK generation using EAS Build:</p>
+            <div class="code-block">
+npm install -g @expo/cli<br>
+eas build --platform android
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>🎯 Core Features</h3>
+                <ul class="feature-list">
+                    <li>Daily task management with points</li>
+                    <li>Medical information tracking</li>
+                    <li>Academic planning tools</li>
+                    <li>Financial management system</li>
+                    <li>Mood tracking and wellness</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>⚡ Technical Stack</h3>
+                <ul class="feature-list">
+                    <li>React 18 + TypeScript</li>
+                    <li>Express.js backend</li>
+                    <li>PostgreSQL database</li>
+                    <li>Capacitor for mobile</li>
+                    <li>Tailwind CSS + Radix UI</li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>📱 Mobile Ready</h3>
+                <ul class="feature-list">
+                    <li>Android project configured</li>
+                    <li>App store assets prepared</li>
+                    <li>EAS Build compatible</li>
+                    <li>HIPAA compliance built-in</li>
+                    <li>PWA capabilities included</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <h3>🎉 What's Next?</h3>
+            <ol style="padding-left: 20px; color: #475569;">
+                <li style="margin: 10px 0;">Download and extract the project files</li>
+                <li style="margin: 10px 0;">Install dependencies with <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">npm install</code></li>
+                <li style="margin: 10px 0;">Set up database with <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">npm run db:push</code></li>
+                <li style="margin: 10px 0;">Start development with <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px;">npm run dev</code></li>
+                <li style="margin: 10px 0;">Generate mobile app with EAS Build</li>
+                <li style="margin: 10px 0;">Submit to Google Play Store and App Store</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
