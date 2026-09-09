@@ -127,3 +127,17 @@ mtime_ms = 1788869894516
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7981e44f-db7f-4b04-bc84-a25a98984239/80249952-0333-4ece-b91a-72cea6ea9cb1"
 storage_version_token = "1788869899664526"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "lxRpJc0Y8reGxcoVsUBMU"
+uri = "file://flutter-code.zip"
+type = "unspecified"
+title = "Flutter code ZIP"
+description = "Complete mobile_flutter source package, excluding generated build and cache files."
+logical_id = "23b85ee6-81f0-4749-a8d0-bb07c00148aa"
+content_hash = "sha256:2867f7f4f75ca0260eeafd35afda211248aaa0f1cf90804095c95660aedd7e51"
+size = 369658
+mtime_ms = 1788942507884
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/23b85ee6-81f0-4749-a8d0-bb07c00148aa/a52ab48d-dcd8-48a1-a47b-c6e0cc0b5727"
+storage_version_token = "1788942511657479"
+content_type = "application/octet-stream"
