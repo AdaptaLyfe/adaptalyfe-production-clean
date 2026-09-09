@@ -681,7 +681,10 @@ class _HomeDrawer extends StatelessWidget {
             _DrawerItem(
               icon: Icons.calendar_month_outlined,
               label: 'Calendar',
-              onTap: () => _showUnavailable(context),
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/calendar');
+              },
             ),
             _DrawerItem(
               icon: Icons.medical_services_outlined,

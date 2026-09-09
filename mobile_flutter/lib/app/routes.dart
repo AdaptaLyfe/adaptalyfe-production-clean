@@ -17,6 +17,11 @@ import '../features/academic/bloc/academic_event.dart';
 import '../features/academic/data/academic_api.dart';
 import '../features/academic/data/academic_repository.dart';
 import '../features/academic/presentation/academic_planner_screen.dart';
+import '../features/calendar/bloc/calendar_bloc.dart';
+import '../features/calendar/bloc/calendar_event.dart';
+import '../features/calendar/data/calendar_api.dart';
+import '../features/calendar/data/calendar_repository.dart';
+import '../features/calendar/presentation/calendar_screen.dart';
 import '../features/daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../features/daily_tasks/bloc/daily_tasks_event.dart';
 import '../features/daily_tasks/data/daily_tasks_api.dart';
@@ -81,6 +86,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/medical' ||
           location == '/meal-shopping' ||
            location == '/academic-planner' ||
+           location == '/calendar' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -176,6 +182,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const AcademicPlannerScreen(),
         ),
       ),
+      GoRoute(
+        path: '/calendar',
+        builder: (context, state) => BlocProvider(
+          create: (_) => CalendarBloc(_createCalendarRepository())
+            ..add(const CalendarStarted()),
+          child: const CalendarScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -268,6 +282,15 @@ AcademicRepository _createAcademicRepository() {
   final localStorage = LocalStorage();
   return AcademicRepository(
     AcademicApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+CalendarRepository _createCalendarRepository() {
+  final localStorage = LocalStorage();
+  return CalendarRepository(
+    CalendarApi(
       ApiClient(localStorage: localStorage),
     ),
   );
