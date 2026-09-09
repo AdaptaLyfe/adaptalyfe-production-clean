@@ -149,7 +149,8 @@ class AssignmentModel extends Equatable {
       title: _asString(json['title']),
       description: _asNullableString(json['description']),
       type: _asString(json['type']),
-      dueDate: _asDateTime(json['dueDate']),
+      dueDate: _asDateTime(json['dueDate']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       estimatedHours: _asNullableInt(json['estimatedHours']),
       priority: _asString(json['priority'], fallback: 'medium'),
       status: _asString(json['status'], fallback: 'not_started'),
@@ -248,16 +249,6 @@ String _asString(Object? value, {String fallback = ''}) =>
 String? _asNullableString(Object? value) {
   if (value is! String || value.trim().isEmpty) return null;
   return value;
-}
-
-DateTime _asDateTime(Object? value) {
-  if (value is DateTime) return value;
-  return DateTime.tryParse('$value') ?? DateTime.fromMillisecondsSinceEpoch(0);
-}
-
-DateTime? _asNullableDateTime(Object? value) {
-  if (value == null || value is! String || value.isEmpty) return null;
-  return DateTime.tryParse(value);
 }
 
 DateTime? _asDateTime(Object? value) {

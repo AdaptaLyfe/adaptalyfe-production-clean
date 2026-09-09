@@ -700,6 +700,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.school_outlined,
+              label: 'Academic Planner',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/academic-planner');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),

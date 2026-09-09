@@ -12,6 +12,11 @@ import '../features/auth/data/auth_api.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
+import '../features/academic/bloc/academic_bloc.dart';
+import '../features/academic/bloc/academic_event.dart';
+import '../features/academic/data/academic_api.dart';
+import '../features/academic/data/academic_repository.dart';
+import '../features/academic/presentation/academic_planner_screen.dart';
 import '../features/daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../features/daily_tasks/bloc/daily_tasks_event.dart';
 import '../features/daily_tasks/data/daily_tasks_api.dart';
@@ -75,6 +80,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/financial' ||
           location == '/medical' ||
           location == '/meal-shopping' ||
+           location == '/academic-planner' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -162,6 +168,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const MealShoppingScreen(),
         ),
       ),
+      GoRoute(
+        path: '/academic-planner',
+        builder: (context, state) => BlocProvider(
+          create: (_) => AcademicBloc(_createAcademicRepository())
+            ..add(const AcademicStarted()),
+          child: const AcademicPlannerScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -245,6 +259,15 @@ MealShoppingRepository _createMealShoppingRepository() {
   final localStorage = LocalStorage();
   return MealShoppingRepository(
     MealShoppingApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+AcademicRepository _createAcademicRepository() {
+  final localStorage = LocalStorage();
+  return AcademicRepository(
+    AcademicApi(
       ApiClient(localStorage: localStorage),
     ),
   );
