@@ -294,7 +294,6 @@ class NativeNotificationService {
   }
 
   void _onLocalNotificationResponse(NotificationResponse response) {
-    if (response.actionId == NotificationResponse.dismissActionId) return;
     _publishAction(response.payload);
   }
 
