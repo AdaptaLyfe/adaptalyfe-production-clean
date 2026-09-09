@@ -56,6 +56,11 @@ import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/rewards/bloc/rewards_bloc.dart';
+import '../features/rewards/bloc/rewards_event.dart';
+import '../features/rewards/data/rewards_api.dart';
+import '../features/rewards/data/rewards_repository.dart';
+import '../features/rewards/presentation/rewards_screen.dart';
 import '../features/resources/bloc/resources_bloc.dart';
 import '../features/resources/bloc/resources_event.dart';
 import '../features/resources/data/resources_api.dart';
@@ -99,6 +104,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
            location == '/calendar' ||
            location == '/sleep-tracking' ||
            location == '/resources' ||
+           location == '/rewards' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -216,6 +222,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => ResourcesBloc(_createResourcesRepository())
             ..add(const ResourcesStarted()),
           child: const ResourcesScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/rewards',
+        builder: (context, state) => BlocProvider(
+          create: (_) => RewardsBloc(_createRewardsRepository())
+            ..add(const RewardsStarted()),
+          child: const RewardsScreen(),
         ),
       ),
     ],
@@ -337,6 +351,15 @@ ResourcesRepository _createResourcesRepository() {
   final localStorage = LocalStorage();
   return ResourcesRepository(
     ResourcesApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+RewardsRepository _createRewardsRepository() {
+  final localStorage = LocalStorage();
+  return RewardsRepository(
+    RewardsApi(
       ApiClient(localStorage: localStorage),
     ),
   );

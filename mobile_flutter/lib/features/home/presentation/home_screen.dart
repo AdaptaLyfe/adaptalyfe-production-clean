@@ -727,6 +727,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.emoji_events_outlined,
+              label: 'Rewards & Points',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/rewards');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),

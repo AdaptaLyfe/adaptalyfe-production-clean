@@ -1301,14 +1301,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Achievements routes
-  app.get("/api/achievements", async (req, res) => {
-    const achievements = await storage.getAchievementsByUser(1);
-    res.json(achievements);
+  app.get("/api/achievements", requireAuth, async (req: any, res) => {
+    try {
+      const achievements = await storage.getAchievementsByUser(req.session.user.id);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
   });
 
-  app.post("/api/achievements", async (req, res) => {
+  app.post("/api/achievements", requireAuth, async (req: any, res) => {
     try {
-      const data = insertAchievementSchema.parse({ ...req.body, userId: 1 });
+      const data = insertAchievementSchema.parse({
+        ...req.body,
+        userId: req.session.user.id,
+      });
       const achievement = await storage.createAchievement(data);
       res.json(achievement);
     } catch (error) {
