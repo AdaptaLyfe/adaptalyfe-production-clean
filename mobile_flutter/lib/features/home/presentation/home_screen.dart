@@ -41,9 +41,7 @@ class HomeScreen extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: const _HomeAppBar(),
-          drawer: const _HomeDrawer(),
           body: _HomeBody(state: state),
-          bottomNavigationBar: const _MobileBottomNavigation(),
         );
       },
     );
@@ -97,13 +95,6 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             context.read<HomeBloc>().add(const RefreshHome());
           },
           icon: const Icon(Icons.refresh_rounded),
-        ),
-        Builder(
-          builder: (context) => IconButton(
-            tooltip: 'Open menu',
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: const Icon(Icons.menu_rounded),
-          ),
         ),
         const SizedBox(width: 4),
       ],
