@@ -14,3 +14,4 @@
 - [Flutter subscription contract](flutter-subscription-contract.md) — forward platform receipt/token data to existing verification routes; backend remains the entitlement authority.
 - [Flutter settings contract](flutter-settings-contract.md) — use the five supported preference columns; keep dashboard and explicitly local web preferences on-device.
 - [Flutter analytics](flutter-analytics.md) — native Firebase uses Dart-defined public options and best-effort centralized event logging.
+- [Flutter native notifications](flutter-native-notifications.md) — platform delivery stays separate from server notification list/read state; no device-token route currently exists.

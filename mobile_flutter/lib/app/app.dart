@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/analytics/firebase_analytics_service.dart';
+import '../core/notifications/native_notification_service.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_state.dart';
 import 'routes.dart';
@@ -19,6 +22,9 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
   late final AuthBloc _authBloc;
   late final GoRouter _router;
   final _analytics = FirebaseAnalyticsService.instance;
+  final _nativeNotifications = NativeNotificationService.instance;
+  late final StreamSubscription<NativeNotificationAction>
+      _notificationActionsSubscription;
 
   @override
   void initState() {
@@ -26,6 +32,11 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
     WidgetsBinding.instance.addObserver(this);
     _authBloc = AuthBloc(createAuthRepository());
     _router = createAppRouter(_authBloc);
+    _notificationActionsSubscription =
+        _nativeNotifications.actions.listen(_handleNotificationAction);
+    for (final action in _nativeNotifications.takePendingActions()) {
+      _handleNotificationAction(action);
+    }
     _router.routerDelegate.addListener(_trackCurrentRoute);
     WidgetsBinding.instance.addPostFrameCallback((_) => _trackCurrentRoute());
     _analytics.startSession();
@@ -34,6 +45,7 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _notificationActionsSubscription.cancel();
     _router.routerDelegate.removeListener(_trackCurrentRoute);
     _analytics.endSession();
     _router.dispose();
@@ -54,6 +66,13 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
   void _trackCurrentRoute() {
     final route = _router.routerDelegate.currentConfiguration.uri.path;
     _analytics.trackRoute(route);
+  }
+
+  void _handleNotificationAction(NativeNotificationAction action) {
+    final route = action.route;
+    if (route != null && route.isNotEmpty && mounted) {
+      _router.go(route);
+    }
   }
 
   @override

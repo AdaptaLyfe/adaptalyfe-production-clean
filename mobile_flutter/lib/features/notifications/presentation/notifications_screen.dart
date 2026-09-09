@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../../core/notifications/native_notification_service.dart';
 import '../bloc/notifications_bloc.dart';
 import '../bloc/notifications_event.dart';
 import '../bloc/notifications_state.dart';
@@ -46,6 +47,22 @@ class NotificationsScreen extends StatelessWidget {
               ],
             ),
             actions: [
+              IconButton(
+                tooltip: 'Enable device notifications',
+                onPressed: () async {
+                  final permission = await NativeNotificationService.instance
+                      .requestPermission();
+                  if (!context.mounted) return;
+                  final message = permission ==
+                          NativeNotificationPermission.granted
+                      ? 'Device notifications are enabled.'
+                      : 'Device notification permission was not granted.';
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(message)));
+                },
+                icon: const Icon(Icons.notifications_active_outlined),
+              ),
               IconButton(
                 tooltip: 'Refresh notifications',
                 onPressed: () => context

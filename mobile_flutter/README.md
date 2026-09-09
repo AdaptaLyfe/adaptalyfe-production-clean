@@ -41,5 +41,28 @@ flutter run \
 these options are absent, so authentication and feature flows continue to
 work in unconfigured development environments.
 
+## Native notifications
+
+Native notification handling is separate from the server notification BLoC:
+
+- `/api/notifications` and `/api/notifications/:id/read` remain the source of
+  server notification data and read state.
+- `NativeNotificationService` owns Android/iOS permissions, Firebase
+  Messaging, foreground presentation, background handling, notification taps,
+  and local scheduling.
+- Medication, appointment, daily check-in, and emergency local notifications
+  do not require a backend change.
+
+Android declares `POST_NOTIFICATIONS` and uses the
+`adaptalyfe_general` high-importance channel. iOS registers for remote
+notifications and enables the remote-notification background mode. For real
+Firebase/APNs delivery, the Firebase project must also have the mobile Android
+app configured and the iOS app configured with APNs credentials/capability.
+
+The current backend does not expose a device-token registration or FCM send
+route. The Flutter client therefore does not invent one or send tokens to an
+unsupported endpoint; Firebase Messaging is ready for provider-delivered
+messages while the existing server notification API remains unchanged.
+
 The existing React frontend, backend, database, and top-level Capacitor
 `android/` and `ios/` projects are separate and are not used as build inputs.
