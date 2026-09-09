@@ -2187,9 +2187,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency resources routes
-  app.get("/api/emergency-resources", async (req: any, res) => {
+  app.get("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.user?.id || 1;
+      const userId = req.session.user.id;
       const resources = await storage.getEmergencyResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
@@ -2198,9 +2198,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/emergency-resources", async (req: any, res) => {
+  app.post("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.user?.id || 1;
+      const userId = req.session.user.id;
       const resourceData = { ...req.body, userId };
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
@@ -2210,10 +2210,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/emergency-resources/:id", async (req: any, res) => {
+  app.put("/api/emergency-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const updates = req.body;
+      const resources = await storage.getEmergencyResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Emergency resource not found" });
+      }
+
+      const updates = { ...req.body };
+      delete updates.userId;
       const resource = await storage.updateEmergencyResource(resourceId, updates);
       
       if (!resource) {
@@ -2227,9 +2235,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/emergency-resources/:id", async (req: any, res) => {
+  app.delete("/api/emergency-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getEmergencyResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Emergency resource not found" });
+      }
+
       const success = await storage.deleteEmergencyResource(resourceId);
       
       if (!success) {
@@ -3590,9 +3605,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Personal Resources Routes
-  app.get("/api/personal-resources", async (req, res) => {
+  app.get("/api/personal-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      const userId = req.session.user.id;
       const { category } = req.query;
       
       let resources;
@@ -3609,9 +3624,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/personal-resources", async (req, res) => {
+  app.post("/api/personal-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      const userId = req.session.user.id;
       const resourceData = insertPersonalResourceSchema.parse({ ...req.body, userId });
       
       const resource = await storage.createPersonalResource(resourceData);
@@ -3622,10 +3637,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/personal-resources/:id", async (req, res) => {
+  app.patch("/api/personal-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const updates = req.body;
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
+      const updates = { ...req.body };
+      delete updates.userId;
       
       const updated = await storage.updatePersonalResource(resourceId, updates);
       
@@ -3640,9 +3663,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/personal-resources/:id", async (req, res) => {
+  app.delete("/api/personal-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
       const deleted = await storage.deletePersonalResource(resourceId);
       
       if (!deleted) {
@@ -3656,9 +3686,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/personal-resources/:id/access", async (req, res) => {
+  app.patch("/api/personal-resources/:id/access", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
       const updated = await storage.incrementResourceAccess(resourceId);
       
       if (!updated) {

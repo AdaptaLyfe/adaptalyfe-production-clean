@@ -56,6 +56,11 @@ import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/resources/bloc/resources_bloc.dart';
+import '../features/resources/bloc/resources_event.dart';
+import '../features/resources/data/resources_api.dart';
+import '../features/resources/data/resources_repository.dart';
+import '../features/resources/presentation/resources_screen.dart';
 import '../features/sleep/bloc/sleep_bloc.dart';
 import '../features/sleep/bloc/sleep_event.dart';
 import '../features/sleep/data/sleep_api.dart';
@@ -93,6 +98,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
            location == '/academic-planner' ||
            location == '/calendar' ||
            location == '/sleep-tracking' ||
+           location == '/resources' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -202,6 +208,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => SleepBloc(_createSleepRepository())
             ..add(const SleepStarted()),
           child: const SleepTrackingScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/resources',
+        builder: (context, state) => BlocProvider(
+          create: (_) => ResourcesBloc(_createResourcesRepository())
+            ..add(const ResourcesStarted()),
+          child: const ResourcesScreen(),
         ),
       ),
     ],
@@ -314,6 +328,15 @@ SleepRepository _createSleepRepository() {
   final localStorage = LocalStorage();
   return SleepRepository(
     SleepApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+ResourcesRepository _createResourcesRepository() {
+  final localStorage = LocalStorage();
+  return ResourcesRepository(
+    ResourcesApi(
       ApiClient(localStorage: localStorage),
     ),
   );

@@ -719,6 +719,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.menu_book_outlined,
+              label: 'Resources',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/resources');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),
