@@ -735,6 +735,30 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.volunteer_activism_outlined,
+              label: 'Caregiver Setup',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/caregiver-setup');
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.people_alt_outlined,
+              label: 'Caregiver Dashboard',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/caregiver-dashboard');
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.key_rounded,
+              label: 'Accept Invitation',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/accept-invitation');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),

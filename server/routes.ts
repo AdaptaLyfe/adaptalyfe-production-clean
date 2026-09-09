@@ -2746,10 +2746,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/accept-invitation", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const { invitationCode, userId } = req.body;
       
       if (!invitationCode || !userId) {
         return res.status(400).json({ message: "Invitation code and user ID are required" });
+      }
+      if (user.id !== userId) {
+        return res.status(403).json({ message: "The invitation must be accepted by the signed-in user" });
       }
 
       const acceptedInvitation = await storage.acceptCaregiverInvitation(invitationCode, userId);
@@ -2769,9 +2777,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Care Relationship Routes
-  app.get("/api/care-relationships/user/:userId", async (req, res) => {
+  app.get("/api/care-relationships/user/:userId", async (req: any, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const userId = parseInt(req.params.userId);
+      if (user.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       const relationships = await storage.getCareRelationshipsByUser(userId);
       res.json(relationships);
     } catch (error) {
@@ -2780,9 +2797,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/care-relationships/caregiver/:caregiverId", async (req, res) => {
+  app.get("/api/care-relationships/caregiver/:caregiverId", async (req: any, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const caregiverId = parseInt(req.params.caregiverId);
+      if (user.id !== caregiverId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
       res.json(relationships);
     } catch (error) {

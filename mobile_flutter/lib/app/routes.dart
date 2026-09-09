@@ -22,6 +22,13 @@ import '../features/calendar/bloc/calendar_event.dart';
 import '../features/calendar/data/calendar_api.dart';
 import '../features/calendar/data/calendar_repository.dart';
 import '../features/calendar/presentation/calendar_screen.dart';
+import '../features/caregiver/bloc/caregiver_bloc.dart';
+import '../features/caregiver/bloc/caregiver_event.dart';
+import '../features/caregiver/data/caregiver_api.dart';
+import '../features/caregiver/data/caregiver_repository.dart';
+import '../features/caregiver/presentation/accept_invitation_screen.dart';
+import '../features/caregiver/presentation/caregiver_dashboard_screen.dart';
+import '../features/caregiver/presentation/caregiver_setup_screen.dart';
 import '../features/daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../features/daily_tasks/bloc/daily_tasks_event.dart';
 import '../features/daily_tasks/data/daily_tasks_api.dart';
@@ -93,6 +100,15 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         return '/home';
       }
 
+      if (location == '/accept-invitation' &&
+          authState is Unauthenticated) {
+        final code = state.uri.queryParameters['code'];
+        if (code == null || code.trim().isEmpty) {
+          return '/login';
+        }
+        return '/login?code=${Uri.encodeComponent(code)}';
+      }
+
       final isProtectedRoute =
           location == '/home' ||
           location == '/daily-tasks' ||
@@ -105,6 +121,9 @@ GoRouter createAppRouter(AuthBloc authBloc) {
            location == '/sleep-tracking' ||
            location == '/resources' ||
            location == '/rewards' ||
+          location == '/caregiver-setup' ||
+          location == '/accept-invitation' ||
+          location == '/caregiver-dashboard' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -230,6 +249,40 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => RewardsBloc(_createRewardsRepository())
             ..add(const RewardsStarted()),
           child: const RewardsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/caregiver-setup',
+        builder: (context, state) {
+          final user = authBloc.state;
+          final userId = user is Authenticated ? user.user.id : 0;
+          return BlocProvider(
+            create: (_) => CaregiverBloc(_createCaregiverRepository())
+              ..add(CaregiverStarted(userId)),
+            child: const CaregiverSetupScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/accept-invitation',
+        builder: (context, state) {
+          final user = authBloc.state;
+          final userId = user is Authenticated ? user.user.id : 0;
+          return BlocProvider(
+            create: (_) => CaregiverBloc(_createCaregiverRepository())
+              ..add(CaregiverStarted(userId)),
+            child: AcceptInvitationScreen(
+              initialCode: state.uri.queryParameters['code'],
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/caregiver-dashboard',
+        builder: (context, state) => BlocProvider(
+          create: (_) => CaregiverBloc(_createCaregiverRepository())
+            ..add(const LoadCareRecipients()),
+          child: const CaregiverDashboardScreen(),
         ),
       ),
     ],
@@ -360,6 +413,15 @@ RewardsRepository _createRewardsRepository() {
   final localStorage = LocalStorage();
   return RewardsRepository(
     RewardsApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+CaregiverRepository _createCaregiverRepository() {
+  final localStorage = LocalStorage();
+  return CaregiverRepository(
+    CaregiverApi(
       ApiClient(localStorage: localStorage),
     ),
   );

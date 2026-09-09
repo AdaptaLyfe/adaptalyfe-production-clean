@@ -107,10 +107,14 @@ class _SignupScreenState extends State<SignupScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          // The Flutter subscription and invitation destinations are not yet
-          // part of the mobile route set. Home is the available authenticated
-          // destination until those flows are added.
-          context.go('/home');
+          final code = _invitationCodeController.text.trim();
+          if (code.isNotEmpty) {
+            context.go(
+              '/accept-invitation?code=${Uri.encodeComponent(code)}',
+            );
+          } else {
+            context.go('/home');
+          }
         }
       },
       builder: (context, state) {
@@ -167,7 +171,13 @@ class _SignupScreenState extends State<SignupScreen> {
                               setState(() => _subscribeNewsletter = value);
                             },
                             onSubmit: _submit,
-                            onLogin: () => context.go('/login'),
+                            onLogin: () {
+                              final code = _invitationCodeController.text.trim();
+                              final destination = code.isEmpty
+                                  ? '/login'
+                                  : '/login?code=${Uri.encodeComponent(code)}';
+                              context.go(destination);
+                            },
                           ),
                         ),
                       ),

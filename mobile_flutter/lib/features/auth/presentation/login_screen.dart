@@ -62,7 +62,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          context.go('/home');
+          final code = _invitationCodeController.text.trim();
+          if (code.isNotEmpty) {
+            context.go(
+              '/accept-invitation?code=${Uri.encodeComponent(code)}',
+            );
+          } else {
+            context.go('/home');
+          }
         }
       },
       builder: (context, state) {
@@ -105,7 +112,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             errorMessage: errorMessage,
                             isLoading: isLoading,
                             onSubmit: _submit,
-                            onSignup: () => context.go('/signup'),
+                            onSignup: () {
+                              final code = _invitationCodeController.text.trim();
+                              final destination = code.isEmpty
+                                  ? '/signup'
+                                  : '/signup?code=${Uri.encodeComponent(code)}';
+                              context.go(destination);
+                            },
                           ),
                         ),
                       ),
