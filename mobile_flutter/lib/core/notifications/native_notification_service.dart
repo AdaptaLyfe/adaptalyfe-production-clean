@@ -74,7 +74,7 @@ class NativeNotificationService {
   Future<void> _configureLocalNotifications() async {
     try {
       final localTimezone = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(localTimezone.name));
+      tz.setLocalLocation(tz.getLocation(localTimezone));
     } catch (_) {
       // The timezone package remains usable with its default location in
       // unusual simulator/test environments.
@@ -166,7 +166,7 @@ class NativeNotificationService {
     }
 
     final darwin = _localNotifications.resolvePlatformSpecificImplementation<
-        DarwinFlutterLocalNotificationsPlugin>();
+        IOSFlutterLocalNotificationsPlugin>();
     if (darwin != null) {
       granted = (await darwin.requestPermissions(
             alert: true,

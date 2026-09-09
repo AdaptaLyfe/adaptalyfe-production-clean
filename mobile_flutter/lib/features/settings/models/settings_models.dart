@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../models/user_model.dart';
-
 class LocalUserSettings extends Equatable {
   const LocalUserSettings({
     this.premiumFeatures = false,

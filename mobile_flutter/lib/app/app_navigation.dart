@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_event.dart';
+import '../features/auth/bloc/auth_state.dart';
 
 /// App-wide navigation chrome for authenticated screens.
 ///

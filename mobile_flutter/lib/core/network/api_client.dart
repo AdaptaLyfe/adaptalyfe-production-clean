@@ -256,14 +256,14 @@ class ApiClient {
   }
 
   static ApiErrorType _errorTypeForStatus(int? statusCode) {
-    return switch (statusCode) {
-      400 => ApiErrorType.badRequest,
-      401 => ApiErrorType.unauthorized,
-      403 => ApiErrorType.forbidden,
-      404 => ApiErrorType.notFound,
-      >= 500 => ApiErrorType.server,
-      _ => ApiErrorType.unknown,
-    };
+    if (statusCode == 400) return ApiErrorType.badRequest;
+    if (statusCode == 401) return ApiErrorType.unauthorized;
+    if (statusCode == 403) return ApiErrorType.forbidden;
+    if (statusCode == 404) return ApiErrorType.notFound;
+    if (statusCode != null && statusCode >= 500) {
+      return ApiErrorType.server;
+    }
+    return ApiErrorType.unknown;
   }
 
   static String _messageFromPayload(Object? payload, int? statusCode) {
@@ -278,14 +278,18 @@ class ApiClient {
       return payload;
     }
 
-    return switch (statusCode) {
-      400 => 'The request was invalid',
-      401 => 'Authentication is required',
-      403 => 'You do not have permission to access this resource',
-      404 => 'The requested resource was not found',
-      >= 500 => 'The server could not complete the request',
-      _ => 'The request failed',
-    };
+    if (statusCode == 400) return 'The request was invalid';
+    if (statusCode == 401) return 'Authentication is required';
+    if (statusCode == 403) {
+      return 'You do not have permission to access this resource';
+    }
+    if (statusCode == 404) {
+      return 'The requested resource was not found';
+    }
+    if (statusCode != null && statusCode >= 500) {
+      return 'The server could not complete the request';
+    }
+    return 'The request failed';
   }
 
   static bool _acceptHttpStatus(int? statusCode) {
