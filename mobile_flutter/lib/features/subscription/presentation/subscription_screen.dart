@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/analytics/firebase_analytics_service.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
@@ -18,7 +19,8 @@ class SubscriptionScreen extends StatelessWidget {
           previous.managementUrl != current.managementUrl ||
           previous.sessionInvalid != current.sessionInvalid ||
           previous.errorMessage != current.errorMessage ||
-          previous.actionMessage != current.actionMessage,
+          previous.actionMessage != current.actionMessage ||
+          previous.subscription != current.subscription,
       listener: (context, state) async {
         if (state.sessionInvalid) {
           if (context.mounted) context.go('/login');
@@ -36,6 +38,32 @@ class SubscriptionScreen extends StatelessWidget {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(SnackBar(content: Text(message)));
+        }
+
+        final subscription = state.subscription;
+        if (subscription != null) {
+          final analytics = FirebaseAnalyticsService.instance;
+          if (subscription.trialDaysLeft != null) {
+            analytics.logTrialStatus(
+              subscription.trialDaysLeft!,
+              subscription.status,
+            );
+            if (subscription.trialDaysLeft! <= 2) {
+              analytics.logChurnRisk(
+                'trial_ending_soon',
+                details: {'days_left': '${subscription.trialDaysLeft}'},
+              );
+            }
+          } else if (subscription.status == 'expired') {
+            analytics.logChurnRisk(
+              'trial_expired',
+              details: {'plan_type': subscription.planType},
+            );
+          }
+          analytics.setAnalyticsUserProperties({
+            'plan_type': subscription.planType,
+            'subscription_status': subscription.status,
+          });
         }
       },
       child: Scaffold(
@@ -120,9 +148,13 @@ class _SubscriptionBody extends StatelessWidget {
                 const SizedBox(height: 4),
                 _RestoreCard(
                   enabled: !state.isBusy,
-                  onPressed: () => context
-                      .read<SubscriptionBloc>()
-                      .add(const RestorePurchasesRequested()),
+                  onPressed: () {
+                    FirebaseAnalyticsService.instance
+                        .logSubscriptionEvent('restore', 'store');
+                    context
+                        .read<SubscriptionBloc>()
+                        .add(const RestorePurchasesRequested());
+                  },
                 ),
                 const SizedBox(height: 20),
                 const _TermsCard(),
@@ -318,9 +350,13 @@ class _PlanCard extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: available
-                  ? () => context
-                      .read<SubscriptionBloc>()
-                      .add(PlanPurchaseRequested(plan.id))
+                  ? () {
+                      FirebaseAnalyticsService.instance
+                          .logSubscriptionEvent('upgrade', plan.id);
+                      context
+                          .read<SubscriptionBloc>()
+                          .add(PlanPurchaseRequested(plan.id));
+                    }
                   : null,
               child: Text(
                 state.busyPlanId == plan.id ? 'Processing…' : 'Subscribe',

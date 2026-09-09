@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'app/app.dart';
+import 'core/analytics/firebase_analytics_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final analytics = FirebaseAnalyticsService.instance;
+  await analytics.initialize();
+  final previousFlutterErrorHandler = FlutterError.onError;
+  FlutterError.onError = (details) {
+    analytics.logError('flutter_error', details.exceptionAsString());
+    previousFlutterErrorHandler?.call(details);
+  };
   runApp(const AdaptalyfeApp());
 }

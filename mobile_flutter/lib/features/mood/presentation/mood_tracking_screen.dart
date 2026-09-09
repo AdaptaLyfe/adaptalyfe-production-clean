@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/analytics/firebase_analytics_service.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/mood_bloc.dart';
@@ -86,6 +87,10 @@ class _MoodTrackingScreenState extends State<MoodTrackingScreen> {
   void _submitMood() {
     final mood = _selectedMood;
     if (mood == null) return;
+    FirebaseAnalyticsService.instance.logMoodEntry(
+      mood,
+      _moodOption(mood).label,
+    );
     context.read<MoodBloc>().add(
           AddMood(
             MoodEntryInput(

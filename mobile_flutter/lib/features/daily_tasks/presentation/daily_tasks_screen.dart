@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/analytics/firebase_analytics_service.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/daily_tasks_bloc.dart';
@@ -543,12 +544,18 @@ class _TaskTile extends StatelessWidget {
                 ? 'Mark task incomplete'
                 : 'Mark task complete',
             onPressed: state.action == DailyTaskAction.none
-                ? () => context.read<DailyTasksBloc>().add(
-                      ToggleDailyTask(
-                        taskId: task.id,
-                        isCompleted: !task.isCompleted,
-                      ),
-                    )
+                ? () {
+                    if (!task.isCompleted) {
+                      FirebaseAnalyticsService.instance
+                          .logTaskCompletion(task.category);
+                    }
+                    context.read<DailyTasksBloc>().add(
+                          ToggleDailyTask(
+                            taskId: task.id,
+                            isCompleted: !task.isCompleted,
+                          ),
+                        );
+                  }
                 : null,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
