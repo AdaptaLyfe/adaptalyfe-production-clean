@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/network/api_client.dart';
+import '../core/network/current_user_api.dart';
 import '../core/storage/local_storage.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_state.dart';
@@ -352,7 +353,9 @@ class _AuthRouterRefresh extends ChangeNotifier {
 HomeRepository _createHomeRepository() {
   final localStorage = LocalStorage();
   return HomeRepository(
-    ApiClient(localStorage: localStorage),
+    CurrentUserApi(
+      ApiClient(localStorage: localStorage),
+    ),
   );
 }
 

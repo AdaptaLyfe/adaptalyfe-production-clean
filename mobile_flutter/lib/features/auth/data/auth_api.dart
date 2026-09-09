@@ -1,10 +1,12 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/current_user_api.dart';
 
 /// API boundary for the existing Adaptalyfe authentication endpoints.
 class AuthApi {
-  const AuthApi(this.client);
+  AuthApi(this.client) : _currentUserApi = CurrentUserApi(client);
 
   final ApiClient client;
+  final CurrentUserApi _currentUserApi;
 
   Future<Map<String, dynamic>> login({
     required String username,
@@ -45,7 +47,7 @@ class AuthApi {
   }
 
   Future<Map<String, dynamic>> getCurrentUser() {
-    return _asObject(client.get<dynamic>('/api/user'));
+    return _currentUserApi.getCurrentUser();
   }
 
   Future<Map<String, dynamic>> logout() {

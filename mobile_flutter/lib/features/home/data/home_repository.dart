@@ -1,20 +1,13 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/current_user_api.dart';
 import '../../../models/user_model.dart';
 
 class HomeRepository {
-  const HomeRepository(this.apiClient);
+  const HomeRepository(this.api);
 
-  final ApiClient apiClient;
+  final CurrentUserApi api;
 
   Future<UserModel> getCurrentUser() async {
-    final response = await apiClient.get<dynamic>('/api/user');
-    final payload = response.data;
-
-    if (payload is! Map) {
-      throw const FormatException('Invalid current-user response');
-    }
-
-    final responseData = Map<String, dynamic>.from(payload);
+    final responseData = await api.getCurrentUser();
     final nestedUser = responseData['user'];
     final userData = nestedUser is Map
         ? Map<String, dynamic>.from(nestedUser)
