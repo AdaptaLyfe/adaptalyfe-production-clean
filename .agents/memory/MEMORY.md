@@ -12,3 +12,4 @@
 - [Shared chatbot surface](shared-chatbot-surface.md) — mount the single chatbot instance in the app shell so route changes preserve its conversation state.
 - [Flutter scaffold verification](flutter-scaffold.md) — Flutter files can be scaffolded here, but SDK-side pub get and platform builds need a Flutter-enabled environment.
 - [Flutter subscription contract](flutter-subscription-contract.md) — forward platform receipt/token data to existing verification routes; backend remains the entitlement authority.
+- [Flutter settings contract](flutter-settings-contract.md) — use the five supported preference columns; keep dashboard and explicitly local web preferences on-device.

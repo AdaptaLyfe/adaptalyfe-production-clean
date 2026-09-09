@@ -743,6 +743,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.settings_outlined,
+              label: 'Settings',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/settings');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.volunteer_activism_outlined,
               label: 'Caregiver Setup',
               onTap: () {
