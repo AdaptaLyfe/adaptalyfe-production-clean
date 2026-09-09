@@ -56,6 +56,11 @@ import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/sleep/bloc/sleep_bloc.dart';
+import '../features/sleep/bloc/sleep_event.dart';
+import '../features/sleep/data/sleep_api.dart';
+import '../features/sleep/data/sleep_repository.dart';
+import '../features/sleep/presentation/sleep_tracking_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
@@ -87,6 +92,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/meal-shopping' ||
            location == '/academic-planner' ||
            location == '/calendar' ||
+           location == '/sleep-tracking' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -190,6 +196,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const CalendarScreen(),
         ),
       ),
+      GoRoute(
+        path: '/sleep-tracking',
+        builder: (context, state) => BlocProvider(
+          create: (_) => SleepBloc(_createSleepRepository())
+            ..add(const SleepStarted()),
+          child: const SleepTrackingScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -291,6 +305,15 @@ CalendarRepository _createCalendarRepository() {
   final localStorage = LocalStorage();
   return CalendarRepository(
     CalendarApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+SleepRepository _createSleepRepository() {
+  final localStorage = LocalStorage();
+  return SleepRepository(
+    SleepApi(
       ApiClient(localStorage: localStorage),
     ),
   );

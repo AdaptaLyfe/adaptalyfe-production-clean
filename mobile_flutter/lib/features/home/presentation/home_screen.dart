@@ -687,6 +687,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.nightlight_round,
+              label: 'Sleep Tracking',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/sleep-tracking');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.medical_services_outlined,
               label: 'Health Records',
               onTap: () {
