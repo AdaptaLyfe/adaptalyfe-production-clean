@@ -36,6 +36,11 @@ import '../features/mood/bloc/mood_event.dart';
 import '../features/mood/data/mood_api.dart';
 import '../features/mood/data/mood_repository.dart';
 import '../features/mood/presentation/mood_tracking_screen.dart';
+import '../features/meal_shopping/bloc/meal_shopping_bloc.dart';
+import '../features/meal_shopping/bloc/meal_shopping_event.dart';
+import '../features/meal_shopping/data/meal_shopping_api.dart';
+import '../features/meal_shopping/data/meal_shopping_repository.dart';
+import '../features/meal_shopping/presentation/meal_shopping_screen.dart';
 import '../features/notifications/bloc/notifications_bloc.dart';
 import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
@@ -69,6 +74,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/notifications' ||
           location == '/financial' ||
           location == '/medical' ||
+          location == '/meal-shopping' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -148,6 +154,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           child: const MedicalScreen(),
         ),
       ),
+      GoRoute(
+        path: '/meal-shopping',
+        builder: (context, state) => BlocProvider(
+          create: (_) => MealShoppingBloc(_createMealShoppingRepository())
+            ..add(const MealShoppingStarted()),
+          child: const MealShoppingScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -222,6 +236,15 @@ MedicalRepository _createMedicalRepository() {
   final localStorage = LocalStorage();
   return MedicalRepository(
     MedicalApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+MealShoppingRepository _createMealShoppingRepository() {
+  final localStorage = LocalStorage();
+  return MealShoppingRepository(
+    MealShoppingApi(
       ApiClient(localStorage: localStorage),
     ),
   );

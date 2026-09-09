@@ -692,6 +692,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.restaurant_menu_rounded,
+              label: 'Meal & Shopping',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/meal-shopping');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.support_agent_rounded,
               label: 'Support',
               onTap: () => _showUnavailable(context),
