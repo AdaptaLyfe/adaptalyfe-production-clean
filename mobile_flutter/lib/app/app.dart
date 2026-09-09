@@ -8,7 +8,6 @@ import '../core/analytics/firebase_analytics_service.dart';
 import '../core/notifications/native_notification_service.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_state.dart';
-import 'app_navigation.dart';
 import 'routes.dart';
 
 class AdaptalyfeApp extends StatefulWidget {
@@ -117,10 +116,6 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
               seedColor: const Color(0xFF2E7D6B),
             ),
             useMaterial3: true,
-          ),
-          builder: (context, child) => AppNavigationShell(
-            location: _router.routerDelegate.currentConfiguration.uri.path,
-            child: child ?? const SizedBox.shrink(),
           ),
           routerConfig: _router,
         ),

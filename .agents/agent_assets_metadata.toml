@@ -155,3 +155,17 @@ mtime_ms = 1788947828587
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1a20d7aa-8dc9-4c8d-a34c-1252927bd73f/aa866f6a-ade5-4cab-a86a-2cbaadbd98f7"
 storage_version_token = "1788947832776375"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YWJN6BoBLTPQWXSS_e3gy"
+uri = "file://flutter-code-bottom-navigation-fixed.zip"
+type = "unspecified"
+title = "Flutter bottom navigation fix"
+description = "Updated Flutter source with the authenticated navigation shell moved into GoRouter so the bottom navigation has an Overlay ancestor."
+logical_id = "172ace29-3da8-4107-9317-8b348557cb9d"
+content_hash = "sha256:7a08591f4f8b1fbbfe4f4bdcffed1cf610ea936a67f8264e248174d06d7746e9"
+size = 369603
+mtime_ms = 1788957668486
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/172ace29-3da8-4107-9317-8b348557cb9d/972eaf51-7cad-4c50-9643-03c8b8a29af9"
+storage_version_token = "1788957673686002"
+content_type = "application/octet-stream"

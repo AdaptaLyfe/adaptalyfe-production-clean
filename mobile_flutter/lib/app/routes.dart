@@ -93,6 +93,7 @@ import '../features/subscription/data/purchase_service.dart';
 import '../features/subscription/data/subscription_api.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
+import 'app_navigation.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -171,157 +172,165 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           initialInvitationCode: state.uri.queryParameters['code'],
         ),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => BlocProvider(
-          create: (_) => HomeBloc(_createHomeRepository())
-            ..add(const HomeStarted()),
-          child: const HomeScreen(),
+      ShellRoute(
+        builder: (context, state, child) => AppNavigationShell(
+          location: state.uri.path,
+          child: child,
         ),
-      ),
-      GoRoute(
-        path: '/daily-tasks',
-        builder: (context, state) => BlocProvider(
-          create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-            ..add(const DailyTasksStarted()),
-          child: const DailyTasksScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => BlocProvider(
-          create: (_) => NotificationsBloc(_createNotificationsRepository())
-            ..add(const NotificationsStarted()),
-          child: const NotificationsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/financial',
-        builder: (context, state) => BlocProvider(
-          create: (_) => FinancialBloc(_createFinancialRepository())
-            ..add(const FinancialStarted()),
-          child: const FinancialScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/mood-tracking',
-        builder: (context, state) => BlocProvider(
-          create: (_) => MoodBloc(_createMoodRepository())
-            ..add(const MoodStarted()),
-          child: const MoodTrackingScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/medical',
-        builder: (context, state) => BlocProvider(
-          create: (_) => MedicalBloc(_createMedicalRepository())
-            ..add(const MedicalStarted()),
-          child: const MedicalScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/meal-shopping',
-        builder: (context, state) => BlocProvider(
-          create: (_) => MealShoppingBloc(_createMealShoppingRepository())
-            ..add(const MealShoppingStarted()),
-          child: const MealShoppingScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/academic-planner',
-        builder: (context, state) => BlocProvider(
-          create: (_) => AcademicBloc(_createAcademicRepository())
-            ..add(const AcademicStarted()),
-          child: const AcademicPlannerScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/calendar',
-        builder: (context, state) => BlocProvider(
-          create: (_) => CalendarBloc(_createCalendarRepository())
-            ..add(const CalendarStarted()),
-          child: const CalendarScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/sleep-tracking',
-        builder: (context, state) => BlocProvider(
-          create: (_) => SleepBloc(_createSleepRepository())
-            ..add(const SleepStarted()),
-          child: const SleepTrackingScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/resources',
-        builder: (context, state) => BlocProvider(
-          create: (_) => ResourcesBloc(_createResourcesRepository())
-            ..add(const ResourcesStarted()),
-          child: const ResourcesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/rewards',
-        builder: (context, state) => BlocProvider(
-          create: (_) => RewardsBloc(_createRewardsRepository())
-            ..add(const RewardsStarted()),
-          child: const RewardsScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/subscription',
-        builder: (context, state) => BlocProvider(
-          create: (_) => SubscriptionBloc(
-            _createSubscriptionRepository(),
-            PurchaseService(),
-          )..add(const SubscriptionStarted()),
-          child: const SubscriptionScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) {
-          final authState = authBloc.state;
-          final userId = authState is Authenticated ? authState.user.id : 0;
-          return BlocProvider(
-            create: (_) => SettingsBloc(_createSettingsRepository())
-              ..add(SettingsStarted(userId)),
-            child: SettingsScreen(userId: userId),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/caregiver-setup',
-        builder: (context, state) {
-          final user = authBloc.state;
-          final userId = user is Authenticated ? user.user.id : 0;
-          return BlocProvider(
-            create: (_) => CaregiverBloc(_createCaregiverRepository())
-              ..add(CaregiverStarted(userId)),
-            child: const CaregiverSetupScreen(),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/accept-invitation',
-        builder: (context, state) {
-          final user = authBloc.state;
-          final userId = user is Authenticated ? user.user.id : 0;
-          return BlocProvider(
-            create: (_) => CaregiverBloc(_createCaregiverRepository())
-              ..add(CaregiverStarted(userId)),
-            child: AcceptInvitationScreen(
-              initialCode: state.uri.queryParameters['code'],
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => BlocProvider(
+              create: (_) => HomeBloc(_createHomeRepository())
+                ..add(const HomeStarted()),
+              child: const HomeScreen(),
             ),
-          );
-        },
-      ),
-      GoRoute(
-        path: '/caregiver-dashboard',
-        builder: (context, state) => BlocProvider(
-          create: (_) => CaregiverBloc(_createCaregiverRepository())
-            ..add(const LoadCareRecipients()),
-          child: const CaregiverDashboardScreen(),
-        ),
+          ),
+          GoRoute(
+            path: '/daily-tasks',
+            builder: (context, state) => BlocProvider(
+              create: (_) => DailyTasksBloc(_createDailyTasksRepository())
+                ..add(const DailyTasksStarted()),
+              child: const DailyTasksScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => BlocProvider(
+              create: (_) => NotificationsBloc(_createNotificationsRepository())
+                ..add(const NotificationsStarted()),
+              child: const NotificationsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/financial',
+            builder: (context, state) => BlocProvider(
+              create: (_) => FinancialBloc(_createFinancialRepository())
+                ..add(const FinancialStarted()),
+              child: const FinancialScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/mood-tracking',
+            builder: (context, state) => BlocProvider(
+              create: (_) => MoodBloc(_createMoodRepository())
+                ..add(const MoodStarted()),
+              child: const MoodTrackingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/medical',
+            builder: (context, state) => BlocProvider(
+              create: (_) => MedicalBloc(_createMedicalRepository())
+                ..add(const MedicalStarted()),
+              child: const MedicalScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/meal-shopping',
+            builder: (context, state) => BlocProvider(
+              create: (_) => MealShoppingBloc(_createMealShoppingRepository())
+                ..add(const MealShoppingStarted()),
+              child: const MealShoppingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/academic-planner',
+            builder: (context, state) => BlocProvider(
+              create: (_) => AcademicBloc(_createAcademicRepository())
+                ..add(const AcademicStarted()),
+              child: const AcademicPlannerScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/calendar',
+            builder: (context, state) => BlocProvider(
+              create: (_) => CalendarBloc(_createCalendarRepository())
+                ..add(const CalendarStarted()),
+              child: const CalendarScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/sleep-tracking',
+            builder: (context, state) => BlocProvider(
+              create: (_) => SleepBloc(_createSleepRepository())
+                ..add(const SleepStarted()),
+              child: const SleepTrackingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/resources',
+            builder: (context, state) => BlocProvider(
+              create: (_) => ResourcesBloc(_createResourcesRepository())
+                ..add(const ResourcesStarted()),
+              child: const ResourcesScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/rewards',
+            builder: (context, state) => BlocProvider(
+              create: (_) => RewardsBloc(_createRewardsRepository())
+                ..add(const RewardsStarted()),
+              child: const RewardsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/subscription',
+            builder: (context, state) => BlocProvider(
+              create: (_) => SubscriptionBloc(
+                _createSubscriptionRepository(),
+                PurchaseService(),
+              )..add(const SubscriptionStarted()),
+              child: const SubscriptionScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) {
+              final authState = authBloc.state;
+              final userId = authState is Authenticated ? authState.user.id : 0;
+              return BlocProvider(
+                create: (_) => SettingsBloc(_createSettingsRepository())
+                  ..add(SettingsStarted(userId)),
+                child: SettingsScreen(userId: userId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/caregiver-setup',
+            builder: (context, state) {
+              final user = authBloc.state;
+              final userId = user is Authenticated ? user.user.id : 0;
+              return BlocProvider(
+                create: (_) => CaregiverBloc(_createCaregiverRepository())
+                  ..add(CaregiverStarted(userId)),
+                child: const CaregiverSetupScreen(),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/accept-invitation',
+            builder: (context, state) {
+              final user = authBloc.state;
+              final userId = user is Authenticated ? user.user.id : 0;
+              return BlocProvider(
+                create: (_) => CaregiverBloc(_createCaregiverRepository())
+                  ..add(CaregiverStarted(userId)),
+                child: AcceptInvitationScreen(
+                  initialCode: state.uri.queryParameters['code'],
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/caregiver-dashboard',
+            builder: (context, state) => BlocProvider(
+              create: (_) => CaregiverBloc(_createCaregiverRepository())
+                ..add(const LoadCareRecipients()),
+              child: const CaregiverDashboardScreen(),
+            ),
+          ),
+        ],
       ),
     ],
   );
