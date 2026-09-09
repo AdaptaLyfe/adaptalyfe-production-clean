@@ -79,6 +79,12 @@ import '../features/sleep/data/sleep_api.dart';
 import '../features/sleep/data/sleep_repository.dart';
 import '../features/sleep/presentation/sleep_tracking_screen.dart';
 import '../features/splash/presentation/splash_screen.dart';
+import '../features/subscription/bloc/subscription_bloc.dart';
+import '../features/subscription/bloc/subscription_event.dart';
+import '../features/subscription/data/purchase_service.dart';
+import '../features/subscription/data/subscription_api.dart';
+import '../features/subscription/data/subscription_repository.dart';
+import '../features/subscription/presentation/subscription_screen.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -121,6 +127,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
            location == '/sleep-tracking' ||
            location == '/resources' ||
            location == '/rewards' ||
+          location == '/subscription' ||
           location == '/caregiver-setup' ||
           location == '/accept-invitation' ||
           location == '/caregiver-dashboard' ||
@@ -249,6 +256,16 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => RewardsBloc(_createRewardsRepository())
             ..add(const RewardsStarted()),
           child: const RewardsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/subscription',
+        builder: (context, state) => BlocProvider(
+          create: (_) => SubscriptionBloc(
+            _createSubscriptionRepository(),
+            PurchaseService(),
+          )..add(const SubscriptionStarted()),
+          child: const SubscriptionScreen(),
         ),
       ),
       GoRoute(
@@ -413,6 +430,15 @@ RewardsRepository _createRewardsRepository() {
   final localStorage = LocalStorage();
   return RewardsRepository(
     RewardsApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+SubscriptionRepository _createSubscriptionRepository() {
+  final localStorage = LocalStorage();
+  return SubscriptionRepository(
+    SubscriptionApi(
       ApiClient(localStorage: localStorage),
     ),
   );

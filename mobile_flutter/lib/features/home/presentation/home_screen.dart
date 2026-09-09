@@ -735,6 +735,14 @@ class _HomeDrawer extends StatelessWidget {
               },
             ),
             _DrawerItem(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Subscription',
+              onTap: () {
+                Navigator.of(context).pop();
+                context.push('/subscription');
+              },
+            ),
+            _DrawerItem(
               icon: Icons.volunteer_activism_outlined,
               label: 'Caregiver Setup',
               onTap: () {
