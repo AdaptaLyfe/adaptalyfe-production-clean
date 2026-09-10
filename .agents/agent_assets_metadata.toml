@@ -407,3 +407,17 @@ mtime_ms = 1789046179684
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cf2fe3d8-a31e-4633-ba46-01c920fd4dd9/d8361119-8ed0-4795-9ff6-81dbe54d11db"
 storage_version_token = "1789046183697477"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BrInAl7UFo1D55UJxVOED"
+uri = "file://flutter-daily-task-changed-files.zip"
+type = "unspecified"
+title = "Changed Flutter Daily Task files only"
+description = "Contains only the three modified files: daily_tasks_bloc.dart, daily_tasks_event.dart, and daily_tasks_screen.dart."
+logical_id = "894b7ecd-a9e5-4f3d-92d0-e36906a23fc5"
+content_hash = "sha256:cdcf12eea2d86171dce8052bc862115d54b9d1431cf0edcf3101ed73fc162538"
+size = 9490
+mtime_ms = 1789046496273
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/894b7ecd-a9e5-4f3d-92d0-e36906a23fc5/b2550de4-b19f-47b4-a3c9-65c5579c59e0"
+storage_version_token = "1789046500248552"
+content_type = "application/octet-stream"
