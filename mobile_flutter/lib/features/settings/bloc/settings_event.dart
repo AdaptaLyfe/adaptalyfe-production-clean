@@ -144,3 +144,15 @@ final class RedeemOrganizationCode extends SettingsEvent {
 final class DeleteAccountRequested extends SettingsEvent {
   const DeleteAccountRequested();
 }
+
+final class ResetSettingsRequested extends SettingsEvent {
+  const ResetSettingsRequested();
+}
+
+final class SaveSettingsRequested extends SettingsEvent {
+  const SaveSettingsRequested();
+}
+
+final class TestVoiceSettingsRequested extends SettingsEvent {
+  const TestVoiceSettingsRequested();
+}

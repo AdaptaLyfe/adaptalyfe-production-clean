@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/platform/text_to_speech_service.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -90,31 +91,31 @@ class _SettingsBody extends StatelessWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
               children: [
-                _ProfileCard(state: state),
+                const _SettingsPageHeader(),
                 const SizedBox(height: 16),
-                _AppearanceCard(state: state),
+                _SubscriptionStatusCard(state: state),
                 const SizedBox(height: 16),
-                _AccessibilityCard(state: state),
+                _ReactAppearanceCard(state: state),
                 const SizedBox(height: 16),
-                _NotificationCard(state: state),
+                _ReactSafetyCard(state: state),
                 const SizedBox(height: 16),
-                _BehaviorCard(state: state),
+                _ReactPrivacyCaregiverCard(state: state),
                 const SizedBox(height: 16),
-                _AdaptiveFeaturesCard(state: state),
+                _ReactVoiceAudioCard(state: state),
                 const SizedBox(height: 16),
-                _OtherPreferencesCard(state: state),
+                _ReactNotificationCard(state: state),
                 const SizedBox(height: 16),
-                _DashboardPreferencesCard(state: state),
+                _ReactFeaturesCard(state: state),
                 const SizedBox(height: 16),
-                _ProtectedSettingsCard(state: state),
-                if (state.careRecipients.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _CaregiverControlsCard(state: state),
-                ],
+                _ReactPrivacySecurityCard(state: state),
+                const SizedBox(height: 16),
+                const _ReactHelpSupportCard(),
                 const SizedBox(height: 16),
                 _OrganizationAccessCard(state: state),
                 const SizedBox(height: 16),
                 _DangerZoneCard(state: state),
+                const SizedBox(height: 16),
+                _SettingsActionButtons(state: state),
               ],
             ),
           ),
@@ -131,6 +132,750 @@ class _SettingsBody extends StatelessWidget {
           (state.status == SettingsStatus.loaded ||
               state.status == SettingsStatus.failure) &&
           !state.isSaving,
+    );
+  }
+}
+
+class _SettingsPageHeader extends StatelessWidget {
+  const _SettingsPageHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.settings_rounded, color: Color(0xFF9333EA), size: 30),
+            SizedBox(width: 12),
+            Text(
+              'Settings & Customization',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Personalize your Adaptalyfe experience with accessibility options, themes, and feature preferences.',
+          style: TextStyle(color: Color(0xFF4B5563), fontSize: 14),
+        ),
+      ],
+    );
+  }
+}
+
+class _SubscriptionStatusCard extends StatelessWidget {
+  const _SubscriptionStatusCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = state.user;
+    if (user == null || user.subscriptionStatus == 'active') {
+      if (user == null) return const SizedBox.shrink();
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF22C55E), Color(0xFF059669)],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x18000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_humanize(user.subscriptionTier ?? 'subscription')} Plan — Active',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    _subscriptionMessage(user.subscriptionPlatform),
+                    style: const TextStyle(
+                      color: Color(0xD9FFFFFF),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF14B8A6), Color(0xFF0891B2)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x18000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CircleAvatar(
+            backgroundColor: Color(0x33FFFFFF),
+            foregroundColor: Colors.white,
+            child: Icon(Icons.workspace_premium_rounded),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Activate Your Subscription',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Unlock all features — daily tasks, finance, mood tracking, appointments & more.',
+                  style: TextStyle(color: Color(0xD9FFFFFF), fontSize: 13),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Plans from \$4.99/month · Billed through Apple ID · Cancel anytime',
+                  style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: () => context.push('/subscription'),
+            icon: const Icon(Icons.credit_card_rounded, size: 17),
+            label: const Text('View Plans'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Color(0xFF0F766E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactAppearanceCard extends StatelessWidget {
+  const _ReactAppearanceCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = state.theme;
+    return _Panel(
+      title: 'Appearance',
+      subtitle: 'Customize the look and feel of your dashboard',
+      icon: Icons.palette_outlined,
+      child: Column(
+        children: [
+          _SelectRow(
+            label: 'Theme',
+            value: _oneOf(
+              '${theme['theme'] ?? theme['colorScheme'] ?? 'light'}',
+              const ['light', 'dark', 'auto'],
+            ),
+            options: const ['light', 'dark', 'auto'],
+            onChanged: (value) =>
+                _update(context, 'themeSettings', 'theme', value),
+          ),
+          const SizedBox(height: 14),
+          _SliderRow(
+            label: 'Font Size',
+            value: _double(theme['fontSize'], 16).clamp(12, 24).toDouble(),
+            min: 12,
+            max: 24,
+            divisions: 12,
+            suffix: 'px',
+            onChanged: (value) =>
+                _update(context, 'themeSettings', 'fontSize', value.round()),
+          ),
+          _ReactSwitchRow(
+            label: 'High Contrast Mode',
+            icon: Icons.visibility_rounded,
+            activeColor: const Color(0xFFD97706),
+            value: _bool(theme['highContrast']),
+            onChanged: (value) =>
+                _update(context, 'themeSettings', 'highContrast', value),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactSafetyCard extends StatelessWidget {
+  const _ReactSafetyCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final local = state.localSettings;
+    return _Panel(
+      title: 'Safety & Emergency Settings',
+      subtitle: 'Critical safety features managed by your care team',
+      icon: Icons.shield_outlined,
+      color: const Color(0xFFFFF7F7),
+      borderColor: const Color(0xFFFECACA),
+      child: Column(
+        children: [
+          _ReactProtectedSwitchRow(
+            state: state,
+            settingKey: 'locationTracking',
+            label: 'Location Tracking',
+            icon: Icons.location_on_outlined,
+            value: local.locationTracking,
+            activeColor: const Color(0xFFDC2626),
+          ),
+          _ReactProtectedSwitchRow(
+            state: state,
+            settingKey: 'emergencyAlerts',
+            label: 'Emergency Alerts',
+            icon: Icons.warning_amber_rounded,
+            value: local.emergencyAlerts,
+            activeColor: const Color(0xFFDC2626),
+          ),
+          _ReactProtectedSwitchRow(
+            state: state,
+            settingKey: 'automaticCheckIns',
+            label: 'Automatic Check-ins',
+            icon: Icons.favorite_outline_rounded,
+            value: local.automaticCheckIns,
+            activeColor: const Color(0xFFEA580C),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactPrivacyCaregiverCard extends StatelessWidget {
+  const _ReactPrivacyCaregiverCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final local = state.localSettings;
+    return _Panel(
+      title: 'Privacy & Caregiver Access',
+      subtitle: 'Control what information caregivers can access',
+      icon: Icons.shield_outlined,
+      color: const Color(0xFFFAF5FF),
+      borderColor: const Color(0xFFE9D5FF),
+      child: Column(
+        children: [
+          _ReactProtectedSwitchRow(
+            state: state,
+            settingKey: 'medicalDataSharing',
+            label: 'Medical Data Sharing',
+            icon: Icons.favorite_outline_rounded,
+            value: local.medicalDataSharing,
+            activeColor: const Color(0xFF9333EA),
+          ),
+          _ReactProtectedSwitchRow(
+            state: state,
+            settingKey: 'caregiverAccess',
+            label: 'Caregiver Dashboard Access',
+            icon: Icons.phone_outlined,
+            value: local.caregiverAccess,
+            activeColor: const Color(0xFF9333EA),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE9D5FF)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.help_outline_rounded,
+                    color: Color(0xFF9333EA), size: 18),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Your caregivers may lock certain safety-critical settings to ensure your wellbeing. This is especially important for individuals who may be at risk of wandering or have medical conditions requiring supervision.',
+                    style: TextStyle(color: Color(0xFF4B5563), fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactVoiceAudioCard extends StatelessWidget {
+  const _ReactVoiceAudioCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final accessibility = state.accessibility;
+    return _Panel(
+      title: 'Voice & Audio',
+      subtitle: 'Configure speech and audio preferences',
+      icon: Icons.volume_up_outlined,
+      child: Column(
+        children: [
+          _ReactSwitchRow(
+            label: 'Enable Voice Commands',
+            icon: Icons.volume_up_outlined,
+            activeColor: const Color(0xFF16A34A),
+            value: _bool(
+              accessibility['voiceEnabled'] ??
+                  accessibility['voiceGuidance'] ??
+                  accessibility['textToSpeech'],
+              fallback: true,
+            ),
+            onChanged: (value) => _update(
+              context,
+              'accessibilitySettings',
+              'voiceGuidance',
+              value,
+            ),
+          ),
+          _SliderRow(
+            label: 'Voice Speed',
+            value: _double(accessibility['speechRate'], 1).clamp(.5, 2).toDouble(),
+            min: .5,
+            max: 2,
+            divisions: 15,
+            suffix: 'x',
+            onChanged: (value) =>
+                _update(context, 'accessibilitySettings', 'speechRate', value),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () async {
+                final rate = _double(
+                  accessibility['voiceSpeed'] ?? accessibility['speechRate'],
+                  1,
+                );
+                await TextToSpeechService.speak(
+                  text: 'This is a test of the voice settings at the current speed.',
+                  rate: rate,
+                );
+                if (context.mounted) {
+                  context
+                      .read<SettingsBloc>()
+                      .add(const TestVoiceSettingsRequested());
+                }
+              },
+              child: const Text('Test Voice Settings'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactNotificationCard extends StatelessWidget {
+  const _ReactNotificationCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final notifications = state.notifications;
+    final reminders = state.reminders;
+    return _Panel(
+      title: 'Notifications',
+      subtitle: 'Manage alerts and reminders',
+      icon: Icons.notifications_none_rounded,
+      color: const Color(0xFFFFF7ED),
+      borderColor: const Color(0xFFFED7AA),
+      child: Column(
+        children: [
+          _ReactSwitchRow(
+            label: 'Enable Notifications',
+            icon: Icons.notifications_none_rounded,
+            activeColor: const Color(0xFF16A34A),
+            value: _bool(
+              notifications['notificationsEnabled'] ?? notifications['pushEnabled'],
+              fallback: true,
+            ),
+            onChanged: (value) => _update(
+              context,
+              'notificationSettings',
+              'notificationsEnabled',
+              value,
+            ),
+          ),
+          _SelectRow(
+            label: 'Default Reminder Time',
+            value: _oneOf(
+              '${_intValue(reminders['defaultMinutes'], 15)}',
+              const ['5', '15', '30', '60'],
+            ),
+            options: const ['5', '15', '30', '60'],
+            onChanged: (value) => _update(
+              context,
+              'reminderTiming',
+              'defaultMinutes',
+              int.parse(value),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactFeaturesCard extends StatelessWidget {
+  const _ReactFeaturesCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = state.theme;
+    final local = state.localSettings;
+    return _Panel(
+      title: 'Features',
+      subtitle: 'Enable or disable specific features',
+      icon: Icons.bolt_outlined,
+      color: const Color(0xFFEEF2FF),
+      borderColor: const Color(0xFFC7D2FE),
+      child: Column(
+        children: [
+          _ReactSwitchRow(
+            label: 'Quick Actions Bar',
+            icon: Icons.bolt_outlined,
+            activeColor: const Color(0xFF2563EB),
+            value: _bool(theme['quickActionsEnabled'], fallback: true),
+            onChanged: (value) =>
+                _update(context, 'themeSettings', 'quickActionsEnabled', value),
+          ),
+          _ReactSwitchRow(
+            label: 'Premium Features',
+            icon: Icons.star_outline_rounded,
+            activeColor: const Color(0xFF9333EA),
+            value: local.premiumFeatures,
+            onChanged: (value) => _updateLocal(context, 'premiumFeatures', value),
+          ),
+          _ReactSwitchRow(
+            label: 'Auto-save Changes',
+            icon: Icons.save_outlined,
+            activeColor: const Color(0xFF059669),
+            value: local.autoSave,
+            onChanged: (value) => _updateLocal(context, 'autoSave', value),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactPrivacySecurityCard extends StatelessWidget {
+  const _ReactPrivacySecurityCard({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      title: 'Privacy & Security',
+      subtitle: 'Control your privacy and data settings',
+      icon: Icons.shield_outlined,
+      child: Column(
+        children: [
+          _ReactSwitchRow(
+            label: 'Privacy Mode',
+            icon: Icons.shield_outlined,
+            activeColor: const Color(0xFFDC2626),
+            value: state.localSettings.privacyMode,
+            onChanged: (value) => _updateLocal(context, 'privacyMode', value),
+          ),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(top: 4, bottom: 10),
+              child: Text(
+                'Privacy mode hides sensitive information in screenshots and when screen sharing.',
+                style: TextStyle(color: Color(0xFF4B5563), fontSize: 12),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/resources'),
+              icon: const Icon(Icons.shield_outlined, size: 17),
+              label: const Text('View Privacy Policy'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactHelpSupportCard extends StatelessWidget {
+  const _ReactHelpSupportCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      title: 'Help & Support',
+      subtitle: 'Get help and learn about features',
+      icon: Icons.help_outline_rounded,
+      child: Column(
+        children: [
+          _HelpButton(
+            icon: Icons.help_outline_rounded,
+            label: 'View User Guide',
+            onPressed: () => context.push('/resources'),
+          ),
+          _HelpButton(
+            icon: Icons.volume_up_outlined,
+            label: 'Accessibility Tutorial',
+            onPressed: () => context.push('/resources'),
+          ),
+          _HelpButton(
+            icon: Icons.star_outline_rounded,
+            label: 'Feature Walkthrough',
+            onPressed: () => context.push('/resources'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HelpButton extends StatelessWidget {
+  const _HelpButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 17),
+          label: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(label),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactProtectedSwitchRow extends StatelessWidget {
+  const _ReactProtectedSwitchRow({
+    required this.state,
+    required this.settingKey,
+    required this.label,
+    required this.icon,
+    required this.value,
+    required this.activeColor,
+  });
+
+  final SettingsState state;
+  final String settingKey;
+  final String label;
+  final IconData icon;
+  final bool value;
+  final Color activeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = _isLocalSettingLocked(state, settingKey);
+    return _ReactSwitchRow(
+      label: label,
+      icon: icon,
+      activeColor: activeColor,
+      value: value,
+      locked: locked,
+      onChanged: locked
+          ? null
+          : (nextValue) => _updateLocal(context, settingKey, nextValue),
+    );
+  }
+}
+
+class _ReactSwitchRow extends StatelessWidget {
+  const _ReactSwitchRow({
+    required this.label,
+    required this.icon,
+    required this.activeColor,
+    required this.value,
+    required this.onChanged,
+    this.locked = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color activeColor;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = value && !locked;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: locked
+            ? const Color(0xFFF3F4F6)
+            : value
+                ? activeColor.withAlpha(22)
+                : Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: locked
+              ? const Color(0xFF9CA3AF)
+              : value
+                  ? activeColor.withAlpha(130)
+                  : const Color(0xFFD1D5DB),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: locked ? const Color(0xFF9CA3AF) : activeColor, size: 19),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Wrap(
+              spacing: 7,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: locked ? const Color(0xFF6B7280) : const Color(0xFF1F2937),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (enabled)
+                  _ReactBadge(label: 'ACTIVE', color: activeColor),
+                if (locked)
+                  const _ReactBadge(label: 'LOCKED', color: Color(0xFF6B7280)),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: locked ? null : onChanged,
+            activeColor: activeColor,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactBadge extends StatelessWidget {
+  const _ReactBadge({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withAlpha(30),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsActionButtons extends StatelessWidget {
+  const _SettingsActionButtons({required this.state});
+
+  final SettingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<SettingsBloc>();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 52),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          OutlinedButton.icon(
+            onPressed: state.isSaving
+                ? null
+                : () => bloc.add(const ResetSettingsRequested()),
+            icon: const Icon(Icons.restart_alt_rounded, size: 17),
+            label: const Text('Reset to Defaults'),
+          ),
+          FilledButton.icon(
+            onPressed: state.isSaving
+                ? null
+                : () => bloc.add(const SaveSettingsRequested()),
+            icon: const Icon(Icons.save_outlined, size: 17),
+            label: Text(state.isSaving ? 'Saving...' : 'Save Settings'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1349,6 +2094,19 @@ String _humanize(String value) => value
     .split('_')
     .map((part) => part.isEmpty ? part : '${part[0].toUpperCase()}${part.substring(1)}')
     .join(' ');
+
+String _subscriptionMessage(String? platform) {
+  switch (platform) {
+    case 'app_store':
+      return 'Manage or cancel from your Apple ID subscription settings.';
+    case 'google_play':
+      return 'Manage or cancel from your Google Play subscription settings.';
+    case 'web':
+      return 'Manage or cancel your subscription from the Adaptalyfe website.';
+    default:
+      return 'Your subscription is active.';
+  }
+}
 
 Color _colorForScheme(String scheme) {
   switch (scheme) {

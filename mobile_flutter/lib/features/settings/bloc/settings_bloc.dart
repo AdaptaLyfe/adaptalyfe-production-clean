@@ -22,6 +22,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<UpdateCaregiverPermission>(_updateCaregiverPermission);
     on<RedeemOrganizationCode>(_redeemOrganizationCode);
     on<DeleteAccountRequested>(_deleteAccount);
+    on<ResetSettingsRequested>(_resetSettings);
+    on<SaveSettingsRequested>(_saveSettings);
+    on<TestVoiceSettingsRequested>(_testVoiceSettings);
   }
 
   final SettingsRepository repository;
@@ -378,6 +381,125 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     } catch (error) {
       _emitUnexpectedActionError(emit, error, 'delete');
     }
+  }
+
+  Future<void> _resetSettings(
+    ResetSettingsRequested event,
+    Emitter<SettingsState> emit,
+  ) async {
+    const defaults = UserPreferences(
+      notificationSettings: {
+        'notificationsEnabled': true,
+      },
+      reminderTiming: {
+        'defaultMinutes': 15,
+        'taskReminders': true,
+        'overdueReminders': true,
+      },
+      themeSettings: {
+        'theme': 'light',
+        'colorScheme': 'default',
+        'fontSize': 16,
+        'highContrast': false,
+      },
+      accessibilitySettings: {
+        'voiceGuidance': true,
+        'speechRate': 1.0,
+        'voiceVolume': 0.8,
+      },
+      behaviorPatterns: {
+        'preferredTaskTime': 'anytime',
+        'reminderStyle': 'standard',
+        'motivationLevel': 'moderate',
+        'supportLevel': 'standard',
+      },
+    );
+
+    emit(
+      state.copyWith(
+        status: SettingsStatus.saving,
+        busyKey: 'reset',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+
+    try {
+      final preferences = await repository.updatePreferences(
+        _preferencesPayload(defaults),
+      );
+      await repository.saveLocalSettings(const LocalUserSettings());
+      emit(
+        state.copyWith(
+          status: SettingsStatus.loaded,
+          preferences: preferences,
+          localSettings: const LocalUserSettings(),
+          busyKey: null,
+          actionMessage: 'All settings have been reset to defaults.',
+        ),
+      );
+    } on ApiException catch (error) {
+      _emitActionError(emit, error, 'reset');
+    } catch (error) {
+      _emitUnexpectedActionError(emit, error, 'reset');
+    }
+  }
+
+  Future<void> _saveSettings(
+    SaveSettingsRequested event,
+    Emitter<SettingsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: SettingsStatus.saving,
+        busyKey: 'save',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+
+    try {
+      final preferences = await repository.updatePreferences(
+        _preferencesPayload(state.preferences),
+      );
+      await repository.saveLocalSettings(state.localSettings);
+      emit(
+        state.copyWith(
+          status: SettingsStatus.loaded,
+          preferences: preferences,
+          busyKey: null,
+          actionMessage: 'Your preferences have been saved successfully.',
+        ),
+      );
+    } on ApiException catch (error) {
+      _emitActionError(emit, error, 'save');
+    } catch (error) {
+      _emitUnexpectedActionError(emit, error, 'save');
+    }
+  }
+
+  Future<void> _testVoiceSettings(
+    TestVoiceSettingsRequested event,
+    Emitter<SettingsState> emit,
+  ) async {
+    final rate =
+        state.accessibility['voiceSpeed'] ?? state.accessibility['speechRate'] ?? 1.0;
+    emit(
+      state.copyWith(
+        actionMessage: 'Voice settings test requested at ${rate}x speed.',
+        errorMessage: null,
+      ),
+    );
+  }
+
+  Map<String, dynamic> _preferencesPayload(UserPreferences preferences) {
+    return {
+      'notificationSettings': preferences.notificationSettings,
+      'reminderTiming': preferences.reminderTiming,
+      'themeSettings': preferences.themeSettings,
+      'accessibilitySettings': preferences.accessibilitySettings,
+      'behaviorPatterns': preferences.behaviorPatterns,
+    };
   }
 
   void _emitActionError(

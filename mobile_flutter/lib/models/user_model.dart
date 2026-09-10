@@ -10,6 +10,7 @@ class UserModel {
     this.accountType,
     this.subscriptionTier,
     this.subscriptionStatus,
+    this.subscriptionPlatform,
   });
 
   final int id;
@@ -22,6 +23,7 @@ class UserModel {
   final String? accountType;
   final String? subscriptionTier;
   final String? subscriptionStatus;
+  final String? subscriptionPlatform;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
@@ -43,6 +45,7 @@ class UserModel {
       accountType: json['accountType'] as String?,
       subscriptionTier: json['subscriptionTier'] as String?,
       subscriptionStatus: json['subscriptionStatus'] as String?,
+      subscriptionPlatform: json['subscriptionPlatform'] as String?,
     );
   }
 
