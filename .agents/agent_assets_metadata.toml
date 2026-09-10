@@ -379,3 +379,17 @@ mtime_ms = 1789045384684
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/74b0acd7-a9db-43b6-ac5a-5b001299a578/821acc8b-0f75-464d-848d-2c65e1f3b440"
 storage_version_token = "1789045389907654"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "R4FPbeJPvZTBIyuGJeMpw"
+uri = "file://flutter-home-mood-react-parity-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood React parity fix"
+description = "ZIP containing the corrected Flutter Home widget. The full Mood Log remains visible during loading, matching the React mobile behavior."
+logical_id = "ba7ff8be-ae63-4af7-939f-18cebcb7cf46"
+content_hash = "sha256:a335e66b21e8b852aced11f1943d6fcfca88bd02930cc72820385a2d14301b29"
+size = 22247
+mtime_ms = 1789045466984
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba7ff8be-ae63-4af7-939f-18cebcb7cf46/576e0006-5485-473a-9209-3351eb4ded1f"
+storage_version_token = "1789045474517390"
+content_type = "application/octet-stream"
