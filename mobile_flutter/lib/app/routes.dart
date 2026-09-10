@@ -42,6 +42,7 @@ import '../features/financial/data/financial_repository.dart';
 import '../features/financial/presentation/financial_screen.dart';
 import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
+import '../features/home/data/home_quick_actions_store.dart';
 import '../features/home/data/home_repository.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/medical/bloc/medical_bloc.dart';
@@ -387,10 +388,12 @@ class _AuthRouterRefresh extends ChangeNotifier {
 
 HomeRepository _createHomeRepository() {
   final localStorage = LocalStorage();
+  final client = ApiClient(localStorage: localStorage);
   return HomeRepository(
-    CurrentUserApi(
-      ApiClient(localStorage: localStorage),
-    ),
+    CurrentUserApi(client),
+    client,
+    const DashboardLayoutStore(),
+    const HomeQuickActionsStore(),
   );
 }
 

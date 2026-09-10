@@ -19,6 +19,7 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import 'home_dashboard_widgets.dart';
+import 'home_extended_widgets.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -55,6 +56,19 @@ class HomeScreen extends StatelessWidget {
             homeState: state,
             onRefresh: () => _refreshDashboard(context),
           ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              showDragHandle: true,
+              builder: (_) => const HomeChatSheet(),
+            ),
+            backgroundColor: const Color(0xFF059669),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.auto_awesome_rounded),
+            label: const Text('AdaptAI'),
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
     );
@@ -88,6 +102,13 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       foregroundColor: const Color(0xFF111827),
       elevation: 2,
       shadowColor: const Color(0x18000000),
+      leading: IconButton(
+        tooltip: 'Open menu',
+        onPressed: () {
+          context.findRootAncestorStateOfType<ScaffoldState>()?.openDrawer();
+        },
+        icon: const Icon(Icons.menu_rounded),
+      ),
       titleSpacing: 8,
       title: Row(
         children: [

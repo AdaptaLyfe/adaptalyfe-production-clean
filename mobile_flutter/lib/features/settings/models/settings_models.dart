@@ -372,6 +372,34 @@ const defaultDashboardModules = <DashboardModuleModel>[
     enabled: false,
     order: 8,
   ),
+  DashboardModuleModel(
+    id: 'safety',
+    name: 'Safety & Transportation',
+    component: 'SafetyTransportationModule',
+    enabled: false,
+    order: 9,
+  ),
+  DashboardModuleModel(
+    id: 'health',
+    name: 'Health & Wellness',
+    component: 'HealthWellnessModule',
+    enabled: false,
+    order: 10,
+  ),
+  DashboardModuleModel(
+    id: 'life-skills',
+    name: 'Life Skills',
+    component: 'LifeSkillsModule',
+    enabled: false,
+    order: 11,
+  ),
+  DashboardModuleModel(
+    id: 'progress',
+    name: 'Progress & Motivation',
+    component: 'ProgressMotivationModule',
+    enabled: false,
+    order: 12,
+  ),
 ];
 
 class SettingsLockInput {

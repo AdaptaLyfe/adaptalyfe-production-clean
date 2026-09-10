@@ -211,3 +211,17 @@ mtime_ms = 1789027554299
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6ef8824f-75ca-4b9c-91aa-9cf4e4acb5f0/b7df169e-47d6-4291-b7d8-b1966cea2ca6"
 storage_version_token = "1789027558989214"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XJMbMUycVohwVXhCRyfgF"
+uri = "file://flutter-home-migration.zip"
+type = "unspecified"
+title = "Flutter Home migration"
+description = "Updated Flutter project with the same-to-same Home dashboard surfaces, live Daily Guide, configurable quick actions and modules, Today flow, AdaptAI chat, and action confirmation."
+logical_id = "94f415c0-183b-4d18-9d66-a28723481bc2"
+content_hash = "sha256:02669465919d128787bb51fbef2e345299ac5aa5f42f146c19fcd56b0039d830"
+size = 401179
+mtime_ms = 1789028949683
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/94f415c0-183b-4d18-9d66-a28723481bc2/76f59cd9-5591-4801-9c63-15c2fc655060"
+storage_version_token = "1789028956110086"
+content_type = "application/octet-stream"

@@ -18,6 +18,7 @@ import '../../mood/bloc/mood_state.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_state.dart';
 import '../bloc/home_state.dart';
+import 'home_extended_widgets.dart';
 
 class HomeDashboardBody extends StatelessWidget {
   const HomeDashboardBody({
@@ -76,17 +77,13 @@ class HomeDashboardBody extends StatelessWidget {
                 ),
               ),
             if (user != null) ...[
-              const HomeQuickActions(),
+              const HomeConfigurableQuickActions(),
               const SizedBox(height: 20),
-              HomeTodayFlow(user: user),
+              HomeTodayFlowRich(user: user),
               const SizedBox(height: 20),
-              const HomeDailyGuide(),
+              const HomeLiveDailyGuide(),
               const SizedBox(height: 20),
-              const HomeDailySummary(),
-              const SizedBox(height: 20),
-              const HomeTasksModule(),
-              const SizedBox(height: 20),
-              const HomeMoodModule(),
+              const HomeDashboardModules(),
             ],
           ],
         ),
