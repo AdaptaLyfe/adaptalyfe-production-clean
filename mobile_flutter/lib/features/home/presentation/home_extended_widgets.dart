@@ -1669,55 +1669,596 @@ class _HomeTasksModule extends StatelessWidget {
   }
 }
 
-class _HomeMoodModule extends StatelessWidget {
+class _HomeMoodModule extends StatefulWidget {
   const _HomeMoodModule();
 
   @override
+  State<_HomeMoodModule> createState() => _HomeMoodModuleState();
+}
+
+class _HomeMoodModuleState extends State<_HomeMoodModule> {
+  static const _moods = [
+    (1, '😢', 'Sad'),
+    (2, '😐', 'Okay'),
+    (3, '😊', 'Good'),
+    (4, '😃', 'Great'),
+    (5, '🤩', 'Amazing'),
+  ];
+
+  int? _pendingMood;
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MoodBloc, MoodState>(
+    return BlocConsumer<MoodBloc, MoodState>(
+      listenWhen: (previous, current) =>
+          previous.actionMessage != current.actionMessage,
+      listener: (context, state) {
+        if (state.actionMessage?.startsWith('Mood recorded') == true &&
+            _pendingMood != null) {
+          final mood = _pendingMood!;
+          _pendingMood = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _showMoodConfirmation(context, mood);
+            }
+          });
+        }
+      },
       builder: (context, state) {
-        final moods = <int, String>{1: 'Sad', 2: 'Okay', 3: 'Good', 4: 'Great', 5: 'Amazing'};
-        return _SurfaceCard(
+        final isRequired = state.isMoodRequired;
+        final currentMood = state.todayMood?.mood;
+        final borderColor =
+            isRequired ? const Color(0xFFF87171) : const Color(0xFF8B5CF6);
+        final backgroundColor =
+            isRequired ? const Color(0xFFFFF7F7) : Colors.white;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border(
+              top: BorderSide(color: borderColor, width: 4),
+              left: BorderSide(
+                color: isRequired
+                    ? const Color(0xFFFECACA)
+                    : const Color(0xFFE5E7EB),
+              ),
+              right: BorderSide(
+                color: isRequired
+                    ? const Color(0xFFFECACA)
+                    : const Color(0xFFE5E7EB),
+              ),
+              bottom: BorderSide(
+                color: isRequired
+                    ? const Color(0xFFFECACA)
+                    : const Color(0xFFE5E7EB),
+              ),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isRequired
+                    ? const Color(0x33FCA5A5)
+                    : const Color(0x0D111827),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ModuleHeader(
-                title: 'Mood Log',
-                icon: Icons.favorite_outline_rounded,
-                action: TextButton(
-                  onPressed: () => context.push('/mood-tracking'),
-                  child: Text(state.isMoodRequired ? 'Required check-in' : 'Open'),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isRequired
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF8B5CF6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: Colors.white,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'Mood Log',
+                              style: TextStyle(
+                                color: Color(0xFF111827),
+                                fontSize: 19,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (isRequired)
+                              const _HomeMoodBadge(
+                                label: 'Required',
+                                color: Color(0xFFDC2626),
+                                background: Color(0xFFFEE2E2),
+                              ),
+                          ],
+                        ),
+                        if (isRequired)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Text(
+                              'Daily mood check-in is required to continue',
+                              style: TextStyle(
+                                color: Color(0xFFDC2626),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => context.push('/mood-tracking'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isRequired
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFF8B5CF6),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 11,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: Text(
+                      isRequired ? 'Required Check-in' : 'Check In Now',
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                state.todayMood == null
-                    ? 'How are you feeling today?'
-                    : 'Today: ${moods[state.todayMood!.mood] ?? 'Logged'}',
-                style: const TextStyle(color: Color(0xFF475569)),
+              const SizedBox(height: 18),
+              const Text(
+                'How are you feeling today?',
+                style: TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 10),
-              if (state.isMoodRequired)
-                Wrap(
-                  spacing: 8,
-                  children: moods.entries.map((entry) => ActionChip(
-                        label: Text('${entry.value} ${_moodEmoji(entry.key)}'),
-                        onPressed: state.isSubmitting
-                            ? null
-                            : () => context
-                                .read<MoodBloc>()
-                                .add(AddMood(MoodEntryInput(mood: entry.key))),
-                      )).toList(),
-                )
-              else
-                const _InlineNotice(
-                  icon: Icons.check_circle_rounded,
-                  text: 'Daily check-in recorded. You can update it from Mood Tracking.',
+              Row(
+                children: _moods
+                    .map(
+                      (mood) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: _HomeMoodChoice(
+                            emoji: mood.$2,
+                            label: mood.$3,
+                            selected: currentMood == mood.$1,
+                            disabled: state.isSubmitting || currentMood != null,
+                            onPressed: () {
+                              _pendingMood = mood.$1;
+                              context.read<MoodBloc>().add(
+                                    AddMood(
+                                      MoodEntryInput(mood: mood.$1),
+                                    ),
+                                  );
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Quick Resources',
+                style: TextStyle(
+                  color: Color(0xFF1F2937),
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+              const SizedBox(height: 10),
+              _HomeMoodResourceButton(
+                icon: Icons.air_rounded,
+                label: 'Breathing Exercise',
+                onPressed: () => context.push('/resources'),
+              ),
+              const SizedBox(height: 8),
+              _HomeMoodResourceButton(
+                icon: Icons.lightbulb_outline_rounded,
+                label: 'Coping Strategies',
+                onPressed: () => context.push('/resources'),
+              ),
+              const SizedBox(height: 8),
+              _HomeMoodResourceButton(
+                icon: Icons.phone_outlined,
+                label: 'Trusted Contacts',
+                onPressed: () => context.push('/resources'),
+                danger: true,
+              ),
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  state.errorMessage!,
+                  style: const TextStyle(
+                    color: Color(0xFFB91C1C),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ],
           ),
         );
       },
     );
+  }
+
+  Future<void> _showMoodConfirmation(BuildContext context, int mood) {
+    final feedback = _homeMoodFeedback(mood);
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: feedback.colors),
+              ),
+              child: Row(
+                children: [
+                  Text(feedback.emoji, style: const TextStyle(fontSize: 38)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          feedback.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          "You're feeling ${feedback.label.toLowerCase()} today",
+                          style: const TextStyle(
+                            color: Color(0xDFFFFFFF),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
+              child: Text(
+                feedback.message,
+                style: const TextStyle(
+                  color: Color(0xFF374151),
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+              ),
+            ),
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Color(0xFFF59E0B),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Daily Tip',
+                          style: TextStyle(
+                            color: Color(0xFF92400E),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          feedback.tip,
+                          style: const TextStyle(
+                            color: Color(0xFFB45309),
+                            fontSize: 13,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: feedback.colors.last,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it, thanks!',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Your mood has been recorded for today.',
+                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMoodChoice extends StatelessWidget {
+  const _HomeMoodChoice({
+    required this.emoji,
+    required this.label,
+    required this.selected,
+    required this.disabled,
+    required this.onPressed,
+  });
+
+  final String emoji;
+  final String label;
+  final bool selected;
+  final bool disabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final faded = disabled && !selected;
+    return Opacity(
+      opacity: faded ? 0.5 : 1,
+      child: OutlinedButton(
+        onPressed: disabled ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
+          backgroundColor:
+              selected ? const Color(0xFFF5F3FF) : Colors.white,
+          foregroundColor: const Color(0xFF374151),
+          disabledForegroundColor: const Color(0xFF374151),
+          side: BorderSide(
+            color: selected
+                ? const Color(0xFF8B5CF6)
+                : const Color(0xFFE5E7EB),
+            width: selected ? 2 : 1,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 23)),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMoodResourceButton extends StatelessWidget {
+  const _HomeMoodResourceButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        danger ? const Color(0xFFDC2626) : const Color(0xFF8B5CF6);
+    final background =
+        danger ? const Color(0xFFFFF7F7) : const Color(0xFFFAF5FF);
+    final border = danger ? const Color(0xFFFECACA) : const Color(0xFFE9D5FF);
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, color: color, size: 18),
+        label: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF111827),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          alignment: Alignment.centerLeft,
+          backgroundColor: background,
+          side: BorderSide(color: border),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMoodBadge extends StatelessWidget {
+  const _HomeMoodBadge({
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  final String label;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeMoodFeedback {
+  const _HomeMoodFeedback({
+    required this.label,
+    required this.emoji,
+    required this.title,
+    required this.message,
+    required this.tip,
+    required this.colors,
+  });
+
+  final String label;
+  final String emoji;
+  final String title;
+  final String message;
+  final String tip;
+  final List<Color> colors;
+}
+
+_HomeMoodFeedback _homeMoodFeedback(int mood) {
+  switch (mood) {
+    case 1:
+      return const _HomeMoodFeedback(
+        label: 'Sad',
+        emoji: '😢',
+        title: 'We hear you',
+        message:
+            "It's okay to have tough days. You're not alone, and checking in shows real strength.",
+        tip:
+            'Try a breathing exercise or reach out to a trusted contact. Small steps matter.',
+        colors: [Color(0xFF60A5FA), Color(0xFF2563EB)],
+      );
+    case 2:
+      return const _HomeMoodFeedback(
+        label: 'Okay',
+        emoji: '😐',
+        title: 'Hanging in there',
+        message:
+            'Neutral days are part of the journey. You showed up and that counts!',
+        tip: 'A short walk or a favorite song can give your mood a gentle boost.',
+        colors: [Color(0xFF2DD4BF), Color(0xFF0D9488)],
+      );
+    case 3:
+      return const _HomeMoodFeedback(
+        label: 'Good',
+        emoji: '😊',
+        title: 'Looking good!',
+        message: "You're feeling positive today — keep that energy going!",
+        tip:
+            'Write down one thing you’re grateful for to hold onto this feeling.',
+        colors: [Color(0xFF4ADE80), Color(0xFF059669)],
+      );
+    case 4:
+      return const _HomeMoodFeedback(
+        label: 'Great',
+        emoji: '😃',
+        title: 'What a great day!',
+        message:
+            "You're doing amazing! Your positivity is something to celebrate.",
+        tip:
+            'Share your good mood with someone — happiness is contagious!',
+        colors: [Color(0xFFC084FC), Color(0xFF9333EA)],
+      );
+    default:
+      return const _HomeMoodFeedback(
+        label: 'Amazing',
+        emoji: '🤩',
+        title: "You're on fire!",
+        message:
+            'Incredible energy today! You should be so proud of yourself.',
+        tip: "Channel this energy into a goal or challenge — you've got this!",
+        colors: [Color(0xFFFBBF24), Color(0xFFF97316)],
+      );
   }
 }
 
