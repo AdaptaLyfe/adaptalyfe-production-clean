@@ -2093,7 +2093,22 @@ class _HomeMoodChoice extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 23)),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 23)),
+                if (selected)
+                  const Positioned(
+                    top: -4,
+                    right: -8,
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF8B5CF6),
+                      size: 14,
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 3),
             Text(
               label,
