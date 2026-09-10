@@ -212,7 +212,10 @@ class HomeConfigurableQuickActions extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => const HomeChatSheet(),
+      builder: (_) => BlocProvider.value(
+        value: context.read<HomeBloc>(),
+        child: const HomeChatSheet(),
+      ),
     );
   }
 }
