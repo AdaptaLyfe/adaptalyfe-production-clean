@@ -337,3 +337,17 @@ mtime_ms = 1789043348917
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0606c581-ae47-49a5-9306-799e7de5abe7/8168a3db-16ee-48a0-adc4-b965222d5d6b"
 storage_version_token = "1789043353027157"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "H8yMVdlKSDkWvXzAuP-Zh"
+uri = "file://flutter-home-mood-reference-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood reference fix"
+description = "ZIP containing the changed Flutter Home Mood Log file styled to match the attached reference."
+logical_id = "8c52a6f1-c0bc-424b-af08-0e6dbfeccd44"
+content_hash = "sha256:8e57421dadaf2a39e5e0778ae47959ecd4f4dcff6f12e6475922ec895f136742"
+size = 22074
+mtime_ms = 1789044355932
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8c52a6f1-c0bc-424b-af08-0e6dbfeccd44/28ed1994-5659-4e0b-80f6-c28fade2136e"
+storage_version_token = "1789044359937508"
+content_type = "application/octet-stream"
