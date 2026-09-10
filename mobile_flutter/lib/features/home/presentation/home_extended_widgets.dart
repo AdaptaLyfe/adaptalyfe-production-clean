@@ -1473,12 +1473,17 @@ class HomeDashboardModules extends StatelessWidget {
   }
 
   Widget _module(BuildContext context, DashboardModuleModel module) {
-    switch (module.id) {
+    final moduleId = module.id.toLowerCase();
+    switch (moduleId) {
       case 'daily-summary':
         return const _HomeSummaryModule();
       case 'daily-tasks':
         return const _HomeTasksModule();
       case 'mood':
+      case 'moodmodule':
+      case 'mood-module':
+      case 'moodlog':
+      case 'mood-log':
         return const _HomeMoodModule();
       case 'financial':
         return const _HomeFinancialModule();
@@ -1690,6 +1695,55 @@ class _HomeTasksModule extends StatelessWidget {
   }
 }
 
+class _HomeMoodLoadingCard extends StatelessWidget {
+  const _HomeMoodLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3F3),
+        borderRadius: BorderRadius.circular(24),
+        border: const Border(
+          top: BorderSide(color: Color(0xFFF87171), width: 7),
+          left: BorderSide(color: Color(0xFFFECACA), width: 2),
+          right: BorderSide(color: Color(0xFFFECACA), width: 2),
+          bottom: BorderSide(color: Color(0xFFFECACA), width: 2),
+        ),
+      ),
+      child: const Row(
+        children: [
+          Icon(
+            Icons.favorite_border_rounded,
+            color: Color(0xFFEF4444),
+            size: 28,
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Mood Log',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFFEF4444),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _HomeMoodModule extends StatefulWidget {
   const _HomeMoodModule();
 
@@ -1726,6 +1780,10 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
         }
       },
       builder: (context, state) {
+        if (state.status == MoodStatus.initial || state.isLoading) {
+          return const _HomeMoodLoadingCard();
+        }
+
         final isRequired = state.isMoodRequired;
         final currentMood = state.todayMood?.mood;
         final borderColor =
