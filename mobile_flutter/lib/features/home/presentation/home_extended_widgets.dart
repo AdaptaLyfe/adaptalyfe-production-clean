@@ -1741,6 +1741,7 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
                     ? const Color(0x33FCA5A5)
                     : const Color(0x0D111827),
                 blurRadius: 8,
+                spreadRadius: isRequired ? 2 : 0,
                 offset: const Offset(0, 3),
               ),
             ],
@@ -1763,7 +1764,7 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
                     child: const Icon(
                       Icons.favorite_rounded,
                       color: Colors.white,
-                      size: 21,
+                      size: 18,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -2075,7 +2076,8 @@ class _HomeMoodChoice extends StatelessWidget {
       child: OutlinedButton(
         onPressed: disabled ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 2),
+          minimumSize: const Size(0, 64),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
           backgroundColor:
               selected ? const Color(0xFFF5F3FF) : Colors.white,
           foregroundColor: const Color(0xFF374151),
@@ -2093,29 +2095,34 @@ class _HomeMoodChoice extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 23)),
-                if (selected)
-                  const Positioned(
-                    top: -4,
-                    right: -8,
-                    child: Icon(
-                      Icons.check_circle_rounded,
-                      color: Color(0xFF8B5CF6),
-                      size: 14,
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 23)),
+                    if (selected)
+                      const Positioned(
+                        top: -2,
+                        right: -4,
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          color: Color(0xFF8B5CF6),
+                          size: 14,
+                        ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 10),
-            ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10),
+              ),
           ],
         ),
       ),
