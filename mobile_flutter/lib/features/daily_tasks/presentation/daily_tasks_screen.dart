@@ -441,19 +441,24 @@ class _CategoryCard extends StatelessWidget {
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         side: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+      child: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Color(0xFFD1D5DB), width: 4),
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  width: 28,
-                  height: 28,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: _categoryColor(category),
                     borderRadius: BorderRadius.circular(8),
@@ -465,13 +470,13 @@ class _CategoryCard extends StatelessWidget {
                     '${_prettyLabel(category)} Tasks',
                     style: const TextStyle(
                       color: Color(0xFF1F2937),
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 Text(
-                  '$completed/${tasks.length}',
+                  '($completed/${tasks.length})',
                   style: const TextStyle(
                     color: Color(0xFF6B7280),
                     fontSize: 13,
@@ -524,16 +529,11 @@ class _TaskTile extends StatelessWidget {
     final isBusy = isActive && state.action != DailyTaskAction.none;
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: task.isCompleted ? const Color(0xFFF0FDF4) : const Color(0xFFF9FAFB),
+        color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: task.isCompleted
-              ? const Color(0xFFBBF7D0)
-              : const Color(0xFFE5E7EB),
-        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,12 +552,20 @@ class _TaskTile extends StatelessWidget {
                           ToggleDailyTask(
                             taskId: task.id,
                             isCompleted: !task.isCompleted,
+                          pointValue: task.pointValue,
                           ),
                         );
                   }
                 : null,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            style: IconButton.styleFrom(
+              backgroundColor: task.isCompleted
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFF22C55E),
+              foregroundColor: Colors.white,
+              shape: const CircleBorder(),
+            ),
             icon: isBusy
                 ? const SizedBox(
                     width: 20,
@@ -568,13 +576,11 @@ class _TaskTile extends StatelessWidget {
                     task.isCompleted
                         ? Icons.check_circle_rounded
                         : Icons.radio_button_unchecked_rounded,
-                    color: task.isCompleted
-                        ? const Color(0xFF16A34A)
-                        : const Color(0xFF22C55E),
+                    color: Colors.white,
                     size: 26,
                   ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,8 +589,8 @@ class _TaskTile extends StatelessWidget {
                   task.title,
                   style: TextStyle(
                     color: const Color(0xFF111827),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                     decoration: task.isCompleted
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
@@ -633,29 +639,40 @@ class _TaskTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 4),
-          Column(
+          const SizedBox(width: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
+              _TaskActionButton(
                 tooltip: 'Edit task',
+                icon: Icons.edit_outlined,
+                color: const Color(0xFF2563EB),
                 onPressed: state.action == DailyTaskAction.none
                     ? () => _editTask(context)
                     : null,
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: Color(0xFF2563EB),
-                ),
               ),
-              IconButton(
+              _TaskActionButton(
                 tooltip: 'Delete task',
+                icon: Icons.delete_outline_rounded,
+                color: const Color(0xFFDC2626),
                 onPressed: state.action == DailyTaskAction.none
                     ? () => _deleteTask(context)
                     : null,
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Color(0xFFDC2626),
-                ),
               ),
+              if (task.isCompleted)
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF59E0B),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.star_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
             ],
           ),
         ],
@@ -750,6 +767,31 @@ class _TaskMetadata extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _TaskActionButton extends StatelessWidget {
+  const _TaskActionButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+      icon: Icon(icon, color: color, size: 18),
     );
   }
 }

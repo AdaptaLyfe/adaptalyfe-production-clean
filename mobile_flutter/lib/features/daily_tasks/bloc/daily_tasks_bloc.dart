@@ -152,9 +152,11 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
       await repository.updateCompletion(event.taskId, event.isCompleted);
       await _reloadAfterMutation(
         emit,
-        successMessage: event.isCompleted
-            ? 'Great job staying on track!'
-            : 'Task marked as incomplete.',
+        successMessage: event.isCompleted && event.pointValue > 0
+            ? 'Excellent! You earned ${event.pointValue} points for completing this task!'
+            : event.isCompleted
+                ? 'Great job staying on track!'
+                : 'Task updated!',
       );
     } catch (error) {
       _emitActionError(emit, error, 'Failed to update task. Please try again.');
@@ -165,18 +167,26 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     Emitter<DailyTasksState> emit, {
     required String successMessage,
   }) async {
-    final tasks = await repository.getTasks();
-    emit(
-      state.copyWith(
-        status: DailyTasksStatus.loaded,
-        tasks: tasks,
-        action: DailyTaskAction.none,
-        activeTaskId: null,
-        errorMessage: null,
-        actionMessage: successMessage,
-        sessionInvalid: false,
-      ),
-    );
+    try {
+      final tasks = await repository.getTasks();
+      emit(
+        state.copyWith(
+          status: DailyTasksStatus.loaded,
+          tasks: tasks,
+          action: DailyTaskAction.none,
+          activeTaskId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionError(
+        emit,
+        error,
+        'The task changed, but the list could not be refreshed.',
+      );
+    }
   }
 
   void _emitActionError(

@@ -393,3 +393,17 @@ mtime_ms = 1789045466984
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba7ff8be-ae63-4af7-939f-18cebcb7cf46/576e0006-5485-473a-9209-3351eb4ded1f"
 storage_version_token = "1789045474517390"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_LOMNetFLDWda33pnpKMs"
+uri = "file://flutter-daily-task-screen-parity.zip"
+type = "unspecified"
+title = "Flutter Daily Task screen parity package"
+description = "Complete mobile_flutter project with the Daily Tasks screen migrated to Flutter + BLoC, existing API integration, forms, task actions, states, and navigation."
+logical_id = "cf2fe3d8-a31e-4633-ba46-01c920fd4dd9"
+content_hash = "sha256:12515639ea078936445ba3dfea5e88cf466457c8af1a8c17a5cc34f056d95aec"
+size = 421342
+mtime_ms = 1789046179684
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cf2fe3d8-a31e-4633-ba46-01c920fd4dd9/d8361119-8ed0-4795-9ff6-81dbe54d11db"
+storage_version_token = "1789046183697477"
+content_type = "application/octet-stream"

@@ -52,11 +52,13 @@ final class ToggleDailyTask extends DailyTasksEvent {
   const ToggleDailyTask({
     required this.taskId,
     required this.isCompleted,
+    this.pointValue = 0,
   });
 
   final int taskId;
   final bool isCompleted;
+  final int pointValue;
 
   @override
-  List<Object?> get props => [taskId, isCompleted];
+  List<Object?> get props => [taskId, isCompleted, pointValue];
 }
