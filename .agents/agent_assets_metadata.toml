@@ -169,3 +169,17 @@ mtime_ms = 1788957668486
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/172ace29-3da8-4107-9317-8b348557cb9d/972eaf51-7cad-4c50-9643-03c8b8a29af9"
 storage_version_token = "1788957673686002"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nbfRRfT88zrIV_67-GgCU"
+uri = "file://flutter-home-dashboard-updated.zip"
+type = "unspecified"
+title = "Updated Flutter Home dashboard source"
+description = "Download the Flutter source with the completed Home dashboard migration, route BLoC providers, refreshed Home screen, and streak parsing updates."
+logical_id = "05f6dac8-f540-4fe6-b69d-f7ef27c29c9f"
+content_hash = "sha256:8c84bd73931113f385f22555e4ca8654ad1d59ca43854985a28602118898c7dc"
+size = 377965
+mtime_ms = 1789022670191
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05f6dac8-f540-4fe6-b69d-f7ef27c29c9f/29f5590c-9564-4f22-87b3-6a1677f505b5"
+storage_version_token = "1789022673903225"
+content_type = "application/octet-stream"
