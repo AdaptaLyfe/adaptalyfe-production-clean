@@ -39,58 +39,79 @@ class HomeConfigurableQuickActions extends StatelessWidget {
         return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1F2937),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const heading = Text(
+                    'Quick Actions',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF1F2937),
+                    ),
+                  );
+                  final controls = Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _editQuickActions(
+                          context,
+                          state.quickActions,
+                          title: 'Reorder Quick Actions',
+                        ),
+                        icon: const Icon(
+                          Icons.drag_indicator_rounded,
+                          size: 18,
+                        ),
+                        label: const Text('Reorder'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF374151),
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 13),
+                        ),
                       ),
-                    ),
-                  ),
-                  Flexible(
-                    child: Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: 8,
-                      runSpacing: 6,
+                      OutlinedButton.icon(
+                        onPressed: () => _editQuickActions(
+                          context,
+                          state.quickActions,
+                          title: 'Customize Quick Actions',
+                        ),
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        label: const Text('Customize'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF374151),
+                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                          shape: const StadiumBorder(),
+                          padding: const EdgeInsets.symmetric(horizontal: 13),
+                        ),
+                      ),
+                    ],
+                  );
+
+                  if (constraints.maxWidth < 520) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: () => _editQuickActions(
-                            context,
-                            state.quickActions,
-                            title: 'Reorder Quick Actions',
-                          ),
-                          icon: const Icon(Icons.drag_indicator_rounded, size: 18),
-                          label: const Text('Reorder'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF374151),
-                            side: const BorderSide(color: Color(0xFFD1D5DB)),
-                            shape: const StadiumBorder(),
-                            padding: const EdgeInsets.symmetric(horizontal: 13),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => _editQuickActions(
-                            context,
-                            state.quickActions,
-                            title: 'Customize Quick Actions',
-                          ),
-                          icon: const Icon(Icons.tune_rounded, size: 18),
-                          label: const Text('Customize'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF374151),
-                            side: const BorderSide(color: Color(0xFFD1D5DB)),
-                            shape: const StadiumBorder(),
-                            padding: const EdgeInsets.symmetric(horizontal: 13),
-                          ),
-                        ),
+                        heading,
+                        const SizedBox(height: 8),
+                        controls,
                       ],
-                    ),
-                  ),
-                ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      const Expanded(child: heading),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: controls,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 12),
               if (visible.isEmpty)

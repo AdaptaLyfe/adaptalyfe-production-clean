@@ -351,3 +351,17 @@ mtime_ms = 1789044355932
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8c52a6f1-c0bc-424b-af08-0e6dbfeccd44/28ed1994-5659-4e0b-80f6-c28fade2136e"
 storage_version_token = "1789044359937508"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "V2UBbQsyjMp6f4-tAG9mP"
+uri = "file://flutter-home-quick-actions-layout-fix.zip"
+type = "unspecified"
+title = "Flutter Home Quick Actions layout fix"
+description = "ZIP containing the changed Flutter Home widget with the responsive Quick Actions header fix."
+logical_id = "ac2b6eca-a546-48bf-a4d9-bdde3dfc9589"
+content_hash = "sha256:52563eb28fe88087d4d6e02fd6e8b66713ad5184c2c7967375e720576caf59fe"
+size = 22203
+mtime_ms = 1789044696088
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ac2b6eca-a546-48bf-a4d9-bdde3dfc9589/69210a95-dce4-4662-9a83-abf612122701"
+storage_version_token = "1789044703110986"
+content_type = "application/octet-stream"
