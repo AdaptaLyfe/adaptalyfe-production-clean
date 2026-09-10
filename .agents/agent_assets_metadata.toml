@@ -267,3 +267,17 @@ mtime_ms = 1789032480107
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/13f93a11-4da9-4a09-a23b-eedec6b4f46f/8cfd1559-1b33-4434-aa49-20231ecb88ae"
 storage_version_token = "1789032485251640"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "t-XGZ9V9QoBmA0HNx55bv"
+uri = "file://flutter-chatbox-provider-fix.zip"
+type = "unspecified"
+title = "Flutter chatbox provider fix"
+description = "Only the two Flutter files changed to fix the HomeBloc ProviderNotFoundException when opening the chatbox."
+logical_id = "5dadc94b-d3b2-47bd-aa03-0cbd6c90067d"
+content_hash = "sha256:faf81d727451ac2344863229a799b7c4a0c7cb9e59fe48b347aafcc852120dfa"
+size = 20793
+mtime_ms = 1789033869656
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5dadc94b-d3b2-47bd-aa03-0cbd6c90067d/c23874e5-b672-40b1-aaef-31b605ec0963"
+storage_version_token = "1789033873905327"
+content_type = "application/octet-stream"
