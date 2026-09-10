@@ -4,6 +4,7 @@ class UserModel {
     required this.username,
     this.name,
     this.email,
+    this.streakDays = 0,
     this.isAdmin = false,
     this.createdAt,
     this.accountType,
@@ -15,6 +16,7 @@ class UserModel {
   final String username;
   final String? name;
   final String? email;
+  final int streakDays;
   final bool isAdmin;
   final DateTime? createdAt;
   final String? accountType;
@@ -35,6 +37,7 @@ class UserModel {
       username: username,
       name: json['name'] as String?,
       email: json['email'] as String?,
+      streakDays: _parseInt(json['streakDays']),
       isAdmin: json['isAdmin'] == true,
       createdAt: _parseDate(json['createdAt']),
       accountType: json['accountType'] as String?,
@@ -45,4 +48,10 @@ class UserModel {
 
   static DateTime? _parseDate(Object? value) =>
       value is String ? DateTime.tryParse(value) : null;
+
+  static int _parseInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('$value') ?? 0;
+  }
 }

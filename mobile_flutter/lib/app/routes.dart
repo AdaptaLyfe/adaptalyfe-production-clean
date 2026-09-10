@@ -180,9 +180,35 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         routes: [
           GoRoute(
             path: '/home',
-            builder: (context, state) => BlocProvider(
-              create: (_) => HomeBloc(_createHomeRepository())
-                ..add(const HomeStarted()),
+            builder: (context, state) => MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => HomeBloc(_createHomeRepository())
+                    ..add(const HomeStarted()),
+                ),
+                BlocProvider(
+                  create: (_) => DailyTasksBloc(_createDailyTasksRepository())
+                    ..add(const DailyTasksStarted()),
+                ),
+                BlocProvider(
+                  create: (_) => MoodBloc(_createMoodRepository())
+                    ..add(const MoodStarted()),
+                ),
+                BlocProvider(
+                  create: (_) => FinancialBloc(_createFinancialRepository())
+                    ..add(const FinancialStarted()),
+                ),
+                BlocProvider(
+                  create: (_) => CalendarBloc(_createCalendarRepository())
+                    ..add(const CalendarStarted()),
+                ),
+                BlocProvider(
+                  create: (_) => SubscriptionBloc(
+                    _createSubscriptionRepository(),
+                    PurchaseService(),
+                  )..add(const SubscriptionStarted()),
+                ),
+              ],
               child: const HomeScreen(),
             ),
           ),

@@ -5,9 +5,20 @@ import 'package:go_router/go_router.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
+import '../../calendar/bloc/calendar_bloc.dart';
+import '../../calendar/bloc/calendar_event.dart';
+import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
+import '../../daily_tasks/bloc/daily_tasks_event.dart';
+import '../../financial/bloc/financial_bloc.dart';
+import '../../financial/bloc/financial_event.dart';
+import '../../mood/bloc/mood_bloc.dart';
+import '../../mood/bloc/mood_event.dart';
+import '../../subscription/bloc/subscription_bloc.dart';
+import '../../subscription/bloc/subscription_event.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
+import 'home_dashboard_widgets.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,9 +51,26 @@ class HomeScreen extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: const _HomeAppBar(),
-          body: _HomeBody(state: state),
+          body: HomeDashboardBody(
+            homeState: state,
+            onRefresh: () => _refreshDashboard(context),
+          ),
         );
       },
+    );
+  }
+
+  Future<void> _refreshDashboard(BuildContext context) async {
+    final homeBloc = context.read<HomeBloc>();
+    homeBloc.add(const RefreshHome());
+    context.read<DailyTasksBloc>().add(const RefreshDailyTasks());
+    context.read<MoodBloc>().add(const RefreshMood());
+    context.read<FinancialBloc>().add(const RefreshFinancial());
+    context.read<CalendarBloc>().add(const RefreshCalendar());
+    context.read<SubscriptionBloc>().add(const RefreshSubscription());
+
+    await homeBloc.stream.firstWhere(
+      (nextState) => nextState is HomeLoaded || nextState is HomeError,
     );
   }
 }
@@ -97,389 +125,6 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         const SizedBox(width: 4),
       ],
-    );
-  }
-}
-
-class _HomeBody extends StatelessWidget {
-  const _HomeBody({required this.state});
-
-  final HomeState state;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFEFF6FF),
-            Color(0xFFF5F3FF),
-            Color(0xFFF0FDFA),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: RefreshIndicator(
-        onRefresh: () async {
-          final bloc = context.read<HomeBloc>();
-          bloc.add(const RefreshHome());
-          await bloc.stream.firstWhere(
-            (nextState) => nextState is HomeLoaded || nextState is HomeError,
-          );
-        },
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-          children: [
-            if (state is HomeInitial || state is HomeLoading)
-              const _HomeLoadingCard()
-            else if (state is HomeLoaded)
-              _UserGreetingCard(user: (state as HomeLoaded).user)
-            else if (state is HomeError)
-              _HomeErrorCard(
-                message: (state as HomeError).message,
-                onRetry: () {
-                  context.read<HomeBloc>().add(const RefreshHome());
-                },
-              ),
-            const SizedBox(height: 20),
-            const _DashboardShellCard(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UserGreetingCard extends StatelessWidget {
-  const _UserGreetingCard({required this.user});
-
-  final UserModel user;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayName = user.name?.trim().isNotEmpty == true
-        ? user.name!.trim()
-        : user.username;
-    final email = user.email?.trim();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF2DD4BF),
-          width: 2,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'assets/adaptalyfe-icon.png',
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Adaptalyfe',
-                    style: TextStyle(
-                      color: Color(0xFF2DD4BF),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    'Grow with Guidance. Thrive with Confidence.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            '${_greeting()}, $displayName! ★',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _UserInfoPill(
-                label: 'Username',
-                value: '@${user.username}',
-              ),
-              if (email != null && email.isNotEmpty)
-                _UserInfoPill(
-                  label: 'Email',
-                  value: email,
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _greeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-}
-
-class _UserInfoPill extends StatelessWidget {
-  const _UserInfoPill({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 280),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      decoration: BoxDecoration(
-        color: const Color(0x80374151),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: const Color(0x662DD4BF)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFFE5E7EB),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Color(0xFF2DD4BF),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DashboardShellCard extends StatelessWidget {
-  const _DashboardShellCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 8,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Your Dashboard',
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Your daily tasks, progress, and guidance will appear here.',
-            style: TextStyle(
-              color: Color(0xFF4B5563),
-              fontSize: 14,
-            ),
-          ),
-          SizedBox(height: 16),
-          _ModulePlaceholder(
-            icon: Icons.dashboard_customize_outlined,
-            title: 'Dashboard modules',
-            subtitle: 'Additional mobile dashboard modules are coming next.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModulePlaceholder extends StatelessWidget {
-  const _ModulePlaceholder({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF2563EB), size: 26),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF1F2937),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeLoadingCard extends StatelessWidget {
-  const _HomeLoadingCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF2DD4BF),
-          width: 2,
-        ),
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF2DD4BF),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeErrorCard extends StatelessWidget {
-  const _HomeErrorCard({
-    required this.message,
-    required this.onRetry,
-  });
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFECACA)),
-      ),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.cloud_off_rounded,
-            color: Color(0xFFB91C1C),
-            size: 38,
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'We could not load your dashboard.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF991B1B),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF6B7280),
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try again'),
-          ),
-        ],
-      ),
     );
   }
 }
