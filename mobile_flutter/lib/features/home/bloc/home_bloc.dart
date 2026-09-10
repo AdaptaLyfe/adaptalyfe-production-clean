@@ -103,7 +103,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (current is! HomeLoaded || event.message.trim().isEmpty) return;
     final messages = [
       ...current.chatMessages,
-      HomeChatMessage(text: event.message.trim(), isUser: true),
+      HomeChatMessage(
+        text: event.message.trim(),
+        isUser: true,
+        timestamp: DateTime.now(),
+      ),
     ];
     emit(current.copyWith(
       chatMessages: messages,
@@ -122,10 +126,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         emit(latest.copyWith(
           chatMessages: [
             ...latest.chatMessages,
-            HomeChatMessage(text: answer, isUser: false),
+            HomeChatMessage(
+              text: answer,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
           ],
           chatLoading: false,
           pendingChatAction: action,
+          chatActionStatus: action == null
+              ? HomeChatActionStatus.idle
+              : HomeChatActionStatus.pending,
         ));
       }
     } on ApiException catch (error) {
@@ -141,7 +152,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     final current = state;
     if (current is! HomeLoaded || current.pendingChatAction == null) return;
-    emit(current.copyWith(chatLoading: true, chatError: null));
+    emit(current.copyWith(
+      chatLoading: true,
+      chatError: null,
+      chatActionStatus: HomeChatActionStatus.executing,
+    ));
     try {
       final response =
           await repository.executeChatAction(current.pendingChatAction!);
@@ -151,16 +166,29 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         emit(latest.copyWith(
           chatMessages: [
             ...latest.chatMessages,
-            HomeChatMessage(text: message, isUser: false),
+            HomeChatMessage(
+              text: message,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
           ],
           chatLoading: false,
           pendingChatAction: null,
+          chatActionStatus: HomeChatActionStatus.completed,
         ));
       }
     } on ApiException catch (error) {
-      _emitChatError(error.message, emit);
+      _emitChatError(
+        error.message,
+        emit,
+        actionFailed: true,
+      );
     } catch (error) {
-      _emitChatError(_messageFor(error), emit);
+      _emitChatError(
+        _messageFor(error),
+        emit,
+        actionFailed: true,
+      );
     }
   }
 
@@ -173,9 +201,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       emit(current.copyWith(
         pendingChatAction: null,
         chatLoading: false,
+        chatActionStatus: HomeChatActionStatus.cancelled,
         chatMessages: [
           ...current.chatMessages,
-          const HomeChatMessage(text: 'Cancelled.', isUser: false),
+            HomeChatMessage(
+              text: 'Cancelled.',
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
         ],
       ));
     }
@@ -296,20 +329,28 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await repository.saveQuickActions(event.actions);
   }
 
-  void _emitChatError(String message, Emitter<HomeState> emit) {
+  void _emitChatError(
+    String message,
+    Emitter<HomeState> emit, {
+    bool actionFailed = false,
+  }) {
     final current = state;
     if (current is HomeLoaded) {
       emit(current.copyWith(
         chatLoading: false,
         chatError: message,
-        chatMessages: [
-          ...current.chatMessages,
-          const HomeChatMessage(
-            text: 'I could not complete that request right now. Please try again.',
-            isUser: false,
-            isError: true,
-          ),
-        ],
+        chatActionStatus: actionFailed
+            ? HomeChatActionStatus.failed
+            : current.chatActionStatus,
+          chatMessages: [
+            ...current.chatMessages,
+            HomeChatMessage(
+              text: 'I could not complete that request right now. Please try again.',
+              isUser: false,
+              isError: true,
+              timestamp: DateTime.now(),
+            ),
+          ],
       ));
     }
   }

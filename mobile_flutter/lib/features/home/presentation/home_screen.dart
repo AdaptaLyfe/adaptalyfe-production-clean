@@ -10,8 +10,14 @@ import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../../daily_tasks/bloc/daily_tasks_event.dart';
 import '../../financial/bloc/financial_bloc.dart';
 import '../../financial/bloc/financial_event.dart';
+import '../../medical/bloc/medical_bloc.dart';
+import '../../medical/bloc/medical_event.dart';
 import '../../mood/bloc/mood_bloc.dart';
 import '../../mood/bloc/mood_event.dart';
+import '../../rewards/bloc/rewards_bloc.dart';
+import '../../rewards/bloc/rewards_event.dart';
+import '../../caregiver/bloc/caregiver_bloc.dart';
+import '../../caregiver/bloc/caregiver_event.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_event.dart';
 import '../bloc/home_bloc.dart';
@@ -27,6 +33,10 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<HomeBloc, HomeState>(
       listener: (context, state) {
+        if (state is HomeLoaded &&
+            state.chatActionStatus == HomeChatActionStatus.completed) {
+          _refreshFeatureBlocs(context, state.user.id);
+        }
         if (state is HomeError) {
           if (state.sessionInvalid) {
             context.read<AuthBloc>().add(const CheckAuthentication());
@@ -76,15 +86,28 @@ class HomeScreen extends StatelessWidget {
   Future<void> _refreshDashboard(BuildContext context) async {
     final homeBloc = context.read<HomeBloc>();
     homeBloc.add(const RefreshHome());
+    final homeState = homeBloc.state;
+    final userId = homeState is HomeLoaded ? homeState.user.id : null;
+    _refreshFeatureBlocs(context, userId);
+
+    await homeBloc.stream.firstWhere(
+      (nextState) => nextState is HomeLoaded || nextState is HomeError,
+    );
+  }
+
+  void _refreshFeatureBlocs(BuildContext context, int? userId) {
     context.read<DailyTasksBloc>().add(const RefreshDailyTasks());
     context.read<MoodBloc>().add(const RefreshMood());
     context.read<FinancialBloc>().add(const RefreshFinancial());
     context.read<CalendarBloc>().add(const RefreshCalendar());
     context.read<SubscriptionBloc>().add(const RefreshSubscription());
-
-    await homeBloc.stream.firstWhere(
-      (nextState) => nextState is HomeLoaded || nextState is HomeError,
-    );
+    context.read<MedicalBloc>().add(const RefreshMedical());
+    context.read<RewardsBloc>().add(const RefreshRewards());
+    if (userId != null) {
+      context
+          .read<CaregiverBloc>()
+          .add(CaregiverStarted(userId));
+    }
   }
 }
 

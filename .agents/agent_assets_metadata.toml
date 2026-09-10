@@ -253,3 +253,17 @@ mtime_ms = 1789030377143
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b7fc832a-112a-433a-8b43-aa1214ef3651/19dafd4d-21b9-4c5f-bd55-28bee055d0b0"
 storage_version_token = "1789030381752232"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "oYcPtybAy4_GUdGF6dfBU"
+uri = "file://flutter-home-parity-final.zip"
+type = "unspecified"
+title = "Flutter Home parity final changes"
+description = "Updated Flutter-only Home parity changes, route wiring, Quick Action alignment, live dashboard modules, Today/Daily Guide improvements, AdaptAI action states, and the Personal Documents feature."
+logical_id = "13f93a11-4da9-4a09-a23b-eedec6b4f46f"
+content_hash = "sha256:3cac66514c1a3e83c651820f4bd07fb05af45187cb4cda6ce8e28a43c2a940c5"
+size = 36834
+mtime_ms = 1789032480107
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/13f93a11-4da9-4a09-a23b-eedec6b4f46f/8cfd1559-1b33-4434-aa49-20231ecb88ae"
+storage_version_token = "1789032485251640"
+content_type = "application/octet-stream"

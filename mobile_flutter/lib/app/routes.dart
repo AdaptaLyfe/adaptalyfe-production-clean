@@ -65,6 +65,8 @@ import '../features/notifications/bloc/notifications_event.dart';
 import '../features/notifications/data/notifications_api.dart';
 import '../features/notifications/data/notifications_repository.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/personal_documents/data/personal_documents_repository.dart';
+import '../features/personal_documents/presentation/personal_documents_screen.dart';
 import '../features/rewards/bloc/rewards_bloc.dart';
 import '../features/rewards/bloc/rewards_event.dart';
 import '../features/rewards/data/rewards_api.dart';
@@ -132,16 +134,19 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/financial' ||
           location == '/medical' ||
           location == '/meal-shopping' ||
-           location == '/academic-planner' ||
-           location == '/calendar' ||
-           location == '/sleep-tracking' ||
-           location == '/resources' ||
-           location == '/rewards' ||
+          location == '/academic-planner' ||
+          location == '/calendar' ||
+          location == '/sleep-tracking' ||
+          location == '/resources' ||
+          location == '/rewards' ||
           location == '/settings' ||
           location == '/subscription' ||
           location == '/caregiver-setup' ||
           location == '/accept-invitation' ||
           location == '/caregiver-dashboard' ||
+          location == '/caregiver' ||
+          location == '/pharmacy' ||
+          location == '/personal-documents' ||
           location == '/mood-tracking';
 
       if (isProtectedRoute && authState is! Authenticated) {
@@ -181,37 +186,55 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         routes: [
           GoRoute(
             path: '/home',
-            builder: (context, state) => MultiBlocProvider(
-              providers: [
-                BlocProvider(
-                  create: (_) => HomeBloc(_createHomeRepository())
-                    ..add(const HomeStarted()),
-                ),
-                BlocProvider(
-                  create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-                    ..add(const DailyTasksStarted()),
-                ),
-                BlocProvider(
-                  create: (_) => MoodBloc(_createMoodRepository())
-                    ..add(const MoodStarted()),
-                ),
-                BlocProvider(
-                  create: (_) => FinancialBloc(_createFinancialRepository())
-                    ..add(const FinancialStarted()),
-                ),
-                BlocProvider(
-                  create: (_) => CalendarBloc(_createCalendarRepository())
-                    ..add(const CalendarStarted()),
-                ),
-                BlocProvider(
-                  create: (_) => SubscriptionBloc(
-                    _createSubscriptionRepository(),
-                    PurchaseService(),
-                  )..add(const SubscriptionStarted()),
-                ),
-              ],
-              child: const HomeScreen(),
-            ),
+            builder: (context, state) {
+              final currentAuthState = authBloc.state;
+              final userId = currentAuthState is Authenticated
+                  ? currentAuthState.user.id
+                  : 0;
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (_) => HomeBloc(_createHomeRepository())
+                      ..add(const HomeStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => DailyTasksBloc(_createDailyTasksRepository())
+                      ..add(const DailyTasksStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => MoodBloc(_createMoodRepository())
+                      ..add(const MoodStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => FinancialBloc(_createFinancialRepository())
+                      ..add(const FinancialStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => CalendarBloc(_createCalendarRepository())
+                      ..add(const CalendarStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => SubscriptionBloc(
+                      _createSubscriptionRepository(),
+                      PurchaseService(),
+                    )..add(const SubscriptionStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => MedicalBloc(_createMedicalRepository())
+                      ..add(const MedicalStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => RewardsBloc(_createRewardsRepository())
+                      ..add(const RewardsStarted()),
+                  ),
+                  BlocProvider(
+                    create: (_) => CaregiverBloc(_createCaregiverRepository())
+                      ..add(CaregiverStarted(userId)),
+                  ),
+                ],
+                child: const HomeScreen(),
+              );
+            },
           ),
           GoRoute(
             path: '/daily-tasks',
@@ -247,6 +270,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
           GoRoute(
             path: '/medical',
+            builder: (context, state) => BlocProvider(
+              create: (_) => MedicalBloc(_createMedicalRepository())
+                ..add(const MedicalStarted()),
+              child: const MedicalScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/pharmacy',
             builder: (context, state) => BlocProvider(
               create: (_) => MedicalBloc(_createMedicalRepository())
                 ..add(const MedicalStarted()),
@@ -334,6 +365,26 @@ GoRouter createAppRouter(AuthBloc authBloc) {
                 child: const CaregiverSetupScreen(),
               );
             },
+          ),
+          GoRoute(
+            path: '/caregiver',
+            builder: (context, state) {
+              final currentAuthState = authBloc.state;
+              final userId = currentAuthState is Authenticated
+                  ? currentAuthState.user.id
+                  : 0;
+              return BlocProvider(
+                create: (_) => CaregiverBloc(_createCaregiverRepository())
+                  ..add(CaregiverStarted(userId)),
+                child: const CaregiverSetupScreen(),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/personal-documents',
+            builder: (context, state) => PersonalDocumentsScreen(
+              repository: _createPersonalDocumentsRepository(),
+            ),
           ),
           GoRoute(
             path: '/accept-invitation',
@@ -511,6 +562,12 @@ CaregiverRepository _createCaregiverRepository() {
     CaregiverApi(
       ApiClient(localStorage: localStorage),
     ),
+  );
+}
+
+PersonalDocumentsRepository _createPersonalDocumentsRepository() {
+  return PersonalDocumentsRepository(
+    ApiClient(localStorage: LocalStorage()),
   );
 }
 

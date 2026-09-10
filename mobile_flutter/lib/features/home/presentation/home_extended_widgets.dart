@@ -5,15 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_state.dart';
 import '../../calendar/models/calendar_models.dart';
+import '../../caregiver/bloc/caregiver_bloc.dart';
+import '../../caregiver/bloc/caregiver_state.dart';
 import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../../daily_tasks/bloc/daily_tasks_state.dart';
 import '../../daily_tasks/models/daily_task_model.dart';
 import '../../financial/bloc/financial_bloc.dart';
 import '../../financial/bloc/financial_state.dart';
+import '../../medical/bloc/medical_bloc.dart';
+import '../../medical/bloc/medical_state.dart';
 import '../../mood/bloc/mood_bloc.dart';
 import '../../mood/bloc/mood_event.dart';
 import '../../mood/models/mood_entry_model.dart';
 import '../../mood/bloc/mood_state.dart';
+import '../../rewards/bloc/rewards_bloc.dart';
+import '../../rewards/bloc/rewards_state.dart';
 import '../../settings/models/settings_models.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
@@ -288,7 +294,11 @@ class HomeTodayFlowRich extends StatelessWidget {
           final now = DateTime.now();
           final timeline = <_TimelineItem>[
             ...tasks.tasks
-                .where((item) => !item.isCompleted)
+                .where(
+                  (item) =>
+                      !item.isCompleted &&
+                      item.scheduledTime?.trim().isNotEmpty == true,
+                )
                 .map(
                   (item) => _TimelineItem(
                     title: item.title,
@@ -312,7 +322,7 @@ class HomeTodayFlowRich extends StatelessWidget {
                   ),
                 ),
             ...calendar.calendarEvents
-                .where((item) => !item.isCompleted && DateUtils.isSameDay(item.startDate, now))
+                .where((item) => !item.isCompleted && _eventIsOnDay(item, now))
                 .map(
                   (item) => _TimelineItem(
                     title: item.title,
@@ -357,6 +367,10 @@ class HomeTodayFlowRich extends StatelessWidget {
                 now: now,
                 primary: primary,
               ),
+              if (timeline.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                _TodayMomentCards(items: timeline.take(3).toList()),
+              ],
               if (primary != null && next != null) ...[
                 const SizedBox(height: 14),
                 _TodayTransitionCard(primary: primary, next: next),
@@ -388,6 +402,80 @@ class HomeTodayFlowRich extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+bool _eventIsOnDay(CalendarEventModel event, DateTime day) {
+  if (DateUtils.isSameDay(event.startDate, day)) return true;
+  final end = event.endDate;
+  if (end == null) return false;
+  final dayStart = DateTime(day.year, day.month, day.day);
+  final dayEnd = dayStart.add(const Duration(days: 1));
+  return event.startDate.isBefore(dayEnd) && end.isAfter(dayStart);
+}
+
+class _TodayMomentCards extends StatelessWidget {
+  const _TodayMomentCards({required this.items});
+
+  final List<_TimelineItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = ['NOW', 'NEXT', 'LATER'];
+    const colors = [
+      Color(0xFF0F766E),
+      Color(0xFF2563EB),
+      Color(0xFF7C3AED),
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var index = 0; index < items.length; index++) ...[
+          if (index > 0) const SizedBox(width: 8),
+          Expanded(
+            child: _TodayInset(
+              background: colors[index].withAlpha(12),
+              borderColor: colors[index].withAlpha(70),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    labels[index],
+                    style: TextStyle(
+                      color: colors[index],
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    items[index].title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (items[index].time != null) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      _timeLabel(items[index].time!),
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -1042,14 +1130,12 @@ class HomeLiveDailyGuide extends StatelessWidget {
           );
         }
         final guide = state.dailyGuide!;
+        final period = _guidePeriod(DateTime.now().hour);
+        final groupedHighlights = _guideGroups(guide.highlights);
         return _SurfaceCard(
           padding: EdgeInsets.zero,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2D7DF6),
-              Color(0xFF16C7E8),
-              Color(0xFF46DCC5),
-            ],
+          gradient: LinearGradient(
+            colors: period.colors,
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -1057,25 +1143,28 @@ class HomeLiveDailyGuide extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome_rounded, color: Colors.white),
-                    SizedBox(width: 8),
+                    Icon(period.icon, color: Colors.white),
+                    const SizedBox(width: 8),
                     Text(
-                      'ADAPTALYFE GUIDE',
-                      style: TextStyle(
+                      '${period.label.toUpperCase()} GUIDE',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.7,
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     Text(
-                      'Proactive Guide',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                      period.badge,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -1105,29 +1194,47 @@ class HomeLiveDailyGuide extends StatelessWidget {
                       guide.summary,
                       style: const TextStyle(color: Color(0xFF374151), height: 1.35),
                     ),
-                    if (guide.highlights.isNotEmpty) ...[
+                    if (groupedHighlights.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      ...guide.highlights.take(5).map(
-                        (highlight) => ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(
-                            _guideIcon(highlight.type),
-                            color: _priorityColor(highlight.priority),
-                          ),
-                          title: Text(
-                            highlight.title,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          trailing: highlight.time == null
-                              ? null
-                              : Text(
-                                  highlight.time!,
-                                  style: const TextStyle(
-                                    color: Color(0xFF6B7280),
-                                    fontSize: 12,
+                      ...groupedHighlights.map(
+                        (entry) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text(
+                                _guideTypeLabel(entry.key),
+                                style: const TextStyle(
+                                  color: Color(0xFF475569),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: .5,
+                                ),
+                              ),
+                            ),
+                            ...entry.value.take(4).map(
+                                  (highlight) => ListTile(
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(
+                                      _guideIcon(highlight.type),
+                                      color: _priorityColor(highlight.priority),
+                                    ),
+                                    title: Text(
+                                      _cleanGuideTitle(highlight.title),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    trailing: _GuideHighlightMeta(
+                                      highlight: highlight,
+                                    ),
                                   ),
                                 ),
+                            const SizedBox(height: 6),
+                          ],
                         ),
                       ),
                     ] else
@@ -1150,13 +1257,16 @@ class HomeLiveDailyGuide extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        guide.nextAction!.title,
+                        _cleanGuideTitle(guide.nextAction!.title),
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       if (guide.nextAction!.reason != null)
                         Text(
                           guide.nextAction!.reason!,
-                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 12,
+                          ),
                         ),
                     ],
                   ],
@@ -1168,6 +1278,117 @@ class HomeLiveDailyGuide extends StatelessWidget {
       },
     );
   }
+}
+
+class _GuideHighlightMeta extends StatelessWidget {
+  const _GuideHighlightMeta({required this.highlight});
+
+  final DailyGuideHighlight highlight;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = <Widget>[
+      if (highlight.time != null)
+        Text(
+          highlight.time!,
+          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+        ),
+      if (highlight.priority != 'normal')
+        Container(
+          margin: const EdgeInsets.only(left: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
+          decoration: BoxDecoration(
+            color: _priorityColor(highlight.priority).withAlpha(20),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            highlight.priority,
+            style: TextStyle(
+              color: _priorityColor(highlight.priority),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+    ];
+    return children.isEmpty
+        ? const SizedBox.shrink()
+        : Row(mainAxisSize: MainAxisSize.min, children: children);
+  }
+}
+
+class _GuidePeriod {
+  const _GuidePeriod({
+    required this.label,
+    required this.badge,
+    required this.icon,
+    required this.colors,
+  });
+
+  final String label;
+  final String badge;
+  final IconData icon;
+  final List<Color> colors;
+}
+
+_GuidePeriod _guidePeriod(int hour) {
+  if (hour >= 5 && hour < 12) {
+    return const _GuidePeriod(
+      label: 'Morning',
+      badge: 'Start gently',
+      icon: Icons.wb_sunny_outlined,
+      colors: [Color(0xFF2D7DF6), Color(0xFF16C7E8), Color(0xFF46DCC5)],
+    );
+  }
+  if (hour >= 12 && hour < 17) {
+    return const _GuidePeriod(
+      label: 'Afternoon',
+      badge: 'Keep going',
+      icon: Icons.wb_sunny_rounded,
+      colors: [Color(0xFF2563EB), Color(0xFF06B6D4), Color(0xFF14B8A6)],
+    );
+  }
+  if (hour >= 17 && hour < 21) {
+    return const _GuidePeriod(
+      label: 'Evening',
+      badge: 'Wind down',
+      icon: Icons.wb_twilight_rounded,
+      colors: [Color(0xFF7C3AED), Color(0xFF2563EB), Color(0xFF0EA5E9)],
+    );
+  }
+  return const _GuidePeriod(
+    label: 'Night',
+    badge: 'Rest and reset',
+    icon: Icons.nightlight_outlined,
+    colors: [Color(0xFF312E81), Color(0xFF4338CA), Color(0xFF2563EB)],
+  );
+}
+
+List<MapEntry<String, List<DailyGuideHighlight>>> _guideGroups(
+  List<DailyGuideHighlight> highlights,
+) {
+  final groups = <String, List<DailyGuideHighlight>>{
+    'Appointments': [],
+    'Calendar': [],
+    'Tasks': [],
+  };
+  for (final highlight in highlights) {
+    final key = switch (highlight.type) {
+      'appointment' => 'Appointments',
+      'calendar' => 'Calendar',
+      _ => 'Tasks',
+    };
+    groups[key]!.add(highlight);
+  }
+  return groups.entries.where((entry) => entry.value.isNotEmpty).toList();
+}
+
+String _guideTypeLabel(String type) => type;
+
+String _cleanGuideTitle(String title) {
+  return title
+      .replaceFirst(RegExp(r'^\s*(test|sample|demo)\s*[:\-]\s*', caseSensitive: false), '')
+      .trim();
 }
 
 class HomeDashboardModules extends StatelessWidget {
@@ -1239,6 +1460,22 @@ class HomeDashboardModules extends StatelessWidget {
         return const _HomeFinancialModule();
       case 'appointments':
         return const _HomeAppointmentsModule();
+      case 'pharmacy':
+        return const _HomePharmacyModule();
+      case 'achievements':
+        return const _HomeAchievementsModule();
+      case 'caregiver':
+        return const _HomeCaregiverModule();
+      case 'safety-transportation':
+        return const _HomeSafetyModule();
+      case 'health-wellness':
+        return const _HomeHealthModule();
+      case 'accessibility':
+        return const _HomeAccessibilityModule();
+      case 'life-skills':
+        return const _HomeLifeSkillsModule();
+      case 'progress-motivation':
+        return const _HomeProgressModule();
       default:
         return _HomeFeatureModule(module: module);
     }
@@ -1596,6 +1833,564 @@ class _HomeAppointmentsModule extends StatelessWidget {
   }
 }
 
+class _HomePharmacyModule extends StatelessWidget {
+  const _HomePharmacyModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MedicalBloc, MedicalState>(
+      builder: (context, state) => _SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ModuleHeader(
+              title: 'Medication List',
+              icon: Icons.medication_outlined,
+              action: TextButton(
+                onPressed: () => context.push('/pharmacy'),
+                child: const Text('Open pharmacy'),
+              ),
+            ),
+            if (state.isLoading)
+              const LinearProgressIndicator(minHeight: 3)
+            else if (state.errorMessage != null)
+              Text(
+                state.errorMessage!,
+                style: const TextStyle(color: Color(0xFFB91C1C)),
+              )
+            else if (state.medications.isEmpty)
+              const _EmptyInline(
+                icon: Icons.medication_outlined,
+                text: 'No medications added yet.',
+              )
+            else
+              ...state.medications.take(3).map(
+                    (medication) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      leading: const Icon(
+                        Icons.medication_liquid_outlined,
+                        color: Color(0xFFDB2777),
+                      ),
+                      title: Text(medication.medicationName),
+                      subtitle: Text(
+                        medication.dosage ?? 'Dosage not recorded',
+                      ),
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeAchievementsModule extends StatelessWidget {
+  const _HomeAchievementsModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<RewardsBloc, RewardsState>(
+      builder: (context, state) => _SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ModuleHeader(
+              title: 'Achievements',
+              icon: Icons.emoji_events_outlined,
+              action: TextButton(
+                onPressed: () => context.push('/rewards'),
+                child: const Text('View all'),
+              ),
+            ),
+            if (state.isLoading)
+              const LinearProgressIndicator(minHeight: 3)
+            else if (state.errorMessage != null)
+              Text(
+                state.errorMessage!,
+                style: const TextStyle(color: Color(0xFFB91C1C)),
+              )
+            else ...[
+              Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: Color(0xFFF59E0B)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${state.pointsBalance?.availablePoints ?? 0} points available',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (state.achievements.isEmpty)
+                const Text(
+                  'Complete tasks to build your first achievement streak.',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                )
+              else
+                ...state.achievements.take(3).map(
+                      (achievement) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        leading: const Icon(
+                          Icons.military_tech_outlined,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        title: Text(achievement.title),
+                        subtitle: Text(achievement.description),
+                      ),
+                    ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeCaregiverModule extends StatelessWidget {
+  const _HomeCaregiverModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CaregiverBloc, CaregiverState>(
+      builder: (context, state) => _SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ModuleHeader(
+              title: 'Support Network',
+              icon: Icons.people_alt_outlined,
+              action: TextButton(
+                onPressed: () => context.push('/caregiver'),
+                child: const Text('Manage'),
+              ),
+            ),
+            if (state.isLoading)
+              const LinearProgressIndicator(minHeight: 3)
+            else if (state.errorMessage != null)
+              Text(
+                state.errorMessage!,
+                style: const TextStyle(color: Color(0xFFB91C1C)),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _HomeStatTile(
+                      label: 'Active caregivers',
+                      value:
+                          '${state.relationships.where((item) => item.isActive).length}',
+                      color: const Color(0xFF4F46E5),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _HomeStatTile(
+                      label: 'Pending invitations',
+                      value: '${state.invitations.length}',
+                      color: const Color(0xFF0D9488),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeStatTile extends StatelessWidget {
+  const _HomeStatTile({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withAlpha(14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(70)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeModuleBadge extends StatelessWidget {
+  const _HomeModuleBadge({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(20),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeSafetyModule extends StatelessWidget {
+  const _HomeSafetyModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MedicalBloc, MedicalState>(
+      builder: (context, state) => _SurfaceCard(
+        color: const Color(0xFFFFFBEB),
+        borderColor: const Color(0xFFFDE68A),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ModuleHeader(
+              title: 'Safety & Transportation',
+              icon: Icons.shield_outlined,
+              action: TextButton(
+                onPressed: () => context.push('/medical'),
+                child: const Text('Open'),
+              ),
+            ),
+            const _HomeModuleBadge(
+              label: 'Premium module',
+              color: Color(0xFFB45309),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.verified_user_outlined, color: Color(0xFF16A34A)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Safety plan ready',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  '${state.emergencyContacts.length} contacts',
+                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/medical'),
+                  icon: const Icon(Icons.contact_phone_outlined, size: 17),
+                  label: const Text('Emergency contacts'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/resources'),
+                  icon: const Icon(Icons.directions_car_outlined, size: 17),
+                  label: const Text('Transportation'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeHealthModule extends StatelessWidget {
+  const _HomeHealthModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DailyTasksBloc, DailyTasksState>(
+      builder: (context, taskState) => BlocBuilder<MoodBloc, MoodState>(
+        builder: (context, moodState) {
+          final total = taskState.tasks.length;
+          final completed =
+              taskState.tasks.where((task) => task.isCompleted).length;
+          final progress = total == 0 ? 0.0 : completed / total;
+          return _SurfaceCard(
+            color: const Color(0xFFF0FDFA),
+            borderColor: const Color(0xFF99F6E4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ModuleHeader(
+                  title: 'Health & Wellness',
+                  icon: Icons.health_and_safety_outlined,
+                  action: TextButton(
+                    onPressed: () => context.push('/medical'),
+                    child: const Text('Open'),
+                  ),
+                ),
+                const _HomeModuleBadge(
+                  label: 'Premium module',
+                  color: Color(0xFF0F766E),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Routine progress',
+                        value: '${(progress * 100).round()}%',
+                        color: const Color(0xFF0F766E),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Mood check-in',
+                        value: moodState.todayMood == null ? 'Needed' : 'Logged',
+                        color: const Color(0xFF9333EA),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  moodState.isMoodRequired
+                      ? 'A mood check-in is waiting for you.'
+                      : 'Your wellness signals are up to date.',
+                  style: const TextStyle(color: Color(0xFF475569)),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HomeAccessibilityModule extends StatelessWidget {
+  const _HomeAccessibilityModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      color: const Color(0xFFF5F3FF),
+      borderColor: const Color(0xFFDDD6FE),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ModuleHeader(
+            title: 'Accessibility Settings',
+            icon: Icons.accessibility_new_rounded,
+            action: TextButton(
+              onPressed: () => context.push('/settings'),
+              child: const Text('Open settings'),
+            ),
+          ),
+          const _HomeModuleBadge(
+            label: 'Premium module',
+            color: Color(0xFF7C3AED),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Adjust voice, text size, contrast, and communication preferences for a more comfortable experience.',
+            style: TextStyle(color: Color(0xFF475569), height: 1.35),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: [
+              _HomePreferenceChip(
+                icon: Icons.record_voice_over_outlined,
+                label: 'Voice support',
+              ),
+              _HomePreferenceChip(
+                icon: Icons.format_size_rounded,
+                label: 'Text size',
+              ),
+              _HomePreferenceChip(
+                icon: Icons.contrast_rounded,
+                label: 'Contrast',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomePreferenceChip extends StatelessWidget {
+  const _HomePreferenceChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16, color: const Color(0xFF6D28D9)),
+      label: Text(label),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _HomeLifeSkillsModule extends StatelessWidget {
+  const _HomeLifeSkillsModule();
+
+  @override
+  Widget build(BuildContext context) {
+    const lessons = [
+      ('Daily routines', Icons.schedule_rounded),
+      ('Communication', Icons.forum_outlined),
+      ('Independent living', Icons.home_outlined),
+    ];
+    return _SurfaceCard(
+      color: const Color(0xFFF0FDF4),
+      borderColor: const Color(0xFFBBF7D0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ModuleHeader(
+            title: 'Life Skills Training',
+            icon: Icons.lightbulb_outline_rounded,
+            action: TextButton(
+              onPressed: () => context.push('/resources'),
+              child: const Text('Open lessons'),
+            ),
+          ),
+          const _HomeModuleBadge(
+            label: 'Premium module',
+            color: Color(0xFF15803D),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Choose a small lesson to build confidence in everyday routines.',
+            style: TextStyle(color: Color(0xFF475569)),
+          ),
+          const SizedBox(height: 8),
+          ...lessons.map(
+            (lesson) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              leading: Icon(lesson.$2, color: const Color(0xFF16A34A)),
+              title: Text(lesson.$1),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => context.push('/resources'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeProgressModule extends StatelessWidget {
+  const _HomeProgressModule();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DailyTasksBloc, DailyTasksState>(
+      builder: (context, taskState) => BlocBuilder<RewardsBloc, RewardsState>(
+        builder: (context, rewardState) {
+          final total = taskState.tasks.length;
+          final completed =
+              taskState.tasks.where((task) => task.isCompleted).length;
+          final progress = total == 0 ? 0.0 : completed / total;
+          return _SurfaceCard(
+            color: const Color(0xFFEFF6FF),
+            borderColor: const Color(0xFFBFDBFE),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ModuleHeader(
+                  title: 'Progress & Motivation',
+                  icon: Icons.trending_up_rounded,
+                  action: TextButton(
+                    onPressed: () => context.push('/rewards'),
+                    child: const Text('View progress'),
+                  ),
+                ),
+                const _HomeModuleBadge(
+                  label: 'Premium module',
+                  color: Color(0xFF2563EB),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Today',
+                        value: '${(progress * 100).round()}%',
+                        color: const Color(0xFF2563EB),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricTile(
+                        label: 'Points',
+                        value:
+                            '${rewardState.pointsBalance?.availablePoints ?? 0}',
+                        color: const Color(0xFFF59E0B),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 8,
+                    backgroundColor: const Color(0xFFDBEAFE),
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _HomeFeatureModule extends StatelessWidget {
   const _HomeFeatureModule({required this.module});
 
@@ -1748,10 +2543,52 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
                   Expanded(
                     child: ListView.builder(
                       controller: _scrollController,
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) => _ChatBubble(message: messages[index]),
+                       itemCount: messages.isEmpty
+                           ? 1
+                           : 1 + (messages.length > 12 ? 12 : messages.length),
+                      itemBuilder: (context, index) {
+                         if (index == 0) {
+                          return const _ChatWelcome();
+                        }
+                        final firstVisibleIndex =
+                            messages.length > 12 ? messages.length - 12 : 0;
+                        return _ChatBubble(
+                           message: messages[firstVisibleIndex + index - 1],
+                        );
+                      },
                     ),
                   ),
+                   if (homeState?.chatError != null)
+                     Padding(
+                       padding: const EdgeInsets.only(top: 6),
+                       child: Text(
+                         homeState!.chatError!,
+                         style: const TextStyle(
+                           color: Color(0xFFB91C1C),
+                           fontSize: 12,
+                         ),
+                       ),
+                     ),
+                  if (messages.isNotEmpty && homeState?.chatLoading != true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 4),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          'What should I do next?',
+                          'Summarize my day',
+                          'Help me get organized',
+                        ]
+                            .map(
+                              (prompt) => ActionChip(
+                                label: Text(prompt),
+                                onPressed: () => _sendPrompt(context, prompt),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
                   if (homeState?.pendingChatAction != null)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1764,7 +2601,7 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            homeState!.pendingChatAction!.summary,
+                             '${_chatActionHeading(homeState!.chatActionStatus)}\n${homeState!.pendingChatAction!.summary}',
                             style: const TextStyle(
                               color: Color(0xFF065F46),
                               fontWeight: FontWeight.w700,
@@ -1782,7 +2619,12 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
                                         .read<HomeBloc>()
                                         .add(const ConfirmHomeChatAction()),
                                 icon: const Icon(Icons.check_rounded),
-                                label: const Text('Confirm change'),
+                                 label: Text(
+                                   homeState.chatActionStatus ==
+                                           HomeChatActionStatus.failed
+                                       ? 'Retry change'
+                                       : 'Confirm change',
+                                 ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -1809,10 +2651,12 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                           SizedBox(width: 8),
-                          Text(
-                            'Thinking…',
-                            style: TextStyle(color: Color(0xFF64748B)),
-                          ),
+                           Text(
+                             homeState?.pendingChatAction == null
+                                 ? 'Thinking…'
+                                 : 'Applying your confirmed change…',
+                             style: TextStyle(color: Color(0xFF64748B)),
+                           ),
                         ],
                       ),
                     ),
@@ -1884,17 +2728,98 @@ class _ChatBubble extends StatelessWidget {
                   : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: message.isUser
-                ? Colors.white
-                : message.isError
-                    ? const Color(0xFF991B1B)
-                    : const Color(0xFF1F2937),
-            height: 1.35,
-          ),
+        child: Column(
+          crossAxisAlignment:
+              message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.text,
+              style: TextStyle(
+                color: message.isUser
+                    ? Colors.white
+                    : message.isError
+                        ? const Color(0xFF991B1B)
+                        : const Color(0xFF1F2937),
+                height: 1.35,
+              ),
+            ),
+            if (message.timestamp != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                _chatTimeLabel(message.timestamp!),
+                style: TextStyle(
+                  color: message.isUser
+                      ? Colors.white70
+                      : const Color(0xFF94A3B8),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ],
         ),
+      ),
+    );
+  }
+}
+
+String _chatTimeLabel(DateTime value) {
+  final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
+  final minute = value.minute.toString().padLeft(2, '0');
+  return '$hour:$minute ${value.hour >= 12 ? 'PM' : 'AM'}';
+}
+
+String _chatActionHeading(HomeChatActionStatus status) {
+  switch (status) {
+    case HomeChatActionStatus.executing:
+      return 'Applying confirmed action';
+    case HomeChatActionStatus.failed:
+      return 'Action failed — try again';
+    case HomeChatActionStatus.cancelled:
+      return 'Action cancelled';
+    case HomeChatActionStatus.completed:
+      return 'Action completed';
+    case HomeChatActionStatus.pending:
+    case HomeChatActionStatus.idle:
+      return 'Action proposed';
+  }
+}
+
+class _ChatWelcome extends StatelessWidget {
+  const _ChatWelcome();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 18, bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDFA),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFF99F6E4)),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: Color(0xFF0F766E)),
+              SizedBox(width: 8),
+              Text(
+                'How can I help today?',
+                style: TextStyle(
+                  color: Color(0xFF134E4A),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Ask about your tasks, appointments, routines, or the next small step. I will ask before making any change.',
+            style: TextStyle(color: Color(0xFF475569), height: 1.4),
+          ),
+        ],
       ),
     );
   }
@@ -2183,10 +3108,11 @@ IconData _iconFor(String value) {
 String _safeRoute(String route) {
   switch (route) {
     case '/caregiver':
-      return '/caregiver-dashboard';
+      return '/caregiver';
     case '/pharmacy':
+      return '/pharmacy';
     case '/personal-documents':
-      return '/medical';
+      return '/personal-documents';
     default:
       return route;
   }

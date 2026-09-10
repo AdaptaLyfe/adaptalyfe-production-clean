@@ -92,14 +92,16 @@ class HomeChatMessage extends Equatable {
     required this.text,
     required this.isUser,
     this.isError = false,
+    this.timestamp,
   });
 
   final String text;
   final bool isUser;
   final bool isError;
+  final DateTime? timestamp;
 
   @override
-  List<Object?> get props => [text, isUser, isError];
+  List<Object?> get props => [text, isUser, isError, timestamp];
 }
 
 class HomeChatAction extends Equatable {
@@ -166,7 +168,7 @@ class HomeQuickAction extends Equatable {
 
 const defaultHomeQuickActions = <HomeQuickAction>[
   HomeQuickAction(
-    id: 'meals',
+    id: 'meal-shopping',
     label: 'Meals & Shopping',
     description: 'Plan and shop',
     route: '/meal-shopping',
@@ -184,7 +186,7 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     visible: true,
   ),
   HomeQuickAction(
-    id: 'tasks',
+    id: 'daily-tasks',
     label: 'Daily Tasks',
     description: 'Complete activities',
     route: '/daily-tasks',
@@ -193,7 +195,7 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     visible: true,
   ),
   HomeQuickAction(
-    id: 'mood',
+    id: 'mood-checkin',
     label: 'Mood Check-in',
     description: 'How are you feeling?',
     route: '/mood-tracking',
@@ -202,16 +204,16 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     visible: true,
   ),
   HomeQuickAction(
-    id: 'documents',
+    id: 'personal-documents',
     label: 'Personal Documents',
-    description: 'Keep important records',
+    description: 'Your documents',
     route: '/personal-documents',
     icon: 'description',
-    colorValue: 0xFF2563EB,
+    colorValue: 0xFF60A5FA,
     visible: true,
   ),
   HomeQuickAction(
-    id: 'bills',
+    id: 'financial',
     label: 'Bill Reminders',
     description: 'Manage payments',
     route: '/financial',
@@ -222,28 +224,28 @@ const defaultHomeQuickActions = <HomeQuickAction>[
   HomeQuickAction(
     id: 'ai-chat',
     label: 'AI Chat Assistant',
-    description: 'Ask AdaptAI',
+    description: 'Get help from AI',
     route: '/home',
     icon: 'sparkles',
     colorValue: 0xFF10B981,
     visible: false,
   ),
   HomeQuickAction(
-    id: 'support',
-    label: 'Support',
-    description: 'Connect with caregivers',
+    id: 'caregiver',
+    label: 'Contact Support',
+    description: 'Reach caregivers',
     route: '/caregiver',
     icon: 'people',
-    colorValue: 0xFF0D9488,
+    colorValue: 0xFF6366F1,
     visible: false,
   ),
   HomeQuickAction(
     id: 'pharmacy',
-    label: 'Pharmacy',
+    label: 'Medication List',
     description: 'Manage medications',
     route: '/pharmacy',
     icon: 'medication',
-    colorValue: 0xFFDB2777,
+    colorValue: 0xFFEF4444,
     visible: false,
   ),
   HomeQuickAction(
@@ -257,11 +259,20 @@ const defaultHomeQuickActions = <HomeQuickAction>[
   ),
   HomeQuickAction(
     id: 'rewards',
-    label: 'Rewards',
-    description: 'Points and progress',
+    label: 'Achievements',
+    description: 'View rewards',
     route: '/rewards',
     icon: 'emoji_events',
     colorValue: 0xFFF59E0B,
+    visible: false,
+  ),
+  HomeQuickAction(
+    id: 'mood-tracking',
+    label: 'Mood Log',
+    description: 'Track your mood',
+    route: '/mood-tracking',
+    icon: 'mood',
+    colorValue: 0xFFF97316,
     visible: false,
   ),
   HomeQuickAction(

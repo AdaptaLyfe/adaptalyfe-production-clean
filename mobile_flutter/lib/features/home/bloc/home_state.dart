@@ -21,6 +21,8 @@ final class HomeLoading extends HomeState {
 
 enum HomeGuideStatus { initial, loading, loaded, failure }
 
+enum HomeChatActionStatus { idle, pending, executing, completed, failed, cancelled }
+
 final class HomeLoaded extends HomeState {
   const HomeLoaded(
     this.user, {
@@ -31,6 +33,7 @@ final class HomeLoaded extends HomeState {
     this.chatLoading = false,
     this.chatError,
     this.pendingChatAction,
+    this.chatActionStatus = HomeChatActionStatus.idle,
     this.dashboardModules = defaultDashboardModules,
     this.quickActions = defaultHomeQuickActions,
   });
@@ -43,6 +46,7 @@ final class HomeLoaded extends HomeState {
   final bool chatLoading;
   final String? chatError;
   final HomeChatAction? pendingChatAction;
+  final HomeChatActionStatus chatActionStatus;
   final List<DashboardModuleModel> dashboardModules;
   final List<HomeQuickAction> quickActions;
 
@@ -54,6 +58,7 @@ final class HomeLoaded extends HomeState {
     bool? chatLoading,
     Object? chatError = _notSet,
     Object? pendingChatAction = _notSet,
+    HomeChatActionStatus? chatActionStatus,
     List<DashboardModuleModel>? dashboardModules,
     List<HomeQuickAction>? quickActions,
   }) {
@@ -74,6 +79,7 @@ final class HomeLoaded extends HomeState {
       pendingChatAction: identical(pendingChatAction, _notSet)
           ? this.pendingChatAction
           : pendingChatAction as HomeChatAction?,
+      chatActionStatus: chatActionStatus ?? this.chatActionStatus,
       dashboardModules: dashboardModules ?? this.dashboardModules,
       quickActions: quickActions ?? this.quickActions,
     );
@@ -89,6 +95,7 @@ final class HomeLoaded extends HomeState {
         chatLoading,
         chatError,
         pendingChatAction,
+        chatActionStatus,
         dashboardModules,
         quickActions,
       ];

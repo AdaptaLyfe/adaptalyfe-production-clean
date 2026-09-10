@@ -21,7 +21,7 @@ class HomeQuickActionsStore {
       };
       final ordered = <HomeQuickAction>[];
       for (final item in decoded.whereType<Map>()) {
-        final id = '${item['id']}';
+        final id = _canonicalId('${item['id']}');
         final action = defaultsById[id];
         if (action != null && !ordered.any((saved) => saved.id == id)) {
           ordered.add(action.copyWith(visible: item['visible'] == true));
@@ -49,5 +49,17 @@ class HomeQuickActionsStore {
   Future<void> reset() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.remove(_key);
+  }
+
+  String _canonicalId(String id) {
+    const legacyIds = {
+      'meals': 'meal-shopping',
+      'tasks': 'daily-tasks',
+      'mood': 'mood-checkin',
+      'documents': 'personal-documents',
+      'bills': 'financial',
+      'support': 'caregiver',
+    };
+    return legacyIds[id] ?? id;
   }
 }
