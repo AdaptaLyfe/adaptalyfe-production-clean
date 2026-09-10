@@ -1710,29 +1710,32 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
         final borderColor =
             isRequired ? const Color(0xFFF87171) : const Color(0xFF8B5CF6);
         final backgroundColor =
-            isRequired ? const Color(0xFFFFF7F7) : Colors.white;
+            isRequired ? const Color(0xFFFFF3F3) : Colors.white;
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border(
-              top: BorderSide(color: borderColor, width: 4),
+              top: BorderSide(color: borderColor, width: 7),
               left: BorderSide(
                 color: isRequired
                     ? const Color(0xFFFECACA)
                     : const Color(0xFFE5E7EB),
+                width: 2,
               ),
               right: BorderSide(
                 color: isRequired
                     ? const Color(0xFFFECACA)
                     : const Color(0xFFE5E7EB),
+                width: 2,
               ),
               bottom: BorderSide(
                 color: isRequired
                     ? const Color(0xFFFECACA)
                     : const Color(0xFFE5E7EB),
+                width: 2,
               ),
             ),
             boxShadow: [
@@ -1759,12 +1762,12 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
                       color: isRequired
                           ? const Color(0xFFEF4444)
                           : const Color(0xFF8B5CF6),
-                      borderRadius: BorderRadius.circular(10),
+                      shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.favorite_rounded,
+                      Icons.favorite_border_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size: 25,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1823,7 +1826,7 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       textStyle: const TextStyle(
                         fontSize: 12,
@@ -2089,7 +2092,7 @@ class _HomeMoodChoice extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
         child: Column(
@@ -2148,8 +2151,8 @@ class _HomeMoodResourceButton extends StatelessWidget {
     final color =
         danger ? const Color(0xFFDC2626) : const Color(0xFF8B5CF6);
     final background =
-        danger ? const Color(0xFFFFF7F7) : const Color(0xFFFAF5FF);
-    final border = danger ? const Color(0xFFFECACA) : const Color(0xFFE9D5FF);
+        danger ? const Color(0xFFFFF3F3) : const Color(0xFFFCF6FF);
+    final border = danger ? const Color(0xFFF2CACA) : const Color(0xFFE9D5FF);
 
     return SizedBox(
       width: double.infinity,
@@ -2168,9 +2171,9 @@ class _HomeMoodResourceButton extends StatelessWidget {
           alignment: Alignment.centerLeft,
           backgroundColor: background,
           side: BorderSide(color: border),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
       ),
