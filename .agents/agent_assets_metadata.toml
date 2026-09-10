@@ -197,3 +197,17 @@ mtime_ms = 1789027140209
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/14ebbe98-b608-41cd-8f9b-44cafa41a274/5bfaca88-ea06-4572-b99f-ffaf7dfd0f49"
 storage_version_token = "1789027389649750"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4oN2JX-Ov2AIZF9HacPz_"
+uri = "file://flutter-settings-files-only.zip"
+type = "unspecified"
+title = "Updated Flutter files only"
+description = "Only the seven changed/new Flutter files; no full project source included."
+logical_id = "6ef8824f-75ca-4b9c-91aa-9cf4e4acb5f0"
+content_hash = "sha256:e6b77728e922bff2b8e1f5ae4f77ee67feb5ec4ec817bbd3ef5cb42ebf507246"
+size = 20256
+mtime_ms = 1789027554299
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6ef8824f-75ca-4b9c-91aa-9cf4e4acb5f0/b7df169e-47d6-4291-b7d8-b1966cea2ca6"
+storage_version_token = "1789027558989214"
+content_type = "application/octet-stream"
