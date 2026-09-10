@@ -309,3 +309,17 @@ mtime_ms = 1789040563585
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/58bac7fb-afd3-4346-8fb5-4b83739a125b/d67ba15c-649e-477f-b725-590f5b35916b"
 storage_version_token = "1789040570407269"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "figkwePQ9NX8Mjve_B0qj"
+uri = "file://flutter-mood-log-check-fix.zip"
+type = "unspecified"
+title = "Flutter Mood Log check fix"
+description = "ZIP containing the changed Flutter Home Mood Log file with the selected-mood check indicator."
+logical_id = "390bd645-defe-4f8f-8b51-d1dbfe231afb"
+content_hash = "sha256:b65c575e45e302e10bc7494c781c1fbfd2a7f0cab97de815bf3d4f9912d2df66"
+size = 21995
+mtime_ms = 1789042378672
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/390bd645-defe-4f8f-8b51-d1dbfe231afb/a07f1a8f-c094-4423-a8cd-feefecdb6ed2"
+storage_version_token = "1789042382511949"
+content_type = "application/octet-stream"
