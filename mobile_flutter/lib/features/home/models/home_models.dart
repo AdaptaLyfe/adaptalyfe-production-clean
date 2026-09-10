@@ -208,7 +208,7 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     route: '/personal-documents',
     icon: 'description',
     colorValue: 0xFF2563EB,
-    visible: false,
+    visible: true,
   ),
   HomeQuickAction(
     id: 'bills',
@@ -253,7 +253,7 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     route: '/resources',
     icon: 'menu_book',
     colorValue: 0xFFEAB308,
-    visible: true,
+    visible: false,
   ),
   HomeQuickAction(
     id: 'rewards',

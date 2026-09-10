@@ -16,14 +16,15 @@ class HomeQuickActionsStore {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return defaultHomeQuickActions;
-      final values = {
-        for (final item in decoded.whereType<Map>())
-          '${item['id']}': item['visible'] == true,
+      final defaultsById = {
+        for (final action in defaultHomeQuickActions) action.id: action,
       };
       final ordered = <HomeQuickAction>[];
-      for (final action in defaultHomeQuickActions) {
-        if (values.containsKey(action.id)) {
-          ordered.add(action.copyWith(visible: values[action.id]));
+      for (final item in decoded.whereType<Map>()) {
+        final id = '${item['id']}';
+        final action = defaultsById[id];
+        if (action != null && !ordered.any((saved) => saved.id == id)) {
+          ordered.add(action.copyWith(visible: item['visible'] == true));
         }
       }
       for (final action in defaultHomeQuickActions) {

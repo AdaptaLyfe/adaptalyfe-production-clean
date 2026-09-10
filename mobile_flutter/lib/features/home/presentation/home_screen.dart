@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
@@ -102,14 +101,8 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       foregroundColor: const Color(0xFF111827),
       elevation: 2,
       shadowColor: const Color(0x18000000),
-      leading: IconButton(
-        tooltip: 'Open menu',
-        onPressed: () {
-          context.findRootAncestorStateOfType<ScaffoldState>()?.openDrawer();
-        },
-        icon: const Icon(Icons.menu_rounded),
-      ),
-      titleSpacing: 8,
+      automaticallyImplyLeading: false,
+      titleSpacing: 14,
       title: Row(
         children: [
           ClipRRect(
@@ -123,7 +116,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 10),
           const Text(
-            'Adaptalyfe',
+            'AdaptaLyfe',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -132,19 +125,20 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        IconButton(
-          tooltip: 'Open notifications',
-          onPressed: () => context.push('/notifications'),
-          icon: const Icon(Icons.notifications_none_rounded),
+        Container(
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            tooltip: 'Open menu',
+            onPressed: () {
+              context.findRootAncestorStateOfType<ScaffoldState>()?.openDrawer();
+            },
+            icon: const Icon(Icons.menu_rounded),
+          ),
         ),
-        IconButton(
-          tooltip: 'Refresh dashboard',
-          onPressed: () {
-            context.read<HomeBloc>().add(const RefreshHome());
-          },
-          icon: const Icon(Icons.refresh_rounded),
-        ),
-        const SizedBox(width: 4),
       ],
     );
   }

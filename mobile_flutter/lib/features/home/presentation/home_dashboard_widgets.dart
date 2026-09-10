@@ -40,9 +40,9 @@ class HomeDashboardBody extends StatelessWidget {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFFEFF6FF),
-            Color(0xFFF5F3FF),
-            Color(0xFFF0FDFA),
+            Color(0xFFD9FAFB),
+            Color(0xFFE9FCFB),
+            Color(0xFFFFFFFF),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

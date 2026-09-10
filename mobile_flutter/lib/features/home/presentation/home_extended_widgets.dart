@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_state.dart';
+import '../../calendar/models/calendar_models.dart';
 import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../../daily_tasks/bloc/daily_tasks_state.dart';
+import '../../daily_tasks/models/daily_task_model.dart';
 import '../../financial/bloc/financial_bloc.dart';
 import '../../financial/bloc/financial_state.dart';
 import '../../mood/bloc/mood_bloc.dart';
@@ -28,8 +30,7 @@ class HomeConfigurableQuickActions extends StatelessWidget {
       builder: (context, state) {
         if (state is! HomeLoaded) return const SizedBox.shrink();
         final visible = state.quickActions.where((item) => item.visible).toList();
-        return _SurfaceCard(
-          child: Column(
+        return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -44,10 +45,44 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                       ),
                     ),
                   ),
-                  TextButton.icon(
-                    onPressed: () => _editQuickActions(context, state.quickActions),
-                    icon: const Icon(Icons.tune_rounded, size: 18),
-                    label: const Text('Customize'),
+                  Flexible(
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: () => _editQuickActions(
+                            context,
+                            state.quickActions,
+                            title: 'Reorder Quick Actions',
+                          ),
+                          icon: const Icon(Icons.drag_indicator_rounded, size: 18),
+                          label: const Text('Reorder'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF374151),
+                            side: const BorderSide(color: Color(0xFFD1D5DB)),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 13),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _editQuickActions(
+                            context,
+                            state.quickActions,
+                            title: 'Customize Quick Actions',
+                          ),
+                          icon: const Icon(Icons.tune_rounded, size: 18),
+                          label: const Text('Customize'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF374151),
+                            side: const BorderSide(color: Color(0xFFD1D5DB)),
+                            shape: const StadiumBorder(),
+                            padding: const EdgeInsets.symmetric(horizontal: 13),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -57,7 +92,11 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   icon: Icons.dashboard_customize_outlined,
                   text: 'No quick actions selected.',
                   action: TextButton(
-                    onPressed: () => _editQuickActions(context, state.quickActions),
+                    onPressed: () => _editQuickActions(
+                      context,
+                      state.quickActions,
+                      title: 'Customize Quick Actions',
+                    ),
                     child: const Text('Add some'),
                   ),
                 )
@@ -68,9 +107,9 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   itemCount: visible.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.55,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 172,
                   ),
                   itemBuilder: (context, index) {
                     final action = visible[index];
@@ -85,46 +124,55 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
                         decoration: BoxDecoration(
-                          color: color.withAlpha(20),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: color.withAlpha(90)),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: color,
-                              foregroundColor: Colors.white,
-                              child: Icon(_iconFor(action.icon), size: 20),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x160F172A),
+                              blurRadius: 9,
+                              offset: Offset(0, 4),
                             ),
-                            const SizedBox(width: 9),
-                            Expanded(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    action.label,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Color(0xFF111827),
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    action.description,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Color(0xFF6B7280),
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 58,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                color: color,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                _iconFor(action.icon),
+                                color: Colors.white,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 9),
+                            Text(
+                              action.label,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              action.description,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 11,
                               ),
                             ),
                           ],
@@ -134,7 +182,6 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   },
                 ),
             ],
-          ),
         );
       },
     );
@@ -143,10 +190,11 @@ class HomeConfigurableQuickActions extends StatelessWidget {
   Future<void> _editQuickActions(
     BuildContext context,
     List<HomeQuickAction> actions,
+    {required String title}
   ) async {
     final result = await showDialog<List<HomeQuickAction>>(
       context: context,
-      builder: (_) => _QuickActionsEditor(actions: actions),
+      builder: (_) => _QuickActionsEditor(actions: actions, title: title),
     );
     if (result != null && context.mounted) {
       context.read<HomeBloc>().add(SaveHomeQuickActionConfig(result));
@@ -164,9 +212,13 @@ class HomeConfigurableQuickActions extends StatelessWidget {
 }
 
 class _QuickActionsEditor extends StatefulWidget {
-  const _QuickActionsEditor({required this.actions});
+  const _QuickActionsEditor({
+    required this.actions,
+    required this.title,
+  });
 
   final List<HomeQuickAction> actions;
+  final String title;
 
   @override
   State<_QuickActionsEditor> createState() => _QuickActionsEditorState();
@@ -178,7 +230,7 @@ class _QuickActionsEditorState extends State<_QuickActionsEditor> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Customize Quick Actions'),
+      title: Text(widget.title),
       content: SizedBox(
         width: double.maxFinite,
         height: 470,
@@ -236,7 +288,7 @@ class HomeTodayFlowRich extends StatelessWidget {
           final now = DateTime.now();
           final timeline = <_TimelineItem>[
             ...tasks.tasks
-                .where((item) => !item.isCompleted && item.scheduledTime != null)
+                .where((item) => !item.isCompleted)
                 .map(
                   (item) => _TimelineItem(
                     title: item.title,
@@ -273,83 +325,682 @@ class HomeTodayFlowRich extends StatelessWidget {
                 ),
           ]..sort((a, b) => (a.time ?? now).compareTo(b.time ?? now));
 
-          final pendingTasks = tasks.tasks.where((item) => !item.isCompleted).length;
-          final completedTasks = tasks.tasks.where((item) => item.isCompleted).length;
-          return _SurfaceCard(
-            borderColor: const Color(0xFF99F6E4),
+          final pendingTasks =
+              tasks.tasks.where((item) => !item.isCompleted).toList();
+          final completedTasks =
+              tasks.tasks.where((item) => item.isCompleted).length;
+          final appointment = calendar.upcomingAppointments
+              .where(
+                (item) =>
+                    !item.isCompleted &&
+                    DateUtils.isSameDay(item.appointmentDate, now),
+              )
+              .isEmpty
+              ? null
+              : calendar.upcomingAppointments
+                  .where(
+                    (item) =>
+                        !item.isCompleted &&
+                        DateUtils.isSameDay(item.appointmentDate, now),
+                  )
+                  .first;
+          final next = timeline.length > 1 ? timeline[1] : null;
+          final primary = timeline.isEmpty ? null : timeline.first;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _TodayHeaderCard(
+                userName: user.name?.trim().isNotEmpty == true
+                    ? user.name!.trim()
+                    : user.username,
+                now: now,
+                primary: primary,
+              ),
+              if (primary != null && next != null) ...[
+                const SizedBox(height: 14),
+                _TodayTransitionCard(primary: primary, next: next),
+              ],
+              if (appointment != null) ...[
+                const SizedBox(height: 14),
+                _TodayAppointmentCard(
+                  appointment: appointment,
+                  preparationTasks: pendingTasks.take(4).toList(),
+                ),
+              ],
+              const SizedBox(height: 14),
+              _TodayProgressCard(
+                total: tasks.tasks.length,
+                completed: completedTasks,
+                pending: pendingTasks.length,
+              ),
+              if (primary != null) ...[
+                const SizedBox(height: 14),
+                _TodayNextActionCard(item: primary),
+              ],
+              const SizedBox(height: 14),
+              const _TodayEncouragementCard(),
+              const SizedBox(height: 14),
+              _TodayTimelineCard(items: timeline),
+              const SizedBox(height: 14),
+              const _TodayFoundationCard(),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TodayHeaderCard extends StatelessWidget {
+  const _TodayHeaderCard({
+    required this.userName,
+    required this.now,
+    required this.primary,
+  });
+
+  final String userName;
+  final DateTime now;
+  final _TimelineItem? primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      borderColor: const Color(0xFF99F6E4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.explore_outlined, color: Color(0xFF0F766E)),
+              const SizedBox(width: 8),
+              const Text(
+                'TODAY',
+                style: TextStyle(
+                  color: Color(0xFF115E59),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2,
+                ),
+              ),
+              const Spacer(),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/daily-tasks'),
+                icon: const Icon(Icons.checklist_rounded, size: 16),
+                label: const Text('Open tasks'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  shape: const StadiumBorder(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Let's look at today, $userName",
+            style: const TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${_dateLabel(now)} · One step at a time.',
+            style: const TextStyle(color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 16),
+          _TodayInset(
+            background: const Color(0xFFF8FFFE),
+            borderColor: const Color(0xFFD6FAF3),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.explore_outlined, color: Color(0xFF0F766E)),
-                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Color(0xFF0F766E),
+                    ),
+                    const SizedBox(width: 10),
                     const Text(
-                      'TODAY',
+                      'Your day, brought together',
                       style: TextStyle(
-                        color: Color(0xFF115E59),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const Spacer(),
-                    Text(
-                      _dateLabel(now),
-                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                    ),
+                    const SizedBox(width: 8),
+                    const _TodayPill(label: 'Context'),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  "Let's look at today, ${user.name?.trim().isNotEmpty == true ? user.name!.trim() : user.username}",
-                  style: const TextStyle(
-                    color: Color(0xFF0F172A),
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  timeline.isEmpty
-                      ? 'Nothing is scheduled yet. You can add a task or event when you are ready.'
-                      : 'Here is what is coming up. We will keep the next step clear.',
-                  style: const TextStyle(color: Color(0xFF475569), height: 1.35),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    _FlowStat(label: 'To do', value: '$pendingTasks', color: const Color(0xFF0F766E)),
-                    const SizedBox(width: 8),
-                    _FlowStat(label: 'Done', value: '$completedTasks', color: const Color(0xFF2563EB)),
-                    const SizedBox(width: 8),
-                    _FlowStat(label: 'Today', value: '${timeline.length}', color: const Color(0xFF7C3AED)),
-                  ],
-                ),
-                if (timeline.isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  ...timeline.take(4).map((item) => _TimelineRow(item: item)),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => context.push('/daily-tasks'),
-                      icon: const Icon(Icons.list_alt_rounded, size: 17),
-                      label: const Text('Open tasks'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: () => context.push('/calendar'),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 17),
-                      label: const Text('View calendar'),
-                    ),
-                  ],
+                const SizedBox(height: 8),
+                const Text(
+                  'A calm view of what matters now, what comes next, and how you are progressing.',
+                  style: TextStyle(color: Color(0xFF475569), height: 1.4),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 12),
+          _TodayInset(
+            background: const Color(0xFFF0FDFA),
+            borderColor: const Color(0xFFD1FAE5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.auto_awesome, color: Color(0xFF0F766E)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'A HELPFUL NEXT STEP',
+                        style: TextStyle(
+                          color: Color(0xFF0F766E),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.6,
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        primary == null
+                            ? 'There is room for what matters today. Add one small task when you are ready.'
+                            : '${primary!.title} is coming up. Start with one small preparation step.',
+                        style: const TextStyle(
+                          color: Color(0xFF134E4A),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '✦  Guidance, not pressure.',
+                        style: TextStyle(
+                          color: Color(0xFF0F766E),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayTransitionCard extends StatelessWidget {
+  const _TodayTransitionCard({required this.primary, required this.next});
+
+  final _TimelineItem primary;
+  final _TimelineItem next;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      color: const Color(0xFFF8F7FF),
+      borderColor: const Color(0xFFE8E1FF),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '→  NEXT TRANSITION',
+            style: TextStyle(
+              color: Color(0xFF7C3AED),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.6,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _TodayPill(label: primary.title),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 9),
+                child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF7C3AED)),
+              ),
+              _TodayPill(label: next.title, filled: true),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '${next.title} is coming up. Start with one small preparation step.',
+            style: const TextStyle(color: Color(0xFF334155), height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () => context.push('/daily-tasks'),
+            child: const Text('Open tasks'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayAppointmentCard extends StatelessWidget {
+  const _TodayAppointmentCard({
+    required this.appointment,
+    required this.preparationTasks,
+  });
+
+  final AppointmentModel appointment;
+  final List<DailyTaskModel> preparationTasks;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      borderColor: const Color(0xFFE2E8F0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0xFFEDE9FE),
+                foregroundColor: Color(0xFF7C3AED),
+                child: Icon(Icons.calendar_month_rounded),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  appointment.title,
+                  style: const TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              _TodayPill(label: _timeLabel(appointment.appointmentDate)),
+            ],
+          ),
+          const SizedBox(height: 5),
+          const Text(
+            'Related tasks and preparation in one place.',
+            style: TextStyle(color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              const Text(
+                'Preparation',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+              const Spacer(),
+              Text(
+                '${preparationTasks.length} remaining',
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          if (preparationTasks.isEmpty)
+            const _EmptyInline(
+              icon: Icons.check_circle_outline_rounded,
+              text: 'No preparation tasks are waiting.',
+            )
+          else
+            ...preparationTasks.map(
+              (task) => CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                value: task.isCompleted,
+                title: Text(
+                  task.title,
+                  style: const TextStyle(fontSize: 13),
+                ),
+                subtitle: task.estimatedMinutes > 0
+                    ? Text('${task.estimatedMinutes} min')
+                    : null,
+                onChanged: (value) => context.read<DailyTasksBloc>().add(
+                  ToggleDailyTask(
+                    taskId: task.id,
+                    isCompleted: value ?? false,
+                  ),
+                ),
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: const Color(0xFF7C3AED),
+              ),
+            ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/daily-tasks'),
+              icon: const Icon(Icons.flag_outlined),
+              label: const Text('Continue preparation'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayProgressCard extends StatelessWidget {
+  const _TodayProgressCard({
+    required this.total,
+    required this.completed,
+    required this.pending,
+  });
+
+  final int total;
+  final int completed;
+  final int pending;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = total == 0 ? 0.0 : completed / total;
+    return _SurfaceCard(
+      color: const Color(0xFFFFFEF5),
+      borderColor: const Color(0xFFFDE68A),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0xFFFEF3C7),
+                foregroundColor: Color(0xFFB45309),
+                child: Icon(Icons.checklist_rounded),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  "Today's task progress",
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              _TodayPill(
+                label: pending == 0 ? 'Complete' : 'In progress',
+                filled: pending == 0,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Current step: ${pending == 0 ? 'all tasks complete' : 'choose a manageable next step'}',
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Text(
+                '$completed of $total steps',
+                style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
+              ),
+              const Spacer(),
+              Text(
+                '${(progress * 100).round()}%',
+                style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFFEF3C7),
+              color: const Color(0xFFFBBF24),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pending == 0
+                ? 'You made space for what matters today.'
+                : 'About ${pending * 15} min left · Choose one manageable next step.',
+            style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayNextActionCard extends StatelessWidget {
+  const _TodayNextActionCard({required this.item});
+
+  final _TimelineItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      color: const Color(0xFFF0FDFA),
+      borderColor: const Color(0xFFCCFBF1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: Color(0xFF0F766E)),
+              const SizedBox(width: 8),
+              const Text(
+                'Your primary next action',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 8),
+              const _TodayPill(label: 'Suggested'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${item.title} is the next small step. Keep it simple.',
+            style: const TextStyle(color: Color(0xFF134E4A), height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.push(item.route),
+              icon: const Icon(Icons.check_circle_outline_rounded),
+              label: Text('Open ${item.title}'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0F766E),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayEncouragementCard extends StatelessWidget {
+  const _TodayEncouragementCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      color: const Color(0xFFF0FDF4),
+      borderColor: const Color(0xFFBBF7D0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.favorite_outline_rounded, color: Color(0xFF16A34A)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'A small start still counts.',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(width: 8),
+                    _TodayPill(label: 'Encouragement'),
+                  ],
+                ),
+                SizedBox(height: 7),
+                Text(
+                  'Adaptalyfe is here to support the next step, not rush the whole day.',
+                  style: TextStyle(color: Color(0xFF166534), height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayTimelineCard extends StatelessWidget {
+  const _TodayTimelineCard({required this.items});
+
+  final List<_TimelineItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'YOUR TIMELINE',
+                  style: TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/calendar'),
+                child: const Text('View calendar'),
+              ),
+            ],
+          ),
+          if (items.isEmpty)
+            const _EmptyInline(
+              icon: Icons.event_available_outlined,
+              text: 'Nothing is scheduled yet.',
+            )
+          else
+            ...items.take(6).map((item) => _TimelineRow(item: item)),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayFoundationCard extends StatelessWidget {
+  const _TodayFoundationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _SurfaceCard(
+      color: const Color(0xFFF0FDFA),
+      borderColor: const Color(0xFFD1FAE5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF0F766E)),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'FUTURE-READY FOUNDATION',
+                      style: TextStyle(
+                        color: Color(0xFF0F766E),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    _TodayPill(label: 'Context'),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'This presentation is powered by your existing tasks and schedule. Future Guide intelligence can add richer context without changing the experience.',
+                  style: TextStyle(color: Color(0xFF134E4A), height: 1.4),
+                ),
+                SizedBox(height: 7),
+                Text(
+                  'Proactive guidance stays separate from AdaptAI chat.',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodayInset extends StatelessWidget {
+  const _TodayInset({
+    required this.child,
+    required this.background,
+    required this.borderColor,
+  });
+
+  final Widget child;
+  final Color background;
+  final Color borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: borderColor),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _TodayPill extends StatelessWidget {
+  const _TodayPill({required this.label, this.filled = false});
+
+  final String label;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: filled ? const Color(0xFFEDE9FE) : Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: filled ? const Color(0xFFE9D5FF) : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
       ),
     );
   }
@@ -393,7 +1044,15 @@ class HomeLiveDailyGuide extends StatelessWidget {
         final guide = state.dailyGuide!;
         return _SurfaceCard(
           padding: EdgeInsets.zero,
-          color: const Color(0xFF047857),
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF2D7DF6),
+              Color(0xFF16C7E8),
+              Color(0xFF46DCC5),
+            ],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
           borderColor: const Color(0xFF059669),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1245,12 +1904,14 @@ class _SurfaceCard extends StatelessWidget {
   const _SurfaceCard({
     required this.child,
     this.color = Colors.white,
+    this.gradient,
     this.borderColor = const Color(0xFFE5E7EB),
     this.padding = const EdgeInsets.all(16),
   });
 
   final Widget child;
   final Color color;
+  final Gradient? gradient;
   final Color borderColor;
   final EdgeInsets padding;
 
@@ -1259,7 +1920,8 @@ class _SurfaceCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: color,
+        color: gradient == null ? color : null,
+        gradient: gradient,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor),
         boxShadow: const [
@@ -1541,12 +2203,15 @@ String _safeRoute(String route) {
     case 'accessibility':
       return (Icons.accessibility_new_rounded, '/settings', 'Adjust voice, appearance, safety, and accessibility preferences.');
     case 'safety':
+    case 'safety-transportation':
       return (Icons.shield_outlined, '/resources', 'Keep safety resources and transportation planning easy to reach.');
     case 'health':
+    case 'health-wellness':
       return (Icons.health_and_safety_outlined, '/medical', 'Organize health information and build healthy routines.');
     case 'life-skills':
       return (Icons.lightbulb_outline_rounded, '/resources', 'Explore practical resources for everyday independence.');
     case 'progress':
+    case 'progress-motivation':
       return (Icons.trending_up_rounded, '/rewards', 'Review your progress and celebrate completed goals.');
     default:
       return (Icons.apps_rounded, '/resources', 'Explore this Adaptalyfe module and add information when you are ready.');
