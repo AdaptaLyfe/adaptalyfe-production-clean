@@ -295,3 +295,17 @@ mtime_ms = 1789038963539
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cf633cb7-e290-4960-aa7f-dc1e6252df39/d5dd8202-c4d8-4975-8299-5cb1a1a7a0b5"
 storage_version_token = "1789038967897009"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GdyptfTqcvAoPIIJhYa93"
+uri = "file://flutter-drawer-change.zip"
+type = "unspecified"
+title = "Flutter drawer change"
+description = "ZIP containing the single changed Flutter file for the React-matching Home drawer."
+logical_id = "58bac7fb-afd3-4346-8fb5-4b83739a125b"
+content_hash = "sha256:67176ea6ef23bb9cac5234db9b36ccc9e3d42c59ffa62fddc2c2a27abfc64eb9"
+size = 4443
+mtime_ms = 1789040563585
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/58bac7fb-afd3-4346-8fb5-4b83739a125b/d67ba15c-649e-477f-b725-590f5b35916b"
+storage_version_token = "1789040570407269"
+content_type = "application/octet-stream"
