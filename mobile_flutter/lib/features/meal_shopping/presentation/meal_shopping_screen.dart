@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/meal_shopping_bloc.dart';
@@ -137,7 +138,9 @@ class _MealPlansTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+         padding: AppResponsive.pagePadding(context).add(
+           const EdgeInsets.only(top: 16, bottom: 32),
+         ),
         children: [
           _IntroCard(
             icon: Icons.restaurant_menu_rounded,
@@ -362,7 +365,9 @@ class _ShoppingListTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+         padding: AppResponsive.pagePadding(context).add(
+           const EdgeInsets.only(top: 16, bottom: 32),
+         ),
         children: [
           _ShoppingStats(
             activeCount: state.activeShoppingItems.length,
@@ -420,35 +425,45 @@ class _ShoppingStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth < 380
+            ? constraints.maxWidth
+            : (constraints.maxWidth - 16) / 3;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SizedBox(
+              width: cardWidth,
+              child: _StatCard(
             icon: Icons.inventory_2_outlined,
             label: 'Active Items',
             value: '$activeCount',
             color: const Color(0xFFF97316),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
+            SizedBox(
+              width: cardWidth,
+              child: _StatCard(
             icon: Icons.attach_money_rounded,
             label: 'Estimated Total',
             value: _currency(estimatedTotal),
             color: const Color(0xFF16A34A),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
+            SizedBox(
+              width: cardWidth,
+              child: _StatCard(
             icon: Icons.check_circle_outline_rounded,
             label: 'Spent',
             value: _currency(actualTotal),
             color: const Color(0xFF2563EB),
           ),
         ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -863,6 +878,10 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
+        constraints: BoxConstraints(
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
+        ),
         title: const Text('Add New Meal'),
         content: Form(
           key: formKey,
@@ -980,6 +999,10 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
+        constraints: BoxConstraints(
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
+        ),
         title: const Text('Add Shopping Item'),
         content: Form(
           key: formKey,

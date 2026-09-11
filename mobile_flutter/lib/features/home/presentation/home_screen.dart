@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -78,7 +79,7 @@ class HomeScreen extends StatelessWidget {
             backgroundColor: const Color(0xFF059669),
             foregroundColor: Colors.white,
             icon: const Icon(Icons.auto_awesome_rounded),
-            label: const Text('AdaptAI'),
+             label: Text(AppResponsive.isCompact(context) ? 'AI' : 'AdaptAI'),
           ),
           floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
@@ -141,11 +142,14 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Text(
-            'AdaptaLyfe',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+           const Flexible(
+             child: Text(
+               'AdaptaLyfe',
+               overflow: TextOverflow.ellipsis,
+               style: TextStyle(
+                 fontSize: 20,
+                 fontWeight: FontWeight.w700,
+               ),
             ),
           ),
         ],

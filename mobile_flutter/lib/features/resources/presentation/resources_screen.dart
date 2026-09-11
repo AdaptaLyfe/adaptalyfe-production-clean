@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/resources_bloc.dart';
@@ -119,7 +120,7 @@ class _PersonalResourcesTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 18, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
@@ -168,8 +169,11 @@ class _PersonalResourcesTab extends StatelessWidget {
           const SizedBox(height: 12),
           _CategoryChips(state: state),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Text(
                 '${state.visiblePersonalResources.length} resource'
@@ -409,7 +413,7 @@ class _EmergencyResourcesTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 18, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
@@ -439,8 +443,11 @@ class _EmergencyResourcesTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               const Text(
                 'Saved support contacts',
@@ -639,7 +646,7 @@ class _WellbeingTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+      padding: AppResponsive.pagePadding(context).copyWith(top: 18, bottom: 32),
       children: const [
         Text(
           'Self-guided support',
@@ -1201,11 +1208,21 @@ class _PersonalResourceDialogState extends State<_PersonalResourceDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.resource != null;
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.isCompact(context) ? 12 : 24,
+        vertical: 24,
+      ),
       title: Text(isEditing ? 'Edit personal resource' : 'Add personal resource'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _formField(
@@ -1256,6 +1273,8 @@ class _PersonalResourceDialogState extends State<_PersonalResourceDialog> {
                   onChanged: (value) => setState(() => _isFavorite = value),
                 ),
             ],
+              ),
+            ),
           ),
         ),
       ),
@@ -1360,13 +1379,23 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.resource != null;
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.isCompact(context) ? 12 : 24,
+        vertical: 24,
+      ),
       title: Text(
         isEditing ? 'Edit emergency resource' : 'Add emergency resource',
       ),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _formField(
@@ -1405,6 +1434,8 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
                 onChanged: (value) => setState(() => _isAvailable24_7 = value),
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),

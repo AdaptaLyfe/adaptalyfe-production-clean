@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../data/personal_documents_repository.dart';
 import '../models/personal_document_model.dart';
 
@@ -88,7 +89,7 @@ class _PersonalDocumentsScreenState extends State<PersonalDocumentsScreen> {
     }
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(24),
+        padding: AppResponsive.pagePadding(context, compact: 16).copyWith(top: 24, bottom: 24),
         children: [
           const Icon(Icons.cloud_off_rounded, size: 44, color: Colors.red),
           const SizedBox(height: 12),
@@ -132,7 +133,7 @@ class _PersonalDocumentsScreenState extends State<PersonalDocumentsScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 100),
       itemCount: _documents.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
@@ -227,7 +228,7 @@ class _DocumentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -267,7 +268,9 @@ class _DocumentCard extends StatelessWidget {
               Text(document.content!, maxLines: 4, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
               children: [
                 TextButton.icon(
                   onPressed: onEdit,
@@ -334,7 +337,7 @@ class _DocumentEditorState extends State<_DocumentEditor> {
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 20),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 8, bottom: bottom + 20),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,22 +422,36 @@ class _DocumentEditorState extends State<_DocumentEditor> {
                 title: const Text('Mark as important'),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 360;
+                  final buttons = [
+                    OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
+                    FilledButton(
                       onPressed: _submit,
                       child: Text(widget.document == null ? 'Save' : 'Update'),
                     ),
-                  ),
-                ],
+                  ];
+                  return compact
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            buttons[0],
+                            const SizedBox(height: 8),
+                            buttons[1],
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: buttons[0]),
+                            const SizedBox(width: 10),
+                            Expanded(child: buttons[1]),
+                          ],
+                        );
+                },
               ),
             ],
           ),

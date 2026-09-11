@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -77,13 +78,13 @@ class _AcceptInvitationScreenState extends State<AcceptInvitationScreen> {
             foregroundColor: const Color(0xFF111827),
           ),
           body: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
             children: [
               const _AcceptHeader(),
               const SizedBox(height: 16),
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

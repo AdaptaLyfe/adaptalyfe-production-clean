@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/financial_bloc.dart';
@@ -364,14 +365,15 @@ class _SummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      childAspectRatio: 1.65,
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
+    return LayoutBuilder(
+      builder: (context, constraints) => GridView.count(
+        crossAxisCount: constraints.maxWidth < 360 ? 1 : 2,
+        childAspectRatio: constraints.maxWidth < 360 ? 3.2 : 1.65,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
         _SummaryCard(
           label: 'Monthly income',
           value: _currency(state.totalIncome),
@@ -398,7 +400,8 @@ class _SummaryGrid extends StatelessWidget {
               : const Color(0xFFB91C1C),
           icon: Icons.account_balance_wallet_outlined,
         ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1279,9 +1282,12 @@ class _BillDialogState extends State<_BillDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.bill == null ? 'Add New Bill' : 'Edit Bill'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .72),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1330,6 +1336,7 @@ class _BillDialogState extends State<_BillDialog> {
                 onChanged: (value) => setState(() => _isRecurring = value),
               ),
             ],
+          ),
           ),
         ),
       ),
@@ -1397,9 +1404,12 @@ class _BudgetDialogState extends State<_BudgetDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(_type == 'income' ? 'Add Income' : 'Add Expense'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .72),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1442,6 +1452,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
                     const InputDecoration(labelText: 'Description (optional)'),
               ),
             ],
+          ),
           ),
         ),
       ),

@@ -547,3 +547,17 @@ mtime_ms = 1789131132126
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f2623be-3926-4cc8-b7f3-c57cc01cf55d/b50ffd9a-c642-450b-b364-6ae95dac9139"
 storage_version_token = "1789131136648120"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cl-27gOMPVuF3v4Uq8ezn"
+uri = "file://adaptalyfe-flutter-responsive-update.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter responsive update"
+description = "Complete mobile_flutter source package with responsive layouts applied across the app shell, auth, dashboard, tools, health, settings, caregiver, and content screens."
+logical_id = "d36f2e72-18a9-4629-bbf5-31be8507a924"
+content_hash = "sha256:63bcf9cf2981f178774171a0e0990d945c9644d5c61d9149c1a0694a098e47a4"
+size = 433877
+mtime_ms = 1789139394390
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d36f2e72-18a9-4629-bbf5-31be8507a924/f6f2c9a7-57c3-4569-b9a9-3c3ad16b71db"
+storage_version_token = "1789139400836793"
+content_type = "application/octet-stream"

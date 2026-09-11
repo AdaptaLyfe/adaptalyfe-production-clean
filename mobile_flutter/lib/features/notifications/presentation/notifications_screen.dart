@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../../core/notifications/native_notification_service.dart';
+import '../../../core/layout/responsive.dart';
 import '../bloc/notifications_bloc.dart';
 import '../bloc/notifications_event.dart';
 import '../bloc/notifications_state.dart';
@@ -39,7 +40,7 @@ class NotificationsScreen extends StatelessWidget {
           appBar: AppBar(
             title: Row(
               children: [
-                const Text('Notifications'),
+                const Flexible(child: Text('Notifications', overflow: TextOverflow.ellipsis)),
                 if (state.unreadCount > 0) ...[
                   const SizedBox(width: 10),
                   _UnreadBadge(count: state.unreadCount),
@@ -117,7 +118,7 @@ class _NotificationsBody extends StatelessWidget {
         child: state.notifications.isEmpty
             ? ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                 padding: AppResponsive.pagePadding(context).copyWith(top: 20, bottom: 20),
                 children: const [
                   SizedBox(height: 120),
                   _EmptyNotifications(),
@@ -125,7 +126,7 @@ class _NotificationsBody extends StatelessWidget {
               )
             : ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                 padding: AppResponsive.pagePadding(context).copyWith(top: 20, bottom: 32),
                 children: [
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.isLoading) const SizedBox(height: 12),
@@ -486,7 +487,7 @@ class _NotificationsLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+       padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
       children: [
         ...List.generate(
           4,

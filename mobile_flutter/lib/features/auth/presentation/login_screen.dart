@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
+import '../../../core/layout/responsive.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -96,7 +97,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   _LoginNavigationBar(),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 48, 16, 40),
+                       padding: AppResponsive.pagePadding(context).add(
+                         EdgeInsets.only(
+                           top: AppResponsive.isCompact(context) ? 20 : 48,
+                           bottom: 40,
+                         ),
+                       ),
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 440),
@@ -226,7 +232,7 @@ class _LoginCard extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+         padding: EdgeInsets.all(AppResponsive.isCompact(context) ? 16 : 24),
         child: Form(
           key: formKey,
           child: Column(

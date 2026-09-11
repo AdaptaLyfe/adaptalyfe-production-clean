@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_state.dart';
 import '../../calendar/models/calendar_models.dart';
@@ -143,15 +144,16 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   ),
                 )
               else
-                GridView.builder(
+                LayoutBuilder(
+                  builder: (context, constraints) => GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: visible.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    mainAxisExtent: 172,
+                    mainAxisExtent: constraints.maxWidth < 360 ? 158 : 172,
                   ),
                   itemBuilder: (context, index) {
                     final action = visible[index];
@@ -222,6 +224,7 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                       ),
                     );
                   },
+                  ),
                 ),
             ],
         );
@@ -277,8 +280,8 @@ class _QuickActionsEditorState extends State<_QuickActionsEditor> {
     return AlertDialog(
       title: Text(widget.title),
       content: SizedBox(
-        width: double.maxFinite,
-        height: 470,
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .7),
         child: ReorderableListView.builder(
           itemCount: items.length,
           onReorder: (oldIndex, newIndex) {
@@ -467,13 +470,21 @@ class _TodayMomentCards extends StatelessWidget {
       Color(0xFF2563EB),
       Color(0xFF7C3AED),
     ];
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          if (index > 0) const SizedBox(width: 8),
-          Expanded(
-            child: _TodayInset(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 380;
+        final itemWidth = compact
+            ? constraints.maxWidth
+            : (constraints.maxWidth - ((items.length - 1) * 8)) /
+                items.length;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var index = 0; index < items.length; index++)
+              SizedBox(
+                width: itemWidth,
+                child: _TodayInset(
               background: colors[index].withAlpha(12),
               borderColor: colors[index].withAlpha(70),
               child: Column(
@@ -512,9 +523,10 @@ class _TodayMomentCards extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ],
-      ],
+                ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1553,8 +1565,8 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     return AlertDialog(
       title: const Text('Customize Dashboard'),
       content: SizedBox(
-        width: double.maxFinite,
-        height: 470,
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .7),
         child: ReorderableListView.builder(
           itemCount: items.length,
           onReorder: (oldIndex, newIndex) {

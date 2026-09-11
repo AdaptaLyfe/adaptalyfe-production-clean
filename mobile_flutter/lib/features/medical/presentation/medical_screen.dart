@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/medical_bloc.dart';
@@ -428,10 +429,32 @@ class _MedicalCollectionView extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+         padding: AppResponsive.pagePadding(context).add(
+           const EdgeInsets.only(top: 16, bottom: 32),
+         ),
         children: [
           if (header != null) ...[header!, const SizedBox(height: 14)],
-          Row(
+          LayoutBuilder(
+            builder: (context, constraints) => constraints.maxWidth < 430
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        emptyTitle.replaceFirst('No ', ''),
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      FilledButton.icon(
+                        onPressed: onAdd,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(addLabel),
+                      ),
+                    ],
+                  )
+                : Row(
             children: [
               Expanded(
                 child: Text(
@@ -448,6 +471,7 @@ class _MedicalCollectionView extends StatelessWidget {
                 label: Text(addLabel),
               ),
             ],
+          ),
           ),
           const SizedBox(height: 14),
           if (errorMessage != null)
@@ -1046,6 +1070,10 @@ Future<void> _showConditionDialog(
           : 'Note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(existing == null ? 'Add Medical Condition' : 'Edit Medical Condition'),
         content: Form(
           key: formKey,
@@ -1161,6 +1189,10 @@ Future<void> _showAllergyDialog(
           : 'Sensitivity updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(existing == null ? 'Add New Allergy' : 'Edit Allergy'),
         content: Form(
           key: formKey,
@@ -1274,6 +1306,10 @@ Future<void> _showAdverseMedicationDialog(
           : 'Reaction updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(
           existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
         ),
@@ -1410,6 +1446,10 @@ Future<void> _showProviderDialog(
           : 'Healthcare contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(
           existing == null
               ? 'Add Primary Care Provider'
@@ -1570,6 +1610,10 @@ Future<void> _showSymptomDialog(
           : 'Personal note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
         content: Form(
           key: formKey,
@@ -1735,6 +1779,10 @@ Future<void> _showContactDialog(
           : 'Trusted contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
         title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
         content: Form(
           key: formKey,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../../core/layout/responsive.dart';
 import '../bloc/rewards_bloc.dart';
 import '../bloc/rewards_event.dart';
 import '../bloc/rewards_state.dart';
@@ -101,7 +102,7 @@ class _RewardsBody extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+             padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 12),
             child: _PointsBalanceCard(balance: state.pointsBalance),
           ),
           Expanded(
@@ -203,21 +204,22 @@ class _RewardsTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
-              const Expanded(
-                child: Text(
-                  'Available Rewards',
-                  style: TextStyle(
-                    color: Color(0xFF111827),
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+              const Text(
+                'Available Rewards',
+                style: TextStyle(
+                  color: Color(0xFF111827),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               FilledButton.icon(
@@ -459,7 +461,7 @@ class _BadgesTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+         padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
@@ -622,7 +624,7 @@ class _ProgressTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+         padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
@@ -836,7 +838,7 @@ class _HistoryTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+         padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           if (state.isLoading) const SizedBox(height: 12),
@@ -1311,11 +1313,21 @@ class _RewardDialogState extends State<_RewardDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.reward != null;
     return AlertDialog(
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.isCompact(context) ? 12 : 24,
+        vertical: 24,
+      ),
       title: Text(isEditing ? 'Edit Reward' : 'Create New Reward'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: AppResponsive.dialogMaxHeight(context),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _field(
@@ -1378,6 +1390,8 @@ class _RewardDialogState extends State<_RewardDialog> {
                 },
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../../core/platform/text_to_speech_service.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
@@ -89,7 +90,9 @@ class _SettingsBody extends StatelessWidget {
             onRefresh: () => _refresh(context),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+              padding: AppResponsive.pagePadding(context).add(
+                const EdgeInsets.only(top: 20, bottom: 32),
+              ),
               children: [
                 const _SettingsPageHeader(),
                 const SizedBox(height: 16),
@@ -144,10 +147,11 @@ class _SettingsPageHeader extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
             Icon(Icons.settings_rounded, color: Color(0xFF9333EA), size: 30),
-            SizedBox(width: 12),
             Text(
               'Settings & Customization',
               style: TextStyle(
@@ -857,8 +861,10 @@ class _SettingsActionButtons extends StatelessWidget {
     final bloc = context.read<SettingsBloc>();
     return Padding(
       padding: const EdgeInsets.only(bottom: 52),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: 10,
+        runSpacing: 10,
         children: [
           OutlinedButton.icon(
             onPressed: state.isSaving
@@ -1689,19 +1695,18 @@ class _OrganizationAccessCardState extends State<_OrganizationAccessCard> {
                 ),
               ],
             )
-          : Row(
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(
-                      labelText: 'Organization code',
-                      border: OutlineInputBorder(),
-                    ),
+                TextField(
+                  controller: _controller,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Organization code',
+                    border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(height: 10),
                 FilledButton(
                   onPressed: () {
                     if (_controller.text.trim().isNotEmpty) {
@@ -1896,15 +1901,20 @@ class _Panel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null)
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (icon != null) ...[
+                if (icon != null)
                   Icon(icon, color: const Color(0xFF2563EB)),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: AppResponsive.width(context) - 96,
+                  ),
                   child: Text(
                     title!,
+                    softWrap: true,
                     style: const TextStyle(
                       color: Color(0xFF111827),
                       fontSize: 18,

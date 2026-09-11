@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/daily_tasks_bloc.dart';
@@ -993,8 +994,9 @@ class _TaskFormDialogState extends State<_TaskFormDialog> {
 
     return AlertDialog(
       title: Text(isEditing ? 'Edit Task' : 'Add New Daily Task'),
-      content: SizedBox(
-        width: 440,
+       content: SizedBox(
+         width: AppResponsive.dialogWidth(context),
+         height: AppResponsive.dialogMaxHeight(context, fraction: .78),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,

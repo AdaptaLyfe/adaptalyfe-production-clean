@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/calendar_bloc.dart';
@@ -614,8 +615,12 @@ class _CalendarItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: compact ? 250 : double.infinity,
+     return Container(
+       constraints: compact
+           ? BoxConstraints(
+               maxWidth: MediaQuery.sizeOf(context).width - 48,
+             )
+           : const BoxConstraints(),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: item.backgroundColor,
@@ -1506,7 +1511,8 @@ class _AppointmentFormDialogState extends State<_AppointmentFormDialog> {
     return AlertDialog(
       title: const Text('Schedule New Appointment'),
       content: SizedBox(
-        width: 420,
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .78),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -1662,7 +1668,8 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
     return AlertDialog(
       title: Text(isEditing ? 'Edit Event' : 'Add New Event'),
       content: SizedBox(
-        width: 420,
+        width: AppResponsive.dialogWidth(context),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .78),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(

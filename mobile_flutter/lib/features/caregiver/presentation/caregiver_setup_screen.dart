@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
+import '../../../core/layout/responsive.dart';
 import '../bloc/caregiver_bloc.dart';
 import '../bloc/caregiver_event.dart';
 import '../bloc/caregiver_state.dart';
@@ -129,7 +130,7 @@ class _CaregiverSetupScreenState extends State<CaregiverSetupScreen> {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
               children: [
                 _IntroCard(
                   title: 'Build your care team',
@@ -269,7 +270,7 @@ class _CreateInvitationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -381,7 +382,7 @@ class _InvitationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+              Row(
               children: [
                 const Icon(Icons.mail_rounded, color: Color(0xFF7C3AED)),
                 const SizedBox(width: 8),

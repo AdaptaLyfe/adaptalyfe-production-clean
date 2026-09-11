@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../../models/user_model.dart';
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_state.dart';
@@ -52,7 +53,7 @@ class HomeDashboardBody extends StatelessWidget {
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+           padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 36),
           children: [
             if (homeState is HomeInitial || homeState is HomeLoading)
               const HomeLoadingCard()
@@ -454,17 +455,18 @@ class HomeQuickActions extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          GridView.builder(
+           LayoutBuilder(
+             builder: (context, constraints) => GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _actions.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+               crossAxisCount: constraints.maxWidth < 360 ? 1 : 2,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.55,
-            ),
-            itemBuilder: (context, index) {
+               childAspectRatio: 1.55,
+             ),
+             itemBuilder: (context, index) {
               final action = _actions[index];
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
@@ -516,8 +518,9 @@ class HomeQuickActions extends StatelessWidget {
                   ),
                 ),
               );
-            },
-          ),
+             },
+           ),
+           ),
         ],
       ),
     );
@@ -1126,8 +1129,8 @@ class _TaskCategoryPanel extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
+              ),
             ),
-          ),
           ...completed.map(
             (task) => _TaskRow(
               task: task,

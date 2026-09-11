@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/caregiver_bloc.dart';
@@ -47,7 +48,7 @@ class CaregiverDashboardScreen extends StatelessWidget {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
               children: [
                 Card(
                   color: const Color(0xFFF0FDFA),
@@ -106,7 +107,7 @@ class _RecipientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: AppResponsive.pagePadding(context).copyWith(top: 16, bottom: 16),
         leading: const CircleAvatar(
           radius: 26,
           backgroundColor: Color(0xFFEDE9FE),

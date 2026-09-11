@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
+import '../../../core/layout/responsive.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
@@ -117,7 +118,10 @@ class _SubscriptionBody extends StatelessWidget {
             onRefresh: () => _refresh(context),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+               padding: AppResponsive.pagePadding(context).copyWith(
+                 top: 20,
+                 bottom: 32,
+               ),
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
                 const SizedBox(height: 16),
@@ -295,26 +299,31 @@ class _PlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  plan.name,
-                  style: const TextStyle(
-                    color: Color(0xFF111827),
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              if (plan.popular)
-                const Chip(
-                  label: Text('Popular'),
-                  backgroundColor: Color(0xFFEDE9FE),
-                  labelStyle: TextStyle(color: Color(0xFF6D28D9)),
-                ),
-            ],
-          ),
+           Row(
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               Expanded(
+                 child: Text(
+                   plan.name,
+                   maxLines: 2,
+                   overflow: TextOverflow.ellipsis,
+                   style: const TextStyle(
+                     color: Color(0xFF111827),
+                     fontSize: 20,
+                     fontWeight: FontWeight.w800,
+                   ),
+                 ),
+               ),
+               if (plan.popular) ...[
+                 const SizedBox(width: 8),
+                 const Chip(
+                   label: Text('Popular'),
+                   backgroundColor: Color(0xFFEDE9FE),
+                   labelStyle: TextStyle(color: Color(0xFF6D28D9)),
+                 ),
+               ],
+             ],
+           ),
           const SizedBox(height: 4),
           Text(plan.description, style: const TextStyle(color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
@@ -426,15 +435,19 @@ class _RestoreCard extends StatelessWidget {
     return _Panel(
       color: const Color(0xFFFFFBEB),
       borderColor: const Color(0xFFFDE68A),
-      child: Row(
-        children: [
+       child: Wrap(
+         spacing: 10,
+         runSpacing: 8,
+         crossAxisAlignment: WrapCrossAlignment.center,
+         children: [
           const Icon(Icons.restore_rounded, color: Color(0xFFB45309)),
           const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
+           const SizedBox(
+             width: 230,
+             child: Text(
               'Already subscribed? Restore purchases from this store account.',
               style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-            ),
+             ),
           ),
           TextButton(onPressed: enabled ? onPressed : null, child: const Text('Restore')),
         ],

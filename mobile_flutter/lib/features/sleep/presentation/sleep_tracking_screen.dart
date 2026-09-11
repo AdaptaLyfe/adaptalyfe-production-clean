@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/sleep_bloc.dart';
@@ -178,7 +179,9 @@ class _OverviewTab extends StatelessWidget {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+         padding: AppResponsive.pagePadding(context).add(
+           const EdgeInsets.only(top: 18, bottom: 32),
+         ),
         children: [
           Row(
             children: const [
@@ -268,12 +271,18 @@ class _StatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: AppResponsive.gridColumns(
+        context,
+        minimumItemWidth: 170,
+        compactColumns: 1,
+        mediumColumns: 2,
+        wideColumns: 2,
+      ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 10,
       mainAxisSpacing: 10,
-      childAspectRatio: 1.65,
+      childAspectRatio: AppResponsive.isCompact(context) ? 2.25 : 1.65,
       children: [
         _StatCard(
           title: 'Avg Sleep Duration',
@@ -390,7 +399,49 @@ class _SleepHistoryCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) => constraints.maxWidth < 430
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const CircleAvatar(
+                      radius: 19,
+                      backgroundColor: Color(0xFFDBEAFE),
+                      foregroundColor: Color(0xFF2563EB),
+                      child: Icon(Icons.nightlight_round, size: 19),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: _SleepHistorySummary(session: session)),
+                  ]),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      _SleepMetric(
+                        value: _formatDuration(session.totalSleepDuration),
+                        label: 'Duration',
+                      ),
+                      _SleepMetric(
+                        value: session.sleepScore == null
+                            ? '--/100'
+                            : '${session.sleepScore}/100',
+                        label: 'Score',
+                      ),
+                      if (_hasText(session.quality))
+                        _QualityBadge(quality: session.quality!),
+                      IconButton(
+                        tooltip: 'Delete sleep log',
+                        onPressed: () => _confirmDelete(context, session),
+                        icon: const Icon(Icons.delete_outline,
+                            color: Color(0xFFDC2626)),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
         children: [
           const CircleAvatar(
             radius: 19,
@@ -473,8 +524,61 @@ class _SleepHistoryCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
+}
+
+class _SleepHistorySummary extends StatelessWidget {
+  const _SleepHistorySummary({required this.session});
+
+  final SleepSessionModel session;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = _parseDateOnly(session.sleepDate);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(_formatDate(date),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            if (DateUtils.isSameDay(date, DateTime.now()))
+              const _SmallBadge(
+                label: 'Today',
+                background: Color(0xFFE0F2FE),
+                foreground: Color(0xFF0369A1),
+              ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(
+          '${_formatTime(session.bedtime)} - ${_formatTime(session.wakeTime)}',
+          style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+  }
+}
+
+class _SleepMetric extends StatelessWidget {
+  const _SleepMetric({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(label,
+              style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280))),
+        ],
+      );
 }
 
 class _SleepLogTab extends StatefulWidget {
@@ -546,7 +650,9 @@ class _SleepLogTabState extends State<_SleepLogTab> {
   Widget build(BuildContext context) {
     final hasExisting = widget.state.dailySession != null;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+       padding: AppResponsive.pagePadding(context).add(
+         const EdgeInsets.only(top: 18, bottom: 32),
+       ),
       children: [
         Card(
           child: Padding(
@@ -778,7 +884,9 @@ class _TrendsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final recent = sessions.takeLast(7).reversed.toList();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
+       padding: AppResponsive.pagePadding(context).add(
+         const EdgeInsets.only(top: 18, bottom: 32),
+       ),
       children: [
         Card(
           child: Padding(

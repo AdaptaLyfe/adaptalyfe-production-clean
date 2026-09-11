@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -83,16 +84,24 @@ class _SplashView extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFFECFDF5),
         body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
+           child: SingleChildScrollView(
+             padding: AppResponsive.pagePadding(context).add(
+               const EdgeInsets.symmetric(vertical: 24),
+             ),
+             child: ConstrainedBox(
+               constraints: BoxConstraints(
+                 minHeight: AppResponsive.height(context) -
+                     MediaQuery.paddingOf(context).vertical -
+                     48,
+               ),
+               child: Center(
+                 child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
+                   Image.asset(
                     'assets/adaptalyfe-icon.png',
-                    width: 132,
-                    height: 106,
+                     width: AppResponsive.isCompact(context) ? 104 : 132,
+                     height: AppResponsive.isCompact(context) ? 84 : 106,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 18),
@@ -152,7 +161,8 @@ class _SplashView extends StatelessWidget {
                     ),
                   ],
                 ],
-              ),
+                 ),
+               ),
             ),
           ),
         ),

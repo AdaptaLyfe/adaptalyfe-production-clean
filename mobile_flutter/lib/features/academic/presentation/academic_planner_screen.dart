@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/academic_bloc.dart';
@@ -281,7 +282,9 @@ class _ScheduleTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+       padding: AppResponsive.pagePadding(context).add(
+         const EdgeInsets.only(top: 16, bottom: 32),
+       ),
         children: [
           _SectionHeader(
             icon: Icons.calendar_today_outlined,
@@ -342,7 +345,9 @@ class _ClassesTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+       padding: AppResponsive.pagePadding(context).add(
+         const EdgeInsets.only(top: 16, bottom: 32),
+       ),
         children: [
           _SectionHeader(
             icon: Icons.school_outlined,
@@ -386,7 +391,9 @@ class _AssignmentsTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+       padding: AppResponsive.pagePadding(context).add(
+         const EdgeInsets.only(top: 16, bottom: 32),
+       ),
         children: [
           _SectionHeader(
             icon: Icons.assignment_outlined,
@@ -451,7 +458,27 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxWidth < 430
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(children: [
+                  Icon(icon, color: const Color(0xFF2563EB), size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(title, style: const TextStyle(
+                    fontSize: 19, fontWeight: FontWeight.w700,
+                  ))),
+                ]),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onAction,
+                  icon: const Icon(Icons.add, size: 17),
+                  label: Text(actionLabel),
+                ),
+              ],
+            )
+          : Row(
       children: [
         Icon(icon, color: const Color(0xFF2563EB), size: 22),
         const SizedBox(width: 8),
@@ -471,6 +498,7 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }
@@ -865,6 +893,10 @@ Future<void> _showClassDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
+        constraints: BoxConstraints(
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
+        ),
         title: const Text('Add New Class'),
         content: Form(
           key: formKey,
@@ -1043,6 +1075,10 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
+        constraints: BoxConstraints(
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
+        ),
         title: const Text('Add New Assignment'),
         content: Form(
           key: formKey,

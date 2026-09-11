@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/layout/responsive.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_event.dart';
 import '../features/auth/bloc/auth_state.dart';
@@ -120,25 +121,34 @@ class AppBottomNavigation extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: 3,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.05,
-                children: _moreDestinations
-                    .map(
-                      (item) => _MoreNavigationTile(
-                        item: item,
-                        active: location == item.route ||
-                            location.startsWith('${item.route}/'),
-                        onTap: () {
-                          Navigator.of(sheetContext).pop();
-                          context.go(item.route);
-                        },
-                      ),
-                    )
-                    .toList(),
+              LayoutBuilder(
+                builder: (context, constraints) => GridView.count(
+                  shrinkWrap: true,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.05,
+                  crossAxisCount: AppResponsive.gridColumnsForWidth(
+                    constraints.maxWidth,
+                    minimumItemWidth: 110,
+                    compactColumns: 2,
+                    mediumColumns: 3,
+                    wideColumns: 4,
+                    maxColumns: 5,
+                  ),
+                  children: _moreDestinations
+                      .map(
+                        (item) => _MoreNavigationTile(
+                          item: item,
+                          active: location == item.route ||
+                              location.startsWith('${item.route}/'),
+                          onTap: () {
+                            Navigator.of(sheetContext).pop();
+                            context.go(item.route);
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
               _MoreMenuFooter(
                 onOpenMenu: () {
@@ -286,7 +296,9 @@ class AppNavigationDrawer extends StatelessWidget {
     final email = user?.email?.trim() ?? '';
 
     return Drawer(
-      width: MediaQuery.sizeOf(context).width,
+      width: AppResponsive.isMediumOrWider(context)
+          ? AppResponsive.dialogWidth(context, maxWidth: 420, horizontalGutter: 0)
+          : AppResponsive.width(context) * .88,
       child: SafeArea(
         child: Column(
           children: [
@@ -309,9 +321,21 @@ class AppNavigationDrawer extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: _coreItems.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: AppResponsive.gridColumnsForWidth(
+                        AppResponsive.isMediumOrWider(context)
+                            ? AppResponsive.dialogWidth(
+                                context,
+                                maxWidth: 420,
+                                horizontalGutter: 0,
+                              ) -
+                                32
+                            : (AppResponsive.width(context) * .88) - 32,
+                        minimumItemWidth: 145,
+                        compactColumns: 1,
+                        mediumColumns: 2,
+                        wideColumns: 2,
+                      ),
                       mainAxisSpacing: 4,
                       crossAxisSpacing: 8,
                       mainAxisExtent: 48,
