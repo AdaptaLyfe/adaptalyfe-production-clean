@@ -302,71 +302,77 @@ class _MonthCalendar extends StatelessWidget {
             itemCount: 42,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              childAspectRatio: 0.72,
+              childAspectRatio: 0.5,
             ),
             itemBuilder: (context, index) {
               final date = gridStart.add(Duration(days: index));
               final items = _itemsForDate(state, date);
               final isToday = DateUtils.isSameDay(date, today);
               final inMonth = date.month == state.selectedDate.month;
-              return InkWell(
-                onTap: () {
-                  final bloc = context.read<CalendarBloc>();
-                  bloc.add(CalendarDateChanged(date));
-                  bloc.add(const CalendarViewChanged(CalendarView.day));
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: isToday
-                        ? const Color(0xFFEFF6FF)
-                        : inMonth
-                            ? Colors.white
-                            : const Color(0xFFF8FAFC),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: CircleAvatar(
-                          radius: isToday ? 13 : 11,
-                          backgroundColor:
-                              isToday ? const Color(0xFF2563EB) : Colors.transparent,
-                          child: Text(
-                            '${date.day}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: isToday
-                                  ? Colors.white
-                                  : inMonth
-                                      ? const Color(0xFF374151)
-                                      : const Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ),
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final maxVisibleItems = constraints.maxWidth < 40 ? 2 : 3;
+                  return InkWell(
+                    onTap: () {
+                      final bloc = context.read<CalendarBloc>();
+                      bloc.add(CalendarDateChanged(date));
+                      bloc.add(const CalendarViewChanged(CalendarView.day));
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? const Color(0xFFEFF6FF)
+                            : inMonth
+                                ? Colors.white
+                                : const Color(0xFFF8FAFC),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
-                      const SizedBox(height: 2),
-                      ...items.take(3).map(
-                            (item) => _MiniCalendarItem(item: item),
-                          ),
-                      if (items.length > 3)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            '+${items.length - 3} more',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Color(0xFF6B7280),
-                              fontWeight: FontWeight.w600,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Align(
+                            alignment: Alignment.topRight,
+                            child: CircleAvatar(
+                              radius: isToday ? 10 : 9,
+                              backgroundColor: isToday
+                                  ? const Color(0xFF2563EB)
+                                  : Colors.transparent,
+                              child: Text(
+                                '${date.day}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: isToday
+                                      ? Colors.white
+                                      : inMonth
+                                          ? const Color(0xFF374151)
+                                          : const Color(0xFF9CA3AF),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ),
+                          const SizedBox(height: 2),
+                          ...items
+                              .take(maxVisibleItems)
+                              .map((item) => _MiniCalendarItem(item: item)),
+                          if (items.length > maxVisibleItems)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                '+${items.length - maxVisibleItems} more',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),

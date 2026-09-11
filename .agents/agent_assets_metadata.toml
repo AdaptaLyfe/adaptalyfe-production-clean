@@ -463,3 +463,17 @@ mtime_ms = 1789121073827
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5fbaec55-5e59-4cfe-a19c-aa5b99bb4b29/638f527d-0e53-49e2-98a3-46521b2dea95"
 storage_version_token = "1789121077756801"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PO77_K-Nsw0iQkkQW152K"
+uri = "file://flutter-calendar-overflow-fix.zip"
+type = "unspecified"
+title = "Flutter Calendar overflow fix"
+description = "ZIP containing the updated Calendar screen with responsive month-grid sizing and compact narrow-phone cells."
+logical_id = "8039fac7-8c01-4650-a3e8-1c51aea9ae5a"
+content_hash = "sha256:6a3823b69143039930cf5aaf438e452836533e08bced2f2f7fa588aa4b3640a8"
+size = 10319
+mtime_ms = 1789121449078
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8039fac7-8c01-4650-a3e8-1c51aea9ae5a/bc83225e-413d-4af4-a293-9a4a1ddd3280"
+storage_version_token = "1789121454887634"
+content_type = "application/octet-stream"
