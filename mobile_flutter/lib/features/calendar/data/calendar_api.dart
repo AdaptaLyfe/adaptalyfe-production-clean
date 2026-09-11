@@ -1,4 +1,7 @@
 import '../../../core/network/api_client.dart';
+import '../../daily_tasks/models/daily_task_model.dart';
+import '../../financial/models/financial_models.dart';
+import '../../mood/models/mood_entry_model.dart';
 import '../models/calendar_models.dart';
 
 class CalendarApi {
@@ -9,8 +12,14 @@ class CalendarApi {
   Future<List<AppointmentModel>> getAppointments() =>
       _getList('/api/appointments', AppointmentModel.fromJson);
 
-  Future<List<AppointmentModel>> getUpcomingAppointments() =>
-      _getList('/api/appointments/upcoming', AppointmentModel.fromJson);
+  Future<List<DailyTaskModel>> getDailyTasks() =>
+      _getList('/api/daily-tasks', DailyTaskModel.fromJson);
+
+  Future<List<BillModel>> getBills() =>
+      _getList('/api/bills', BillModel.fromJson);
+
+  Future<List<MoodEntryModel>> getMoodEntries() =>
+      _getList('/api/mood-entries', MoodEntryModel.fromJson);
 
   Future<AppointmentModel> createAppointment(AppointmentInput input) =>
       _post('/api/appointments', input.toJson(), AppointmentModel.fromJson);

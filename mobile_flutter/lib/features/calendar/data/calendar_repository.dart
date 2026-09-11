@@ -1,4 +1,7 @@
 import '../models/calendar_models.dart';
+import '../../daily_tasks/models/daily_task_model.dart';
+import '../../financial/models/financial_models.dart';
+import '../../mood/models/mood_entry_model.dart';
 import 'calendar_api.dart';
 
 class CalendarRepository {
@@ -8,8 +11,11 @@ class CalendarRepository {
 
   Future<List<AppointmentModel>> getAppointments() => api.getAppointments();
 
-  Future<List<AppointmentModel>> getUpcomingAppointments() =>
-      api.getUpcomingAppointments();
+  Future<List<DailyTaskModel>> getDailyTasks() => api.getDailyTasks();
+
+  Future<List<BillModel>> getBills() => api.getBills();
+
+  Future<List<MoodEntryModel>> getMoodEntries() => api.getMoodEntries();
 
   Future<AppointmentModel> createAppointment(AppointmentInput input) =>
       api.createAppointment(input);

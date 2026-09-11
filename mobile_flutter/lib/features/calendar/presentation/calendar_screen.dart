@@ -51,70 +51,13 @@ class CalendarScreen extends StatelessWidget {
           );
         }
 
-        return DefaultTabController(
-          length: 2,
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Calendar'),
-              actions: [
-                IconButton(
-                  tooltip: 'Refresh calendar',
-                  onPressed: state.busyAction == 'refresh'
-                      ? null
-                      : () => context
-                          .read<CalendarBloc>()
-                          .add(const RefreshCalendar()),
-                  icon: const Icon(Icons.refresh_rounded),
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Add to calendar',
-                  onSelected: (value) {
-                    if (value == 'appointment') {
-                      _showAppointmentDialog(context);
-                    } else {
-                      _showCalendarEventDialog(context);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'appointment',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.medical_services_outlined),
-                        title: Text('Appointment'),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'event',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.event_outlined),
-                        title: Text('Calendar event'),
-                      ),
-                    ),
-                  ],
-                  icon: const Icon(Icons.add_circle_outline_rounded),
-                ),
-              ],
-              bottom: const TabBar(
-                tabs: [
-                  Tab(text: 'Calendar'),
-                  Tab(text: 'Appointments'),
-                ],
-              ),
-            ),
-            body: Column(
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
               children: [
                 if (state.isLoading || state.busyAction != null)
                   const LinearProgressIndicator(minHeight: 2),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _CalendarView(state: state),
-                      _AppointmentsView(state: state),
-                    ],
-                  ),
-                ),
+                Expanded(child: _CalendarView(state: state)),
               ],
             ),
           ),
@@ -155,6 +98,8 @@ class _CalendarView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
         children: [
+          const _CalendarPageHeader(),
+          const SizedBox(height: 18),
           _CalendarNavigation(state: state),
           const SizedBox(height: 12),
           if (state.view == CalendarView.month)
@@ -165,7 +110,7 @@ class _CalendarView extends StatelessWidget {
             _DayCalendar(state: state),
           const SizedBox(height: 18),
           const _CalendarLegend(),
-          if (state.calendarEvents.isEmpty && state.appointments.isEmpty) ...[
+          if (!state.hasData) ...[
             const SizedBox(height: 16),
             _EmptyCard(
               icon: Icons.event_available_outlined,
@@ -175,6 +120,67 @@ class _CalendarView extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _CalendarPageHeader extends StatelessWidget {
+  const _CalendarPageHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<CalendarBloc>();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final title = const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_month_rounded, color: Color(0xFF2563EB)),
+            SizedBox(width: 8),
+            Text(
+              'Calendar',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ],
+        );
+        final actions = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            OutlinedButton(
+              onPressed: () => bloc.add(CalendarDateChanged(DateTime.now())),
+              child: const Text('Today'),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: () => _showCalendarEventDialog(context),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add Event'),
+            ),
+          ],
+        );
+
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              title,
+              const SizedBox(height: 10),
+              Align(alignment: Alignment.centerRight, child: actions),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: title),
+            actions,
+          ],
+        );
+      },
     );
   }
 }
@@ -219,23 +225,53 @@ class _CalendarNavigation extends StatelessWidget {
         ),
         Row(
           children: [
-            OutlinedButton.icon(
-              onPressed: () =>
-                  bloc.add(CalendarDateChanged(DateTime.now())),
-              icon: const Icon(Icons.today_outlined, size: 17),
-              label: const Text('Today'),
-            ),
-            const Spacer(),
-            SegmentedButton<CalendarView>(
-              segments: const [
-                ButtonSegment(value: CalendarView.month, label: Text('Month')),
-                ButtonSegment(value: CalendarView.week, label: Text('Week')),
-                ButtonSegment(value: CalendarView.day, label: Text('Day')),
-              ],
-              selected: {state.view},
-              onSelectionChanged: (selection) =>
-                  bloc.add(CalendarViewChanged(selection.first)),
-              showSelectedIcon: false,
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFD1D5DB)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: CalendarView.values
+                        .map(
+                          (view) => Expanded(
+                            child: InkWell(
+                              onTap: () => bloc.add(CalendarViewChanged(view)),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 11),
+                                decoration: BoxDecoration(
+                                  color: state.view == view
+                                      ? const Color(0xFF2563EB)
+                                      : Colors.white,
+                                  border: view == CalendarView.month
+                                      ? null
+                                      : const Border(
+                                          left: BorderSide(
+                                            color: Color(0xFFD1D5DB),
+                                          ),
+                                        ),
+                                ),
+                                child: Text(
+                                  _viewLabel(view),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: state.view == view
+                                        ? Colors.white
+                                        : const Color(0xFF374151),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -584,8 +620,7 @@ class _CalendarItemCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(item.isAppointment ? Icons.medical_services_outlined : Icons.event,
-              color: item.accentColor),
+          Icon(item.icon, color: item.accentColor),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -598,14 +633,15 @@ class _CalendarItemCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  item.timeLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: item.textColor,
-                    fontWeight: FontWeight.w600,
+                if (item.timeLabel != null)
+                  Text(
+                    item.timeLabel!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: item.textColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
                 if (item.location != null)
                   Text(
                     item.location!,
@@ -617,7 +653,7 @@ class _CalendarItemCard extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  item.isAppointment ? 'Appointment' : item.category,
+                  item.typeLabel,
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF6B7280),
@@ -914,12 +950,20 @@ class _CalendarLegend extends StatelessWidget {
           runSpacing: 10,
           children: const [
             _LegendItem(
+              color: Color(0xFF2563EB),
+              label: 'Daily Tasks',
+            ),
+            _LegendItem(
+              color: Color(0xFFDC2626),
+              label: 'Bills',
+            ),
+            _LegendItem(
               color: Color(0xFF9333EA),
               label: 'Appointments',
             ),
             _LegendItem(
-              color: Color(0xFF2563EB),
-              label: 'Calendar events',
+              color: Color(0xFFDB2777),
+              label: 'Mood Check-ins',
             ),
           ],
         ),
@@ -1055,35 +1099,115 @@ enum _AppointmentFilter {
   completed,
 }
 
+enum _CalendarItemType { task, bill, appointment, event, mood }
+
 class _CalendarItem {
   const _CalendarItem({
     required this.title,
     required this.start,
-    required this.isAppointment,
+    required this.type,
     required this.isCompleted,
     required this.category,
     required this.location,
     this.eventId,
+    this.allDay = false,
+    this.time,
   });
 
   final String title;
   final DateTime start;
-  final bool isAppointment;
+  final _CalendarItemType type;
   final bool isCompleted;
   final String category;
   final String? location;
   final int? eventId;
+  final bool allDay;
+  final String? time;
 
-  String get timeLabel => isAppointment || start.hour != 0 || start.minute != 0
-      ? _formatTimeStatic(start)
-      : 'All day';
+  bool get isAppointment => type == _CalendarItemType.appointment;
 
-  Color get accentColor =>
-      isAppointment ? const Color(0xFF9333EA) : const Color(0xFF2563EB);
-  Color get backgroundColor =>
-      isAppointment ? const Color(0xFFF3E8FF) : const Color(0xFFDBEAFE);
-  Color get textColor =>
-      isAppointment ? const Color(0xFF6B21A8) : const Color(0xFF1E40AF);
+  String? get timeLabel {
+    if (time != null && time!.isNotEmpty) return time;
+    if (allDay || type == _CalendarItemType.task && start.hour == 0) {
+      return null;
+    }
+    return _formatTimeStatic(start);
+  }
+
+  IconData get icon {
+    switch (type) {
+      case _CalendarItemType.task:
+        return isCompleted ? Icons.check_circle : Icons.circle_outlined;
+      case _CalendarItemType.bill:
+        return Icons.attach_money_rounded;
+      case _CalendarItemType.appointment:
+        return Icons.medical_services_outlined;
+      case _CalendarItemType.event:
+        return Icons.event_outlined;
+      case _CalendarItemType.mood:
+        return Icons.favorite_outline_rounded;
+    }
+  }
+
+  Color get accentColor {
+    switch (type) {
+      case _CalendarItemType.task:
+        return const Color(0xFF2563EB);
+      case _CalendarItemType.bill:
+        return const Color(0xFFDC2626);
+      case _CalendarItemType.appointment:
+        return const Color(0xFF9333EA);
+      case _CalendarItemType.event:
+        return const Color(0xFF4F46E5);
+      case _CalendarItemType.mood:
+        return const Color(0xFFDB2777);
+    }
+  }
+
+  Color get backgroundColor {
+    switch (type) {
+      case _CalendarItemType.task:
+        return const Color(0xFFEFF6FF);
+      case _CalendarItemType.bill:
+        return const Color(0xFFFEF2F2);
+      case _CalendarItemType.appointment:
+        return const Color(0xFFF3E8FF);
+      case _CalendarItemType.event:
+        return const Color(0xFFEEF2FF);
+      case _CalendarItemType.mood:
+        return const Color(0xFFFCE7F3);
+    }
+  }
+
+  Color get textColor {
+    switch (type) {
+      case _CalendarItemType.task:
+        return const Color(0xFF1E40AF);
+      case _CalendarItemType.bill:
+        return const Color(0xFF991B1B);
+      case _CalendarItemType.appointment:
+        return const Color(0xFF6B21A8);
+      case _CalendarItemType.event:
+        return const Color(0xFF3730A3);
+      case _CalendarItemType.mood:
+        return const Color(0xFF9D174D);
+    }
+  }
+
+  String get typeLabel {
+    switch (type) {
+      case _CalendarItemType.task:
+        return 'Daily Task';
+      case _CalendarItemType.bill:
+        return 'Bill Due';
+      case _CalendarItemType.appointment:
+        return 'Appointment';
+      case _CalendarItemType.event:
+        return 'Event';
+      case _CalendarItemType.mood:
+        return 'Mood Check-in';
+    }
+  }
 }
 
 List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
@@ -1094,7 +1218,7 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
         _CalendarItem(
           title: appointment.title,
           start: appointment.appointmentDate,
-          isAppointment: true,
+          type: _CalendarItemType.appointment,
           isCompleted: appointment.isCompleted,
           category: appointment.provider ?? 'Appointment',
           location: appointment.location,
@@ -1108,11 +1232,75 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
         _CalendarItem(
           title: event.title,
           start: event.startDate,
-          isAppointment: false,
+          type: _CalendarItemType.event,
           isCompleted: event.isCompleted,
           category: event.category,
           location: event.location,
           eventId: event.id,
+          allDay: event.allDay,
+        ),
+      );
+    }
+  }
+  for (final task in state.tasks) {
+    final isDaily = task.frequency.isEmpty || task.frequency == 'daily';
+    if (isDaily) {
+      items.add(
+        _CalendarItem(
+          title: task.title,
+          start: date,
+          type: _CalendarItemType.task,
+          isCompleted: task.isCompleted,
+          category: task.category.isEmpty ? 'daily' : task.category,
+          location: null,
+        ),
+      );
+    }
+    final dueDate = task.dueDate;
+    if (dueDate != null && DateUtils.isSameDay(dueDate, date)) {
+      items.add(
+        _CalendarItem(
+          title: task.title,
+          start: dueDate,
+          type: _CalendarItemType.task,
+          isCompleted: task.isCompleted,
+          category: task.frequency.isEmpty ? 'scheduled' : task.frequency,
+          location: null,
+        ),
+      );
+    }
+  }
+  for (final bill in state.bills) {
+    if (bill.dueDate == date.day) {
+      items.add(
+        _CalendarItem(
+          title: '${bill.name} - \$${bill.amount.toStringAsFixed(2)}',
+          start: date,
+          type: _CalendarItemType.bill,
+          isCompleted: bill.isPaid,
+          category: 'financial',
+          location: null,
+        ),
+      );
+    }
+  }
+  for (final mood in state.moodEntries) {
+    final entryDate = mood.entryDate;
+    if (entryDate != null && DateUtils.isSameDay(entryDate, date)) {
+      const moodEmojis = ['😢', '😐', '😊', '😃', '🤩'];
+      final moodIndex = mood.mood < 1
+          ? 0
+          : mood.mood > moodEmojis.length
+              ? moodEmojis.length - 1
+              : mood.mood - 1;
+      items.add(
+        _CalendarItem(
+          title: 'Mood: ${moodEmojis[moodIndex]}',
+          start: mood.entryDate!,
+          type: _CalendarItemType.mood,
+          isCompleted: true,
+          category: 'wellness',
+          location: null,
         ),
       );
     }
@@ -1130,6 +1318,17 @@ String _headerLabel(CalendarState state) {
   final start = date.subtract(Duration(days: date.weekday % 7));
   final end = start.add(const Duration(days: 6));
   return '${_formatMonthDay(start)} - ${_formatMonthDay(end)}, ${end.year}';
+}
+
+String _viewLabel(CalendarView view) {
+  switch (view) {
+    case CalendarView.month:
+      return 'Month';
+    case CalendarView.week:
+      return 'Week';
+    case CalendarView.day:
+      return 'Day';
+  }
 }
 
 String _appointmentStatus(AppointmentModel appointment) {

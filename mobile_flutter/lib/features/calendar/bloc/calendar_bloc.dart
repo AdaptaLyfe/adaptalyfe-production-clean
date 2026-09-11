@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../daily_tasks/models/daily_task_model.dart';
+import '../../financial/models/financial_models.dart';
+import '../../mood/models/mood_entry_model.dart';
 import '../data/calendar_repository.dart';
 import '../models/calendar_models.dart';
 import 'calendar_event.dart';
@@ -161,6 +164,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final results = await Future.wait<Object>([
         repository.getAppointments(),
         repository.getCalendarEvents(),
+        repository.getDailyTasks(),
+        repository.getBills(),
+        repository.getMoodEntries(),
       ]);
       final appointments = results[0] as List<AppointmentModel>;
       emit(
@@ -169,6 +175,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
           appointments: appointments,
           upcomingAppointments: _upcomingAppointments(appointments),
           calendarEvents: results[1] as List<CalendarEventModel>,
+          tasks: results[2] as List<DailyTaskModel>,
+          bills: results[3] as List<BillModel>,
+          moodEntries: results[4] as List<MoodEntryModel>,
           busyAction: null,
           errorMessage: null,
           actionMessage: null,
@@ -199,6 +208,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final results = await Future.wait<Object>([
         repository.getAppointments(),
         repository.getCalendarEvents(),
+        repository.getDailyTasks(),
+        repository.getBills(),
+        repository.getMoodEntries(),
       ]);
       final appointments = results[0] as List<AppointmentModel>;
       emit(
@@ -207,6 +219,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
           appointments: appointments,
           upcomingAppointments: _upcomingAppointments(appointments),
           calendarEvents: results[1] as List<CalendarEventModel>,
+          tasks: results[2] as List<DailyTaskModel>,
+          bills: results[3] as List<BillModel>,
+          moodEntries: results[4] as List<MoodEntryModel>,
           busyAction: null,
           actionMessage: successMessage,
           errorMessage: null,

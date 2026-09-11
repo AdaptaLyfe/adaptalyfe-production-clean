@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../daily_tasks/models/daily_task_model.dart';
+import '../../financial/models/financial_models.dart';
+import '../../mood/models/mood_entry_model.dart';
 import '../models/calendar_models.dart';
 import 'calendar_event.dart';
 
@@ -18,6 +21,9 @@ class CalendarState extends Equatable {
     this.appointments = const [],
     this.upcomingAppointments = const [],
     this.calendarEvents = const [],
+    this.tasks = const [],
+    this.bills = const [],
+    this.moodEntries = const [],
     this.busyAction,
     this.errorMessage,
     this.actionMessage,
@@ -30,13 +36,21 @@ class CalendarState extends Equatable {
   final List<AppointmentModel> appointments;
   final List<AppointmentModel> upcomingAppointments;
   final List<CalendarEventModel> calendarEvents;
+  final List<DailyTaskModel> tasks;
+  final List<BillModel> bills;
+  final List<MoodEntryModel> moodEntries;
   final String? busyAction;
   final String? errorMessage;
   final String? actionMessage;
   final bool sessionInvalid;
 
   bool get isLoading => status == CalendarStatus.loading;
-  bool get hasData => appointments.isNotEmpty || calendarEvents.isNotEmpty;
+  bool get hasData =>
+      appointments.isNotEmpty ||
+      calendarEvents.isNotEmpty ||
+      tasks.isNotEmpty ||
+      bills.isNotEmpty ||
+      moodEntries.isNotEmpty;
 
   DateTime get selectedDate => currentDate ?? DateTime.now();
 
@@ -47,6 +61,9 @@ class CalendarState extends Equatable {
     List<AppointmentModel>? appointments,
     List<AppointmentModel>? upcomingAppointments,
     List<CalendarEventModel>? calendarEvents,
+    List<DailyTaskModel>? tasks,
+    List<BillModel>? bills,
+    List<MoodEntryModel>? moodEntries,
     Object? busyAction = _notSet,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
@@ -60,6 +77,9 @@ class CalendarState extends Equatable {
       upcomingAppointments:
           upcomingAppointments ?? this.upcomingAppointments,
       calendarEvents: calendarEvents ?? this.calendarEvents,
+      tasks: tasks ?? this.tasks,
+      bills: bills ?? this.bills,
+      moodEntries: moodEntries ?? this.moodEntries,
       busyAction: identical(busyAction, _notSet)
           ? this.busyAction
           : busyAction as String?,
@@ -81,6 +101,9 @@ class CalendarState extends Equatable {
         appointments,
         upcomingAppointments,
         calendarEvents,
+        tasks,
+        bills,
+        moodEntries,
         busyAction,
         errorMessage,
         actionMessage,
