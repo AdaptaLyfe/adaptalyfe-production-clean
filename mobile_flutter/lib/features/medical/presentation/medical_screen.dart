@@ -988,6 +988,7 @@ Future<void> _showConditionDialog(
   BuildContext context, [
   MedicalConditionModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final conditionController =
       TextEditingController(text: existing?.condition ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
@@ -1068,7 +1069,7 @@ Future<void> _showConditionDialog(
                 diagnosedDate: diagnosedDate,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddCondition(input)
                         : EditCondition(existing.id, input),
@@ -1089,6 +1090,7 @@ Future<void> _showAllergyDialog(
   BuildContext context, [
   AllergyModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final allergenController =
       TextEditingController(text: existing?.allergen ?? '');
   final reactionController =
@@ -1166,7 +1168,7 @@ Future<void> _showAllergyDialog(
                 reaction: reactionController.text,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddAllergy(input)
                         : EditAllergy(existing.id, input),
@@ -1188,6 +1190,7 @@ Future<void> _showAdverseMedicationDialog(
   BuildContext context, [
   AdverseMedicationModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final medicationController =
       TextEditingController(text: existing?.medicationName ?? '');
   final reactionController =
@@ -1284,7 +1287,7 @@ Future<void> _showAdverseMedicationDialog(
                 reactionDate: reactionDate,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddAdverseMedication(input)
                         : EditAdverseMedication(existing.id, input),
@@ -1306,6 +1309,7 @@ Future<void> _showProviderDialog(
   BuildContext context, [
   PrimaryCareProviderModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final nameController = TextEditingController(text: existing?.name ?? '');
   final specialtyController =
       TextEditingController(text: existing?.specialty ?? '');
@@ -1421,7 +1425,7 @@ Future<void> _showProviderDialog(
                 isPrimary: isPrimary,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddPrimaryCareProvider(input)
                         : EditPrimaryCareProvider(existing.id, input),
@@ -1453,6 +1457,7 @@ Future<void> _showSymptomDialog(
   BuildContext context, [
   SymptomEntryModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final nameController =
       TextEditingController(text: existing?.symptomName ?? '');
   final locationController =
@@ -1579,7 +1584,7 @@ Future<void> _showSymptomDialog(
                 description: descriptionController.text,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddSymptomEntry(input)
                         : EditSymptomEntry(existing.id, input),
@@ -1607,6 +1612,7 @@ Future<void> _showContactDialog(
   BuildContext context, [
   EmergencyContactModel? existing,
 ]) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final nameController = TextEditingController(text: existing?.name ?? '');
   final phoneController =
       TextEditingController(text: existing?.phoneNumber ?? '');
@@ -1724,7 +1730,7 @@ Future<void> _showContactDialog(
                 isEmergencyContact: isEmergency,
                 notes: notesController.text,
               );
-              context.read<MedicalBloc>().add(
+               medicalBloc.add(
                     existing == null
                         ? AddEmergencyContact(input)
                         : EditEmergencyContact(existing.id, input),
@@ -1749,6 +1755,7 @@ Future<void> _showContactDialog(
 }
 
 Future<void> _showMedicationDialog(BuildContext context) async {
+  final medicalBloc = context.read<MedicalBloc>();
   final nameController = TextEditingController();
   final dosageController = TextEditingController();
   final prescriptionController = TextEditingController();
@@ -1940,7 +1947,7 @@ Future<void> _showMedicationDialog(BuildContext context) async {
                 pillMarkings: markingsController.text,
                 pillDescription: descriptionController.text,
               );
-              context.read<MedicalBloc>().add(AddMedication(input));
+              medicalBloc.add(AddMedication(input));
               Navigator.pop(dialogContext);
             },
             child: const Text('Add Medication'),

@@ -18,3 +18,4 @@
 - [Flutter navigation](flutter-navigation.md) — GoRouter guards auth while one app shell owns bottom navigation, More modules, drawer, and global logout.
 - [Flutter architecture](flutter-architecture.md) — migrated features use presentation → BLoC → repository → API → ApiClient, with shared current-user access.
 - [Flutter medical mutations](flutter-medical-mutations.md) — Health Records mutations update only the affected collection; global post-mutation reloads can hide successful writes.
+- [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.

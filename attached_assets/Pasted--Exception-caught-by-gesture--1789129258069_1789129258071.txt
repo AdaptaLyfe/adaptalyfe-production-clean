@@ -1,0 +1,87 @@
+======= Exception caught by gesture ===============================================================
+The following ProviderNotFoundException was thrown while handling a gesture:
+Error: Could not find the correct Provider<MedicalBloc> above this StatefulBuilder Widget
+
+This happens because you used a `BuildContext` that does not include the provider
+of your choice. There are a few common scenarios:
+
+- You added a new provider in your `main.dart` and performed a hot-reload.
+  To fix, perform a hot-restart.
+
+- The provider you are trying to read is in a different route.
+
+  Providers are "scoped". So if you insert of provider inside a route, then
+  other routes will not be able to access that provider.
+
+- You used a `BuildContext` that is an ancestor of the provider you are trying to read.
+
+  Make sure that StatefulBuilder is under your MultiProvider/Provider<MedicalBloc>.
+  This usually happens when you are creating a provider and trying to read it immediately.
+
+  For example, instead of:
+
+  ```
+  Widget build(BuildContext context) {
+    return Provider<Example>(
+      create: (_) => Example(),
+      // Will throw a ProviderNotFoundError, because `context` is associated
+      // to the widget that is the parent of `Provider<Example>`
+      child: Text(context.watch<Example>().toString()),
+    );
+  }
+  ```
+
+  consider using `builder` like so:
+
+  ```
+  Widget build(BuildContext context) {
+    return Provider<Example>(
+      create: (_) => Example(),
+      // we use `builder` to obtain a new `BuildContext` that has access to the provider
+      builder: (context, child) {
+        // No longer throws
+        return Text(context.watch<Example>().toString());
+      }
+    );
+  }
+  ```
+
+If none of these solutions work, consider asking for help on StackOverflow:
+https://stackoverflow.com/questions/tagged/flutter
+
+When the exception was thrown, this was the stack: 
+#0      Provider._inheritedElementOf (package:provider/src/provider.dart:377:7)
+#1      Provider.of (package:provider/src/provider.dart:327:30)
+#2      ReadContext.read (package:provider/src/provider.dart:683:21)
+#3      _showAllergyDialog.<anonymous closure>.<anonymous closure>.<anonymous closure> (package:adaptalyfe_mobile/features/medical/presentation/medical_screen.dart:1169:23)
+#4      _InkResponseState.handleTap (package:flutter/src/material/ink_well.dart:1170:21)
+#5      GestureRecognizer.invokeCallback (package:flutter/src/gestures/recognizer.dart:351:24)
+#6      TapGestureRecognizer.handleTapUp (package:flutter/src/gestures/tap.dart:656:11)
+#7      BaseTapGestureRecognizer._checkUp (package:flutter/src/gestures/tap.dart:313:5)
+#8      BaseTapGestureRecognizer.handlePrimaryPointer (package:flutter/src/gestures/tap.dart:246:7)
+#9      PrimaryPointerGestureRecognizer.handleEvent (package:flutter/src/gestures/recognizer.dart:703:9)
+#10     PointerRouter._dispatch (package:flutter/src/gestures/pointer_router.dart:98:12)
+#11     PointerRouter._dispatchEventToRoutes.<anonymous closure> (package:flutter/src/gestures/pointer_router.dart:143:9)
+#12     _LinkedHashMapMixin.forEach (dart:collection-patch/compact_hash.dart:633:13)
+#13     PointerRouter._dispatchEventToRoutes (package:flutter/src/gestures/pointer_router.dart:141:18)
+#14     PointerRouter.route (package:flutter/src/gestures/pointer_router.dart:127:7)
+#15     GestureBinding.handleEvent (package:flutter/src/gestures/binding.dart:501:19)
+#16     GestureBinding.dispatchEvent (package:flutter/src/gestures/binding.dart:481:22)
+#17     RendererBinding.dispatchEvent (package:flutter/src/rendering/binding.dart:450:11)
+#18     GestureBinding._handlePointerEventImmediately (package:flutter/src/gestures/binding.dart:426:7)
+#19     GestureBinding.handlePointerEvent (package:flutter/src/gestures/binding.dart:389:5)
+#20     GestureBinding._flushPointerEventQueue (package:flutter/src/gestures/binding.dart:336:7)
+#21     GestureBinding._handlePointerDataPacket (package:flutter/src/gestures/binding.dart:305:9)
+#22     _invoke1 (dart:ui/hooks.dart:328:13)
+#23     PlatformDispatcher._dispatchPointerDataPacket (dart:ui/platform_dispatcher.dart:442:7)
+#24     _dispatchPointerDataPacket (dart:ui/hooks.dart:262:31)
+Handler: "onTap"
+Recognizer: TapGestureRecognizer#85c92
+  debugOwner: GestureDetector
+  state: possible
+  won arena
+  finalPosition: Offset(297.7, 642.5)
+  finalLocalPosition: Offset(71.7, 23.6)
+  button: 1
+  sent tap down
+====================================================================================================
