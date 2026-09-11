@@ -157,7 +157,7 @@ class ShoppingItemInput extends Equatable {
   Map<String, dynamic> toJson() => {
         'itemName': itemName.trim(),
         'category': category.trim(),
-        if (_hasText(quantity)) 'quantity': quantity!.trim(),
+        'quantity': quantity?.trim() ?? '',
         'isPurchased': isPurchased,
         if (estimatedCost != null) 'estimatedCost': estimatedCost,
         if (actualCost != null) 'actualCost': actualCost,

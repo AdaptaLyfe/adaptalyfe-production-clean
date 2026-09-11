@@ -969,6 +969,7 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
 }
 
 Future<void> _showShoppingItemDialog(BuildContext context) async {
+  final mealShoppingBloc = context.read<MealShoppingBloc>();
   final nameController = TextEditingController();
   final quantityController = TextEditingController();
   final estimatedCostController = TextEditingController();
@@ -1043,7 +1044,7 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
-              context.read<MealShoppingBloc>().add(
+              mealShoppingBloc.add(
                     AddShoppingItem(
                       ShoppingItemInput(
                         itemName: nameController.text,

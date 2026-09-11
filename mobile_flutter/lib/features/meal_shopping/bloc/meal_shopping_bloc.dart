@@ -106,9 +106,9 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     );
     try {
       await repository.createShoppingItem(event.input);
-      await _reloadAfterMutation(
+      await _reloadAfterShoppingMutation(
         emit,
-        successMessage: 'Shopping item added successfully.',
+        successMessage: 'Shopping item added successfully!',
       );
     } catch (error) {
       _emitActionFailure(
@@ -186,6 +186,36 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
         emit,
         error,
         'Meal plan was saved, but the meal list could not be refreshed.',
+      );
+    }
+  }
+
+  Future<void> _reloadAfterShoppingMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    try {
+      final results = await Future.wait([
+        repository.getShoppingItems(),
+        repository.getActiveShoppingItems(),
+      ]);
+      emit(
+        state.copyWith(
+          status: MealShoppingStatus.loaded,
+          shoppingItems: results[0] as List<ShoppingItemModel>,
+          activeShoppingItems: results[1] as List<ShoppingItemModel>,
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Shopping item was saved, but the shopping list could not be refreshed.',
       );
     }
   }
