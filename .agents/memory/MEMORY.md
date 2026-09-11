@@ -17,3 +17,4 @@
 - [Flutter native notifications](flutter-native-notifications.md) — platform delivery stays separate from server notification list/read state; no device-token route currently exists.
 - [Flutter navigation](flutter-navigation.md) — GoRouter guards auth while one app shell owns bottom navigation, More modules, drawer, and global logout.
 - [Flutter architecture](flutter-architecture.md) — migrated features use presentation → BLoC → repository → API → ApiClient, with shared current-user access.
+- [Flutter medical mutations](flutter-medical-mutations.md) — Health Records mutations update only the affected collection; global post-mutation reloads can hide successful writes.
