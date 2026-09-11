@@ -44,11 +44,12 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   const heading = Text(
                     'Quick Actions',
                     style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF1F2937),
                     ),
                   );
+                  final compact = constraints.maxWidth < 380;
                   final controls = Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -68,7 +69,17 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                           foregroundColor: const Color(0xFF374151),
                           side: const BorderSide(color: Color(0xFFD1D5DB)),
                           shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 13),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 8 : 13,
+                            vertical: compact ? 7 : 8,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          textStyle: TextStyle(
+                            fontSize: compact ? 11 : 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                       OutlinedButton.icon(
@@ -83,30 +94,34 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                           foregroundColor: const Color(0xFF374151),
                           side: const BorderSide(color: Color(0xFFD1D5DB)),
                           shape: const StadiumBorder(),
-                          padding: const EdgeInsets.symmetric(horizontal: 13),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 8 : 13,
+                            vertical: compact ? 7 : 8,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          textStyle: TextStyle(
+                            fontSize: compact ? 11 : 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   );
 
-                  if (constraints.maxWidth < 520) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        heading,
-                        const SizedBox(height: 8),
-                        controls,
-                      ],
-                    );
-                  }
-
                   return Row(
                     children: [
                       const Expanded(child: heading),
-                      Flexible(
+                      const SizedBox(width: 6),
+                      Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: controls,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: controls,
+                          ),
                         ),
                       ),
                     ],

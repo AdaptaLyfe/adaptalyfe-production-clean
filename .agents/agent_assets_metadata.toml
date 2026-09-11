@@ -477,3 +477,17 @@ mtime_ms = 1789121449078
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8039fac7-8c01-4650-a3e8-1c51aea9ae5a/bc83225e-413d-4af4-a293-9a4a1ddd3280"
 storage_version_token = "1789121454887634"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YwOcNFLD_u87kQhrGIXts"
+uri = "file://flutter-home-quick-actions-ui-fix.zip"
+type = "unspecified"
+title = "Flutter Home Quick Actions UI fix"
+description = "ZIP containing the only changed Flutter Home file."
+logical_id = "ffc3c043-0c70-4ce1-984b-42676a4a99ba"
+content_hash = "sha256:f8cd32057d76fc75337a87d0992089e7e20c4878f96b626b0e80daa877f05068"
+size = 22351
+mtime_ms = 1789121902315
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffc3c043-0c70-4ce1-984b-42676a4a99ba/a7580f99-0bc4-4a89-9248-185e91913251"
+storage_version_token = "1789121906262015"
+content_type = "application/octet-stream"
