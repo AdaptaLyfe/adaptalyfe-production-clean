@@ -1070,10 +1070,6 @@ Future<void> _showConditionDialog(
           : 'Note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(existing == null ? 'Add Medical Condition' : 'Edit Medical Condition'),
         content: Form(
           key: formKey,
@@ -1189,10 +1185,6 @@ Future<void> _showAllergyDialog(
           : 'Sensitivity updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(existing == null ? 'Add New Allergy' : 'Edit Allergy'),
         content: Form(
           key: formKey,
@@ -1306,10 +1298,6 @@ Future<void> _showAdverseMedicationDialog(
           : 'Reaction updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(
           existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
         ),
@@ -1446,10 +1434,6 @@ Future<void> _showProviderDialog(
           : 'Healthcare contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(
           existing == null
               ? 'Add Primary Care Provider'
@@ -1610,10 +1594,6 @@ Future<void> _showSymptomDialog(
           : 'Personal note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
         content: Form(
           key: formKey,
@@ -1779,10 +1759,6 @@ Future<void> _showContactDialog(
           : 'Trusted contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          constraints: BoxConstraints(
-            maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(context),
-          ),
         title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
         content: Form(
           key: formKey,

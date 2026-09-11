@@ -878,10 +878,6 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        constraints: BoxConstraints(
-          maxWidth: AppResponsive.dialogWidth(context),
-          maxHeight: AppResponsive.dialogMaxHeight(context),
-        ),
         title: const Text('Add New Meal'),
         content: Form(
           key: formKey,
@@ -999,10 +995,6 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        constraints: BoxConstraints(
-          maxWidth: AppResponsive.dialogWidth(context),
-          maxHeight: AppResponsive.dialogMaxHeight(context),
-        ),
         title: const Text('Add Shopping Item'),
         content: Form(
           key: formKey,

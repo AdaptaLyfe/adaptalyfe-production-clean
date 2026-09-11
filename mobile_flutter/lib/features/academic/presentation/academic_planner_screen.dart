@@ -893,10 +893,6 @@ Future<void> _showClassDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        constraints: BoxConstraints(
-          maxWidth: AppResponsive.dialogWidth(context),
-          maxHeight: AppResponsive.dialogMaxHeight(context),
-        ),
         title: const Text('Add New Class'),
         content: Form(
           key: formKey,
@@ -1075,10 +1071,6 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        constraints: BoxConstraints(
-          maxWidth: AppResponsive.dialogWidth(context),
-          maxHeight: AppResponsive.dialogMaxHeight(context),
-        ),
         title: const Text('Add New Assignment'),
         content: Form(
           key: formKey,

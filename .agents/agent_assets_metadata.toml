@@ -575,3 +575,17 @@ mtime_ms = 1789139556438
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0bd205f-c44e-4654-92f0-bcef3e6ac09a/d99050a7-dc28-49a3-ab7e-00ca9191fe4c"
 storage_version_token = "1789139560295077"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "uDySx8Oo8EzxLFfWtQ2b0"
+uri = "file://adaptalyfe-alertdialog-fix-files.zip"
+type = "unspecified"
+title = "Only AlertDialog fix files"
+description = "Contains only the three Flutter files updated to remove the unsupported AlertDialog constraints parameter."
+logical_id = "6af6684d-3f29-4c53-8576-45256fdb297d"
+content_hash = "sha256:c0beff71ed9f064f1670be5fd838a32af2805faa028ddd5e80ed1ef41465821d"
+size = 27191
+mtime_ms = 1789140213673
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6af6684d-3f29-4c53-8576-45256fdb297d/e3313784-25c0-4c32-a78e-127249a6c6c8"
+storage_version_token = "1789140219462333"
+content_type = "application/octet-stream"
