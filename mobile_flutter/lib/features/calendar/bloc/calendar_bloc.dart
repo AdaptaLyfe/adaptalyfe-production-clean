@@ -160,15 +160,15 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     try {
       final results = await Future.wait<Object>([
         repository.getAppointments(),
-        repository.getUpcomingAppointments(),
         repository.getCalendarEvents(),
       ]);
+      final appointments = results[0] as List<AppointmentModel>;
       emit(
         state.copyWith(
           status: CalendarStatus.loaded,
-          appointments: results[0] as List<AppointmentModel>,
-          upcomingAppointments: results[1] as List<AppointmentModel>,
-          calendarEvents: results[2] as List<CalendarEventModel>,
+          appointments: appointments,
+          upcomingAppointments: _upcomingAppointments(appointments),
+          calendarEvents: results[1] as List<CalendarEventModel>,
           busyAction: null,
           errorMessage: null,
           actionMessage: null,
@@ -198,15 +198,15 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       await operation();
       final results = await Future.wait<Object>([
         repository.getAppointments(),
-        repository.getUpcomingAppointments(),
         repository.getCalendarEvents(),
       ]);
+      final appointments = results[0] as List<AppointmentModel>;
       emit(
         state.copyWith(
           status: CalendarStatus.loaded,
-          appointments: results[0] as List<AppointmentModel>,
-          upcomingAppointments: results[1] as List<AppointmentModel>,
-          calendarEvents: results[2] as List<CalendarEventModel>,
+          appointments: appointments,
+          upcomingAppointments: _upcomingAppointments(appointments),
+          calendarEvents: results[1] as List<CalendarEventModel>,
           busyAction: null,
           actionMessage: successMessage,
           errorMessage: null,
@@ -241,5 +241,19 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     if (error is ApiException) return error.message;
     if (error is FormatException) return error.message;
     return 'Unable to load calendar data. Please try again.';
+  }
+
+  List<AppointmentModel> _upcomingAppointments(
+    List<AppointmentModel> appointments,
+  ) {
+    final now = DateTime.now();
+    return appointments
+        .where(
+          (appointment) =>
+              !appointment.isCompleted &&
+              !appointment.appointmentDate.isBefore(now),
+        )
+        .toList()
+      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
   }
 }
