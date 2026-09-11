@@ -984,6 +984,46 @@ class _MedicalInlineError extends StatelessWidget {
   }
 }
 
+class _MedicalDialogScope extends StatelessWidget {
+  const _MedicalDialogScope({
+    required this.bloc,
+    required this.action,
+    required this.successMessage,
+    required this.builder,
+  });
+
+  final MedicalBloc bloc;
+  final String action;
+  final String successMessage;
+  final Widget Function(BuildContext context, bool isSubmitting) builder;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: bloc,
+      child: BlocListener<MedicalBloc, MedicalState>(
+        listenWhen: (previous, current) =>
+            previous.actionMessage != current.actionMessage &&
+            current.actionMessage == successMessage,
+        listener: (dialogContext, state) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (dialogContext.mounted) {
+              Navigator.of(dialogContext).pop();
+            }
+          });
+        },
+        child: BlocBuilder<MedicalBloc, MedicalState>(
+          buildWhen: (previous, current) =>
+              previous.busySection != current.busySection &&
+              (previous.busySection == action || current.busySection == action),
+          builder: (context, state) =>
+              builder(context, state.busySection == action),
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> _showConditionDialog(
   BuildContext context, [
   MedicalConditionModel? existing,
@@ -998,8 +1038,14 @@ Future<void> _showConditionDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'condition',
+      successMessage: existing == null
+          ? 'Note added successfully.'
+          : 'Note updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(existing == null ? 'Add Medical Condition' : 'Edit Medical Condition'),
         content: Form(
           key: formKey,
@@ -1061,7 +1107,9 @@ Future<void> _showConditionDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
+            onPressed: isSubmitting
+                ? null
+                : () {
               if (!formKey.currentState!.validate()) return;
               final input = MedicalConditionInput(
                 condition: conditionController.text,
@@ -1069,16 +1117,20 @@ Future<void> _showConditionDialog(
                 diagnosedDate: diagnosedDate,
                 notes: notesController.text,
               );
-               medicalBloc.add(
-                    existing == null
-                        ? AddCondition(input)
-                        : EditCondition(existing.id, input),
-                  );
-              Navigator.pop(dialogContext);
+              medicalBloc.add(
+                existing == null
+                    ? AddCondition(input)
+                    : EditCondition(existing.id, input),
+              );
             },
-            child: Text(existing == null ? 'Add Condition' : 'Update Condition'),
+            child: Text(
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null ? 'Add Condition' : 'Update Condition'),
+            ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1101,8 +1153,14 @@ Future<void> _showAllergyDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'allergy',
+      successMessage: existing == null
+          ? 'Sensitivity added successfully.'
+          : 'Sensitivity updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(existing == null ? 'Add New Allergy' : 'Edit Allergy'),
         content: Form(
           key: formKey,
@@ -1160,24 +1218,30 @@ Future<void> _showAllergyDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = AllergyInput(
-                allergen: allergenController.text,
-                severity: severity,
-                reaction: reactionController.text,
-                notes: notesController.text,
-              );
-               medicalBloc.add(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = AllergyInput(
+                      allergen: allergenController.text,
+                      severity: severity,
+                      reaction: reactionController.text,
+                      notes: notesController.text,
+                    );
+                    medicalBloc.add(
                     existing == null
                         ? AddAllergy(input)
                         : EditAllergy(existing.id, input),
                   );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(existing == null ? 'Add Allergy' : 'Update Allergy'),
+                  },
+            child: Text(
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null ? 'Add Allergy' : 'Update Allergy'),
+            ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1202,8 +1266,14 @@ Future<void> _showAdverseMedicationDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'reaction',
+      successMessage: existing == null
+          ? 'Reaction added successfully.'
+          : 'Reaction updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(
           existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
         ),
@@ -1278,25 +1348,31 @@ Future<void> _showAdverseMedicationDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = AdverseMedicationInput(
-                medicationName: medicationController.text,
-                reaction: reactionController.text,
-                severity: severity,
-                reactionDate: reactionDate,
-                notes: notesController.text,
-              );
-               medicalBloc.add(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = AdverseMedicationInput(
+                      medicationName: medicationController.text,
+                      reaction: reactionController.text,
+                      severity: severity,
+                      reactionDate: reactionDate,
+                      notes: notesController.text,
+                    );
+                    medicalBloc.add(
                     existing == null
                         ? AddAdverseMedication(input)
                         : EditAdverseMedication(existing.id, input),
                   );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(existing == null ? 'Add Reaction' : 'Update Reaction'),
+                  },
+            child: Text(
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null ? 'Add Reaction' : 'Update Reaction'),
+            ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1326,8 +1402,14 @@ Future<void> _showProviderDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'provider',
+      successMessage: existing == null
+          ? 'Healthcare contact added successfully.'
+          : 'Healthcare contact updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(
           existing == null
               ? 'Add Primary Care Provider'
@@ -1413,30 +1495,36 @@ Future<void> _showProviderDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = PrimaryCareProviderInput(
-                name: nameController.text,
-                specialty: specialtyController.text,
-                practiceName: practiceController.text,
-                phoneNumber: phoneController.text,
-                email: emailController.text,
-                address: addressController.text,
-                isPrimary: isPrimary,
-                notes: notesController.text,
-              );
-               medicalBloc.add(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = PrimaryCareProviderInput(
+                      name: nameController.text,
+                      specialty: specialtyController.text,
+                      practiceName: practiceController.text,
+                      phoneNumber: phoneController.text,
+                      email: emailController.text,
+                      address: addressController.text,
+                      isPrimary: isPrimary,
+                      notes: notesController.text,
+                    );
+                    medicalBloc.add(
                     existing == null
                         ? AddPrimaryCareProvider(input)
                         : EditPrimaryCareProvider(existing.id, input),
                   );
-              Navigator.pop(dialogContext);
-            },
+                  },
             child: Text(
-              existing == null ? 'Add Healthcare Contact' : 'Update Contact',
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null
+                      ? 'Add Healthcare Contact'
+                      : 'Update Contact'),
             ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1474,8 +1562,14 @@ Future<void> _showSymptomDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'symptom',
+      successMessage: existing == null
+          ? 'Personal note added successfully.'
+          : 'Personal note updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
         content: Form(
           key: formKey,
@@ -1572,28 +1666,34 @@ Future<void> _showSymptomDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = SymptomEntryInput(
-                symptomName: nameController.text,
-                severity: severity,
-                startTime: startTime,
-                endTime: endTime,
-                triggers: triggersController.text,
-                location: locationController.text,
-                description: descriptionController.text,
-                notes: notesController.text,
-              );
-               medicalBloc.add(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = SymptomEntryInput(
+                      symptomName: nameController.text,
+                      severity: severity,
+                      startTime: startTime,
+                      endTime: endTime,
+                      triggers: triggersController.text,
+                      location: locationController.text,
+                      description: descriptionController.text,
+                      notes: notesController.text,
+                    );
+                    medicalBloc.add(
                     existing == null
                         ? AddSymptomEntry(input)
                         : EditSymptomEntry(existing.id, input),
                   );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(existing == null ? 'Add Entry' : 'Update Entry'),
+                  },
+            child: Text(
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null ? 'Add Entry' : 'Update Entry'),
+            ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1627,8 +1727,14 @@ Future<void> _showContactDialog(
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'contact',
+      successMessage: existing == null
+          ? 'Trusted contact added successfully.'
+          : 'Trusted contact updated successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
         content: Form(
           key: formKey,
@@ -1718,28 +1824,34 @@ Future<void> _showContactDialog(
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = EmergencyContactInput(
-                name: nameController.text,
-                relationship: relationship,
-                phoneNumber: phoneController.text,
-                email: emailController.text,
-                address: addressController.text,
-                isPrimary: isPrimary,
-                isEmergencyContact: isEmergency,
-                notes: notesController.text,
-              );
-               medicalBloc.add(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = EmergencyContactInput(
+                      name: nameController.text,
+                      relationship: relationship,
+                      phoneNumber: phoneController.text,
+                      email: emailController.text,
+                      address: addressController.text,
+                      isPrimary: isPrimary,
+                      isEmergencyContact: isEmergency,
+                      notes: notesController.text,
+                    );
+                    medicalBloc.add(
                     existing == null
                         ? AddEmergencyContact(input)
                         : EditEmergencyContact(existing.id, input),
                   );
-              Navigator.pop(dialogContext);
-            },
-            child: Text(existing == null ? 'Save Contact' : 'Update Contact'),
+                  },
+            child: Text(
+              isSubmitting
+                  ? (existing == null ? 'Adding...' : 'Updating...')
+                  : (existing == null ? 'Save Contact' : 'Update Contact'),
+            ),
           ),
         ],
+      ),
       ),
     ),
   );
@@ -1774,8 +1886,12 @@ Future<void> _showMedicationDialog(BuildContext context) async {
 
   await showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'medication',
+      successMessage: 'Medication added successfully.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
         title: const Text('Add New Medication'),
         content: Form(
           key: formKey,
@@ -1929,30 +2045,32 @@ Future<void> _showMedicationDialog(BuildContext context) async {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = MedicationInput(
-                medicationName: nameController.text,
-                dosage: dosageController.text,
-                prescriptionNumber: prescriptionController.text,
-                quantity: _parseInt(quantityController.text),
-                refillsRemaining: _parseInt(refillsController.text),
-                prescribedBy: prescribedByController.text,
-                pharmacyId: _parseInt(pharmacyController.text),
-                nextRefillDate: nextRefillDate,
-                instructions: instructionsController.text,
-                pillColor: colorController.text,
-                pillShape: shape,
-                pillSize: size,
-                pillMarkings: markingsController.text,
-                pillDescription: descriptionController.text,
-              );
-              medicalBloc.add(AddMedication(input));
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Add Medication'),
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    final input = MedicationInput(
+                      medicationName: nameController.text,
+                      dosage: dosageController.text,
+                      prescriptionNumber: prescriptionController.text,
+                      quantity: _parseInt(quantityController.text),
+                      refillsRemaining: _parseInt(refillsController.text),
+                      prescribedBy: prescribedByController.text,
+                      pharmacyId: _parseInt(pharmacyController.text),
+                      nextRefillDate: nextRefillDate,
+                      instructions: instructionsController.text,
+                      pillColor: colorController.text,
+                      pillShape: shape,
+                      pillSize: size,
+                      pillMarkings: markingsController.text,
+                      pillDescription: descriptionController.text,
+                    );
+                    medicalBloc.add(AddMedication(input));
+                  },
+            child: Text(isSubmitting ? 'Adding...' : 'Add Medication'),
           ),
         ],
+      ),
       ),
     ),
   );
