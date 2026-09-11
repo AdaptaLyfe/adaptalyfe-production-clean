@@ -421,3 +421,17 @@ mtime_ms = 1789046496273
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/894b7ecd-a9e5-4f3d-92d0-e36906a23fc5/b2550de4-b19f-47b4-a3c9-65c5579c59e0"
 storage_version_token = "1789046500248552"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "spwdSEJ9m4bu6yK34Eap0"
+uri = "file://flutter-add-meal-changed-files.zip"
+type = "unspecified"
+title = "Changed Flutter Add Meal files only"
+description = "Contains only the three modified Flutter files for the Add Meal fix: meal_shopping_bloc.dart, meal_shopping_models.dart, and meal_shopping_screen.dart."
+logical_id = "f3dff37f-1961-458b-903b-e144803ad419"
+content_hash = "sha256:a3333d8c7df750f7ab158f4a1587a847d896f7ae77597d99d3c365802e04d3e4"
+size = 10210
+mtime_ms = 1789117081632
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f3dff37f-1961-458b-903b-e144803ad419/8f44fe88-f522-47f3-9f48-fcacc43a664f"
+storage_version_token = "1789117085694876"
+content_type = "application/octet-stream"

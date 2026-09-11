@@ -65,8 +65,8 @@ class MealPlanInput extends Equatable {
         'mealName': mealName.trim(),
         'plannedDate': plannedDate,
         'isCompleted': isCompleted,
-        if (_hasText(recipe)) 'recipe': recipe!.trim(),
-        if (cookingTime != null) 'cookingTime': cookingTime,
+        'recipe': recipe?.trim() ?? '',
+        'cookingTime': cookingTime ?? 0,
       };
 
   @override

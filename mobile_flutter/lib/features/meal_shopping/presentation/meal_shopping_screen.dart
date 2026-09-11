@@ -851,6 +851,7 @@ class _MealShoppingError extends StatelessWidget {
 }
 
 Future<void> _showMealPlanDialog(BuildContext context) async {
+  final mealShoppingBloc = context.read<MealShoppingBloc>();
   final nameController = TextEditingController();
   final cookingTimeController = TextEditingController(text: '30');
   final recipeController = TextEditingController();
@@ -941,16 +942,16 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
-              context.read<MealShoppingBloc>().add(
+              mealShoppingBloc.add(
                     AddMealPlan(
                       MealPlanInput(
                         mealType: mealType,
                         mealName: nameController.text,
                         plannedDate: plannedDate,
                         recipe: recipeController.text,
-                        cookingTime: int.tryParse(
-                          cookingTimeController.text.trim(),
-                        ),
+                        cookingTime:
+                            int.tryParse(cookingTimeController.text.trim()) ??
+                                0,
                       ),
                     ),
                   );
@@ -1128,9 +1129,9 @@ String? _requiredValidator(String? value) {
 }
 
 String? _positiveIntValidator(String? value) {
-  if (value == null || value.trim().isEmpty) return 'Enter cooking time';
+  if (value == null || value.trim().isEmpty) return null;
   final parsed = int.tryParse(value.trim());
-  if (parsed == null || parsed <= 0) return 'Enter a positive whole number';
+  if (parsed == null || parsed < 0) return 'Enter a whole number';
   return null;
 }
 
