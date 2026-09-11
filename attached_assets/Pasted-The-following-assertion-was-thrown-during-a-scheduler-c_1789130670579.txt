@@ -1,0 +1,38 @@
+The following assertion was thrown during a scheduler callback:
+Tried to build dirty widget in the wrong build scope.
+
+A widget which was marked as dirty and is still active was scheduled to be built, but the current build scope unexpectedly does not contain that widget.
+
+Sometimes this is detected when an element is removed from the widget tree, but the element somehow did not get marked as inactive. In that case, it might be caused by an ancestor element failing to implement visitChildren correctly, thus preventing some or all of its descendants from being correctly deactivated.
+
+The root of the build scope was: [root]
+The offending element (which does not appear to be a descendant of the root of the build scope) was: AnimatedDefaultTextStyle
+  duration: 167ms
+  debugLabel: (((englishLike bodyLarge 2021).merge((blackMountainView bodyLarge).apply)).copyWith).copyWith
+  inherit: false
+  color: Color(0xff3f4945)
+  family: Roboto
+  size: 16.0
+  weight: 400
+  letterSpacing: 0.5
+  baseline: alphabetic
+  height: 1.0x
+  leadingDistribution: even
+  decoration: Color(0xff171d1b) TextDecoration.none
+  softWrap: wrapping at box width
+  overflow: clip
+  dirty
+  state: _AnimatedDefaultTextStyleState#a4786(ticker inactive)
+When the exception was thrown, this was the stack: 
+#0      BuildScope._debugAssertElementInScope (package:flutter/src/widgets/framework.dart:2717:5)
+#1      BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2751:18)
+#2      BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3048:18)
+#3      WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1162:21)
+#4      RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:468:5)
+#5      SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1397:15)
+#6      SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1318:9)
+#7      SchedulerBinding._handleDrawFrame (package:flutter/src/scheduler/binding.dart:1176:5)
+#8      _invoke (dart:ui/hooks.dart:312:13)
+#9      PlatformDispatcher._drawFrame (dart:ui/platform_dispatcher.dart:419:5)
+#10     _drawFrame (dart:ui/hooks.dart:283:31)
+====================================================================================================
