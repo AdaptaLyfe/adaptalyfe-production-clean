@@ -164,12 +164,66 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         status: MedicalStatus.loading,
         errorMessage: null,
         actionMessage: null,
+        collectionErrors: const {},
         sessionInvalid: false,
       ),
     );
     try {
       final snapshot = await _fetchAll();
-      _emitSnapshot(emit, snapshot);
+      final failures = <String, String>{};
+      final successfulLoads =
+          snapshot.where((result) => result.isSuccess).length;
+
+      String? firstFailure;
+      void recordFailure(String key, _MedicalCollectionResult result) {
+        if (result.error == null) return;
+        final message = _messageFor(result.error!);
+        failures[key] = message;
+        firstFailure ??= message;
+      }
+
+      recordFailure('conditions', snapshot[0]);
+      recordFailure('allergies', snapshot[1]);
+      recordFailure('contacts', snapshot[2]);
+      recordFailure('reactions', snapshot[3]);
+      recordFailure('providers', snapshot[4]);
+      recordFailure('symptoms', snapshot[5]);
+
+      if (successfulLoads == 0) {
+        _emitFailure(
+          emit,
+          snapshot.first.error ?? 'Unable to load medical records.',
+        );
+        return;
+      }
+
+      _emitSnapshot(
+        emit,
+        (
+          snapshot[0].value is List<MedicalConditionModel>
+              ? snapshot[0].value as List<MedicalConditionModel>
+              : state.conditions,
+          snapshot[1].value is List<AllergyModel>
+              ? snapshot[1].value as List<AllergyModel>
+              : state.allergies,
+          snapshot[2].value is List<EmergencyContactModel>
+              ? snapshot[2].value as List<EmergencyContactModel>
+              : state.emergencyContacts,
+          snapshot[3].value is List<AdverseMedicationModel>
+              ? snapshot[3].value as List<AdverseMedicationModel>
+              : state.adverseMedications,
+          snapshot[4].value is List<PrimaryCareProviderModel>
+              ? snapshot[4].value as List<PrimaryCareProviderModel>
+              : state.primaryCareProviders,
+          snapshot[5].value is List<SymptomEntryModel>
+              ? snapshot[5].value as List<SymptomEntryModel>
+              : state.symptomEntries,
+        ),
+        collectionErrors: failures,
+        actionMessage: firstFailure == null
+            ? null
+            : 'Some medical records could not be loaded. Try again.',
+      );
     } catch (error) {
       _emitFailure(emit, error);
     }
@@ -204,31 +258,24 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     }
   }
 
-  Future<
-      (
-        List<MedicalConditionModel>,
-        List<AllergyModel>,
-        List<EmergencyContactModel>,
-        List<AdverseMedicationModel>,
-        List<PrimaryCareProviderModel>,
-        List<SymptomEntryModel>
-      )> _fetchAll() async {
+  Future<List<_MedicalCollectionResult>> _fetchAll() async {
     final results = await Future.wait([
-      repository.getConditions(),
-      repository.getAllergies(),
-      repository.getEmergencyContacts(),
-      repository.getAdverseMedications(),
-      repository.getPrimaryCareProviders(),
-      repository.getSymptomEntries(),
+      _capture(repository.getConditions()),
+      _capture(repository.getAllergies()),
+      _capture(repository.getEmergencyContacts()),
+      _capture(repository.getAdverseMedications()),
+      _capture(repository.getPrimaryCareProviders()),
+      _capture(repository.getSymptomEntries()),
     ]);
-    return (
-      results[0] as List<MedicalConditionModel>,
-      results[1] as List<AllergyModel>,
-      results[2] as List<EmergencyContactModel>,
-      results[3] as List<AdverseMedicationModel>,
-      results[4] as List<PrimaryCareProviderModel>,
-      results[5] as List<SymptomEntryModel>,
-    );
+    return results;
+  }
+
+  Future<_MedicalCollectionResult> _capture(Future<Object?> request) async {
+    try {
+      return _MedicalCollectionResult(value: await request);
+    } catch (error) {
+      return _MedicalCollectionResult(error: error);
+    }
   }
 
   void _emitSnapshot(
@@ -242,6 +289,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         List<SymptomEntryModel>
     ) snapshot, {
     String? actionMessage,
+    Map<String, String> collectionErrors = const {},
   }) {
     emit(
       state.copyWith(
@@ -255,6 +303,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         busySection: null,
         errorMessage: null,
         actionMessage: actionMessage,
+        collectionErrors: collectionErrors,
         sessionInvalid: false,
       ),
     );
@@ -272,6 +321,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
       busySection: null,
       errorMessage: null,
       actionMessage: successMessage,
+      collectionErrors: const {},
       sessionInvalid: false,
     );
 
@@ -393,9 +443,25 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
             : MedicalStatus.failure,
         busySection: null,
         errorMessage: message,
+        collectionErrors: const {},
         sessionInvalid:
             error is ApiException && error.type == ApiErrorType.unauthorized,
       ),
     );
   }
+
+  String _messageFor(Object error) {
+    if (error is ApiException) return error.message;
+    if (error is FormatException) return error.message;
+    return 'The medical records request failed.';
+  }
+}
+
+class _MedicalCollectionResult {
+  const _MedicalCollectionResult({this.value, this.error});
+
+  final Object? value;
+  final Object? error;
+
+  bool get isSuccess => error == null;
 }

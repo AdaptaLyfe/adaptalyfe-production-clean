@@ -124,6 +124,7 @@ class _ConditionsTab extends StatelessWidget {
       emptyTitle: 'No notes recorded',
       emptySubtitle: 'Add a note to get started.',
       addLabel: 'Add Note',
+      errorMessage: state.collectionErrors['conditions'],
       onAdd: () => _showConditionDialog(context),
       children: state.conditions
           .map(
@@ -192,6 +193,7 @@ class _AllergiesTab extends StatelessWidget {
       emptyTitle: 'No sensitivities recorded',
       emptySubtitle: 'Add a sensitivity to get started.',
       addLabel: 'Add Sensitivity',
+      errorMessage: state.collectionErrors['allergies'],
       onAdd: () => _showAllergyDialog(context),
       children: state.allergies
           .map(
@@ -233,6 +235,7 @@ class _AdverseMedicationsTab extends StatelessWidget {
       emptyTitle: 'No reactions recorded',
       emptySubtitle: 'Add a reaction to get started.',
       addLabel: 'Add Reaction',
+      errorMessage: state.collectionErrors['reactions'],
       onAdd: () => _showAdverseMedicationDialog(context),
       children: state.adverseMedications
           .map(
@@ -278,6 +281,7 @@ class _ContactsTab extends StatelessWidget {
       emptyTitle: 'No contacts added yet',
       emptySubtitle: 'Add emergency contacts for quick access.',
       addLabel: 'Add Contact',
+      errorMessage: state.collectionErrors['contacts'],
       header: emergency.isEmpty
           ? null
           : _QuickDial(contacts: emergency),
@@ -329,6 +333,7 @@ class _ProvidersTab extends StatelessWidget {
       emptyTitle: 'No healthcare contacts recorded',
       emptySubtitle: 'Add a healthcare contact to get started.',
       addLabel: 'Add Healthcare Contact',
+      errorMessage: state.collectionErrors['providers'],
       onAdd: () => _showProviderDialog(context),
       children: state.primaryCareProviders
           .map(
@@ -374,6 +379,7 @@ class _SymptomsTab extends StatelessWidget {
       emptyTitle: 'No personal notes recorded',
       emptySubtitle: 'Log a symptom to identify patterns and triggers.',
       addLabel: 'Log Symptom',
+      errorMessage: state.collectionErrors['symptoms'],
       onAdd: () => _showSymptomDialog(context),
       children: state.symptomEntries
           .map(
@@ -403,6 +409,7 @@ class _MedicalCollectionView extends StatelessWidget {
     required this.addLabel,
     required this.onAdd,
     required this.children,
+    this.errorMessage,
     this.header,
   });
 
@@ -412,6 +419,7 @@ class _MedicalCollectionView extends StatelessWidget {
   final String addLabel;
   final VoidCallback onAdd;
   final List<Widget> children;
+  final String? errorMessage;
   final Widget? header;
 
   @override
@@ -442,7 +450,12 @@ class _MedicalCollectionView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          if (children.isEmpty)
+          if (errorMessage != null)
+            _MedicalInlineError(
+              message: errorMessage!,
+              onRetry: onRefresh,
+            ),
+          if (errorMessage == null && children.isEmpty)
             _MedicalEmpty(
               title: emptyTitle,
               subtitle: emptySubtitle,
@@ -903,6 +916,66 @@ class _MedicalError extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try again'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MedicalInlineError extends StatelessWidget {
+  const _MedicalInlineError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xFFFFF7ED),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Color(0xFFC2410C),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This section could not be loaded.',
+                    style: TextStyle(
+                      color: Color(0xFF9A3412),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    message,
+                    style: const TextStyle(color: Color(0xFF7C2D12)),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        onRetry();
+                      },
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('Try again'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

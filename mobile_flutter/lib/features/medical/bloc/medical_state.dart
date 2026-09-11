@@ -22,6 +22,7 @@ class MedicalState extends Equatable {
     this.busySection,
     this.errorMessage,
     this.actionMessage,
+    this.collectionErrors = const {},
     this.sessionInvalid = false,
   });
 
@@ -36,6 +37,7 @@ class MedicalState extends Equatable {
   final String? busySection;
   final String? errorMessage;
   final String? actionMessage;
+  final Map<String, String> collectionErrors;
   final bool sessionInvalid;
 
   bool get isLoading => status == MedicalStatus.loading;
@@ -60,6 +62,7 @@ class MedicalState extends Equatable {
     Object? busySection = _notSet,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
+    Map<String, String>? collectionErrors,
     bool? sessionInvalid,
   }) {
     return MedicalState(
@@ -80,6 +83,7 @@ class MedicalState extends Equatable {
       actionMessage: identical(actionMessage, _notSet)
           ? this.actionMessage
           : actionMessage as String?,
+      collectionErrors: collectionErrors ?? this.collectionErrors,
       sessionInvalid: sessionInvalid ?? this.sessionInvalid,
     );
   }
@@ -97,6 +101,7 @@ class MedicalState extends Equatable {
         busySection,
         errorMessage,
         actionMessage,
+    collectionErrors,
         sessionInvalid,
       ];
 }
