@@ -40,4 +40,43 @@ class MedicalRepository {
       api.updateEmergencyContact(id, input);
   Future<void> deleteEmergencyContact(int id) =>
       api.deleteEmergencyContact(id);
+
+  Future<List<AdverseMedicationModel>> getAdverseMedications() =>
+      api.getAdverseMedications();
+  Future<AdverseMedicationModel> createAdverseMedication(
+    AdverseMedicationInput input,
+  ) =>
+      api.createAdverseMedication(input);
+  Future<AdverseMedicationModel> updateAdverseMedication(
+    int id,
+    AdverseMedicationInput input,
+  ) =>
+      api.updateAdverseMedication(id, input);
+  Future<void> deleteAdverseMedication(int id) =>
+      api.deleteAdverseMedication(id);
+
+  Future<List<PrimaryCareProviderModel>> getPrimaryCareProviders() =>
+      api.getPrimaryCareProviders();
+  Future<PrimaryCareProviderModel> createPrimaryCareProvider(
+    PrimaryCareProviderInput input,
+  ) =>
+      api.createPrimaryCareProvider(input);
+  Future<PrimaryCareProviderModel> updatePrimaryCareProvider(
+    int id,
+    PrimaryCareProviderInput input,
+  ) =>
+      api.updatePrimaryCareProvider(id, input);
+  Future<void> deletePrimaryCareProvider(int id) =>
+      api.deletePrimaryCareProvider(id);
+
+  Future<List<SymptomEntryModel>> getSymptomEntries() =>
+      api.getSymptomEntries();
+  Future<SymptomEntryModel> createSymptomEntry(SymptomEntryInput input) =>
+      api.createSymptomEntry(input);
+  Future<SymptomEntryModel> updateSymptomEntry(
+    int id,
+    SymptomEntryInput input,
+  ) =>
+      api.updateSymptomEntry(id, input);
+  Future<void> deleteSymptomEntry(int id) => api.deleteSymptomEntry(id);
 }

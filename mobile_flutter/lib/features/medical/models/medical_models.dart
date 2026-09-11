@@ -362,6 +362,259 @@ class EmergencyContactInput extends Equatable {
       ];
 }
 
+class AdverseMedicationModel extends Equatable {
+  const AdverseMedicationModel({
+    required this.id,
+    required this.medicationName,
+    required this.reaction,
+    required this.severity,
+    required this.reactionDate,
+    required this.notes,
+  });
+
+  factory AdverseMedicationModel.fromJson(Map<String, dynamic> json) {
+    return AdverseMedicationModel(
+      id: _asInt(json['id']),
+      medicationName: _asString(json['medicationName']),
+      reaction: _asString(json['reaction']),
+      severity: _asString(json['severity'], fallback: 'mild'),
+      reactionDate: _asDate(json['reactionDate']),
+      notes: _asNullableString(json['notes']),
+    );
+  }
+
+  final int id;
+  final String medicationName;
+  final String reaction;
+  final String severity;
+  final DateTime? reactionDate;
+  final String? notes;
+
+  @override
+  List<Object?> get props =>
+      [id, medicationName, reaction, severity, reactionDate, notes];
+}
+
+class AdverseMedicationInput extends Equatable {
+  const AdverseMedicationInput({
+    required this.medicationName,
+    required this.reaction,
+    required this.severity,
+    this.reactionDate,
+    this.notes,
+  });
+
+  final String medicationName;
+  final String reaction;
+  final String severity;
+  final DateTime? reactionDate;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'medicationName': medicationName.trim(),
+        'reaction': reaction.trim(),
+        'severity': severity,
+        if (reactionDate != null) 'reactionDate': _dateOnly(reactionDate!),
+        if (_hasText(notes)) 'notes': notes!.trim(),
+      };
+
+  @override
+  List<Object?> get props =>
+      [medicationName, reaction, severity, reactionDate, notes];
+}
+
+class PrimaryCareProviderModel extends Equatable {
+  const PrimaryCareProviderModel({
+    required this.id,
+    required this.name,
+    required this.specialty,
+    required this.practiceName,
+    required this.phoneNumber,
+    required this.email,
+    required this.address,
+    required this.isPrimary,
+    required this.notes,
+  });
+
+  factory PrimaryCareProviderModel.fromJson(Map<String, dynamic> json) {
+    return PrimaryCareProviderModel(
+      id: _asInt(json['id']),
+      name: _asString(json['name']),
+      specialty: _asString(json['specialty']),
+      practiceName: _asNullableString(json['practiceName']),
+      phoneNumber: _asString(json['phoneNumber']),
+      email: _asNullableString(json['email']),
+      address: _asNullableString(json['address']),
+      isPrimary: json['isPrimary'] == true,
+      notes: _asNullableString(json['notes']),
+    );
+  }
+
+  final int id;
+  final String name;
+  final String specialty;
+  final String? practiceName;
+  final String phoneNumber;
+  final String? email;
+  final String? address;
+  final bool isPrimary;
+  final String? notes;
+
+  @override
+  List<Object?> get props => [
+        id,
+        name,
+        specialty,
+        practiceName,
+        phoneNumber,
+        email,
+        address,
+        isPrimary,
+        notes,
+      ];
+}
+
+class PrimaryCareProviderInput extends Equatable {
+  const PrimaryCareProviderInput({
+    required this.name,
+    required this.specialty,
+    required this.phoneNumber,
+    this.practiceName,
+    this.email,
+    this.address,
+    this.isPrimary = false,
+    this.notes,
+  });
+
+  final String name;
+  final String specialty;
+  final String? practiceName;
+  final String phoneNumber;
+  final String? email;
+  final String? address;
+  final bool isPrimary;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'name': name.trim(),
+        'specialty': specialty.trim(),
+        if (_hasText(practiceName)) 'practiceName': practiceName!.trim(),
+        'phoneNumber': phoneNumber.trim(),
+        if (_hasText(email)) 'email': email!.trim(),
+        if (_hasText(address)) 'address': address!.trim(),
+        'isPrimary': isPrimary,
+        if (_hasText(notes)) 'notes': notes!.trim(),
+      };
+
+  @override
+  List<Object?> get props => [
+        name,
+        specialty,
+        practiceName,
+        phoneNumber,
+        email,
+        address,
+        isPrimary,
+        notes,
+      ];
+}
+
+class SymptomEntryModel extends Equatable {
+  const SymptomEntryModel({
+    required this.id,
+    required this.symptomName,
+    required this.severity,
+    required this.startTime,
+    required this.endTime,
+    required this.triggers,
+    required this.location,
+    required this.description,
+    required this.notes,
+  });
+
+  factory SymptomEntryModel.fromJson(Map<String, dynamic> json) {
+    return SymptomEntryModel(
+      id: _asInt(json['id']),
+      symptomName: _asString(json['symptomName']),
+      severity: _asInt(json['severity']),
+      startTime: _asDate(json['startTime']) ?? DateTime.now(),
+      endTime: _asDate(json['endTime']),
+      triggers: _asNullableString(json['triggers']),
+      location: _asNullableString(json['location']),
+      description: _asNullableString(json['description']),
+      notes: _asNullableString(json['notes']),
+    );
+  }
+
+  final int id;
+  final String symptomName;
+  final int severity;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final String? triggers;
+  final String? location;
+  final String? description;
+  final String? notes;
+
+  @override
+  List<Object?> get props => [
+        id,
+        symptomName,
+        severity,
+        startTime,
+        endTime,
+        triggers,
+        location,
+        description,
+        notes,
+      ];
+}
+
+class SymptomEntryInput extends Equatable {
+  const SymptomEntryInput({
+    required this.symptomName,
+    required this.severity,
+    required this.startTime,
+    this.endTime,
+    this.triggers,
+    this.location,
+    this.description,
+    this.notes,
+  });
+
+  final String symptomName;
+  final int severity;
+  final DateTime startTime;
+  final DateTime? endTime;
+  final String? triggers;
+  final String? location;
+  final String? description;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'symptomName': symptomName.trim(),
+        'severity': severity,
+        'startTime': startTime.toUtc().toIso8601String(),
+        if (endTime != null) 'endTime': endTime!.toUtc().toIso8601String(),
+        if (_hasText(triggers)) 'triggers': triggers!.trim(),
+        if (_hasText(location)) 'location': location!.trim(),
+        if (_hasText(description)) 'description': description!.trim(),
+        if (_hasText(notes)) 'notes': notes!.trim(),
+      };
+
+  @override
+  List<Object?> get props => [
+        symptomName,
+        severity,
+        startTime,
+        endTime,
+        triggers,
+        location,
+        description,
+        notes,
+      ];
+}
+
 String _asString(Object? value, {String fallback = ''}) =>
     value is String ? value : fallback;
 

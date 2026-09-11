@@ -16,6 +16,9 @@ class MedicalState extends Equatable {
     this.medications = const [],
     this.allergies = const [],
     this.emergencyContacts = const [],
+    this.adverseMedications = const [],
+    this.primaryCareProviders = const [],
+    this.symptomEntries = const [],
     this.busySection,
     this.errorMessage,
     this.actionMessage,
@@ -27,6 +30,9 @@ class MedicalState extends Equatable {
   final List<MedicationModel> medications;
   final List<AllergyModel> allergies;
   final List<EmergencyContactModel> emergencyContacts;
+  final List<AdverseMedicationModel> adverseMedications;
+  final List<PrimaryCareProviderModel> primaryCareProviders;
+  final List<SymptomEntryModel> symptomEntries;
   final String? busySection;
   final String? errorMessage;
   final String? actionMessage;
@@ -37,7 +43,10 @@ class MedicalState extends Equatable {
       conditions.isNotEmpty ||
       medications.isNotEmpty ||
       allergies.isNotEmpty ||
-      emergencyContacts.isNotEmpty;
+      emergencyContacts.isNotEmpty ||
+      adverseMedications.isNotEmpty ||
+      primaryCareProviders.isNotEmpty ||
+      symptomEntries.isNotEmpty;
 
   MedicalState copyWith({
     MedicalStatus? status,
@@ -45,6 +54,9 @@ class MedicalState extends Equatable {
     List<MedicationModel>? medications,
     List<AllergyModel>? allergies,
     List<EmergencyContactModel>? emergencyContacts,
+    List<AdverseMedicationModel>? adverseMedications,
+    List<PrimaryCareProviderModel>? primaryCareProviders,
+    List<SymptomEntryModel>? symptomEntries,
     Object? busySection = _notSet,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
@@ -56,6 +68,9 @@ class MedicalState extends Equatable {
       medications: medications ?? this.medications,
       allergies: allergies ?? this.allergies,
       emergencyContacts: emergencyContacts ?? this.emergencyContacts,
+      adverseMedications: adverseMedications ?? this.adverseMedications,
+      primaryCareProviders: primaryCareProviders ?? this.primaryCareProviders,
+      symptomEntries: symptomEntries ?? this.symptomEntries,
       busySection: identical(busySection, _notSet)
           ? this.busySection
           : busySection as String?,
@@ -76,6 +91,9 @@ class MedicalState extends Equatable {
         medications,
         allergies,
         emergencyContacts,
+        adverseMedications,
+        primaryCareProviders,
+        symptomEntries,
         busySection,
         errorMessage,
         actionMessage,

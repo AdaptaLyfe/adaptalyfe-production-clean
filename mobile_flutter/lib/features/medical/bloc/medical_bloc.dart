@@ -80,6 +80,71 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
             return null;
           },
         ));
+    on<AddAdverseMedication>((event, emit) => _runMutation(
+          emit,
+          action: 'reaction',
+          successMessage: 'Reaction added successfully.',
+          operation: () => repository.createAdverseMedication(event.input),
+        ));
+    on<EditAdverseMedication>((event, emit) => _runMutation(
+          emit,
+          action: 'reaction',
+          successMessage: 'Reaction updated successfully.',
+          operation: () =>
+              repository.updateAdverseMedication(event.id, event.input),
+        ));
+    on<DeleteAdverseMedication>((event, emit) => _runMutation(
+          emit,
+          action: 'reaction',
+          successMessage: 'Reaction deleted successfully.',
+          operation: () async {
+            await repository.deleteAdverseMedication(event.id);
+            return null;
+          },
+        ));
+    on<AddPrimaryCareProvider>((event, emit) => _runMutation(
+          emit,
+          action: 'provider',
+          successMessage: 'Healthcare contact added successfully.',
+          operation: () => repository.createPrimaryCareProvider(event.input),
+        ));
+    on<EditPrimaryCareProvider>((event, emit) => _runMutation(
+          emit,
+          action: 'provider',
+          successMessage: 'Healthcare contact updated successfully.',
+          operation: () =>
+              repository.updatePrimaryCareProvider(event.id, event.input),
+        ));
+    on<DeletePrimaryCareProvider>((event, emit) => _runMutation(
+          emit,
+          action: 'provider',
+          successMessage: 'Healthcare contact deleted successfully.',
+          operation: () async {
+            await repository.deletePrimaryCareProvider(event.id);
+            return null;
+          },
+        ));
+    on<AddSymptomEntry>((event, emit) => _runMutation(
+          emit,
+          action: 'symptom',
+          successMessage: 'Personal note added successfully.',
+          operation: () => repository.createSymptomEntry(event.input),
+        ));
+    on<EditSymptomEntry>((event, emit) => _runMutation(
+          emit,
+          action: 'symptom',
+          successMessage: 'Personal note updated successfully.',
+          operation: () => repository.updateSymptomEntry(event.id, event.input),
+        ));
+    on<DeleteSymptomEntry>((event, emit) => _runMutation(
+          emit,
+          action: 'symptom',
+          successMessage: 'Personal note deleted successfully.',
+          operation: () async {
+            await repository.deleteSymptomEntry(event.id);
+            return null;
+          },
+        ));
   }
 
   final MedicalRepository repository;
@@ -136,19 +201,28 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         List<MedicalConditionModel>,
         List<MedicationModel>,
         List<AllergyModel>,
-        List<EmergencyContactModel>
+        List<EmergencyContactModel>,
+        List<AdverseMedicationModel>,
+        List<PrimaryCareProviderModel>,
+        List<SymptomEntryModel>
       )> _fetchAll() async {
     final results = await Future.wait([
       repository.getConditions(),
       repository.getMedications(),
       repository.getAllergies(),
       repository.getEmergencyContacts(),
+      repository.getAdverseMedications(),
+      repository.getPrimaryCareProviders(),
+      repository.getSymptomEntries(),
     ]);
     return (
       results[0] as List<MedicalConditionModel>,
       results[1] as List<MedicationModel>,
       results[2] as List<AllergyModel>,
       results[3] as List<EmergencyContactModel>,
+      results[4] as List<AdverseMedicationModel>,
+      results[5] as List<PrimaryCareProviderModel>,
+      results[6] as List<SymptomEntryModel>,
     );
   }
 
@@ -158,7 +232,10 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
       List<MedicalConditionModel>,
       List<MedicationModel>,
       List<AllergyModel>,
-      List<EmergencyContactModel>
+        List<EmergencyContactModel>,
+        List<AdverseMedicationModel>,
+        List<PrimaryCareProviderModel>,
+        List<SymptomEntryModel>
     ) snapshot, {
     String? actionMessage,
   }) {
@@ -169,6 +246,9 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         medications: snapshot.$2,
         allergies: snapshot.$3,
         emergencyContacts: snapshot.$4,
+        adverseMedications: snapshot.$5,
+        primaryCareProviders: snapshot.$6,
+        symptomEntries: snapshot.$7,
         busySection: null,
         errorMessage: null,
         actionMessage: actionMessage,

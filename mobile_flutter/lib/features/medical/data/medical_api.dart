@@ -74,6 +74,75 @@ class MedicalApi {
   Future<void> deleteEmergencyContact(int id) =>
       _delete('/api/emergency-contacts/$id');
 
+  Future<List<AdverseMedicationModel>> getAdverseMedications() =>
+      _getList('/api/adverse-medications', AdverseMedicationModel.fromJson);
+
+  Future<AdverseMedicationModel> createAdverseMedication(
+    AdverseMedicationInput input,
+  ) =>
+      _post(
+        '/api/adverse-medications',
+        input.toJson(),
+        AdverseMedicationModel.fromJson,
+      );
+
+  Future<AdverseMedicationModel> updateAdverseMedication(
+    int id,
+    AdverseMedicationInput input,
+  ) =>
+      _put(
+        '/api/adverse-medications/$id',
+        input.toJson(),
+        AdverseMedicationModel.fromJson,
+      );
+
+  Future<void> deleteAdverseMedication(int id) =>
+      _delete('/api/adverse-medications/$id');
+
+  Future<List<PrimaryCareProviderModel>> getPrimaryCareProviders() =>
+      _getList('/api/primary-care-providers', PrimaryCareProviderModel.fromJson);
+
+  Future<PrimaryCareProviderModel> createPrimaryCareProvider(
+    PrimaryCareProviderInput input,
+  ) =>
+      _post(
+        '/api/primary-care-providers',
+        input.toJson(),
+        PrimaryCareProviderModel.fromJson,
+      );
+
+  Future<PrimaryCareProviderModel> updatePrimaryCareProvider(
+    int id,
+    PrimaryCareProviderInput input,
+  ) =>
+      _put(
+        '/api/primary-care-providers/$id',
+        input.toJson(),
+        PrimaryCareProviderModel.fromJson,
+      );
+
+  Future<void> deletePrimaryCareProvider(int id) =>
+      _delete('/api/primary-care-providers/$id');
+
+  Future<List<SymptomEntryModel>> getSymptomEntries() =>
+      _getList('/api/symptom-entries', SymptomEntryModel.fromJson);
+
+  Future<SymptomEntryModel> createSymptomEntry(SymptomEntryInput input) =>
+      _post('/api/symptom-entries', input.toJson(), SymptomEntryModel.fromJson);
+
+  Future<SymptomEntryModel> updateSymptomEntry(
+    int id,
+    SymptomEntryInput input,
+  ) =>
+      _patch(
+        '/api/symptom-entries/$id',
+        input.toJson(),
+        SymptomEntryModel.fromJson,
+      );
+
+  Future<void> deleteSymptomEntry(int id) =>
+      _delete('/api/symptom-entries/$id');
+
   Future<List<T>> _getList<T>(
     String path,
     T Function(Map<String, dynamic>) fromJson,
@@ -103,6 +172,15 @@ class MedicalApi {
     T Function(Map<String, dynamic>) fromJson,
   ) async {
     final response = await client.put<dynamic>(path, data: data);
+    return _parseItem(response.data, fromJson);
+  }
+
+  Future<T> _patch<T>(
+    String path,
+    Map<String, dynamic> data,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
+    final response = await client.patch<dynamic>(path, data: data);
     return _parseItem(response.data, fromJson);
   }
 

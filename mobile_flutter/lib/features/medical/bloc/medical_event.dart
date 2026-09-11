@@ -109,3 +109,87 @@ final class DeleteEmergencyContact extends MedicalEvent {
   @override
   List<Object?> get props => [id];
 }
+
+final class AddAdverseMedication extends MedicalEvent {
+  const AddAdverseMedication(this.input);
+
+  final AdverseMedicationInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class EditAdverseMedication extends MedicalEvent {
+  const EditAdverseMedication(this.id, this.input);
+
+  final int id;
+  final AdverseMedicationInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeleteAdverseMedication extends MedicalEvent {
+  const DeleteAdverseMedication(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+final class AddPrimaryCareProvider extends MedicalEvent {
+  const AddPrimaryCareProvider(this.input);
+
+  final PrimaryCareProviderInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class EditPrimaryCareProvider extends MedicalEvent {
+  const EditPrimaryCareProvider(this.id, this.input);
+
+  final int id;
+  final PrimaryCareProviderInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeletePrimaryCareProvider extends MedicalEvent {
+  const DeletePrimaryCareProvider(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+final class AddSymptomEntry extends MedicalEvent {
+  const AddSymptomEntry(this.input);
+
+  final SymptomEntryInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class EditSymptomEntry extends MedicalEvent {
+  const EditSymptomEntry(this.id, this.input);
+
+  final int id;
+  final SymptomEntryInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeleteSymptomEntry extends MedicalEvent {
+  const DeleteSymptomEntry(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}

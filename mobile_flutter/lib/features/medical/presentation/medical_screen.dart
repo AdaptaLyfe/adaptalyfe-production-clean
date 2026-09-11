@@ -53,7 +53,7 @@ class MedicalScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          length: 4,
+          length: 6,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Health Records'),
@@ -68,10 +68,12 @@ class MedicalScreen extends StatelessWidget {
               bottom: const TabBar(
                 isScrollable: true,
                 tabs: [
-                  Tab(text: 'Conditions'),
-                  Tab(text: 'Medications'),
-                  Tab(text: 'Allergies'),
-                  Tab(text: 'Contacts'),
+                  Tab(text: 'Sensitivities'),
+                  Tab(text: 'Notes'),
+                  Tab(text: 'Reactions'),
+                  Tab(text: 'Trusted Contacts'),
+                  Tab(text: 'Healthcare Contacts'),
+                  Tab(text: 'Personal Notes'),
                 ],
               ),
             ),
@@ -81,10 +83,12 @@ class MedicalScreen extends StatelessWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _ConditionsTab(state: state),
-                      _MedicationsTab(state: state),
                       _AllergiesTab(state: state),
+                      _ConditionsTab(state: state),
+                      _AdverseMedicationsTab(state: state),
                       _ContactsTab(state: state),
+                      _ProvidersTab(state: state),
+                      _SymptomsTab(state: state),
                     ],
                   ),
                 ),
@@ -117,9 +121,9 @@ class _ConditionsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MedicalCollectionView(
       onRefresh: () => _refresh(context),
-      emptyTitle: 'No conditions recorded',
-      emptySubtitle: 'Add a condition to get started.',
-      addLabel: 'Add Condition',
+      emptyTitle: 'No notes recorded',
+      emptySubtitle: 'Add a note to get started.',
+      addLabel: 'Add Note',
       onAdd: () => _showConditionDialog(context),
       children: state.conditions
           .map(
@@ -217,6 +221,47 @@ class _AllergiesTab extends StatelessWidget {
   }
 }
 
+class _AdverseMedicationsTab extends StatelessWidget {
+  const _AdverseMedicationsTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MedicalCollectionView(
+      onRefresh: () => _refresh(context),
+      emptyTitle: 'No reactions recorded',
+      emptySubtitle: 'Add a reaction to get started.',
+      addLabel: 'Add Reaction',
+      onAdd: () => _showAdverseMedicationDialog(context),
+      children: state.adverseMedications
+          .map(
+            (item) => _MedicalCard(
+              leading: Icons.warning_amber_rounded,
+              title: item.medicationName,
+              badge: _BadgeData(item.severity, _severityColor(item.severity)),
+              details: [
+                'Reaction: ${item.reaction}',
+                if (item.reactionDate != null)
+                  'Date: ${_formatDate(item.reactionDate!)}',
+                if (_hasText(item.notes)) item.notes!,
+              ],
+              onEdit: () => _showAdverseMedicationDialog(context, item),
+              onDelete: () => _confirmDelete(
+                context,
+                title: 'Delete reaction?',
+                message: 'This reaction will be removed from your records.',
+                onConfirm: () => context
+                    .read<MedicalBloc>()
+                    .add(DeleteAdverseMedication(item.id)),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
 class _ContactsTab extends StatelessWidget {
   const _ContactsTab({required this.state});
 
@@ -264,6 +309,84 @@ class _ContactsTab extends StatelessWidget {
                 onConfirm: () => context
                     .read<MedicalBloc>()
                     .add(DeleteEmergencyContact(item.id)),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ProvidersTab extends StatelessWidget {
+  const _ProvidersTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MedicalCollectionView(
+      onRefresh: () => _refresh(context),
+      emptyTitle: 'No healthcare contacts recorded',
+      emptySubtitle: 'Add a healthcare contact to get started.',
+      addLabel: 'Add Healthcare Contact',
+      onAdd: () => _showProviderDialog(context),
+      children: state.primaryCareProviders
+          .map(
+            (item) => _MedicalCard(
+              leading: Icons.local_hospital_outlined,
+              title: item.name,
+              badge: item.isPrimary
+                  ? const _BadgeData('Primary', Color(0xFF16A34A))
+                  : null,
+              details: [
+                item.specialty,
+                if (_hasText(item.practiceName)) item.practiceName!,
+                'Phone: ${item.phoneNumber}',
+                if (_hasText(item.email)) 'Email: ${item.email}',
+                if (_hasText(item.address)) item.address!,
+                if (_hasText(item.notes)) item.notes!,
+              ],
+              onEdit: () => _showProviderDialog(context, item),
+              onDelete: () => _confirmDelete(
+                context,
+                title: 'Delete healthcare contact?',
+                message: 'This contact will be removed from your records.',
+                onConfirm: () => context
+                    .read<MedicalBloc>()
+                    .add(DeletePrimaryCareProvider(item.id)),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _SymptomsTab extends StatelessWidget {
+  const _SymptomsTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MedicalCollectionView(
+      onRefresh: () => _refresh(context),
+      emptyTitle: 'No personal notes recorded',
+      emptySubtitle: 'Log a symptom to identify patterns and triggers.',
+      addLabel: 'Log Symptom',
+      onAdd: () => _showSymptomDialog(context),
+      children: state.symptomEntries
+          .map(
+            (item) => _SymptomCard(
+              entry: item,
+              onEdit: () => _showSymptomDialog(context, item),
+              onDelete: () => _confirmDelete(
+                context,
+                title: 'Delete personal note?',
+                message: 'This symptom entry will be removed.',
+                onConfirm: () => context
+                    .read<MedicalBloc>()
+                    .add(DeleteSymptomEntry(item.id)),
               ),
             ),
           )
@@ -327,6 +450,90 @@ class _MedicalCollectionView extends StatelessWidget {
           else
             ...children,
         ],
+      ),
+    );
+  }
+}
+
+class _SymptomCard extends StatelessWidget {
+  const _SymptomCard({
+    required this.entry,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final SymptomEntryModel entry;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    entry.symptomName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                _StatusBadge(
+                  data: _BadgeData(
+                    'Level ${entry.severity}',
+                    _symptomSeverityColor(entry.severity),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') onEdit();
+                    if (value == 'delete') onDelete();
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    PopupMenuItem(value: 'delete', child: Text('Delete')),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _formatDateTime(entry.startTime),
+              style: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+            ),
+            if (entry.endTime != null)
+              Text(
+                'Ended: ${_formatDateTime(entry.endTime!)}',
+                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              ),
+            if (_hasText(entry.location))
+              Text(
+                'Location: ${entry.location}',
+                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              ),
+            if (_hasText(entry.description) ||
+                _hasText(entry.triggers) ||
+                _hasText(entry.notes)) ...[
+              const Divider(height: 20),
+              if (_hasText(entry.description)) Text(entry.description!),
+              if (_hasText(entry.triggers))
+                Text('Triggers: ${entry.triggers!}'),
+              if (_hasText(entry.notes))
+                Text(
+                  entry.notes!,
+                  style: const TextStyle(color: Color(0xFF6B7280)),
+                ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -904,6 +1111,425 @@ Future<void> _showAllergyDialog(
   notesController.dispose();
 }
 
+Future<void> _showAdverseMedicationDialog(
+  BuildContext context, [
+  AdverseMedicationModel? existing,
+]) async {
+  final medicationController =
+      TextEditingController(text: existing?.medicationName ?? '');
+  final reactionController =
+      TextEditingController(text: existing?.reaction ?? '');
+  final notesController = TextEditingController(text: existing?.notes ?? '');
+  final formKey = GlobalKey<FormState>();
+  var severity = existing?.severity ?? '';
+  var reactionDate = existing?.reactionDate;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(
+          existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
+        ),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: medicationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Medication Name',
+                    hintText: 'e.g., Amoxicillin, Aspirin',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: reactionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Reaction',
+                    hintText: 'e.g., Rash, nausea, dizziness',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: severity.isEmpty ? null : severity,
+                  decoration: const InputDecoration(labelText: 'Severity'),
+                  items: _severities
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_titleCase(value)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => severity = value ?? ''),
+                  validator: (value) =>
+                      value == null ? 'Severity is required' : null,
+                ),
+                const SizedBox(height: 12),
+                _DateField(
+                  label: 'Reaction Date',
+                  date: reactionDate,
+                  onPick: () async {
+                    final date = await _pickDate(context, reactionDate);
+                    if (date != null) setState(() => reactionDate = date);
+                  },
+                  onClear: reactionDate == null
+                      ? null
+                      : () => setState(() => reactionDate = null),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: notesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    hintText: 'Additional information',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final input = AdverseMedicationInput(
+                medicationName: medicationController.text,
+                reaction: reactionController.text,
+                severity: severity,
+                reactionDate: reactionDate,
+                notes: notesController.text,
+              );
+              context.read<MedicalBloc>().add(
+                    existing == null
+                        ? AddAdverseMedication(input)
+                        : EditAdverseMedication(existing.id, input),
+                  );
+              Navigator.pop(dialogContext);
+            },
+            child: Text(existing == null ? 'Add Reaction' : 'Update Reaction'),
+          ),
+        ],
+      ),
+    ),
+  );
+  medicationController.dispose();
+  reactionController.dispose();
+  notesController.dispose();
+}
+
+Future<void> _showProviderDialog(
+  BuildContext context, [
+  PrimaryCareProviderModel? existing,
+]) async {
+  final nameController = TextEditingController(text: existing?.name ?? '');
+  final specialtyController =
+      TextEditingController(text: existing?.specialty ?? '');
+  final practiceController =
+      TextEditingController(text: existing?.practiceName ?? '');
+  final phoneController =
+      TextEditingController(text: existing?.phoneNumber ?? '');
+  final emailController = TextEditingController(text: existing?.email ?? '');
+  final addressController =
+      TextEditingController(text: existing?.address ?? '');
+  final notesController = TextEditingController(text: existing?.notes ?? '');
+  final formKey = GlobalKey<FormState>();
+  var isPrimary = existing?.isPrimary ?? false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(
+          existing == null
+              ? 'Add Primary Care Provider'
+              : 'Edit Healthcare Contact',
+        ),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Provider Name',
+                    hintText: 'Dr. Smith',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: specialtyController,
+                  decoration: const InputDecoration(
+                    labelText: 'Specialty',
+                    hintText: 'e.g., Family Medicine, Cardiology',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: practiceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Practice Name',
+                    hintText: 'Medical center or clinic name',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: 'Office phone number',
+                  ),
+                  validator: _phoneValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: _emailValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: addressController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Address'),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Primary care provider'),
+                  value: isPrimary,
+                  onChanged: (value) => setState(() => isPrimary = value),
+                ),
+                TextFormField(
+                  controller: notesController,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Notes',
+                    hintText: 'Additional information',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final input = PrimaryCareProviderInput(
+                name: nameController.text,
+                specialty: specialtyController.text,
+                practiceName: practiceController.text,
+                phoneNumber: phoneController.text,
+                email: emailController.text,
+                address: addressController.text,
+                isPrimary: isPrimary,
+                notes: notesController.text,
+              );
+              context.read<MedicalBloc>().add(
+                    existing == null
+                        ? AddPrimaryCareProvider(input)
+                        : EditPrimaryCareProvider(existing.id, input),
+                  );
+              Navigator.pop(dialogContext);
+            },
+            child: Text(
+              existing == null ? 'Add Healthcare Contact' : 'Update Contact',
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+  for (final controller in [
+    nameController,
+    specialtyController,
+    practiceController,
+    phoneController,
+    emailController,
+    addressController,
+    notesController,
+  ]) {
+    controller.dispose();
+  }
+}
+
+Future<void> _showSymptomDialog(
+  BuildContext context, [
+  SymptomEntryModel? existing,
+]) async {
+  final nameController =
+      TextEditingController(text: existing?.symptomName ?? '');
+  final locationController =
+      TextEditingController(text: existing?.location ?? '');
+  final triggersController =
+      TextEditingController(text: existing?.triggers ?? '');
+  final descriptionController =
+      TextEditingController(text: existing?.description ?? '');
+  final notesController = TextEditingController(text: existing?.notes ?? '');
+  final formKey = GlobalKey<FormState>();
+  var severity = existing?.severity ?? 1;
+  var startTime = existing?.startTime ?? DateTime.now();
+  var endTime = existing?.endTime;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Symptom Name',
+                    hintText: 'e.g., Headache, Nausea, Pain',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: severity,
+                  decoration: const InputDecoration(
+                    labelText: 'Severity (1-10)',
+                  ),
+                  items: List.generate(
+                    10,
+                    (index) => DropdownMenuItem(
+                      value: index + 1,
+                      child: Text('${index + 1} - ${_symptomSeverityLabel(index + 1)}'),
+                    ),
+                  ),
+                  onChanged: (value) => setState(() => severity = value ?? 1),
+                ),
+                const SizedBox(height: 12),
+                _DateTimeField(
+                  label: 'Start Time',
+                  value: startTime,
+                  onPick: () async {
+                    final value = await _pickDateTime(context, startTime);
+                    if (value != null) setState(() => startTime = value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _DateTimeField(
+                  label: 'End Time (Optional)',
+                  value: endTime,
+                  onPick: () async {
+                    final value = await _pickDateTime(context, endTime);
+                    if (value != null) setState(() => endTime = value);
+                  },
+                  onClear: endTime == null
+                      ? null
+                      : () => setState(() => endTime = null),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Location (Optional)',
+                    hintText: 'e.g., Head, Stomach, Back',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: triggersController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Possible Triggers (Optional)',
+                    hintText: 'e.g., Stress, Food, Weather',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (Optional)',
+                    hintText: 'Describe the symptom in detail',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: notesController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final input = SymptomEntryInput(
+                symptomName: nameController.text,
+                severity: severity,
+                startTime: startTime,
+                endTime: endTime,
+                triggers: triggersController.text,
+                location: locationController.text,
+                description: descriptionController.text,
+                notes: notesController.text,
+              );
+              context.read<MedicalBloc>().add(
+                    existing == null
+                        ? AddSymptomEntry(input)
+                        : EditSymptomEntry(existing.id, input),
+                  );
+              Navigator.pop(dialogContext);
+            },
+            child: Text(existing == null ? 'Add Entry' : 'Update Entry'),
+          ),
+        ],
+      ),
+    ),
+  );
+  for (final controller in [
+    nameController,
+    locationController,
+    triggersController,
+    descriptionController,
+    notesController,
+  ]) {
+    controller.dispose();
+  }
+}
+
 Future<void> _showContactDialog(
   BuildContext context, [
   EmergencyContactModel? existing,
@@ -1377,6 +2003,48 @@ class _DateField extends StatelessWidget {
   }
 }
 
+class _DateTimeField extends StatelessWidget {
+  const _DateTimeField({
+    required this.label,
+    required this.value,
+    required this.onPick,
+    this.onClear,
+  });
+
+  final String label;
+  final DateTime? value;
+  final VoidCallback onPick;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: onClear == null
+              ? const Icon(Icons.schedule_outlined, size: 18)
+              : IconButton(
+                  onPressed: onClear,
+                  icon: const Icon(Icons.clear, size: 18),
+                ),
+          border: const OutlineInputBorder(),
+        ),
+        child: Text(
+          value == null ? 'Select date and time' : _formatDateTime(value!),
+          style: TextStyle(
+            color: value == null
+                ? const Color(0xFF6B7280)
+                : const Color(0xFF111827),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Future<DateTime?> _pickDate(BuildContext context, DateTime? current) {
   final now = DateTime.now();
   return showDatePicker(
@@ -1387,8 +2055,35 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime? current) {
   );
 }
 
+Future<DateTime?> _pickDateTime(BuildContext context, DateTime? current) async {
+  final now = DateTime.now();
+  final date = await showDatePicker(
+    context: context,
+    initialDate: current ?? now,
+    firstDate: DateTime(1900),
+    lastDate: DateTime(now.year + 20),
+  );
+  if (date == null || !context.mounted) return null;
+  final time = await showTimePicker(
+    context: context,
+    initialTime: current == null
+        ? TimeOfDay.fromDateTime(now)
+        : TimeOfDay.fromDateTime(current),
+  );
+  if (time == null) return null;
+  return DateTime(date.year, date.month, date.day, time.hour, time.minute);
+}
+
 String? _requiredValidator(String? value) {
   if (value == null || value.trim().isEmpty) return 'This field is required';
+  return null;
+}
+
+String? _phoneValidator(String? value) {
+  if (value == null || value.trim().isEmpty) return 'Phone number is required';
+  if (!RegExp(r'^[0-9+\-()\s]+$').hasMatch(value.trim())) {
+    return 'Enter a valid phone number';
+  }
   return null;
 }
 
@@ -1417,6 +2112,42 @@ bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 String _formatDate(DateTime date) {
   final local = date.toLocal();
   return '${local.month}/${local.day}/${local.year}';
+}
+
+String _formatDateTime(DateTime date) {
+  final local = date.toLocal();
+  final hour = local.hour == 0
+      ? 12
+      : local.hour > 12
+          ? local.hour - 12
+          : local.hour;
+  final minute = local.minute.toString().padLeft(2, '0');
+  final period = local.hour >= 12 ? 'PM' : 'AM';
+  return '${_formatDate(local)} at $hour:$minute $period';
+}
+
+String _symptomSeverityLabel(int severity) {
+  const labels = [
+    'Very Mild',
+    'Mild',
+    'Mild-Moderate',
+    'Moderate',
+    'Moderate',
+    'Moderate-Severe',
+    'Severe',
+    'Severe',
+    'Very Severe',
+    'Extreme',
+  ];
+  final index = severity.clamp(1, 10).toInt() - 1;
+  return labels[index];
+}
+
+Color _symptomSeverityColor(int severity) {
+  if (severity <= 2) return const Color(0xFF16A34A);
+  if (severity <= 4) return const Color(0xFFCA8A04);
+  if (severity <= 6) return const Color(0xFFEA580C);
+  return const Color(0xFFB91C1C);
 }
 
 String _titleCase(String value) {

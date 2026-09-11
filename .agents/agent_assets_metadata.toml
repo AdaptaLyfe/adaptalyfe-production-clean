@@ -505,3 +505,17 @@ mtime_ms = 1789123118543
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ee0d5f73-1d6c-42ab-a1af-b78aa60de3d7/18317601-7bb6-4a3f-93fe-5327ec55ecee"
 storage_version_token = "1789123123814209"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wtyb54qEcqsb2Gs9EizHQ"
+uri = "file://flutter-medical-react-parity-files.zip"
+type = "unspecified"
+title = "Flutter medical React-parity files"
+description = "Seven changed Flutter medical feature files covering the six Health Records sections, API/repository models, BLoC events/state, CRUD dialogs, and symptom tracking."
+logical_id = "8e73f0b8-ca59-4f9f-a26b-ab9bd77f4095"
+content_hash = "sha256:2a3c748f37dd55f32d1e435ac7f0611728b100ad1097d683cf1b739e6ab8043d"
+size = 18199
+mtime_ms = 1789124503722
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e73f0b8-ca59-4f9f-a26b-ab9bd77f4095/7ecbf9bd-b054-4a88-93b3-236da0733e60"
+storage_version_token = "1789124515136382"
+content_type = "application/octet-stream"
