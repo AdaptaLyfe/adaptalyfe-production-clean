@@ -519,3 +519,17 @@ mtime_ms = 1789129313199
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e73f0b8-ca59-4f9f-a26b-ab9bd77f4095/4c6c3d99-e1bb-4278-9d0f-35935a3d97cf"
 storage_version_token = "1789129334766358"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9mfu2RCTLmRI30lfV6T_P"
+uri = "file://flutter-medical-react-parity-files-updated.zip"
+type = "unspecified"
+title = "Updated Flutter Medical files"
+description = "Renamed ZIP containing the updated Medical Flutter files with the dialog BLoC provider fix."
+logical_id = "b3052097-a4e5-4c0c-9ce2-299ab5b3ebfa"
+content_hash = "sha256:a6caa542f2d86d168083889b1a62525b85a6bbf989376dff11727fffc4aa9f23"
+size = 19498
+mtime_ms = 1789129899458
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b3052097-a4e5-4c0c-9ce2-299ab5b3ebfa/e3b4e275-bc79-4406-be06-793506e7667f"
+storage_version_token = "1789129904042052"
+content_type = "application/octet-stream"
