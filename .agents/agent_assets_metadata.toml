@@ -435,3 +435,17 @@ mtime_ms = 1789117081632
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f3dff37f-1961-458b-903b-e144803ad419/8f44fe88-f522-47f3-9f48-fcacc43a664f"
 storage_version_token = "1789117085694876"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9LMVQpmW8_L9DMOE4IHDX"
+uri = "file://flutter-calendar-changed-files.zip"
+type = "unspecified"
+title = "Flutter Calendar changed file"
+description = "ZIP containing the updated mobile Flutter Calendar BLoC file."
+logical_id = "4219aa5d-e30f-4948-8cef-20f4eaf68b76"
+content_hash = "sha256:994fa9eef56295a57b818ce50fdd40618de9b5d508e317795d7aa9ad8571bfc8"
+size = 1726
+mtime_ms = 1789119848306
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4219aa5d-e30f-4948-8cef-20f4eaf68b76/34a78ba3-65d5-4050-9d37-1e6200a2ed9e"
+storage_version_token = "1789119852076306"
+content_type = "application/octet-stream"
