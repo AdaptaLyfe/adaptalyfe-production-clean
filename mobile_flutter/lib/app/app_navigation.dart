@@ -277,9 +277,13 @@ class AppNavigationDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLoggingOut = context.select<AuthBloc, bool>(
-      (state) => state is AuthLoading,
-    );
+    final authState = context.watch<AuthBloc>().state;
+    final isLoggingOut = authState is AuthLoading;
+    final user = authState is Authenticated ? authState.user : null;
+    final displayName = user?.name?.trim().isNotEmpty == true
+        ? user!.name!.trim()
+        : user?.username ?? 'Loading...';
+    final email = user?.email?.trim() ?? '';
 
     return Drawer(
       width: MediaQuery.sizeOf(context).width,
@@ -422,24 +426,58 @@ class AppNavigationDrawer extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 14),
+                  _DrawerUserFooter(
+                    displayName: displayName,
+                    email: email,
+                  ),
+                  const SizedBox(height: 12),
+                  Material(
+                    color: const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      onTap: isLoggingOut
+                          ? null
+                          : () {
+                              Navigator.of(context).pop();
+                              context
+                                  .read<AuthBloc>()
+                                  .add(const LogoutRequested());
+                            },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.logout_rounded,
+                              size: 17,
+                              color: isLoggingOut
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFFB91C1C),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isLoggingOut ? 'Logging out…' : 'Logout',
+                              style: TextStyle(
+                                color: isLoggingOut
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFFB91C1C),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const Divider(height: 1),
-            ListTile(
-              dense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-              leading: const Icon(Icons.logout_rounded),
-              title: Text(isLoggingOut ? 'Logging out…' : 'Log out'),
-              enabled: !isLoggingOut,
-              onTap: isLoggingOut
-                  ? null
-                  : () {
-                      Navigator.of(context).pop();
-                      context
-                          .read<AuthBloc>()
-                          .add(const LogoutRequested());
-                    },
             ),
           ],
         ),
@@ -466,6 +504,89 @@ class AppNavigationDrawer extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('This feature is not available in the Flutter app yet.'),
+      ),
+    );
+  }
+}
+
+class _DrawerUserFooter extends StatelessWidget {
+  const _DrawerUserFooter({
+    required this.displayName,
+    required this.email,
+  });
+
+  final String displayName;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF9333EA)],
+              ),
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              color: Colors.white,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (email.isNotEmpty)
+                  Text(
+                    email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3E8FF),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: const Text(
+              'Demo',
+              style: TextStyle(
+                color: Color(0xFF9333EA),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

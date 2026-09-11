@@ -491,3 +491,17 @@ mtime_ms = 1789121902315
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffc3c043-0c70-4ce1-984b-42676a4a99ba/a7580f99-0bc4-4a89-9248-185e91913251"
 storage_version_token = "1789121906262015"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "trOvE6HOP6brxduFc6fol"
+uri = "file://flutter-home-drawer-ui-fix.zip"
+type = "unspecified"
+title = "Flutter Home drawer UI fix"
+description = "ZIP containing the only changed Flutter drawer/navigation file."
+logical_id = "ee0d5f73-1d6c-42ab-a1af-b78aa60de3d7"
+content_hash = "sha256:93840158cdfa957573bdaf88964e0f110198f66fc2dd7816074748ade8c4aa98"
+size = 4972
+mtime_ms = 1789123118543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ee0d5f73-1d6c-42ab-a1af-b78aa60de3d7/18317601-7bb6-4a3f-93fe-5327ec55ecee"
+storage_version_token = "1789123123814209"
+content_type = "application/octet-stream"
