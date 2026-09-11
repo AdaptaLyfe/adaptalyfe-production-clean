@@ -561,3 +561,17 @@ mtime_ms = 1789139394390
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d36f2e72-18a9-4629-bbf5-31be8507a924/f6f2c9a7-57c3-4569-b9a9-3c3ad16b71db"
 storage_version_token = "1789139400836793"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hsAkAd73EUtKOle9674uX"
+uri = "file://adaptalyfe-flutter-responsive-updated-files.zip"
+type = "unspecified"
+title = "Only updated Flutter files"
+description = "Contains only the 24 Flutter files updated for responsive layouts, including the shared responsive helper."
+logical_id = "b0bd205f-c44e-4654-92f0-bcef3e6ac09a"
+content_hash = "sha256:6ffa53e60b13dbd850d6c2366a93db1a578581c885a175e544a1b788fc8356f9"
+size = 164681
+mtime_ms = 1789139556438
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0bd205f-c44e-4654-92f0-bcef3e6ac09a/d99050a7-dc28-49a3-ab7e-00ca9191fe4c"
+storage_version_token = "1789139560295077"
+content_type = "application/octet-stream"
