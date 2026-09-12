@@ -36,7 +36,7 @@ class AppNavigationShell extends StatelessWidget {
   }
 }
 
-class AppBottomNavigation extends StatelessWidget {
+class AppBottomNavigation extends StatefulWidget {
   const AppBottomNavigation({
     required this.location,
     super.key,
@@ -44,6 +44,11 @@ class AppBottomNavigation extends StatelessWidget {
 
   final String location;
 
+  @override
+  State<AppBottomNavigation> createState() => _AppBottomNavigationState();
+}
+
+class _AppBottomNavigationState extends State<AppBottomNavigation> {
   static const _primaryItems = [
     _NavigationDestination(
       label: 'Home',
@@ -77,7 +82,9 @@ class AppBottomNavigation extends StatelessWidget {
 
   int get _selectedIndex {
     final primaryIndex = _primaryItems.indexWhere(
-      (item) => location == item.route || location.startsWith('${item.route}/'),
+      (item) =>
+          widget.location == item.route ||
+          widget.location.startsWith('${item.route}/'),
     );
     return primaryIndex == -1 ? _primaryItems.length : primaryIndex;
   }
