@@ -603,3 +603,17 @@ mtime_ms = 1789190534412
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/29a0c707-6024-4a17-b6fd-09fc9bb31c93/c7bc06ce-a375-4167-97d8-21e4fcd813b0"
 storage_version_token = "1789193672030027"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9B8APG3fOMLXzlMS2352C"
+uri = "file://adaptalyfe-quick-actions-updated-file.zip"
+type = "unspecified"
+title = "Updated Flutter Quick Actions file"
+description = "Contains only the updated Home Quick Actions widget with React-aligned grid spacing, card sizing, icon sizing, and reorder layout."
+logical_id = "f25e67a4-a0c4-446c-b5d7-2bf1e36676ba"
+content_hash = "sha256:bde3fb0ffd5c367e71d9ec932d370fd38474c4e266d85721ea926b8a2137755e"
+size = 26317
+mtime_ms = 1789197695951
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f25e67a4-a0c4-446c-b5d7-2bf1e36676ba/d0750936-5679-43f3-8e18-4c65d7f7ff1a"
+storage_version_token = "1789197699601426"
+content_type = "application/octet-stream"

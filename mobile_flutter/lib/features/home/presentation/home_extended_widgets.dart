@@ -193,11 +193,9 @@ class _HomeConfigurableQuickActionsState
                   itemCount: visible.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                     mainAxisExtent: _isReorderMode
-                         ? (constraints.maxWidth < 360 ? 210 : 220)
-                         : (constraints.maxWidth < 360 ? 158 : 172),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    mainAxisExtent: _isReorderMode ? 208 : 160,
                   ),
                   itemBuilder: (context, index) {
                     final action = visible[index];
@@ -517,7 +515,7 @@ class _QuickActionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: isReorderMode ? null : onTap,
         child: Container(
-          padding: EdgeInsets.fromLTRB(10, isReorderMode ? 44 : 14, 10, 12),
+          padding: EdgeInsets.fromLTRB(24, isReorderMode ? 44 : 24, 24, 24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -540,11 +538,11 @@ class _QuickActionTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Container(
-                      width: 58,
-                      height: 58,
+                      width: 64,
+                      height: 64,
                       decoration: BoxDecoration(
                         color: Color(action.colorValue),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         _iconFor(action.icon),
@@ -552,7 +550,7 @@ class _QuickActionTile extends StatelessWidget {
                         size: 32,
                       ),
                     ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: Text(
@@ -562,12 +560,12 @@ class _QuickActionTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF111827),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     SizedBox(
                       width: double.infinity,
                       child: Text(
@@ -577,7 +575,7 @@ class _QuickActionTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF6B7280),
-                          fontSize: 11,
+                          fontSize: 12,
                         ),
                       ),
                     ),
