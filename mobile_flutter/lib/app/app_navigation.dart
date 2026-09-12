@@ -91,77 +91,37 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: _selectedIndex,
-      onDestinationSelected: (index) {
-        if (index == _primaryItems.length) {
-          _showMoreMenu(context);
-          return;
-        }
-        context.go(_primaryItems[index].route);
-      },
-      destinations: [
-        ..._primaryItems.map(
-          (item) => NavigationDestination(
-            icon: Icon(item.icon),
-            selectedIcon: Icon(item.selectedIcon, color: item.color),
-            label: item.label,
-          ),
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.menu_rounded),
-          selectedIcon: Icon(Icons.menu_open_rounded),
-          label: 'More',
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showMoreMenu(BuildContext context) {
-    return showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    return Material(
+      color: Colors.white,
+      elevation: 8,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: SizedBox(
+          height: 56,
+          child: Row(
             children: [
-              LayoutBuilder(
-                builder: (context, constraints) => GridView.count(
-                  shrinkWrap: true,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 1.05,
-                  crossAxisCount: AppResponsive.gridColumnsForWidth(
-                    constraints.maxWidth,
-                    minimumItemWidth: 110,
-                    compactColumns: 2,
-                    mediumColumns: 3,
-                    wideColumns: 4,
-                    maxColumns: 5,
+              ..._primaryItems.map(
+                (item) => Expanded(
+                  child: _BottomNavigationButton(
+                    item: item,
+                    active: _selectedIndex == _primaryItems.indexOf(item),
+                    onTap: () => context.go(item.route),
                   ),
-                  children: _moreDestinations
-                      .map(
-                        (item) => _MoreNavigationTile(
-                          item: item,
-                          active: location == item.route ||
-                              location.startsWith('${item.route}/'),
-                          onTap: () {
-                            Navigator.of(sheetContext).pop();
-                            context.go(item.route);
-                          },
-                        ),
-                      )
-                      .toList(),
                 ),
               ),
-              _MoreMenuFooter(
-                onOpenMenu: () {
-                  Navigator.of(sheetContext).pop();
-                  Scaffold.of(context).openDrawer();
-                },
+              Expanded(
+                child: _BottomNavigationButton(
+                  item: const _NavigationDestination(
+                    label: 'More',
+                    route: '',
+                    icon: Icons.menu_rounded,
+                    selectedIcon: Icons.menu_rounded,
+                    color: Color(0xFF111827),
+                  ),
+                  active: _selectedIndex == _primaryItems.length,
+                  onTap: () => _showMoreMenu(context),
+                ),
               ),
             ],
           ),
@@ -170,24 +130,48 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     );
   }
 
-  // Kept as a separate action so the full drawer (including global logout)
-  // remains reachable from every authenticated route.
-}
-
-class _MoreMenuFooter extends StatelessWidget {
-  const _MoreMenuFooter({required this.onOpenMenu});
-
-  final VoidCallback onOpenMenu;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: OutlinedButton.icon(
-        onPressed: onOpenMenu,
-        icon: const Icon(Icons.menu_open_rounded),
-        label: const Text('Open full menu and account actions'),
-      ),
+  Future<void> _showMoreMenu(BuildContext context) {
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close More menu',
+      barrierColor: const Color(0x66000000),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        final bottomInset = MediaQuery.paddingOf(dialogContext).bottom;
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(8, 0, 8, 72 + bottomInset),
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: GridView.count(
+                  shrinkWrap: true,
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 2.05,
+                  children: _moreDestinations
+                      .map(
+                        (item) => _MoreNavigationTile(
+                          item: item,
+                          active: _isRouteActive(widget.location, item.route),
+                          onTap: () {
+                            Navigator.of(dialogContext).pop();
+                            context.go(item.route);
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
