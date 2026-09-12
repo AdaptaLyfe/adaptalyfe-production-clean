@@ -534,46 +534,55 @@ class _QuickActionTile extends StatelessWidget {
           ),
           child: Stack(
             children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: Color(action.colorValue),
-                      borderRadius: BorderRadius.circular(14),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Color(action.colorValue),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        _iconFor(action.icon),
+                        color: Colors.white,
+                        size: 32,
+                      ),
                     ),
-                    child: Icon(
-                      _iconFor(action.icon),
-                      color: Colors.white,
-                      size: 32,
+                    const SizedBox(height: 9),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        action.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 9),
-                  Text(
-                    action.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF111827),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                    const SizedBox(height: 3),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        action.description,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    action.description,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               if (isReorderMode)
                 Positioned(
