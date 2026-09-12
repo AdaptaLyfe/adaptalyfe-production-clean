@@ -91,6 +91,8 @@ class HomeRepository {
   Future<void> saveDashboardModules(List<DashboardModuleModel> modules) =>
       dashboardLayoutStore.save(modules);
 
+  Future<void> resetDashboardModules() => dashboardLayoutStore.reset();
+
   Future<List<HomeQuickAction>> loadQuickActions() =>
       quickActionsStore.load();
 

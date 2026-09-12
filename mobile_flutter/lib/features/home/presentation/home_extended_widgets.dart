@@ -28,8 +28,18 @@ import '../bloc/home_state.dart';
 import '../models/home_models.dart';
 import '../../../models/user_model.dart';
 
-class HomeConfigurableQuickActions extends StatelessWidget {
+class HomeConfigurableQuickActions extends StatefulWidget {
   const HomeConfigurableQuickActions({super.key});
+
+  @override
+  State<HomeConfigurableQuickActions> createState() =>
+      _HomeConfigurableQuickActionsState();
+}
+
+class _HomeConfigurableQuickActionsState
+    extends State<HomeConfigurableQuickActions> {
+  bool _isReorderMode = false;
+  String? _draggingActionId;
 
   @override
   Widget build(BuildContext context) {
@@ -56,19 +66,25 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () => _editQuickActions(
-                          context,
-                          state.quickActions,
-                          title: 'Reorder Quick Actions',
-                        ),
+                        onPressed: _toggleReorderMode,
                         icon: const Icon(
                           Icons.drag_indicator_rounded,
                           size: 18,
                         ),
                         label: const Text('Reorder'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF374151),
-                          side: const BorderSide(color: Color(0xFFD1D5DB)),
+                           foregroundColor: _isReorderMode
+                               ? Colors.white
+                               : const Color(0xFF374151),
+                           backgroundColor: _isReorderMode
+                               ? const Color(0xFF3B82F6)
+                               : Colors.white,
+                           side: BorderSide(
+                             color: _isReorderMode
+                                 ? const Color(0xFF3B82F6)
+                                 : const Color(0xFFD1D5DB),
+                             width: 2,
+                           ),
                           shape: const StadiumBorder(),
                           padding: EdgeInsets.symmetric(
                             horizontal: compact ? 8 : 13,
@@ -84,12 +100,9 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                         ),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => _editQuickActions(
-                          context,
-                          state.quickActions,
-                          title: 'Customize Quick Actions',
-                        ),
-                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        onPressed: () =>
+                            _showCustomizeDialog(context, state.quickActions),
+                         icon: const Icon(Icons.settings_rounded, size: 18),
                         label: const Text('Customize'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF374151),
@@ -129,17 +142,45 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                   );
                 },
               ),
+              if (_isReorderMode) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDBEAFE),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF93C5FD)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.drag_indicator_rounded,
+                        color: Color(0xFF2563EB),
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Drag the blue grip or tap arrows to reorder',
+                          style: TextStyle(
+                            color: Color(0xFF1E40AF),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               if (visible.isEmpty)
                 _EmptyInline(
                   icon: Icons.dashboard_customize_outlined,
                   text: 'No quick actions selected.',
-                  action: TextButton(
-                    onPressed: () => _editQuickActions(
-                      context,
-                      state.quickActions,
-                      title: 'Customize Quick Actions',
-                    ),
+                   action: TextButton(
+                    onPressed: () =>
+                        _showCustomizeDialog(context, state.quickActions),
                     child: const Text('Add some'),
                   ),
                 )
@@ -153,73 +194,81 @@ class HomeConfigurableQuickActions extends StatelessWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    mainAxisExtent: constraints.maxWidth < 360 ? 158 : 172,
+                     mainAxisExtent: _isReorderMode
+                         ? (constraints.maxWidth < 360 ? 210 : 220)
+                         : (constraints.maxWidth < 360 ? 158 : 172),
                   ),
                   itemBuilder: (context, index) {
                     final action = visible[index];
-                    final color = Color(action.colorValue);
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(14),
-                      onTap: () {
-                        if (action.id == 'ai-chat') {
-                          _openChat(context);
-                        } else {
-                          context.push(_safeRoute(action.route));
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x160F172A),
-                              blurRadius: 9,
-                              offset: Offset(0, 4),
+                    return DragTarget<String>(
+                      onWillAccept: (candidate) =>
+                          _isReorderMode && candidate != action.id,
+                      onAccept: (draggedId) => _moveQuickActionTo(
+                        context,
+                        draggedId,
+                        action.id,
+                      ),
+                      builder: (context, candidates, rejected) =>
+                          LongPressDraggable<String>(
+                        data: action.id,
+                        maxSimultaneousDrags: _isReorderMode ? 1 : 0,
+                        onDragStarted: () =>
+                            setState(() => _draggingActionId = action.id),
+                        onDragEnd: (_) =>
+                            setState(() => _draggingActionId = null),
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: SizedBox(
+                            width: (constraints.maxWidth - 12) / 2,
+                            child: _QuickActionTile(
+                              action: action,
+                              index: index,
+                              totalCount: visible.length,
+                              isReorderMode: true,
+                              isDragging: true,
+                              onTap: null,
+                              onMove: (direction) => _moveQuickAction(
+                                context,
+                                action.id,
+                                direction,
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 58,
-                              height: 58,
-                              decoration: BoxDecoration(
-                                color: color,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(
-                                _iconFor(action.icon),
-                                color: Colors.white,
-                                size: 32,
-                              ),
+                        childWhenDragging: Opacity(
+                          opacity: .35,
+                          child: _QuickActionTile(
+                            action: action,
+                            index: index,
+                            totalCount: visible.length,
+                            isReorderMode: _isReorderMode,
+                            isDragging: true,
+                            onTap: null,
+                            onMove: (direction) => _moveQuickAction(
+                              context,
+                              action.id,
+                              direction,
                             ),
-                            const SizedBox(height: 9),
-                            Text(
-                              action.label,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF111827),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              action.description,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ),
+                        child: _QuickActionTile(
+                          action: action,
+                          index: index,
+                          totalCount: visible.length,
+                          isReorderMode: _isReorderMode,
+                          isDragging: _draggingActionId == action.id,
+                          onTap: () {
+                            if (action.id == 'ai-chat') {
+                              _openChat(context);
+                            } else {
+                              context.push(_safeRoute(action.route));
+                            }
+                          },
+                          onMove: (direction) => _moveQuickAction(
+                            context,
+                            action.id,
+                            direction,
+                          ),
                         ),
                       ),
                     );
@@ -232,18 +281,66 @@ class HomeConfigurableQuickActions extends StatelessWidget {
     );
   }
 
-  Future<void> _editQuickActions(
+  void _toggleReorderMode() {
+    setState(() => _isReorderMode = !_isReorderMode);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _isReorderMode
+                ? 'Drag the blue grip or tap arrows to reorder.'
+                : 'Your new order has been saved.',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+
+  Future<void> _showCustomizeDialog(
     BuildContext context,
     List<HomeQuickAction> actions,
-    {required String title}
   ) async {
     final result = await showDialog<List<HomeQuickAction>>(
       context: context,
-      builder: (_) => _QuickActionsEditor(actions: actions, title: title),
+      builder: (_) => _CustomizeQuickActionsDialog(actions: actions),
     );
     if (result != null && context.mounted) {
       context.read<HomeBloc>().add(SaveHomeQuickActionConfig(result));
     }
+  }
+
+  void _moveQuickAction(
+    BuildContext context,
+    String actionId,
+    int direction,
+  ) {
+    context.read<HomeBloc>().add(MoveHomeQuickAction(actionId, direction));
+  }
+
+  void _moveQuickActionTo(
+    BuildContext context,
+    String draggedId,
+    String targetId,
+  ) {
+    final current = context.read<HomeBloc>().state;
+    if (current is! HomeLoaded) return;
+    final visible = current.quickActions
+        .where((item) => item.visible)
+        .toList();
+    final fromIndex = visible.indexWhere((item) => item.id == draggedId);
+    final toIndex = visible.indexWhere((item) => item.id == targetId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex == toIndex) return;
+    final reordered = [...visible];
+    final item = reordered.removeAt(fromIndex);
+    reordered.insert(toIndex, item);
+    final hidden = current.quickActions.where((item) => !item.visible);
+    context.read<HomeBloc>().add(
+          SaveHomeQuickActionConfig([
+            ...reordered,
+            ...hidden,
+          ]),
+        );
   }
 
   void _openChat(BuildContext context) {
@@ -259,66 +356,273 @@ class HomeConfigurableQuickActions extends StatelessWidget {
   }
 }
 
-class _QuickActionsEditor extends StatefulWidget {
-  const _QuickActionsEditor({
-    required this.actions,
-    required this.title,
-  });
+class _CustomizeQuickActionsDialog extends StatefulWidget {
+  const _CustomizeQuickActionsDialog({required this.actions});
 
   final List<HomeQuickAction> actions;
-  final String title;
 
   @override
-  State<_QuickActionsEditor> createState() => _QuickActionsEditorState();
+  State<_CustomizeQuickActionsDialog> createState() =>
+      _CustomizeQuickActionsDialogState();
 }
 
-class _QuickActionsEditorState extends State<_QuickActionsEditor> {
+class _CustomizeQuickActionsDialogState
+    extends State<_CustomizeQuickActionsDialog> {
   late List<HomeQuickAction> items = [...widget.actions];
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      title: const Text(
+        'Customize Quick Actions',
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+      ),
       content: SizedBox(
-        width: AppResponsive.dialogWidth(context),
-        height: AppResponsive.dialogMaxHeight(context, fraction: .7),
-        child: ReorderableListView.builder(
+        width: AppResponsive.dialogWidth(context, maxWidth: 560),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .8),
+        child: ListView.separated(
           itemCount: items.length,
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (newIndex > oldIndex) newIndex -= 1;
-              final item = items.removeAt(oldIndex);
-              items.insert(newIndex, item);
-            });
-          },
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final item = items[index];
-            return CheckboxListTile(
-              key: ValueKey(item.id),
-              value: item.visible,
-              onChanged: (value) => setState(() {
-                items[index] = item.copyWith(visible: value ?? false);
-              }),
-              secondary: const Icon(Icons.drag_handle_rounded),
-              title: Text(item.label),
-              subtitle: Text(item.description),
-              controlAffinity: ListTileControlAffinity.leading,
+            final selected = item.visible;
+            return InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => setState(
+                () => items[index] = item.copyWith(visible: !selected),
+              ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: selected ? const Color(0xFFEFF6FF) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: selected
+                        ? const Color(0xFF3B82F6)
+                        : const Color(0xFFE5E7EB),
+                    width: 2,
+                  ),
+                  boxShadow: selected
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x14000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: selected,
+                      onChanged: (value) => setState(
+                        () => items[index] =
+                            item.copyWith(visible: value ?? false),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Color(item.colorValue),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x18000000),
+                            blurRadius: 5,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _iconFor(item.icon),
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: Color(0xFF111827),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.description,
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => setState(() {
-            items = defaultHomeQuickActions.toList();
-          }),
-          child: const Text('Reset'),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(items),
-          child: const Text('Save'),
+          child: const Text('Save Changes'),
         ),
       ],
+    );
+  }
+}
+
+class _QuickActionTile extends StatelessWidget {
+  const _QuickActionTile({
+    required this.action,
+    required this.index,
+    required this.totalCount,
+    required this.isReorderMode,
+    required this.isDragging,
+    required this.onTap,
+    required this.onMove,
+  });
+
+  final HomeQuickAction action;
+  final int index;
+  final int totalCount;
+  final bool isReorderMode;
+  final bool isDragging;
+  final VoidCallback? onTap;
+  final ValueChanged<int> onMove;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: isDragging ? 1.03 : 1,
+      duration: const Duration(milliseconds: 120),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: isReorderMode ? null : onTap,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(10, isReorderMode ? 44 : 14, 10, 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: isReorderMode
+                ? Border.all(color: const Color(0xFF93C5FD), width: 2)
+                : null,
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x160F172A),
+                blurRadius: 9,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: Color(action.colorValue),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      _iconFor(action.icon),
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  Text(
+                    action.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    action.description,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              if (isReorderMode)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        tooltip: 'Move left',
+                        onPressed: index == 0 ? null : () => onMove(-1),
+                        icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                        color: const Color(0xFF2563EB),
+                        disabledColor: const Color(0xFFD1D5DB),
+                        padding: EdgeInsets.zero,
+                        constraints:
+                            const BoxConstraints.tightFor(width: 32, height: 32),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF3B82F6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.drag_indicator_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Move right',
+                        onPressed: index == totalCount - 1
+                            ? null
+                            : () => onMove(1),
+                        icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+                        color: const Color(0xFF2563EB),
+                        disabledColor: const Color(0xFFD1D5DB),
+                        padding: EdgeInsets.zero,
+                        constraints:
+                            const BoxConstraints.tightFor(width: 32, height: 32),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1560,51 +1864,447 @@ class _DashboardModuleEditor extends StatefulWidget {
 class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
   late List<DashboardModuleModel> items = [...widget.modules];
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Customize Dashboard'),
-      content: SizedBox(
-        width: AppResponsive.dialogWidth(context),
-        height: AppResponsive.dialogMaxHeight(context, fraction: .7),
-        child: ReorderableListView.builder(
-          itemCount: items.length,
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (newIndex > oldIndex) newIndex -= 1;
-              final item = items.removeAt(oldIndex);
-              items.insert(newIndex, item);
-              items = [
-                for (var index = 0; index < items.length; index++)
-                  items[index].copyWith(order: index),
-              ];
-            });
-          },
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return CheckboxListTile(
-              key: ValueKey(item.id),
-              value: item.enabled,
-              onChanged: (value) => setState(() {
-                items[index] = item.copyWith(enabled: value ?? false);
-              }),
-              secondary: const Icon(Icons.drag_handle_rounded),
-              title: Text(item.name),
-              controlAffinity: ListTileControlAffinity.leading,
-            );
-          },
+  List<DashboardModuleModel> get _activeModules => items
+      .where((module) => module.enabled)
+      .toList()
+    ..sort((a, b) => a.order.compareTo(b.order));
+
+  List<DashboardModuleModel> get _premiumModules =>
+      items.where((module) => module.name.contains('Premium')).toList()
+        ..sort((a, b) => a.order.compareTo(b.order));
+
+  List<DashboardModuleModel> get _regularHiddenModules => items
+      .where((module) => !module.enabled && !module.name.contains('Premium'))
+      .toList()
+    ..sort((a, b) => a.order.compareTo(b.order));
+
+  List<DashboardModuleModel> _normalizedItems(
+    List<DashboardModuleModel> source,
+  ) {
+    return [
+      for (var index = 0; index < source.length; index++)
+        source[index].copyWith(order: index),
+    ];
+  }
+
+  void _save(List<DashboardModuleModel> next) {
+    final normalized = _normalizedItems(next);
+    setState(() => items = normalized);
+    context.read<HomeBloc>().add(SaveHomeModuleConfig(normalized));
+  }
+
+  void _toggleModule(String moduleId) {
+    _save([
+      for (final module in items)
+        module.id == moduleId
+            ? module.copyWith(enabled: !module.enabled)
+            : module,
+    ]);
+  }
+
+  void _moveModule(String moduleId, int direction) {
+    final active = _activeModules;
+    final currentIndex = active.indexWhere((module) => module.id == moduleId);
+    final targetIndex = currentIndex + direction;
+    if (currentIndex < 0 ||
+        targetIndex < 0 ||
+        targetIndex >= active.length) {
+      return;
+    }
+    final firstId = active[currentIndex].id;
+    final secondId = active[targetIndex].id;
+    final firstIndex = items.indexWhere((module) => module.id == firstId);
+    final secondIndex = items.indexWhere((module) => module.id == secondId);
+    if (firstIndex < 0 || secondIndex < 0) return;
+    final next = [...items];
+    final first = next[firstIndex];
+    next[firstIndex] = next[secondIndex];
+    next[secondIndex] = first;
+    _save(next);
+  }
+
+  void _reset() {
+    setState(() => items = _normalizedItems(defaultDashboardModules));
+    context.read<HomeBloc>().add(const ResetHomeModules());
+  }
+
+  void _addEnhancedFeatures() {
+    const enhanced = [
+      DashboardModuleModel(
+        id: 'health-wellness',
+        name: 'Health & Wellness (Premium)',
+        component: 'HealthWellnessModule',
+        enabled: false,
+        order: 0,
+      ),
+      DashboardModuleModel(
+        id: 'accessibility',
+        name: 'Accessibility Settings (Premium)',
+        component: 'AccessibilitySettingsModule',
+        enabled: false,
+        order: 0,
+      ),
+      DashboardModuleModel(
+        id: 'life-skills',
+        name: 'Life Skills Training (Premium)',
+        component: 'LifeSkillsModule',
+        enabled: false,
+        order: 0,
+      ),
+      DashboardModuleModel(
+        id: 'progress-motivation',
+        name: 'Progress & Motivation (Premium)',
+        component: 'ProgressMotivationModule',
+        enabled: false,
+        order: 0,
+      ),
+    ];
+    final ids = items.map((module) => module.id).toSet();
+    _save([
+      ...items,
+      ...enhanced.where((module) => !ids.contains(module.id)),
+    ]);
+  }
+
+  Widget _moduleRow(
+    BuildContext context,
+    DashboardModuleModel module, {
+    required String subtitle,
+    required bool showArrows,
+    required int activeIndex,
+    required int activeCount,
+    required bool premium,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: premium
+            ? (module.enabled
+                ? const Color(0xFFEDE9FE)
+                : const Color(0xFFF5F3FF))
+            : (module.enabled ? Colors.white : const Color(0xFFF9FAFB)),
+        gradient: premium
+            ? const LinearGradient(
+                colors: [Color(0xFFF3E8FF), Color(0xFFEFF6FF)],
+              )
+            : null,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: premium
+              ? const Color(0xFFD8B4FE)
+              : const Color(0xFFE5E7EB),
+          width: premium ? 2 : 1,
         ),
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(
-          onPressed: () {
-            context.read<HomeBloc>().add(SaveHomeModuleConfig(items));
-            Navigator.pop(context);
-          },
-          child: const Text('Save'),
+      child: Row(
+        children: [
+          Icon(
+            Icons.drag_indicator_rounded,
+            size: 20,
+            color: premium
+                ? const Color(0xFFA78BFA)
+                : (module.enabled
+                    ? const Color(0xFF9CA3AF)
+                    : const Color(0xFFD1D5DB)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  module.name,
+                  style: TextStyle(
+                    color: premium
+                        ? const Color(0xFF581C87)
+                        : (module.enabled
+                            ? const Color(0xFF111827)
+                            : const Color(0xFF4B5563)),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: premium
+                        ? const Color(0xFF7E22CE)
+                        : const Color(0xFF6B7280),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showArrows)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Move up',
+                  onPressed: activeIndex == 0
+                      ? null
+                      : () => _moveModule(module.id, -1),
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  tooltip: 'Move down',
+                  onPressed: activeIndex == activeCount - 1
+                      ? null
+                      : () => _moveModule(module.id, 1),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
+            ),
+          Switch.adaptive(
+            value: module.enabled,
+            onChanged: (_) => _toggleModule(module.id),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final active = _activeModules;
+    final premium = _premiumModules;
+    final hidden = _regularHiddenModules;
+    final hasPremium = premium.isNotEmpty;
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      title: Row(
+        children: [
+          const Icon(Icons.settings_outlined, color: Color(0xFF2563EB)),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Customize Your Dashboard',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: _reset,
+            icon: const Icon(Icons.restart_alt_rounded, size: 16),
+            label: const Text('Reset'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close_rounded),
+          ),
+        ],
+      ),
+      content: SizedBox(
+        width: AppResponsive.dialogWidth(context, maxWidth: 600),
+        height: AppResponsive.dialogMaxHeight(context, fraction: .82),
+        child: ListView(
+          children: [
+            const Text(
+              'Customize which skill modules appear on your dashboard and change their order. Use the arrow buttons to move modules up or down, or toggle them on/off.',
+              style: TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+            ),
+                const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.visibility_outlined, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'Active Modules',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                _CountBadge(count:  active.length),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ...active.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _moduleRow(
+                      context,
+                      entry.value,
+                      subtitle: 'Position: ${entry.key + 1}',
+                      showArrows: true,
+                      activeIndex: entry.key,
+                      activeCount: active.length,
+                      premium: entry.value.name.contains('Premium'),
+                    ),
+                  ),
+                ),
+            if (!hasPremium) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFFDE68A),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      '🌟 Premium Enhanced Features',
+                      style: TextStyle(
+                        color: Color(0xFF78350F),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Unlock advanced tools for independence and personal growth',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton(
+                      onPressed: _addEnhancedFeatures,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFD97706),
+                      ),
+                      child: const Text('Show Premium Features'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            if (premium.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '🌟 Premium Enhanced Features',
+                      style: TextStyle(
+                        color: Color(0xFF581C87),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  _CountBadge(
+                    count: premium.length,
+                    outline: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ...premium.map(
+                (module) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _moduleRow(
+                    context,
+                    module,
+                    subtitle: module.enabled
+                        ? 'Premium feature - active on dashboard'
+                        : 'Premium feature - toggle to activate',
+                    showArrows: false,
+                    activeIndex: 0,
+                    activeCount: 1,
+                    premium: true,
+                  ),
+                ),
+              ),
+            ],
+            if (hidden.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(Icons.visibility_off_outlined, size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Hidden Basic Modules',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  _CountBadge(count: hidden.length, outline: true),
+                ],
+              ),
+              const SizedBox(height: 10),
+              ...hidden.map(
+                (module) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _moduleRow(
+                    context,
+                    module,
+                    subtitle: 'Currently hidden',
+                    showArrows: false,
+                    activeIndex: 0,
+                    activeCount: 1,
+                    premium: false,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tips for Customization',
+                    style: TextStyle(
+                      color: Color(0xFF1E3A8A),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    '• Put your most important skills at the top\n'
+                    '• Hide modules you do not use regularly\n'
+                    '• You can always turn modules back on later\n'
+                    '• Changes are saved automatically',
+                    style: TextStyle(color: Color(0xFF1E40AF), fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count, this.outline = false});
+
+  final int count;
+  final bool outline;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: outline ? Colors.white : const Color(0xFFE5E7EB),
+        borderRadius: BorderRadius.circular(20),
+        border: outline
+            ? Border.all(color: const Color(0xFFD1D5DB))
+            : null,
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: Color(0xFF4B5563),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

@@ -589,3 +589,17 @@ mtime_ms = 1789140213673
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6af6684d-3f29-4c53-8576-45256fdb297d/e3313784-25c0-4c32-a78e-127249a6c6c8"
 storage_version_token = "1789140219462333"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "-By1R2Qkm_OtIw2yO6aoT"
+uri = "file://adaptalyfe-home-customization-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Home customization updated files"
+description = "Updated Flutter Home Quick Actions reorder/customize flow, Dashboard Modules editor, BLoC persistence/state handling, and aligned defaults. Includes only the eight changed source files."
+logical_id = "29a0c707-6024-4a17-b6fd-09fc9bb31c93"
+content_hash = "sha256:8059548bdceb3583912dfad39f37236c263c21ae74deae0a8d9d8fecc3d11b8d"
+size = 38195
+mtime_ms = 1789187319884
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/29a0c707-6024-4a17-b6fd-09fc9bb31c93/c569a9bb-1a6e-462b-8f02-67624379b0fa"
+storage_version_token = "1789187326174740"
+content_type = "application/octet-stream"

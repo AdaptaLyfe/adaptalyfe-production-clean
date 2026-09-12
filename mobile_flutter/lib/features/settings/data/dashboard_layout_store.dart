@@ -16,7 +16,7 @@ class DashboardLayoutStore {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is! List) return defaultDashboardModules;
-      final modules = decoded
+      final saved = decoded
           .whereType<Map>()
           .map(
             (item) => DashboardModuleModel.fromJson(
@@ -24,7 +24,18 @@ class DashboardLayoutStore {
             ),
           )
           .toList();
-      return modules.isEmpty ? defaultDashboardModules : modules;
+      final seen = <String>{};
+      final merged = <DashboardModuleModel>[];
+      for (final module in saved) {
+        if (seen.add(module.id)) merged.add(module);
+      }
+      for (final module in defaultDashboardModules) {
+        if (seen.add(module.id)) merged.add(module);
+      }
+      return [
+        for (var index = 0; index < merged.length; index++)
+          merged[index].copyWith(order: index),
+      ];
     } catch (_) {
       return defaultDashboardModules;
     }

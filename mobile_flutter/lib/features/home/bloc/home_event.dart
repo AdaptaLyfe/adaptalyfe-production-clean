@@ -40,7 +40,11 @@ final class CancelHomeChatAction extends HomeEvent {
   const CancelHomeChatAction();
 }
 
-final class ToggleHomeModule extends HomeEvent {
+sealed class HomeCustomizationEvent extends HomeEvent {
+  const HomeCustomizationEvent();
+}
+
+final class ToggleHomeModule extends HomeCustomizationEvent {
   const ToggleHomeModule(this.moduleId);
 
   final String moduleId;
@@ -49,7 +53,7 @@ final class ToggleHomeModule extends HomeEvent {
   List<Object?> get props => [moduleId];
 }
 
-final class MoveHomeModule extends HomeEvent {
+final class MoveHomeModule extends HomeCustomizationEvent {
   const MoveHomeModule(this.moduleId, this.direction);
 
   final String moduleId;
@@ -59,7 +63,7 @@ final class MoveHomeModule extends HomeEvent {
   List<Object?> get props => [moduleId, direction];
 }
 
-final class SaveHomeModuleConfig extends HomeEvent {
+final class SaveHomeModuleConfig extends HomeCustomizationEvent {
   const SaveHomeModuleConfig(this.modules);
 
   final List<DashboardModuleModel> modules;
@@ -68,7 +72,11 @@ final class SaveHomeModuleConfig extends HomeEvent {
   List<Object?> get props => [modules];
 }
 
-final class ToggleHomeQuickAction extends HomeEvent {
+final class ResetHomeModules extends HomeCustomizationEvent {
+  const ResetHomeModules();
+}
+
+final class ToggleHomeQuickAction extends HomeCustomizationEvent {
   const ToggleHomeQuickAction(this.actionId);
 
   final String actionId;
@@ -77,7 +85,7 @@ final class ToggleHomeQuickAction extends HomeEvent {
   List<Object?> get props => [actionId];
 }
 
-final class MoveHomeQuickAction extends HomeEvent {
+final class MoveHomeQuickAction extends HomeCustomizationEvent {
   const MoveHomeQuickAction(this.actionId, this.direction);
 
   final String actionId;
@@ -87,11 +95,11 @@ final class MoveHomeQuickAction extends HomeEvent {
   List<Object?> get props => [actionId, direction];
 }
 
-final class ResetHomeQuickActions extends HomeEvent {
+final class ResetHomeQuickActions extends HomeCustomizationEvent {
   const ResetHomeQuickActions();
 }
 
-final class SaveHomeQuickActions extends HomeEvent {
+final class SaveHomeQuickActions extends HomeCustomizationEvent {
   const SaveHomeQuickActions(this.orderedIds);
 
   final List<String> orderedIds;
@@ -100,7 +108,7 @@ final class SaveHomeQuickActions extends HomeEvent {
   List<Object?> get props => [orderedIds];
 }
 
-final class SaveHomeQuickActionConfig extends HomeEvent {
+final class SaveHomeQuickActionConfig extends HomeCustomizationEvent {
   const SaveHomeQuickActionConfig(this.actions);
 
   final List<HomeQuickAction> actions;

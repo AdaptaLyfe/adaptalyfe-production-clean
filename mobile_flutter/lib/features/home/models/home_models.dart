@@ -222,6 +222,15 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     visible: true,
   ),
   HomeQuickAction(
+    id: 'mood-tracking',
+    label: 'Mood Log',
+    description: 'Track your mood',
+    route: '/mood-tracking',
+    icon: 'mood',
+    colorValue: 0xFFF97316,
+    visible: false,
+  ),
+  HomeQuickAction(
     id: 'ai-chat',
     label: 'AI Chat Assistant',
     description: 'Get help from AI',
@@ -264,15 +273,6 @@ const defaultHomeQuickActions = <HomeQuickAction>[
     route: '/rewards',
     icon: 'emoji_events',
     colorValue: 0xFFF59E0B,
-    visible: false,
-  ),
-  HomeQuickAction(
-    id: 'mood-tracking',
-    label: 'Mood Log',
-    description: 'Track your mood',
-    route: '/mood-tracking',
-    icon: 'mood',
-    colorValue: 0xFFF97316,
     visible: false,
   ),
   HomeQuickAction(

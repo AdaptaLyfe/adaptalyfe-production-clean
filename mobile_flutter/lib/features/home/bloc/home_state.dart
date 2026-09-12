@@ -23,6 +23,8 @@ enum HomeGuideStatus { initial, loading, loaded, failure }
 
 enum HomeChatActionStatus { idle, pending, executing, completed, failed, cancelled }
 
+enum HomeCustomizationStatus { idle, saving, success, failure }
+
 final class HomeLoaded extends HomeState {
   const HomeLoaded(
     this.user, {
@@ -36,6 +38,9 @@ final class HomeLoaded extends HomeState {
     this.chatActionStatus = HomeChatActionStatus.idle,
     this.dashboardModules = defaultDashboardModules,
     this.quickActions = defaultHomeQuickActions,
+    this.customizationStatus = HomeCustomizationStatus.idle,
+    this.customizationMessage,
+    this.customizationError,
   });
 
   final UserModel user;
@@ -49,6 +54,9 @@ final class HomeLoaded extends HomeState {
   final HomeChatActionStatus chatActionStatus;
   final List<DashboardModuleModel> dashboardModules;
   final List<HomeQuickAction> quickActions;
+  final HomeCustomizationStatus customizationStatus;
+  final String? customizationMessage;
+  final String? customizationError;
 
   HomeLoaded copyWith({
     HomeGuideStatus? guideStatus,
@@ -61,6 +69,9 @@ final class HomeLoaded extends HomeState {
     HomeChatActionStatus? chatActionStatus,
     List<DashboardModuleModel>? dashboardModules,
     List<HomeQuickAction>? quickActions,
+    HomeCustomizationStatus? customizationStatus,
+    Object? customizationMessage = _notSet,
+    Object? customizationError = _notSet,
   }) {
     return HomeLoaded(
       user,
@@ -82,6 +93,14 @@ final class HomeLoaded extends HomeState {
       chatActionStatus: chatActionStatus ?? this.chatActionStatus,
       dashboardModules: dashboardModules ?? this.dashboardModules,
       quickActions: quickActions ?? this.quickActions,
+      customizationStatus:
+          customizationStatus ?? this.customizationStatus,
+      customizationMessage: identical(customizationMessage, _notSet)
+          ? this.customizationMessage
+          : customizationMessage as String?,
+      customizationError: identical(customizationError, _notSet)
+          ? this.customizationError
+          : customizationError as String?,
     );
   }
 
@@ -98,6 +117,9 @@ final class HomeLoaded extends HomeState {
         chatActionStatus,
         dashboardModules,
         quickActions,
+        customizationStatus,
+        customizationMessage,
+        customizationError,
       ];
 }
 
