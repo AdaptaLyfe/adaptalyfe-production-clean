@@ -4,6 +4,7 @@ import '../../../core/network/api_client.dart';
 import '../data/home_repository.dart';
 import 'home_event.dart';
 import 'home_state.dart';
+import '../models/home_models.dart';
 import '../../settings/models/settings_models.dart';
 
 EventTransformer<T> _sequential<T>() {

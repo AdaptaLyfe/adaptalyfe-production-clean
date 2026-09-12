@@ -9,6 +9,7 @@ import '../../calendar/models/calendar_models.dart';
 import '../../caregiver/bloc/caregiver_bloc.dart';
 import '../../caregiver/bloc/caregiver_state.dart';
 import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
+import '../../daily_tasks/bloc/daily_tasks_event.dart';
 import '../../daily_tasks/bloc/daily_tasks_state.dart';
 import '../../daily_tasks/models/daily_task_model.dart';
 import '../../financial/bloc/financial_bloc.dart';
@@ -3965,8 +3966,8 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
                       ],
                     ),
                   if (homeState?.chatLoading == true)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Row(
                         children: [
                           SizedBox(
