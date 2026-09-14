@@ -123,6 +123,18 @@ export default function Financial() {
     },
   });
 
+  const openAddBillDialog = () => {
+    setEditingBill(null);
+    billForm.reset({
+      name: "",
+      amount: 0,
+      dueDate: 1,
+      category: "",
+      isRecurring: true,
+    });
+    setShowBillDialog(true);
+  };
+
   const budgetForm = useForm<{category: string; amount: number; type: "income" | "expense"; description: string}>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
@@ -741,7 +753,10 @@ export default function Financial() {
                     }
                   }}>
                     <DialogTrigger asChild>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={openAddBillDialog}
+                      >
                         <Plus size={16} className="mr-2" />
                         Add Bill
                       </Button>
@@ -838,7 +853,7 @@ export default function Financial() {
                       <p className="text-sm text-gray-500 mb-4">Add your recurring bills to track due dates</p>
                       <Button 
                         className="bg-sunny-orange hover:bg-sunny-orange"
-                        onClick={() => setShowBillDialog(true)}
+                        onClick={openAddBillDialog}
                       >
                         <Plus size={16} className="mr-2" />
                         Add Your First Bill
