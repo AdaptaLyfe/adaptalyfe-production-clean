@@ -91,6 +91,9 @@ const getTodayDateInputValue = () => {
   return `${today.getFullYear()}-${month}-${day}`;
 };
 
+const getDateInputValue = (dateValue?: string | null) =>
+  dateValue ? dateValue.split("T")[0] : "";
+
 const isFutureDateInputValue = (dateValue: string) =>
   Boolean(dateValue) && dateValue > getTodayDateInputValue();
 
@@ -1313,7 +1316,7 @@ export default function MedicalInformationModule() {
                     name="reactionDate"
                     type="date"
                     max={getTodayDateInputValue()}
-                    defaultValue={editingAdverseMed.reactionDate || ""}
+                    defaultValue={getDateInputValue(editingAdverseMed.reactionDate)}
                   />
                 </div>
                 <div>

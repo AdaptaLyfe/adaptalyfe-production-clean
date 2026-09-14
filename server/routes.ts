@@ -3287,7 +3287,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/adverse-medications/:id", async (req, res) => {
     try {
       const adverseMedId = parseInt(req.params.id);
-      const adverseMed = await storage.updateAdverseMedication(adverseMedId, req.body);
+      const adverseMedData = { ...req.body };
+      if (adverseMedData.reactionDate) {
+        adverseMedData.reactionDate = new Date(adverseMedData.reactionDate);
+      }
+      const adverseMed = await storage.updateAdverseMedication(adverseMedId, adverseMedData);
       res.json(adverseMed);
     } catch (error) {
       console.error("Error updating adverse medication:", error);
