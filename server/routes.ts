@@ -2194,7 +2194,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.user?.id || 1;
       const storeId = parseInt(req.params.id);
-      const store = await storage.updateGroceryStore(storeId, req.body);
+      const data = insertGroceryStoreSchema.omit({ userId: true }).partial().parse(req.body);
+      const store = await storage.updateGroceryStore(storeId, data);
       if (!store) {
         return res.status(404).json({ message: "Grocery store not found" });
       }

@@ -751,6 +751,15 @@ export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({
   plannedDate: z.string().min(1, "Planned date is required"),
 });
 
+const isHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 export const insertGroceryStoreSchema = createInsertSchema(groceryStores).omit({
   id: true,
   createdAt: true,
