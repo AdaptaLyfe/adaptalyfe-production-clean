@@ -168,7 +168,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
       trackSubscriptionEvent("upgrade", planType);
       sessionStorage.removeItem("pending_stripe_subscription_id");
       toast({
-        title: intentType === "setup" ? "Payment method saved!" : "Payment Successful!",
+        title: intentType === "setup" ? "Payment details saved!" : "Payment Successful!",
         description: "Your recurring subscription has been activated."
       });
       onSuccess();
