@@ -273,10 +273,16 @@ function WelcomeState({
   );
 }
 
-export default function AIChatbot({ careRecipientId }: { careRecipientId?: number } = {}) {
+export default function AIChatbot({
+  careRecipientId,
+  initiallyExpanded = false,
+}: {
+  careRecipientId?: number;
+  initiallyExpanded?: boolean;
+} = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [showFullChat, setShowFullChat] = useState(false);
+  const [showFullChat, setShowFullChat] = useState(initiallyExpanded);
   const [isOpen, setIsOpen] = useState(false);
   const [showDailyGreeting, setShowDailyGreeting] = useState(true);
   const messagesEndRef = useSafeRef<HTMLDivElement | null>(null);

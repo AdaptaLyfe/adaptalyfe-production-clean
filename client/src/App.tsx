@@ -223,6 +223,20 @@ function App() {
         <Route path="/dashboard">
           <AuthCheck><Dashboard /></AuthCheck>
         </Route>
+        <Route path="/ai-chat" component={() => (
+          <AuthCheck>
+            <React.Suspense fallback={
+              <div className="container mx-auto p-6">
+                <div className="max-w-3xl mx-auto animate-pulse">
+                  <div className="h-8 bg-gray-300 rounded w-48 mb-6"></div>
+                  <div className="h-96 bg-white rounded-lg border"></div>
+                </div>
+              </div>
+            }>
+              <AIChatbot initiallyExpanded />
+            </React.Suspense>
+          </AuthCheck>
+        )} />
         <Route path="/subscription">
           <Subscription />
         </Route>
