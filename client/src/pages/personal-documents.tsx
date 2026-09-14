@@ -63,6 +63,21 @@ export default function PersonalDocuments() {
     },
   });
 
+  const openAddDocument = () => {
+    setEditingDoc(null);
+    setDocType("text");
+    setUploadedImageUrl("");
+    form.reset({
+      title: "",
+      category: "medical",
+      documentType: "text",
+      content: "",
+      linkUrl: "",
+      isImportant: false,
+    });
+    setIsOpen(true);
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const payload: any = {
@@ -203,7 +218,7 @@ export default function PersonalDocuments() {
         <Button 
           className="w-full sm:w-auto" 
           data-testid="button-add-document"
-          onClick={() => setIsOpen(true)}
+          onClick={openAddDocument}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Document
