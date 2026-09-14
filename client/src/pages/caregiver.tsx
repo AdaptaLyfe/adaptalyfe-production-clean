@@ -210,7 +210,7 @@ export default function Caregiver() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Caregivers List */}
-        <Card className="border-t-4 border-vibrant-green">
+        <Card className="border-t-4 border-vibrant-green h-[32rem] flex flex-col overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -290,7 +290,7 @@ export default function Caregiver() {
               </Dialog>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-0 flex-1 overflow-y-auto">
             <div className="space-y-4">
               {caregivers.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">
