@@ -30,12 +30,49 @@ const CATEGORIES = [
 ];
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  category: z.string().min(1, "Category is required"),
-  documentType: z.enum(["text", "image", "link"]),
+  title: z.string().trim().min(1, "Title is required"),
+  category: z.string().trim().min(1, "Category is required"),
+  documentType: z.enum(["text", "image", "link"], {
+    required_error: "Document type is required",
+    invalid_type_error: "Document type is required",
+  }),
   content: z.string().optional(),
   linkUrl: z.string().optional(),
   isImportant: z.boolean().optional(),
+}).superRefine((data, context) => {
+  if (data.documentType === "text" && !data.content?.trim()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["content"],
+      message: "Information is required",
+    });
+  }
+
+  if (data.documentType === "link") {
+    const linkUrl = data.linkUrl?.trim() || "";
+
+    if (!linkUrl) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["linkUrl"],
+        message: "Website URL is required",
+      });
+      return;
+    }
+
+    try {
+      const parsedUrl = new URL(linkUrl);
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        throw new Error("Unsupported URL protocol");
+      }
+    } catch {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["linkUrl"],
+        message: "Enter a valid website URL",
+      });
+    }
+  }
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -331,6 +368,11 @@ export default function PersonalDocuments() {
                       <span className="text-xs sm:text-sm">Link</span>
                     </Button>
                   </div>
+                  {form.formState.errors.documentType?.message && (
+                    <p className="text-sm font-medium text-destructive mt-2">
+                      {form.formState.errors.documentType.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Conditional Content Fields */}
