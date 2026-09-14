@@ -290,7 +290,7 @@ export default function HealthWellnessModule() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Medication Name</FormLabel>
+                            <FormLabel required>Medication Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Vitamin D" {...field} />
                             </FormControl>
@@ -304,7 +304,7 @@ export default function HealthWellnessModule() {
                           name="dosage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Dosage</FormLabel>
+                              <FormLabel required>Dosage</FormLabel>
                               <FormControl>
                                 <Input placeholder="e.g., 1000 IU" {...field} />
                               </FormControl>
@@ -317,7 +317,7 @@ export default function HealthWellnessModule() {
                           name="frequency"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Frequency</FormLabel>
+                              <FormLabel required>Frequency</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
@@ -341,7 +341,7 @@ export default function HealthWellnessModule() {
                         name="reminderTime"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Reminder Time</FormLabel>
+                            <FormLabel required>Reminder Time</FormLabel>
                             <FormControl>
                               <Input type="time" {...field} />
                             </FormControl>
@@ -426,7 +426,7 @@ export default function HealthWellnessModule() {
                           name="bedtime"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Bedtime</FormLabel>
+                            <FormLabel required>Bedtime</FormLabel>
                               <FormControl>
                                 <Input type="time" {...field} />
                               </FormControl>
@@ -439,7 +439,7 @@ export default function HealthWellnessModule() {
                           name="wakeTime"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Wake Time</FormLabel>
+                            <FormLabel required>Wake Time</FormLabel>
                               <FormControl>
                                 <Input type="time" {...field} />
                               </FormControl>
@@ -453,7 +453,7 @@ export default function HealthWellnessModule() {
                         name="quality"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sleep Quality (1-5)</FormLabel>
+                            <FormLabel required>Sleep Quality (1-5)</FormLabel>
                             <FormControl>
                               <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value.toString()}>
                                 <SelectTrigger>
@@ -549,7 +549,7 @@ export default function HealthWellnessModule() {
                         name="activityType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Activity Type</FormLabel>
+                            <FormLabel required>Activity Type</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Walking, Swimming, Yoga" {...field} />
                             </FormControl>
@@ -563,7 +563,7 @@ export default function HealthWellnessModule() {
                           name="duration"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Duration (minutes)</FormLabel>
+                              <FormLabel required>Duration (minutes)</FormLabel>
                               <FormControl>
                                 <Input 
                                   type="number" 
@@ -581,7 +581,7 @@ export default function HealthWellnessModule() {
                           name="intensity"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Intensity</FormLabel>
+                              <FormLabel required>Intensity</FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>

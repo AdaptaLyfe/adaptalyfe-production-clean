@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { FieldLabel } from "@/components/ui/field-label";
 import {
   Shield,
   Users,
@@ -529,9 +530,9 @@ export default function SuperAdminSubscriptions() {
               </DialogHeader>
 
               <div className="py-3">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                <FieldLabel required className="text-sm font-medium text-gray-700 mb-2 block">
                   Type <span className="font-mono text-red-700">DELETE</span> to confirm:
-                </label>
+                </FieldLabel>
                 <Input
                   value={hardConfirmText}
                   onChange={(e) => setHardConfirmText(e.target.value)}

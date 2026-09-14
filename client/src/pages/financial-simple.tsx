@@ -343,7 +343,7 @@ export default function FinancialPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bill Name</FormLabel>
+                          <FormLabel required>Bill Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Electric Bill" {...field} />
                           </FormControl>
@@ -356,7 +356,7 @@ export default function FinancialPage() {
                       name="amount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Amount</FormLabel>
+                          <FormLabel required>Amount</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -375,7 +375,7 @@ export default function FinancialPage() {
                       name="dueDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Due Date (Day of Month)</FormLabel>
+                          <FormLabel required>Due Date (Day of Month)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -395,7 +395,7 @@ export default function FinancialPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -526,7 +526,7 @@ export default function FinancialPage() {
                 name="payeeWebsite"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Website URL</FormLabel>
+                    <FormLabel optional>Payment Website URL</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="https://www.yourprovider.com/pay-bill" 
@@ -547,7 +547,7 @@ export default function FinancialPage() {
                 name="payeeAccountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Your Account Number (Optional)</FormLabel>
+                    <FormLabel optional>Your Account Number</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Enter your account number" 
@@ -608,7 +608,7 @@ export default function FinancialPage() {
                       name="bankName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bank Name</FormLabel>
+                          <FormLabel required>Bank Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Chase Bank" {...field} />
                           </FormControl>
@@ -621,7 +621,7 @@ export default function FinancialPage() {
                       name="accountType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Account Type</FormLabel>
+                          <FormLabel required>Account Type</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -643,7 +643,7 @@ export default function FinancialPage() {
                       name="accountNickname"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nickname (Optional)</FormLabel>
+                          <FormLabel optional>Nickname</FormLabel>
                           <FormControl>
                             <Input placeholder="My Checking" {...field} />
                           </FormControl>
@@ -656,7 +656,7 @@ export default function FinancialPage() {
                       name="bankWebsite"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bank Website</FormLabel>
+                          <FormLabel optional>Bank Website</FormLabel>
                           <FormControl>
                             <Input placeholder="https://www.chase.com/login" {...field} />
                           </FormControl>
@@ -669,7 +669,7 @@ export default function FinancialPage() {
                       name="lastFour"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Last 4 Digits (Optional)</FormLabel>
+                          <FormLabel optional>Last 4 Digits</FormLabel>
                           <FormControl>
                             <Input placeholder="1234" maxLength={4} {...field} />
                           </FormControl>

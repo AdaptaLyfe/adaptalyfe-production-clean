@@ -203,7 +203,7 @@ export default function EmergencyResourcesModule() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Resource Name</FormLabel>
+                          <FormLabel required>Resource Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Crisis Hotline, Local Counselor, etc." {...field} />
                           </FormControl>
@@ -217,7 +217,7 @@ export default function EmergencyResourcesModule() {
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Type</FormLabel>
+                          <FormLabel required>Type</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>

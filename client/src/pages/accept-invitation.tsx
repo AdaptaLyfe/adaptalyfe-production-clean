@@ -222,7 +222,7 @@ export default function AcceptInvitation() {
                   name="invitationCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invitation Code</FormLabel>
+                       <FormLabel required>Invitation Code</FormLabel>
                       <FormControl>
                         <Input
                           {...field}

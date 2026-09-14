@@ -235,7 +235,7 @@ export default function Caregiver() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Name</FormLabel>
+                            <FormLabel required>Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Mom, Dr. Smith" {...field} />
                             </FormControl>
@@ -248,7 +248,7 @@ export default function Caregiver() {
                         name="relationship"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Relationship</FormLabel>
+                            <FormLabel required>Relationship</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -362,7 +362,7 @@ export default function Caregiver() {
                         name="caregiverId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Send to</FormLabel>
+                            <FormLabel required>Send to</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
                               <FormControl>
                                 <SelectTrigger>
@@ -386,7 +386,7 @@ export default function Caregiver() {
                         name="content"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Message</FormLabel>
+                            <FormLabel required>Message</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Type your message here..."

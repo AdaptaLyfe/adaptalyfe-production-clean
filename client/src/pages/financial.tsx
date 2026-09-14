@@ -498,7 +498,7 @@ export default function Financial() {
                                 name="type"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Entry Type</FormLabel>
+                                    <FormLabel required>Entry Type</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
@@ -519,7 +519,7 @@ export default function Financial() {
                                 name="category"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Category</FormLabel>
+                                    <FormLabel required>Category</FormLabel>
                                     <FormControl>
                                       <Input placeholder="e.g., Groceries, Gas, Shopping" {...field} />
                                     </FormControl>
@@ -532,7 +532,7 @@ export default function Financial() {
                                 name="amount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Amount</FormLabel>
+                                    <FormLabel required>Amount</FormLabel>
                                     <FormControl>
                                       <div className="flex items-center gap-2">
                                         <Input
@@ -749,7 +749,7 @@ export default function Financial() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bill Name</FormLabel>
+                                <FormLabel required>Bill Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Electric Bill, Rent" {...field} />
                                 </FormControl>
@@ -762,7 +762,7 @@ export default function Financial() {
                             name="amount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Amount</FormLabel>
+                                <FormLabel required>Amount</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -781,7 +781,7 @@ export default function Financial() {
                             name="dueDate"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Due Date (Day of Month)</FormLabel>
+                                <FormLabel required>Due Date (Day of Month)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -801,7 +801,7 @@ export default function Financial() {
                             name="category"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category</FormLabel>
+                                <FormLabel required>Category</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Utilities, Housing" {...field} />
                                 </FormControl>
@@ -934,7 +934,7 @@ export default function Financial() {
                             name="title"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Goal Title</FormLabel>
+                                <FormLabel required>Goal Title</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Emergency Fund, Vacation" {...field} />
                                 </FormControl>
@@ -961,7 +961,7 @@ export default function Financial() {
                               name="targetAmount"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Target Amount</FormLabel>
+                                  <FormLabel required>Target Amount</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -980,7 +980,7 @@ export default function Financial() {
                               name="currentAmount"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Current Amount</FormLabel>
+                                  <FormLabel required>Current Amount</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -1000,7 +1000,7 @@ export default function Financial() {
                             name="targetDate"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Target Date</FormLabel>
+                                <FormLabel required>Target Date</FormLabel>
                                 <FormControl>
                                   <Input type="date" {...field} />
                                 </FormControl>
@@ -1013,7 +1013,7 @@ export default function Financial() {
                             name="priority"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Priority</FormLabel>
+                                <FormLabel required>Priority</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -1129,7 +1129,7 @@ export default function Financial() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category Name</FormLabel>
+                                <FormLabel required>Category Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Food & Dining, Transportation" {...field} />
                                 </FormControl>
@@ -1142,7 +1142,7 @@ export default function Financial() {
                             name="type"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category Type</FormLabel>
+                                <FormLabel required>Category Type</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -1163,7 +1163,7 @@ export default function Financial() {
                             name="budgetedAmount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Budgeted Amount</FormLabel>
+                                <FormLabel required>Budgeted Amount</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -1182,7 +1182,7 @@ export default function Financial() {
                             name="color"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Color</FormLabel>
+                                <FormLabel optional>Color</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="color" 
@@ -1281,7 +1281,7 @@ export default function Financial() {
                             name="bankName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bank Name</FormLabel>
+                                <FormLabel required>Bank Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Chase, Bank of America" {...field} data-testid="input-bank-name" />
                                 </FormControl>
@@ -1294,7 +1294,7 @@ export default function Financial() {
                             name="accountType"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Account Type</FormLabel>
+                                <FormLabel required>Account Type</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl>
                                     <SelectTrigger data-testid="select-account-type">
@@ -1332,7 +1332,7 @@ export default function Financial() {
                             name="bankWebsite"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bank Website URL</FormLabel>
+                                <FormLabel optional>Bank Website URL</FormLabel>
                                 <FormControl>
                                   <Input placeholder="https://www.yourbank.com/login" {...field} data-testid="input-bank-website" />
                                 </FormControl>

@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { FieldLabel } from "@/components/ui/field-label"
 
 const Form = FormProvider
 
@@ -88,15 +89,24 @@ FormItem.displayName = "FormItem"
 
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & {
+    required?: boolean
+    optional?: boolean
+  }
+>(({ className, required, optional, ...props }, ref) => {
   const { error, formItemId } = useFormField()
+  const labelText = React.Children.toArray(props.children)
+    .filter((child): child is string => typeof child === "string")
+    .join(" ")
+  const hasExplicitMarker = /\*|\(\s*optional\s*\)/i.test(labelText)
 
   return (
-    <Label
+    <FieldLabel
       ref={ref}
       className={cn(error && "text-destructive", className)}
       htmlFor={formItemId}
+      required={required}
+      optional={optional ?? (required === undefined && !hasExplicitMarker)}
       {...props}
     />
   )

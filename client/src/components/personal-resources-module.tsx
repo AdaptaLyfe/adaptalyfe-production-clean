@@ -187,7 +187,7 @@ export default function PersonalResourcesModule() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel required>Title</FormLabel>
                       <FormControl>
                         <Input placeholder="Resource name" {...field} />
                       </FormControl>
@@ -199,7 +199,7 @@ export default function PersonalResourcesModule() {
                   name="url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL</FormLabel>
+                      <FormLabel required>URL</FormLabel>
                       <FormControl>
                         <Input placeholder="https://" {...field} />
                       </FormControl>
@@ -211,7 +211,7 @@ export default function PersonalResourcesModule() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>

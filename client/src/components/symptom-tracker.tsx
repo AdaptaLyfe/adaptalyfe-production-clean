@@ -184,7 +184,7 @@ export function SymptomTracker() {
                   name="symptomName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Symptom Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name" />
                       </FormControl>
@@ -198,7 +198,7 @@ export function SymptomTracker() {
                   name="severity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Severity (1-10) <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Severity (1-10)</FormLabel>
                       <FormControl>
                         <select
                           {...field}
@@ -225,7 +225,7 @@ export function SymptomTracker() {
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Start Time</FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
@@ -435,7 +435,7 @@ export function SymptomTracker() {
                 name="symptomName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel required>Symptom Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name-edit" />
                     </FormControl>
@@ -449,7 +449,7 @@ export function SymptomTracker() {
                 name="severity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Severity (1-10)</FormLabel>
+                    <FormLabel required>Severity (1-10)</FormLabel>
                     <FormControl>
                       <select
                         {...field}
@@ -476,7 +476,7 @@ export function SymptomTracker() {
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel required>Start Time</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"

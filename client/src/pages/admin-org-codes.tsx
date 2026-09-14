@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
@@ -291,11 +291,11 @@ export default function AdminOrgCodes() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Organization Name</Label>
+              <FieldLabel required>Organization Name</FieldLabel>
               <Input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="e.g., Sunrise Care Center" />
             </div>
             <div>
-              <Label>Access Code</Label>
+              <FieldLabel required>Access Code</FieldLabel>
               <div className="flex gap-2">
                 <Input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} placeholder="e.g., SUNRISE2025" className="font-mono" />
                 <Button variant="outline" onClick={generateCode}>Generate</Button>
@@ -303,11 +303,11 @@ export default function AdminOrgCodes() {
               <p className="text-xs text-gray-500 mt-1">Share this code with the organization for their users to enter</p>
             </div>
             <div>
-              <Label>Max Users (optional)</Label>
+              <FieldLabel optional>Max Users</FieldLabel>
               <Input type="number" value={newMaxUsers} onChange={(e) => setNewMaxUsers(e.target.value)} placeholder="Leave blank for unlimited" />
             </div>
             <div>
-              <Label>Expiration Date (optional)</Label>
+              <FieldLabel optional>Expiration Date</FieldLabel>
               <Input type="date" value={newExpiresAt} onChange={(e) => setNewExpiresAt(e.target.value)} />
             </div>
           </div>

@@ -1,3 +1,4 @@
+import { FieldLabel } from "@/components/ui/field-label";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -236,7 +237,7 @@ export function EnhancedCommunication() {
         <CardContent>
           {/* Caregiver Selection */}
           <div className="mb-4">
-            <label className="text-sm font-medium mb-2 block">Select Caregiver:</label>
+            <FieldLabel required className="text-sm font-medium mb-2 block">Select Caregiver</FieldLabel>
             <div className="flex gap-2 flex-wrap">
               {caregivers.map((caregiver: any) => (
                 <Button
@@ -341,7 +342,7 @@ export function EnhancedCommunication() {
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Category:</label>
+                          <FieldLabel required className="text-sm font-medium mb-2 block">Category</FieldLabel>
                           <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
@@ -356,7 +357,7 @@ export function EnhancedCommunication() {
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium mb-2 block">Message Template:</label>
+                          <FieldLabel optional className="text-sm font-medium mb-2 block">Message Template</FieldLabel>
                           <Textarea
                             value={newQuickResponse}
                             onChange={(e) => setNewQuickResponse(e.target.value)}

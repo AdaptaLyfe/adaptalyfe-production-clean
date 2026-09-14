@@ -98,7 +98,7 @@ export default function PersonalDocuments() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title *</FormLabel>
+                      <FormLabel required>Title</FormLabel>
                       <FormControl>
                         <Input placeholder="Document title..." {...field} />
                       </FormControl>
@@ -112,7 +112,7 @@ export default function PersonalDocuments() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category *</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -137,7 +137,7 @@ export default function PersonalDocuments() {
                   name="content"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Information *</FormLabel>
+                      <FormLabel required>Information</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Enter the information you want to save..."
@@ -163,7 +163,7 @@ export default function PersonalDocuments() {
                           className="h-4 w-4"
                         />
                       </FormControl>
-                      <FormLabel>Mark as Important</FormLabel>
+                      <FormLabel optional>Mark as Important</FormLabel>
                       <FormMessage />
                     </FormItem>
                   )}

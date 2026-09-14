@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { FieldLabel } from "@/components/ui/field-label";
 
 interface OnboardingStep {
   id: string;
@@ -426,7 +427,7 @@ export function SetupWizard({ isVisible, onComplete }: SetupWizardProps) {
       content: (
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">What would you like to be called?</label>
+            <FieldLabel optional className="text-sm font-medium mb-2 block">What would you like to be called?</FieldLabel>
             <input
               type="text"
               value={formData.name}
@@ -484,7 +485,7 @@ export function SetupWizard({ isVisible, onComplete }: SetupWizardProps) {
           </div>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Name</label>
+              <FieldLabel optional className="text-sm font-medium mb-1 block">Name</FieldLabel>
               <input
                 type="text"
                 value={formData.emergencyContact.name}
@@ -497,7 +498,7 @@ export function SetupWizard({ isVisible, onComplete }: SetupWizardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Phone Number</label>
+              <FieldLabel optional className="text-sm font-medium mb-1 block">Phone Number</FieldLabel>
               <input
                 type="tel"
                 value={formData.emergencyContact.phone}
@@ -510,7 +511,7 @@ export function SetupWizard({ isVisible, onComplete }: SetupWizardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1 block">Relationship</label>
+              <FieldLabel optional className="text-sm font-medium mb-1 block">Relationship</FieldLabel>
               <input
                 type="text"
                 value={formData.emergencyContact.relationship}

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import CaregiverControlPanel from "@/components/caregiver-control-panel";
 import { useToast } from "@/hooks/use-toast";
+import { FieldLabel } from "@/components/ui/field-label";
 
 export default function AdminDashboard() {
   const [timeRange, setTimeRange] = useState("30d");
@@ -1133,7 +1134,7 @@ export default function AdminDashboard() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Check-in Type</label>
+              <FieldLabel optional className="block text-sm font-medium mb-2">Check-in Type</FieldLabel>
               <select className="w-full border rounded-md p-2">
                 <option>Weekly Progress Review</option>
                 <option>Emergency Check-in</option>
@@ -1143,12 +1144,12 @@ export default function AdminDashboard() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Date & Time</label>
+              <FieldLabel optional className="block text-sm font-medium mb-2">Date & Time</FieldLabel>
               <input type="datetime-local" className="w-full border rounded-md p-2" />
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Notes</label>
+              <FieldLabel optional className="block text-sm font-medium mb-2">Notes</FieldLabel>
               <textarea 
                 className="w-full border rounded-md p-2 h-20" 
                 placeholder="Any specific topics to discuss..."

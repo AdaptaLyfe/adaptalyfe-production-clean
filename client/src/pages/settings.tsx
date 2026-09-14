@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { FieldLabel } from "@/components/ui/field-label";
 import { getSubscriptionManagementMessage } from "@/lib/subscription-management";
 
 export default function SettingsPage() {
@@ -775,9 +776,9 @@ export default function SettingsPage() {
                         <li>Remove all caregiver connections</li>
                       </ul>
                       <div className="pt-3">
-                        <Label htmlFor="confirm-delete" className="text-sm font-medium">
+                        <FieldLabel htmlFor="confirm-delete" required className="text-sm font-medium">
                           Type "delete my account" to confirm:
-                        </Label>
+                        </FieldLabel>
                         <Input
                           id="confirm-delete"
                           value={deleteConfirmText}

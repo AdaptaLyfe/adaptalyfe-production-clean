@@ -419,7 +419,7 @@ export default function RewardsPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reward Title</FormLabel>
+                        <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
                           <Input placeholder="Extra screen time" {...field} />
                         </FormControl>
@@ -433,7 +433,7 @@ export default function RewardsPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel optional>Description</FormLabel>
                         <FormControl>
                           <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
@@ -448,7 +448,7 @@ export default function RewardsPage() {
                       name="pointsRequired"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Points Required</FormLabel>
+                          <FormLabel required>Points Required</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -469,7 +469,7 @@ export default function RewardsPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -495,7 +495,7 @@ export default function RewardsPage() {
                     name="rewardType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -520,7 +520,7 @@ export default function RewardsPage() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value (optional)</FormLabel>
+                        <FormLabel optional>Value</FormLabel>
                         <FormControl>
                           <Input placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>
@@ -562,7 +562,7 @@ export default function RewardsPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reward Title</FormLabel>
+                        <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
                           <Input placeholder="Extra screen time" {...field} />
                         </FormControl>
@@ -576,7 +576,7 @@ export default function RewardsPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel optional>Description</FormLabel>
                         <FormControl>
                           <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
@@ -591,7 +591,7 @@ export default function RewardsPage() {
                       name="pointsRequired"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Points Required</FormLabel>
+                          <FormLabel required>Points Required</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -612,7 +612,7 @@ export default function RewardsPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -638,7 +638,7 @@ export default function RewardsPage() {
                     name="rewardType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -663,7 +663,7 @@ export default function RewardsPage() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value (optional)</FormLabel>
+                        <FormLabel optional>Value</FormLabel>
                         <FormControl>
                           <Input placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>

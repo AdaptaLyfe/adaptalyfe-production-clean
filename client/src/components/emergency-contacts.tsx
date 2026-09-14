@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EditButton } from "@/components/ui/edit-button";
@@ -208,7 +208,7 @@ export default function EmergencyContacts() {
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <Label htmlFor="name">Name *</Label>
+                      <FieldLabel htmlFor="name" required>Name</FieldLabel>
                       <Input
                         id="name"
                         value={formData.name}
@@ -217,7 +217,7 @@ export default function EmergencyContacts() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="relationship">Relationship *</Label>
+                      <FieldLabel htmlFor="relationship" required>Relationship</FieldLabel>
                       <Select
                         value={formData.relationship}
                         onValueChange={(value) => setFormData({ ...formData, relationship: value })}
@@ -239,7 +239,7 @@ export default function EmergencyContacts() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="phoneNumber">Phone Number *</Label>
+                      <FieldLabel htmlFor="phoneNumber" required>Phone Number</FieldLabel>
                       <Input
                         id="phoneNumber"
                         type="tel"
@@ -249,7 +249,7 @@ export default function EmergencyContacts() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="email">Email</Label>
+                      <FieldLabel htmlFor="email" optional>Email</FieldLabel>
                       <Input
                         id="email"
                         type="email"
@@ -258,7 +258,7 @@ export default function EmergencyContacts() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="notes">Notes</Label>
+                      <FieldLabel htmlFor="notes" optional>Notes</FieldLabel>
                       <Textarea
                         id="notes"
                         value={formData.notes}
@@ -371,7 +371,7 @@ export default function EmergencyContacts() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Name *</Label>
+                    <FieldLabel htmlFor="name" required>Name</FieldLabel>
                     <Input
                       id="name"
                       value={formData.name}
@@ -380,7 +380,7 @@ export default function EmergencyContacts() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="relationship">Relationship *</Label>
+                    <FieldLabel htmlFor="relationship" required>Relationship</FieldLabel>
                     <Select
                       value={formData.relationship}
                       onValueChange={(value) => setFormData({ ...formData, relationship: value })}
@@ -402,7 +402,7 @@ export default function EmergencyContacts() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="phoneNumber">Phone Number *</Label>
+                    <FieldLabel htmlFor="phoneNumber" required>Phone Number</FieldLabel>
                     <Input
                       id="phoneNumber"
                       type="tel"
@@ -412,7 +412,7 @@ export default function EmergencyContacts() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <FieldLabel htmlFor="email" optional>Email</FieldLabel>
                     <Input
                       id="email"
                       type="email"
@@ -427,7 +427,7 @@ export default function EmergencyContacts() {
                       checked={formData.isPrimary}
                       onChange={(e) => setFormData({ ...formData, isPrimary: e.target.checked })}
                     />
-                    <Label htmlFor="isPrimary">Primary contact</Label>
+                    <FieldLabel htmlFor="isPrimary" optional>Primary contact</FieldLabel>
                   </div>
                   <div className="flex items-center space-x-2">
                     <input
@@ -436,10 +436,10 @@ export default function EmergencyContacts() {
                       checked={formData.isEmergencyContact}
                       onChange={(e) => setFormData({ ...formData, isEmergencyContact: e.target.checked })}
                     />
-                    <Label htmlFor="isEmergencyContact">Emergency contact</Label>
+                    <FieldLabel htmlFor="isEmergencyContact" optional>Emergency contact</FieldLabel>
                   </div>
                   <div>
-                    <Label htmlFor="notes">Notes</Label>
+                    <FieldLabel htmlFor="notes" optional>Notes</FieldLabel>
                     <Textarea
                       id="notes"
                       value={formData.notes}

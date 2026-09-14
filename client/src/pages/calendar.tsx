@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FieldLabel } from "@/components/ui/field-label";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -625,7 +626,7 @@ export default function Calendar() {
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-sm font-medium">Start Date</label>
+                    <FieldLabel required className="text-sm font-medium">Start Date</FieldLabel>
                     <Input
                       type="date"
                       value={newEvent.startDate}
@@ -633,7 +634,7 @@ export default function Calendar() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Start Time</label>
+                    <FieldLabel optional className="text-sm font-medium">Start Time</FieldLabel>
                     <Input
                       type="time"
                       disabled={newEvent.allDay}
@@ -647,7 +648,7 @@ export default function Calendar() {
                     checked={newEvent.allDay}
                     onCheckedChange={(checked) => setNewEvent({ ...newEvent, allDay: !!checked })}
                   />
-                  <label className="text-sm font-medium">All Day Event</label>
+                  <FieldLabel optional className="text-sm font-medium">All Day Event</FieldLabel>
                 </div>
                 <Select value={newEvent.category} onValueChange={(value) => setNewEvent({ ...newEvent, category: value })}>
                   <SelectTrigger>

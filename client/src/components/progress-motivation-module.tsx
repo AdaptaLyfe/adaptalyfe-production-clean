@@ -486,7 +486,7 @@ export default function ProgressMotivationModule() {
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
+                            <FormLabel required>Category</FormLabel>
                             <FormControl>
                               <select {...field} className="w-full border rounded-md p-2">
                                 <option value="">Select category</option>
@@ -506,7 +506,7 @@ export default function ProgressMotivationModule() {
                         name="description"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel required>Description</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Tell us about this achievement or milestone..."
@@ -686,7 +686,7 @@ export default function ProgressMotivationModule() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Story Title</FormLabel>
+                            <FormLabel required>Story Title</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., How I Learned to Cook My Favorite Meal" {...field} />
                             </FormControl>
@@ -699,7 +699,7 @@ export default function ProgressMotivationModule() {
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
+                            <FormLabel required>Category</FormLabel>
                             <FormControl>
                               <select {...field} className="w-full border rounded-md p-2">
                                 <option value="">Select category</option>
@@ -720,7 +720,7 @@ export default function ProgressMotivationModule() {
                         name="content"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Your Story</FormLabel>
+                            <FormLabel required>Your Story</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Tell your story... What challenge did you face? How did you overcome it? What advice would you give others?"
@@ -744,7 +744,7 @@ export default function ProgressMotivationModule() {
                                 onChange={field.onChange}
                               />
                             </FormControl>
-                            <FormLabel>Share anonymously</FormLabel>
+                            <FormLabel optional>Share anonymously</FormLabel>
                           </FormItem>
                         )}
                       />

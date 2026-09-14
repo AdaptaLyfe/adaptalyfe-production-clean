@@ -102,7 +102,7 @@ export default function SavingsGoals() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Goal Name</FormLabel>
+                      <FormLabel required>Goal Name</FormLabel>
                       <FormControl>
                         <Input placeholder="New Car, Vacation, etc." {...field} />
                       </FormControl>
@@ -116,7 +116,7 @@ export default function SavingsGoals() {
                   name="targetAmount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Target Amount</FormLabel>
+                      <FormLabel required>Target Amount</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -136,7 +136,7 @@ export default function SavingsGoals() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -162,7 +162,7 @@ export default function SavingsGoals() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>

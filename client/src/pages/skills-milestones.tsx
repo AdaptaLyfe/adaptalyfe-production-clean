@@ -344,7 +344,7 @@ export default function SkillsMilestones() {
                   name="skillName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Skill Name</FormLabel>
+                      <FormLabel required>Skill Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Time Management, Cooking, Communication" {...field} />
                       </FormControl>
@@ -358,7 +358,7 @@ export default function SkillsMilestones() {
                   name="skillCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -382,7 +382,7 @@ export default function SkillsMilestones() {
                     name="currentLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Level (1-10)</FormLabel>
+                        <FormLabel required>Current Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -402,7 +402,7 @@ export default function SkillsMilestones() {
                     name="targetLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Target Level (1-10)</FormLabel>
+                        <FormLabel required>Target Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -440,7 +440,7 @@ export default function SkillsMilestones() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -491,7 +491,7 @@ export default function SkillsMilestones() {
                   name="skillName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Skill Name</FormLabel>
+                      <FormLabel required>Skill Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Time Management, Cooking, Communication" {...field} />
                       </FormControl>
@@ -505,7 +505,7 @@ export default function SkillsMilestones() {
                   name="skillCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -529,7 +529,7 @@ export default function SkillsMilestones() {
                     name="currentLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Level (1-10)</FormLabel>
+                        <FormLabel required>Current Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -549,7 +549,7 @@ export default function SkillsMilestones() {
                     name="targetLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Target Level (1-10)</FormLabel>
+                        <FormLabel required>Target Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -587,7 +587,7 @@ export default function SkillsMilestones() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>

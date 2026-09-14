@@ -199,7 +199,7 @@ export default function MealPlanningModule() {
                   name="mealName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Meal Name</FormLabel>
+                      <FormLabel required>Meal Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Scrambled eggs and toast" {...field} />
                       </FormControl>
@@ -213,7 +213,7 @@ export default function MealPlanningModule() {
                   name="mealType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Meal Type</FormLabel>
+                      <FormLabel required>Meal Type</FormLabel>
                       <FormControl>
                         <select 
                           {...field}
@@ -236,7 +236,7 @@ export default function MealPlanningModule() {
                   name="plannedDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Planned Date</FormLabel>
+                      <FormLabel required>Planned Date</FormLabel>
                       <FormControl>
                         <Input type="date" min={format(new Date(), "yyyy-MM-dd")} {...field} />
                       </FormControl>
@@ -250,7 +250,7 @@ export default function MealPlanningModule() {
                   name="cookingTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cooking Time (minutes)</FormLabel>
+                      <FormLabel optional>Cooking Time (minutes)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

@@ -197,7 +197,7 @@ export default function AppointmentsModule() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Appointment Title</FormLabel>
+                        <FormLabel required>Appointment Title</FormLabel>
                         <FormControl>
                           <Input placeholder="Doctor visit, dentist checkup..." {...field} required />
                         </FormControl>
@@ -211,7 +211,7 @@ export default function AppointmentsModule() {
                     name="provider"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Provider Type</FormLabel>
+                        <FormLabel optional>Provider Type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
@@ -237,7 +237,7 @@ export default function AppointmentsModule() {
                     name="appointmentDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Date & Time</FormLabel>
+                        <FormLabel required>Date & Time</FormLabel>
                         <FormControl>
                           <Input type="datetime-local" {...field} required />
                         </FormControl>
@@ -251,7 +251,7 @@ export default function AppointmentsModule() {
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Location</FormLabel>
+                        <FormLabel optional>Location</FormLabel>
                         <FormControl>
                           <Input placeholder="Clinic name, address..." {...field} value={field.value || ""} />
                         </FormControl>

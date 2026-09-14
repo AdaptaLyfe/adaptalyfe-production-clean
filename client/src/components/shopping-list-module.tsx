@@ -355,7 +355,7 @@ export default function ShoppingListModule() {
                   name="itemName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Item Name</FormLabel>
+                      <FormLabel required>Item Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Bananas" {...field} />
                       </FormControl>
@@ -369,7 +369,7 @@ export default function ShoppingListModule() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <FormControl>
                         <select 
                           {...field}
@@ -394,7 +394,7 @@ export default function ShoppingListModule() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Quantity</FormLabel>
+                      <FormLabel optional>Quantity</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="e.g., 2 lbs, 1 gallon" 
@@ -414,7 +414,7 @@ export default function ShoppingListModule() {
                   name="estimatedCost"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Est. Cost ($)</FormLabel>
+                      <FormLabel optional>Est. Cost ($)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -791,7 +791,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Store Name *</FormLabel>
+                  <FormLabel required>Store Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Kroger, Walmart, Target..." {...field} />
                   </FormControl>
@@ -805,7 +805,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel optional>Address</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Main St, Anytown, USA" {...field} />
                   </FormControl>
@@ -820,7 +820,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel optional>Phone Number</FormLabel>
                     <FormControl>
                       <Input placeholder="(555) 123-4567" {...field} />
                     </FormControl>
@@ -834,7 +834,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
+                    <FormLabel optional>Website</FormLabel>
                     <FormControl>
                       <Input placeholder="https://kroger.com" {...field} />
                     </FormControl>
@@ -849,7 +849,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="onlineOrderingUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Online Ordering URL</FormLabel>
+                    <FormLabel optional>Online Ordering URL</FormLabel>
                   <FormControl>
                     <Input placeholder="https://grocery.kroger.com" {...field} />
                   </FormControl>
@@ -871,7 +871,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Delivery Available</FormLabel>
+                      <FormLabel optional>Delivery Available</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -889,7 +889,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Pickup Available</FormLabel>
+                      <FormLabel optional>Pickup Available</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -907,7 +907,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Preferred Store</FormLabel>
+                      <FormLabel optional>Preferred Store</FormLabel>
                     </div>
                   </FormItem>
                 )}

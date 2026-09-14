@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FieldLabel as Label } from "@/components/ui/field-label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -672,11 +672,11 @@ export default function MedicalInformationModule() {
                 setShowConditionDialog(false);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="condition">Condition</Label>
+                  <Label htmlFor="condition" required>Condition</Label>
                   <Input name="condition" required placeholder="e.g., Diabetes, Asthma" />
                 </div>
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status" required>Status</Label>
                   <select 
                     value={conditionStatus} 
                     onChange={(e) => setConditionStatus(e.target.value)}
@@ -754,11 +754,11 @@ export default function MedicalInformationModule() {
                 setShowAllergyDialog(false);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="allergen">Allergen</Label>
+                  <Label htmlFor="allergen" required>Allergen</Label>
                   <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" />
                 </div>
                 <div>
-                  <Label htmlFor="severity">Severity</Label>
+                  <Label htmlFor="severity" required>Severity</Label>
                   <select 
                     value={allergySeverity} 
                     onChange={(e) => setAllergySeverity(e.target.value)}
@@ -773,7 +773,7 @@ export default function MedicalInformationModule() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="reaction">Reaction</Label>
+                  <Label htmlFor="reaction" required>Reaction</Label>
                   <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" />
                 </div>
                 <div>
@@ -843,15 +843,15 @@ export default function MedicalInformationModule() {
                 setShowAdverseMedDialog(false);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="medicationName">Medication Name</Label>
+                  <Label htmlFor="medicationName" required>Medication Name</Label>
                   <Input name="medicationName" required placeholder="e.g., Amoxicillin, Aspirin" />
                 </div>
                 <div>
-                  <Label htmlFor="reaction">Reaction</Label>
+                  <Label htmlFor="reaction" required>Reaction</Label>
                   <Input name="reaction" required placeholder="e.g., Rash, nausea, dizziness" />
                 </div>
                 <div>
-                  <Label htmlFor="severity">Severity</Label>
+                  <Label htmlFor="severity" required>Severity</Label>
                   <select 
                     value={adverseMedSeverity} 
                     onChange={(e) => setAdverseMedSeverity(e.target.value)}
@@ -953,7 +953,7 @@ export default function MedicalInformationModule() {
                 setShowContactDialog(false);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" required>Name</Label>
                   <Input name="name" required placeholder="Contact name" />
                 </div>
                 <div>
@@ -961,7 +961,7 @@ export default function MedicalInformationModule() {
                   <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
                   <Input 
                     name="phoneNumber" 
                     required 
@@ -1054,11 +1054,11 @@ export default function MedicalInformationModule() {
                 setShowProviderDialog(false);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Provider Name</Label>
+                  <Label htmlFor="name" required>Provider Name</Label>
                   <Input name="name" required placeholder="Dr. Smith" />
                 </div>
                 <div>
-                  <Label htmlFor="specialty">Specialty</Label>
+                  <Label htmlFor="specialty" required>Specialty</Label>
                   <Input name="specialty" required placeholder="e.g., Family Medicine, Cardiology" />
                 </div>
                 <div>
@@ -1066,7 +1066,7 @@ export default function MedicalInformationModule() {
                   <Input name="practiceName" placeholder="Medical center or clinic name" />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
                   <Input 
                     name="phoneNumber" 
                     required 
@@ -1158,11 +1158,11 @@ export default function MedicalInformationModule() {
                 });
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="condition">Condition</Label>
+                  <Label htmlFor="condition" required>Condition</Label>
                   <Input name="condition" required placeholder="e.g., Diabetes, Asthma" defaultValue={editingCondition.condition} />
                 </div>
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status" required>Status</Label>
                   <select 
                     value={conditionStatus || editingCondition.status} 
                     onChange={(e) => setConditionStatus(e.target.value)}
@@ -1241,11 +1241,11 @@ export default function MedicalInformationModule() {
                 setEditingAllergy(null);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="allergen">Allergen</Label>
+                  <Label htmlFor="allergen" required>Allergen</Label>
                   <Input name="allergen" required placeholder="e.g., Peanuts, Penicillin" defaultValue={editingAllergy.allergen} />
                 </div>
                 <div>
-                  <Label htmlFor="severity">Severity</Label>
+                  <Label htmlFor="severity" required>Severity</Label>
                   <select 
                     value={allergySeverity || editingAllergy.severity} 
                     onChange={(e) => setAllergySeverity(e.target.value)}
@@ -1260,7 +1260,7 @@ export default function MedicalInformationModule() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="reaction">Reaction</Label>
+                  <Label htmlFor="reaction" required>Reaction</Label>
                   <Input name="reaction" placeholder="e.g., Hives, difficulty breathing" defaultValue={editingAllergy.reaction || ""} />
                 </div>
                 <div>
@@ -1330,15 +1330,15 @@ export default function MedicalInformationModule() {
                 setEditingAdverseMed(null);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="medicationName">Medication Name</Label>
+                  <Label htmlFor="medicationName" required>Medication Name</Label>
                   <Input name="medicationName" required placeholder="e.g., Amoxicillin, Aspirin" defaultValue={editingAdverseMed.medicationName} />
                 </div>
                 <div>
-                  <Label htmlFor="reaction">Reaction</Label>
+                  <Label htmlFor="reaction" required>Reaction</Label>
                   <Input name="reaction" required placeholder="e.g., Rash, nausea, dizziness" defaultValue={editingAdverseMed.reaction} />
                 </div>
                 <div>
-                  <Label htmlFor="severity">Severity</Label>
+                  <Label htmlFor="severity" required>Severity</Label>
                   <select 
                     value={adverseMedSeverity || editingAdverseMed.severity} 
                     onChange={(e) => setAdverseMedSeverity(e.target.value)}
@@ -1420,7 +1420,7 @@ export default function MedicalInformationModule() {
                 setEditingContact(null);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name" required>Name</Label>
                   <Input name="name" required placeholder="Contact name" defaultValue={editingContact.name} />
                 </div>
                 <div>
@@ -1428,7 +1428,7 @@ export default function MedicalInformationModule() {
                   <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" defaultValue={editingContact.relationship || ""} />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
                   <Input 
                     name="phoneNumber" 
                     required 
@@ -1515,11 +1515,11 @@ export default function MedicalInformationModule() {
                 setEditingProvider(null);
               }} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Provider Name</Label>
+                  <Label htmlFor="name" required>Provider Name</Label>
                   <Input name="name" required placeholder="Dr. Smith" defaultValue={editingProvider.name} />
                 </div>
                 <div>
-                  <Label htmlFor="specialty">Specialty</Label>
+                  <Label htmlFor="specialty" required>Specialty</Label>
                   <Input name="specialty" required placeholder="e.g., Family Medicine, Cardiology" defaultValue={editingProvider.specialty} />
                 </div>
                 <div>
@@ -1527,7 +1527,7 @@ export default function MedicalInformationModule() {
                   <Input name="practiceName" placeholder="Medical center or clinic name" defaultValue={editingProvider.practiceName || ""} />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
                   <Input 
                     name="phoneNumber" 
                     required 

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Circle, Star, Plus, Clock, Trash2, X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
 
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
@@ -501,7 +502,7 @@ export default function DailyTasks() {
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               />
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Category</FieldLabel>
                 <select
                   value={newTask.category}
                   onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
@@ -518,7 +519,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Frequency</FieldLabel>
                 <select
                   value={newTask.frequency}
                   onChange={(e) => setNewTask({ ...newTask, frequency: e.target.value })}
@@ -532,7 +533,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Scheduled Time</FieldLabel>
                 <TimePicker
                   value={newTask.scheduledTime}
                   onChange={(v) => setNewTask({ ...newTask, scheduledTime: v })}
@@ -540,7 +541,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estimated Time (minutes)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Estimated Time (minutes)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -556,7 +557,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">How long will this task take? (1-480 minutes)</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -623,7 +624,7 @@ export default function DailyTasks() {
                 onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
               />
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Category</FieldLabel>
                 <select
                   value={editTask.category}
                   onChange={(e) => setEditTask({ ...editTask, category: e.target.value })}
@@ -640,7 +641,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Frequency</FieldLabel>
                 <select
                   value={editTask.frequency}
                   onChange={(e) => setEditTask({ ...editTask, frequency: e.target.value })}
@@ -654,7 +655,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Scheduled Time</FieldLabel>
                 <TimePicker
                   value={editTask.scheduledTime}
                   onChange={(v) => setEditTask({ ...editTask, scheduledTime: v })}
@@ -662,7 +663,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estimated Time (minutes)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Estimated Time (minutes)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -678,7 +679,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">How long will this task take? (1-480 minutes)</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"

@@ -301,7 +301,7 @@ export default function CaregiverSetup() {
                       name="userName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Person's Name</FormLabel>
+                          <FormLabel required>Person's Name</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g., Sarah Johnson" {...field} />
                           </FormControl>
@@ -315,7 +315,7 @@ export default function CaregiverSetup() {
                       name="userEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address (Optional)</FormLabel>
+                          <FormLabel optional>Email Address</FormLabel>
                           <FormControl>
                             <Input 
                               type="email" 
@@ -335,7 +335,7 @@ export default function CaregiverSetup() {
                     name="relationship"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Relationship Type</FormLabel>
+                        <FormLabel required>Relationship Type</FormLabel>
                         <Select 
                           onValueChange={(value) => {
                             field.onChange(value);
@@ -374,7 +374,7 @@ export default function CaregiverSetup() {
                     name="permissions"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Access Permissions</FormLabel>
+                        <FormLabel required>Access Permissions</FormLabel>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {permissionTypes.map((permission) => (
                             <div
