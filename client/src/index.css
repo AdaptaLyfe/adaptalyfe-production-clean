@@ -43,6 +43,25 @@ html, body {
   outline-offset: 2px;
 }
 
+/* Keep Academic Planner popup fields fully bordered inside their scrollable forms. */
+.academic-planner-form input,
+.academic-planner-form textarea,
+.academic-planner-form [role="combobox"] {
+  border-color: var(--input);
+  border-style: solid;
+  border-width: 1px;
+}
+
+.academic-planner-form input:focus,
+.academic-planner-form textarea:focus,
+.academic-planner-form [role="combobox"]:focus,
+.academic-planner-form [role="combobox"][data-state="open"] {
+  border-color: var(--input);
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* Android-native header styling */
 .android-header {
   padding-top: max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px));
