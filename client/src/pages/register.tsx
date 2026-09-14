@@ -86,20 +86,20 @@ export default function Register() {
       return;
     }
 
-    if (!formData.agreeToTerms) {
+    if (!formData.ageVerified) {
       toast({
-        title: "Terms Required",
-        description: "Please agree to the terms of service",
+        title: "Age Verification Required",
+        description: "Users under 13 must have a parent or guardian create their account",
         variant: "destructive"
       });
       setIsSubmitting(false);
       return;
     }
 
-    if (!formData.ageVerified) {
+    if (!formData.agreeToTerms) {
       toast({
-        title: "Age Verification Required",
-        description: "Users under 13 must have a parent or guardian create their account",
+        title: "Terms Required",
+        description: "Please agree to the terms of service",
         variant: "destructive"
       });
       setIsSubmitting(false);

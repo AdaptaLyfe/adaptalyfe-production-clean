@@ -74,17 +74,17 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (!_agreeToTerms) {
-      _showLocalError(
-        'Terms Required: Please agree to the terms of service',
-      );
-      return;
-    }
-
     if (!_ageVerified) {
       _showLocalError(
         'Age Verification Required: Users under 13 must have a parent '
         'or guardian create an account',
+      );
+      return;
+    }
+
+    if (!_agreeToTerms) {
+      _showLocalError(
+        'Terms Required: Please agree to the terms of service',
       );
       return;
     }
