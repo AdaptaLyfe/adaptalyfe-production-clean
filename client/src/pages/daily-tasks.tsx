@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Circle, Star, Plus, Clock, Edit3, Trash2, X } from "lucide-react";
+import { CheckCircle, Circle, Star, Plus, Clock, Trash2, X } from "lucide-react";
 
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
@@ -425,15 +426,11 @@ export default function DailyTasks() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-blue-100 rounded-lg"
+                      <EditButton
                         onClick={() => handleEditTask(task)}
+                        aria-label={`Edit ${task.title}`}
                         data-testid={`button-edit-task-${task.id}`}
-                      >
-                        <Edit3 className="text-blue-600" size={18} />
-                      </Button>
+                      />
                       <Button
                         variant="ghost"
                         size="sm"

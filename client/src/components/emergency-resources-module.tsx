@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { EditButton } from "@/components/ui/edit-button";
 import { insertEmergencyResourceSchema, type EmergencyResource, type InsertEmergencyResource } from "@shared/schema";
 import { 
   Shield, 
@@ -20,7 +21,6 @@ import {
   Globe, 
   Clock, 
   Plus, 
-  Edit, 
   Trash2,
   Heart,
   Hospital,
@@ -431,13 +431,10 @@ export default function EmergencyResourcesModule() {
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
-                      <Button
+                      <EditButton
                         onClick={() => startEdit(resource)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                        aria-label={`Edit ${resource.name}`}
+                      />
                       <Button
                         onClick={() => deleteMutation.mutate(resource.id)}
                         variant="ghost"

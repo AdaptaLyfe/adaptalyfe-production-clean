@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type PersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Edit, Image as ImageIcon, Link as LinkIcon, Camera, Clock } from "lucide-react";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Image as ImageIcon, Link as LinkIcon, Camera, Clock } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
@@ -557,10 +558,7 @@ export default function PersonalDocuments() {
                   )}
 
                   <div className="flex gap-2 flex-wrap">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex-1 sm:flex-none"
+                    <EditButton
                       onClick={() => {
                         setEditingDoc(doc);
                         setDocType(doc.documentType as "text" | "image" | "link");
@@ -575,11 +573,9 @@ export default function PersonalDocuments() {
                         });
                         setIsOpen(true);
                       }}
+                      aria-label={`Edit ${doc.title}`}
                       data-testid={`button-edit-${doc.id}`}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
+                    />
                     <Button
                       variant="ghost"
                       size="sm"

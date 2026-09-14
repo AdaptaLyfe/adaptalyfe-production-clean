@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { EditButton } from "@/components/ui/edit-button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Phone, UserPlus, Shield, Heart, AlertTriangle, Star, Edit, Trash2 } from "lucide-react";
+import { Phone, UserPlus, Shield, Heart, AlertTriangle, Star, Trash2 } from "lucide-react";
 
 interface EmergencyContact {
   id: number;
@@ -314,14 +315,10 @@ export default function EmergencyContacts() {
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <EditButton
                       onClick={() => handleEdit(contact)}
-                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                      aria-label={`Edit ${contact.name}`}
+                    />
                     <Button
                       size="sm"
                       variant="outline"
@@ -499,14 +496,10 @@ export default function EmergencyContacts() {
                     >
                       <Phone className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
+                    <EditButton
                       onClick={() => handleEdit(contact)}
-                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                      aria-label={`Edit ${contact.name}`}
+                    />
                     <Button
                       size="sm"
                       variant="outline"

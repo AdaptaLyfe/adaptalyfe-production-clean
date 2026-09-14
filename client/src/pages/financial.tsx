@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -866,9 +867,7 @@ export default function Financial() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
+                                <EditButton
                                   onClick={() => {
                                     setEditingBill(bill);
                                     billForm.reset({
@@ -880,9 +879,8 @@ export default function Financial() {
                                     });
                                     setShowBillDialog(true);
                                   }}
-                                >
-                                  Edit
-                                </Button>
+                                  aria-label={`Edit ${bill.name}`}
+                                />
                                 <Button 
                                   size="sm" 
                                   className="bg-bright-blue hover:bg-blue-600"
@@ -1055,9 +1053,7 @@ export default function Financial() {
                               <span className="text-sm text-gray-600">
                                 {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                               </span>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
+                              <EditButton
                                 onClick={() => {
                                   setEditingSavingsGoal(goal);
                                   savingsForm.reset({
@@ -1071,9 +1067,8 @@ export default function Financial() {
                                   });
                                   setShowSavingsDialog(true);
                                 }}
-                              >
-                                Edit
-                              </Button>
+                                aria-label={`Edit ${goal.title}`}
+                              />
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
@@ -1229,9 +1224,7 @@ export default function Financial() {
                             <span className="font-semibold text-gray-900">
                               {formatCurrency(category.budgetedAmount)}
                             </span>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
+                            <EditButton
                               onClick={() => {
                                 setEditingCategory(category);
                                 categoryForm.reset({
@@ -1242,9 +1235,8 @@ export default function Financial() {
                                 });
                                 setShowCategoryDialog(true);
                               }}
-                            >
-                              Edit
-                            </Button>
+                              aria-label={`Edit ${category.name}`}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1409,9 +1401,7 @@ export default function Financial() {
                                   Visit Bank
                                 </Button>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <EditButton
                                 onClick={() => {
                                   setEditingBank(account);
                                   bankForm.reset({
@@ -1423,10 +1413,9 @@ export default function Financial() {
                                   });
                                   setShowBankDialog(true);
                                 }}
+                                aria-label={`Edit ${account.bankName}`}
                                 data-testid={`button-edit-bank-${account.id}`}
-                              >
-                                Edit
-                              </Button>
+                              />
                               <Button
                                 variant="outline"
                                 size="sm"

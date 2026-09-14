@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Clock, MapPin, AlertTriangle, Calendar, Trash2, Edit } from "lucide-react";
+import { EditButton } from "@/components/ui/edit-button";
+import { Plus, Clock, MapPin, AlertTriangle, Calendar, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSymptomEntrySchema, type SymptomEntry, type InsertSymptomEntry } from "@shared/schema";
@@ -349,9 +350,10 @@ export function SymptomTracker() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => startEdit(entry)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <EditButton
+                      onClick={() => startEdit(entry)}
+                      aria-label={`Edit ${entry.symptomName}`}
+                    />
                     <Button
                       variant="ghost"
                       size="sm"

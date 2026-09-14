@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,6 @@ import {
   Briefcase,
   Heart,
   Brain,
-  Edit,
   Trash2
 } from "lucide-react";
 
@@ -709,15 +709,10 @@ export default function SkillsMilestones() {
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
+                      <EditButton
                         onClick={() => handleEditSkill(skill)}
-                      >
-                        <Edit size={14} className="mr-1" />
-                        Edit
-                      </Button>
+                        aria-label={`Edit ${skill.skillName}`}
+                      />
                       <Button
                         variant="outline"
                         size="sm"

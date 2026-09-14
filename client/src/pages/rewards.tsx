@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -30,7 +31,6 @@ import {
   ShoppingBag,
   MapPin,
   DollarSign,
-  Edit,
   Trash2
 } from "lucide-react";
 
@@ -731,15 +731,11 @@ export default function RewardsPage() {
                             </Badge>
                           )}
                           <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <EditButton
                               onClick={() => handleEdit(reward)}
-                              className="h-7 w-7 p-0 hover:bg-blue-100"
+                              aria-label={`Edit ${reward.title}`}
                               data-testid={`button-edit-reward-${reward.id}`}
-                            >
-                              <Edit className="w-4 h-4 text-blue-600" />
-                            </Button>
+                            />
                             <Button
                               size="sm"
                               variant="ghost"

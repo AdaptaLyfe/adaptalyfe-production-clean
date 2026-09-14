@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -645,14 +646,11 @@ export default function ShoppingListModule() {
                           </div>
                           
                           <div className="flex gap-2 ml-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <EditButton
                               onClick={() => setEditingStore(store)}
+                              aria-label={`Edit ${store.name}`}
                               data-testid={`button-edit-store-${store.id}`}
-                            >
-                              Edit
-                            </Button>
+                            />
                             <Button
                               variant="outline"
                               size="sm"

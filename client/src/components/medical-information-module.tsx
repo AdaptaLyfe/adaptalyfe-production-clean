@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { EditButton } from "@/components/ui/edit-button";
 import { 
   AlertTriangle, 
   Heart, 
@@ -17,7 +18,6 @@ import {
   Phone, 
   UserPlus,
   Stethoscope,
-  Edit,
   Trash2,
   Plus
 } from "lucide-react";
@@ -336,9 +336,10 @@ export default function MedicalInformationModule() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditingAllergy(allergy)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <EditButton
+                          onClick={() => setEditingAllergy(allergy)}
+                          aria-label={`Edit ${allergy.allergen}`}
+                        />
                         <Button size="sm" variant="outline" onClick={() => deleteAllergy.mutate(allergy.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -389,9 +390,10 @@ export default function MedicalInformationModule() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditingCondition(condition)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <EditButton
+                          onClick={() => setEditingCondition(condition)}
+                          aria-label={`Edit ${condition.condition}`}
+                        />
                         <Button size="sm" variant="outline" onClick={() => deleteCondition.mutate(condition.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -443,9 +445,10 @@ export default function MedicalInformationModule() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditingAdverseMed(adverseMed)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <EditButton
+                          onClick={() => setEditingAdverseMed(adverseMed)}
+                          aria-label={`Edit ${adverseMed.medicationName}`}
+                        />
                         <Button size="sm" variant="outline" onClick={() => deleteAdverseMed.mutate(adverseMed.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -501,9 +504,10 @@ export default function MedicalInformationModule() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditingContact(contact)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <EditButton
+                          onClick={() => setEditingContact(contact)}
+                          aria-label={`Edit ${contact.name}`}
+                        />
                         <Button size="sm" variant="outline" onClick={() => deleteContact.mutate(contact.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -560,9 +564,10 @@ export default function MedicalInformationModule() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditingProvider(provider)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <EditButton
+                          onClick={() => setEditingProvider(provider)}
+                          aria-label={`Edit ${provider.name}`}
+                        />
                         <Button size="sm" variant="outline" onClick={() => deleteProvider.mutate(provider.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
