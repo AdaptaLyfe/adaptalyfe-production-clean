@@ -12,6 +12,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertShoppingListSchema, type ShoppingList, type InsertShoppingList, type GroceryStore } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +33,7 @@ export default function ShoppingListModule() {
   const [selectedStore, setSelectedStore] = useState<GroceryStore | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStore, setEditingStore] = useState<GroceryStore | null>(null);
+  const [itemPendingRemoval, setItemPendingRemoval] = useState<ShoppingList | null>(null);
 
   const { data: shoppingItems, isLoading } = useQuery<ShoppingList[]>({
     queryKey: ["/api/shopping-lists"],
@@ -121,6 +132,16 @@ export default function ShoppingListModule() {
       isPurchased: !item.isPurchased,
       actualCost: actualCost,
     });
+  };
+
+  const requestItemRemoval = (item: ShoppingList) => {
+    setItemPendingRemoval(item);
+  };
+
+  const confirmItemRemoval = () => {
+    if (!itemPendingRemoval) return;
+    togglePurchased(itemPendingRemoval);
+    setItemPendingRemoval(null);
   };
 
   const getCategoryColor = (category: string) => {
@@ -455,7 +476,13 @@ export default function ShoppingListModule() {
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={item.isPurchased || false}
-                              onCheckedChange={() => togglePurchased(item)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  requestItemRemoval(item);
+                                } else {
+                                  togglePurchased(item);
+                                }
+                              }}
                               disabled={updatePurchasedMutation.isPending}
                             />
                             <div>
@@ -490,6 +517,28 @@ export default function ShoppingListModule() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={itemPendingRemoval !== null}
+        onOpenChange={(open) => {
+          if (!open) setItemPendingRemoval(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove shopping item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this item?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmItemRemoval}>
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Store Management Dialog - Custom Modal */}
       {showStoreDialog && (
