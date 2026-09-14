@@ -136,7 +136,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
 
       if (result.error) {
         toast({
-          title: intentType === "setup" ? "Could not save payment method" : "Payment Failed",
+          title: intentType === "setup" ? "Could not proceed with payment method" : "Payment Failed",
           description: result.error.message,
           variant: "destructive"
         });
