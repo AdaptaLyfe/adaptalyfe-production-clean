@@ -6382,6 +6382,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rewardId = parseInt(req.params.id);
+      const redemptions = await storage.getRewardRedemptions(req.session.user.id);
+      const hasBeenRedeemed = redemptions.some((redemption) => redemption.rewardId === rewardId);
+
+      if (hasBeenRedeemed) {
+        return res.status(409).json({
+          error: "This reward cannot be deleted because it has already been redeemed.",
+          code: "REWARD_ALREADY_REDEEMED",
+        });
+      }
+
       await storage.deleteReward(rewardId);
       console.log("Deleted reward:", rewardId);
       res.json({ success: true, message: "Reward deleted successfully" });

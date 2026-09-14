@@ -200,9 +200,12 @@ export default function RewardsPage() {
     },
     onError: (error: any) => {
       console.error("=== DELETE ERROR ===", error);
+      const description = error?.code === "REWARD_ALREADY_REDEEMED"
+        ? "This reward cannot be deleted because it has already been redeemed."
+        : error?.message || "Failed to delete reward";
       toast({ 
         title: "Error", 
-        description: error?.message || "Failed to delete reward", 
+        description,
         variant: "destructive" 
       });
     },
