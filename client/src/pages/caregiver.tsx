@@ -124,6 +124,13 @@ export default function Caregiver() {
         description: "Your message has been sent to your caregiver.",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to send message",
+        description: error.message || "Your message could not be sent. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const shareProgressMutation = useMutation({

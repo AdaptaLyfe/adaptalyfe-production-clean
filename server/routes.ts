@@ -1325,14 +1325,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Caregivers routes
-  app.get("/api/caregivers", async (req, res) => {
-    const caregivers = await storage.getCaregiversByUser(1);
-    res.json(caregivers);
+  app.get("/api/caregivers", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const relationships = await storage.getCareRelationshipsByUser(userId);
+      const linkedCaregivers = await Promise.all(
+        relationships.map(async (relationship) => {
+          const caregiver = await storage.getUser(relationship.caregiverId);
+          if (!caregiver) return null;
+
+          return {
+            id: caregiver.id,
+            userId,
+            name: caregiver.name || caregiver.username,
+            relationship: relationship.relationship,
+            email: caregiver.email,
+            isActive: relationship.isActive,
+          };
+        }),
+      );
+
+      if (linkedCaregivers.some(Boolean)) {
+        return res.json(linkedCaregivers.filter(Boolean));
+      }
+
+      // Keep legacy contacts visible for accounts that have not migrated to
+      // invitation-based caregiver relationships yet.
+      const legacyCaregivers = await storage.getCaregiversByUser(userId);
+      res.json(legacyCaregivers);
+    } catch (error) {
+      console.error("Error fetching caregivers:", error);
+      res.status(500).json({ message: "Failed to fetch caregivers" });
+    }
   });
 
-  app.post("/api/caregivers", async (req, res) => {
+  app.post("/api/caregivers", requireAuth, async (req: any, res) => {
     try {
-      const data = insertCaregiverSchema.parse({ ...req.body, userId: 1 });
+      const data = insertCaregiverSchema.parse({ ...req.body, userId: req.user.id });
       const caregiver = await storage.createCaregiver(data);
       res.json(caregiver);
     } catch (error) {
@@ -1341,18 +1370,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Messages routes
-  app.get("/api/messages", async (req, res) => {
-    const messages = await storage.getMessagesByUser(1);
-    res.json(messages);
+  app.get("/api/messages", requireAuth, async (req: any, res) => {
+    try {
+      const messages = await storage.getMessagesByUser(req.user.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
   });
 
-  app.post("/api/messages", async (req, res) => {
+  app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
-      const data = insertMessageSchema.parse({ ...req.body, userId: 1 });
+      const userId = req.user.id;
+      const caregiverId = Number(req.body.caregiverId);
+      if (!Number.isInteger(caregiverId) || caregiverId < 1) {
+        return res.status(400).json({ message: "A valid caregiver is required" });
+      }
+
+      const relationships = await storage.getCareRelationshipsByUser(userId);
+      const connectedCaregiver = relationships.find(
+        (relationship) =>
+          relationship.caregiverId === caregiverId && relationship.isActive,
+      );
+
+      if (!connectedCaregiver) {
+        return res.status(403).json({
+          message: "This caregiver is not connected to your account. Ask them to accept a caregiver invitation first.",
+        });
+      }
+
+      const data = insertMessageSchema.parse({
+        ...req.body,
+        userId,
+        caregiverId,
+        fromUser: true,
+      });
       const message = await storage.createMessage(data);
       res.json(message);
     } catch (error) {
+      console.error("Error creating message:", error);
       res.status(400).json({ message: "Invalid message data" });
+    }
+  });
+
+  // Messages received by the authenticated caregiver. The optional userId
+  // keeps the existing caregiver dashboard's selected-recipient view scoped.
+  app.get("/api/caregiver/messages", requireAuth, async (req: any, res) => {
+    try {
+      const caregiverId = req.user.id;
+      const requestedUserId = req.query.userId
+        ? Number(req.query.userId)
+        : undefined;
+
+      if (
+        requestedUserId !== undefined &&
+        (!Number.isInteger(requestedUserId) || requestedUserId < 1)
+      ) {
+        return res.status(400).json({ message: "Invalid care recipient" });
+      }
+
+      const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
+      if (
+        requestedUserId !== undefined &&
+        !relationships.some(
+          (relationship) =>
+            relationship.userId === requestedUserId && relationship.isActive,
+        )
+      ) {
+        return res.status(403).json({ message: "You are not connected to this care recipient" });
+      }
+
+      const messages = await storage.getMessagesByCaregiver(
+        caregiverId,
+        requestedUserId,
+      );
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching caregiver messages:", error);
+      res.status(500).json({ message: "Failed to fetch caregiver messages" });
     }
   });
 

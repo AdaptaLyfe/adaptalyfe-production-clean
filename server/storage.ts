@@ -121,6 +121,7 @@ export interface IStorage {
   
   // Messages
   getMessagesByUser(userId: number): Promise<Message[]>;
+  getMessagesByCaregiver(caregiverId: number, userId?: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   
   // Budget Entries
@@ -1021,7 +1022,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessagesByUser(userId: number): Promise<Message[]> {
-    return await db.select().from(messages).where(eq(messages.userId, userId));
+    return await db.select().from(messages)
+      .where(eq(messages.userId, userId))
+      .orderBy(desc(messages.sentAt));
+  }
+
+  async getMessagesByCaregiver(caregiverId: number, userId?: number): Promise<Message[]> {
+    const relationshipConditions = [
+      eq(careRelationships.caregiverId, caregiverId),
+      eq(careRelationships.isActive, true),
+    ];
+
+    if (userId !== undefined) {
+      relationshipConditions.push(eq(careRelationships.userId, userId));
+    }
+
+    const messageConditions = [
+      eq(messages.caregiverId, caregiverId),
+      ...relationshipConditions,
+    ];
+
+    return await db
+      .select({
+        id: messages.id,
+        userId: messages.userId,
+        caregiverId: messages.caregiverId,
+        content: messages.content,
+        fromUser: messages.fromUser,
+        sentAt: messages.sentAt,
+      })
+      .from(messages)
+      .innerJoin(
+        careRelationships,
+        and(
+          eq(careRelationships.userId, messages.userId),
+          eq(careRelationships.caregiverId, caregiverId),
+          eq(careRelationships.isActive, true),
+        ),
+      )
+      .where(and(...messageConditions))
+      .orderBy(desc(messages.sentAt));
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
