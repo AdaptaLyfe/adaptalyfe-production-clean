@@ -190,6 +190,19 @@ export async function apiRequest(
   return res;
 }
 
+export async function getAuthenticatedUser<T = unknown>(): Promise<T | null> {
+  try {
+    const response = await apiRequest("GET", "/api/user");
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 export async function demoLogin(username: string, password: string) {
   const response = await apiRequest("POST", "/api/demo-login", {
     username,

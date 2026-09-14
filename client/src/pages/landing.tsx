@@ -40,12 +40,14 @@ import {
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthenticatedUser } from "@/lib/queryClient";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [invitationCode, setInvitationCode] = useState<string>("");
   const [joinCodeInput, setJoinCodeInput] = useState<string>("");
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,6 +83,23 @@ export default function Landing() {
     // Store the code and redirect
     localStorage.setItem("pendingInvitation", joinCodeInput.trim());
     setLocation(`/register?code=${joinCodeInput.trim()}`);
+  };
+
+  const handleLoginClick = async () => {
+    if (isCheckingLogin) return;
+
+    setIsCheckingLogin(true);
+    try {
+      const user = await getAuthenticatedUser();
+      setLocation(user ? "/dashboard" : "/login");
+    } catch (error) {
+      // Preserve the normal login flow if the session check is temporarily
+      // unavailable instead of blocking the user at the landing page.
+      console.warn("Unable to check existing session before login navigation", error);
+      setLocation("/login");
+    } finally {
+      setIsCheckingLogin(false);
+    }
   };
 
   return (
@@ -155,14 +174,15 @@ export default function Landing() {
                 </DialogContent>
               </Dialog>
 
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
-                >
-                  Sign In
-                </Button>
-              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleLoginClick}
+                disabled={isCheckingLogin}
+                className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
+              >
+                Sign In
+              </Button>
               <Link href="/register">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm px-2 sm:px-4">
                   Get Started

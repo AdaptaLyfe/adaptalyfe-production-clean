@@ -42,7 +42,7 @@ import AdminOrgCodes from "@/pages/admin-org-codes";
 import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
 import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
-import { getSessionToken } from "@/lib/queryClient";
+import { clearSessionToken, getAuthenticatedUser, getSessionToken } from "@/lib/queryClient";
 import { useFirebaseAnalytics } from "@/hooks/useFirebaseAnalytics";
 import { App as CapacitorApp } from "@capacitor/app";
 
@@ -146,22 +146,45 @@ function App() {
 
   // Session restoration on app startup (critical for mobile apps)
   React.useEffect(() => {
-    // If we have a session token and we're on an auth page, redirect immediately
-    if (shouldRedirectToDashboard) {
-      console.log('🔄 App startup: Session token found, redirecting to dashboard');
-      window.location.replace('/dashboard');
-      return; // Don't set checking to false - we're redirecting
-    }
-    
-    if (sessionToken) {
-      console.log('✅ App startup: Session token found, user authenticated');
-    } else {
-      console.log('🚫 App startup: No session token, user not authenticated');
-    }
-    
-    // Small delay to ensure smooth transition
-    setIsCheckingSession(false);
-  }, [shouldRedirectToDashboard, sessionToken]);
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      if (!isAuthPage || isPasswordRecoveryPage || location === "/privacy-policy") {
+        setIsCheckingSession(false);
+        return;
+      }
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (cancelled) return;
+
+        if (user) {
+          console.log('🔄 App startup: Existing session found, redirecting to dashboard');
+          window.location.replace('/dashboard');
+          return;
+        }
+
+        if (sessionToken) {
+          clearSessionToken();
+        }
+        console.log('🚫 App startup: No authenticated session found');
+      } catch (error) {
+        // A session check failure should not prevent a logged-out user from
+        // reaching the existing login flow.
+        console.warn('Session check unavailable; continuing to auth page', error);
+      }
+
+      if (!cancelled) {
+        setIsCheckingSession(false);
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthPage, isPasswordRecoveryPage, location, sessionToken]);
   
   // Show loading screen while checking session OR if we need to redirect
   // This prevents the login page flash
