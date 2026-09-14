@@ -373,7 +373,7 @@ export default function RewardsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header with Points Balance */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Trophy className="w-8 h-8 text-yellow-500" />
