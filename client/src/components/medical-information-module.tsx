@@ -1074,7 +1074,11 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
-                  <Input name="diagnosedDate" type="date" defaultValue={editingCondition.diagnosedDate} />
+                  <Input
+                    name="diagnosedDate"
+                    type="date"
+                    defaultValue={editingCondition.diagnosedDate?.split("T")[0] || ""}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="notes">Notes</Label>
