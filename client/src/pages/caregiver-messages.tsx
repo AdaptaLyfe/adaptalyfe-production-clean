@@ -4,31 +4,72 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/queryClient";
 import { formatTimeAgo } from "@/lib/utils";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { Caregiver, Message } from "@shared/schema";
+
+const retryTransientRequest = (failureCount: number, error: unknown) => {
+  const status = (error as { status?: number } | null)?.status;
+
+  // Authentication and permission failures will not be fixed by retrying.
+  if (status !== undefined && status >= 400 && status < 500) {
+    return false;
+  }
+
+  // Three total attempts covers startup/network races without creating a
+  // request loop when the backend is unavailable.
+  return failureCount < 2;
+};
+
+const retryDelay = (attemptIndex: number) =>
+  Math.min(500 * 2 ** attemptIndex, 2000);
+
+async function fetchCollection<T>(url: string): Promise<T[]> {
+  const response = await apiRequest("GET", url);
+  const data: unknown = await response.json();
+
+  if (!Array.isArray(data)) {
+    throw new Error(`Invalid response received from ${url}`);
+  }
+
+  return data as T[];
+}
+
+function getMessageDate(value: Message["sentAt"]): Date | null {
+  if (!value) return null;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 export default function CaregiverMessages() {
   const [, setLocation] = useLocation();
   const { isPremiumUser } = useSubscriptionEnforcement();
 
   const {
-    data: messages = [],
+    data: messagesResponse,
     isLoading: messagesLoading,
     isError: messagesError,
     refetch: refetchMessages,
   } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
+    queryFn: () => fetchCollection<Message>("/api/messages"),
+    retry: retryTransientRequest,
+    retryDelay,
   });
 
   const {
-    data: caregivers = [],
+    data: caregiversResponse,
     isLoading: caregiversLoading,
     isError: caregiversError,
     refetch: refetchCaregivers,
   } = useQuery<Caregiver[]>({
     queryKey: ["/api/caregivers"],
+    queryFn: () => fetchCollection<Caregiver>("/api/caregivers"),
+    retry: retryTransientRequest,
+    retryDelay,
   });
 
   if (!isPremiumUser) {
@@ -45,9 +86,16 @@ export default function CaregiverMessages() {
     );
   }
 
-  const sortedMessages = [...messages].sort(
-    (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
-  );
+  const messages = Array.isArray(messagesResponse) ? messagesResponse : [];
+  const caregivers = (Array.isArray(caregiversResponse) ? caregiversResponse : [])
+    .filter((caregiver): caregiver is Caregiver => Boolean(caregiver && typeof caregiver === "object"));
+  const sortedMessages = [...messages]
+    .filter((message): message is Message => Boolean(message && typeof message === "object"))
+    .sort((a, b) => {
+      const aTime = getMessageDate(a.sentAt)?.getTime() ?? 0;
+      const bTime = getMessageDate(b.sentAt)?.getTime() ?? 0;
+      return bTime - aTime;
+    });
   const isLoading = messagesLoading || caregiversLoading;
   const hasError = messagesError || caregiversError;
 
@@ -113,6 +161,7 @@ export default function CaregiverMessages() {
               {sortedMessages.map((message) => {
                 const caregiver = caregivers.find((item) => item.id === message.caregiverId);
                 const recipientLabel = caregiver?.name || "Support";
+                const messageDate = getMessageDate(message.sentAt);
 
                 return (
                   <div
@@ -128,7 +177,7 @@ export default function CaregiverMessages() {
                         {message.fromUser ? `Sent to ${recipientLabel}` : recipientLabel}
                       </span>
                       <span className="shrink-0 text-xs text-gray-500">
-                        {formatTimeAgo(new Date(message.sentAt))}
+                        {messageDate ? formatTimeAgo(messageDate) : "Date unavailable"}
                       </span>
                     </div>
                     <p className="text-gray-700">{message.content}</p>
