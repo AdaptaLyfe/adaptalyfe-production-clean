@@ -86,6 +86,10 @@ export default function Caregiver() {
     },
   });
 
+  const completedTasks = tasks.filter(task => task.isCompleted).length;
+  const totalTasks = tasks.length;
+  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
   const createCaregiverMutation = useMutation({
     mutationFn: async (data: z.infer<typeof caregiverSchema>) => {
       return apiRequest("POST", "/api/caregivers", {
@@ -124,20 +128,41 @@ export default function Caregiver() {
 
   const shareProgressMutation = useMutation({
     mutationFn: async () => {
-      // Simulate sharing progress - in a real app this would send progress data
-      return new Promise((resolve) => setTimeout(resolve, 1000));
+      if (caregivers.length === 0) {
+        throw new Error("Add a caregiver before sharing your progress.");
+      }
+
+      const progressReport = [
+        "Progress Report",
+        `Daily tasks: ${completedTasks}/${totalTasks} complete (${progressPercentage}%)`,
+        `Current streak: ${user?.streakDays || 0} days`,
+      ].join("\n");
+
+      await Promise.all(
+        caregivers.map((caregiver) =>
+          apiRequest("POST", "/api/messages", {
+            caregiverId: caregiver.id,
+            content: progressReport,
+            fromUser: true,
+          }),
+        ),
+      );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
       toast({
         title: "Progress shared!",
         description: "Your progress has been shared with your caregivers.",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to share progress",
+        description: error.message || "Your progress could not be shared. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
-
-  const completedTasks = tasks.filter(task => task.isCompleted).length;
-  const totalTasks = tasks.length;
-  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const messagesByCaregiver = messages.reduce((acc, message) => {
     if (!acc[message.caregiverId]) {
@@ -185,7 +210,7 @@ export default function Caregiver() {
             <Button
               className="bg-calm-teal hover:bg-calm-teal text-white"
               onClick={() => shareProgressMutation.mutate()}
-              disabled={shareProgressMutation.isPending}
+              disabled={shareProgressMutation.isPending || caregivers.length === 0}
             >
               <Share size={16} className="mr-2" />
               Share Progress
