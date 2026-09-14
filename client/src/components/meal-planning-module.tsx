@@ -8,15 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, ChefHat, Plus, CheckCircle2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Calendar, Clock, ChefHat, Plus, CheckCircle2, Trash2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { insertMealPlanSchema, type MealPlan, type InsertMealPlan } from "@shared/schema";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function MealPlanningModule() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [mealPendingDeletion, setMealPendingDeletion] = useState<MealPlan | null>(null);
 
   const { data: mealPlans, isLoading } = useQuery<MealPlan[]>({
     queryKey: ["/api/meal-plans"],
@@ -55,6 +67,43 @@ export default function MealPlanningModule() {
     },
   });
 
+  const deleteMealPlanMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest("DELETE", `/api/meal-plans/${id}`);
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/meal-plans"] });
+      const previousMealPlans = queryClient.getQueryData<MealPlan[]>(["/api/meal-plans"]);
+
+      queryClient.setQueryData<MealPlan[]>(["/api/meal-plans"], (currentMealPlans) =>
+        currentMealPlans?.filter((mealPlan) => mealPlan.id !== id),
+      );
+
+      return { previousMealPlans };
+    },
+    onSuccess: () => {
+      setMealPendingDeletion(null);
+      toast({
+        title: "Meal deleted",
+        description: "The meal was removed from your meal list.",
+      });
+    },
+    onError: (error, _id, context) => {
+      console.error("Failed to delete meal plan:", error);
+      if (context?.previousMealPlans) {
+        queryClient.setQueryData(["/api/meal-plans"], context.previousMealPlans);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete the meal. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meal-plans"] });
+    },
+  });
+
   const form = useForm<Omit<InsertMealPlan, 'userId'>>({
     resolver: zodResolver(insertMealPlanSchema.omit({ userId: true })),
     defaultValues: {
@@ -76,6 +125,12 @@ export default function MealPlanningModule() {
     updateCompletionMutation.mutate({
       id: mealPlan.id,
       isCompleted: !mealPlan.isCompleted,
+    });
+  };
+
+  const selectMeal = (mealPlan: MealPlan) => {
+    toast({
+      title: `Meal selected: ${mealPlan.mealName}`,
     });
   };
 
@@ -278,6 +333,15 @@ export default function MealPlanningModule() {
                         .map((meal) => (
                           <div
                             key={meal.id}
+                             role="button"
+                             tabIndex={0}
+                             onClick={() => selectMeal(meal)}
+                             onKeyDown={(event) => {
+                               if (event.key === "Enter" || event.key === " ") {
+                                 event.preventDefault();
+                                 selectMeal(meal);
+                               }
+                             }}
                             className={`p-4 rounded-lg border-2 transition-all ${
                               meal.isCompleted
                                 ? "border-vibrant-green bg-green-50"
@@ -288,8 +352,15 @@ export default function MealPlanningModule() {
                               <div className="flex items-center space-x-3">
                                 <Checkbox
                                   checked={meal.isCompleted || false}
+                                   onClick={(event) => {
+                                     event.stopPropagation();
+                                     selectMeal(meal);
+                                   }}
                                   onCheckedChange={() => toggleCompletion(meal)}
-                                  disabled={updateCompletionMutation.isPending}
+                                   disabled={
+                                     updateCompletionMutation.isPending ||
+                                     deleteMealPlanMutation.isPending
+                                   }
                                 />
                                 <div>
                                   <div className="flex items-center space-x-2">
@@ -311,9 +382,26 @@ export default function MealPlanningModule() {
                                   )}
                                 </div>
                               </div>
-                              {meal.isCompleted && (
-                                <CheckCircle2 className="w-5 h-5 text-vibrant-green" />
-                              )}
+                               <div className="flex items-center space-x-2">
+                                 <Button
+                                   type="button"
+                                   variant="outline"
+                                   size="sm"
+                                   aria-label={`Delete ${meal.mealName}`}
+                                   onClick={(event) => {
+                                     event.stopPropagation();
+                                     setMealPendingDeletion(meal);
+                                   }}
+                                   disabled={deleteMealPlanMutation.isPending}
+                                   className="text-red-600 border-red-200 hover:bg-red-50"
+                                   data-testid={`button-delete-meal-${meal.id}`}
+                                 >
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
+                                 {meal.isCompleted && (
+                                   <CheckCircle2 className="w-5 h-5 text-vibrant-green" />
+                                 )}
+                               </div>
                             </div>
                           </div>
                         ))}
@@ -324,6 +412,48 @@ export default function MealPlanningModule() {
           )}
         </CardContent>
       </Card>
+
+       <AlertDialog
+         open={mealPendingDeletion !== null}
+         onOpenChange={(open) => {
+           if (!open && !deleteMealPlanMutation.isPending) {
+             setMealPendingDeletion(null);
+           }
+         }}
+       >
+         <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl sm:p-6">
+           <AlertDialogHeader className="space-y-3 text-left">
+             <AlertDialogTitle className="text-base leading-6 text-slate-900 sm:text-lg">
+               Delete this meal?
+             </AlertDialogTitle>
+             <AlertDialogDescription className="text-sm leading-5 text-slate-600">
+               {mealPendingDeletion
+                 ? `Are you sure you want to delete ${mealPendingDeletion.mealName}? This action cannot be undone.`
+                 : "This action cannot be undone."}
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-2 sm:space-x-0">
+             <AlertDialogCancel
+               disabled={deleteMealPlanMutation.isPending}
+               className="mt-0 w-full sm:w-auto"
+             >
+               Cancel
+             </AlertDialogCancel>
+             <AlertDialogAction
+               onClick={(event) => {
+                 event.preventDefault();
+                 if (mealPendingDeletion) {
+                   deleteMealPlanMutation.mutate(mealPendingDeletion.id);
+                 }
+               }}
+               disabled={deleteMealPlanMutation.isPending}
+               className="mt-0 w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
+             >
+               {deleteMealPlanMutation.isPending ? "Deleting..." : "Delete"}
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
     </div>
   );
 }

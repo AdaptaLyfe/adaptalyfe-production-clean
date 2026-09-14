@@ -159,6 +159,7 @@ export interface IStorage {
   getMealPlansByUser(userId: number): Promise<MealPlan[]>;
   createMealPlan(mealPlan: InsertMealPlan): Promise<MealPlan>;
   updateMealPlanCompletion(mealPlanId: number, isCompleted: boolean): Promise<MealPlan | undefined>;
+   deleteMealPlan(mealPlanId: number, userId: number): Promise<boolean>;
   getMealPlansByDate(userId: number, date: string): Promise<MealPlan[]>;
   
   // Shopping Lists
@@ -1264,6 +1265,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(mealPlans.id, mealPlanId))
       .returning();
     return mealPlan || undefined;
+  }
+
+  async deleteMealPlan(mealPlanId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(mealPlans)
+      .where(
+        and(
+          eq(mealPlans.id, mealPlanId),
+          eq(mealPlans.userId, userId),
+        ),
+      );
+    return result.rowCount > 0;
   }
 
   async getMealPlansByDate(userId: number, date: string): Promise<MealPlan[]> {

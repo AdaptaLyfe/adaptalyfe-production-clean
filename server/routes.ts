@@ -2072,6 +2072,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/meal-plans/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const mealPlanId = Number.parseInt(req.params.id, 10);
+      if (Number.isNaN(mealPlanId)) {
+        return res.status(400).json({ message: "Invalid meal plan ID" });
+      }
+
+      const deleted = await storage.deleteMealPlan(mealPlanId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Meal plan not found" });
+      }
+
+      res.json({ message: "Meal plan deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting meal plan:", error);
+      res.status(400).json({ message: "Invalid meal plan request" });
+    }
+  });
+
   app.get("/api/meal-plans/date/:date", async (req, res) => {
     try {
       const user = storage.getCurrentUser();
