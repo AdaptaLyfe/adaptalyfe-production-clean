@@ -724,94 +724,96 @@ export default function AcademicPlanner() {
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">No assignments yet</p>
-                  <Dialog open={isAddAssignmentOpen} onOpenChange={setIsAddAssignmentOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="mt-4" size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Assignment
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Add New Assignment</DialogTitle>
-                      </DialogHeader>
-                      <div className="academic-planner-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                        <Input
-                          placeholder="Assignment title"
-                          value={newAssignment.title}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
-                          required
-                        />
-                        <Textarea
-                          placeholder="Description (optional)"
-                          value={newAssignment.description}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
-                        />
-                        <Select 
-                          value={newAssignment.type} 
-                          onValueChange={(value) => setNewAssignment({ ...newAssignment, type: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Assignment type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="homework">Homework</SelectItem>
-                            <SelectItem value="project">Project</SelectItem>
-                            <SelectItem value="exam">Exam</SelectItem>
-                            <SelectItem value="quiz">Quiz</SelectItem>
-                            <SelectItem value="paper">Paper</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="date"
-                          placeholder="Due date"
-                          value={newAssignment.dueDate}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
-                          required
-                        />
-                        <Select 
-                          value={newAssignment.priority} 
-                          onValueChange={(value) => setNewAssignment({ ...newAssignment, priority: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          placeholder="Estimated hours"
-                          value={newAssignment.estimatedHours}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, estimatedHours: parseInt(e.target.value) || 2 })}
-                          min="1"
-                          max="100"
-                        />
-                        <div className="flex space-x-2">
-                          <Button 
-                            onClick={handleCreateAssignment} 
-                            disabled={createAssignmentMutation.isPending}
-                            className="flex-1"
-                          >
-                            {createAssignmentMutation.isPending ? "Creating..." : "Create Assignment"}
-                          </Button>
-                          <Button 
-                            onClick={() => setIsAddAssignmentOpen(false)} 
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </div>
               )}
+              <div className="flex justify-center">
+                <Dialog open={isAddAssignmentOpen} onOpenChange={setIsAddAssignmentOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="mt-4" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Assignment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Add New Assignment</DialogTitle>
+                    </DialogHeader>
+                    <div className="academic-planner-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <Input
+                      placeholder="Assignment title"
+                      value={newAssignment.title}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+                      required
+                    />
+                    <Textarea
+                      placeholder="Description (optional)"
+                      value={newAssignment.description}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+                    />
+                    <Select
+                      value={newAssignment.type}
+                      onValueChange={(value) => setNewAssignment({ ...newAssignment, type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Assignment type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="homework">Homework</SelectItem>
+                        <SelectItem value="project">Project</SelectItem>
+                        <SelectItem value="exam">Exam</SelectItem>
+                        <SelectItem value="quiz">Quiz</SelectItem>
+                        <SelectItem value="paper">Paper</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      placeholder="Due date"
+                      value={newAssignment.dueDate}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
+                      required
+                    />
+                    <Select
+                      value={newAssignment.priority}
+                      onValueChange={(value) => setNewAssignment({ ...newAssignment, priority: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder="Estimated hours"
+                      value={newAssignment.estimatedHours}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, estimatedHours: parseInt(e.target.value) || 2 })}
+                      min="1"
+                      max="100"
+                    />
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleCreateAssignment}
+                        disabled={createAssignmentMutation.isPending}
+                        className="flex-1"
+                      >
+                        {createAssignmentMutation.isPending ? "Creating..." : "Create Assignment"}
+                      </Button>
+                      <Button
+                        onClick={() => setIsAddAssignmentOpen(false)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
