@@ -3860,6 +3860,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(resource);
     } catch (error) {
       console.error("Error creating personal resource:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Please provide a title, valid URL, and category.",
+          errors: error.flatten().fieldErrors,
+        });
+      }
       res.status(500).json({ message: "Failed to create personal resource" });
     }
   });

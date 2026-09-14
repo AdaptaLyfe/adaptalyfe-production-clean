@@ -876,9 +876,14 @@ export const insertSymptomEntrySchema = createInsertSchema(symptomEntries).omit(
 
 export const insertPersonalResourceSchema = createInsertSchema(personalResources).omit({
   id: true,
+  userId: true,
   accessCount: true,
   createdAt: true,
   lastAccessedAt: true,
+}).extend({
+  title: z.string().trim().min(1, "Title is required"),
+  url: z.string().trim().url("Please enter a valid URL"),
+  category: z.string().trim().min(1, "Category is required"),
 });
 
 export const insertBusScheduleSchema = createInsertSchema(busSchedules).omit({
