@@ -43,6 +43,17 @@ const severityLabels = {
   6: "Moderate-Severe", 7: "Severe", 8: "Severe", 9: "Very Severe", 10: "Extreme"
 };
 
+const blankSymptomFormValues: Partial<InsertSymptomEntry> = {
+  symptomName: "",
+  severity: undefined,
+  startTime: undefined,
+  endTime: null,
+  triggers: "",
+  location: "",
+  description: "",
+  notes: "",
+};
+
 export function SymptomTracker() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
@@ -91,16 +102,7 @@ export function SymptomTracker() {
 
   const form = useForm<InsertSymptomEntry>({
     resolver: zodResolver(symptomFormSchema),
-    defaultValues: {
-      symptomName: "",
-      severity: 1,
-      startTime: new Date(),
-      endTime: null,
-      triggers: "",
-      location: "",
-      description: "",
-      notes: "",
-    },
+    defaultValues: blankSymptomFormValues,
   });
 
   const editForm = useForm<InsertSymptomEntry>({
@@ -141,6 +143,11 @@ export function SymptomTracker() {
     });
   };
 
+  const openAddDialog = () => {
+    form.reset(blankSymptomFormValues);
+    setIsAddDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-8"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   }
@@ -152,7 +159,7 @@ export function SymptomTracker() {
           <h3 className="text-lg font-semibold">Symptom Tracker</h3>
           <p className="text-gray-600">Track your symptoms to identify patterns and triggers</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow" data-testid="button-log-symptom">
+        <Button onClick={openAddDialog} className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow" data-testid="button-log-symptom">
           <Plus className="w-4 h-4" />
           Log Symptom
         </Button>
@@ -331,7 +338,7 @@ export function SymptomTracker() {
             <AlertTriangle className="w-12 h-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Symptoms Logged</h3>
             <p className="text-gray-600 mb-4">Start tracking symptoms to identify patterns and triggers</p>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+            <Button onClick={openAddDialog} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Log Your First Symptom
             </Button>
