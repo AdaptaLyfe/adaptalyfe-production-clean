@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
+import { apiRequest, ApiError, setSessionToken, getSessionToken } from "@/lib/queryClient";
 
 export default function MobileLogin() {
   const [, setLocation] = useLocation();
@@ -88,7 +88,9 @@ export default function MobileLogin() {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid username or password",
+        description: error instanceof ApiError && error.status === 401
+          ? "Invalid email or password. Please try again."
+          : error.message || "Invalid username or password",
         variant: "destructive"
       });
     } finally {

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
+import { apiRequest, ApiError, setSessionToken, getSessionToken } from "@/lib/queryClient";
 import { trackLogin } from "@/lib/firebase";
 
 function isNativeMobile(): boolean {
@@ -107,7 +107,9 @@ export default function Login() {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid username or password",
+        description: error instanceof ApiError && error.status === 401
+          ? "Invalid email or password. Please try again."
+          : error.message || "Invalid username or password",
         variant: "destructive"
       });
     } finally {
