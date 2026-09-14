@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, ApiError } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeWrapper } from '@/components/stripe-wrapper';
@@ -85,6 +85,10 @@ const planFeatures: PlanFeatures = {
     ]
   }
 };
+
+function isNoSubscriptionError(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.code === "NO_SUBSCRIPTION";
+}
 
 function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuccess }: {
   planType: string;
@@ -622,8 +626,16 @@ export default function SubscriptionPage() {
                     } else {
                       toast({ title: "No active payment found", description: data.message || "No active Stripe subscription found.", variant: "destructive" });
                     }
-                  } catch {
-                    toast({ title: "Error", description: "Could not check payment. Try again.", variant: "destructive" });
+                   } catch (error) {
+                     if (isNoSubscriptionError(error)) {
+                       toast({
+                         title: "No active payment found",
+                         description: "No active Stripe subscription found.",
+                         variant: "destructive",
+                       });
+                     } else {
+                       toast({ title: "Error", description: "Could not check payment. Try again.", variant: "destructive" });
+                     }
                   }
                 }}
                 className="w-full py-2 px-4 rounded-lg border-2 border-orange-400 bg-orange-50 text-orange-800 text-sm font-semibold hover:bg-orange-100 transition-colors"
@@ -843,8 +855,16 @@ export default function SubscriptionPage() {
                       } else {
                         toast({ title: "No payment found", description: data.message || "No active Stripe subscription found. Please subscribe below.", variant: "destructive" });
                       }
-                    } catch {
-                      toast({ title: "Error", description: "Could not check your payment. Please try again.", variant: "destructive" });
+                   } catch (error) {
+                     if (isNoSubscriptionError(error)) {
+                       toast({
+                         title: "No payment found",
+                         description: "No active Stripe subscription found. Please subscribe below.",
+                         variant: "destructive",
+                       });
+                     } else {
+                       toast({ title: "Error", description: "Could not check your payment. Please try again.", variant: "destructive" });
+                     }
                     }
                   }}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"

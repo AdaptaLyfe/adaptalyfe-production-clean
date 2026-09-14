@@ -4584,6 +4584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!user.stripeCustomerId) {
         return res.status(400).json({
+          code: "NO_SUBSCRIPTION",
           message: "No verified Stripe subscription is linked to this account. Please subscribe below or contact support.",
         });
       }
@@ -4631,6 +4632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (!found) {
         return res.status(400).json({ 
+          code: "NO_SUBSCRIPTION",
           message: "No active recurring subscription found on your account. If you believe this is an error, please contact support."
         });
       }
