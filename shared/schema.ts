@@ -763,6 +763,10 @@ export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
 }).extend({
   itemName: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
+  quantity: z.string().optional().nullable().refine(
+    (value) => value == null || value.trim() === "" || !/^\s*[-−]/.test(value),
+    "Quantity must be 0 or greater",
+  ),
 });
 
 export const insertEmergencyResourceSchema = createInsertSchema(emergencyResources).omit({
