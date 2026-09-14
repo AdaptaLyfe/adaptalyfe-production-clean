@@ -233,7 +233,7 @@ function App() {
                 </div>
               </div>
             }>
-              <AIChatbot initiallyExpanded />
+              <AIChatbot fullPage />
             </React.Suspense>
           </AuthCheck>
         )} />

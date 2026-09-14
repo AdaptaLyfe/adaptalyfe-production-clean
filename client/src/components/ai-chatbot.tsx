@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { useSafeRef } from "@/hooks/useSafeRef";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { ChatInput } from "@/components/chat-input";
 import {
   ArrowRight,
+  ArrowLeft,
   Bot,
   CalendarDays,
   CheckCircle2,
@@ -275,14 +277,15 @@ function WelcomeState({
 
 export default function AIChatbot({
   careRecipientId,
-  initiallyExpanded = false,
+  fullPage = false,
 }: {
   careRecipientId?: number;
-  initiallyExpanded?: boolean;
+  fullPage?: boolean;
 } = {}) {
+  const [, setLocation] = useLocation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [showFullChat, setShowFullChat] = useState(initiallyExpanded);
+  const [showFullChat, setShowFullChat] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showDailyGreeting, setShowDailyGreeting] = useState(true);
   const messagesEndRef = useSafeRef<HTMLDivElement | null>(null);
@@ -485,6 +488,14 @@ export default function AIChatbot({
     setIsOpen(true);
   }, []);
 
+  const closeFullChat = useCallback(() => {
+    if (fullPage) {
+      setLocation("/dashboard");
+      return;
+    }
+    setShowFullChat(false);
+  }, [fullPage, setLocation]);
+
   useEffect(() => {
     if (isOpen && user?.id) {
       setShowDailyGreeting(claimDailyChatbotGreeting(user.id));
@@ -686,11 +697,20 @@ export default function AIChatbot({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowFullChat(false)}
-            className="h-9 w-9 rounded-full p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-            aria-label="Close full-screen AdaptAI"
+            onClick={closeFullChat}
+            className={fullPage
+              ? "h-9 gap-1.5 rounded-full px-3 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+              : "h-9 w-9 rounded-full p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-900"}
+            aria-label={fullPage ? "Back to Dashboard" : "Close full-screen AdaptAI"}
           >
-            <X className="h-4 w-4" />
+            {fullPage ? (
+              <>
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </>
+            ) : (
+              <X className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -742,6 +762,14 @@ export default function AIChatbot({
       </div>
     </div>
   );
+
+  if (fullPage) {
+    return (
+      <div className="h-[calc(100dvh-4rem)] min-h-0">
+        <FullChat />
+      </div>
+    );
+  }
 
   return (
     <>
