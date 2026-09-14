@@ -29,6 +29,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format, isToday, isTomorrow, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
+import { useToast } from "@/hooks/use-toast";
 import type { 
   AcademicClass, 
   Assignment, 
@@ -41,6 +42,7 @@ import type {
 
 export default function AcademicPlanner() {
   const { hasFeature } = useSubscriptionEnforcement();
+  const { toast } = useToast();
   
   // Check if user has access to academic planner features
   if (!hasFeature('advancedAnalytics')) {
@@ -173,7 +175,7 @@ export default function AcademicPlanner() {
     cacheTime: 0,
   });
 
-  const { data: studyGroups = [], isLoading: groupsLoading } = useQuery({
+  const { data: studyGroups = [], isLoading: groupsLoading, refetch: refetchStudyGroups } = useQuery({
     queryKey: ["/api/study-groups"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/study-groups");
@@ -252,10 +254,18 @@ export default function AcademicPlanner() {
     mutationFn: async (groupData: any) => {
       return apiRequest("POST", "/api/study-groups", groupData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["/api/study-groups"] });
+      await refetchStudyGroups();
       setIsAddStudyGroupOpen(false);
       setNewStudyGroup({ groupName: "", subject: "", description: "", meetingDay: "", meetingTime: "", maxMembers: 6 });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Unable to create study group",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
