@@ -13,7 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { EditButton } from "@/components/ui/edit-button";
-import { insertEmergencyResourceSchema, type EmergencyResource, type InsertEmergencyResource } from "@shared/schema";
+import { insertEmergencyResourceSchema, type EmergencyResource } from "@shared/schema";
+import { z } from "zod";
 import { 
   Shield, 
   Phone, 
@@ -29,6 +30,12 @@ import {
   AlertTriangle
 } from "lucide-react";
 
+const emergencyResourceFormSchema = insertEmergencyResourceSchema.omit({
+  userId: true,
+});
+
+type EmergencyResourceFormValues = z.infer<typeof emergencyResourceFormSchema>;
+
 export default function EmergencyResourcesModule() {
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState<EmergencyResource | null>(null);
@@ -39,23 +46,23 @@ export default function EmergencyResourcesModule() {
     queryKey: ["/api/emergency-resources"],
   });
 
-  const form = useForm<InsertEmergencyResource>({
-    resolver: zodResolver(insertEmergencyResourceSchema),
+  const form = useForm<EmergencyResourceFormValues>({
+    resolver: zodResolver(emergencyResourceFormSchema),
     defaultValues: {
       name: "",
-      type: "crisis",
+      resourceType: "crisis",
       phoneNumber: "",
       address: "",
       website: "",
       description: "",
       availabilityHours: "",
       isEmergencyOnly: false,
-      caregiverId: 1, // This would come from the caregiver's session
+      isAvailable24_7: false,
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertEmergencyResource) => {
+    mutationFn: async (data: EmergencyResourceFormValues) => {
       return await apiRequest("POST", "/api/emergency-resources", data);
     },
     onSuccess: () => {
@@ -77,7 +84,7 @@ export default function EmergencyResourcesModule() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertEmergencyResource> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<EmergencyResourceFormValues> }) => {
       return await apiRequest("PUT", `/api/emergency-resources/${id}`, data);
     },
     onSuccess: () => {
@@ -118,7 +125,7 @@ export default function EmergencyResourcesModule() {
     },
   });
 
-  const handleSubmit = (data: InsertEmergencyResource) => {
+  const handleSubmit = (data: EmergencyResourceFormValues) => {
     if (editingResource) {
       updateMutation.mutate({ id: editingResource.id, data });
     } else {
@@ -131,14 +138,14 @@ export default function EmergencyResourcesModule() {
     setShowForm(true);
     form.reset({
       name: resource.name,
-      type: resource.type,
+      resourceType: resource.resourceType,
       phoneNumber: resource.phoneNumber || "",
       address: resource.address || "",
       website: resource.website || "",
       description: resource.description || "",
       availabilityHours: resource.availabilityHours || "",
       isEmergencyOnly: resource.isEmergencyOnly || false,
-      caregiverId: resource.caregiverId,
+      isAvailable24_7: resource.isAvailable24_7 || false,
     });
   };
 
@@ -214,7 +221,7 @@ export default function EmergencyResourcesModule() {
 
                     <FormField
                       control={form.control}
-                      name="type"
+                      name="resourceType"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel required>Type</FormLabel>
@@ -371,10 +378,10 @@ export default function EmergencyResourcesModule() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {getTypeIcon(resource.type)}
+                        {getTypeIcon(resource.resourceType)}
                         <h3 className="font-semibold text-lg">{resource.name}</h3>
-                        <Badge className={getTypeColor(resource.type)}>
-                          {resource.type.replace("_", " ")}
+                        <Badge className={getTypeColor(resource.resourceType)}>
+                          {resource.resourceType.replace("_", " ")}
                         </Badge>
                         {resource.isEmergencyOnly && (
                           <Badge variant="destructive" className="text-xs">

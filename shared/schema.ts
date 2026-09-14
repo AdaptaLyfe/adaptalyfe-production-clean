@@ -339,7 +339,10 @@ export const emergencyResources = pgTable("emergency_resources", {
   resourceType: varchar("resource_type").notNull(), // "crisis", "counselor", "hospital", "mental_health", "support_group"
   phoneNumber: varchar("phone_number"),
   address: text("address"),
+  website: text("website"),
   description: text("description"),
+  availabilityHours: varchar("availability_hours"),
+  isEmergencyOnly: boolean("is_emergency_only").default(false),
   isAvailable24_7: boolean("is_available_24_7").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

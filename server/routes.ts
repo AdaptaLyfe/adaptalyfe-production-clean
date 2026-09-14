@@ -133,7 +133,7 @@ import {
   insertBusScheduleSchema, insertEmergencyTreatmentPlanSchema,
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
   insertStreakTrackingSchema, insertVoiceInteractionSchema, insertQuickResponseSchema,
-  insertMessageReactionSchema, insertActivityPatternSchema
+  insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { initializeComprehensiveDemo } from "./demo-data";
@@ -2385,11 +2385,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
       const userId = req.session.user.id;
-      const resourceData = { ...req.body, userId };
+      const resourceData = insertEmergencyResourceSchema.parse({ ...req.body, userId });
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
       console.error("Error creating emergency resource:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Please provide a resource name and type.",
+          errors: error.flatten().fieldErrors,
+        });
+      }
       res.status(500).json({ message: "Failed to create emergency resource" });
     }
   });
