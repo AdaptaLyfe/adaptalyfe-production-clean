@@ -625,7 +625,7 @@ export default function MedicalInformationModule() {
           </div>
         </TabsContent>
 
-        <TabsContent value="symptoms" className="space-y-4 mt-6 h-96 overflow-y-scroll">
+        <TabsContent value="symptoms" className="space-y-4 mt-6 h-96 overflow-y-auto">
           <SymptomTracker />
         </TabsContent>
       </Tabs>
