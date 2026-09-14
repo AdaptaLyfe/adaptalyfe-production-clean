@@ -876,7 +876,6 @@ export const insertSymptomEntrySchema = createInsertSchema(symptomEntries).omit(
 
 export const insertPersonalResourceSchema = createInsertSchema(personalResources).omit({
   id: true,
-  userId: true,
   accessCount: true,
   createdAt: true,
   lastAccessedAt: true,

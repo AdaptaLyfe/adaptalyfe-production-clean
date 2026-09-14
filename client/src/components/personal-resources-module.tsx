@@ -11,10 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPersonalResourceSchema } from "@shared/schema";
-import type { PersonalResource, InsertPersonalResource } from "@shared/schema";
+import type { PersonalResource } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, ExternalLink, Trash2, Star, StarOff, Music, Video, Globe, Book, Heart, Smile } from "lucide-react";
+import { z } from "zod";
 
 const categoryIcons = {
   music: Music,
@@ -36,14 +37,20 @@ const categoryColors = {
   other: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
 };
 
+const personalResourceFormSchema = insertPersonalResourceSchema.omit({
+  userId: true,
+});
+
+type PersonalResourceFormValues = z.infer<typeof personalResourceFormSchema>;
+
 export default function PersonalResourcesModule() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<InsertPersonalResource>({
-    resolver: zodResolver(insertPersonalResourceSchema),
+  const form = useForm<PersonalResourceFormValues>({
+    resolver: zodResolver(personalResourceFormSchema),
     defaultValues: {
       title: "",
       url: "",
@@ -63,7 +70,7 @@ export default function PersonalResourcesModule() {
     : allResources.filter((r) => r.category === selectedCategory);
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertPersonalResource) => {
+    mutationFn: async (data: PersonalResourceFormValues) => {
       return await apiRequest("POST", "/api/personal-resources", data);
     },
     onSuccess: async () => {
@@ -123,7 +130,7 @@ export default function PersonalResourcesModule() {
     },
   });
 
-  const onSubmit = (data: InsertPersonalResource) => {
+  const onSubmit = (data: PersonalResourceFormValues) => {
     createMutation.mutate(data);
   };
 
@@ -191,6 +198,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Input placeholder="Resource name" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -203,6 +211,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Input placeholder="https://" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -228,6 +237,7 @@ export default function PersonalResourcesModule() {
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -240,6 +250,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Textarea placeholder="What makes this resource helpful?" {...field} value={field.value || ""} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -252,6 +263,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Input placeholder="calming, motivation, focus (comma-separated)" {...field} value={field.value || ""} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
