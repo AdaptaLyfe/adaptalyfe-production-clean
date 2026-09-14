@@ -133,6 +133,16 @@ export default function Financial() {
     },
   });
 
+  const openBudgetDialog = (type: "income" | "expense") => {
+    budgetForm.reset({
+      type,
+      category: "",
+      amount: 0,
+      description: "",
+    });
+    setShowBudgetDialog(true);
+  };
+
   const savingsForm = useForm({
     resolver: zodResolver(savingsGoalSchema),
     defaultValues: {
@@ -482,7 +492,10 @@ export default function Financial() {
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
                         <DialogTrigger asChild>
-                          <Button className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap">
+                          <Button
+                            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap"
+                            onClick={() => openBudgetDialog("expense")}
+                          >
                             <Plus size={16} className="mr-1 sm:mr-2" />
                             Add Expense
                           </Button>
@@ -586,10 +599,7 @@ export default function Financial() {
                       </Dialog>
                       <Button 
                         className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base whitespace-nowrap"
-                        onClick={() => {
-                          budgetForm.reset({ type: 'income' as const, category: '', amount: 0, description: '' });
-                          setShowBudgetDialog(true);
-                        }}
+                        onClick={() => openBudgetDialog("income")}
                       >
                         <Plus size={16} className="mr-1 sm:mr-2" />
                         Add Income
