@@ -84,6 +84,16 @@ const statusColors = {
   resolved: "bg-green-100 text-green-800"
 };
 
+const getTodayDateInputValue = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
+const isFutureDateInputValue = (dateValue: string) =>
+  Boolean(dateValue) && dateValue > getTodayDateInputValue();
+
 export default function MedicalInformationModule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -626,6 +636,14 @@ export default function MedicalInformationModule() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const diagnosedDateStr = formData.get("diagnosedDate") as string;
+                if (isFutureDateInputValue(diagnosedDateStr)) {
+                  toast({
+                    title: "Invalid Diagnosed Date",
+                    description: "Diagnosed Date cannot be in the future.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 createCondition.mutate({
                   condition: formData.get("condition") as string,
                   status: conditionStatus,
@@ -656,7 +674,11 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="diagnosedDate">Diagnosed Date</Label>
-                  <Input name="diagnosedDate" type="date" />
+                  <Input
+                    name="diagnosedDate"
+                    type="date"
+                    max={getTodayDateInputValue()}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="notes">Notes</Label>
@@ -1061,6 +1083,14 @@ export default function MedicalInformationModule() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const diagnosedDateStr = formData.get("diagnosedDate") as string;
+                if (isFutureDateInputValue(diagnosedDateStr)) {
+                  toast({
+                    title: "Invalid Diagnosed Date",
+                    description: "Diagnosed Date cannot be in the future.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 const notes = formData.get("notes");
                 updateCondition.mutate({
                   id: editingCondition.id,
@@ -1093,6 +1123,7 @@ export default function MedicalInformationModule() {
                   <Input
                     name="diagnosedDate"
                     type="date"
+                    max={getTodayDateInputValue()}
                     defaultValue={editingCondition.diagnosedDate?.split("T")[0] || ""}
                   />
                 </div>
