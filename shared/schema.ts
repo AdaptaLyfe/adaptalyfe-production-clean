@@ -756,6 +756,22 @@ export const insertGroceryStoreSchema = createInsertSchema(groceryStores).omit({
   createdAt: true,
 }).extend({
   name: z.string().trim().min(1, "Store Name is required"),
+  phoneNumber: z.string().trim().optional().nullable().refine(
+    (value) => {
+      if (!value) return true;
+      const normalized = value.replace(/[\s().-]/g, "");
+      return /^\+?\d{7,15}$/.test(normalized);
+    },
+    "Please enter a valid phone number",
+  ),
+  website: z.string().trim().optional().nullable().refine(
+    (value) => !value || isHttpUrl(value),
+    "Please enter a valid website URL",
+  ),
+  onlineOrderingUrl: z.string().trim().optional().nullable().refine(
+    (value) => !value || isHttpUrl(value),
+    "Please enter a valid online ordering URL",
+  ),
 });
 
 export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
