@@ -32,6 +32,17 @@ html, body {
   min-height: 100vh;
 }
 
+/* Keep the Create New Reward controls' left borders visible while focused/open. */
+.reward-create-form .reward-create-control:focus,
+.reward-create-form .reward-create-control[data-state="open"] {
+  border-left-color: var(--input);
+  border-left-style: solid;
+  border-left-width: 1px;
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* Android-native header styling */
 .android-header {
   padding-top: max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px));
