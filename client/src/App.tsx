@@ -82,6 +82,7 @@ import PersonalDocuments from "@/pages/personal-documents";
 import RewardsPage from "@/pages/rewards";
 import SleepTracking from "@/pages/sleep-tracking";
 import PrivacyPolicy from "@/pages/privacy-policy";
+import CaregiverMessages from "@/pages/caregiver-messages";
 const AIChatbot = React.lazy(() => import("@/components/ai-chatbot"));
 
 // Simple Route Component - no authentication required
@@ -341,6 +342,9 @@ function App() {
         </Route>
         <Route path="/caregiver">
           <AuthCheck><Caregiver /></AuthCheck>
+        </Route>
+        <Route path="/caregiver/messages">
+          <AuthCheck><CaregiverMessages /></AuthCheck>
         </Route>
         <Route path="/caregiver-setup">
           <AuthCheck><CaregiverSetup /></AuthCheck>

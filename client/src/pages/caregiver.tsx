@@ -17,6 +17,7 @@ import { formatTimeAgo } from "@/lib/utils";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { Caregiver, Message, User, DailyTask } from "@shared/schema";
+import { useLocation } from "wouter";
 
 const caregiverSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -32,6 +33,7 @@ const messageSchema = z.object({
 export default function Caregiver() {
   const { isPremiumUser } = useSubscriptionEnforcement();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [showCaregiverDialog, setCaregiverDialog] = useState(false);
   
   // Block access if trial expired and no active subscription
@@ -145,7 +147,7 @@ export default function Caregiver() {
     return acc;
   }, {} as Record<number, Message[]>);
 
-  const recentMessages = messages
+  const recentMessages = [...messages]
     .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
     .slice(0, 5);
 
@@ -443,7 +445,11 @@ export default function Caregiver() {
             
             {messages.length > 5 && (
               <div className="text-center mt-6">
-                <Button variant="outline" className="border-bright-blue text-bright-blue hover:bg-blue-50">
+                <Button
+                  variant="outline"
+                  className="border-bright-blue text-bright-blue hover:bg-blue-50"
+                  onClick={() => setLocation("/caregiver/messages")}
+                >
                   View All Messages
                 </Button>
               </div>
