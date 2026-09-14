@@ -78,7 +78,7 @@ export default function Register() {
     
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Password Mismatch",
+        title: "Password",
         description: "Passwords do not match",
         variant: "destructive"
       });

@@ -70,7 +70,7 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      _showLocalError('Password Mismatch: Passwords do not match');
+      _showLocalError('Password: Passwords do not match');
       return;
     }
 
