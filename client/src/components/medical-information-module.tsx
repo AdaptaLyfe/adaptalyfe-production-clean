@@ -806,6 +806,14 @@ export default function MedicalInformationModule() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const reactionDateStr = formData.get("reactionDate") as string;
+                if (isFutureDateInputValue(reactionDateStr)) {
+                  toast({
+                    title: "Invalid Reaction Date",
+                    description: "Reaction date cannot be in the future.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 createAdverseMed.mutate({
                   medicationName: formData.get("medicationName") as string,
                   reaction: formData.get("reaction") as string,
@@ -842,7 +850,11 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="reactionDate">Reaction Date</Label>
-                  <Input name="reactionDate" type="date" />
+                  <Input
+                    name="reactionDate"
+                    type="date"
+                    max={getTodayDateInputValue()}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="notes">Notes</Label>
@@ -1252,6 +1264,14 @@ export default function MedicalInformationModule() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const reactionDateStr = formData.get("reactionDate") as string;
+                if (isFutureDateInputValue(reactionDateStr)) {
+                  toast({
+                    title: "Invalid Reaction Date",
+                    description: "Reaction date cannot be in the future.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
                 updateAdverseMed.mutate({
                   id: editingAdverseMed.id,
                   medicationName: formData.get("medicationName") as string,
@@ -1289,7 +1309,12 @@ export default function MedicalInformationModule() {
                 </div>
                 <div>
                   <Label htmlFor="reactionDate">Reaction Date</Label>
-                  <Input name="reactionDate" type="date" defaultValue={editingAdverseMed.reactionDate || ""} />
+                  <Input
+                    name="reactionDate"
+                    type="date"
+                    max={getTodayDateInputValue()}
+                    defaultValue={editingAdverseMed.reactionDate || ""}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="notes">Notes</Label>
