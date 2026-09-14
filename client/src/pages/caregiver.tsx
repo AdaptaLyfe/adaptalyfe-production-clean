@@ -22,7 +22,7 @@ import { useLocation } from "wouter";
 const caregiverSchema = z.object({
   name: z.string().min(1, "Name is required"),
   relationship: z.string().min(1, "Relationship is required"),
-  email: z.string().email("Valid email is required").optional().or(z.literal("")),
+  email: z.string().trim().email("Enter the caregiver's app account email"),
 });
 
 const messageSchema = z.object({
@@ -104,6 +104,13 @@ export default function Caregiver() {
       toast({
         title: "Caregiver added!",
         description: "Your support person has been added to your network.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to add caregiver",
+        description: error.message || "This caregiver could not be added. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -307,9 +314,13 @@ export default function Caregiver() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormLabel required>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="caregiver@example.com" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="caregiver@example.com"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

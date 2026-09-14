@@ -1361,10 +1361,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/caregivers", requireAuth, async (req: any, res) => {
     try {
-      const data = insertCaregiverSchema.parse({ ...req.body, userId: req.user.id });
-      const caregiver = await storage.createCaregiver(data);
-      res.json(caregiver);
+      const email = typeof req.body.email === "string"
+        ? req.body.email.trim()
+        : "";
+
+      if (!email) {
+        return res.status(400).json({
+          error: "A caregiver email is required to verify their app account.",
+        });
+      }
+
+      const caregiverAccount = await storage.getUserByEmail(email);
+      if (!caregiverAccount) {
+        return res.status(404).json({
+          error: "This caregiver does not have an account in the app.",
+        });
+      }
+
+      if (caregiverAccount.id === req.user.id) {
+        return res.status(400).json({
+          error: "You cannot add your own account as a caregiver.",
+        });
+      }
+
+      const existingRelationships = await storage.getCareRelationshipsByUser(req.user.id);
+      if (existingRelationships.some(
+        (relationship) =>
+          relationship.caregiverId === caregiverAccount.id && relationship.isActive,
+      )) {
+        return res.status(409).json({
+          error: "This caregiver is already in your support team.",
+        });
+      }
+
+      const data = insertCaregiverSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        name: caregiverAccount.name || caregiverAccount.username,
+        email: caregiverAccount.email || email,
+      });
+
+      await storage.createCareRelationship({
+        caregiverId: caregiverAccount.id,
+        userId: req.user.id,
+        relationship: data.relationship,
+        isPrimary: false,
+        isActive: true,
+        establishedVia: "manual",
+      });
+
+      res.json({
+        id: caregiverAccount.id,
+        userId: req.user.id,
+        name: caregiverAccount.name || caregiverAccount.username,
+        relationship: data.relationship,
+        email: caregiverAccount.email || email,
+        isActive: true,
+      });
     } catch (error) {
+      console.error("Error adding caregiver:", error);
       res.status(400).json({ message: "Invalid caregiver data" });
     }
   });
