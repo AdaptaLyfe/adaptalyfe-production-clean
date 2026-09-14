@@ -128,7 +128,7 @@ import {
   insertAchievementSchema, insertCaregiverSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
-  insertShoppingListSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
+  insertShoppingListSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
   insertMedicationSchema, insertRefillOrderSchema, insertPersonalResourceSchema,
   insertBusScheduleSchema, insertEmergencyTreatmentPlanSchema,
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
@@ -2158,7 +2158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/grocery-stores", async (req: any, res) => {
     try {
       const userId = req.session?.user?.id || 1;
-      const data = { ...req.body, userId };
+      const data = insertGroceryStoreSchema.parse({ ...req.body, userId });
       const store = await storage.createGroceryStore(data);
       res.json(store);
     } catch (error) {

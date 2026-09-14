@@ -754,6 +754,8 @@ export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({
 export const insertGroceryStoreSchema = createInsertSchema(groceryStores).omit({
   id: true,
   createdAt: true,
+}).extend({
+  name: z.string().trim().min(1, "Store Name is required"),
 });
 
 export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({

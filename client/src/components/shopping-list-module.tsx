@@ -9,7 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingCart, Plus, DollarSign, Package, CheckCircle2, Trash2, ExternalLink, Store, Settings, Globe, Phone, MapPin } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { insertShoppingListSchema, type ShoppingList, type InsertShoppingList, type GroceryStore } from "@shared/schema";
+import {
+  insertGroceryStoreSchema,
+  insertShoppingListSchema,
+  type ShoppingList,
+  type InsertShoppingList,
+  type GroceryStore,
+} from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
@@ -700,6 +706,7 @@ interface StoreFormDialogProps {
 function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const groceryStoreFormSchema = insertGroceryStoreSchema.omit({ userId: true });
 
   const createStoreMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -730,6 +737,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
   });
 
   const form = useForm({
+    resolver: zodResolver(groceryStoreFormSchema),
     defaultValues: {
       name: store?.name || "",
       address: store?.address || "",
