@@ -91,8 +91,8 @@ interface Reward {
 interface UserPointsBalance {
   userId: number;
   availablePoints: number;
-  totalEarned: number;
-  totalSpent: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
 }
 
 interface PointsTransaction {
@@ -796,11 +796,11 @@ export default function RewardsPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span>Total Earned:</span>
-                  <span className="font-semibold">{pointsBalance?.totalEarned || 0}</span>
+                  <span className="font-semibold">{pointsBalance?.lifetimeEarned || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Spent:</span>
-                  <span className="font-semibold">{pointsBalance?.totalSpent || 0}</span>
+                  <span className="font-semibold">{pointsBalance?.lifetimeSpent || 0}</span>
                 </div>
                 <div className="flex justify-between text-lg">
                   <span>Available:</span>
@@ -821,9 +821,9 @@ export default function RewardsPage() {
                   <p className="text-2xl font-bold">100 Points</p>
                   <p className="text-sm text-gray-600">Special Achievement Badge</p>
                 </div>
-                <Progress value={((pointsBalance?.totalEarned || 0) % 100)} className="w-full" />
+                <Progress value={((pointsBalance?.lifetimeEarned || 0) % 100)} className="w-full" />
                 <p className="text-sm text-center text-gray-500">
-                  {100 - ((pointsBalance?.totalEarned || 0) % 100)} points to go!
+                  {100 - ((pointsBalance?.lifetimeEarned || 0) % 100)} points to go!
                 </p>
               </CardContent>
             </Card>
