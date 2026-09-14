@@ -172,12 +172,30 @@ export default function MedicalInformationModule() {
   });
 
   const updateCondition = useMutation({
-    mutationFn: ({ id, ...data }: Partial<MedicalCondition> & { id: number }) => 
-      apiRequest("PUT", `/api/medical-conditions/${id}`, data),
-    onSuccess: () => {
+    mutationFn: async ({ id, ...data }: Partial<MedicalCondition> & { id: number }) => {
+      const response = await apiRequest("PUT", `/api/medical-conditions/${id}`, data);
+      return response.json() as Promise<MedicalCondition>;
+    },
+    onSuccess: (updatedCondition) => {
+      queryClient.setQueryData<MedicalCondition[]>(
+        ["/api/medical-conditions"],
+        (currentConditions = []) =>
+          currentConditions.map((condition) =>
+            condition.id === updatedCondition.id ? updatedCondition : condition,
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/medical-conditions"] });
       toast({ title: "Success", description: "Note updated successfully" });
+      setConditionStatus("");
       setEditingCondition(null);
+    },
+    onError: (error: any) => {
+      console.error("Failed to update medical condition:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update note. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -1043,16 +1061,14 @@ export default function MedicalInformationModule() {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const diagnosedDateStr = formData.get("diagnosedDate") as string;
+                const notes = formData.get("notes");
                 updateCondition.mutate({
                   id: editingCondition.id,
                   condition: formData.get("condition") as string,
                   status: conditionStatus,
                   diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
-                  notes: formData.get("notes") as string,
+                  notes: typeof notes === "string" ? notes : "",
                 });
-                e.currentTarget.reset();
-                setConditionStatus("");
-                setEditingCondition(null);
               }} className="space-y-4">
                 <div>
                   <Label htmlFor="condition">Condition</Label>

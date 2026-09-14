@@ -3219,7 +3219,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/medical-conditions/:id", async (req, res) => {
     try {
       const conditionId = parseInt(req.params.id);
-      const condition = await storage.updateMedicalCondition(conditionId, req.body);
+      const conditionData = { ...req.body };
+      if (conditionData.diagnosedDate) {
+        conditionData.diagnosedDate = new Date(conditionData.diagnosedDate);
+      }
+      const condition = await storage.updateMedicalCondition(conditionId, conditionData);
+      if (!condition) {
+        return res.status(404).json({ message: "Medical condition not found" });
+      }
       res.json(condition);
     } catch (error) {
       console.error("Error updating medical condition:", error);
