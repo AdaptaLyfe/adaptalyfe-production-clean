@@ -416,6 +416,7 @@ export default function Caregiver() {
               ) : (
                 recentMessages.map((message) => {
                   const caregiver = caregivers.find(c => c.id === message.caregiverId);
+                  const recipientLabel = caregiver?.name || "Support";
                   return (
                     <div 
                       key={message.id} 
@@ -427,7 +428,7 @@ export default function Caregiver() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900 text-sm">
-                          {message.fromUser ? "You" : caregiver?.name}
+                          {message.fromUser ? `Sent to ${recipientLabel}` : caregiver?.name}
                         </span>
                         <span className="text-xs text-gray-500">
                           {formatTimeAgo(new Date(message.sentAt))}
