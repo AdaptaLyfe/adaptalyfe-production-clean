@@ -1582,7 +1582,13 @@ export const insertTransitionSkillSchema = createInsertSchema(transitionSkills).
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).refine(
+  (values) => (values.currentLevel ?? 1) <= (values.targetLevel ?? 5),
+  {
+    message: "Current level cannot be greater than target level.",
+    path: ["targetLevel"],
+  },
+);
 
 // Types for new tables
 export type Notification = typeof notifications.$inferSelect;

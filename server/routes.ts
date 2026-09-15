@@ -171,7 +171,8 @@ import {
   insertBusScheduleSchema, insertEmergencyTreatmentPlanSchema,
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
   insertStreakTrackingSchema, insertVoiceInteractionSchema, insertQuickResponseSchema,
-  insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema
+  insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema,
+  insertTransitionSkillSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { initializeComprehensiveDemo } from "./demo-data";
@@ -2119,12 +2120,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: user.id
       };
-      
-      const skill = await storage.createTransitionSkill(skillData);
+
+      const validatedSkillData = insertTransitionSkillSchema.parse(skillData);
+      const skill = await storage.createTransitionSkill(validatedSkillData);
       res.json(skill);
     } catch (error) {
       console.error("Failed to create transition skill:", error);
-      res.status(500).json({ message: "Failed to create transition skill" });
+      res.status(400).json({
+        message: error instanceof z.ZodError
+          ? error.issues[0]?.message || "Invalid transition skill data"
+          : "Failed to create transition skill",
+      });
     }
   });
 

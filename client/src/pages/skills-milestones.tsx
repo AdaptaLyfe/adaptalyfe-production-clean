@@ -16,6 +16,10 @@ import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getSkillProgressState } from "@/lib/skill-progress";
+import {
+  isValidSkillLevelRange,
+  skillLevelRangeError,
+} from "@/lib/skill-level-validation";
 import type { TransitionSkill } from "@shared/schema";
 import { 
   Star, 
@@ -43,7 +47,13 @@ const skillFormSchema = z.object({
   targetLevel: z.number().min(1).max(10).default(5),
   targetDate: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-});
+}).refine(
+  (values) => isValidSkillLevelRange(values.currentLevel, values.targetLevel),
+  {
+    message: skillLevelRangeError,
+    path: ["targetLevel"],
+  },
+);
 
 const categoryConfig = {
   academic: { label: "Academic Skills", icon: BookOpen, color: "bg-blue-500" },
