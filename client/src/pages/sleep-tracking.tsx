@@ -22,7 +22,10 @@ import {
 import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
-import { sortSleepSessionsChronologically } from '@/lib/sleep-trends';
+import {
+  getRecentSleepSessions,
+  sortSleepSessionsChronologically,
+} from '@/lib/sleep-trends';
 import {
   calculateSleepMetrics,
   calculateSleepStats,
@@ -286,7 +289,7 @@ export default function SleepTracking() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {availableSleepSessions.slice(-7).reverse().map((session: SleepSession) => {
+                {getRecentSleepSessions(availableSleepSessions).map((session: SleepSession) => {
                   const metrics = calculateSleepMetrics(session);
                   return (
                   <div key={session.id} className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg">

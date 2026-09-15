@@ -15,3 +15,15 @@ export function sortSleepSessionsChronologically<T extends SleepTrendSession>(
     return dateOrder || a.id - b.id;
   });
 }
+
+/**
+ * Returns the most recently dated sessions first without mutating the query
+ * cache. The id provides a stable logged-order tie breaker for the same date.
+ */
+export function getRecentSleepSessions<T extends SleepTrendSession>(
+  sessions: readonly T[],
+  limit = 7,
+): T[] {
+  if (limit <= 0) return [];
+  return sortSleepSessionsChronologically(sessions).slice(-limit).reverse();
+}
