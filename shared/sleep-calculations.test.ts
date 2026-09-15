@@ -106,6 +106,8 @@ test("does not invent metrics for incomplete records", () => {
   assert.equal(stats.avgSleepDuration, undefined);
   assert.equal(stats.avgSleepScore, undefined);
   assert.equal(stats.avgEfficiency, undefined);
-  assert.equal(stats.goalProgress, undefined);
+  assert.equal(stats.goalProgress, 0);
+  assert.equal(stats.weeklyTotalSleepDuration, 0);
+  assert.equal(stats.weeklyLoggedSessions, 0);
   assert.equal(stats.totalSessions, 0);
 });
