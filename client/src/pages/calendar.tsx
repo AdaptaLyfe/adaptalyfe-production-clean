@@ -54,7 +54,7 @@ export default function Calendar() {
       </div>
     );
   }
-  const [currentDate, setCurrentDate] = useState(new Date('2025-07-08'));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
