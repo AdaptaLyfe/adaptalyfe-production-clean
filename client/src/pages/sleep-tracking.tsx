@@ -35,6 +35,7 @@ import {
   getLocalDateString,
   getSleepDateValidationError,
 } from '@shared/sleep-date-validation';
+import { getSleepTimeValidationError } from '@shared/sleep-time-validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -440,6 +441,7 @@ function SleepLoggingForm({
   dailySession?: SleepSession;
 }) {
   const [dateError, setDateError] = useState<string | null>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     sleepDate: format(selectedDate, 'yyyy-MM-dd'),
     bedtime: '',
@@ -459,6 +461,10 @@ function SleepLoggingForm({
         quality: dailySession.quality || '',
         notes: dailySession.notes || ''
       });
+      setTimeError(getSleepTimeValidationError(
+        dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
+        dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
+      ));
     }
   }, [dailySession]);
 
@@ -471,6 +477,13 @@ function SleepLoggingForm({
       return;
     }
     setDateError(null);
+
+    const sleepTimeError = getSleepTimeValidationError(formData.bedtime, formData.sleepTime);
+    if (sleepTimeError) {
+      setTimeError(sleepTimeError);
+      return;
+    }
+    setTimeError(null);
     
     const sleepData = {
       ...formData,
@@ -536,7 +549,12 @@ function SleepLoggingForm({
                 id="bedtime"
                 type="time"
                 value={formData.bedtime}
-                onChange={(e) => setFormData({ ...formData, bedtime: e.target.value })}
+                onChange={(e) => {
+                  const bedtime = e.target.value;
+                  setFormData({ ...formData, bedtime });
+                  setTimeError(getSleepTimeValidationError(bedtime, formData.sleepTime));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
                 required
               />
             </div>
@@ -546,9 +564,19 @@ function SleepLoggingForm({
                 id="sleepTime"
                 type="time"
                 value={formData.sleepTime}
-                onChange={(e) => setFormData({ ...formData, sleepTime: e.target.value })}
+                onChange={(e) => {
+                  const sleepTime = e.target.value;
+                  setFormData({ ...formData, sleepTime });
+                  setTimeError(getSleepTimeValidationError(formData.bedtime, sleepTime));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
                 required
               />
+              {timeError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {timeError}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="wakeTime">Wake Time</Label>

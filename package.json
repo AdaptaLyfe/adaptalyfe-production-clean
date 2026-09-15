@@ -12,6 +12,7 @@
     "test:sleep-trends": "tsx --test client/src/lib/sleep-trends.test.ts",
     "test:sleep-calculations": "tsx --test shared/sleep-calculations.test.ts",
     "test:sleep-date-validation": "tsx --test shared/sleep-date-validation.test.ts",
+    "test:sleep-time-validation": "tsx --test shared/sleep-time-validation.test.ts",
     "test:adaptai-context": "tsx --test server/ai-context.test.ts",
     "test:ai-service": "tsx --test server/ai-service.test.ts",
     "test:today-briefing": "tsx --test server/today-briefing.test.ts",

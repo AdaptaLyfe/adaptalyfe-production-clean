@@ -24,6 +24,7 @@ import {
   DEFAULT_SLEEP_GOAL_MINUTES,
 } from "@shared/sleep-calculations";
 import { getSleepDateValidationError } from "@shared/sleep-date-validation";
+import { getSleepTimeValidationError } from "@shared/sleep-time-validation";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   buildTasksRoutinesResponse,
@@ -3552,7 +3553,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     if (missingField) return `${missingField[1]} is required`;
 
-    return getSleepDateValidationError(data.sleepDate, new Date(), timeZone);
+    const dateError = getSleepDateValidationError(data.sleepDate, new Date(), timeZone);
+    if (dateError) return dateError;
+
+    return getSleepTimeValidationError(data.bedtime, data.sleepTime);
   };
 
   const withSleepMetrics = (session: any) => {
