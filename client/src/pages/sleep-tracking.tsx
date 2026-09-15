@@ -762,7 +762,7 @@ function SleepGoals({
                 </div>
                 <Progress value={stats.goalProgress ?? 0} />
                 <p className="text-sm text-gray-600">
-                  Average: {formatDuration(stats.avgSleepDuration)} / Target: {formatDuration(goals.targetSleepDuration)}
+                  Average: {formatDuration(stats.weeklyAvgSleepDuration)} / Target: {formatDuration(goals.targetSleepDuration)}
                 </p>
               </div>
             </div>

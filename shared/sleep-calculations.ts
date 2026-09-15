@@ -26,6 +26,10 @@ export interface SleepStats extends SleepMetrics {
   avgSleepScore?: number;
   avgEfficiency?: number;
   goalProgress?: number;
+  weeklyTotalSleepDuration?: number;
+  weeklyAvgSleepDuration?: number;
+  weeklyGoalTargetMinutes?: number;
+  weeklyLoggedSessions?: number;
   totalSessions: number;
 }
 
@@ -69,6 +73,10 @@ function dayNumber(value: string | null | undefined): number | undefined {
 
 function round(value: number): number {
   return Math.round(value);
+}
+
+function getWeekStartDay(day: number): number {
+  return day - new Date(day * 86_400_000).getUTCDay();
 }
 
 export function calculateSleepMetrics(
@@ -125,6 +133,11 @@ export function calculateSleepStats(
     const date = dayNumber(session.sleepDate);
     return date !== undefined && date >= anchorDay - 6 && date <= anchorDay;
   });
+  const weekStartDay = getWeekStartDay(anchorDay);
+  const weekly = metrics.filter(({ session }) => {
+    const date = dayNumber(session.sleepDate);
+    return date !== undefined && date >= weekStartDay && date <= anchorDay;
+  });
   const selected = metrics.find(({ session }) => session.sleepDate === anchor)?.metrics;
 
   const durations = recent
@@ -136,6 +149,9 @@ export function calculateSleepStats(
   const efficiencies = metrics
     .map(({ metrics }) => metrics.sleepEfficiency)
     .filter((value): value is number => value !== undefined);
+  const weeklyDurations = weekly
+    .map(({ metrics }) => metrics.totalSleepDuration)
+    .filter((value): value is number => value !== undefined);
 
   const average = (values: number[]): number | undefined =>
     values.length > 0 ? round(values.reduce((sum, value) => sum + value, 0) / values.length) : undefined;
@@ -143,6 +159,12 @@ export function calculateSleepStats(
   const avgSleepDuration = average(durations);
   const avgSleepScore = average(scores);
   const avgEfficiency = average(efficiencies);
+  const weeklyTotalSleepDuration = weeklyDurations.reduce((sum, value) => sum + value, 0);
+  const weeklyAvgSleepDuration = average(weeklyDurations);
+  const weeklyElapsedDays = anchorDay - weekStartDay + 1;
+  const weeklyGoalTargetMinutes = targetSleepDuration > 0
+    ? targetSleepDuration * weeklyElapsedDays
+    : undefined;
 
   return {
     dailyDuration: selected?.totalSleepDuration,
@@ -153,9 +175,13 @@ export function calculateSleepStats(
     totalSleepDuration: avgSleepDuration,
     sleepScore: avgSleepScore,
     sleepEfficiency: avgEfficiency,
-    goalProgress: avgSleepDuration === undefined || targetSleepDuration <= 0
+    goalProgress: weeklyGoalTargetMinutes === undefined
       ? undefined
-      : round(clamp((avgSleepDuration / targetSleepDuration) * 100, 0, 100)),
+      : round(clamp((weeklyTotalSleepDuration / weeklyGoalTargetMinutes) * 100, 0, 100)),
+    weeklyTotalSleepDuration,
+    weeklyAvgSleepDuration,
+    weeklyGoalTargetMinutes,
+    weeklyLoggedSessions: weeklyDurations.length,
     totalSessions: durations.length,
   };
 }
