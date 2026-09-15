@@ -58,7 +58,7 @@ export default function SkillsMilestones() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<any>(null);
-  const [updatingSkillId, setUpdatingSkillId] = useState<number | null>(null);
+  const [updatingSkillIds, setUpdatingSkillIds] = useState<Set<number>>(() => new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const form = useForm({
@@ -120,10 +120,11 @@ export default function SkillsMilestones() {
   // Update skill progress mutation
   const updateSkillMutation = useMutation({
     mutationFn: async ({ id, currentLevel }: { id: number; currentLevel: number }) => {
-      return apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
+      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
+      return (await response.json()) as TransitionSkill;
     },
     onMutate: ({ id }) => {
-      setUpdatingSkillId(id);
+      setUpdatingSkillIds((currentIds) => new Set(currentIds).add(id));
     },
     onSuccess: (updatedSkill: TransitionSkill, variables) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -138,8 +139,12 @@ export default function SkillsMilestones() {
         description: "Great job on improving your skills!",
       });
     },
-    onSettled: () => {
-      setUpdatingSkillId(null);
+    onSettled: (_data, _error, variables) => {
+      setUpdatingSkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(variables.id);
+        return nextIds;
+      });
     },
   });
 
@@ -698,7 +703,7 @@ export default function SkillsMilestones() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleProgressUpdate(skill.id, Math.max(1, (skill.currentLevel || 1) - 1))}
-                        disabled={updatingSkillId === skill.id || (skill.currentLevel || 1) <= 1}
+                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) <= 1}
                       >
                         -
                       </Button>
@@ -707,7 +712,7 @@ export default function SkillsMilestones() {
                         size="sm"
                         className="flex-1"
                         onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updatingSkillId === skill.id || (skill.currentLevel || 1) >= 10}
+                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= 10}
                       >
                         Update Progress
                       </Button>
@@ -715,7 +720,7 @@ export default function SkillsMilestones() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updatingSkillId === skill.id || (skill.currentLevel || 1) >= 10}
+                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= 10}
                       >
                         +
                       </Button>
