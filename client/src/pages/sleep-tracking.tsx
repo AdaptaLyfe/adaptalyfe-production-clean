@@ -35,7 +35,7 @@ import {
   getLocalDateString,
   getSleepDateValidationError,
 } from '@shared/sleep-date-validation';
-import { getSleepTimeValidationError } from '@shared/sleep-time-validation';
+import { getSleepRoutineTimeValidationError } from '@shared/sleep-time-validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -461,9 +461,10 @@ function SleepLoggingForm({
         quality: dailySession.quality || '',
         notes: dailySession.notes || ''
       });
-      setTimeError(getSleepTimeValidationError(
+      setTimeError(getSleepRoutineTimeValidationError(
         dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
         dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
+        dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
       ));
     }
   }, [dailySession]);
@@ -478,7 +479,11 @@ function SleepLoggingForm({
     }
     setDateError(null);
 
-    const sleepTimeError = getSleepTimeValidationError(formData.bedtime, formData.sleepTime);
+    const sleepTimeError = getSleepRoutineTimeValidationError(
+      formData.bedtime,
+      formData.sleepTime,
+      formData.wakeTime,
+    );
     if (sleepTimeError) {
       setTimeError(sleepTimeError);
       return;
@@ -552,7 +557,11 @@ function SleepLoggingForm({
                 onChange={(e) => {
                   const bedtime = e.target.value;
                   setFormData({ ...formData, bedtime });
-                  setTimeError(getSleepTimeValidationError(bedtime, formData.sleepTime));
+                  setTimeError(getSleepRoutineTimeValidationError(
+                    bedtime,
+                    formData.sleepTime,
+                    formData.wakeTime,
+                  ));
                 }}
                 aria-invalid={timeError ? 'true' : undefined}
                 required
@@ -567,7 +576,11 @@ function SleepLoggingForm({
                 onChange={(e) => {
                   const sleepTime = e.target.value;
                   setFormData({ ...formData, sleepTime });
-                  setTimeError(getSleepTimeValidationError(formData.bedtime, sleepTime));
+                  setTimeError(getSleepRoutineTimeValidationError(
+                    formData.bedtime,
+                    sleepTime,
+                    formData.wakeTime,
+                  ));
                 }}
                 aria-invalid={timeError ? 'true' : undefined}
                 required
@@ -584,7 +597,16 @@ function SleepLoggingForm({
                 id="wakeTime"
                 type="time"
                 value={formData.wakeTime}
-                onChange={(e) => setFormData({ ...formData, wakeTime: e.target.value })}
+                onChange={(e) => {
+                  const wakeTime = e.target.value;
+                  setFormData({ ...formData, wakeTime });
+                  setTimeError(getSleepRoutineTimeValidationError(
+                    formData.bedtime,
+                    formData.sleepTime,
+                    wakeTime,
+                  ));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
                 required
               />
             </div>

@@ -61,3 +61,34 @@ export function getSleepTimeValidationError(
 
   return isEarlier ? "Time fell asleep must be the same as or later than bedtime" : null;
 }
+
+export function getWakeTimeValidationError(
+  sleepTime: SleepTimeValue,
+  wakeTime: SleepTimeValue,
+): string | null {
+  if (sleepTime === null || sleepTime === undefined || sleepTime === ""
+    || wakeTime === null || wakeTime === undefined || wakeTime === "") {
+    return null;
+  }
+
+  const parsedSleepTime = parseSleepTime(sleepTime);
+  const parsedWakeTime = parseSleepTime(wakeTime);
+  if (!parsedSleepTime || !parsedWakeTime) {
+    return "Time fell asleep and wake time must be valid times";
+  }
+
+  const isEarlier = parsedSleepTime.timestamp !== undefined && parsedWakeTime.timestamp !== undefined
+    ? parsedWakeTime.timestamp < parsedSleepTime.timestamp
+    : parsedWakeTime.minutes! < parsedSleepTime.minutes!;
+
+  return isEarlier ? "Wake time must be the same as or later than time fell asleep" : null;
+}
+
+export function getSleepRoutineTimeValidationError(
+  bedtime: SleepTimeValue,
+  sleepTime: SleepTimeValue,
+  wakeTime: SleepTimeValue,
+): string | null {
+  return getSleepTimeValidationError(bedtime, sleepTime)
+    ?? getWakeTimeValidationError(sleepTime, wakeTime);
+}
