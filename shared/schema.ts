@@ -1300,6 +1300,7 @@ export const transitionSkills = pgTable("transition_skills", {
   description: text("description"),
   currentLevel: integer("current_level").default(1), // 1-5 scale
   targetLevel: integer("target_level").default(5),
+  priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "critical"
   practiceActivities: text("practice_activities").array(),
   milestones: jsonb("milestones").default('[]'), // Array of completed milestones
   lastPracticed: timestamp("last_practiced"),
