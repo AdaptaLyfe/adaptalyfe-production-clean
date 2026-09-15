@@ -714,16 +714,22 @@ export default function SkillsMilestones() {
                         variant="default"
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= 10}
+                        onClick={() => handleProgressUpdate(
+                          skill.id,
+                          Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
+                        )}
+                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         Update Progress
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= 10}
+                        onClick={() => handleProgressUpdate(
+                          skill.id,
+                          Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
+                        )}
+                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         +
                       </Button>
