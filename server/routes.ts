@@ -66,6 +66,38 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "./email-service";
 
+function isValidCalendarDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(`${value}T`);
+}
+
+function getRequestCalendarDate(req: any): string {
+  const requestedDate = req.query?.date;
+  if (isValidCalendarDate(requestedDate)) return requestedDate;
+
+  const timeZone = req.get?.("X-User-Timezone");
+  if (typeof timeZone === "string") {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(
+        parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
+      );
+      const localDate = `${values.year}-${values.month}-${values.day}`;
+      if (isValidCalendarDate(localDate)) return localDate;
+    } catch {
+      // Fall through to the server calendar date for malformed timezone headers.
+    }
+  }
+
+  return new Date().toISOString().slice(0, 10);
+}
+
 // Extend the session data interface
 declare module "express-session" {
   interface SessionData {
@@ -875,7 +907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = req.session.user;
-      const tasks = await storage.getDailyTasksByUser(user.id);
+      const tasks = await storage.getDailyTasksByUser(user.id, getRequestCalendarDate(req));
       res.json(tasks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tasks" });
@@ -1069,6 +1101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.session.user;
       const taskId = parseInt(req.params.id);
       const { isCompleted } = req.body;
+      const completionDate = req.body?.date || getRequestCalendarDate(req);
+      if (typeof isCompleted !== "boolean" || !isValidCalendarDate(completionDate)) {
+        return res.status(400).json({ message: "A valid completion date and boolean status are required" });
+      }
       
       // Get the task to check ownership and point value
       const existingTask = await storage.getTaskById(taskId);
@@ -1076,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Task not found" });
       }
 
-      const task = await storage.updateTaskCompletion(taskId, isCompleted);
+      const task = await storage.updateTaskCompletion(taskId, isCompleted, completionDate);
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }

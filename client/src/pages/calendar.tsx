@@ -33,6 +33,10 @@ import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
 import { EventPreparationCard } from "@/components/ai-ready";
 
+type CalendarDailyTask = DailyTask & {
+  completionDates?: string[];
+};
+
 export default function Calendar() {
   const { isPremiumUser } = useSubscriptionEnforcement();
   
@@ -69,7 +73,7 @@ export default function Calendar() {
 
   const queryClient = useQueryClient();
 
-  const { data: tasks = [] } = useQuery<DailyTask[]>({
+  const { data: tasks = [] } = useQuery<CalendarDailyTask[]>({
     queryKey: ["/api/daily-tasks"],
   });
 
@@ -193,15 +197,18 @@ export default function Calendar() {
     // Add daily tasks to every day
     tasks.forEach(task => {
       if (task.frequency === 'daily' || !task.frequency) {
+        const completedForDate = task.frequency === 'daily'
+          ? task.completionDates?.includes(dateStr) ?? false
+          : task.isCompleted;
         events.push({
           id: `task-${task.id}`,
           type: 'task',
           title: task.title,
           time: null,
-          completed: task.isCompleted,
+          completed: completedForDate,
           category: task.category || 'daily',
-          icon: task.isCompleted ? CheckCircle : Circle,
-          color: task.isCompleted ? 'text-green-600' : 'text-blue-600'
+          icon: completedForDate ? CheckCircle : Circle,
+          color: completedForDate ? 'text-green-600' : 'text-blue-600'
         });
       }
     });

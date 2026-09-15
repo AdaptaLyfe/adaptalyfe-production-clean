@@ -72,6 +72,17 @@ export const dailyTasks = pgTable("daily_tasks", {
   lastOverdueReminder: timestamp("last_overdue_reminder"), // When overdue reminder was last sent
 });
 
+export const dailyTaskCompletions = pgTable("daily_task_completions", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull().references(() => dailyTasks.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  completionDate: date("completion_date").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+}, (table) => ({
+  taskDateUnique: uniqueIndex("daily_task_completions_task_date_idx")
+    .on(table.taskId, table.completionDate),
+}));
+
 export const bills = pgTable("bills", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -709,6 +720,11 @@ export const insertDailyTaskSchema = createInsertSchema(dailyTasks).omit({
   lastOverdueReminder: true,
 });
 
+export const insertDailyTaskCompletionSchema = createInsertSchema(dailyTaskCompletions).omit({
+  id: true,
+  completedAt: true,
+});
+
 export const insertBillSchema = createInsertSchema(bills).omit({
   id: true,
 });
@@ -920,6 +936,8 @@ export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type DailyTask = typeof dailyTasks.$inferSelect;
 export type InsertDailyTask = z.infer<typeof insertDailyTaskSchema>;
+export type DailyTaskCompletion = typeof dailyTaskCompletions.$inferSelect;
+export type InsertDailyTaskCompletion = z.infer<typeof insertDailyTaskCompletionSchema>;
 export type Bill = typeof bills.$inferSelect;
 export type InsertBill = z.infer<typeof insertBillSchema>;
 

@@ -1,5 +1,5 @@
 import {
-  users, dailyTasks, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
+  users, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
   budgetCategories, savingsGoals, savingsTransactions, userPreferences,
   mealPlans, shoppingLists, groceryStores, emergencyResources, pharmacies, userPharmacies, medications, refillOrders,
   allergies, medicalConditions, adverseMedications, emergencyContacts, primaryCareProviders, symptomEntries,
@@ -55,6 +55,14 @@ function daysBetween(startDay: string, endDay: string): number {
   return Math.round((end - start) / (24 * 60 * 60 * 1000));
 }
 
+function getServerCalendarDate(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeCompletionDate(value: string | Date): string {
+  return typeof value === "string" ? value.slice(0, 10) : getServerCalendarDate(value);
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -84,11 +92,11 @@ export interface IStorage {
   acceptFamilyInvite(inviteCode: string, memberUserId: number): Promise<FamilyMember | undefined>;
 
   // Daily Tasks
-  getDailyTasksByUser(userId: number): Promise<DailyTask[]>;
+  getDailyTasksByUser(userId: number, completionDate?: string): Promise<DailyTask[]>;
   getTaskById(taskId: number): Promise<DailyTask | undefined>;
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
-  updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined>;
+  updateTaskCompletion(taskId: number, isCompleted: boolean, completionDate?: string): Promise<DailyTask | undefined>;
   completeDailyTaskIfIncomplete(taskId: number, userId: number): Promise<DailyTask | undefined>;
   deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
@@ -742,34 +750,55 @@ export class DatabaseStorage implements IStorage {
 
   // ── Daily Tasks ───────────────────────────────────────────────────────────────
 
-  async getDailyTasksByUser(userId: number): Promise<DailyTask[]> {
+  async getDailyTasksByUser(userId: number, completionDate = getServerCalendarDate()): Promise<DailyTask[]> {
     const tasks = await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));
+    const completionRows = await db
+      .select({
+        taskId: dailyTaskCompletions.taskId,
+        completionDate: dailyTaskCompletions.completionDate,
+        completedAt: dailyTaskCompletions.completedAt,
+      })
+      .from(dailyTaskCompletions)
+      .where(eq(dailyTaskCompletions.userId, userId));
 
-    // Reset isCompleted for recurring tasks whose completedAt is from a previous period.
-    // We do this at read-time so no cron job is needed and it is always accurate.
+    const completionsByTask = new Map<number, typeof completionRows>();
+    for (const completion of completionRows) {
+      const existing = completionsByTask.get(completion.taskId) || [];
+      existing.push(completion);
+      completionsByTask.set(completion.taskId, existing);
+    }
+
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     return tasks.map(task => {
+      if (task.frequency === "daily") {
+        const completions = completionsByTask.get(task.id) || [];
+        const legacyCompletionMatchesDate =
+          completions.length === 0 &&
+          task.isCompleted &&
+          task.completedAt &&
+          getServerCalendarDate(task.completedAt) === completionDate;
+        const completion = completions.find(
+          row => normalizeCompletionDate(row.completionDate) === completionDate,
+        );
+
+        return {
+          ...task,
+          isCompleted: Boolean(completion || legacyCompletionMatchesDate),
+          completedAt: completion?.completedAt || (legacyCompletionMatchesDate ? task.completedAt : null),
+          completionDates: completions.map(row => normalizeCompletionDate(row.completionDate)),
+        };
+      }
+
       if (!task.isCompleted || !task.completedAt) return task;
 
       const completedDate = new Date(task.completedAt);
-
-      if (task.frequency === 'daily') {
-        // Reset if completed before today
-        const startOfCompletedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
-        if (startOfCompletedDay < startOfToday) {
-          return { ...task, isCompleted: false };
-        }
-      } else if (task.frequency === 'weekly') {
-        // Reset if completed more than 7 days ago
+      if (task.frequency === "weekly") {
         const sevenDaysAgo = new Date(startOfToday);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        if (completedDate < sevenDaysAgo) {
-          return { ...task, isCompleted: false };
-        }
-      } else if (task.frequency === 'monthly') {
-        // Reset if completed in a previous month
+        if (completedDate < sevenDaysAgo) return { ...task, isCompleted: false };
+      } else if (task.frequency === "monthly") {
         if (
           completedDate.getFullYear() < now.getFullYear() ||
           (completedDate.getFullYear() === now.getFullYear() && completedDate.getMonth() < now.getMonth())
@@ -804,7 +833,58 @@ export class DatabaseStorage implements IStorage {
     return task || undefined;
   }
 
-  async updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined> {
+  async updateTaskCompletion(
+    taskId: number,
+    isCompleted: boolean,
+    completionDate = getServerCalendarDate(),
+  ): Promise<DailyTask | undefined> {
+    const existingTask = await this.getTaskById(taskId);
+    if (!existingTask) return undefined;
+
+    if (existingTask.frequency === "daily") {
+      if (isCompleted) {
+        await db
+          .insert(dailyTaskCompletions)
+          .values({
+            taskId,
+            userId: existingTask.userId,
+            completionDate,
+          })
+          .onConflictDoUpdate({
+            target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
+            set: { completedAt: new Date() },
+          });
+      } else {
+        await db
+          .delete(dailyTaskCompletions)
+          .where(and(
+            eq(dailyTaskCompletions.taskId, taskId),
+            eq(dailyTaskCompletions.userId, existingTask.userId),
+            eq(dailyTaskCompletions.completionDate, completionDate),
+          ));
+      }
+
+      // Keep the legacy fields current for existing consumers, but the
+      // completion table is the source of truth for recurring task dates.
+      if (completionDate === getServerCalendarDate()) {
+        const [task] = await db
+          .update(dailyTasks)
+          .set({
+            isCompleted,
+            completedAt: isCompleted ? new Date() : null,
+          })
+          .where(eq(dailyTasks.id, taskId))
+          .returning();
+        return task || undefined;
+      }
+
+      return {
+        ...existingTask,
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+      };
+    }
+
     const [task] = await db
       .update(dailyTasks)
       .set({ 
@@ -820,21 +900,9 @@ export class DatabaseStorage implements IStorage {
     taskId: number,
     userId: number,
   ): Promise<DailyTask | undefined> {
-    const [task] = await db
-      .update(dailyTasks)
-      .set({
-        isCompleted: true,
-        completedAt: new Date(),
-      })
-      .where(
-        and(
-          eq(dailyTasks.id, taskId),
-          eq(dailyTasks.userId, userId),
-          or(eq(dailyTasks.isCompleted, false), isNull(dailyTasks.isCompleted)),
-        ),
-      )
-      .returning();
-    return task || undefined;
+    const task = await this.getTaskById(taskId);
+    if (!task || task.userId !== userId || task.isCompleted) return undefined;
+    return this.updateTaskCompletion(taskId, true);
   }
 
   async deleteDailyTask(taskId: number, userId: number): Promise<boolean> {
