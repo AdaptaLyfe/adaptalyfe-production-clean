@@ -911,6 +911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tasks = await storage.getDailyTasksByUser(user.id, getRequestCalendarDate(req));
       res.json(tasks);
     } catch (error) {
+      console.error("Failed to fetch daily tasks:", error);
       res.status(500).json({ message: "Failed to fetch tasks" });
     }
   });

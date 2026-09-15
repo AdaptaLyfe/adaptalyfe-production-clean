@@ -63,6 +63,81 @@ function normalizeCompletionDate(value: string | Date): string {
   return typeof value === "string" ? value.slice(0, 10) : getServerCalendarDate(value);
 }
 
+type DailyTaskSchemaCapabilities = {
+  hasCreatedAt: boolean;
+  hasCompletions: boolean;
+};
+
+let dailyTaskSchemaCapabilitiesPromise: Promise<DailyTaskSchemaCapabilities> | undefined;
+
+const legacyDailyTaskColumns = {
+  id: dailyTasks.id,
+  userId: dailyTasks.userId,
+  title: dailyTasks.title,
+  description: dailyTasks.description,
+  category: dailyTasks.category,
+  frequency: dailyTasks.frequency,
+  estimatedMinutes: dailyTasks.estimatedMinutes,
+  pointValue: dailyTasks.pointValue,
+  scheduledTime: dailyTasks.scheduledTime,
+  isCompleted: dailyTasks.isCompleted,
+  completedAt: dailyTasks.completedAt,
+  dueDate: dailyTasks.dueDate,
+  lastCompleted: dailyTasks.lastCompleted,
+  lastReminderSent: dailyTasks.lastReminderSent,
+  lastOverdueReminder: dailyTasks.lastOverdueReminder,
+};
+
+async function getDailyTaskSchemaCapabilities(): Promise<DailyTaskSchemaCapabilities> {
+  if (!dailyTaskSchemaCapabilitiesPromise) {
+    dailyTaskSchemaCapabilitiesPromise = (async () => {
+      try {
+        const result = await db.execute(sql`
+          SELECT
+            EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'daily_tasks'
+                AND column_name = 'created_at'
+            ) AS has_created_at,
+            EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = 'daily_task_completions'
+            ) AS has_completions
+        `);
+        const row = result.rows[0] as {
+          has_created_at?: boolean;
+          has_completions?: boolean;
+        } | undefined;
+        const capabilities = {
+          hasCreatedAt: Boolean(row?.has_created_at),
+          hasCompletions: Boolean(row?.has_completions),
+        };
+
+        if (!capabilities.hasCreatedAt || !capabilities.hasCompletions) {
+          console.warn(
+            "Daily task schema is behind the application schema; using legacy compatibility mode.",
+            capabilities,
+          );
+        }
+
+        return capabilities;
+      } catch (error) {
+        console.warn(
+          "Could not inspect daily task schema; using legacy compatibility mode.",
+          error,
+        );
+        return { hasCreatedAt: false, hasCompletions: false };
+      }
+    })();
+  }
+
+  return dailyTaskSchemaCapabilitiesPromise;
+}
+
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -751,15 +826,24 @@ export class DatabaseStorage implements IStorage {
   // ── Daily Tasks ───────────────────────────────────────────────────────────────
 
   async getDailyTasksByUser(userId: number, completionDate = getServerCalendarDate()): Promise<DailyTask[]> {
-    const tasks = await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));
-    const completionRows = await db
-      .select({
-        taskId: dailyTaskCompletions.taskId,
-        completionDate: dailyTaskCompletions.completionDate,
-        completedAt: dailyTaskCompletions.completedAt,
-      })
-      .from(dailyTaskCompletions)
-      .where(eq(dailyTaskCompletions.userId, userId));
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const tasks = capabilities.hasCreatedAt
+      ? await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId))
+      : (await db
+          .select(legacyDailyTaskColumns)
+          .from(dailyTasks)
+          .where(eq(dailyTasks.userId, userId)))
+        .map(task => ({ ...task, createdAt: null }));
+    const completionRows = capabilities.hasCompletions
+      ? await db
+          .select({
+            taskId: dailyTaskCompletions.taskId,
+            completionDate: dailyTaskCompletions.completionDate,
+            completedAt: dailyTaskCompletions.completedAt,
+          })
+          .from(dailyTaskCompletions)
+          .where(eq(dailyTaskCompletions.userId, userId))
+      : [];
 
     const completionsByTask = new Map<number, typeof completionRows>();
     for (const completion of completionRows) {
@@ -771,7 +855,7 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    return tasks.map(task => {
+    return (tasks as DailyTask[]).map(task => {
       if (task.frequency === "daily") {
         const completions = completionsByTask.get(task.id) || [];
         const legacyCompletionMatchesDate =
@@ -812,7 +896,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTaskById(taskId: number): Promise<DailyTask | undefined> {
-    const [task] = await db.select().from(dailyTasks).where(eq(dailyTasks.id, taskId));
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const [task] = capabilities.hasCreatedAt
+      ? await db.select().from(dailyTasks).where(eq(dailyTasks.id, taskId))
+      : await db
+          .select(legacyDailyTaskColumns)
+          .from(dailyTasks)
+          .where(eq(dailyTasks.id, taskId));
     return task || undefined;
   }
 
@@ -842,26 +932,29 @@ export class DatabaseStorage implements IStorage {
     if (!existingTask) return undefined;
 
     if (existingTask.frequency === "daily") {
-      if (isCompleted) {
-        await db
-          .insert(dailyTaskCompletions)
-          .values({
-            taskId,
-            userId: existingTask.userId,
-            completionDate,
-          })
-          .onConflictDoUpdate({
-            target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
-            set: { completedAt: new Date() },
-          });
-      } else {
-        await db
-          .delete(dailyTaskCompletions)
-          .where(and(
-            eq(dailyTaskCompletions.taskId, taskId),
-            eq(dailyTaskCompletions.userId, existingTask.userId),
-            eq(dailyTaskCompletions.completionDate, completionDate),
-          ));
+      const capabilities = await getDailyTaskSchemaCapabilities();
+      if (capabilities.hasCompletions) {
+        if (isCompleted) {
+          await db
+            .insert(dailyTaskCompletions)
+            .values({
+              taskId,
+              userId: existingTask.userId,
+              completionDate,
+            })
+            .onConflictDoUpdate({
+              target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
+              set: { completedAt: new Date() },
+            });
+        } else {
+          await db
+            .delete(dailyTaskCompletions)
+            .where(and(
+              eq(dailyTaskCompletions.taskId, taskId),
+              eq(dailyTaskCompletions.userId, existingTask.userId),
+              eq(dailyTaskCompletions.completionDate, completionDate),
+            ));
+        }
       }
 
       // Keep the legacy fields current for existing consumers, but the

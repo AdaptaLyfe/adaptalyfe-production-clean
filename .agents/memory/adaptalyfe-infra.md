@@ -39,3 +39,10 @@ The development database can lag behind `shared/schema.ts`; a declared table may
 **Why:** Runtime queries fail only when a feature first uses the missing relation, so builds and startup logs do not prove schema readiness.
 
 **How to apply:** Before testing a new persistence-backed feature, verify its tables in development and sync only the development schema with the database tools. Keep production changes on the Publish schema-diff path.
+
+## Deployed schema drift
+The deployed database can also lag behind the shared schema; broad ORM selects against newly added columns or tables can turn a read-only dashboard request into a 500.
+
+**Why:** The deployed database lacked the daily-task creation-date column and completion table while the running code queried both.
+
+**How to apply:** Prefer capability-aware reads for transitional deployments, log the underlying exception, and still synchronize the deployed schema through the supported deployment migration flow.
