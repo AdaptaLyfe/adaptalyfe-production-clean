@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getSkillProgressState } from "@/lib/skill-progress";
 import type { TransitionSkill } from "@shared/schema";
 import { 
   Star, 
@@ -280,7 +281,10 @@ export default function SkillsMilestones() {
               <div>
                 <p className="text-sm text-gray-600">Completed</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {transitionSkills.filter((s: any) => (s.currentLevel || 1) >= (s.targetLevel || 5)).length}
+                  {transitionSkills.filter((s: any) => {
+                    const progress = getSkillProgressState(s.currentLevel, s.targetLevel);
+                    return progress.isCompleted;
+                  }).length}
                 </p>
               </div>
             </div>
@@ -297,9 +301,8 @@ export default function SkillsMilestones() {
                 <p className="text-sm text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {transitionSkills.filter((s: any) => {
-                    const current = s.currentLevel || 1;
-                    const target = s.targetLevel || 5;
-                    return current < target && current > 1;
+                    const progress = getSkillProgressState(s.currentLevel, s.targetLevel);
+                    return progress.isInProgress;
                   }).length}
                 </p>
               </div>
