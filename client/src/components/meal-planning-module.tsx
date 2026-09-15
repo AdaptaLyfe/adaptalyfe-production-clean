@@ -64,6 +64,7 @@ export default function MealPlanningModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meal-plans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
   });
 

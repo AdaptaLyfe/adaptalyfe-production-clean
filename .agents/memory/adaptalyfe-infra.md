@@ -32,3 +32,10 @@ Replit-managed production schema changes are applied through the Publish schema-
 **Why:** Production DDL outside Publish is unsafe and unsupported, while development and production can be out of sync after a schema change.
 
 **How to apply:** Update the shared Drizzle schema and migration source, verify development, then publish and accept the non-destructive table/column creation prompt.
+
+## Development schema drift
+The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.
+
+**Why:** Runtime queries fail only when a feature first uses the missing relation, so builds and startup logs do not prove schema readiness.
+
+**How to apply:** Before testing a new persistence-backed feature, verify its tables in development and sync only the development schema with the database tools. Keep production changes on the Publish schema-diff path.

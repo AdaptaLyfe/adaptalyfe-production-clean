@@ -773,6 +773,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             });
             const { password, ...userResponse } = user;
+            await storage.refreshUserActivityStreak(user.id);
+            const refreshedUser = await storage.getUserById(user.id);
+            if (refreshedUser) {
+              req.session.user = refreshedUser;
+              const { password: _, ...refreshedResponse } = refreshedUser;
+              return res.json(refreshedResponse);
+            }
             return res.json(userResponse);
           }
         } catch (error) {
@@ -790,6 +797,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const freshUser = await storage.getUserById(sessionUser.id);
       if (freshUser) {
+        await storage.refreshUserActivityStreak(freshUser.id);
+        const refreshedUser = await storage.getUserById(freshUser.id);
+        if (refreshedUser) {
+          req.session.user = refreshedUser;
+          const { password, ...userResponse } = refreshedUser;
+          return res.json(userResponse);
+        }
         req.session.user = freshUser;
         const { password, ...userResponse } = freshUser;
         return res.json(userResponse);
@@ -1059,6 +1073,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const task = await storage.updateTaskCompletion(taskId, isCompleted);
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
+      }
+
+      try {
+        if (isCompleted) {
+          await storage.recordUserActivity(user.id);
+        } else {
+          await storage.refreshUserActivityStreak(user.id);
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after task completion:", streakError);
       }
 
       // Award points when task is completed (not when uncompleted)
@@ -2211,11 +2235,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/meal-plans/:id/completion", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       const mealPlanId = parseInt(req.params.id);
       const { isCompleted } = req.body;
+      const mealPlans = await storage.getMealPlansByUser(user.id);
+      const existingMealPlan = mealPlans.find((mealPlan) => mealPlan.id === mealPlanId);
+      if (!existingMealPlan) {
+        return res.status(404).json({ message: "Meal plan not found" });
+      }
       const mealPlan = await storage.updateMealPlanCompletion(mealPlanId, isCompleted);
       if (!mealPlan) {
         return res.status(404).json({ message: "Meal plan not found" });
+      }
+      try {
+        if (isCompleted) {
+          await storage.recordUserActivity(user.id);
+        } else {
+          await storage.refreshUserActivityStreak(user.id);
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after meal completion:", streakError);
       }
       res.json(mealPlan);
     } catch (error) {
@@ -2307,11 +2349,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/shopping-lists/:id/purchased", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       const itemId = parseInt(req.params.id);
       const { isPurchased, actualCost } = req.body;
+      const shoppingItems = await storage.getShoppingListsByUser(user.id);
+      const existingItem = shoppingItems.find((item) => item.id === itemId);
+      if (!existingItem) {
+        return res.status(404).json({ message: "Shopping item not found" });
+      }
       const item = await storage.updateShoppingItemPurchased(itemId, isPurchased, actualCost);
       if (!item) {
         return res.status(404).json({ message: "Shopping item not found" });
+      }
+      try {
+        if (isPurchased) {
+          await storage.recordUserActivity(user.id);
+        } else {
+          await storage.refreshUserActivityStreak(user.id);
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after shopping completion:", streakError);
       }
       res.json(item);
     } catch (error) {

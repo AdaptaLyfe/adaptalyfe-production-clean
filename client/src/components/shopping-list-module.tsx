@@ -93,6 +93,7 @@ export default function ShoppingListModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists"] });
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
   });
 

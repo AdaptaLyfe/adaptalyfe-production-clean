@@ -96,6 +96,7 @@ import '../features/subscription/data/purchase_service.dart';
 import '../features/subscription/data/subscription_api.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
+import 'app_route_observer.dart';
 import 'app_navigation.dart';
 
 GoRouter createAppRouter(AuthBloc authBloc) {
@@ -179,6 +180,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         ),
       ),
       ShellRoute(
+        observers: [appRouteObserver],
         builder: (context, state, child) => AppNavigationShell(
           location: state.uri.path,
           child: child,

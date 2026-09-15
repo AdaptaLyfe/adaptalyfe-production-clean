@@ -22,6 +22,7 @@ export default function DailyTasksModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Task updated",
         description: "Task completion status has been updated.",
