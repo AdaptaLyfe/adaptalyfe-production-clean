@@ -23,6 +23,11 @@ import {
   MapPin
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  getCalendarEventDateKey,
+  formatLocalCalendarDate,
+  toCalendarDateTimeIso,
+} from "@/lib/calendar-date";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
@@ -90,17 +95,15 @@ export default function Calendar() {
       let startDateTime;
       
       if (newEvent.allDay) {
-        // For all-day events, use the date without time
-        startDateTime = `${eventData.startDate}T00:00:00`;
+        startDateTime = toCalendarDateTimeIso(eventData.startDate, "00:00");
       } else {
-        // For timed events, combine date and time in local timezone
         const timeStr = eventData.startTime || '12:00';
-        startDateTime = `${eventData.startDate}T${timeStr}:00`;
+        startDateTime = toCalendarDateTimeIso(eventData.startDate, timeStr);
       }
       
       let endDateTime = null;
       if (eventData.endDate && eventData.endTime) {
-        endDateTime = `${eventData.endDate}T${eventData.endTime}:00`;
+        endDateTime = toCalendarDateTimeIso(eventData.endDate, eventData.endTime);
       }
 
       const payload = {
@@ -159,13 +162,12 @@ export default function Calendar() {
   };
 
   const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalCalendarDate(date);
     const events: any[] = [];
 
     // Add calendar events
     calendarEvents.forEach(event => {
-      // Parse the stored date properly considering it's in local timezone
-      const eventDate = event.startDate.split('T')[0];
+      const eventDate = getCalendarEventDateKey(event.startDate, event.allDay);
       if (eventDate === dateStr) {
         let displayTime = null;
         if (!event.allDay) {

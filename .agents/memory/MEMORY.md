@@ -21,3 +21,4 @@
 - [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
 - [Flutter responsive layout](flutter-responsive-layout.md) — use available constraints, not device width alone, for nested surfaces and keyboard-aware mobile layouts.
 - [Flutter Home customization](flutter-home-customization.md) — Quick Actions and dashboard modules mirror React’s local reorder, visibility, premium, and auto-save semantics.
+- [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
