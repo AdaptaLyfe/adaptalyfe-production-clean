@@ -57,6 +57,7 @@ export const caregiverInvitations = pgTable("caregiver_invitations", {
 export const dailyTasks = pgTable("daily_tasks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(), // "morning", "cooking", "organization", etc.
@@ -714,6 +715,7 @@ export const insertInvitationCodeSchema = createInsertSchema(invitationCodes).om
 
 export const insertDailyTaskSchema = createInsertSchema(dailyTasks).omit({
   id: true,
+  createdAt: true,
   completedAt: true,
   lastCompleted: true,
   lastReminderSent: true,

@@ -28,6 +28,7 @@ import {
   formatLocalCalendarDate,
   toCalendarDateTimeIso,
 } from "@/lib/calendar-date";
+import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
@@ -194,9 +195,9 @@ export default function Calendar() {
       }
     });
 
-    // Add daily tasks to every day
+    // Add daily task occurrences only on dates where the task is scheduled.
     tasks.forEach(task => {
-      if (task.frequency === 'daily' || !task.frequency) {
+      if (isDailyTaskScheduledForDate(task, dateStr) && (task.frequency === 'daily' || !task.frequency)) {
         const completedForDate = task.frequency === 'daily'
           ? task.completionDates?.includes(dateStr) ?? false
           : task.isCompleted;
@@ -215,9 +216,9 @@ export default function Calendar() {
 
     // Weekly and monthly tasks with due dates
     tasks.forEach(task => {
-      if (task.dueDate) {
-        const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
-        if (taskDate === dateStr) {
+      if (task.frequency !== 'daily' && task.dueDate) {
+        const taskDate = getCalendarEventDateKey(task.dueDate);
+        if (taskDate === dateStr && isDailyTaskScheduledForDate(task, dateStr)) {
           events.push({
             id: `scheduled-task-${task.id}`,
             type: 'task',
