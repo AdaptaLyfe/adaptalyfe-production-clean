@@ -31,6 +31,10 @@ import {
   calculateSleepStats,
   type SleepStats,
 } from '@shared/sleep-calculations';
+import {
+  getLocalDateString,
+  getSleepDateValidationError,
+} from '@shared/sleep-date-validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -435,6 +439,7 @@ function SleepLoggingForm({
   selectedDate: Date;
   dailySession?: SleepSession;
 }) {
+  const [dateError, setDateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     sleepDate: format(selectedDate, 'yyyy-MM-dd'),
     bedtime: '',
@@ -459,6 +464,13 @@ function SleepLoggingForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const sleepDateError = getSleepDateValidationError(formData.sleepDate);
+    if (sleepDateError) {
+      setDateError(sleepDateError);
+      return;
+    }
+    setDateError(null);
     
     const sleepData = {
       ...formData,
@@ -484,9 +496,20 @@ function SleepLoggingForm({
                 id="sleepDate"
                 type="date"
                 value={formData.sleepDate}
-                onChange={(e) => setFormData({ ...formData, sleepDate: e.target.value })}
+                max={getLocalDateString()}
+                onChange={(e) => {
+                  const sleepDate = e.target.value;
+                  setFormData({ ...formData, sleepDate });
+                  setDateError(getSleepDateValidationError(sleepDate));
+                }}
+                aria-invalid={dateError ? 'true' : undefined}
                 required
               />
+              {dateError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {dateError}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="quality">Sleep Quality</Label>

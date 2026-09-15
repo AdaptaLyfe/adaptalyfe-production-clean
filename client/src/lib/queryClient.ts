@@ -115,6 +115,13 @@ export async function logout(): Promise<void> {
 function getAuthHeaders(): HeadersInit {
   const sessionToken = getSessionToken();
   const headers: HeadersInit = {};
+  const localTimeZone = typeof Intl !== "undefined"
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+    : undefined;
+
+  if (localTimeZone) {
+    headers['X-User-Timezone'] = localTimeZone;
+  }
   
   if (isNativeClient()) {
     headers['X-Adaptalyfe-Client'] = 'native';

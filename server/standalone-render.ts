@@ -40,7 +40,7 @@ app.use(cors({
   origin: true, // Allow all origins in production
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Adaptalyfe-Client']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Adaptalyfe-Client', 'X-User-Timezone']
 }));
 
 // Rate limiting

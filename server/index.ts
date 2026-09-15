@@ -99,7 +99,8 @@ app.use(cors({
     'Content-Type',
     'Authorization',
     'X-Requested-With',
-    'X-Adaptalyfe-Client'
+    'X-Adaptalyfe-Client',
+    'X-User-Timezone'
   ],
   exposedHeaders: [
     'Access-Control-Allow-Origin',

@@ -84,7 +84,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Adaptalyfe-Client'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Adaptalyfe-Client', 'X-User-Timezone'],
   optionsSuccessStatus: 200
 }));
 

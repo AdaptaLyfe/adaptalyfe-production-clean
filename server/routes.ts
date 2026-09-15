@@ -23,6 +23,7 @@ import {
   calculateSleepMetrics,
   DEFAULT_SLEEP_GOAL_MINUTES,
 } from "@shared/sleep-calculations";
+import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   buildTasksRoutinesResponse,
@@ -3535,7 +3536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sleep Tracking Routes
-  const validateSleepSessionFields = (data: any): string | null => {
+  const validateSleepSessionFields = (data: any, timeZone?: string): string | null => {
     const requiredFields = [
       ["sleepDate", "Sleep date"],
       ["bedtime", "Bedtime"],
@@ -3549,7 +3550,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return value === undefined || value === null || String(value).trim() === "";
     });
 
-    return missingField ? `${missingField[1]} is required` : null;
+    if (missingField) return `${missingField[1]} is required`;
+
+    return getSleepDateValidationError(data.sleepDate, new Date(), timeZone);
   };
 
   const withSleepMetrics = (session: any) => {
@@ -3583,7 +3586,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const sessionData = { ...req.body, userId: req.session.user.id };
-      const validationError = validateSleepSessionFields(sessionData);
+      const timeZone = req.get("X-User-Timezone") || undefined;
+      const validationError = validateSleepSessionFields(sessionData, timeZone);
       if (validationError) {
         return res.status(400).json({ error: validationError, message: validationError });
       }
@@ -3620,7 +3624,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const sessionId = parseInt(req.params.id);
       const updates = { ...req.body };
-      const validationError = validateSleepSessionFields(updates);
+      const timeZone = req.get("X-User-Timezone") || undefined;
+      const validationError = validateSleepSessionFields(updates, timeZone);
       if (validationError) {
         return res.status(400).json({ error: validationError, message: validationError });
       }
