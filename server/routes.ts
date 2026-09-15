@@ -3531,6 +3531,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sleep Tracking Routes
+  const validateSleepSessionFields = (data: any): string | null => {
+    const requiredFields = [
+      ["sleepDate", "Sleep date"],
+      ["bedtime", "Bedtime"],
+      ["sleepTime", "Time fell asleep"],
+      ["wakeTime", "Wake time"],
+      ["quality", "Sleep quality"],
+    ] as const;
+
+    const missingField = requiredFields.find(([field]) => {
+      const value = data?.[field];
+      return value === undefined || value === null || String(value).trim() === "";
+    });
+
+    return missingField ? `${missingField[1]} is required` : null;
+  };
+
   app.get("/api/sleep-sessions", async (req: any, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
@@ -3552,6 +3569,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const sessionData = { ...req.body, userId: req.session.user.id };
+      const validationError = validateSleepSessionFields(sessionData);
+      if (validationError) {
+        return res.status(400).json({ error: validationError, message: validationError });
+      }
       
       // Convert ISO strings to Date objects for TIMESTAMP columns
       if (sessionData.bedtime) {
@@ -3580,6 +3601,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const sessionId = parseInt(req.params.id);
       const updates = { ...req.body };
+      const validationError = validateSleepSessionFields(updates);
+      if (validationError) {
+        return res.status(400).json({ error: validationError, message: validationError });
+      }
       
       // Convert ISO strings to Date objects for TIMESTAMP columns
       if (updates.bedtime) {

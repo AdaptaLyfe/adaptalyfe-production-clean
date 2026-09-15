@@ -711,6 +711,8 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                           ],
                           onChanged: (value) =>
                               setState(() => _quality = value ?? ''),
+                           validator: (value) =>
+                               _hasText(value) ? null : 'Required',
                         ),
                       ),
                     ],
@@ -811,6 +813,14 @@ class _SleepLogTabState extends State<_SleepLogTab> {
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
+    if (_bedtime == null || _sleepTime == null || _wakeTime == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('Please fill in all required fields.')),
+        );
+      return;
+    }
     final date = _formDate ?? DateTime.now();
     final input = SleepSessionInput(
       sleepDate: _dateOnly(date),

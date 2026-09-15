@@ -493,6 +493,7 @@ function SleepLoggingForm({
                 value={formData.quality}
                 onChange={(e) => setFormData({ ...formData, quality: e.target.value })}
                 className="w-full p-2 border rounded-md"
+                required
               >
                 <option value="">Select quality</option>
                 <option value="excellent">Excellent</option>
@@ -511,6 +512,7 @@ function SleepLoggingForm({
                 type="time"
                 value={formData.bedtime}
                 onChange={(e) => setFormData({ ...formData, bedtime: e.target.value })}
+                required
               />
             </div>
             <div>
@@ -520,6 +522,7 @@ function SleepLoggingForm({
                 type="time"
                 value={formData.sleepTime}
                 onChange={(e) => setFormData({ ...formData, sleepTime: e.target.value })}
+                required
               />
             </div>
             <div>
@@ -529,6 +532,7 @@ function SleepLoggingForm({
                 type="time"
                 value={formData.wakeTime}
                 onChange={(e) => setFormData({ ...formData, wakeTime: e.target.value })}
+                required
               />
             </div>
           </div>
