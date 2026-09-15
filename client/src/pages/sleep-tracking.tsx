@@ -22,6 +22,7 @@ import {
 import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
+import { sortSleepSessionsChronologically } from '@/lib/sleep-trends';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -561,6 +562,8 @@ function SleepLoggingForm({
 
 // Sleep Trends Component
 function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
+  const trendSessions = sortSleepSessionsChronologically(sleepSessions);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -580,7 +583,7 @@ function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
                 <div>
                   <h3 className="font-medium mb-3">Sleep Duration Trend</h3>
                   <div className="space-y-2">
-                    {sleepSessions.slice(-7).reverse().map((session, index) => (
+                    {trendSessions.map((session) => (
                       <div key={session.id} className="flex items-center justify-between">
                         <span className="text-sm">{format(new Date(session.sleepDate), 'MMM dd')}</span>
                         <div className="flex items-center gap-2">
@@ -601,7 +604,7 @@ function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
                 <div>
                   <h3 className="font-medium mb-3">Sleep Quality Trend</h3>
                   <div className="space-y-2">
-                    {sleepSessions.slice(-7).reverse().map((session) => (
+                    {trendSessions.map((session) => (
                       <div key={session.id} className="flex items-center justify-between">
                         <span className="text-sm">{format(new Date(session.sleepDate), 'MMM dd')}</span>
                         <Badge className={`${session.quality ? getQualityColor(session.quality) : 'bg-gray-100 text-gray-800'}`}>
