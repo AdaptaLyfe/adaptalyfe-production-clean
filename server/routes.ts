@@ -19,6 +19,10 @@ import {
   isMoodSleepRequest,
   shouldIncludeMoodSleepContext,
 } from "./mood-sleep";
+import {
+  calculateSleepMetrics,
+  DEFAULT_SLEEP_GOAL_MINUTES,
+} from "@shared/sleep-calculations";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   buildTasksRoutinesResponse,
@@ -3548,6 +3552,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return missingField ? `${missingField[1]} is required` : null;
   };
 
+  const withSleepMetrics = (session: any) => {
+    const metrics = calculateSleepMetrics(session, DEFAULT_SLEEP_GOAL_MINUTES);
+    return {
+      ...session,
+      totalSleepDuration: metrics.totalSleepDuration ?? session.totalSleepDuration ?? null,
+      sleepEfficiency: metrics.sleepEfficiency ?? session.sleepEfficiency ?? null,
+      sleepScore: metrics.sleepScore ?? session.sleepScore ?? null,
+    };
+  };
+
   app.get("/api/sleep-sessions", async (req: any, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
@@ -3555,7 +3569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const sessions = await storage.getSleepSessionsByUser(req.session.user.id);
-      res.json(sessions);
+      res.json(sessions.map(withSleepMetrics));
     } catch (error) {
       console.error("Error fetching sleep sessions:", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
@@ -3584,9 +3598,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (sessionData.wakeTime) {
         sessionData.wakeTime = new Date(sessionData.wakeTime);
       }
+
+      const metrics = calculateSleepMetrics(sessionData, DEFAULT_SLEEP_GOAL_MINUTES);
+      sessionData.totalSleepDuration = metrics.totalSleepDuration;
+      sessionData.sleepEfficiency = metrics.sleepEfficiency?.toFixed(2);
+      sessionData.sleepScore = metrics.sleepScore;
       
       const session = await storage.createSleepSession(sessionData);
-      res.status(201).json(session);
+      res.status(201).json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error creating sleep session:", error);
       res.status(500).json({ message: "Failed to create sleep session" });
@@ -3616,12 +3635,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updates.wakeTime) {
         updates.wakeTime = new Date(updates.wakeTime);
       }
+
+      const metrics = calculateSleepMetrics(updates, DEFAULT_SLEEP_GOAL_MINUTES);
+      updates.totalSleepDuration = metrics.totalSleepDuration;
+      updates.sleepEfficiency = metrics.sleepEfficiency?.toFixed(2);
+      updates.sleepScore = metrics.sleepScore;
       
       const session = await storage.updateSleepSession(sessionId, updates);
       if (!session) {
         return res.status(404).json({ message: "Sleep session not found" });
       }
-      res.json(session);
+      res.json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error updating sleep session:", error);
       res.status(500).json({ message: "Failed to update sleep session" });
@@ -3656,7 +3680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ message: "No sleep session found for this date" });
       }
-      res.json(session);
+      res.json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error fetching sleep session by date:", error);
       res.status(500).json({ message: "Failed to fetch sleep session" });

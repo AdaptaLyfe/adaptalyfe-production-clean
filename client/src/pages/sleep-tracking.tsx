@@ -23,6 +23,11 @@ import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarCha
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { sortSleepSessionsChronologically } from '@/lib/sleep-trends';
+import {
+  calculateSleepMetrics,
+  calculateSleepStats,
+  type SleepStats,
+} from '@shared/sleep-calculations';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -73,16 +78,23 @@ export default function SleepTracking() {
   // Fetch sleep session for selected date
   const { data: dailySession } = useQuery({
     queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-    queryFn: () => apiRequest('GET', `/api/sleep-sessions/${format(selectedDate, 'yyyy-MM-dd')}`).then(res => res.json()),
+    queryFn: () => apiRequest('GET', `/api/sleep-sessions/date/${format(selectedDate, 'yyyy-MM-dd')}`).then(res => res.json()),
     enabled: !!selectedDate
   });
 
   // Create/update sleep session mutation
   const createSleepSession = useMutation({
-    mutationFn: (data: Partial<SleepSession>) =>
-      apiRequest('POST', '/api/sleep-sessions', data).then(res => res.json()),
+    mutationFn: ({ data, sessionId }: { data: Partial<SleepSession>; sessionId?: number }) =>
+      apiRequest(
+        sessionId ? 'PUT' : 'POST',
+        sessionId ? `/api/sleep-sessions/${sessionId}` : '/api/sleep-sessions',
+        data,
+      ).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
+      });
       toast({ title: 'Sleep session saved successfully!' });
       setIsLogging(false);
     },
@@ -130,33 +142,16 @@ export default function SleepTracking() {
     },
   });
 
-  // Calculate sleep statistics
-  const calculateStats = () => {
-    if (!sleepSessions.length) return null;
-    
-    const recentSessions = sleepSessions.slice(-7); // Last 7 days
-    const totalSleep = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.totalSleepDuration || 0), 0);
-    const avgSleepDuration = totalSleep / recentSessions.length;
-    const avgSleepScore = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.sleepScore || 0), 0) / recentSessions.length;
-    const avgEfficiency = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.sleepEfficiency || 0), 0) / recentSessions.length;
-
-    return {
-      avgSleepDuration: Math.round(avgSleepDuration),
-      avgSleepScore: Math.round(avgSleepScore),
-      avgEfficiency: Math.round(avgEfficiency),
-      totalSessions: recentSessions.length,
-      goalProgress: Math.round((avgSleepDuration / sleepGoals.targetSleepDuration) * 100)
-    };
-  };
-
-  const stats = calculateStats();
+  const availableSleepSessions: SleepSession[] = Array.isArray(sleepSessions) ? sleepSessions : [];
+  const stats: SleepStats | null = calculateSleepStats(
+    availableSleepSessions,
+    sleepGoals.targetSleepDuration,
+    format(selectedDate, 'yyyy-MM-dd'),
+  );
 
   // Format time helpers
-  const formatDuration = (minutes: number | null) => {
-    if (!minutes) return '--';
+  const formatDuration = (minutes: number | null | undefined) => {
+    if (minutes === null || minutes === undefined || !Number.isFinite(minutes)) return '--';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
@@ -216,7 +211,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? formatDuration(stats.avgSleepDuration) : '--'}
+                  {formatDuration(stats?.avgSleepDuration)}
                 </div>
                 <p className="text-xs text-muted-foreground">Last 7 days</p>
               </CardContent>
@@ -229,7 +224,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.avgSleepScore}/100` : '--'}
+                  {stats?.avgSleepScore != null ? `${stats.avgSleepScore}/100` : '--'}
                 </div>
                 <p className="text-xs text-muted-foreground">Average quality</p>
               </CardContent>
@@ -242,7 +237,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.avgEfficiency}%` : '--'}
+                  {stats?.avgEfficiency != null ? `${stats.avgEfficiency}%` : '--'}
                 </div>
                 <p className="text-xs text-muted-foreground">Time asleep vs time in bed</p>
               </CardContent>
@@ -255,9 +250,9 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.goalProgress}%` : '--'}
+                  {stats?.goalProgress != null ? `${stats.goalProgress}%` : '--'}
                 </div>
-                <Progress value={stats?.goalProgress || 0} className="mt-2" />
+                <Progress value={stats?.goalProgress ?? 0} className="mt-2" />
               </CardContent>
             </Card>
           </div>
@@ -291,7 +286,9 @@ export default function SleepTracking() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sleepSessions.slice(-7).reverse().map((session: SleepSession) => (
+                {availableSleepSessions.slice(-7).reverse().map((session: SleepSession) => {
+                  const metrics = calculateSleepMetrics(session);
+                  return (
                   <div key={session.id} className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-full">
@@ -311,11 +308,11 @@ export default function SleepTracking() {
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm">
                       <div className="text-center">
-                        <p className="font-medium">{formatDuration(session.totalSleepDuration)}</p>
+                        <p className="font-medium">{formatDuration(metrics.totalSleepDuration)}</p>
                         <p className="text-gray-500">Duration</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium">{session.sleepScore || '--'}/100</p>
+                        <p className="font-medium">{metrics.sleepScore != null ? `${metrics.sleepScore}/100` : '--'}</p>
                         <p className="text-gray-500">Score</p>
                       </div>
                       {session.quality && (
@@ -337,8 +334,9 @@ export default function SleepTracking() {
                       </Button>
                     </div>
                   </div>
-                ))}
-                {sleepSessions.length === 0 && (
+                  );
+                })}
+                {availableSleepSessions.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <Moon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No sleep sessions recorded yet</p>
@@ -397,7 +395,7 @@ export default function SleepTracking() {
         {/* Log Sleep Tab */}
         <TabsContent value="log" className="space-y-6">
           <SleepLoggingForm 
-            onSubmit={(data) => createSleepSession.mutate(data)}
+            onSubmit={(data, sessionId) => createSleepSession.mutate({ data, sessionId })}
             isLoading={createSleepSession.isPending}
             selectedDate={selectedDate}
             dailySession={dailySession}
@@ -406,7 +404,7 @@ export default function SleepTracking() {
 
         {/* Trends Tab */}
         <TabsContent value="trends" className="space-y-6">
-          <SleepTrends sleepSessions={sleepSessions} />
+          <SleepTrends sleepSessions={availableSleepSessions} />
         </TabsContent>
 
         {/* Goals Tab */}
@@ -429,7 +427,7 @@ function SleepLoggingForm({
   selectedDate, 
   dailySession 
 }: {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any, sessionId?: number) => void;
   isLoading: boolean;
   selectedDate: Date;
   dailySession?: SleepSession;
@@ -466,7 +464,7 @@ function SleepLoggingForm({
       wakeTime: formData.wakeTime ? new Date(`${formData.sleepDate}T${formData.wakeTime}:00`).toISOString() : null,
     };
     
-    onSubmit(sleepData);
+    onSubmit(sleepData, dailySession?.id);
   };
 
   return (
@@ -631,7 +629,7 @@ function SleepGoals({
 }: { 
   goals: SleepGoal; 
   onUpdateGoals: (goals: SleepGoal) => void;
-  stats: any;
+  stats: SleepStats | null;
 }) {
   return (
     <div className="space-y-6">
@@ -682,9 +680,11 @@ function SleepGoals({
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Sleep Duration Goal</span>
-                  <span className="font-medium">{stats.goalProgress}%</span>
+                  <span className="font-medium">
+                    {stats.goalProgress != null ? `${stats.goalProgress}%` : '--'}
+                  </span>
                 </div>
-                <Progress value={stats.goalProgress} />
+                <Progress value={stats.goalProgress ?? 0} />
                 <p className="text-sm text-gray-600">
                   Average: {formatDuration(stats.avgSleepDuration)} / Target: {formatDuration(goals.targetSleepDuration)}
                 </p>
