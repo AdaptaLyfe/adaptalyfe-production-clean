@@ -79,6 +79,11 @@ import '../features/settings/data/local_settings_store.dart';
 import '../features/settings/data/settings_api.dart';
 import '../features/settings/data/settings_repository.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/skills/bloc/skills_bloc.dart';
+import '../features/skills/bloc/skills_event.dart';
+import '../features/skills/data/skills_api.dart';
+import '../features/skills/data/skills_repository.dart';
+import '../features/skills/presentation/skills_screen.dart';
 import '../features/resources/bloc/resources_bloc.dart';
 import '../features/resources/bloc/resources_event.dart';
 import '../features/resources/data/resources_api.dart';
@@ -130,6 +135,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
 
       final isProtectedRoute =
           location == '/home' ||
+          location == '/dashboard' ||
           location == '/daily-tasks' ||
           location == '/notifications' ||
           location == '/financial' ||
@@ -138,6 +144,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           location == '/academic-planner' ||
           location == '/calendar' ||
           location == '/sleep-tracking' ||
+          location == '/skills-milestones' ||
           location == '/resources' ||
           location == '/rewards' ||
           location == '/settings' ||
@@ -179,6 +186,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           initialInvitationCode: state.uri.queryParameters['code'],
         ),
       ),
+      GoRoute(
+        path: '/dashboard',
+        redirect: (context, state) => '/home',
+      ),
       ShellRoute(
         observers: [appRouteObserver],
         builder: (context, state, child) => AppNavigationShell(
@@ -201,7 +212,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
                   ),
                   BlocProvider(
                     create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-                      ..add(const DailyTasksStarted()),
+                      ..add(DailyTasksStarted(date: DateTime.now())),
                   ),
                   BlocProvider(
                     create: (_) => MoodBloc(_createMoodRepository())
@@ -242,7 +253,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             path: '/daily-tasks',
             builder: (context, state) => BlocProvider(
               create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-                ..add(const DailyTasksStarted()),
+                ..add(DailyTasksStarted(date: DateTime.now())),
               child: const DailyTasksScreen(),
             ),
           ),
@@ -316,6 +327,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
               create: (_) => SleepBloc(_createSleepRepository())
                 ..add(const SleepStarted()),
               child: const SleepTrackingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/skills-milestones',
+            builder: (context, state) => BlocProvider(
+              create: (_) => SkillsBloc(_createSkillsRepository())
+                ..add(const SkillsStarted()),
+              child: const SkillsScreen(),
             ),
           ),
           GoRoute(
@@ -526,6 +545,15 @@ SleepRepository _createSleepRepository() {
   final localStorage = LocalStorage();
   return SleepRepository(
     SleepApi(
+      ApiClient(localStorage: localStorage),
+    ),
+  );
+}
+
+SkillsRepository _createSkillsRepository() {
+  final localStorage = LocalStorage();
+  return SkillsRepository(
+    SkillsApi(
       ApiClient(localStorage: localStorage),
     ),
   );

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/network/api_client.dart';
 import '../data/sleep_repository.dart';
 import '../models/sleep_models.dart';
+import '../sleep_validation.dart';
 import 'sleep_event.dart';
 import 'sleep_state.dart';
 
@@ -67,6 +68,11 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     AddSleepSession event,
     Emitter<SleepState> emit,
   ) async {
+    final validationError = _validateInput(event.input);
+    if (validationError != null) {
+      _emitValidationError(emit, validationError);
+      return;
+    }
     await _runMutation(
       emit,
       action: 'add',
@@ -79,6 +85,11 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     UpdateSleepSession event,
     Emitter<SleepState> emit,
   ) async {
+    final validationError = _validateInput(event.input);
+    if (validationError != null) {
+      _emitValidationError(emit, validationError);
+      return;
+    }
     await _runMutation(
       emit,
       action: 'update',
@@ -197,6 +208,30 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     if (error is ApiException) return error.message;
     if (error is FormatException) return error.message;
     return 'Unable to load sleep data. Please try again.';
+  }
+
+  String? _validateInput(SleepSessionInput input) {
+    return sleepDateValidationError(input.sleepDate) ??
+        sleepRoutineValidationError(
+          input.bedtime,
+          input.sleepTime,
+          input.wakeTime,
+        );
+  }
+
+  void _emitValidationError(
+    Emitter<SleepState> emit,
+    String message,
+  ) {
+    emit(
+      state.copyWith(
+        status: state.hasData ? SleepStatus.loaded : SleepStatus.failure,
+        busyAction: null,
+        errorMessage: message,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
+    );
   }
 
   String _dateOnly(DateTime date) =>

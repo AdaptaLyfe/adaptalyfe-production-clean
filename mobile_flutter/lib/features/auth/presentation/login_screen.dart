@@ -462,7 +462,7 @@ class _ErrorBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Login Failed: $message',
+              message,
               style: const TextStyle(
                 color: Color(0xFF991B1B),
                 fontSize: 14,

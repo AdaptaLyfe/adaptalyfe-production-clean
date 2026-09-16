@@ -36,6 +36,15 @@ final class ToggleMealCompletion extends MealShoppingEvent {
   List<Object?> get props => [id, isCompleted];
 }
 
+final class DeleteMealPlan extends MealShoppingEvent {
+  const DeleteMealPlan(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 final class AddShoppingItem extends MealShoppingEvent {
   const AddShoppingItem(this.input);
 
@@ -54,4 +63,13 @@ final class ToggleShoppingItem extends MealShoppingEvent {
 
   @override
   List<Object?> get props => [id, isPurchased, actualCost];
+}
+
+final class DeleteShoppingItem extends MealShoppingEvent {
+  const DeleteShoppingItem(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
 }

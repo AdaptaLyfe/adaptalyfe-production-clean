@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/date/calendar_date.dart';
 import '../models/daily_task_model.dart';
 
 class DailyTasksApi {
@@ -6,8 +7,11 @@ class DailyTasksApi {
 
   final ApiClient client;
 
-  Future<List<DailyTaskModel>> getTasks() async {
-    final response = await client.get<dynamic>('/api/daily-tasks');
+  Future<List<DailyTaskModel>> getTasks({DateTime? date}) async {
+    final response = await client.get<dynamic>(
+      '/api/daily-tasks',
+      queryParameters: date == null ? null : {'date': calendarDateKey(date)},
+    );
     final data = response.data;
 
     if (data is! List) {
@@ -44,10 +48,14 @@ class DailyTasksApi {
   Future<DailyTaskModel> updateCompletion(
     int taskId,
     bool isCompleted,
+    {DateTime? date}
   ) async {
     final response = await client.patch<dynamic>(
       '/api/daily-tasks/$taskId/complete',
-      data: {'isCompleted': isCompleted},
+      data: {
+        'isCompleted': isCompleted,
+        if (date != null) 'date': calendarDateKey(date),
+      },
     );
     return _taskFromResponse(response.data);
   }

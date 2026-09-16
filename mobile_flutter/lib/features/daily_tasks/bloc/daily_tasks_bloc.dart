@@ -16,11 +16,17 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
   }
 
   final DailyTasksRepository repository;
+  DateTime? _selectedDate;
 
   Future<void> _loadTasks(
     DailyTasksEvent event,
     Emitter<DailyTasksState> emit,
   ) async {
+    _selectedDate = event is DailyTasksStarted
+        ? event.date
+        : event is RefreshDailyTasks
+            ? event.date ?? _selectedDate
+            : _selectedDate;
     emit(
       state.copyWith(
         status: DailyTasksStatus.loading,
@@ -31,7 +37,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     );
 
     try {
-      final tasks = await repository.getTasks();
+      final tasks = await repository.getTasks(date: _selectedDate);
       emit(
         state.copyWith(
           status: DailyTasksStatus.loaded,
@@ -149,7 +155,11 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     );
 
     try {
-      await repository.updateCompletion(event.taskId, event.isCompleted);
+      await repository.updateCompletion(
+        event.taskId,
+        event.isCompleted,
+        date: event.date ?? _selectedDate,
+      );
       await _reloadAfterMutation(
         emit,
         successMessage: event.isCompleted && event.pointValue > 0
@@ -168,7 +178,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     required String successMessage,
   }) async {
     try {
-      final tasks = await repository.getTasks();
+      final tasks = await repository.getTasks(date: _selectedDate);
       emit(
         state.copyWith(
           status: DailyTasksStatus.loaded,

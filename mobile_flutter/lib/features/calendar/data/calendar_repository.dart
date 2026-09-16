@@ -11,7 +11,8 @@ class CalendarRepository {
 
   Future<List<AppointmentModel>> getAppointments() => api.getAppointments();
 
-  Future<List<DailyTaskModel>> getDailyTasks() => api.getDailyTasks();
+  Future<List<DailyTaskModel>> getDailyTasks({DateTime? date}) =>
+      api.getDailyTasks(date: date);
 
   Future<List<BillModel>> getBills() => api.getBills();
 

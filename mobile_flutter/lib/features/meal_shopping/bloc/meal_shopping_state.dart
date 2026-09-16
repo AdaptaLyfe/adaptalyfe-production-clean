@@ -13,8 +13,10 @@ enum MealShoppingAction {
   none,
   addingMeal,
   completingMeal,
+  deletingMeal,
   addingShoppingItem,
   completingShoppingItem,
+  deletingShoppingItem,
 }
 
 class MealShoppingState extends Equatable {

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/date/calendar_date.dart';
+
 class AppointmentModel extends Equatable {
   const AppointmentModel({
     required this.id,
@@ -17,7 +19,7 @@ class AppointmentModel extends Equatable {
       id: _asInt(json['id']),
       title: _asString(json['title']),
       description: _asNullableString(json['description']),
-      appointmentDate: _asDate(json['appointmentDate']) ??
+      appointmentDate: parseCalendarDate(json['appointmentDate']) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       location: _asNullableString(json['location']),
       provider: _asNullableString(json['provider']),
@@ -69,7 +71,7 @@ class AppointmentInput extends Equatable {
 
   Map<String, dynamic> toJson() => {
         'title': title.trim(),
-        'appointmentDate': appointmentDate.toIso8601String(),
+        'appointmentDate': calendarDateTimeIso(appointmentDate),
         if (_hasText(description)) 'description': description!.trim(),
         if (_hasText(location)) 'location': location!.trim(),
         if (_hasText(provider)) 'provider': provider!.trim(),
@@ -109,9 +111,15 @@ class CalendarEventModel extends Equatable {
       id: _asInt(json['id']),
       title: _asString(json['title']),
       description: _asNullableString(json['description']),
-      startDate: _asDate(json['startDate']) ??
+      startDate: parseCalendarDate(
+            json['startDate'],
+            dateOnly: json['allDay'] == true,
+          ) ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      endDate: _asDate(json['endDate']),
+      endDate: parseCalendarDate(
+        json['endDate'],
+        dateOnly: json['allDay'] == true,
+      ),
       allDay: json['allDay'] == true,
       category: _asString(json['category'], fallback: 'personal'),
       color: _asString(json['color'], fallback: '#3b82f6'),
@@ -175,8 +183,13 @@ class CalendarEventInput extends Equatable {
   Map<String, dynamic> toJson() => {
         'title': title.trim(),
         if (_hasText(description)) 'description': description!.trim(),
-        'startDate': startDate.toIso8601String(),
-        if (endDate != null) 'endDate': endDate!.toIso8601String(),
+        'startDate': allDay
+            ? calendarDateKey(startDate)
+            : calendarDateTimeIso(startDate),
+        if (endDate != null)
+          'endDate': allDay
+              ? calendarDateKey(endDate!)
+              : calendarDateTimeIso(endDate!),
         'allDay': allDay,
         'category': category,
         'color': color,

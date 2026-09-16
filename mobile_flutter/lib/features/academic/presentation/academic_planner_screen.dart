@@ -54,7 +54,7 @@ class AcademicPlannerScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          length: 3,
+           length: 4,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Academic Planner'),
@@ -88,6 +88,10 @@ class AcademicPlannerScreen extends StatelessWidget {
                       icon: Icon(Icons.assignment_outlined),
                       text: 'Assignments',
                     ),
+                    Tab(
+                      icon: Icon(Icons.groups_outlined),
+                      text: 'Study Groups',
+                    ),
                   ],
                 ),
                 Expanded(
@@ -96,6 +100,7 @@ class AcademicPlannerScreen extends StatelessWidget {
                       _ScheduleTab(state: state),
                       _ClassesTab(state: state),
                       _AssignmentsTab(state: state),
+                      _StudyGroupsTab(state: state),
                     ],
                   ),
                 ),
@@ -437,6 +442,71 @@ class _AssignmentsTab extends StatelessWidget {
             )
           else
             ...filtered.map((item) => _AssignmentCard(item: item)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StudyGroupsTab extends StatelessWidget {
+  const _StudyGroupsTab({required this.state});
+
+  final AcademicState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () => _refresh(context),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
+        children: [
+          _SectionHeader(
+            icon: Icons.groups_outlined,
+            title: 'Study Groups',
+            actionLabel: 'Create Group',
+            onAction: () => _showStudyGroupDialog(context),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Plan collaborative study time with classmates.',
+            style: TextStyle(color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 12),
+          if (state.studyGroups.isEmpty)
+            const _EmptyCard(
+              icon: Icons.groups_outlined,
+              title: 'No study groups yet',
+              subtitle: 'Create a group to keep shared study plans in one place.',
+            )
+          else
+            ...state.studyGroups.map(
+              (group) => Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFEDE9FE),
+                    foregroundColor: Color(0xFF7C3AED),
+                    child: Icon(Icons.groups_outlined),
+                  ),
+                  title: Text(
+                    group.groupName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    [
+                      if (group.location != null) group.location!,
+                      if (group.meetingTime != null)
+                        _fullDate(group.meetingTime!.toLocal()),
+                      if (group.isRecurring && group.recurringPattern != null)
+                        group.recurringPattern!,
+                    ].join(' • '),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -805,6 +875,143 @@ class _EmptyCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _showStudyGroupDialog(BuildContext context) async {
+  final academicBloc = context.read<AcademicBloc>();
+  final groupNameController = TextEditingController();
+  final locationController = TextEditingController();
+  final notesController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  DateTime? meetingTime;
+  var isRecurring = false;
+  var recurringPattern = 'weekly';
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Create Study Group'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: groupNameController,
+                  decoration: const InputDecoration(labelText: 'Group name'),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty
+                          ? 'Group name is required'
+                          : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: locationController,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    meetingTime == null
+                        ? 'Choose meeting time'
+                        : _fullDate(meetingTime!.toLocal()),
+                  ),
+                  leading: const Icon(Icons.schedule_outlined),
+                  onTap: () async {
+                    final now = DateTime.now();
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: meetingTime ?? now,
+                      firstDate: now.subtract(const Duration(days: 365)),
+                      lastDate: now.add(const Duration(days: 365)),
+                    );
+                    if (date == null || !context.mounted) return;
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: meetingTime == null
+                          ? TimeOfDay.fromDateTime(now)
+                          : TimeOfDay.fromDateTime(meetingTime!),
+                    );
+                    if (time != null) {
+                      setState(
+                        () => meetingTime = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        ),
+                      );
+                    }
+                  },
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: isRecurring,
+                  title: const Text('Recurring meeting'),
+                  onChanged: (value) =>
+                      setState(() => isRecurring = value ?? false),
+                ),
+                if (isRecurring)
+                  DropdownButtonFormField<String>(
+                    value: recurringPattern,
+                    decoration:
+                        const InputDecoration(labelText: 'Repeat pattern'),
+                    items: const [
+                      DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                      DropdownMenuItem(
+                        value: 'biweekly',
+                        child: Text('Every two weeks'),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => recurringPattern = value ?? 'weekly'),
+                  ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: notesController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              academicBloc.add(
+                AddStudyGroup(
+                  StudyGroupInput(
+                    groupName: groupNameController.text,
+                    meetingTime: meetingTime,
+                    location: locationController.text,
+                    isRecurring: isRecurring,
+                    recurringPattern: isRecurring ? recurringPattern : null,
+                    notes: notesController.text,
+                  ),
+                ),
+              );
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Create Group'),
+          ),
+        ],
+      ),
+    ),
+  );
+  groupNameController.dispose();
+  locationController.dispose();
+  notesController.dispose();
 }
 
 class _AcademicLoading extends StatelessWidget {

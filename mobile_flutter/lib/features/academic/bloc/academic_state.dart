@@ -14,6 +14,7 @@ enum AcademicAction {
   none,
   addingClass,
   addingAssignment,
+  addingStudyGroup,
 }
 
 class AcademicState extends Equatable {
@@ -21,6 +22,7 @@ class AcademicState extends Equatable {
     this.status = AcademicStatus.initial,
     this.classes = const [],
     this.assignments = const [],
+    this.studyGroups = const [],
     this.action = AcademicAction.none,
     this.assignmentFilter = AcademicAssignmentFilter.all,
     this.errorMessage,
@@ -31,6 +33,7 @@ class AcademicState extends Equatable {
   final AcademicStatus status;
   final List<AcademicClassModel> classes;
   final List<AssignmentModel> assignments;
+  final List<StudyGroupModel> studyGroups;
   final AcademicAction action;
   final AcademicAssignmentFilter assignmentFilter;
   final String? errorMessage;
@@ -38,12 +41,14 @@ class AcademicState extends Equatable {
   final bool sessionInvalid;
 
   bool get isLoading => status == AcademicStatus.loading;
-  bool get hasData => classes.isNotEmpty || assignments.isNotEmpty;
+  bool get hasData =>
+      classes.isNotEmpty || assignments.isNotEmpty || studyGroups.isNotEmpty;
 
   AcademicState copyWith({
     AcademicStatus? status,
     List<AcademicClassModel>? classes,
     List<AssignmentModel>? assignments,
+    List<StudyGroupModel>? studyGroups,
     AcademicAction? action,
     AcademicAssignmentFilter? assignmentFilter,
     Object? errorMessage = _notSet,
@@ -54,6 +59,7 @@ class AcademicState extends Equatable {
       status: status ?? this.status,
       classes: classes ?? this.classes,
       assignments: assignments ?? this.assignments,
+      studyGroups: studyGroups ?? this.studyGroups,
       action: action ?? this.action,
       assignmentFilter: assignmentFilter ?? this.assignmentFilter,
       errorMessage: identical(errorMessage, _notSet)
@@ -71,6 +77,7 @@ class AcademicState extends Equatable {
         status,
         classes,
         assignments,
+        studyGroups,
         action,
         assignmentFilter,
         errorMessage,

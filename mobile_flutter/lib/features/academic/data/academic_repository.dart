@@ -15,4 +15,7 @@ class AcademicRepository {
 
   Future<AssignmentModel> createAssignment(AssignmentInput input) =>
       api.createAssignment(input);
+  Future<List<StudyGroupModel>> getStudyGroups() => api.getStudyGroups();
+  Future<StudyGroupModel> createStudyGroup(StudyGroupInput input) =>
+      api.createStudyGroup(input);
 }

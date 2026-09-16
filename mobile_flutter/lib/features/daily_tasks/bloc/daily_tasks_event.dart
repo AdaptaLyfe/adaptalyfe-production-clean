@@ -10,11 +10,21 @@ sealed class DailyTasksEvent extends Equatable {
 }
 
 final class DailyTasksStarted extends DailyTasksEvent {
-  const DailyTasksStarted();
+  const DailyTasksStarted({this.date});
+
+  final DateTime? date;
+
+  @override
+  List<Object?> get props => [date];
 }
 
 final class RefreshDailyTasks extends DailyTasksEvent {
-  const RefreshDailyTasks();
+  const RefreshDailyTasks({this.date});
+
+  final DateTime? date;
+
+  @override
+  List<Object?> get props => [date];
 }
 
 final class AddDailyTask extends DailyTasksEvent {
@@ -52,13 +62,15 @@ final class ToggleDailyTask extends DailyTasksEvent {
   const ToggleDailyTask({
     required this.taskId,
     required this.isCompleted,
+    this.date,
     this.pointValue = 0,
   });
 
   final int taskId;
   final bool isCompleted;
+  final DateTime? date;
   final int pointValue;
 
   @override
-  List<Object?> get props => [taskId, isCompleted, pointValue];
+  List<Object?> get props => [taskId, isCompleted, date, pointValue];
 }

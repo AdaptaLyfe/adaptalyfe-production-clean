@@ -211,6 +211,7 @@ class _MealDateSection extends StatelessWidget {
             (meal) => _MealPlanCard(
               meal: meal,
               isBusy: busyId == meal.id,
+              onDelete: () => _confirmDeleteMeal(context, meal),
             ),
           ),
         ],
@@ -223,10 +224,12 @@ class _MealPlanCard extends StatelessWidget {
   const _MealPlanCard({
     required this.meal,
     required this.isBusy,
+    required this.onDelete,
   });
 
   final MealPlanModel meal;
   final bool isBusy;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -334,10 +337,44 @@ class _MealPlanCard extends StatelessWidget {
                   color: Color(0xFF16A34A),
                 ),
               ),
+            IconButton(
+              tooltip: 'Delete meal plan',
+              onPressed: isBusy ? null : onDelete,
+              icon: const Icon(Icons.delete_outline_rounded),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+Future<void> _confirmDeleteMeal(
+  BuildContext context,
+  MealPlanModel meal,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete meal plan?'),
+      content: Text('Remove “${meal.mealName}” from your meal schedule?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true && context.mounted) {
+    context.read<MealShoppingBloc>().add(DeleteMealPlan(meal.id));
   }
 }
 
@@ -557,6 +594,7 @@ class _ShoppingCategory extends StatelessWidget {
             (item) => _ShoppingItemCard(
               item: item,
               isBusy: busyId == item.id,
+              onDelete: () => _confirmDeleteShoppingItem(context, item),
             ),
           ),
         ],
@@ -569,10 +607,12 @@ class _ShoppingItemCard extends StatelessWidget {
   const _ShoppingItemCard({
     required this.item,
     required this.isBusy,
+    required this.onDelete,
   });
 
   final ShoppingItemModel item;
   final bool isBusy;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -652,6 +692,11 @@ class _ShoppingItemCard extends StatelessWidget {
                 Icons.check_circle_rounded,
                 color: Color(0xFF16A34A),
               ),
+            IconButton(
+              tooltip: 'Remove shopping item',
+              onPressed: isBusy ? null : onDelete,
+              icon: const Icon(Icons.delete_outline_rounded),
+            ),
           ],
         ),
       ),
@@ -712,6 +757,35 @@ class _IntroCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _confirmDeleteShoppingItem(
+  BuildContext context,
+  ShoppingItemModel item,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Remove shopping item?'),
+      content: Text('Remove “${item.itemName}” from your shopping list?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+          child: const Text('Remove'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true && context.mounted) {
+    context.read<MealShoppingBloc>().add(DeleteShoppingItem(item.id));
   }
 }
 

@@ -17,9 +17,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     on<CalendarViewChanged>(
       (event, emit) => emit(state.copyWith(view: event.view)),
     );
-    on<CalendarDateChanged>(
-      (event, emit) => emit(state.copyWith(currentDate: event.date)),
-    );
+    on<CalendarDateChanged>(_onDateChanged);
     on<CalendarNavigate>(_onNavigate);
     on<AddAppointment>(_onAddAppointment);
     on<CompleteAppointment>(_onCompleteAppointment);
@@ -45,7 +43,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     await _load(emit, keepData: state.hasData);
   }
 
-  void _onNavigate(
+  Future<void> _onNavigate(
     CalendarNavigate event,
     Emitter<CalendarState> emit,
   ) {
@@ -67,9 +65,18 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
           currentDate: DateTime(current.year, current.month + amount, 1),
         ),
       );
-      return;
+      return _load(emit, keepData: true);
     }
     emit(state.copyWith(currentDate: next));
+    return _load(emit, keepData: true);
+  }
+
+  Future<void> _onDateChanged(
+    CalendarDateChanged event,
+    Emitter<CalendarState> emit,
+  ) async {
+    emit(state.copyWith(currentDate: event.date));
+    await _load(emit, keepData: true);
   }
 
   Future<void> _onAddAppointment(
@@ -164,7 +171,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final results = await Future.wait<Object>([
         repository.getAppointments(),
         repository.getCalendarEvents(),
-        repository.getDailyTasks(),
+        repository.getDailyTasks(date: state.selectedDate),
         repository.getBills(),
         repository.getMoodEntries(),
       ]);
@@ -208,7 +215,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final results = await Future.wait<Object>([
         repository.getAppointments(),
         repository.getCalendarEvents(),
-        repository.getDailyTasks(),
+        repository.getDailyTasks(date: state.selectedDate),
         repository.getBills(),
         repository.getMoodEntries(),
       ]);

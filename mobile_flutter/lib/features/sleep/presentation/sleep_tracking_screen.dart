@@ -8,6 +8,9 @@ import '../bloc/sleep_bloc.dart';
 import '../bloc/sleep_event.dart';
 import '../bloc/sleep_state.dart';
 import '../models/sleep_models.dart';
+import '../sleep_calculations.dart';
+import '../sleep_trends.dart';
+import '../sleep_validation.dart';
 
 class SleepTrackingScreen extends StatelessWidget {
   const SleepTrackingScreen({super.key});
@@ -166,7 +169,7 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = state.sessions.takeLast(7).reversed.toList();
+    final recent = getRecentSleepSessions(state.sessions);
     return RefreshIndicator(
       onRefresh: () async {
         final bloc = context.read<SleepBloc>();
@@ -292,19 +295,25 @@ class _StatsGrid extends StatelessWidget {
         ),
         _StatCard(
           title: 'Sleep Score',
-          value: stats == null ? '--' : '${stats!.avgSleepScore}/100',
+          value: stats?.avgSleepScore == null
+              ? '--/100'
+              : '${stats!.avgSleepScore}/100',
           subtitle: 'Average quality',
           icon: Icons.star_outline,
         ),
         _StatCard(
           title: 'Sleep Efficiency',
-          value: stats == null ? '--' : '${stats!.avgEfficiency}%',
+          value: stats?.avgEfficiency == null
+              ? '--'
+              : '${stats!.avgEfficiency}%',
           subtitle: 'Time asleep vs time in bed',
           icon: Icons.trending_up,
         ),
         _StatCard(
           title: 'Goal Progress',
-          value: stats == null ? '--' : '${stats!.goalProgress}%',
+          value: stats?.goalProgress == null
+              ? '--'
+              : '${stats!.goalProgress}%',
           subtitle: 'Average vs target',
           icon: Icons.track_changes,
           progress: stats?.goalProgress,
@@ -604,6 +613,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
   String _quality = '';
   DateTime? _formDate;
   int? _loadedSessionId;
+  String? _validationError;
 
   @override
   void initState() {
@@ -637,6 +647,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     _wakeTime = session?.wakeTime;
     _quality = session?.quality ?? '';
     _loadedSessionId = session?.id;
+    _validationError = null;
   }
 
   @override
@@ -681,8 +692,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                             suffixIcon: Icon(Icons.calendar_today_outlined),
                           ),
                           onTap: _pickDate,
-                          validator: (value) =>
-                              !_hasText(value) ? 'Required' : null,
+                           validator: sleepDateValidationError,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -722,22 +732,38 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                     label: 'Bedtime',
                     value: _bedtime,
                     baseDate: _formDate,
-                    onChanged: (value) => setState(() => _bedtime = value),
+                    onChanged: (value) => _setTime(
+                      () => _bedtime = value,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _TimePickerField(
                     label: 'Time Fell Asleep',
                     value: _sleepTime,
                     baseDate: _formDate,
-                    onChanged: (value) => setState(() => _sleepTime = value),
+                    onChanged: (value) => _setTime(
+                      () => _sleepTime = value,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _TimePickerField(
                     label: 'Wake Time',
                     value: _wakeTime,
                     baseDate: _formDate,
-                    onChanged: (value) => setState(() => _wakeTime = value),
+                    onChanged: (value) => _setTime(
+                      () => _wakeTime = value,
+                    ),
                   ),
+                  if (_validationError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _validationError!,
+                      style: const TextStyle(
+                        color: Color(0xFFB91C1C),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   TextFormField(
                     controller: _notesController,
@@ -774,16 +800,18 @@ class _SleepLogTabState extends State<_SleepLogTab> {
 
   Future<void> _pickDate() async {
     final current = _formDate ?? DateTime.now();
+    final today = DateTime.now();
     final date = await showDatePicker(
       context: context,
-      initialDate: current,
+      initialDate: current.isAfter(today) ? today : current,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: today,
     );
     if (!mounted || date == null) return;
     setState(() {
       _formDate = date;
       _dateController.text = _dateOnly(date);
+      _validationError = _currentValidationError();
     });
     widget.onDateChanged(date);
   }
@@ -822,6 +850,14 @@ class _SleepLogTabState extends State<_SleepLogTab> {
       return;
     }
     final date = _formDate ?? DateTime.now();
+    final validationError = _currentValidationError();
+    if (validationError != null) {
+      setState(() => _validationError = validationError);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(validationError)));
+      return;
+    }
     final input = SleepSessionInput(
       sleepDate: _dateOnly(date),
       bedtime: _bedtime,
@@ -836,6 +872,20 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     } else {
       bloc.add(UpdateSleepSession(id: _loadedSessionId!, input: input));
     }
+  }
+
+  void _setTime(void Function() update) {
+    setState(() {
+      update();
+      _validationError = _currentValidationError();
+    });
+  }
+
+  String? _currentValidationError() {
+    return sleepDateValidationError(
+          _formDate == null ? null : _dateOnly(_formDate!),
+        ) ??
+        sleepRoutineValidationError(_bedtime, _sleepTime, _wakeTime);
   }
 }
 
@@ -892,7 +942,7 @@ class _TrendsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = sessions.takeLast(7).reversed.toList();
+    final recent = getRecentSleepSessions(sessions);
     return ListView(
        padding: AppResponsive.pagePadding(context).add(
          const EdgeInsets.only(top: 18, bottom: 32),
@@ -1026,6 +1076,7 @@ class _GoalsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = stats?.goalProgress ?? 0;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 32),
       children: [
@@ -1088,7 +1139,7 @@ class _GoalsTab extends StatelessWidget {
                           children: [
                             const Text('Sleep Duration Goal'),
                             Text(
-                              '${stats!.goalProgress}%',
+                               '$progress%',
                               style:
                                   const TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -1096,12 +1147,13 @@ class _GoalsTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         LinearProgressIndicator(
-                          value: stats!.goalProgress.clamp(0, 100) / 100,
+                           value: progress.clamp(0, 100) / 100,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Average: ${_formatDuration(stats!.avgSleepDuration)} / '
-                          'Target: ${_formatDuration(goals.targetSleepDuration)}',
+                          'Weekly total: '
+                          '${_formatDuration(stats!.weeklyTotalSleepDuration)} / '
+                          'Target: ${_formatDuration(stats!.weeklyGoalTargetMinutes)}',
                           style: const TextStyle(color: Color(0xFF4B5563)),
                         ),
                       ],
@@ -1355,53 +1407,14 @@ class _SleepGoalValues {
   final String targetWakeTime;
 }
 
-class SleepStats {
-  const SleepStats({
-    required this.avgSleepDuration,
-    required this.avgSleepScore,
-    required this.avgEfficiency,
-    required this.totalSessions,
-    required this.goalProgress,
-  });
-
-  final int avgSleepDuration;
-  final int avgSleepScore;
-  final int avgEfficiency;
-  final int totalSessions;
-  final int goalProgress;
-}
-
 SleepStats? _calculateStats(
   List<SleepSessionModel> sessions,
   int targetSleepDuration,
-) {
-  if (sessions.isEmpty) return null;
-  final recent = sessions.takeLast(7).toList();
-  final totalSleep = recent.fold<int>(
-    0,
-    (sum, session) => sum + (session.totalSleepDuration ?? 0),
-  );
-  final avgSleepDuration = (totalSleep / recent.length).round();
-  final avgSleepScore = (recent.fold<int>(
-            0,
-            (sum, session) => sum + (session.sleepScore ?? 0),
-          ) /
-          recent.length)
-      .round();
-  final avgEfficiency = (recent.fold<double>(
-            0,
-            (sum, session) => sum + (session.sleepEfficiency ?? 0),
-          ) /
-          recent.length)
-      .round();
-  return SleepStats(
-    avgSleepDuration: avgSleepDuration,
-    avgSleepScore: avgSleepScore,
-    avgEfficiency: avgEfficiency,
-    totalSessions: recent.length,
-    goalProgress: (avgSleepDuration / targetSleepDuration * 100).round(),
-  );
-}
+) =>
+    calculateSleepStats(
+      sessions,
+      targetSleepDuration: targetSleepDuration,
+    );
 
 Future<void> _confirmDelete(
   BuildContext context,
@@ -1429,13 +1442,6 @@ Future<void> _confirmDelete(
   );
   if (confirmed == true && context.mounted) {
     context.read<SleepBloc>().add(DeleteSleepSession(session.id));
-  }
-}
-
-extension _SleepSessionListExtension on List<SleepSessionModel> {
-  List<SleepSessionModel> takeLast(int count) {
-    if (length <= count) return List<SleepSessionModel>.from(this);
-    return sublist(length - count);
   }
 }
 

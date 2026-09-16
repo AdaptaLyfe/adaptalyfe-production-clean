@@ -12,8 +12,10 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     on<RefreshMealShopping>(_load);
     on<AddMealPlan>(_addMealPlan);
     on<ToggleMealCompletion>(_toggleMeal);
+    on<DeleteMealPlan>(_deleteMeal);
     on<AddShoppingItem>(_addShoppingItem);
     on<ToggleShoppingItem>(_toggleShoppingItem);
+    on<DeleteShoppingItem>(_deleteShoppingItem);
   }
 
   final MealShoppingRepository repository;
@@ -92,6 +94,33 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     }
   }
 
+  Future<void> _deleteMeal(
+    DeleteMealPlan event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingMeal,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteMealPlan(event.id);
+      await _reloadAfterMealMutation(
+        emit,
+        successMessage: 'Meal plan deleted successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete meal plan. Please try again.',
+      );
+    }
+  }
+
   Future<void> _addShoppingItem(
     AddShoppingItem event,
     Emitter<MealShoppingState> emit,
@@ -148,6 +177,33 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
         emit,
         error,
         'Failed to update shopping item. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _deleteShoppingItem(
+    DeleteShoppingItem event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingShoppingItem,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteShoppingItem(event.id);
+      await _reloadAfterShoppingMutation(
+        emit,
+        successMessage: 'Shopping item removed.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to remove shopping item. Please try again.',
       );
     }
   }

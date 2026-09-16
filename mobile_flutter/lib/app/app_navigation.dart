@@ -247,6 +247,7 @@ class AppNavigationDrawer extends StatelessWidget {
     ),
     _DrawerDestination(
       label: 'Life Skills',
+      route: '/skills-milestones',
       icon: Icons.track_changes_outlined,
       color: Color(0xFF2563EB),
     ),
@@ -831,6 +832,12 @@ const _moreDestinations = [
     route: '/sleep-tracking',
     icon: Icons.bedtime_outlined,
     selectedIcon: Icons.bedtime_rounded,
+  ),
+  _NavigationDestination(
+    label: 'Skills',
+    route: '/skills-milestones',
+    icon: Icons.track_changes_outlined,
+    selectedIcon: Icons.track_changes_rounded,
   ),
   _NavigationDestination(
     label: 'Resources',

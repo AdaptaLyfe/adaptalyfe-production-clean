@@ -11,6 +11,7 @@ class MealShoppingRepository {
       api.createMealPlan(input);
   Future<MealPlanModel> updateMealCompletion(int id, bool isCompleted) =>
       api.updateMealCompletion(id, isCompleted);
+  Future<void> deleteMealPlan(int id) => api.deleteMealPlan(id);
 
   Future<List<ShoppingItemModel>> getShoppingItems() =>
       api.getShoppingItems();
@@ -28,4 +29,5 @@ class MealShoppingRepository {
         isPurchased,
         actualCost: actualCost,
       );
+  Future<void> deleteShoppingItem(int id) => api.deleteShoppingItem(id);
 }

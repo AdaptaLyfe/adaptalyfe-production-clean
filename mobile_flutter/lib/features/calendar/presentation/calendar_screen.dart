@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/date/calendar_date.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../daily_tasks/utils/daily_task_schedule.dart';
 import '../bloc/calendar_bloc.dart';
 import '../bloc/calendar_event.dart';
 import '../bloc/calendar_state.dart';
@@ -1255,26 +1257,26 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
   }
   for (final task in state.tasks) {
     final isDaily = task.frequency.isEmpty || task.frequency == 'daily';
-    if (isDaily) {
+    if (isDailyTaskScheduledForDate(task, date)) {
       items.add(
         _CalendarItem(
           title: task.title,
           start: date,
           type: _CalendarItemType.task,
-          isCompleted: task.isCompleted,
+          isCompleted: task.isCompletedForDate(date),
           category: task.category.isEmpty ? 'daily' : task.category,
           location: null,
         ),
       );
     }
     final dueDate = task.dueDate;
-    if (dueDate != null && DateUtils.isSameDay(dueDate, date)) {
+    if (!isDaily && dueDate != null && DateUtils.isSameDay(dueDate, date)) {
       items.add(
         _CalendarItem(
           title: task.title,
           start: dueDate,
           type: _CalendarItemType.task,
-          isCompleted: task.isCompleted,
+          isCompleted: task.isCompletedForDate(date),
           category: task.frequency.isEmpty ? 'scheduled' : task.frequency,
           location: null,
         ),

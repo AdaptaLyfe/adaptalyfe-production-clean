@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/date/calendar_date.dart';
 import '../../daily_tasks/models/daily_task_model.dart';
 import '../../financial/models/financial_models.dart';
 import '../../mood/models/mood_entry_model.dart';
@@ -12,8 +13,12 @@ class CalendarApi {
   Future<List<AppointmentModel>> getAppointments() =>
       _getList('/api/appointments', AppointmentModel.fromJson);
 
-  Future<List<DailyTaskModel>> getDailyTasks() =>
-      _getList('/api/daily-tasks', DailyTaskModel.fromJson);
+  Future<List<DailyTaskModel>> getDailyTasks({DateTime? date}) =>
+      _getList(
+        '/api/daily-tasks',
+        DailyTaskModel.fromJson,
+        queryParameters: date == null ? null : {'date': calendarDateKey(date)},
+      );
 
   Future<List<BillModel>> getBills() =>
       _getList('/api/bills', BillModel.fromJson);
@@ -61,8 +66,12 @@ class CalendarApi {
   Future<List<T>> _getList<T>(
     String path,
     T Function(Map<String, dynamic>) fromJson,
+    {Map<String, dynamic>? queryParameters}
   ) async {
-    final response = await client.get<dynamic>(path);
+    final response = await client.get<dynamic>(
+      path,
+      queryParameters: queryParameters,
+    );
     if (response.data is! List) {
       throw const FormatException('Invalid calendar collection response');
     }

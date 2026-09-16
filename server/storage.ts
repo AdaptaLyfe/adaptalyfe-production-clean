@@ -258,6 +258,7 @@ export interface IStorage {
   getShoppingListsByUser(userId: number): Promise<ShoppingList[]>;
   createShoppingListItem(item: InsertShoppingList): Promise<ShoppingList>;
   updateShoppingItemPurchased(itemId: number, isPurchased: boolean, actualCost?: number): Promise<ShoppingList | undefined>;
+  deleteShoppingListItem(itemId: number, userId: number): Promise<boolean>;
   getActiveShoppingItems(userId: number): Promise<ShoppingList[]>;
   
   // Emergency Resources
@@ -1629,6 +1630,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(shoppingLists.id, itemId))
       .returning();
     return item || undefined;
+  }
+
+  async deleteShoppingListItem(itemId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(shoppingLists)
+      .where(
+        and(
+          eq(shoppingLists.id, itemId),
+          eq(shoppingLists.userId, userId),
+        ),
+      );
+    return result.rowCount > 0;
   }
 
   async getActiveShoppingItems(userId: number): Promise<ShoppingList[]> {

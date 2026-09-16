@@ -2271,9 +2271,9 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime? current) {
   final now = DateTime.now();
   return showDatePicker(
     context: context,
-    initialDate: current ?? now,
+    initialDate: current != null && !current.isAfter(now) ? current : now,
     firstDate: DateTime(1900),
-    lastDate: DateTime(now.year + 20),
+    lastDate: now,
   );
 }
 

@@ -22,6 +22,10 @@ class MealShoppingApi {
         MealPlanModel.fromJson,
       );
 
+  Future<void> deleteMealPlan(int id) async {
+    await client.delete<dynamic>('/api/meal-plans/$id');
+  }
+
   Future<List<ShoppingItemModel>> getShoppingItems() =>
       _getList('/api/shopping-lists', ShoppingItemModel.fromJson);
 
@@ -44,6 +48,10 @@ class MealShoppingApi {
         },
         ShoppingItemModel.fromJson,
       );
+
+  Future<void> deleteShoppingItem(int id) async {
+    await client.delete<dynamic>('/api/shopping-lists/$id');
+  }
 
   Future<List<T>> _getList<T>(
     String path,

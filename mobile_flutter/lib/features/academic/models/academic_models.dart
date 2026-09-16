@@ -231,6 +231,118 @@ class AssignmentInput extends Equatable {
       ];
 }
 
+class StudyGroupModel extends Equatable {
+  const StudyGroupModel({
+    required this.id,
+    required this.userId,
+    required this.classId,
+    required this.groupName,
+    required this.meetingTime,
+    required this.location,
+    required this.members,
+    required this.topics,
+    required this.isRecurring,
+    required this.recurringPattern,
+    required this.notes,
+    required this.createdAt,
+  });
+
+  factory StudyGroupModel.fromJson(Map<String, dynamic> json) {
+    return StudyGroupModel(
+      id: _asInt(json['id']),
+      userId: _asInt(json['userId']),
+      classId: _asNullableInt(json['classId']),
+      groupName: _asString(json['groupName']),
+      meetingTime: _asDateTime(json['meetingTime']),
+      location: _asNullableString(json['location']),
+      members: _asStringList(json['members']),
+      topics: _asStringList(json['topics']),
+      isRecurring: json['isRecurring'] == true,
+      recurringPattern: _asNullableString(json['recurringPattern']),
+      notes: _asNullableString(json['notes']),
+      createdAt: _asDateTime(json['createdAt']),
+    );
+  }
+
+  final int id;
+  final int userId;
+  final int? classId;
+  final String groupName;
+  final DateTime? meetingTime;
+  final String? location;
+  final List<String> members;
+  final List<String> topics;
+  final bool isRecurring;
+  final String? recurringPattern;
+  final String? notes;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        classId,
+        groupName,
+        meetingTime,
+        location,
+        members,
+        topics,
+        isRecurring,
+        recurringPattern,
+        notes,
+        createdAt,
+      ];
+}
+
+class StudyGroupInput extends Equatable {
+  const StudyGroupInput({
+    required this.groupName,
+    this.classId,
+    this.meetingTime,
+    this.location,
+    this.members = const [],
+    this.topics = const [],
+    this.isRecurring = false,
+    this.recurringPattern,
+    this.notes,
+  });
+
+  final String groupName;
+  final int? classId;
+  final DateTime? meetingTime;
+  final String? location;
+  final List<String> members;
+  final List<String> topics;
+  final bool isRecurring;
+  final String? recurringPattern;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'groupName': groupName.trim(),
+        'classId': classId,
+        'meetingTime': meetingTime?.toUtc().toIso8601String(),
+        'location': _nullableText(location),
+        'members': members,
+        'topics': topics,
+        'isRecurring': isRecurring,
+        'recurringPattern': _nullableText(recurringPattern),
+        'notes': _nullableText(notes),
+      };
+
+  @override
+  List<Object?> get props => [
+        groupName,
+        classId,
+        meetingTime,
+        location,
+        members,
+        topics,
+        isRecurring,
+        recurringPattern,
+        notes,
+      ];
+}
+
 int _asInt(Object? value) =>
     value is int ? value : value is num ? value.toInt() : int.tryParse('$value') ?? 0;
 
@@ -251,6 +363,9 @@ String? _asNullableString(Object? value) {
   return value;
 }
 
+List<String> _asStringList(Object? value) =>
+    value is List ? value.whereType<String>().toList(growable: false) : const [];
+
 DateTime? _asDateTime(Object? value) {
   if (value == null) return null;
   if (value is DateTime) return value;
@@ -259,3 +374,6 @@ DateTime? _asDateTime(Object? value) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String? _nullableText(String? value) =>
+    _hasText(value) ? value!.trim() : null;

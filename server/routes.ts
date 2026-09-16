@@ -2428,6 +2428,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/shopping-lists/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const itemId = Number.parseInt(req.params.id, 10);
+      if (Number.isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid shopping item ID" });
+      }
+      const deleted = await storage.deleteShoppingListItem(itemId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Shopping item not found" });
+      }
+      res.json({ message: "Shopping item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting shopping item:", error);
+      res.status(400).json({ message: "Invalid shopping item request" });
+    }
+  });
+
   // Grocery Stores routes
   app.get("/api/grocery-stores", async (req: any, res) => {
     try {

@@ -12,6 +12,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     on<RefreshAcademic>(_load);
     on<AddAcademicClass>(_addClass);
     on<AddAssignment>(_addAssignment);
+    on<AddStudyGroup>(_addStudyGroup);
     on<SetAssignmentFilter>(_setAssignmentFilter);
   }
 
@@ -35,14 +36,42 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
       final results = await Future.wait<Object>([
         repository.getClasses(),
         repository.getAssignments(),
+        repository.getStudyGroups(),
       ]);
       _emitLoaded(
         emit,
         results[0] as List<AcademicClassModel>,
         results[1] as List<AssignmentModel>,
+        studyGroups: results[2] as List<StudyGroupModel>,
       );
     } catch (error) {
       _emitFailure(emit, error);
+    }
+  }
+
+  Future<void> _addStudyGroup(
+    AddStudyGroup event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.addingStudyGroup,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createStudyGroup(event.input);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Study group created successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to create study group. Please try again.',
+      );
     }
   }
 
@@ -114,11 +143,13 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     final results = await Future.wait<Object>([
       repository.getClasses(),
       repository.getAssignments(),
+      repository.getStudyGroups(),
     ]);
     _emitLoaded(
       emit,
       results[0] as List<AcademicClassModel>,
       results[1] as List<AssignmentModel>,
+        studyGroups: results[2] as List<StudyGroupModel>,
       actionMessage: successMessage,
     );
   }
@@ -127,6 +158,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     Emitter<AcademicState> emit,
     List<AcademicClassModel> classes,
     List<AssignmentModel> assignments, {
+    required List<StudyGroupModel> studyGroups,
     String? actionMessage,
   }) {
     emit(
@@ -134,6 +166,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         status: AcademicStatus.loaded,
         classes: classes,
         assignments: assignments,
+        studyGroups: studyGroups,
         action: AcademicAction.none,
         errorMessage: null,
         actionMessage: actionMessage,

@@ -98,6 +98,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   String _messageFor(Object error) {
     if (error is ApiException) {
+      if (error.type == ApiErrorType.unauthorized) {
+        return 'Invalid email or password. Please try again.';
+      }
       return error.message;
     }
 

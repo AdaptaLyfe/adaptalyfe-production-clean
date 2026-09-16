@@ -35,6 +35,15 @@ final class AddAssignment extends AcademicEvent {
   List<Object?> get props => [input];
 }
 
+final class AddStudyGroup extends AcademicEvent {
+  const AddStudyGroup(this.input);
+
+  final StudyGroupInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
 enum AcademicAssignmentFilter {
   all,
   upcoming,

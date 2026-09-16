@@ -18,6 +18,12 @@ class AcademicApi {
   Future<AssignmentModel> createAssignment(AssignmentInput input) =>
       _post('/api/assignments', input.toJson(), AssignmentModel.fromJson);
 
+  Future<List<StudyGroupModel>> getStudyGroups() =>
+      _getList('/api/study-groups', StudyGroupModel.fromJson);
+
+  Future<StudyGroupModel> createStudyGroup(StudyGroupInput input) =>
+      _post('/api/study-groups', input.toJson(), StudyGroupModel.fromJson);
+
   Future<List<T>> _getList<T>(
     String path,
     T Function(Map<String, dynamic>) fromJson,

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../core/date/calendar_date.dart';
+
 class DailyTaskInput extends Equatable {
   const DailyTaskInput({
     required this.title,
@@ -75,6 +77,12 @@ class DailyTaskModel extends Equatable {
       completedAt: _asDateTime(json['completedAt']),
       dueDate: _asDateTime(json['dueDate']),
       lastCompleted: _asDateTime(json['lastCompleted']),
+      createdAt: _asDateTime(json['createdAt']),
+      completionDates: (json['completionDates'] is List)
+          ? (json['completionDates'] as List)
+              .whereType<String>()
+              .toList(growable: false)
+          : const [],
     );
   }
 
@@ -91,6 +99,16 @@ class DailyTaskModel extends Equatable {
   final DateTime? completedAt;
   final DateTime? dueDate;
   final DateTime? lastCompleted;
+  final DateTime? createdAt;
+  final List<String> completionDates;
+
+  bool isCompletedForDate(DateTime date) {
+    final dateKey = calendarDateKey(date);
+    if (completionDates.isNotEmpty) {
+      return completionDates.contains(dateKey);
+    }
+    return isCompleted;
+  }
 
   @override
   List<Object?> get props => [
@@ -107,6 +125,8 @@ class DailyTaskModel extends Equatable {
         completedAt,
         dueDate,
         lastCompleted,
+        createdAt,
+        completionDates,
       ];
 
   static int _asInt(Object? value) {
@@ -125,7 +145,6 @@ class DailyTaskModel extends Equatable {
   }
 
   static DateTime? _asDateTime(Object? value) {
-    if (value is! String || value.isEmpty) return null;
-    return DateTime.tryParse(value);
+    return parseCalendarDate(value);
   }
 }
