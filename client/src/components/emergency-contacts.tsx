@@ -40,10 +40,13 @@ export default function EmergencyContacts() {
   });
 
   // Fetch emergency contacts
-  const { data: contacts = [], isLoading } = useQuery({
+  const { data: rawContacts, isLoading } = useQuery({
     queryKey: ["/api/emergency-contacts"],
     queryFn: () => apiRequest("GET", "/api/emergency-contacts").then(res => res.json())
   });
+  const contacts: EmergencyContact[] = Array.isArray(rawContacts)
+    ? rawContacts
+    : [];
 
   // Add/Update contact mutation
   const saveMutation = useMutation({

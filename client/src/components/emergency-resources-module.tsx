@@ -42,9 +42,12 @@ export default function EmergencyResourcesModule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: resources = [], isLoading } = useQuery<EmergencyResource[]>({
+  const { data: rawResources, isLoading } = useQuery<
+    EmergencyResource[] | null
+  >({
     queryKey: ["/api/emergency-resources"],
   });
+  const resources = Array.isArray(rawResources) ? rawResources : [];
 
   const form = useForm<EmergencyResourceFormValues>({
     resolver: zodResolver(emergencyResourceFormSchema),

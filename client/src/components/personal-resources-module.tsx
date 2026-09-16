@@ -61,9 +61,10 @@ export default function PersonalResourcesModule() {
     },
   });
 
-  const { data: allResources = [], isLoading } = useQuery<PersonalResource[]>({
+  const { data: rawResources, isLoading } = useQuery<PersonalResource[] | null>({
     queryKey: ["/api/personal-resources"],
   });
+  const allResources = Array.isArray(rawResources) ? rawResources : [];
 
   const resources = selectedCategory === "all"
     ? allResources

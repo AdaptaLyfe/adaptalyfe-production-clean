@@ -23,3 +23,4 @@
 - [Flutter Home customization](flutter-home-customization.md) — Quick Actions and dashboard modules mirror React’s local reorder, visibility, premium, and auto-save semantics.
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
+- [Resource collection safety](resource-collection-safety.md) — resource reads can resolve to null on API failure, so collection consumers must normalize before iteration.

@@ -70,6 +70,9 @@ class ResourcesApi {
     T Function(Map<String, dynamic>) fromJson,
   ) async {
     final response = await client.get<dynamic>(path);
+    if (response.data == null) {
+      return <T>[];
+    }
     if (response.data is! List) {
       throw const FormatException('Invalid resources collection response');
     }
