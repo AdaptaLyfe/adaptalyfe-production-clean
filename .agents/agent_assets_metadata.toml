@@ -617,3 +617,17 @@ mtime_ms = 1789197695951
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f25e67a4-a0c4-446c-b5d7-2bf1e36676ba/d0750936-5679-43f3-8e18-4c65d7f7ff1a"
 storage_version_token = "1789197699601426"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8wMkvjZXJ2tN-H3O2iYRc"
+uri = "file://exports/adaptalyfe_flutter_updated_files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter updated files"
+description = "43 Flutter files changed in the latest project commit, preserving the mobile_flutter folder structure."
+logical_id = "938a4e7d-7930-4fc4-a991-9ccf57b3a387"
+content_hash = "sha256:1168a0f7711fc6d802c778f05bfa644ae999fe04b80426f9ee6bdca81616a4a7"
+size = 99622
+mtime_ms = 1789536213510
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/938a4e7d-7930-4fc4-a991-9ccf57b3a387/545bbd8f-7ab5-4ac4-a60f-44aac63a5c02"
+storage_version_token = "1789536217452967"
+content_type = "application/octet-stream"
