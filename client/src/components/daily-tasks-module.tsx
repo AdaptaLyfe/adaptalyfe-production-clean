@@ -9,6 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { formatTimeAgo } from "@/lib/utils";
 import type { DailyTask } from "@shared/schema";
 
+function getLocalCalendarDate(date = new Date()): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 export default function DailyTasksModule() {
   const { toast } = useToast();
   
@@ -18,7 +26,28 @@ export default function DailyTasksModule() {
 
   const toggleTaskMutation = useMutation({
     mutationFn: async ({ taskId, isCompleted }: { taskId: number; isCompleted: boolean }) => {
-      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, { isCompleted });
+      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
+        isCompleted,
+        date: getLocalCalendarDate(),
+      });
+    },
+    onMutate: async ({ taskId, isCompleted }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
+      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
+        currentTasks.map(task =>
+          task.id === taskId
+            ? {
+                ...task,
+                isCompleted,
+                completedAt: isCompleted ? new Date().toISOString() : null,
+              }
+            : task,
+        ),
+      );
+
+      return { previousTasks };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
@@ -26,6 +55,16 @@ export default function DailyTasksModule() {
       toast({
         title: "Task updated",
         description: "Task completion status has been updated.",
+      });
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-tasks"], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
       });
     },
   });
