@@ -27,6 +27,14 @@ function from24h(val: string): { hour: string; minute: string; ampm: string } {
   return { hour: String(h), minute: mStr || "00", ampm };
 }
 
+function getLocalCalendarDate(date = new Date()): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const parsed = from24h(value);
   const [hour, setHour] = useState(parsed.hour);
@@ -151,7 +159,28 @@ export default function DailyTasks() {
 
   const toggleTaskMutation = useMutation({
     mutationFn: async ({ taskId, isCompleted, task }: { taskId: number; isCompleted: boolean; task?: any }) => {
-      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, { isCompleted });
+      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
+        isCompleted,
+        date: getLocalCalendarDate(),
+      });
+    },
+    onMutate: async ({ taskId, isCompleted }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
+      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
+        currentTasks.map(task =>
+          task.id === taskId
+            ? {
+                ...task,
+                isCompleted,
+                completedAt: isCompleted ? new Date().toISOString() : null,
+              }
+            : task,
+        ),
+      );
+
+      return { previousTasks };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
@@ -170,6 +199,16 @@ export default function DailyTasks() {
       toast({
         title: isCompleted ? "Task completed!" : "Task updated!",
         description,
+      });
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-tasks"], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
       });
     },
   });

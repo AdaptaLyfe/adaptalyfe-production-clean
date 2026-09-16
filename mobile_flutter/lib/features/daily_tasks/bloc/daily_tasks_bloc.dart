@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/date/calendar_date.dart';
 import '../../../core/network/api_client.dart';
 import '../data/daily_tasks_repository.dart';
 import 'daily_tasks_event.dart';
@@ -145,20 +146,55 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     ToggleDailyTask event,
     Emitter<DailyTasksState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        action: DailyTaskAction.completing,
-        activeTaskId: event.taskId,
-        errorMessage: null,
-        actionMessage: null,
-      ),
-    );
+    final previousTasks = state.tasks;
+    final taskIndex = previousTasks.indexWhere((task) => task.id == event.taskId);
+    final selectedDate = event.date ?? _selectedDate;
+    final selectedDateKey =
+        selectedDate == null ? null : calendarDateKey(selectedDate);
+
+    if (taskIndex >= 0) {
+      final currentTask = previousTasks[taskIndex];
+      final updatedCompletionDates = [...currentTask.completionDates];
+      if (selectedDateKey != null) {
+        if (event.isCompleted && !updatedCompletionDates.contains(selectedDateKey)) {
+          updatedCompletionDates.add(selectedDateKey);
+        } else if (!event.isCompleted) {
+          updatedCompletionDates.remove(selectedDateKey);
+        }
+      }
+
+      final updatedTasks = [...previousTasks];
+      updatedTasks[taskIndex] = currentTask.copyWith(
+        isCompleted: event.isCompleted,
+        completedAt: event.isCompleted ? DateTime.now() : null,
+        completionDates: updatedCompletionDates,
+      );
+      emit(
+        state.copyWith(
+          status: DailyTasksStatus.loaded,
+          tasks: updatedTasks,
+          action: DailyTaskAction.completing,
+          activeTaskId: event.taskId,
+          errorMessage: null,
+          actionMessage: null,
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          action: DailyTaskAction.completing,
+          activeTaskId: event.taskId,
+          errorMessage: null,
+          actionMessage: null,
+        ),
+      );
+    }
 
     try {
       await repository.updateCompletion(
         event.taskId,
         event.isCompleted,
-        date: event.date ?? _selectedDate,
+        date: selectedDate,
       );
       await _reloadAfterMutation(
         emit,
@@ -169,6 +205,16 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
                 : 'Task updated!',
       );
     } catch (error) {
+      emit(
+        state.copyWith(
+          status: previousTasks.isEmpty
+              ? DailyTasksStatus.failure
+              : DailyTasksStatus.loaded,
+          tasks: previousTasks,
+          action: DailyTaskAction.none,
+          activeTaskId: null,
+        ),
+      );
       _emitActionError(emit, error, 'Failed to update task. Please try again.');
     }
   }

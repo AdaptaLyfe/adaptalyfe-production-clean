@@ -112,6 +112,32 @@ class DailyTaskModel extends Equatable {
     return isCompleted;
   }
 
+  DailyTaskModel copyWith({
+    bool? isCompleted,
+    Object? completedAt = _notSet,
+    List<String>? completionDates,
+  }) {
+    return DailyTaskModel(
+      id: id,
+      userId: userId,
+      title: title,
+      description: description,
+      category: category,
+      frequency: frequency,
+      estimatedMinutes: estimatedMinutes,
+      pointValue: pointValue,
+      scheduledTime: scheduledTime,
+      isCompleted: isCompleted ?? this.isCompleted,
+      completedAt: identical(completedAt, _notSet)
+          ? this.completedAt
+          : completedAt as DateTime?,
+      dueDate: dueDate,
+      lastCompleted: lastCompleted,
+      createdAt: createdAt,
+      completionDates: completionDates ?? this.completionDates,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,
@@ -150,3 +176,5 @@ class DailyTaskModel extends Equatable {
     return parseCalendarDate(value);
   }
 }
+
+const _notSet = Object();
