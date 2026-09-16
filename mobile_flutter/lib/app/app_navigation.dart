@@ -89,6 +89,11 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     return primaryIndex == -1 ? _primaryItems.length : primaryIndex;
   }
 
+  bool _isRouteActive(String location, String route) {
+    return route.isNotEmpty &&
+        (location == route || location.startsWith('$route/'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
@@ -780,6 +785,46 @@ class _MoreNavigationTile extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomNavigationButton extends StatelessWidget {
+  const _BottomNavigationButton({
+    required this.item,
+    required this.active,
+    required this.onTap,
+  });
+
+  final _NavigationDestination item;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? item.color ?? const Color(0xFF2563EB) : const Color(0xFF6B7280);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(active ? item.selectedIcon : item.icon, color: color, size: 21),
+            const SizedBox(height: 2),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

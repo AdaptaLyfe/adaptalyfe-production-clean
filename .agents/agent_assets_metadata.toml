@@ -631,3 +631,17 @@ mtime_ms = 1789536213510
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/938a4e7d-7930-4fc4-a991-9ccf57b3a387/545bbd8f-7ab5-4ac4-a60f-44aac63a5c02"
 storage_version_token = "1789536217452967"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kkeLdPehDoJZigKLeDt7L"
+uri = "file://exports/adaptalyfe_flutter_error_fixes.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter error fixes"
+description = "Corrected navigation helpers, included the missing app route observer, fixed daily-task constructor fields, and fixed sleep-date validation."
+logical_id = "9fd00bdb-b484-498e-8907-132e1f8145ae"
+content_hash = "sha256:ec8e0c5810a14ee4f9b2ee7660d888be31fb72afbf7e09d3ef0a67c3d6b9cb0e"
+size = 7804
+mtime_ms = 1789537116543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9fd00bdb-b484-498e-8907-132e1f8145ae/9b076c81-50e5-4db6-ad2a-90230e4adae5"
+storage_version_token = "1789537120620910"
+content_type = "application/octet-stream"

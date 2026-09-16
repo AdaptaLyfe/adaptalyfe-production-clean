@@ -23,7 +23,15 @@ String? sleepDateValidationError(
   DateTime? now,
 }) {
   if (!isValidSleepDate(value)) return 'Sleep date must be a valid date';
-  return value! > localSleepDateString(now)
+  final selectedParts = value!.split('-').map(int.parse).toList();
+  final selectedDate = DateTime(
+    selectedParts[0],
+    selectedParts[1],
+    selectedParts[2],
+  );
+  final current = (now ?? DateTime.now()).toLocal();
+  final today = DateTime(current.year, current.month, current.day);
+  return selectedDate.isAfter(today)
       ? 'Sleep date cannot be in the future'
       : null;
 }

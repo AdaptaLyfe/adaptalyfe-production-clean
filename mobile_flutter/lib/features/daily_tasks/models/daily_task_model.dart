@@ -60,6 +60,8 @@ class DailyTaskModel extends Equatable {
     required this.completedAt,
     required this.dueDate,
     required this.lastCompleted,
+    this.createdAt,
+    this.completionDates = const [],
   });
 
   factory DailyTaskModel.fromJson(Map<String, dynamic> json) {
