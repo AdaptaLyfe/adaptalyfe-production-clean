@@ -7,6 +7,11 @@ import '../models/settings_models.dart';
 import 'settings_event.dart';
 import 'settings_state.dart';
 
+const _invalidInvitationCodeMessage =
+    'Invalid invitation code. Please check and try again.';
+const _genericInvitationCodeError =
+    'Unable to redeem invitation code. Please try again.';
+
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc(this.repository) : super(const SettingsState()) {
     on<SettingsStarted>(_load);
@@ -344,7 +349,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     RedeemOrganizationCode event,
     Emitter<SettingsState> emit,
   ) async {
-    emit(state.copyWith(status: SettingsStatus.saving, busyKey: 'org-code'));
+    emit(
+      state.copyWith(
+        status: SettingsStatus.saving,
+        busyKey: 'org-code',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
     try {
       final orgName = await repository.redeemOrganizationCode(event.code);
       final membership = await repository.getOrganizationMembership();
@@ -507,14 +519,26 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     ApiException? error,
     String busyKey,
   ) {
+    final message = busyKey == 'org-code'
+        ? _organizationCodeErrorMessage(error)
+        : error?.message ?? 'Unable to save this setting.';
     emit(
       state.copyWith(
         status: SettingsStatus.loaded,
         busyKey: null,
-        errorMessage: error?.message ?? 'Unable to save this setting.',
+        errorMessage: message,
         sessionInvalid: error?.type == ApiErrorType.unauthorized,
       ),
     );
+  }
+
+  String _organizationCodeErrorMessage(ApiException? error) {
+    final rawMessage = error?.message.toLowerCase() ?? '';
+    if (error?.statusCode == 404 ||
+        rawMessage.contains('invalid organization code')) {
+      return _invalidInvitationCodeMessage;
+    }
+    return _genericInvitationCodeError;
   }
 
   void _emitUnexpectedActionError(
