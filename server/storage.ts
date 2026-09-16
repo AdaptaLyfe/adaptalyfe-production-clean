@@ -103,9 +103,19 @@ async function getDailyTaskSchemaCapabilities(): Promise<DailyTaskSchemaCapabili
             ) AS has_created_at,
             EXISTS (
               SELECT 1
-              FROM information_schema.tables
+              FROM information_schema.columns
               WHERE table_schema = 'public'
                 AND table_name = 'daily_task_completions'
+                AND column_name IN ('task_id', 'user_id', 'completion_date', 'completed_at')
+              GROUP BY table_schema, table_name
+              HAVING COUNT(*) = 4
+            ) AND EXISTS (
+              SELECT 1
+              FROM pg_indexes
+              WHERE schemaname = 'public'
+                AND tablename = 'daily_task_completions'
+                AND indexdef ILIKE '%UNIQUE%'
+                AND indexdef ILIKE '%(task_id, completion_date)%'
             ) AS has_completions
         `);
         const row = result.rows[0] as {
@@ -935,32 +945,43 @@ export class DatabaseStorage implements IStorage {
     if (existingTask.frequency === "daily") {
       const capabilities = await getDailyTaskSchemaCapabilities();
       if (capabilities.hasCompletions) {
-        if (isCompleted) {
-          await db
-            .insert(dailyTaskCompletions)
-            .values({
-              taskId,
-              userId: existingTask.userId,
-              completionDate,
-            })
-            .onConflictDoUpdate({
-              target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
-              set: { completedAt: new Date() },
-            });
-        } else {
-          await db
-            .delete(dailyTaskCompletions)
-            .where(and(
-              eq(dailyTaskCompletions.taskId, taskId),
-              eq(dailyTaskCompletions.userId, existingTask.userId),
-              eq(dailyTaskCompletions.completionDate, completionDate),
-            ));
+        try {
+          if (isCompleted) {
+            await db
+              .insert(dailyTaskCompletions)
+              .values({
+                taskId,
+                userId: existingTask.userId,
+                completionDate,
+              })
+              .onConflictDoUpdate({
+                target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
+                set: { completedAt: new Date() },
+              });
+          } else {
+            await db
+              .delete(dailyTaskCompletions)
+              .where(and(
+                eq(dailyTaskCompletions.taskId, taskId),
+                eq(dailyTaskCompletions.userId, existingTask.userId),
+                eq(dailyTaskCompletions.completionDate, completionDate),
+              ));
+          }
+        } catch (completionError) {
+          // A deployment can have the table without the columns/index needed
+          // by the current schema. Do not turn a task checkbox into a 500 in
+          // that case; the legacy fields below remain a safe compatibility
+          // path until the schema is brought up to date.
+          console.warn(
+            "Daily completion record unavailable; using legacy task completion fields.",
+            { taskId, completionDate, error: completionError },
+          );
         }
       }
 
       // Keep the legacy fields current for existing consumers, but the
       // completion table is the source of truth for recurring task dates.
-      if (completionDate === getServerCalendarDate()) {
+      if (!capabilities.hasCompletions || completionDate === getServerCalendarDate()) {
         const [task] = await db
           .update(dailyTasks)
           .set({

@@ -1148,7 +1148,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(task);
     } catch (error) {
-      console.error("Error updating task completion:", error);
+      console.error("Error updating task completion:", {
+        taskId: req.params.id,
+        userId: req.session.userId,
+        completionDate: req.body?.date,
+        error,
+      });
       res.status(500).json({ message: "Failed to update task" });
     }
   });
