@@ -1113,6 +1113,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!existingTask || existingTask.userId !== user.id) {
         return res.status(404).json({ message: "Task not found" });
       }
+      const taskForDate = (await storage.getDailyTasksByUser(user.id, completionDate))
+        .find(candidate => candidate.id === taskId);
+      const wasCompleted = Boolean(taskForDate?.isCompleted);
 
       const task = await storage.updateTaskCompletion(taskId, isCompleted, completionDate);
       if (!task) {
@@ -1120,9 +1123,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        if (isCompleted) {
+        if (isCompleted && !wasCompleted) {
           await storage.recordUserActivity(user.id);
-        } else {
+        } else if (!isCompleted && wasCompleted) {
           await storage.refreshUserActivityStreak(user.id);
         }
       } catch (streakError) {
@@ -1130,7 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Award points when task is completed (not when uncompleted)
-      if (isCompleted && existingTask.pointValue && existingTask.pointValue > 0) {
+      if (isCompleted && !wasCompleted && existingTask.pointValue && existingTask.pointValue > 0) {
         try {
           await storage.updateUserPoints(
             user.id, 

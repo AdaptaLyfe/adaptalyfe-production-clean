@@ -944,6 +944,7 @@ export class DatabaseStorage implements IStorage {
 
     if (existingTask.frequency === "daily") {
       const capabilities = await getDailyTaskSchemaCapabilities();
+      let completionRecordAvailable = capabilities.hasCompletions;
       if (capabilities.hasCompletions) {
         try {
           if (isCompleted) {
@@ -968,6 +969,7 @@ export class DatabaseStorage implements IStorage {
               ));
           }
         } catch (completionError) {
+          completionRecordAvailable = false;
           // A deployment can have the table without the columns/index needed
           // by the current schema. Do not turn a task checkbox into a 500 in
           // that case; the legacy fields below remain a safe compatibility
@@ -981,16 +983,18 @@ export class DatabaseStorage implements IStorage {
 
       // Keep the legacy fields current for existing consumers, but the
       // completion table is the source of truth for recurring task dates.
-      if (!capabilities.hasCompletions || completionDate === getServerCalendarDate()) {
-        const [task] = await db
+      if (!completionRecordAvailable || completionDate === getServerCalendarDate()) {
+        const legacyCompletedAt = completionRecordAvailable
+          ? new Date()
+          : new Date(`${completionDate}T12:00:00.000Z`);
+        await db
           .update(dailyTasks)
           .set({
             isCompleted,
-            completedAt: isCompleted ? new Date() : null,
+            completedAt: isCompleted ? legacyCompletedAt : null,
           })
-          .where(eq(dailyTasks.id, taskId))
-          .returning();
-        return task || undefined;
+          .where(eq(dailyTasks.id, taskId));
+        return await this.getTaskById(taskId);
       }
 
       return {
@@ -1000,15 +1004,14 @@ export class DatabaseStorage implements IStorage {
       };
     }
 
-    const [task] = await db
+    await db
       .update(dailyTasks)
       .set({ 
         isCompleted, 
         completedAt: isCompleted ? new Date() : null 
       })
-      .where(eq(dailyTasks.id, taskId))
-      .returning();
-    return task || undefined;
+      .where(eq(dailyTasks.id, taskId));
+    return await this.getTaskById(taskId);
   }
 
   async completeDailyTaskIfIncomplete(

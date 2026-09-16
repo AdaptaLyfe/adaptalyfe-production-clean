@@ -46,3 +46,9 @@ The deployed database can also lag behind the shared schema; broad ORM selects a
 **Why:** The deployed database lacked the daily-task creation-date column and completion table while the running code queried both.
 
 **How to apply:** Prefer capability-aware reads for transitional deployments, log the underlying exception, and still synchronize the deployed schema through the supported deployment migration flow.
+
+Avoid unqualified ORM `returning()` calls while supporting a legacy table shape. Even when an update only writes old columns, `returning()` can implicitly select every modeled column and fail on a deployed database that lacks a newer column.
+
+**Why:** Daily-task completion fallback still returned HTTP 500 because its update implicitly requested the missing creation-date column.
+
+**How to apply:** Execute compatibility updates without broad returning clauses, then re-read through the same capability-aware selector used by normal reads.
