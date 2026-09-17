@@ -79,7 +79,15 @@ export function SymptomTracker() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertSymptomEntry> }) =>
       apiRequest("PATCH", `/api/symptom-entries/${id}`, data),
-    onSuccess: () => {
+    onSuccess: async (response) => {
+      const updatedEntry = await response.json() as SymptomEntry;
+      queryClient.setQueryData<SymptomEntry[]>(
+        ["/api/symptom-entries"],
+        (currentEntries = []) =>
+          currentEntries.map((entry) =>
+            entry.id === updatedEntry.id ? updatedEntry : entry
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/symptom-entries"] });
       setEditingEntry(null);
       toast({ title: "Success", description: "Symptom entry updated successfully" });
@@ -496,6 +504,24 @@ export function SymptomTracker() {
                 )}
               />
 
+               <FormField
+                 control={editForm.control}
+                 name="endTime"
+                 render={({ field }) => (
+                   <FormItem>
+                     <FormLabel>End Time (Optional)</FormLabel>
+                     <FormControl>
+                       <Input
+                         type="datetime-local"
+                         value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
+                         onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                       />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>
+                 )}
+               />
+
               <FormField
                 control={editForm.control}
                 name="location"
@@ -529,6 +555,26 @@ export function SymptomTracker() {
                   </FormItem>
                 )}
               />
+
+               <FormField
+                 control={editForm.control}
+                 name="description"
+                 render={({ field }) => (
+                   <FormItem>
+                     <FormLabel>Description (Optional)</FormLabel>
+                     <FormControl>
+                       <Textarea
+                         placeholder="Describe the symptom in detail"
+                         name={field.name}
+                         value={field.value || ""}
+                         onChange={field.onChange}
+                         onBlur={field.onBlur}
+                       />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>
+                 )}
+               />
 
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" disabled={updateMutation.isPending} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">

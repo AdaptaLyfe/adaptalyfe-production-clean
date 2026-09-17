@@ -140,12 +140,18 @@ class MedicalApi {
   Future<SymptomEntryModel> updateSymptomEntry(
     int id,
     SymptomEntryInput input,
-  ) =>
-      _patch(
-        '/api/symptom-entries/$id',
-        input.toJson(),
-        SymptomEntryModel.fromJson,
-      );
+  ) {
+    final payload = input.toJson();
+    // Keep cleared optional fields explicit for PATCH updates.
+    // The add flow continues using SymptomEntryInput.toJson unchanged.
+    payload['endTime'] = input.endTime?.toUtc().toIso8601String();
+    payload['description'] = input.description?.trim() ?? '';
+    return _patch(
+      '/api/symptom-entries/$id',
+      payload,
+      SymptomEntryModel.fromJson,
+    );
+  }
 
   Future<void> deleteSymptomEntry(int id) =>
       _delete('/api/symptom-entries/$id');
