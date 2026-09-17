@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -633,10 +634,11 @@ export default function MedicalInformationModule() {
       </Tabs>
 
       {/* All Custom Dialogs - Rendered Outside Tabs to avoid React portal conflicts */}
-      
-      {/* Condition Dialog */}
+      {typeof document !== "undefined" && createPortal(
+        <>
+          {/* Condition Dialog */}
       {showConditionDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -727,7 +729,7 @@ export default function MedicalInformationModule() {
       
       {/* Allergy Dialog */}
       {showAllergyDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -806,7 +808,7 @@ export default function MedicalInformationModule() {
 
       {/* Adverse Medication Dialog */}
       {showAdverseMedDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -903,7 +905,7 @@ export default function MedicalInformationModule() {
 
       {/* Emergency Contact Dialog */}
       {showContactDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1031,7 +1033,7 @@ export default function MedicalInformationModule() {
 
       {/* Provider Dialog */}
       {showProviderDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1131,7 +1133,7 @@ export default function MedicalInformationModule() {
       
       {/* Edit Condition Dialog */}
       {editingCondition && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1221,7 +1223,7 @@ export default function MedicalInformationModule() {
 
       {/* Edit Allergy Dialog */}
       {editingAllergy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAllergy(null)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAllergy(null)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1300,7 +1302,7 @@ export default function MedicalInformationModule() {
 
       {/* Edit Adverse Medication Dialog */}
       {editingAdverseMed && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAdverseMed(null)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAdverseMed(null)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1398,7 +1400,7 @@ export default function MedicalInformationModule() {
 
       {/* Edit Emergency Contact Dialog */}
       {editingContact && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingContact(null)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingContact(null)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1521,7 +1523,7 @@ export default function MedicalInformationModule() {
 
       {/* Edit Provider Dialog */}
       {editingProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingProvider(null)}>
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingProvider(null)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -1616,6 +1618,9 @@ export default function MedicalInformationModule() {
             </div>
           </div>
         </div>
+          )}
+        </>,
+        document.body,
       )}
     </div>
   );

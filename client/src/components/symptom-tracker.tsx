@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -174,8 +175,10 @@ export function SymptomTracker() {
       </div>
 
       {/* Add Symptom Dialog */}
-      {isAddDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setIsAddDialogOpen(false)}>
+      {typeof document !== "undefined" && createPortal(
+        <>
+          {isAddDialogOpen && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setIsAddDialogOpen(false)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -337,7 +340,10 @@ export function SymptomTracker() {
               </Form>
             </div>
           </div>
-        </div>
+            </div>
+          )}
+        </>,
+        document.body,
       )}
 
       {!symptomEntries || symptomEntries.length === 0 ? (
@@ -424,9 +430,11 @@ export function SymptomTracker() {
         </div>
       )}
 
-      {/* Edit Symptom Dialog */}
-      {editingEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setEditingEntry(null)}>
+          {/* Edit Symptom Dialog */}
+      {typeof document !== "undefined" && createPortal(
+        <>
+          {editingEntry && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setEditingEntry(null)}>
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
@@ -588,7 +596,10 @@ export function SymptomTracker() {
               </Form>
             </div>
           </div>
-        </div>
+            </div>
+          )}
+        </>,
+        document.body,
       )}
     </div>
   );
