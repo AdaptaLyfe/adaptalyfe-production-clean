@@ -1,0 +1,73 @@
+Fix the Daily Tasks functionality in the existing React Native + Wrapper application.
+
+### Issue
+
+Daily Tasks was working properly before, but suddenly stopped working. The following features are not working correctly:
+
+* Add Daily Task
+* Edit Daily Task
+* Update Daily Task
+* Delete Daily Task
+
+### Required Changes
+
+1. **Investigate the issue**
+
+   * Check the existing Daily Tasks screen, components, state management, API calls, and backend integration.
+   * Find why the functionality suddenly stopped working.
+   * Check console errors, API errors, request payloads, and response handling.
+   * Do not assume the issue is only in the UI.
+
+2. **Fix Add Task**
+
+   * Verify that users can create a new daily task.
+   * Check form validation and required fields.
+   * Ensure the task is saved correctly.
+   * Show the newly added task in the list immediately.
+
+3. **Fix Edit and Update Task**
+
+   * Verify that the edit button opens the correct task.
+   * Ensure existing task data is loaded into the form.
+   * Fix the update API call or state update if needed.
+   * Ensure the updated task appears correctly in the list.
+
+4. **Fix Delete Task**
+
+   * Verify that the delete button works.
+   * Delete the correct task.
+   * Update the task list after deletion.
+   * Keep any existing confirmation popup and error handling.
+
+5. **Check Existing Functionality**
+
+   * Review recent changes that may have broken Daily Tasks.
+   * Check navigation, task IDs, API endpoints, authentication, and state management.
+   * Check whether the Wrapper and React Native versions share the same logic.
+   * Preserve the existing UI design, layout, styling, and user flow.
+
+### Important Rules
+
+* Do not rewrite the entire Daily Tasks module.
+* Do not create a new Daily Tasks screen from scratch.
+* Reuse the existing code and backend.
+* Do not change unrelated features.
+* Keep the existing API structure unless a bug requires a correction.
+* Handle loading, success, and error states properly.
+* Make sure the fix works on both React Native and Wrapper platforms.
+
+### Testing Checklist
+
+After fixing, test all of these:
+
+* [ ] Add a new daily task.
+* [ ] Edit an existing daily task.
+* [ ] Update task details.
+* [ ] Delete a daily task.
+* [ ] Refresh the page and verify data persists.
+* [ ] Verify the correct task ID is used.
+* [ ] Verify no duplicate tasks are created.
+* [ ] Verify no console errors.
+* [ ] Verify existing Daily Tasks features still work.
+
+First inspect the existing code and identify the root cause. Then implement the smallest proper fix and explain which files were changed and why.
