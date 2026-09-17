@@ -163,7 +163,7 @@ async function verifyAndUpgradePassword(user: any, password: string): Promise<bo
 // Stripe instance is created dynamically when needed
 import { 
   insertDailyTaskSchema, insertBillSchema, insertBankAccountSchema, insertMoodEntrySchema, 
-  insertAchievementSchema, insertCaregiverSchema, insertMessageSchema,
+  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
   insertShoppingListSchema, updateShoppingItemPurchasedSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
@@ -3825,11 +3825,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/emergency-contacts", async (req, res) => {
     try {
       const userId = 1; // Hardcoded for demo
-      const contactData = { ...req.body, userId };
+      const contactData = insertEmergencyContactSchema.parse({ ...req.body, userId });
       const contact = await storage.createEmergencyContact(contactData);
       res.status(201).json(contact);
     } catch (error) {
       console.error("Error creating emergency contact:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
+      }
       res.status(500).json({ message: "Failed to create emergency contact" });
     }
   });
@@ -3837,10 +3840,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/emergency-contacts/:id", async (req, res) => {
     try {
       const contactId = parseInt(req.params.id);
-      const contact = await storage.updateEmergencyContact(contactId, req.body);
+      const updates = updateEmergencyContactSchema.parse(req.body);
+      const contact = await storage.updateEmergencyContact(contactId, updates);
       res.json(contact);
     } catch (error) {
       console.error("Error updating emergency contact:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
+      }
       res.status(500).json({ message: "Failed to update emergency contact" });
     }
   });

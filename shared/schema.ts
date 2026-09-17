@@ -745,6 +745,14 @@ export const insertCaregiverSchema = createInsertSchema(caregivers).omit({
   id: true,
 });
 
+const validContactPhoneNumber = (value: string) => {
+  const normalized = value.replace(/[\s().-]/g, "");
+  return /^\+?\d{7,15}$/.test(normalized);
+};
+
+const validContactEmail = (value: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   sentAt: true,
@@ -886,7 +894,20 @@ export const insertAdverseMedicationSchema = createInsertSchema(adverseMedicatio
 export const insertEmergencyContactSchema = createInsertSchema(emergencyContacts).omit({
   id: true,
   createdAt: true,
+}).extend({
+  phoneNumber: z.string().trim().refine(
+    validContactPhoneNumber,
+    "Please enter a valid phone number with 7 to 15 digits.",
+  ),
+  email: z.string().trim().optional().nullable().refine(
+    (value) => !value || validContactEmail(value),
+    "Please enter a valid email address.",
+  ),
 });
+
+export const updateEmergencyContactSchema = insertEmergencyContactSchema
+  .omit({ userId: true })
+  .partial();
 
 export const insertPrimaryCareProviderSchema = createInsertSchema(primaryCareProviders).omit({
   id: true,

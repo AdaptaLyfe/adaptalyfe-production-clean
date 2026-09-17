@@ -1793,15 +1793,7 @@ Future<void> _showContactDialog(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(labelText: 'Phone Number *'),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Phone number is required';
-                    }
-                    if (!RegExp(r'^[0-9+\-()\s]+$').hasMatch(value.trim())) {
-                      return 'Enter a valid phone number';
-                    }
-                    return null;
-                  },
+                  validator: _phoneValidator,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -2303,7 +2295,8 @@ String? _requiredValidator(String? value) {
 
 String? _phoneValidator(String? value) {
   if (value == null || value.trim().isEmpty) return 'Phone number is required';
-  if (!RegExp(r'^[0-9+\-()\s]+$').hasMatch(value.trim())) {
+  final normalized = value.trim().replaceAll(RegExp(r'[\s().-]'), '');
+  if (!RegExp(r'^\+?\d{7,15}$').hasMatch(normalized)) {
     return 'Enter a valid phone number';
   }
   return null;

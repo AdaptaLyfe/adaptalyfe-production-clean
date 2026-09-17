@@ -1406,12 +1406,33 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const phoneNumber = (formData.get("phoneNumber") as string).trim();
+                const email = (formData.get("email") as string).trim();
+
+                if (!isValidContactPhoneNumber(phoneNumber)) {
+                  toast({
+                    title: "Invalid Phone Number",
+                    description: "Please enter a valid phone number with 7 to 15 digits.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                if (email && !isValidContactEmail(email)) {
+                  toast({
+                    title: "Invalid Email Address",
+                    description: "Please enter a valid email address.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
                 updateContact.mutate({
                   id: editingContact.id,
                   name: formData.get("name") as string,
                   relationship: formData.get("relationship") as string,
-                  phoneNumber: formData.get("phoneNumber") as string,
-                  email: formData.get("email") as string,
+                  phoneNumber,
+                  email,
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
