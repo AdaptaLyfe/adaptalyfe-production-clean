@@ -599,7 +599,7 @@ class _SignupCard extends StatelessWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '7-day free trial • Cancel anytime • Secure payment processing',
+                        '1-day free trial • Cancel anytime • Secure payment processing',
                         style: TextStyle(
                           color: Color(0xFF1E40AF),
                           fontSize: 13,

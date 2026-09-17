@@ -41,6 +41,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { getAuthenticatedUser } from "@/lib/queryClient";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -354,7 +355,7 @@ export default function Landing() {
               Choose Your <span className="text-blue-600">Plan</span>
             </h3>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              Start with a 7-day free trial. Cancel anytime. All plans include mobile app access.
+              Start with a {FREE_TRIAL_DAYS}-day free trial. Cancel anytime. All plans include mobile app access.
             </p>
           </div>
 
@@ -601,7 +602,7 @@ export default function Landing() {
           <div className="text-center mt-10">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-md">
               <Shield className="w-5 h-5 text-green-500" />
-              <span className="text-sm text-gray-700 font-medium">7-day free trial on all plans • Cancel anytime • Secure payment</span>
+              <span className="text-sm text-gray-700 font-medium">{FREE_TRIAL_DAYS}-day free trial on all plans • Cancel anytime • Secure payment</span>
             </div>
           </div>
         </div>

@@ -10,7 +10,7 @@ Adaptalyfe is a full-stack web application designed to empower individuals with 
 
 ## Previous Changes (February 16, 2026)
 - **Firebase Analytics Integration**: Connected Firebase Analytics for comprehensive app tracking including DAU, feature usage, retention metrics, churn tracking, and subscription events. Lazy-init ensures no events are dropped.
-- **7-Day Free Trial Enforcement**: Fixed trial period (was 30 days for testing), now enforces 7-day trial with full app lockout redirecting expired users to subscription/payment page.
+- **1-Day Free Trial Enforcement**: Fixed trial period with full app lockout redirecting expired users to subscription/payment page.
 - **Mood Log Confirmation Popup**: Added personalized confirmation dialog with colored gradient headers, encouragement messages, and daily tips based on selected mood.
 - **Resources Category Filter Fix**: Fixed personal resources category filter buttons to properly filter the list client-side.
 
@@ -51,7 +51,7 @@ Adaptalyfe supports various core functionalities through integrated modules:
 - **Safety Features**: Geofencing, emergency contacts quick access, smart notifications, and caregiver permission controls.
 - **Personalization**: Fully customizable dashboard with drag-and-drop tile reordering, reorderable quick action buttons, UI themes, and AI-powered recommendations.
 - **Data Management**: Export and backup functionality (JSON, CSV, PDF) with HIPAA compliance.
-- **Monetization**: Integrated Stripe payment system with Basic, Premium, and Family tiers, configured with a 7-day free trial.
+- **Monetization**: Integrated Stripe payment system with Basic, Premium, and Family tiers, configured with a 1-day free trial.
 - **Sleep Tracking**: Fully operational with accurate time saving and enhanced visual appeal for UI elements.
 
 ### System Design Choices

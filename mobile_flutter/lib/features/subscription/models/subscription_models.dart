@@ -13,7 +13,7 @@ const subscriptionPlans = <SubscriptionPlan>[
       'Financial tracking & bill reminders',
       '1 caregiver connection',
       'Basic reminders & notifications',
-      '7-day free trial',
+      '1-day free trial',
       'Email support',
     ],
   ),

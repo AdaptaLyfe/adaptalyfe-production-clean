@@ -106,7 +106,7 @@ export function SubscriptionStatus() {
               <span className="font-medium text-blue-900">Free Trial Active</span>
             </div>
             <p className="text-sm text-blue-700">
-              {subscription.trialDaysLeft} days remaining in your free trial
+              {subscription.trialDaysLeft} {subscription.trialDaysLeft === 1 ? "day" : "days"} remaining in your free trial
             </p>
           </div>
         )}

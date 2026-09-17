@@ -25,6 +25,7 @@ import {
 } from "@shared/sleep-calculations";
 import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   buildTasksRoutinesResponse,
@@ -4785,7 +4786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Calculate trial days left for regular users
       const trialEndDate = new Date(user.createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + 7); // 7-day free trial
+      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
       // Check subscription status. Trust subscriptionStatus as the single source of truth.
@@ -4849,9 +4850,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { planType, billingCycle } = req.body;
       const user = req.session.user;
       
-      // Calculate new trial end date (7 days from now)
+      // Calculate the new trial end date from the configured free-trial duration.
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
       
       // Update user subscription information in session (in production this would update database)
       req.session.user = {
@@ -4868,7 +4869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         billingCycle,
         currentPeriodStart: new Date().toISOString(),
         currentPeriodEnd: trialEndDate.toISOString(),
-        trialDaysLeft: 7,
+        trialDaysLeft: FREE_TRIAL_DAYS,
         usageStats: {
           tasks: { count: 0, limit: planType === "family" ? null : 1000 },
           caregivers: { count: 0, limit: planType === "family" ? null : 10 },
@@ -5073,11 +5074,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return next(); // Active paid subscription
     }
     
-    // Check if user is in free trial (7 days from account creation)
+    // Check if user is in the free trial from account creation.
     const trialEndDate = new Date(user.createdAt);
-    trialEndDate.setDate(trialEndDate.getDate() + 7);
+    trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
     
-    if (now <= trialEndDate && user.subscriptionTier === 'free') {
+    if (now < trialEndDate && user.subscriptionTier === 'free') {
       return next(); // Still in free trial
     }
     
@@ -5359,7 +5360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subscription = await currentStripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
-        trial_period_days: 7,
+        trial_period_days: FREE_TRIAL_DAYS,
         payment_behavior: 'default_incomplete',
         payment_settings: {
           save_default_payment_method: 'on_subscription',

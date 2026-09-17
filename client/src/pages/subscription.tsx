@@ -8,6 +8,7 @@ import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, ApiError } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeWrapper } from '@/components/stripe-wrapper';
 import {
@@ -48,7 +49,7 @@ const planFeatures: PlanFeatures = {
       "Financial tracking & bill reminders",
       "1 caregiver connection",
       "Basic reminders & notifications",
-      "7-day free trial",
+      `${FREE_TRIAL_DAYS}-day free trial`,
       "Email support"
     ]
   },
@@ -317,7 +318,7 @@ export default function SubscriptionPage() {
         : 'another platform';
 
   // Calculate trial days remaining
-  const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+  const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
 
   const handleGooglePlayPurchase = async (planType: string) => {
     if (hasActiveSubscription) {
@@ -581,7 +582,7 @@ export default function SubscriptionPage() {
             }`}>
               <Clock className="w-4 h-4" />
               {trialDaysLeft > 0 ? (
-                <>Free trial: {trialDaysLeft} days remaining</>
+                <>Free trial: {trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} remaining</>
               ) : (
                 <>Trial expired - Subscribe to continue</>
               )}
