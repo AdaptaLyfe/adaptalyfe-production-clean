@@ -393,7 +393,13 @@ export default function MedicalInformationModule() {
         <TabsContent value="conditions" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Notes</h3>
-            <Button onClick={() => setShowConditionDialog(true)} data-testid="button-add-note">
+            <Button
+              onClick={() => {
+                setConditionStatus("");
+                setShowConditionDialog(true);
+              }}
+              data-testid="button-add-note"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Note
             </Button>
@@ -429,7 +435,10 @@ export default function MedicalInformationModule() {
                       </div>
                       <div className="flex gap-2">
                         <EditButton
-                          onClick={() => setEditingCondition(condition)}
+                          onClick={() => {
+                            setConditionStatus(condition.status);
+                            setEditingCondition(condition);
+                          }}
                           aria-label={`Edit ${condition.condition}`}
                         />
                         <Button size="sm" variant="outline" onClick={() => deleteCondition.mutate(condition.id)}>
@@ -1152,7 +1161,7 @@ export default function MedicalInformationModule() {
                 updateCondition.mutate({
                   id: editingCondition.id,
                   condition: formData.get("condition") as string,
-                  status: conditionStatus,
+                  status: conditionStatus || editingCondition.status,
                   diagnosedDate: diagnosedDateStr ? diagnosedDateStr : undefined,
                   notes: typeof notes === "string" ? notes : "",
                 });

@@ -33,12 +33,19 @@ class MedicalApi {
   Future<MedicalConditionModel> updateCondition(
     int id,
     MedicalConditionInput input,
-  ) =>
-      _put(
-        '/api/medical-conditions/$id',
-        input.toJson(),
-        MedicalConditionModel.fromJson,
-      );
+  ) {
+    final payload = input.toJson();
+    // Keep the update payload explicit when a user clears an existing note.
+    // The add flow continues using MedicalConditionInput.toJson unchanged.
+    if (input.notes?.trim().isNotEmpty != true) {
+      payload['notes'] = '';
+    }
+    return _put(
+      '/api/medical-conditions/$id',
+      payload,
+      MedicalConditionModel.fromJson,
+    );
+  }
 
   Future<void> deleteCondition(int id) =>
       _delete('/api/medical-conditions/$id');
