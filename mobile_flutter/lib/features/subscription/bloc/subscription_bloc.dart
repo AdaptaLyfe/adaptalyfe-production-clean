@@ -230,7 +230,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         if (!verification.success) {
           throw ApiException(
             type: ApiErrorType.unknown,
-            message: verification.message ?? 'The purchase could not be verified.',
+            message: item.status == PurchaseStatus.restored
+                ? "No Subscription Found: We couldn't find an active subscription to restore."
+                : verification.message ?? 'The purchase could not be verified.',
           );
         }
         final subscription = await repository.getSubscription();
