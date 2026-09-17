@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -1115,6 +1116,7 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
+                  inputFormatters: [_nonNegativeMoneyFormatter],
                   decoration: const InputDecoration(
                     labelText: 'Estimated Cost (\$)',
                     hintText: '5.99',
@@ -1231,6 +1233,15 @@ String? _optionalMoneyValidator(String? value) {
   if (parsed == null || parsed < 0) return 'Enter a valid non-negative amount';
   return null;
 }
+
+final _nonNegativeMoneyFormatter = TextInputFormatter.withFunction(
+  (oldValue, newValue) {
+    final text = newValue.text;
+    return text.isEmpty || RegExp(r'^\d*\.?\d*$').hasMatch(text)
+        ? newValue
+        : oldValue;
+  },
+);
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 

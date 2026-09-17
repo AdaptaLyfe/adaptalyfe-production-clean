@@ -434,6 +434,17 @@ export default function ShoppingListModule() {
                               field.onChange(parsed);
                             }
                           }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "−") {
+                              e.preventDefault();
+                            }
+                          }}
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData("text");
+                            if (pasted.includes("-") || pasted.includes("−")) {
+                              e.preventDefault();
+                            }
+                          }}
                           onBlur={field.onBlur}
                           name={field.name}
                         />
