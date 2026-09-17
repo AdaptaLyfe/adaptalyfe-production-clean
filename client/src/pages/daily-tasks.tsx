@@ -88,13 +88,26 @@ import { TaskJourneySummary } from "@/components/ai-ready";
 
 export default function DailyTasks() {
   const { isPremiumUser } = useSubscriptionEnforcement();
+
+  // Block access if trial expired and no active subscription
+  if (!isPremiumUser) {
+    return (
+      <div className="container mx-auto p-6">
+        <PremiumFeaturePrompt
+          title="Daily Task Management"
+          description="Organize and track your daily tasks with reminders, categories, and progress tracking. Subscribe to continue using Adaptalyfe's core task management features."
+          feature="tasks"
+          requiredPlan="premium"
+          className="max-w-md mx-auto mt-20"
+        />
+      </div>
+    );
+  }
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isPremiumUser) {
-      trackFeatureUsage("daily_tasks");
-    }
-  }, [isPremiumUser]);
+    trackFeatureUsage("daily_tasks");
+  }, []);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -124,16 +137,9 @@ export default function DailyTasks() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: any) => {
-      const response = await apiRequest("POST", "/api/daily-tasks", taskData);
-      return response.json() as Promise<DailyTask>;
+      return apiRequest("POST", "/api/daily-tasks", taskData);
     },
-    onSuccess: (createdTask) => {
-      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) => {
-        if (currentTasks.some(task => task.id === createdTask.id)) {
-          return currentTasks;
-        }
-        return [...currentTasks, { ...createdTask, completionDates: createdTask.completionDates ?? [] }];
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
       setIsAddDialogOpen(false);
       setNewTask({ title: "", description: "", category: "personal_care", frequency: "daily", estimatedMinutes: "", pointValue: "", scheduledTime: "" });
@@ -209,25 +215,9 @@ export default function DailyTasks() {
 
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: number; updates: any }) => {
-      const response = await apiRequest("PATCH", `/api/daily-tasks/${taskId}`, updates);
-      return response.json() as Promise<DailyTask>;
+      return apiRequest("PATCH", `/api/daily-tasks/${taskId}`, updates);
     },
-    onSuccess: (updatedTask) => {
-      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
-        currentTasks.map(task =>
-          task.id === updatedTask.id
-            ? {
-                ...task,
-                ...updatedTask,
-                // The detail endpoint returns the stored task, while the list
-                // also carries date-specific completion fields.
-                isCompleted: task.isCompleted,
-                completedAt: task.completedAt,
-                completionDates: task.completionDates,
-              }
-            : task,
-        ),
-      );
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
       setIsEditDialogOpen(false);
       setEditingTask(null);
@@ -332,22 +322,6 @@ export default function DailyTasks() {
       });
     }
   };
-
-  // Block access if trial expired and no active subscription. This stays
-  // after all hooks so subscription loading cannot change the hook order.
-  if (!isPremiumUser) {
-    return (
-      <div className="container mx-auto p-6">
-        <PremiumFeaturePrompt
-          title="Daily Task Management"
-          description="Organize and track your daily tasks with reminders, categories, and progress tracking. Subscribe to continue using Adaptalyfe's core task management features."
-          feature="tasks"
-          requiredPlan="premium"
-          className="max-w-md mx-auto mt-20"
-        />
-      </div>
-    );
-  }
 
   const completedTasks = (tasks || []).filter(task => task.isCompleted).length;
   const totalTasks = (tasks || []).length;
