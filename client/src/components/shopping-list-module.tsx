@@ -419,10 +419,21 @@ export default function ShoppingListModule() {
                       <FormControl>
                         <Input
                           type="number"
+                          min={0}
                           step="0.01"
                           placeholder="5.99"
                           value={field.value?.toString() || ""}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const parsed = Number(value);
+                            if (Number.isFinite(parsed) && parsed >= 0) {
+                              field.onChange(parsed);
+                            }
+                          }}
                           onBlur={field.onBlur}
                           name={field.name}
                         />

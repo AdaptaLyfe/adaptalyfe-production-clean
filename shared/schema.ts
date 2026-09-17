@@ -811,10 +811,17 @@ export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
 }).extend({
   itemName: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
+  estimatedCost: z.number().finite().min(0, "Estimated cost must be 0 or greater").optional().nullable(),
+  actualCost: z.number().finite().min(0, "Actual cost must be 0 or greater").optional().nullable(),
   quantity: z.string().optional().nullable().refine(
     (value) => value == null || value.trim() === "" || !/^\s*[-−]/.test(value),
     "Quantity must be 0 or greater",
   ),
+});
+
+export const updateShoppingItemPurchasedSchema = z.object({
+  isPurchased: z.boolean(),
+  actualCost: z.number().finite().min(0, "Actual cost must be 0 or greater").optional().nullable(),
 });
 
 export const insertEmergencyResourceSchema = createInsertSchema(emergencyResources).omit({

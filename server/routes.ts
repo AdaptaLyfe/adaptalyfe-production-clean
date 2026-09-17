@@ -166,7 +166,7 @@ import {
   insertAchievementSchema, insertCaregiverSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
-  insertShoppingListSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
+  insertShoppingListSchema, updateShoppingItemPurchasedSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
   insertMedicationSchema, insertRefillOrderSchema, insertPersonalResourceSchema,
   insertBusScheduleSchema, insertEmergencyTreatmentPlanSchema,
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
@@ -2411,7 +2411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       const itemId = parseInt(req.params.id);
-      const { isPurchased, actualCost } = req.body;
+      const { isPurchased, actualCost } = updateShoppingItemPurchasedSchema.parse(req.body);
       const shoppingItems = await storage.getShoppingListsByUser(user.id);
       const existingItem = shoppingItems.find((item) => item.id === itemId);
       if (!existingItem) {
