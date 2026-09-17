@@ -65,15 +65,6 @@ class _SignupScreenState extends State<SignupScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _localError = null);
 
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      _showLocalError('Password: Passwords do not match');
-      return;
-    }
-
     if (!_ageVerified) {
       _showLocalError(
         'Age Verification Required: Users under 13 must have a parent '
@@ -86,6 +77,15 @@ class _SignupScreenState extends State<SignupScreen> {
       _showLocalError(
         'Terms Required: Please agree to the terms of service',
       );
+      return;
+    }
+
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showLocalError('Password: Passwords do not match');
       return;
     }
 
