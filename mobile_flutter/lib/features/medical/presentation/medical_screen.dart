@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
@@ -1791,7 +1792,11 @@ Future<void> _showContactDialog(
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                   decoration: const InputDecoration(labelText: 'Phone Number *'),
                   validator: _phoneValidator,
                 ),
@@ -2295,9 +2300,8 @@ String? _requiredValidator(String? value) {
 
 String? _phoneValidator(String? value) {
   if (value == null || value.trim().isEmpty) return 'Phone number is required';
-  final normalized = value.trim().replaceAll(RegExp(r'[\s().-]'), '');
-  if (!RegExp(r'^\+?\d{7,15}$').hasMatch(normalized)) {
-    return 'Enter a valid phone number';
+  if (!RegExp(r'^\d{10}$').hasMatch(value.trim())) {
+    return 'Enter a valid 10-digit phone number';
   }
   return null;
 }

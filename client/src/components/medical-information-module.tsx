@@ -101,14 +101,7 @@ const isValidContactEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const isValidContactPhoneNumber = (phoneNumber: string) => {
-  const normalizedPhoneNumber = phoneNumber.trim();
-  const digitCount = normalizedPhoneNumber.replace(/\D/g, "").length;
-
-  return (
-    /^\+?[0-9\s()-]+$/.test(normalizedPhoneNumber) &&
-    digitCount >= 7 &&
-    digitCount <= 15
-  );
+  return /^\d{10}$/.test(phoneNumber.trim());
 };
 
 export default function MedicalInformationModule() {
@@ -967,10 +960,17 @@ export default function MedicalInformationModule() {
                     required 
                     placeholder="Phone number" 
                     type="tel"
-                    pattern="\+?[0-9\s()-]{7,20}"
-                    title="Enter a valid phone number with 7 to 15 digits"
-                    onKeyPress={(e) => {
-                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    title="Enter exactly 10 digits"
+                    onKeyDown={(e) => {
+                      if (e.key.length === 1 && !/\d/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      if (!/^\d{10}$/.test(e.clipboardData.getData("text"))) {
                         e.preventDefault();
                       }
                     }}
@@ -1456,9 +1456,17 @@ export default function MedicalInformationModule() {
                     placeholder="Phone number" 
                     defaultValue={editingContact.phoneNumber}
                     type="tel"
-                    pattern="[0-9+\-\s\(\)]*"
-                    onKeyPress={(e) => {
-                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    title="Enter exactly 10 digits"
+                    onKeyDown={(e) => {
+                      if (e.key.length === 1 && !/\d/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      if (!/^\d{10}$/.test(e.clipboardData.getData("text"))) {
                         e.preventDefault();
                       }
                     }}

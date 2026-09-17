@@ -746,8 +746,7 @@ export const insertCaregiverSchema = createInsertSchema(caregivers).omit({
 });
 
 const validContactPhoneNumber = (value: string) => {
-  const normalized = value.replace(/[\s().-]/g, "");
-  return /^\+?\d{7,15}$/.test(normalized);
+  return /^\d{10}$/.test(value.trim());
 };
 
 const validContactEmail = (value: string) =>
