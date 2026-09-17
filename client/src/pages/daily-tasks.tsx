@@ -281,6 +281,7 @@ export default function DailyTasks() {
     }
     createTaskMutation.mutate({
       ...newTask,
+      scheduledTime: newTask.scheduledTime || null,
       pointValue: parseInt(newTask.pointValue as string) || 0,
       estimatedMinutes: parseInt(newTask.estimatedMinutes as string) || 15
     });
@@ -314,6 +315,7 @@ export default function DailyTasks() {
         taskId: editingTask.id,
         updates: {
           ...editTask,
+          scheduledTime: editTask.scheduledTime || null,
           pointValue: parseInt(editTask.pointValue as string) || 0,
           estimatedMinutes: parseInt(editTask.estimatedMinutes as string) || 15
         }
