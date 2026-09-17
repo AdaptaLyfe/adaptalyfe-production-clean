@@ -1009,6 +1009,42 @@ class _MedicalInlineError extends StatelessWidget {
   }
 }
 
+class _ResponsiveMedicalDialog extends StatelessWidget {
+  const _ResponsiveMedicalDialog({
+    required this.title,
+    required this.content,
+    required this.actions,
+  });
+
+  final Widget? title;
+  final Widget? content;
+  final List<Widget>? actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight =
+        mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+
+    return AlertDialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      title: title,
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: (mediaQuery.size.width - 32)
+              .clamp(0.0, 560.0)
+              .toDouble(),
+          maxHeight: (availableHeight - 180)
+              .clamp(120.0, 600.0)
+              .toDouble(),
+        ),
+        child: content,
+      ),
+      actions: actions,
+    );
+  }
+}
+
 class _MedicalDialogScope extends StatelessWidget {
   const _MedicalDialogScope({
     required this.bloc,
@@ -1070,7 +1106,7 @@ Future<void> _showConditionDialog(
           ? 'Note added successfully.'
           : 'Note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(existing == null ? 'Add Medical Condition' : 'Edit Medical Condition'),
         content: Form(
           key: formKey,
@@ -1185,7 +1221,7 @@ Future<void> _showAllergyDialog(
           ? 'Sensitivity added successfully.'
           : 'Sensitivity updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(existing == null ? 'Add New Allergy' : 'Edit Allergy'),
         content: Form(
           key: formKey,
@@ -1298,7 +1334,7 @@ Future<void> _showAdverseMedicationDialog(
           ? 'Reaction added successfully.'
           : 'Reaction updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(
           existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
         ),
@@ -1434,7 +1470,7 @@ Future<void> _showProviderDialog(
           ? 'Healthcare contact added successfully.'
           : 'Healthcare contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(
           existing == null
               ? 'Add Primary Care Provider'
@@ -1594,7 +1630,7 @@ Future<void> _showSymptomDialog(
           ? 'Personal note added successfully.'
           : 'Personal note updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
         content: Form(
           key: formKey,
@@ -1759,7 +1795,7 @@ Future<void> _showContactDialog(
           ? 'Trusted contact added successfully.'
           : 'Trusted contact updated successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
         content: Form(
           key: formKey,
@@ -1912,7 +1948,7 @@ Future<void> _showMedicationDialog(BuildContext context) async {
       action: 'medication',
       successMessage: 'Medication added successfully.',
       builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
         title: const Text('Add New Medication'),
         content: Form(
           key: formKey,
