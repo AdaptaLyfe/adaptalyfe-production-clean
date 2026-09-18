@@ -100,7 +100,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await repository.getCurrentUser();
       // Do not let a slow resume request restore a session after a logout or
       // a different user has already taken over the bloc.
-      if (state is! Authenticated || state.user.id != currentState.user.id) {
+      final latestState = state;
+      if (latestState is! Authenticated ||
+          latestState.user.id != currentState.user.id) {
         return;
       }
       emit(
