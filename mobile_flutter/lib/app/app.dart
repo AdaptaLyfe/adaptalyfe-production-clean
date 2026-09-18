@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../core/analytics/firebase_analytics_service.dart';
 import '../core/notifications/native_notification_service.dart';
 import '../features/auth/bloc/auth_bloc.dart';
+import '../features/auth/bloc/auth_event.dart';
 import '../features/auth/bloc/auth_state.dart';
 import 'routes.dart';
 
@@ -65,6 +66,9 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _analytics.startSession();
+      if (_authBloc.state is Authenticated) {
+        _authBloc.add(const RefreshAuthentication());
+      }
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _analytics.endSession();

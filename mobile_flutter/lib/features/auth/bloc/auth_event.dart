@@ -55,6 +55,10 @@ final class CheckAuthentication extends AuthEvent {
   const CheckAuthentication();
 }
 
+final class RefreshAuthentication extends AuthEvent {
+  const RefreshAuthentication();
+}
+
 final class LogoutRequested extends AuthEvent {
   const LogoutRequested();
 }

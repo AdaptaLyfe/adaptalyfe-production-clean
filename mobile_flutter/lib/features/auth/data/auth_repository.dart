@@ -33,7 +33,10 @@ class AuthRepository {
     );
 
     await _saveSessionTokenIfPresent(response);
-    return _userFromResponse(response);
+    // The login response is intentionally minimal. Read the shared current
+    // user after storing the native bearer token so entitlement fields and
+    // account metadata are immediately consistent with the web session.
+    return getCurrentUser();
   }
 
   Future<RegistrationResult> register({
@@ -70,7 +73,9 @@ class AuthRepository {
     }
 
     return RegistrationResult(
-      user: _userFromResponse(response),
+      // Registration also returns a minimal user object. Fetch the canonical
+      // record after any invitation-code redemption has completed.
+      user: await getCurrentUser(),
       organizationCodeApplied: organizationCodeApplied,
     );
   }

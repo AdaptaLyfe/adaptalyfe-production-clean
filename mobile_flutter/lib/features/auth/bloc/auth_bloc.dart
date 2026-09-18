@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginSubmitted>(_onLoginSubmitted);
     on<SignupSubmitted>(_onSignupSubmitted);
     on<CheckAuthentication>(_onCheckAuthentication);
+    on<RefreshAuthentication>(_onRefreshAuthentication);
     on<LogoutRequested>(_onLogoutRequested);
   }
 
@@ -83,6 +84,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthError(error.message));
     } catch (error) {
       emit(AuthError(_messageFor(error)));
+    }
+  }
+
+  Future<void> _onRefreshAuthentication(
+    RefreshAuthentication event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! Authenticated) return;
+
+    try {
+      // Keep the authenticated state while refreshing so app resume does not
+      // redirect through the splash screen or disrupt the current route.
+      final user = await repository.getCurrentUser();
+      // Do not let a slow resume request restore a session after a logout or
+      // a different user has already taken over the bloc.
+      if (state is! Authenticated || state.user.id != currentState.user.id) {
+        return;
+      }
+      emit(
+        Authenticated(
+          user,
+          organizationCodeApplied: currentState.organizationCodeApplied,
+        ),
+      );
+    } on ApiException catch (error) {
+      if (error.type == ApiErrorType.unauthorized) {
+        await repository.clearLocalSession();
+        emit(const Unauthenticated());
+      }
+      // Transient resume failures leave the last known authenticated state in
+      // place. The next resume or explicit screen refresh can retry.
+    } catch (_) {
+      // Keep the last known authenticated state on transient network errors.
     }
   }
 

@@ -11,6 +11,7 @@ class UserModel {
     this.subscriptionTier,
     this.subscriptionStatus,
     this.subscriptionPlatform,
+    this.subscriptionExpiresAt,
   });
 
   final int id;
@@ -24,6 +25,7 @@ class UserModel {
   final String? subscriptionTier;
   final String? subscriptionStatus;
   final String? subscriptionPlatform;
+  final DateTime? subscriptionExpiresAt;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
@@ -46,6 +48,7 @@ class UserModel {
       subscriptionTier: json['subscriptionTier'] as String?,
       subscriptionStatus: json['subscriptionStatus'] as String?,
       subscriptionPlatform: json['subscriptionPlatform'] as String?,
+      subscriptionExpiresAt: _parseDate(json['subscriptionExpiresAt']),
     );
   }
 

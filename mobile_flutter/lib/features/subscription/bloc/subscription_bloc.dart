@@ -158,6 +158,17 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     );
     try {
       await purchaseService.restore();
+      // The store emits restored purchases through purchaseStream, but it
+      // emits nothing when the store account has no matching purchase. Do not
+      // leave the screen indefinitely in the restoring state in that case.
+      if (state.status == SubscriptionStatus.restoring) {
+        emit(
+          state.copyWith(
+            status: SubscriptionStatus.ready,
+            actionMessage: 'No previous subscription was found on this store account.',
+          ),
+        );
+      }
     } catch (error) {
       emit(
         state.copyWith(
