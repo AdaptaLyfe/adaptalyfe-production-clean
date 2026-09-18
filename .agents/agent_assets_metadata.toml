@@ -715,3 +715,17 @@ mtime_ms = 1789714372839
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/fdaf31b7-a29c-407c-b863-ebdc402c813a/dbd3816b-1760-4dce-b62e-bb5b763386a0"
 storage_version_token = "1789714378078569"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d1P86dgQZmfRJSLi7FA8M"
+uri = "file://exports/adaptalyfe-flutter-sleep-feature.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Sleep Feature"
+description = "Complete Flutter Sleep feature source with models, API/repository, BLoC, validation, calculations, trends, UI, routing, and navigation wiring. React Native and Wrapper files were not modified or included."
+logical_id = "82eabd64-3a19-439c-8a81-ad038083ea75"
+content_hash = "sha256:9d0d4597794d245875a670bb86fc661c024def0b3d17ddf1289e3711b89fe349"
+size = 27423
+mtime_ms = 1789715477083
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82eabd64-3a19-439c-8a81-ad038083ea75/b31b28a3-1392-41ab-beb5-793327c34f43"
+storage_version_token = "1789715491651710"
+content_type = "application/octet-stream"

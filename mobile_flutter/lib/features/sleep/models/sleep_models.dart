@@ -102,9 +102,9 @@ class SleepSessionInput extends Equatable {
 
   Map<String, dynamic> toJson() => {
         'sleepDate': sleepDate,
-        'bedtime': bedtime?.toIso8601String(),
-        'sleepTime': sleepTime?.toIso8601String(),
-        'wakeTime': wakeTime?.toIso8601String(),
+        'bedtime': _utcIso8601(bedtime),
+        'sleepTime': _utcIso8601(sleepTime),
+        'wakeTime': _utcIso8601(wakeTime),
         'quality': _nullableText(quality),
         'notes': _nullableText(notes),
       };
@@ -154,3 +154,5 @@ String? _asNullableString(Object? value) {
 
 String? _nullableText(String? value) =>
     value == null || value.trim().isEmpty ? null : value.trim();
+
+String? _utcIso8601(DateTime? value) => value?.toUtc().toIso8601String();

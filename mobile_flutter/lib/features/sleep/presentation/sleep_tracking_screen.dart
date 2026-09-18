@@ -95,10 +95,24 @@ class _SleepDashboardState extends State<_SleepDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = _calculateStats(widget.state.sessions, _targetSleepDuration);
+    final stats = _calculateStats(
+      widget.state.sessions,
+      _targetSleepDuration,
+      referenceDate: _dateOnly(widget.state.activeDate),
+    );
     return DefaultTabController(
       length: 4,
-      child: Scaffold(
+      child: Builder(
+        builder: (tabContext) => BlocListener<SleepBloc, SleepState>(
+          listenWhen: (previous, current) =>
+              current.actionMessage != null &&
+              current.actionMessage != previous.actionMessage,
+          listener: (_, state) {
+            if (state.actionMessage != null) {
+              DefaultTabController.of(tabContext).animateTo(0);
+            }
+          },
+          child: Scaffold(
         appBar: AppBar(
           title: const Text('Sleep Routine'),
           actions: [
@@ -152,6 +166,8 @@ class _SleepDashboardState extends State<_SleepDashboard> {
               ),
             ),
           ],
+        ),
+          ),
         ),
       ),
     );
@@ -296,7 +312,7 @@ class _StatsGrid extends StatelessWidget {
         _StatCard(
           title: 'Sleep Score',
           value: stats?.avgSleepScore == null
-              ? '--/100'
+              ? '--'
               : '${stats!.avgSleepScore}/100',
           subtitle: 'Average quality',
           icon: Icons.star_outline,
@@ -434,7 +450,7 @@ class _SleepHistoryCard extends StatelessWidget {
                       ),
                       _SleepMetric(
                         value: session.sleepScore == null
-                            ? '--/100'
+                            ? '--'
                             : '${session.sleepScore}/100',
                         label: 'Score',
                       ),
@@ -510,7 +526,7 @@ class _SleepHistoryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                session.sleepScore == null ? '--/100' : '${session.sleepScore}/100',
+                session.sleepScore == null ? '--' : '${session.sleepScore}/100',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const Text(
@@ -674,7 +690,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    hasExisting ? 'Edit Sleep Session' : 'Log Sleep Session',
+                    'Log Sleep Session',
                     style: const TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.w700,
@@ -781,7 +797,9 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                       onPressed: widget.state.busyAction != null ? null : _save,
                       icon: Icon(hasExisting ? Icons.save_outlined : Icons.add),
                       label: Text(
-                        hasExisting ? 'Update Sleep Session' : 'Save Sleep Session',
+                        widget.state.busyAction != null
+                            ? 'Saving...'
+                            : 'Save Sleep Session',
                       ),
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFF16A34A),
@@ -942,7 +960,7 @@ class _TrendsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recent = getRecentSleepSessions(sessions);
+    final ordered = sortSleepSessionsChronologically(sessions);
     return ListView(
        padding: AppResponsive.pagePadding(context).add(
          const EdgeInsets.only(top: 18, bottom: 32),
@@ -951,7 +969,7 @@ class _TrendsTab extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: recent.isEmpty
+            child: ordered.isEmpty
                 ? const _EmptyCard(
                     icon: Icons.bar_chart_outlined,
                     title: 'Not enough data to show trends',
@@ -973,7 +991,7 @@ class _TrendsTab extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
-                      ...recent.map(
+                      ...ordered.map(
                         (session) => _DurationTrendRow(session: session),
                       ),
                       const SizedBox(height: 22),
@@ -982,7 +1000,7 @@ class _TrendsTab extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 8),
-                      ...recent.map(
+                      ...ordered.map(
                         (session) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
@@ -1037,7 +1055,7 @@ class _DurationTrendRow extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Container(
                 height: 8,
-                width: barWidth * 2,
+                width: barWidth,
                 decoration: BoxDecoration(
                   color: const Color(0xFF3B82F6),
                   borderRadius: BorderRadius.circular(6),
@@ -1151,9 +1169,9 @@ class _GoalsTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Weekly total: '
-                          '${_formatDuration(stats!.weeklyTotalSleepDuration)} / '
-                          'Target: ${_formatDuration(stats!.weeklyGoalTargetMinutes)}',
+                          'Average: '
+                          '${_formatDuration(stats!.weeklyAvgSleepDuration)} / '
+                          'Target: ${_formatDuration(goals.targetSleepDuration)}',
                           style: const TextStyle(color: Color(0xFF4B5563)),
                         ),
                       ],
@@ -1410,10 +1428,14 @@ class _SleepGoalValues {
 SleepStats? _calculateStats(
   List<SleepSessionModel> sessions,
   int targetSleepDuration,
+  {
+    String? referenceDate,
+  }
 ) =>
     calculateSleepStats(
       sessions,
       targetSleepDuration: targetSleepDuration,
+      referenceDate: referenceDate,
     );
 
 Future<void> _confirmDelete(

@@ -76,7 +76,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     await _runMutation(
       emit,
       action: 'add',
-      successMessage: 'Sleep session saved successfully.',
+      successMessage: 'Sleep session saved successfully!',
       operation: () => repository.createSession(event.input),
     );
   }
@@ -93,7 +93,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     await _runMutation(
       emit,
       action: 'update',
-      successMessage: 'Sleep session updated successfully.',
+      successMessage: 'Sleep session saved successfully!',
       operation: () => repository.updateSession(event.id, event.input),
     );
   }
@@ -105,7 +105,8 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     await _runMutation(
       emit,
       action: 'delete',
-      successMessage: 'Sleep log deleted.',
+      successMessage:
+          'Sleep log deleted. The sleep log was permanently deleted.',
       operation: () => repository.deleteSession(event.id),
     );
   }
@@ -181,7 +182,15 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
         ),
       );
     } catch (error) {
-      _emitFailure(emit, error, keepData: true, busyAction: null);
+      _emitFailure(
+        emit,
+        error,
+        keepData: true,
+        busyAction: null,
+        fallbackMessage: action == 'delete'
+            ? 'Failed to delete sleep log. Please try again.'
+            : 'Failed to save sleep session',
+      );
     }
   }
 
@@ -190,6 +199,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     Object error, {
     required bool keepData,
     String? busyAction,
+    String? fallbackMessage,
   }) {
     final unauthorized =
         error is ApiException && error.type == ApiErrorType.unauthorized;
@@ -197,7 +207,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       state.copyWith(
         status: keepData ? SleepStatus.loaded : SleepStatus.failure,
         busyAction: busyAction,
-        errorMessage: _messageFor(error),
+        errorMessage: fallbackMessage ?? _messageFor(error),
         actionMessage: null,
         sessionInvalid: unauthorized,
       ),
