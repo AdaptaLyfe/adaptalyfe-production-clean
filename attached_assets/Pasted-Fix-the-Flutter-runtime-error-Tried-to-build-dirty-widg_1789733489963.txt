@@ -1,0 +1,212 @@
+Fix the Flutter runtime error:
+
+`Tried to build dirty widget in the wrong build scope.`
+
+The error points to:
+
+`AnimatedDefaultTextStyle`
+`BuildScope._debugAssertElementInScope`
+`BuildScope._flushDirtyElements`
+
+There was also a previous error in this project:
+
+`Duplicate GlobalKeys detected in widget tree`
+
+with:
+`_OverlayEntryWidgetState`
+`_Theater`
+
+### IMPORTANT
+
+Treat these two errors as potentially connected. Do NOT simply modify `AnimatedDefaultTextStyle`. Find the actual widget-tree/overlay/navigation lifecycle problem causing the error.
+
+### TASK
+
+1. Inspect the entire Flutter project for incorrect widget lifecycle handling.
+
+2. Find the root cause of the previous duplicate GlobalKey/Overlay problem and this new dirty build-scope problem.
+
+3. Inspect all:
+
+   * `showDialog`
+   * `showModalBottomSheet`
+   * `OverlayEntry`
+   * `Overlay.of(context)`
+   * `PopupMenuButton`
+   * `DropdownButton`
+   * `MenuAnchor`
+   * `ScaffoldMessenger`
+   * `Navigator.push/pop`
+   * `context.go`
+   * `context.push`
+   * GoRouter redirects
+   * BLoC listeners
+   * BlocListener
+   * BlocConsumer
+   * StatefulWidget lifecycle methods
+   * `setState`
+   * timers
+   * animation controllers
+   * streams/listeners
+   * Firebase auth listeners
+
+4. Look specifically for:
+
+   * `setState()` being called after a widget is disposed.
+   * UI updates happening after navigation.
+   * Dialogs or bottom sheets being opened while the widget is being removed.
+   * Multiple navigation calls during the same frame.
+   * Multiple dialogs/overlays being opened from one event.
+   * OverlayEntry being inserted more than once.
+   * OverlayEntry being removed incorrectly.
+   * BLoC listeners triggering navigation/dialogs multiple times.
+   * Async callbacks updating a widget after `dispose()`.
+   * Timers or stream subscriptions not being cancelled.
+   * AnimationController not being disposed.
+   * Using an old `BuildContext` after navigation.
+   * Calling `setState()` during `build()`.
+   * Calling navigation/dialog methods directly during `build()`.
+   * Reusing GlobalKeys.
+   * Widgets being moved between parents incorrectly.
+   * Conditional widgets with incorrectly reused GlobalKeys.
+   * Nested `MaterialApp`, `Navigator`, or `Overlay` implementations that may be causing separate build scopes.
+
+### BLoC / ASYNC CHECK
+
+For every async operation such as:
+
+```dart
+await ...
+```
+
+followed by:
+
+```dart
+setState(...)
+```
+
+or:
+
+```dart
+Navigator...
+```
+
+or:
+
+```dart
+showDialog(...)
+```
+
+verify that the widget is still mounted.
+
+Use the appropriate pattern where required:
+
+```dart
+if (!mounted) return;
+```
+
+For callbacks using a BuildContext, make sure the context is still valid before using it.
+
+### DIALOG / OVERLAY CHECK
+
+Make sure dialogs and bottom sheets cannot be opened multiple times from the same event.
+
+Do not create duplicate overlays.
+
+Do not reuse the same `GlobalKey` for multiple widgets.
+
+Do not fix the problem by randomly removing keys.
+
+### NAVIGATION CHECK
+
+Inspect GoRouter and Navigator interactions.
+
+Make sure the same state change does not cause both:
+
+```dart
+context.go(...)
+```
+
+and:
+
+```dart
+Navigator.push(...)
+```
+
+for the same navigation.
+
+Check Splash/Auth flow carefully for duplicate navigation caused by:
+
+* Firebase auth state
+* AuthBloc
+* GoRouter redirect
+* Splash initialization
+
+Only one navigation mechanism should handle each route transition.
+
+### LIFECYCLE CHECK
+
+For every StatefulWidget, verify:
+
+```dart
+@override
+void dispose() {
+  ...
+  super.dispose();
+}
+```
+
+Cancel:
+
+* Timer
+* StreamSubscription
+* AnimationController
+* TextEditingController listeners
+* FocusNode listeners
+* ChangeNotifier listeners
+* other callbacks/subscriptions
+
+when necessary.
+
+### DO NOT
+
+* Do not rewrite the whole application.
+* Do not remove existing features.
+* Do not change the UI design.
+* Do not change Firebase functionality.
+* Do not change API behavior.
+* Do not change BLoC architecture unnecessarily.
+* Do not suppress the Flutter assertion.
+* Do not use try/catch to hide the error.
+* Do not add random `Future.delayed()` calls as a workaround.
+* Do not randomly add/remove GlobalKeys.
+* Do not modify Flutter framework files.
+
+### FIX REQUIREMENT
+
+Make the smallest proper code changes that fix the actual lifecycle/build-scope problem.
+
+After fixing:
+
+1. Run/analyze the project.
+2. Check for analyzer errors.
+3. Test the affected flow.
+4. Verify that the previous `Duplicate GlobalKeys detected in widget tree` error is also resolved.
+5. Verify that:
+
+   * no duplicate dialogs appear,
+   * no duplicate bottom sheets appear,
+   * no duplicate navigation occurs,
+   * no widget is updated after dispose,
+   * no dirty widget remains in the wrong build scope.
+
+### FINAL RESPONSE
+
+After making the changes, tell me:
+
+1. Exact root cause.
+2. Exact files changed.
+3. What was changed in each file.
+4. Why `AnimatedDefaultTextStyle` appeared in the error even if it was not the real cause.
+5. How the fix also prevents the previous Duplicate GlobalKeys error.
+6. Whether the project passes analysis/build.
