@@ -757,3 +757,17 @@ mtime_ms = 1789718547212
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f5e0123-77e7-4968-95de-5e3aedd59d86/a23bb4ff-3b0e-4906-8191-1ebe46bdf994"
 storage_version_token = "1789718568853933"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T06dgRYnf7shBQ148qnqz"
+uri = "file://exports/adaptalyfe-flutter-health-records-build-scope-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Build-Scope Fix"
+description = "Updated Flutter Health Records ZIP with the screenshot-specific fix. Add and edit dialogs now close directly through the BLoC listener without rebuilding the animated submit button during the same success transition. Includes CRUD lifecycle guards, persisted-value normalization, date safety, the complete medical feature, routing, and navigation."
+logical_id = "10d6af5b-afe5-4558-afb0-11efc03162db"
+content_hash = "sha256:b35b573a69099d12283ac61125701b72615b378d12ffe7a115b51a47bb43febb"
+size = 31560
+mtime_ms = 1789719210767
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/10d6af5b-afe5-4558-afb0-11efc03162db/33ccc571-f4bc-49f6-806e-617d1fca0909"
+storage_version_token = "1789719220152721"
+content_type = "application/octet-stream"
