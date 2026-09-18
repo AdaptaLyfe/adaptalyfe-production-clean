@@ -785,3 +785,17 @@ mtime_ms = 1789719651319
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7f3b611d-2fa5-485a-86f7-803ee817fd59/b46cff54-d9d5-4bf2-bee1-6f2efb0bfd7f"
 storage_version_token = "1789719657148778"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LdG9XHbzVV6vg6BwJttet"
+uri = "file://exports/resources-flutter-updated-files.zip"
+type = "unspecified"
+title = "Updated Flutter Resources files"
+description = "ZIP archive containing the seven updated Flutter Resources feature files."
+logical_id = "e06cb15a-0f25-4ffc-9651-c818ae61a567"
+content_hash = "sha256:4c6ce54885b51192ae6d1e50b95e34a950d3ae9c19e39d63dd64c4a391a25083"
+size = 25492
+mtime_ms = 1789721448801
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e06cb15a-0f25-4ffc-9651-c818ae61a567/ff66c867-5184-4ce4-864b-3d0f16a36ea3"
+storage_version_token = "1789721452998183"
+content_type = "application/octet-stream"
