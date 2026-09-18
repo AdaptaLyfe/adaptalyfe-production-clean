@@ -22,11 +22,14 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
   }
 
   final MealShoppingRepository repository;
+  bool _loadInFlight = false;
 
   Future<void> _load(
     MealShoppingEvent event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (_loadInFlight || state.isBusy) return;
+    _loadInFlight = true;
     emit(
       state.copyWith(
         status: MealShoppingStatus.loading,
@@ -42,6 +45,8 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
       _emitSnapshot(emit, snapshot);
     } catch (error) {
       _emitFailure(emit, error);
+    } finally {
+      _loadInFlight = false;
     }
   }
 
@@ -49,6 +54,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     AddMealPlan event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.addingMeal,
@@ -72,6 +78,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     ToggleMealCompletion event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.completingMeal,
@@ -101,6 +108,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     DeleteMealPlan event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.deletingMeal,
@@ -128,6 +136,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     AddShoppingItem event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     if ((event.input.estimatedCost != null &&
             event.input.estimatedCost! < 0) ||
         (event.input.actualCost != null && event.input.actualCost! < 0)) {
@@ -169,6 +178,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     ToggleShoppingItem event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.completingShoppingItem,
@@ -202,6 +212,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     DeleteShoppingItem event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.deletingShoppingItem,
@@ -229,6 +240,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     AddGroceryStore event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     await _runStoreMutation(
       emit,
       action: MealShoppingAction.addingGroceryStore,
@@ -242,6 +254,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     UpdateGroceryStore event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     await _runStoreMutation(
       emit,
       action: MealShoppingAction.updatingGroceryStore,
@@ -256,6 +269,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     DeleteGroceryStore event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if (state.isBusy) return;
     emit(
       state.copyWith(
         action: MealShoppingAction.deletingGroceryStore,
@@ -383,7 +397,9 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
       try {
         stores = await repository.getGroceryStores();
       } catch (_) {
-        // Grocery-store availability should not hide a usable shopping list.
+        // Grocery-store availability should not hide a usable shopping list
+        // or replace an already loaded store list with an empty one.
+        stores = state.groceryStores;
       }
       emit(
         state.copyWith(

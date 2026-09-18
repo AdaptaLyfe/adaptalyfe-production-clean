@@ -48,7 +48,11 @@ class MealShoppingState extends Equatable {
   final bool sessionInvalid;
 
   bool get isLoading => status == MealShoppingStatus.loading;
-  bool get hasData => mealPlans.isNotEmpty || shoppingItems.isNotEmpty;
+  bool get isBusy => isLoading || action != MealShoppingAction.none;
+  bool get hasData =>
+      mealPlans.isNotEmpty ||
+      shoppingItems.isNotEmpty ||
+      groceryStores.isNotEmpty;
 
   MealShoppingState copyWith({
     MealShoppingStatus? status,

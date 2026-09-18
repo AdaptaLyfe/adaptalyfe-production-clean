@@ -281,6 +281,7 @@ class _MealDateSection extends StatelessWidget {
             (meal) => _MealPlanCard(
               meal: meal,
               isBusy: busyId == meal.id,
+              onTap: () => _showMealSelectionMessage(context, meal),
               onDelete: () => _confirmDeleteMeal(context, meal),
             ),
           ),
@@ -294,11 +295,13 @@ class _MealPlanCard extends StatelessWidget {
   const _MealPlanCard({
     required this.meal,
     required this.isBusy,
+    required this.onTap,
     required this.onDelete,
   });
 
   final MealPlanModel meal;
   final bool isBusy;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
   @override
@@ -306,11 +309,14 @@ class _MealPlanCard extends StatelessWidget {
     final color = _mealTypeColor(meal.mealType);
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Checkbox(
               value: meal.isCompleted,
               onChanged: isBusy
@@ -412,11 +418,20 @@ class _MealPlanCard extends StatelessWidget {
               onPressed: isBusy ? null : onDelete,
               icon: const Icon(Icons.delete_outline_rounded),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+void _showMealSelectionMessage(BuildContext context, MealPlanModel meal) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(content: Text('Meal selected: ${meal.mealName}')),
+    );
 }
 
 Future<void> _confirmDeleteMeal(
@@ -1512,9 +1527,8 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                       FilledButton.icon(
                         onPressed: busy
                             ? null
-                            : () {
-                                Navigator.of(dialogContext).pop();
-                                _showStoreFormDialog(context);
+                            : () async {
+                                await _showStoreFormDialog(context);
                               },
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('Add New Store'),
@@ -1547,8 +1561,10 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                                 store: store,
                                 isBusy: isBusy,
                                 onEdit: () {
-                                  Navigator.of(dialogContext).pop();
-                                  _showStoreFormDialog(context, store: store);
+                                  await _showStoreFormDialog(
+                                    context,
+                                    store: store,
+                                  );
                                 },
                                 onDelete: () =>
                                     _confirmDeleteStore(context, store),
