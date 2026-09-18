@@ -42,21 +42,57 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     );
 
     try {
-      final results = await Future.wait<Object>([
-        repository.getPersonalResources(),
-        repository.getEmergencyResources(),
-        repository.getEmergencyContacts(),
+      final results = await Future.wait<dynamic>([
+        _loadCollection<List<PersonalResourceModel>>(
+          repository.getPersonalResources,
+        ),
+        _loadCollection<List<EmergencyResourceModel>>(
+          repository.getEmergencyResources,
+        ),
+        _loadCollection<List<EmergencyContactModel>>(
+          repository.getEmergencyContacts,
+        ),
       ]);
       if (emit.isDone) return;
+
+      final personalResult =
+          results[0] as _ResourceLoadResult<List<PersonalResourceModel>>;
+      final emergencyResult =
+          results[1] as _ResourceLoadResult<List<EmergencyResourceModel>>;
+      final contactsResult =
+          results[2] as _ResourceLoadResult<List<EmergencyContactModel>>;
+      final errors = [
+        personalResult.error,
+        emergencyResult.error,
+        contactsResult.error,
+      ].whereType<Object>().toList();
+
+      if (personalResult.value == null &&
+          emergencyResult.value == null &&
+          contactsResult.value == null) {
+        _emitFailure(
+          emit,
+          errors.isEmpty ? const FormatException() : errors.first,
+          fallback: 'Unable to load your resources. Please try again.',
+        );
+        return;
+      }
+
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
-          personalResources: results[0] as List<PersonalResourceModel>,
-          emergencyResources: results[1] as List<EmergencyResourceModel>,
-          emergencyContacts: results[2] as List<EmergencyContactModel>,
+          personalResources:
+              personalResult.value ?? state.personalResources,
+          emergencyResources:
+              emergencyResult.value ?? state.emergencyResources,
+          emergencyContacts:
+              contactsResult.value ?? state.emergencyContacts,
           busyKey: null,
-          errorMessage: null,
+          errorMessage: errors.isEmpty
+              ? null
+              : 'Some resource sections could not be loaded. Pull to retry.',
           actionMessage: null,
+          sessionInvalid: errors.any(_isUnauthorized),
         ),
       );
     } on ApiException catch (error) {
@@ -70,6 +106,20 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         fallback: 'Unable to load your resources. Please try again.',
       );
     }
+  }
+
+  Future<_ResourceLoadResult<T>> _loadCollection<T>(
+    Future<T> Function() loader,
+  ) async {
+    try {
+      return _ResourceLoadResult.success(await loader());
+    } catch (error) {
+      return _ResourceLoadResult.failure(error);
+    }
+  }
+
+  bool _isUnauthorized(Object? error) {
+    return error is ApiException && error.type == ApiErrorType.unauthorized;
   }
 
   void _filterPersonalResources(
@@ -117,6 +167,15 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
       );
     }
   }
+
+class _ResourceLoadResult<T> {
+  const _ResourceLoadResult.success(this.value) : error = null;
+
+  const _ResourceLoadResult.failure(this.error) : value = null;
+
+  final T? value;
+  final Object? error;
+}
 
   Future<void> _updatePersonalResource(
     UpdatePersonalResource event,
