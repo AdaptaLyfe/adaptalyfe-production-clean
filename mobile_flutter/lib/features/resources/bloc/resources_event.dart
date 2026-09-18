@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../models/resource_models.dart';
+import '../../medical/models/medical_models.dart';
 
 sealed class ResourcesEvent extends Equatable {
   const ResourcesEvent();
@@ -102,6 +103,34 @@ final class UpdateEmergencyResource extends ResourcesEvent {
 
 final class DeleteEmergencyResource extends ResourcesEvent {
   const DeleteEmergencyResource(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
+final class CreateEmergencyContact extends ResourcesEvent {
+  const CreateEmergencyContact(this.input);
+
+  final EmergencyContactInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class UpdateEmergencyContact extends ResourcesEvent {
+  const UpdateEmergencyContact(this.id, this.input);
+
+  final int id;
+  final EmergencyContactInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeleteEmergencyContact extends ResourcesEvent {
+  const DeleteEmergencyContact(this.id);
 
   final int id;
 

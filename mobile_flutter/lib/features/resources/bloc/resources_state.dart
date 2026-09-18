@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../models/resource_models.dart';
+import '../../medical/models/medical_models.dart';
 
 enum ResourcesStatus {
   initial,
@@ -14,6 +15,7 @@ class ResourcesState extends Equatable {
     this.status = ResourcesStatus.initial,
     this.personalResources = const [],
     this.emergencyResources = const [],
+    this.emergencyContacts = const [],
     this.selectedCategory = 'all',
     this.searchQuery = '',
     this.busyKey,
@@ -25,6 +27,7 @@ class ResourcesState extends Equatable {
   final ResourcesStatus status;
   final List<PersonalResourceModel> personalResources;
   final List<EmergencyResourceModel> emergencyResources;
+  final List<EmergencyContactModel> emergencyContacts;
   final String selectedCategory;
   final String searchQuery;
   final String? busyKey;
@@ -34,7 +37,9 @@ class ResourcesState extends Equatable {
 
   bool get isLoading => status == ResourcesStatus.loading;
   bool get hasResources =>
-      personalResources.isNotEmpty || emergencyResources.isNotEmpty;
+      personalResources.isNotEmpty ||
+      emergencyResources.isNotEmpty ||
+      emergencyContacts.isNotEmpty;
 
   List<PersonalResourceModel> get visiblePersonalResources {
     final query = searchQuery.trim().toLowerCase();
@@ -55,19 +60,23 @@ class ResourcesState extends Equatable {
   }
 
   List<String> get categories {
-    final values = personalResources
-        .map((resource) => resource.category.trim())
-        .where((category) => category.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
-    return ['all', ...values];
+    return const [
+      'all',
+      'music',
+      'videos',
+      'websites',
+      'apps',
+      'relaxation',
+      'entertainment',
+      'other',
+    ];
   }
 
   ResourcesState copyWith({
     ResourcesStatus? status,
     List<PersonalResourceModel>? personalResources,
     List<EmergencyResourceModel>? emergencyResources,
+    List<EmergencyContactModel>? emergencyContacts,
     String? selectedCategory,
     String? searchQuery,
     Object? busyKey = _notSet,
@@ -79,6 +88,7 @@ class ResourcesState extends Equatable {
       status: status ?? this.status,
       personalResources: personalResources ?? this.personalResources,
       emergencyResources: emergencyResources ?? this.emergencyResources,
+      emergencyContacts: emergencyContacts ?? this.emergencyContacts,
       selectedCategory: selectedCategory ?? this.selectedCategory,
       searchQuery: searchQuery ?? this.searchQuery,
       busyKey: identical(busyKey, _notSet) ? this.busyKey : busyKey as String?,
@@ -97,6 +107,7 @@ class ResourcesState extends Equatable {
         status,
         personalResources,
         emergencyResources,
+        emergencyContacts,
         selectedCategory,
         searchQuery,
         busyKey,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/network/api_client.dart';
 import '../data/resources_repository.dart';
 import '../models/resource_models.dart';
+import '../../medical/models/medical_models.dart';
 import 'resources_event.dart';
 import 'resources_state.dart';
 
@@ -20,6 +21,9 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     on<CreateEmergencyResource>(_createEmergencyResource);
     on<UpdateEmergencyResource>(_updateEmergencyResource);
     on<DeleteEmergencyResource>(_deleteEmergencyResource);
+    on<CreateEmergencyContact>(_createEmergencyContact);
+    on<UpdateEmergencyContact>(_updateEmergencyContact);
+    on<DeleteEmergencyContact>(_deleteEmergencyContact);
   }
 
   final ResourcesRepository repository;
@@ -41,20 +45,25 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
       final results = await Future.wait<Object>([
         repository.getPersonalResources(),
         repository.getEmergencyResources(),
+        repository.getEmergencyContacts(),
       ]);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
           personalResources: results[0] as List<PersonalResourceModel>,
           emergencyResources: results[1] as List<EmergencyResourceModel>,
+          emergencyContacts: results[2] as List<EmergencyContactModel>,
           busyKey: null,
           errorMessage: null,
           actionMessage: null,
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitFailure(emit, error);
     } catch (error) {
+      if (emit.isDone) return;
       _emitFailure(
         emit,
         error,
@@ -84,6 +93,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     emit(state.copyWith(busyKey: 'personal-create', errorMessage: null));
     try {
       final created = await repository.createPersonalResource(event.input);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
@@ -95,8 +105,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'personal-create');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
@@ -120,6 +132,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     try {
       final updated =
           await repository.updatePersonalResource(event.id, event.updates);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
@@ -131,8 +144,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'personal-${event.id}');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
@@ -155,6 +170,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     );
     try {
       await repository.deletePersonalResource(event.id);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           personalResources: state.personalResources
@@ -167,8 +183,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'personal-${event.id}');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
@@ -196,6 +214,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
   ) async {
     try {
       final updated = await repository.recordPersonalResourceAccess(event.id);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           personalResources: _replacePersonal(updated),
@@ -204,6 +223,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       // Access tracking should not prevent the URL from opening on the device.
       emit(
         state.copyWith(
@@ -225,6 +245,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     emit(state.copyWith(busyKey: 'emergency-create', errorMessage: null));
     try {
       final created = await repository.createEmergencyResource(event.input);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
@@ -236,8 +257,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'emergency-create');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
@@ -261,6 +284,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     try {
       final updated =
           await repository.updateEmergencyResource(event.id, event.input);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           status: ResourcesStatus.loaded,
@@ -272,8 +296,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'emergency-${event.id}');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
@@ -296,6 +322,7 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     );
     try {
       await repository.deleteEmergencyResource(event.id);
+      if (emit.isDone) return;
       emit(
         state.copyWith(
           emergencyResources: state.emergencyResources
@@ -308,13 +335,125 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         ),
       );
     } on ApiException catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(emit, error, 'emergency-${event.id}');
     } catch (error) {
+      if (emit.isDone) return;
       _emitActionFailure(
         emit,
         error,
         'emergency-${event.id}',
         fallback: 'Unable to delete that emergency resource.',
+      );
+    }
+  }
+
+  Future<void> _createEmergencyContact(
+    CreateEmergencyContact event,
+    Emitter<ResourcesState> emit,
+  ) async {
+    emit(state.copyWith(busyKey: 'contact-create', errorMessage: null));
+    try {
+      final created = await repository.createEmergencyContact(event.input);
+      if (emit.isDone) return;
+      emit(
+        state.copyWith(
+          status: ResourcesStatus.loaded,
+          emergencyContacts: [...state.emergencyContacts, created],
+          busyKey: null,
+          actionMessage: 'Emergency contact added successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } on ApiException catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(emit, error, 'contact-create');
+    } catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(
+        emit,
+        error,
+        'contact-create',
+        fallback: 'Unable to add that emergency contact.',
+      );
+    }
+  }
+
+  Future<void> _updateEmergencyContact(
+    UpdateEmergencyContact event,
+    Emitter<ResourcesState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        busyKey: 'contact-${event.id}',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      final updated =
+          await repository.updateEmergencyContact(event.id, event.input);
+      if (emit.isDone) return;
+      emit(
+        state.copyWith(
+          status: ResourcesStatus.loaded,
+          emergencyContacts: _replaceContact(updated),
+          busyKey: null,
+          actionMessage: 'Emergency contact updated successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } on ApiException catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(emit, error, 'contact-${event.id}');
+    } catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(
+        emit,
+        error,
+        'contact-${event.id}',
+        fallback: 'Unable to update that emergency contact.',
+      );
+    }
+  }
+
+  Future<void> _deleteEmergencyContact(
+    DeleteEmergencyContact event,
+    Emitter<ResourcesState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        busyKey: 'contact-${event.id}',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteEmergencyContact(event.id);
+      if (emit.isDone) return;
+      emit(
+        state.copyWith(
+          emergencyContacts: state.emergencyContacts
+              .where((contact) => contact.id != event.id)
+              .toList(),
+          busyKey: null,
+          actionMessage: 'Emergency contact deleted successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } on ApiException catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(emit, error, 'contact-${event.id}');
+    } catch (error) {
+      if (emit.isDone) return;
+      _emitActionFailure(
+        emit,
+        error,
+        'contact-${event.id}',
+        fallback: 'Unable to delete that emergency contact.',
       );
     }
   }
@@ -330,6 +469,14 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
   ) {
     return state.emergencyResources
         .map((resource) => resource.id == updated.id ? updated : resource)
+        .toList();
+  }
+
+  List<EmergencyContactModel> _replaceContact(
+    EmergencyContactModel updated,
+  ) {
+    return state.emergencyContacts
+        .map((contact) => contact.id == updated.id ? updated : contact)
         .toList();
   }
 

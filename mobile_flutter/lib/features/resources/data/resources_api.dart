@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../models/resource_models.dart';
+import '../../medical/models/medical_models.dart';
 
 class ResourcesApi {
   const ResourcesApi(this.client);
@@ -41,6 +42,32 @@ class ResourcesApi {
 
   Future<List<EmergencyResourceModel>> getEmergencyResources() =>
       _getList('/api/emergency-resources', EmergencyResourceModel.fromJson);
+
+  Future<List<EmergencyContactModel>> getEmergencyContacts() =>
+      _getList('/api/emergency-contacts', EmergencyContactModel.fromJson);
+
+  Future<EmergencyContactModel> createEmergencyContact(
+    EmergencyContactInput input,
+  ) =>
+      _post(
+        '/api/emergency-contacts',
+        input.toJson(),
+        EmergencyContactModel.fromJson,
+      );
+
+  Future<EmergencyContactModel> updateEmergencyContact(
+    int id,
+    EmergencyContactInput input,
+  ) =>
+      _put(
+        '/api/emergency-contacts/$id',
+        input.toUpdateJson(),
+        EmergencyContactModel.fromJson,
+      );
+
+  Future<void> deleteEmergencyContact(int id) async {
+    await client.delete<dynamic>('/api/emergency-contacts/$id');
+  }
 
   Future<EmergencyResourceModel> createEmergencyResource(
     EmergencyResourceInput input,

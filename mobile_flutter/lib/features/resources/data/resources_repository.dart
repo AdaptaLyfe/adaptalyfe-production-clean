@@ -1,4 +1,5 @@
 import '../models/resource_models.dart';
+import '../../medical/models/medical_models.dart';
 import 'resources_api.dart';
 
 class ResourcesRepository {
@@ -42,4 +43,21 @@ class ResourcesRepository {
 
   Future<void> deleteEmergencyResource(int id) =>
       api.deleteEmergencyResource(id);
+
+  Future<List<EmergencyContactModel>> getEmergencyContacts() =>
+      api.getEmergencyContacts();
+
+  Future<EmergencyContactModel> createEmergencyContact(
+    EmergencyContactInput input,
+  ) =>
+      api.createEmergencyContact(input);
+
+  Future<EmergencyContactModel> updateEmergencyContact(
+    int id,
+    EmergencyContactInput input,
+  ) =>
+      api.updateEmergencyContact(id, input);
+
+  Future<void> deleteEmergencyContact(int id) =>
+      api.deleteEmergencyContact(id);
 }

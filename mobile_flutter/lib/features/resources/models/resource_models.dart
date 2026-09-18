@@ -104,7 +104,10 @@ class EmergencyResourceModel extends Equatable {
     required this.resourceType,
     required this.phoneNumber,
     required this.address,
+    required this.website,
     required this.description,
+    required this.availabilityHours,
+    required this.isEmergencyOnly,
     required this.isAvailable24_7,
     required this.createdAt,
     required this.updatedAt,
@@ -121,9 +124,11 @@ class EmergencyResourceModel extends Equatable {
       ),
       phoneNumber: _asNullableString(json['phoneNumber']),
       address: _asNullableString(json['address']),
+      website: _asNullableString(json['website']),
       description: _asNullableString(json['description']),
-      isAvailable24_7:
-          json['isAvailable24_7'] == true || json['isEmergencyOnly'] == true,
+      availabilityHours: _asNullableString(json['availabilityHours']),
+      isEmergencyOnly: json['isEmergencyOnly'] == true,
+      isAvailable24_7: json['isAvailable24_7'] == true,
       createdAt: _asDate(json['createdAt']),
       updatedAt: _asDate(json['updatedAt']),
     );
@@ -135,7 +140,10 @@ class EmergencyResourceModel extends Equatable {
   final String resourceType;
   final String? phoneNumber;
   final String? address;
+  final String? website;
   final String? description;
+  final String? availabilityHours;
+  final bool isEmergencyOnly;
   final bool isAvailable24_7;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -148,7 +156,10 @@ class EmergencyResourceModel extends Equatable {
         resourceType,
         phoneNumber,
         address,
+        website,
         description,
+        availabilityHours,
+        isEmergencyOnly,
         isAvailable24_7,
         createdAt,
         updatedAt,
@@ -161,7 +172,10 @@ class EmergencyResourceInput extends Equatable {
     required this.resourceType,
     this.phoneNumber,
     this.address,
+    this.website,
     this.description,
+    this.availabilityHours,
+    this.isEmergencyOnly = false,
     this.isAvailable24_7 = false,
   });
 
@@ -169,7 +183,10 @@ class EmergencyResourceInput extends Equatable {
   final String resourceType;
   final String? phoneNumber;
   final String? address;
+  final String? website;
   final String? description;
+  final String? availabilityHours;
+  final bool isEmergencyOnly;
   final bool isAvailable24_7;
 
   Map<String, dynamic> toJson() => {
@@ -177,7 +194,10 @@ class EmergencyResourceInput extends Equatable {
         'resourceType': resourceType,
         'phoneNumber': _nullableText(phoneNumber),
         'address': _nullableText(address),
+        'website': _nullableText(website),
         'description': _nullableText(description),
+        'availabilityHours': _nullableText(availabilityHours),
+        'isEmergencyOnly': isEmergencyOnly,
         'isAvailable24_7': isAvailable24_7,
       };
 
@@ -187,7 +207,10 @@ class EmergencyResourceInput extends Equatable {
         resourceType,
         phoneNumber,
         address,
+        website,
         description,
+        availabilityHours,
+        isEmergencyOnly,
         isAvailable24_7,
       ];
 }
