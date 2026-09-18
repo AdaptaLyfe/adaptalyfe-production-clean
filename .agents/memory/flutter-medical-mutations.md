@@ -15,8 +15,8 @@ Edit forms must normalize persisted enum-like values before passing them to Flut
 
 **How to apply:** Apply the normalization at dialog initialization for every Health Records collection, including sensitivities, conditions, reactions, and symptom severity.
 
-Success listeners for Health Records dialogs should pop the dialog directly and avoid rebuilding the submit button during the same success transition.
+Success listeners for Health Records dialogs should close after the submit-button animation settles and avoid rebuilding the button during the same success transition.
 
-**Why:** Rebuilding an animated Material button and removing its dialog in a post-frame callback can leave a dirty widget in the wrong Flutter build scope.
+**Why:** Removing the dialog while Material's enabled/disabled text-style animation is still active can leave a dirty widget in the wrong Flutter build scope.
 
-**How to apply:** Let the listener handle navigation as its side effect; only rebuild the dialog while submitting or when an operation fails and the form must be re-enabled.
+**How to apply:** Let the listener handle navigation as its side effect with a short guarded delay; only rebuild the dialog while submitting or when an operation fails and the form must be re-enabled.

@@ -1139,9 +1139,10 @@ class _MedicalDialogScope extends StatelessWidget {
             previous.actionMessage != current.actionMessage &&
             current.actionMessage == successMessage,
         listener: (dialogContext, state) {
-          if (dialogContext.mounted) {
+          Future<void>.delayed(const Duration(milliseconds: 350), () {
+            if (!dialogContext.mounted) return;
             Navigator.of(dialogContext).pop();
-          }
+          });
         },
         child: BlocBuilder<MedicalBloc, MedicalState>(
           buildWhen: (previous, current) {
