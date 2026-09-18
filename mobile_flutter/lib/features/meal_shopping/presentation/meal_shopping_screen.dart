@@ -12,6 +12,8 @@ import '../bloc/meal_shopping_event.dart';
 import '../bloc/meal_shopping_state.dart';
 import '../models/meal_shopping_models.dart';
 
+final Set<String> _openMealShoppingOverlays = <String>{};
+
 class MealShoppingScreen extends StatelessWidget {
   const MealShoppingScreen({super.key});
 
@@ -438,28 +440,34 @@ Future<void> _confirmDeleteMeal(
   BuildContext context,
   MealPlanModel meal,
 ) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Delete meal plan?'),
-      content: Text('Remove “${meal.mealName}” from your meal schedule?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFDC2626),
+  final overlayKey = 'delete-meal-${meal.id}';
+  if (!_openMealShoppingOverlays.add(overlayKey)) return;
+  try {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete meal plan?'),
+        content: Text('Remove “${meal.mealName}” from your meal schedule?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
           ),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-  if (confirmed == true && context.mounted) {
-    context.read<MealShoppingBloc>().add(DeleteMealPlan(meal.id));
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<MealShoppingBloc>().add(DeleteMealPlan(meal.id));
+    }
+  } finally {
+    _openMealShoppingOverlays.remove(overlayKey);
   }
 }
 
@@ -1097,28 +1105,34 @@ Future<void> _confirmDeleteShoppingItem(
   BuildContext context,
   ShoppingItemModel item,
 ) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Remove shopping item?'),
-      content: Text('Remove “${item.itemName}” from your shopping list?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFDC2626),
+  final overlayKey = 'delete-shopping-item-${item.id}';
+  if (!_openMealShoppingOverlays.add(overlayKey)) return;
+  try {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove shopping item?'),
+        content: Text('Remove “${item.itemName}” from your shopping list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
           ),
-          child: const Text('Remove'),
-        ),
-      ],
-    ),
-  );
-  if (confirmed == true && context.mounted) {
-    context.read<MealShoppingBloc>().add(DeleteShoppingItem(item.id));
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<MealShoppingBloc>().add(DeleteShoppingItem(item.id));
+    }
+  } finally {
+    _openMealShoppingOverlays.remove(overlayKey);
   }
 }
 
@@ -1273,6 +1287,7 @@ class _MealShoppingError extends StatelessWidget {
 }
 
 Future<void> _showMealPlanDialog(BuildContext context) async {
+  if (!_openMealShoppingOverlays.add('add-meal')) return;
   final mealShoppingBloc = context.read<MealShoppingBloc>();
   final nameController = TextEditingController();
   final cookingTimeController = TextEditingController(text: '30');
@@ -1281,116 +1296,151 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
   var mealType = 'breakfast';
   var plannedDate = _dateOnly(DateTime.now());
 
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Add New Meal'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Meal Name',
-                    hintText: 'e.g., Scrambled eggs and toast',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: mealType,
-                  decoration: const InputDecoration(labelText: 'Meal Type'),
-                  items: _mealTypes
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(_titleCase(value)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => mealType = value ?? mealType),
-                  validator: (value) =>
-                      value == null ? 'Meal type is required' : null,
-                ),
-                const SizedBox(height: 12),
-                _DatePickerField(
-                  label: 'Planned Date',
-                  value: plannedDate,
-                  onTap: () async {
-                    final picked = await _pickDate(
-                      context,
-                      DateTime.tryParse(plannedDate) ?? DateTime.now(),
-                      firstDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setState(() => plannedDate = _dateOnly(picked));
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: cookingTimeController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Cooking Time (minutes)',
-                    hintText: '30',
-                  ),
-                  validator: _positiveIntValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: recipeController,
-                  minLines: 3,
-                  maxLines: 5,
-                  decoration: const InputDecoration(
-                    labelText: 'Recipe/Instructions (Optional)',
-                    hintText: 'Write simple cooking instructions or notes...',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              mealShoppingBloc.add(
-                    AddMealPlan(
-                      MealPlanInput(
-                        mealType: mealType,
-                        mealName: nameController.text,
-                        plannedDate: plannedDate,
-                        recipe: recipeController.text,
-                        cookingTime:
-                            int.tryParse(cookingTimeController.text.trim()) ??
-                                0,
+  try {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
+          MealShoppingState>(
+        bloc: mealShoppingBloc,
+        builder: (context, state) {
+          final isBusy = state.isBusy;
+          final isSaving = state.action == MealShoppingAction.addingMeal;
+          return AlertDialog(
+            title: const Text('Add New Meal'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      enabled: !isBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'Meal Name',
+                        hintText: 'e.g., Scrambled eggs and toast',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: mealType,
+                      decoration: const InputDecoration(labelText: 'Meal Type'),
+                      items: _mealTypes
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isBusy
+                          ? null
+                          : (value) =>
+                              setState(() => mealType = value ?? mealType),
+                      validator: (value) =>
+                          value == null ? 'Meal type is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _DatePickerField(
+                      label: 'Planned Date',
+                      value: plannedDate,
+                      onTap: isBusy
+                          ? () {}
+                          : () async {
+                              final picked = await _pickDate(
+                                context,
+                                DateTime.tryParse(plannedDate) ??
+                                    DateTime.now(),
+                                firstDate: DateTime.now(),
+                              );
+                              if (!context.mounted || picked == null) return;
+                              setState(() => plannedDate = _dateOnly(picked));
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: cookingTimeController,
+                      enabled: !isBusy,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Cooking Time (minutes)',
+                        hintText: '30',
+                      ),
+                      validator: _positiveIntValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: recipeController,
+                      enabled: !isBusy,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: 'Recipe/Instructions (Optional)',
+                        hintText: 'Write simple cooking instructions or notes...',
                       ),
                     ),
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Add Meal Plan'),
-          ),
-        ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isBusy ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isBusy
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        mealShoppingBloc.add(
+                          AddMealPlan(
+                            MealPlanInput(
+                              mealType: mealType,
+                              mealName: nameController.text,
+                              plannedDate: plannedDate,
+                              recipe: recipeController.text,
+                              cookingTime: int.tryParse(
+                                    cookingTimeController.text.trim(),
+                                  ) ??
+                                  0,
+                            ),
+                          ),
+                        );
+                        final succeeded = await _waitForActionCompletion(
+                          mealShoppingBloc,
+                        );
+                        if (succeeded && dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Add Meal Plan'),
+              ),
+            ],
+          );
+        },
       ),
-    ),
-  );
-  nameController.dispose();
-  cookingTimeController.dispose();
-  recipeController.dispose();
+      ),
+    );
+  } finally {
+    nameController.dispose();
+    cookingTimeController.dispose();
+    recipeController.dispose();
+    _openMealShoppingOverlays.remove('add-meal');
+  }
 }
 
 Future<void> _showShoppingItemDialog(BuildContext context) async {
+  if (!_openMealShoppingOverlays.add('add-shopping-item')) return;
   final mealShoppingBloc = context.read<MealShoppingBloc>();
   final nameController = TextEditingController();
   final quantityController = TextEditingController();
@@ -1398,105 +1448,139 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
   final formKey = GlobalKey<FormState>();
   var category = 'produce';
 
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Add Shopping Item'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Item Name',
-                    hintText: 'e.g., Bananas',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: category,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  items: _shoppingCategories
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(_categoryLabel(value)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => category = value ?? category),
-                  validator: (value) =>
-                      value == null ? 'Category is required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: quantityController,
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    hintText: 'e.g., 2 lbs, 1 gallon',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: estimatedCostController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [_nonNegativeMoneyFormatter],
-                  decoration: const InputDecoration(
-                    labelText: 'Estimated Cost (\$)',
-                    hintText: '5.99',
-                  ),
-                  validator: _optionalMoneyValidator,
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              mealShoppingBloc.add(
-                    AddShoppingItem(
-                      ShoppingItemInput(
-                        itemName: nameController.text,
-                        category: category,
-                        quantity: quantityController.text,
-                        estimatedCost: double.tryParse(
-                          estimatedCostController.text.trim(),
-                        ),
+  try {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
+          MealShoppingState>(
+        bloc: mealShoppingBloc,
+        builder: (context, state) {
+          final isBusy = state.isBusy;
+          final isSaving =
+              state.action == MealShoppingAction.addingShoppingItem;
+          return AlertDialog(
+            title: const Text('Add Shopping Item'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      enabled: !isBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'Item Name',
+                        hintText: 'e.g., Bananas',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: category,
+                      decoration: const InputDecoration(labelText: 'Category'),
+                      items: _shoppingCategories
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_categoryLabel(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isBusy
+                          ? null
+                          : (value) =>
+                              setState(() => category = value ?? category),
+                      validator: (value) =>
+                          value == null ? 'Category is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: quantityController,
+                      enabled: !isBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantity',
+                        hintText: 'e.g., 2 lbs, 1 gallon',
                       ),
                     ),
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Add to Shopping List'),
-          ),
-        ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: estimatedCostController,
+                      enabled: !isBusy,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [_nonNegativeMoneyFormatter],
+                      decoration: const InputDecoration(
+                        labelText: 'Estimated Cost (\$)',
+                        hintText: '5.99',
+                      ),
+                      validator: _optionalMoneyValidator,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isBusy ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isBusy
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        mealShoppingBloc.add(
+                          AddShoppingItem(
+                            ShoppingItemInput(
+                              itemName: nameController.text,
+                              category: category,
+                              quantity: quantityController.text,
+                              estimatedCost: double.tryParse(
+                                estimatedCostController.text.trim(),
+                              ),
+                            ),
+                          ),
+                        );
+                        final succeeded = await _waitForActionCompletion(
+                          mealShoppingBloc,
+                        );
+                        if (succeeded && dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Add to Shopping List'),
+              ),
+            ],
+          );
+        },
       ),
-    ),
-  );
-  nameController.dispose();
-  quantityController.dispose();
-  estimatedCostController.dispose();
+      ),
+    );
+  } finally {
+    nameController.dispose();
+    quantityController.dispose();
+    estimatedCostController.dispose();
+    _openMealShoppingOverlays.remove('add-shopping-item');
+  }
 }
 
 Future<void> _showStoreManagementDialog(BuildContext context) async {
+  if (!_openMealShoppingOverlays.add('manage-stores')) return;
   final bloc = context.read<MealShoppingBloc>();
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
+  try {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
       title: const Text('Manage Grocery Stores'),
       content: SizedBox(
         width: 620,
@@ -1505,7 +1589,7 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
           child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
             bloc: bloc,
             builder: (context, state) {
-              final busy = state.action == MealShoppingAction.deletingGroceryStore;
+              final busy = state.isBusy;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1580,12 +1664,15 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
+          onPressed: busy ? null : () => Navigator.of(dialogContext).pop(),
           child: const Text('Close'),
         ),
       ],
-    ),
-  );
+      ),
+    );
+  } finally {
+    _openMealShoppingOverlays.remove('manage-stores');
+  }
 }
 
 class _StoreManagementRow extends StatelessWidget {
@@ -1669,6 +1756,8 @@ Future<void> _showStoreFormDialog(
   BuildContext context, {
   GroceryStoreModel? store,
 }) async {
+  final overlayKey = store == null ? 'add-store' : 'edit-store-${store.id}';
+  if (!_openMealShoppingOverlays.add(overlayKey)) return;
   final bloc = context.read<MealShoppingBloc>();
   final nameController = TextEditingController(text: store?.name ?? '');
   final addressController = TextEditingController(text: store?.address ?? '');
@@ -1683,153 +1772,199 @@ Future<void> _showStoreFormDialog(
   var pickupAvailable = store?.pickupAvailable ?? true;
   var isPreferred = store?.isPreferred ?? false;
 
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: Text(store == null ? 'Add New Store' : 'Edit Store'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Store Name',
-                    hintText: 'Kroger, Walmart, Target...',
-                  ),
-                  validator: _requiredValidator,
+  try {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
+          MealShoppingState>(
+        bloc: bloc,
+        builder: (context, state) {
+          final isBusy = state.isBusy;
+          final isSaving = state.action ==
+                  MealShoppingAction.addingGroceryStore ||
+              state.action == MealShoppingAction.updatingGroceryStore;
+          return AlertDialog(
+            title: Text(store == null ? 'Add New Store' : 'Edit Store'),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      enabled: !isBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'Store Name',
+                        hintText: 'Kroger, Walmart, Target...',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: addressController,
+                      enabled: !isBusy,
+                      decoration: const InputDecoration(
+                        labelText: 'Address',
+                        hintText: '123 Main St, Anytown, USA',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: phoneController,
+                      enabled: !isBusy,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                        hintText: '(555) 123-4567',
+                      ),
+                      validator: _phoneValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: websiteController,
+                      enabled: !isBusy,
+                      keyboardType: TextInputType.url,
+                      decoration: const InputDecoration(
+                        labelText: 'Website',
+                        hintText: 'https://example.com',
+                      ),
+                      validator: _urlValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: orderingController,
+                      enabled: !isBusy,
+                      keyboardType: TextInputType.url,
+                      decoration: const InputDecoration(
+                        labelText: 'Online Ordering URL',
+                        hintText: 'https://grocery.example.com',
+                      ),
+                      validator: _urlValidator,
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: deliveryAvailable,
+                      title: const Text('Delivery Available'),
+                      onChanged: isBusy
+                          ? null
+                          : (value) => setState(
+                                () => deliveryAvailable = value ?? false,
+                              ),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: pickupAvailable,
+                      title: const Text('Pickup Available'),
+                      onChanged: isBusy
+                          ? null
+                          : (value) => setState(
+                                () => pickupAvailable = value ?? false,
+                              ),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: isPreferred,
+                      title: const Text('Preferred Store'),
+                      onChanged: isBusy
+                          ? null
+                          : (value) => setState(
+                                () => isPreferred = value ?? false,
+                              ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Address',
-                    hintText: '123 Main St, Anytown, USA',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    hintText: '(555) 123-4567',
-                  ),
-                  validator: _phoneValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: websiteController,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(
-                    labelText: 'Website',
-                    hintText: 'https://example.com',
-                  ),
-                  validator: _urlValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: orderingController,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(
-                    labelText: 'Online Ordering URL',
-                    hintText: 'https://grocery.example.com',
-                  ),
-                  validator: _urlValidator,
-                ),
-                const SizedBox(height: 8),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: deliveryAvailable,
-                  title: const Text('Delivery Available'),
-                  onChanged: (value) =>
-                      setState(() => deliveryAvailable = value ?? false),
-                ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: pickupAvailable,
-                  title: const Text('Pickup Available'),
-                  onChanged: (value) =>
-                      setState(() => pickupAvailable = value ?? false),
-                ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: isPreferred,
-                  title: const Text('Preferred Store'),
-                  onChanged: (value) =>
-                      setState(() => isPreferred = value ?? false),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              final input = GroceryStoreInput(
-                name: nameController.text,
-                address: addressController.text,
-                phoneNumber: phoneController.text,
-                website: websiteController.text,
-                onlineOrderingUrl: orderingController.text,
-                deliveryAvailable: deliveryAvailable,
-                pickupAvailable: pickupAvailable,
-                isPreferred: isPreferred,
-              );
-              if (store == null) {
-                bloc.add(AddGroceryStore(input));
-              } else {
-                bloc.add(UpdateGroceryStore(store.id, input));
-              }
-              Navigator.of(dialogContext).pop();
-            },
-            child: Text(store == null ? 'Add Store' : 'Update Store'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed:
+                    isBusy ? null : () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isBusy
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        final input = GroceryStoreInput(
+                          name: nameController.text,
+                          address: addressController.text,
+                          phoneNumber: phoneController.text,
+                          website: websiteController.text,
+                          onlineOrderingUrl: orderingController.text,
+                          deliveryAvailable: deliveryAvailable,
+                          pickupAvailable: pickupAvailable,
+                          isPreferred: isPreferred,
+                        );
+                        if (store == null) {
+                          bloc.add(AddGroceryStore(input));
+                        } else {
+                          bloc.add(UpdateGroceryStore(store.id, input));
+                        }
+                        final succeeded = await _waitForActionCompletion(bloc);
+                        if (succeeded && dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                      },
+                child: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(store == null ? 'Add Store' : 'Update Store'),
+              ),
+            ],
+          );
+        },
       ),
-    ),
-  );
-  nameController.dispose();
-  addressController.dispose();
-  phoneController.dispose();
-  websiteController.dispose();
-  orderingController.dispose();
+      ),
+    );
+  } finally {
+    nameController.dispose();
+    addressController.dispose();
+    phoneController.dispose();
+    websiteController.dispose();
+    orderingController.dispose();
+    _openMealShoppingOverlays.remove(overlayKey);
+  }
 }
 
 Future<void> _confirmDeleteStore(
   BuildContext context,
   GroceryStoreModel store,
 ) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Delete grocery store?'),
-      content: Text('Remove “${store.name}” from your grocery stores?'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFDC2626),
+  final overlayKey = 'delete-store-${store.id}';
+  if (!_openMealShoppingOverlays.add(overlayKey)) return;
+  try {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete grocery store?'),
+        content: Text('Remove “${store.name}” from your grocery stores?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
           ),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-  if (confirmed == true && context.mounted) {
-    context.read<MealShoppingBloc>().add(DeleteGroceryStore(store.id));
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<MealShoppingBloc>().add(DeleteGroceryStore(store.id));
+    }
+  } finally {
+    _openMealShoppingOverlays.remove(overlayKey);
   }
 }
 
@@ -1845,54 +1980,60 @@ Future<double?> _showPurchaseCostDialog(
   BuildContext context,
   ShoppingItemModel item,
 ) async {
+  final overlayKey = 'purchase-cost-${item.id}';
+  if (!_openMealShoppingOverlays.add(overlayKey)) return _purchaseCancelled;
   final controller = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  final result = await showDialog<double?>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Mark as purchased'),
-      content: Form(
-        key: formKey,
-        child: TextFormField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [_nonNegativeMoneyFormatter],
-          decoration: InputDecoration(
-            labelText: 'Actual Cost (optional)',
-            hintText: item.estimatedCost == null
-                ? 'Leave blank if unknown'
-                : item.estimatedCost!.toStringAsFixed(2),
-            prefixText: '\$ ',
+  try {
+    return await showDialog<double?>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Mark as purchased'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [_nonNegativeMoneyFormatter],
+            decoration: InputDecoration(
+              labelText: 'Actual Cost (optional)',
+              hintText: item.estimatedCost == null
+                  ? 'Leave blank if unknown'
+                  : item.estimatedCost!.toStringAsFixed(2),
+              prefixText: '\$ ',
+            ),
+            validator: _optionalMoneyValidator,
           ),
-          validator: _optionalMoneyValidator,
         ),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_purchaseCancelled),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.of(dialogContext).pop(null);
+            },
+            child: const Text('Skip'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              Navigator.of(dialogContext).pop(
+                double.tryParse(controller.text.trim()),
+              );
+            },
+            child: const Text('Mark Purchased'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(_purchaseCancelled),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            if (!formKey.currentState!.validate()) return;
-            Navigator.of(dialogContext).pop(null);
-          },
-          child: const Text('Skip'),
-        ),
-        FilledButton(
-          onPressed: () {
-            if (!formKey.currentState!.validate()) return;
-            Navigator.of(dialogContext).pop(
-              double.tryParse(controller.text.trim()),
-            );
-          },
-          child: const Text('Mark Purchased'),
-        ),
-      ],
-    ),
-  );
-  controller.dispose();
-  return result;
+    );
+  } finally {
+    controller.dispose();
+    _openMealShoppingOverlays.remove(overlayKey);
+  }
 }
 
 class _DatePickerField extends StatelessWidget {
@@ -1948,6 +2089,15 @@ Future<void> _refresh(BuildContext context) async {
   );
   bloc.add(const RefreshMealShopping());
   await completion;
+}
+
+Future<bool> _waitForActionCompletion(MealShoppingBloc bloc) async {
+  final completed = await bloc.stream.firstWhere(
+    (state) =>
+        state.action == MealShoppingAction.none &&
+        (state.actionMessage != null || state.errorMessage != null),
+  );
+  return completed.errorMessage == null;
 }
 
 String? _requiredValidator(String? value) {
