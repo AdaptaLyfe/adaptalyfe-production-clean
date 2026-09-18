@@ -28,6 +28,7 @@ final class SignupSubmitted extends AuthEvent {
     required this.password,
     this.plan = 'basic',
     this.subscribeNewsletter = false,
+    this.invitationCode = '',
   });
 
   final String name;
@@ -36,6 +37,7 @@ final class SignupSubmitted extends AuthEvent {
   final String password;
   final String plan;
   final bool subscribeNewsletter;
+  final String invitationCode;
 
   @override
   List<Object?> get props => [
@@ -45,6 +47,7 @@ final class SignupSubmitted extends AuthEvent {
         password,
         plan,
         subscribeNewsletter,
+        invitationCode,
       ];
 }
 

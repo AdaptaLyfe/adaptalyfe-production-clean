@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 
 import '../core/analytics/firebase_analytics_service.dart';
 import '../core/notifications/native_notification_service.dart';
@@ -21,6 +22,7 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
     with WidgetsBindingObserver {
   late final AuthBloc _authBloc;
   late final GoRouter _router;
+  late final MethodChannel _deepLinkChannel;
   final _analytics = FirebaseAnalyticsService.instance;
   final _nativeNotifications = NativeNotificationService.instance;
   late final StreamSubscription<NativeNotificationAction>
@@ -32,6 +34,11 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
     WidgetsBinding.instance.addObserver(this);
     _authBloc = AuthBloc(createAuthRepository());
     _router = createAppRouter(_authBloc);
+    _deepLinkChannel = const MethodChannel('adaptalyfe/deep_links');
+    _deepLinkChannel.setMethodCallHandler(_handleDeepLinkCall);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialDeepLink();
+    });
     _notificationActionsSubscription =
         _nativeNotifications.actions.listen(_handleNotificationAction);
     for (final action in _nativeNotifications.takePendingActions()) {
@@ -46,6 +53,7 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _notificationActionsSubscription.cancel();
+    _deepLinkChannel.setMethodCallHandler(null);
     _router.routerDelegate.removeListener(_trackCurrentRoute);
     _analytics.endSession();
     _router.dispose();
@@ -73,6 +81,39 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
     if (route != null && route.isNotEmpty && mounted) {
       _router.go(route);
     }
+  }
+
+  Future<dynamic> _handleDeepLinkCall(MethodCall call) async {
+    if (call.method == 'open' && call.arguments is String) {
+      _openDeepLink(call.arguments as String);
+    }
+    return null;
+  }
+
+  Future<void> _loadInitialDeepLink() async {
+    try {
+      final link = await _deepLinkChannel.invokeMethod<String>('getInitialLink');
+      if (link != null && link.isNotEmpty) {
+        _openDeepLink(link);
+      }
+    } catch (_) {
+      // Deep-link support is optional on platforms without the channel.
+    }
+  }
+
+  void _openDeepLink(String rawLink) {
+    final uri = Uri.tryParse(rawLink);
+    if (uri == null || uri.scheme != 'adaptalyfe') return;
+
+    final isResetPassword =
+        uri.host == 'reset-password' || uri.path == '/reset-password';
+    if (!isResetPassword) return;
+
+    final token = uri.queryParameters['token'];
+    final destination = token == null || token.isEmpty
+        ? '/forgot-password'
+        : '/reset-password?token=${Uri.encodeComponent(token)}';
+    _router.go(destination);
   }
 
   @override

@@ -8,8 +8,11 @@ import java.util.Locale
 
 class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
     private val channelName = "adaptalyfe/text_to_speech"
+    private val deepLinkChannelName = "adaptalyfe/deep_links"
     private var textToSpeech: TextToSpeech? = null
     private var textToSpeechReady = false
+    private var deepLinkChannel: MethodChannel? = null
+    private var pendingDeepLink: String? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -43,6 +46,36 @@ class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
                 "adaptalyfe-settings-test",
             )
             result.success(null)
+        }
+        deepLinkChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            deepLinkChannelName,
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                if (call.method != "getInitialLink") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                result.success(pendingDeepLink)
+                pendingDeepLink = null
+            }
+        }
+        pendingDeepLink = intent?.data?.toString()
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: android.content.Intent?) {
+        val link = intent?.data?.toString() ?: return
+        val channel = deepLinkChannel
+        if (channel == null) {
+            pendingDeepLink = link
+        } else {
+            channel.invokeMethod("open", link)
         }
     }
 

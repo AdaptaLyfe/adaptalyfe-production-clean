@@ -46,6 +46,48 @@ class AuthApi {
     );
   }
 
+  Future<Map<String, dynamic>> redeemOrganizationCode(String code) {
+    return _asObject(
+      client.post<dynamic>(
+        '/api/org-codes/redeem',
+        data: {'code': code},
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> requestPasswordReset(String email) {
+    return _asObject(
+      client.post<dynamic>(
+        '/api/forgot-password',
+        data: {'email': email},
+      ),
+    );
+  }
+
+  Future<bool> validatePasswordResetToken(String token) async {
+    final response = await client.get<dynamic>(
+      '/api/password-reset/validate',
+      queryParameters: {'token': token},
+    );
+    final data = response.data;
+    return data is Map && data['valid'] == true;
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String password,
+  }) {
+    return _asObject(
+      client.post<dynamic>(
+        '/api/reset-password',
+        data: {
+          'token': token,
+          'password': password,
+        },
+      ),
+    );
+  }
+
   Future<Map<String, dynamic>> getCurrentUser() {
     return _currentUserApi.getCurrentUser();
   }

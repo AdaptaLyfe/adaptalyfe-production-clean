@@ -5,6 +5,9 @@ import AVFoundation
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
+  private var deepLinkChannel: FlutterMethodChannel?
+  private var pendingDeepLink: String?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -15,6 +18,21 @@ import AVFoundation
     application.registerForRemoteNotifications()
     GeneratedPluginRegistrant.register(with: self)
     let controller = window?.rootViewController as! FlutterViewController
+    deepLinkChannel = FlutterMethodChannel(
+      name: "adaptalyfe/deep_links",
+      binaryMessenger: controller.binaryMessenger
+    )
+    deepLinkChannel?.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "getInitialLink" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      result(self?.pendingDeepLink)
+      self?.pendingDeepLink = nil
+    }
+    if let launchUrl = launchOptions?[.url] as? URL {
+      pendingDeepLink = launchUrl.absoluteString
+    }
     let textToSpeechChannel = FlutterMethodChannel(
       name: "adaptalyfe/text_to_speech",
       binaryMessenger: controller.binaryMessenger
@@ -47,5 +65,19 @@ import AVFoundation
       result(nil)
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func application(
+    _ app: UIApplication,
+    open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    let link = url.absoluteString
+    if let deepLinkChannel {
+      deepLinkChannel.invokeMethod("open", arguments: link)
+    } else {
+      pendingDeepLink = link
+    }
+    return true
   }
 }

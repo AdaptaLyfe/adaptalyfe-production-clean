@@ -65,6 +65,11 @@ class _SignupScreenState extends State<SignupScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _localError = null);
 
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showLocalError('Password: Passwords do not match');
+      return;
+    }
+
     if (!_ageVerified) {
       _showLocalError(
         'Age Verification Required: Users under 13 must have a parent '
@@ -84,11 +89,6 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
-      _showLocalError('Password: Passwords do not match');
-      return;
-    }
-
     context.read<AuthBloc>().add(
           SignupSubmitted(
             name: _nameController.text.trim(),
@@ -96,6 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
             username: _usernameController.text.trim(),
             password: _passwordController.text,
             subscribeNewsletter: _subscribeNewsletter,
+            invitationCode: _invitationCodeController.text.trim(),
           ),
         );
   }
@@ -110,13 +111,32 @@ class _SignupScreenState extends State<SignupScreen> {
       listener: (context, state) {
         if (state is Authenticated) {
           FirebaseAnalyticsService.instance.logSignUp('email');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Registration Successful! Welcome to AdaptaLyfe, '
+                '${_nameController.text.trim()}!',
+              ),
+            ),
+          );
           final code = _invitationCodeController.text.trim();
           if (code.isNotEmpty) {
-            context.go(
-              '/accept-invitation?code=${Uri.encodeComponent(code)}',
-            );
+            if (state.organizationCodeApplied) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Organization Code Applied! Free access granted.',
+                  ),
+                ),
+              );
+              context.go('/home');
+            } else {
+              context.go(
+                '/accept-invitation?code=${Uri.encodeComponent(code)}',
+              );
+            }
           } else {
-            context.go('/home');
+            context.go('/subscription');
           }
         }
       },

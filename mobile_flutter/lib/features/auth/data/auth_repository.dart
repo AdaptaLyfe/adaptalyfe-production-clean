@@ -36,13 +36,14 @@ class AuthRepository {
     return _userFromResponse(response);
   }
 
-  Future<UserModel> register({
+  Future<RegistrationResult> register({
     required String name,
     String? email,
     required String username,
     required String password,
     String plan = 'basic',
     bool subscribeNewsletter = false,
+    String invitationCode = '',
   }) async {
     final response = await api.register(
       name: name,
@@ -56,7 +57,37 @@ class AuthRepository {
     // Native registration responses use the same sessionToken contract as
     // native login responses.
     await _saveSessionTokenIfPresent(response);
-    return _userFromResponse(response);
+    var organizationCodeApplied = false;
+    final normalizedCode = invitationCode.trim();
+    if (normalizedCode.isNotEmpty) {
+      try {
+        await api.redeemOrganizationCode(normalizedCode);
+        organizationCodeApplied = true;
+      } catch (_) {
+        // The React flow falls back to caregiver invitation acceptance when
+        // organization-code redemption fails.
+      }
+    }
+
+    return RegistrationResult(
+      user: _userFromResponse(response),
+      organizationCodeApplied: organizationCodeApplied,
+    );
+  }
+
+  Future<void> requestPasswordReset(String email) async {
+    await api.requestPasswordReset(email);
+  }
+
+  Future<bool> validatePasswordResetToken(String token) {
+    return api.validatePasswordResetToken(token);
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    await api.resetPassword(token: token, password: password);
   }
 
   Future<UserModel> getCurrentUser() async {
@@ -91,4 +122,14 @@ class AuthRepository {
 
     return UserModel.fromJson(userData);
   }
+}
+
+class RegistrationResult {
+  const RegistrationResult({
+    required this.user,
+    required this.organizationCodeApplied,
+  });
+
+  final UserModel user;
+  final bool organizationCodeApplied;
 }

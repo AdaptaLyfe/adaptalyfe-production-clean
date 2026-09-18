@@ -9,9 +9,11 @@ import '../core/network/current_user_api.dart';
 import '../core/storage/local_storage.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_state.dart';
+import '../features/auth/bloc/password_recovery_bloc.dart';
 import '../features/auth/data/auth_api.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/presentation/password_recovery_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
 import '../features/academic/bloc/academic_bloc.dart';
 import '../features/academic/bloc/academic_event.dart';
@@ -114,13 +116,21 @@ GoRouter createAppRouter(AuthBloc authBloc) {
       final isAuthRoute =
           location == '/splash' ||
           location == '/login' ||
-          location == '/signup';
+          location == '/signup' ||
+          location == '/forgot-password' ||
+          location == '/reset-password';
+      final isPasswordRecoveryRoute =
+          location == '/forgot-password' || location == '/reset-password';
 
       if (authState is AuthInitial || authState is AuthChecking) {
-        return location == '/splash' ? null : '/splash';
+        return location == '/splash' || isPasswordRecoveryRoute
+            ? null
+            : '/splash';
       }
 
-      if (authState is Authenticated && isAuthRoute) {
+      if (authState is Authenticated &&
+          isAuthRoute &&
+          !isPasswordRecoveryRoute) {
         return '/home';
       }
 
@@ -184,6 +194,22 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         path: '/signup',
         builder: (context, state) => SignupScreen(
           initialInvitationCode: state.uri.queryParameters['code'],
+        ),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => BlocProvider(
+          create: (_) => PasswordRecoveryBloc(createAuthRepository()),
+          child: const ForgotPasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => BlocProvider(
+          create: (_) => PasswordRecoveryBloc(createAuthRepository()),
+          child: ResetPasswordScreen(
+            token: state.uri.queryParameters['token'] ?? '',
+          ),
         ),
       ),
       GoRoute(

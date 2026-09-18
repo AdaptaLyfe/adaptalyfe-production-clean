@@ -39,15 +39,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
 
     try {
-      final user = await repository.register(
+      final registration = await repository.register(
         name: event.name,
         email: event.email,
         username: event.username,
         password: event.password,
         plan: event.plan,
         subscribeNewsletter: event.subscribeNewsletter,
+        invitationCode: event.invitationCode,
       );
-      emit(Authenticated(user));
+      emit(
+        Authenticated(
+          registration.user,
+          organizationCodeApplied: registration.organizationCodeApplied,
+        ),
+      );
     } catch (error) {
       emit(AuthError(_messageFor(error)));
     }
@@ -116,6 +122,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return 'Invalid email or password. Please try again.';
     }
 
-    return 'Unable to sign in right now. Please try again.';
+    if (error is ApiException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+    if (error is FormatException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+
+    return 'Invalid username or password';
   }
 }

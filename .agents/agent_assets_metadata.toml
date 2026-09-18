@@ -701,3 +701,17 @@ mtime_ms = 1789711668203
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/43f84bb1-c1e6-46da-bd3b-b1ed5e7381c7/21711218-97c2-4345-8557-3d2f40094151"
 storage_version_token = "1789711672704295"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fJQUB1ggBTiIn0ebsXBSG"
+uri = "file://exports/adaptalyfe-flutter-auth-updates.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Auth Updates"
+description = "ZIP containing all changed Flutter Login, Signup, Forgot Password, reset-password, BLoC, API, routing, Android, and iOS files. React Native and Wrapper files are not included."
+logical_id = "fdaf31b7-a29c-407c-b863-ebdc402c813a"
+content_hash = "sha256:049cd91d8a829b9c9d4dfc91e1b173a905d45a710aa2df557fc7cdddb26d52a7"
+size = 29254
+mtime_ms = 1789714372839
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/fdaf31b7-a29c-407c-b863-ebdc402c813a/dbd3816b-1760-4dce-b62e-bb5b763386a0"
+storage_version_token = "1789714378078569"
+content_type = "application/octet-stream"

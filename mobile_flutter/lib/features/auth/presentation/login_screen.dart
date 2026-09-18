@@ -65,6 +65,11 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         if (state is Authenticated) {
           FirebaseAnalyticsService.instance.logLogin('password');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login Successful! Welcome back to Adaptalyfe'),
+            ),
+          );
           final code = _invitationCodeController.text.trim();
           if (code.isNotEmpty) {
             context.go(
@@ -120,6 +125,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             errorMessage: errorMessage,
                             isLoading: isLoading,
                             onSubmit: _submit,
+                             onForgotPassword: () {
+                               context.go('/forgot-password');
+                             },
                             onSignup: () {
                               final code = _invitationCodeController.text.trim();
                               final destination = code.isEmpty
@@ -199,6 +207,7 @@ class _LoginCard extends StatelessWidget {
     required this.errorMessage,
     required this.isLoading,
     required this.onSubmit,
+    required this.onForgotPassword,
     required this.onSignup,
   });
 
@@ -210,6 +219,7 @@ class _LoginCard extends StatelessWidget {
   final String? errorMessage;
   final bool isLoading;
   final VoidCallback onSubmit;
+  final VoidCallback onForgotPassword;
   final VoidCallback onSignup;
 
   @override
@@ -297,6 +307,13 @@ class _LoginCard extends StatelessWidget {
                   }
                   return null;
                 },
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: isLoading ? null : onForgotPassword,
+                  child: const Text('Forgot password?'),
+                ),
               ),
               const SizedBox(height: 20),
               TextFormField(

@@ -22,12 +22,16 @@ final class AuthChecking extends AuthState {
 }
 
 final class Authenticated extends AuthState {
-  const Authenticated(this.user);
+  const Authenticated(
+    this.user, {
+    this.organizationCodeApplied = false,
+  });
 
   final UserModel user;
+  final bool organizationCodeApplied;
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, organizationCodeApplied];
 }
 
 final class Unauthenticated extends AuthState {
