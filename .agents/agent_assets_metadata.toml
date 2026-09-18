@@ -897,3 +897,17 @@ mtime_ms = 1789735522991
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/91f5a8c9-a68b-45bd-aa37-6e9843d4a6d2/f55dd41a-5386-4558-9861-da697da5daef"
 storage_version_token = "1789735526978654"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "eHLj19L6PX0FPm5qzBcNe"
+uri = "file://exports/adaptalyfe-mobile-flutter-resources.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Resources ZIP"
+description = "Source zip of the existing Flutter application, including the completed Resources section. Generated build files and dependencies are excluded."
+logical_id = "dc934327-7f3e-4dc9-8f40-9c46268ce35f"
+content_hash = "sha256:1a25111ecea0f68402e029415ce172f53935c26059fa79f21acd75a701cd3bad"
+size = 488183
+mtime_ms = 1789736127740
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc934327-7f3e-4dc9-8f40-9c46268ce35f/6f2da258-803f-4197-ad49-e3a590237e0b"
+storage_version_token = "1789736131245826"
+content_type = "application/octet-stream"
