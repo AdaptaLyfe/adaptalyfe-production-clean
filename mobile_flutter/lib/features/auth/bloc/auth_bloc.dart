@@ -28,7 +28,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(Authenticated(user));
     } catch (error) {
-      emit(AuthError(_messageFor(error)));
+      emit(AuthError(_loginMessageFor(error)));
     }
   }
 
@@ -109,5 +109,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
 
     return 'Something went wrong. Please try again.';
+  }
+
+  String _loginMessageFor(Object error) {
+    if (error is ApiException && error.type == ApiErrorType.unauthorized) {
+      return 'Invalid email or password. Please try again.';
+    }
+
+    return 'Unable to sign in right now. Please try again.';
   }
 }

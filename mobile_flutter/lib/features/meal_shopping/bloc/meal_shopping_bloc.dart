@@ -125,6 +125,20 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     AddShoppingItem event,
     Emitter<MealShoppingState> emit,
   ) async {
+    if ((event.input.estimatedCost != null &&
+            event.input.estimatedCost! < 0) ||
+        (event.input.actualCost != null && event.input.actualCost! < 0)) {
+      emit(
+        state.copyWith(
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: 'Enter a valid non-negative amount',
+          actionMessage: null,
+        ),
+      );
+      return;
+    }
+
     emit(
       state.copyWith(
         action: MealShoppingAction.addingShoppingItem,
