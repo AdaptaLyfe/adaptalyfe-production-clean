@@ -13,7 +13,7 @@ class MedicalApi {
       _post('/api/allergies', input.toJson(), AllergyModel.fromJson);
 
   Future<AllergyModel> updateAllergy(int id, AllergyInput input) =>
-      _put('/api/allergies/$id', input.toJson(), AllergyModel.fromJson);
+      _put('/api/allergies/$id', input.toUpdateJson(), AllergyModel.fromJson);
 
   Future<void> deleteAllergy(int id) =>
       _delete('/api/allergies/$id');
@@ -33,19 +33,12 @@ class MedicalApi {
   Future<MedicalConditionModel> updateCondition(
     int id,
     MedicalConditionInput input,
-  ) {
-    final payload = input.toJson();
-    // Keep the update payload explicit when a user clears an existing note.
-    // The add flow continues using MedicalConditionInput.toJson unchanged.
-    if (input.notes?.trim().isNotEmpty != true) {
-      payload['notes'] = '';
-    }
-    return _put(
-      '/api/medical-conditions/$id',
-      payload,
-      MedicalConditionModel.fromJson,
-    );
-  }
+  ) =>
+      _put(
+        '/api/medical-conditions/$id',
+        input.toUpdateJson(),
+        MedicalConditionModel.fromJson,
+      );
 
   Future<void> deleteCondition(int id) =>
       _delete('/api/medical-conditions/$id');
@@ -74,7 +67,7 @@ class MedicalApi {
   ) =>
       _put(
         '/api/emergency-contacts/$id',
-        input.toJson(),
+        input.toUpdateJson(),
         EmergencyContactModel.fromJson,
       );
 
@@ -99,7 +92,7 @@ class MedicalApi {
   ) =>
       _put(
         '/api/adverse-medications/$id',
-        input.toJson(),
+        input.toUpdateJson(),
         AdverseMedicationModel.fromJson,
       );
 
@@ -124,7 +117,7 @@ class MedicalApi {
   ) =>
       _put(
         '/api/primary-care-providers/$id',
-        input.toJson(),
+        input.toUpdateJson(),
         PrimaryCareProviderModel.fromJson,
       );
 
@@ -140,18 +133,12 @@ class MedicalApi {
   Future<SymptomEntryModel> updateSymptomEntry(
     int id,
     SymptomEntryInput input,
-  ) {
-    final payload = input.toJson();
-    // Keep cleared optional fields explicit for PATCH updates.
-    // The add flow continues using SymptomEntryInput.toJson unchanged.
-    payload['endTime'] = input.endTime?.toUtc().toIso8601String();
-    payload['description'] = input.description?.trim() ?? '';
-    return _patch(
-      '/api/symptom-entries/$id',
-      payload,
-      SymptomEntryModel.fromJson,
-    );
-  }
+  ) =>
+      _patch(
+        '/api/symptom-entries/$id',
+        input.toUpdateJson(),
+        SymptomEntryModel.fromJson,
+      );
 
   Future<void> deleteSymptomEntry(int id) =>
       _delete('/api/symptom-entries/$id');

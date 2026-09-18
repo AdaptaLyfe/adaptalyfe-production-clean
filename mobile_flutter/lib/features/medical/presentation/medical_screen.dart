@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../auth/bloc/auth_state.dart';
 import '../bloc/medical_bloc.dart';
 import '../bloc/medical_event.dart';
 import '../bloc/medical_state.dart';
@@ -16,6 +18,10 @@ class MedicalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasMedicalAccess(context)) {
+      return const _MedicalPremiumPrompt();
+    }
+
     return BlocConsumer<MedicalBloc, MedicalState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
@@ -99,6 +105,72 @@ class MedicalScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+bool _hasMedicalAccess(BuildContext context) {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is! Authenticated) return false;
+
+  final user = authState.user;
+  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
+  if (isAdmin) return true;
+
+  final tier = user.subscriptionTier?.toLowerCase();
+  final status = user.subscriptionStatus?.toLowerCase();
+  return (status == 'active' && (tier == 'premium' || tier == 'family')) ||
+      status == 'trialing';
+}
+
+class _MedicalPremiumPrompt extends StatelessWidget {
+  const _MedicalPremiumPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Health Records')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: AppResponsive.pagePadding(context),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.workspace_premium_outlined,
+                    size: 52,
+                    color: Color(0xFFF97316),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Health Records',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Store personal health-related details such as sensitivities and trusted contacts for reference.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF4B5563)),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/subscription'),
+                    icon: const Icon(Icons.lock_open_outlined),
+                    label: const Text('View Subscription Options'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1515,7 +1587,7 @@ Future<void> _showProviderDialog(
                     labelText: 'Phone Number',
                     hintText: 'Office phone number',
                   ),
-                  validator: _phoneValidator,
+                  validator: _providerPhoneValidator,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1781,8 +1853,9 @@ Future<void> _showContactDialog(
   final addressController =
       TextEditingController(text: existing?.address ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
+  final relationshipController =
+      TextEditingController(text: existing?.relationship ?? '');
   final formKey = GlobalKey<FormState>();
-  var relationship = existing?.relationship ?? '';
   var isPrimary = existing?.isPrimary ?? false;
   var isEmergency = existing?.isEmergencyContact ?? true;
 
@@ -1809,21 +1882,12 @@ Future<void> _showContactDialog(
                   validator: _requiredValidator,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _contactRelationships.contains(relationship)
-                      ? relationship
-                      : null,
-                  decoration: const InputDecoration(labelText: 'Relationship *'),
-                  items: _contactRelationships
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_titleCase(value)),
-                          ))
-                      .toList(),
-                  onChanged: (value) =>
-                      setState(() => relationship = value ?? ''),
-                  validator: (value) =>
-                      value == null ? 'Relationship is required' : null,
+                TextFormField(
+                  controller: relationshipController,
+                  decoration: const InputDecoration(
+                    labelText: 'Relationship',
+                    hintText: 'e.g., Parent, Sibling, Friend',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -1887,7 +1951,7 @@ Future<void> _showContactDialog(
                     if (!formKey.currentState!.validate()) return;
                     final input = EmergencyContactInput(
                       name: nameController.text,
-                      relationship: relationship,
+                      relationship: relationshipController.text,
                       phoneNumber: phoneController.text,
                       email: emailController.text,
                       address: addressController.text,
@@ -1914,6 +1978,7 @@ Future<void> _showContactDialog(
   );
   for (final controller in [
     nameController,
+    relationshipController,
     phoneController,
     emailController,
     addressController,
@@ -2342,6 +2407,16 @@ String? _phoneValidator(String? value) {
   return null;
 }
 
+String? _providerPhoneValidator(String? value) {
+  if (value == null || value.trim().isEmpty) return 'Phone number is required';
+  final trimmed = value.trim();
+  if (!RegExp(r'^[0-9+\-()\s]+$').hasMatch(trimmed) ||
+      !RegExp(r'\d').hasMatch(trimmed)) {
+    return 'Enter a valid phone number';
+  }
+  return null;
+}
+
 String? _emailValidator(String? value) {
   if (value == null || value.trim().isEmpty) return null;
   if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
@@ -2443,17 +2518,6 @@ Color _severityColor(String severity) {
 
 const _conditionStatuses = ['active', 'inactive', 'resolved'];
 const _severities = ['mild', 'moderate', 'severe', 'life-threatening'];
-const _contactRelationships = [
-  'parent',
-  'guardian',
-  'sibling',
-  'caregiver',
-  'doctor',
-  'therapist',
-  'crisis_hotline',
-  'friend',
-  'other',
-];
 const _pillShapes = [
   'round',
   'oval',

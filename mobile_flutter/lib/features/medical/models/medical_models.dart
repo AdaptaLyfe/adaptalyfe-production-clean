@@ -50,6 +50,14 @@ class MedicalConditionInput extends Equatable {
         if (_hasText(notes)) 'notes': notes!.trim(),
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'condition': condition.trim(),
+        'status': status,
+        'diagnosedDate':
+            diagnosedDate == null ? null : _dateOnly(diagnosedDate!),
+        'notes': _nullableText(notes),
+      };
+
   @override
   List<Object?> get props => [condition, status, diagnosedDate, notes];
 }
@@ -262,6 +270,13 @@ class AllergyInput extends Equatable {
         if (_hasText(notes)) 'notes': notes!.trim(),
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'allergen': allergen.trim(),
+        'severity': severity,
+        'reaction': _nullableText(reaction),
+        'notes': _nullableText(notes),
+      };
+
   @override
   List<Object?> get props => [allergen, severity, reaction, notes];
 }
@@ -349,6 +364,17 @@ class EmergencyContactInput extends Equatable {
         if (_hasText(notes)) 'notes': notes!.trim(),
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'name': name.trim(),
+        'relationship': _nullableText(relationship),
+        'phoneNumber': phoneNumber.trim(),
+        'email': _nullableText(email),
+        'address': _nullableText(address),
+        'isPrimary': isPrimary,
+        'isEmergencyContact': isEmergencyContact,
+        'notes': _nullableText(notes),
+      };
+
   @override
   List<Object?> get props => [
         name,
@@ -416,6 +442,14 @@ class AdverseMedicationInput extends Equatable {
         'severity': severity,
         if (reactionDate != null) 'reactionDate': _dateOnly(reactionDate!),
         if (_hasText(notes)) 'notes': notes!.trim(),
+      };
+
+  Map<String, dynamic> toUpdateJson() => {
+        'medicationName': medicationName.trim(),
+        'reaction': reaction.trim(),
+        'severity': severity,
+        'reactionDate': reactionDate == null ? null : _dateOnly(reactionDate!),
+        'notes': _nullableText(notes),
       };
 
   @override
@@ -504,6 +538,17 @@ class PrimaryCareProviderInput extends Equatable {
         if (_hasText(address)) 'address': address!.trim(),
         'isPrimary': isPrimary,
         if (_hasText(notes)) 'notes': notes!.trim(),
+      };
+
+  Map<String, dynamic> toUpdateJson() => {
+        'name': name.trim(),
+        'specialty': specialty.trim(),
+        'practiceName': _nullableText(practiceName),
+        'phoneNumber': phoneNumber.trim(),
+        'email': _nullableText(email),
+        'address': _nullableText(address),
+        'isPrimary': isPrimary,
+        'notes': _nullableText(notes),
       };
 
   @override
@@ -602,6 +647,17 @@ class SymptomEntryInput extends Equatable {
         if (_hasText(notes)) 'notes': notes!.trim(),
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'symptomName': symptomName.trim(),
+        'severity': severity,
+        'startTime': startTime.toUtc().toIso8601String(),
+        'endTime': endTime?.toUtc().toIso8601String(),
+        'triggers': _nullableText(triggers),
+        'location': _nullableText(location),
+        'description': _nullableText(description),
+        'notes': _nullableText(notes),
+      };
+
   @override
   List<Object?> get props => [
         symptomName,
@@ -646,3 +702,6 @@ String _dateOnly(DateTime date) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String? _nullableText(String? value) =>
+    _hasText(value) ? value!.trim() : null;
