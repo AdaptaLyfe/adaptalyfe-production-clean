@@ -673,3 +673,17 @@ mtime_ms = 1789707072481
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6fe2b54e-bde6-4cac-a2a0-b6b5079cb311/14612382-c331-466a-8ebe-458ed436ecdb"
 storage_version_token = "1789707076425996"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X75GJpWjfF2NrGJeYaS4C"
+uri = "file://meal-plan-flutter-changes.zip"
+type = "unspecified"
+title = "Meal & Plan Flutter changes"
+description = "ZIP containing only the changed Flutter files for Meal Planning, Shopping List, grocery-store management, premium access, and purchase-cost handling."
+logical_id = "5c27b9bf-d777-401e-8482-a9eeb419cebe"
+content_hash = "sha256:f491b352cd149bebbc9f18b75db1dc54eb714af6e95c47511255b0a46db9b0b2"
+size = 18966
+mtime_ms = 1789710283845
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5c27b9bf-d777-401e-8482-a9eeb419cebe/3e591732-79e7-4221-bafd-a8dfa8f25d36"
+storage_version_token = "1789710296055415"
+content_type = "application/octet-stream"

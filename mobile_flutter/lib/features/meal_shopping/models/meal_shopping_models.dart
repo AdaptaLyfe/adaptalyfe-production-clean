@@ -176,6 +176,102 @@ class ShoppingItemInput extends Equatable {
       ];
 }
 
+class GroceryStoreModel extends Equatable {
+  const GroceryStoreModel({
+    required this.id,
+    required this.name,
+    required this.website,
+    required this.onlineOrderingUrl,
+    required this.address,
+    required this.phoneNumber,
+    required this.isPreferred,
+    required this.deliveryAvailable,
+    required this.pickupAvailable,
+  });
+
+  factory GroceryStoreModel.fromJson(Map<String, dynamic> json) {
+    return GroceryStoreModel(
+      id: _asInt(json['id']),
+      name: _asString(json['name']),
+      website: _asNullableString(json['website']),
+      onlineOrderingUrl: _asNullableString(json['onlineOrderingUrl']),
+      address: _asNullableString(json['address']),
+      phoneNumber: _asNullableString(json['phoneNumber']),
+      isPreferred: json['isPreferred'] == true,
+      deliveryAvailable: json['deliveryAvailable'] == true,
+      pickupAvailable: json['pickupAvailable'] == true,
+    );
+  }
+
+  final int id;
+  final String name;
+  final String? website;
+  final String? onlineOrderingUrl;
+  final String? address;
+  final String? phoneNumber;
+  final bool isPreferred;
+  final bool deliveryAvailable;
+  final bool pickupAvailable;
+
+  @override
+  List<Object?> get props => [
+        id,
+        name,
+        website,
+        onlineOrderingUrl,
+        address,
+        phoneNumber,
+        isPreferred,
+        deliveryAvailable,
+        pickupAvailable,
+      ];
+}
+
+class GroceryStoreInput extends Equatable {
+  const GroceryStoreInput({
+    required this.name,
+    this.website,
+    this.onlineOrderingUrl,
+    this.address,
+    this.phoneNumber,
+    this.isPreferred = false,
+    this.deliveryAvailable = false,
+    this.pickupAvailable = false,
+  });
+
+  final String name;
+  final String? website;
+  final String? onlineOrderingUrl;
+  final String? address;
+  final String? phoneNumber;
+  final bool isPreferred;
+  final bool deliveryAvailable;
+  final bool pickupAvailable;
+
+  Map<String, dynamic> toJson() => {
+        'name': name.trim(),
+        'website': _emptyToNull(website),
+        'onlineOrderingUrl': _emptyToNull(onlineOrderingUrl),
+        'address': _emptyToNull(address),
+        'phoneNumber': _emptyToNull(phoneNumber),
+        'isPreferred': isPreferred,
+        'deliveryAvailable': deliveryAvailable,
+        'pickupAvailable': pickupAvailable,
+      };
+
+  @override
+  List<Object?> get props => [
+        name,
+        website,
+        onlineOrderingUrl,
+        address,
+        phoneNumber,
+        isPreferred,
+        deliveryAvailable,
+        pickupAvailable,
+      ];
+}
+
 String _asString(Object? value) => value is String ? value : '';
 
 String? _asNullableString(Object? value) {
@@ -204,3 +300,8 @@ DateTime? _asDate(Object? value) =>
     value is String && value.isNotEmpty ? DateTime.tryParse(value) : null;
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String? _emptyToNull(String? value) {
+  final trimmed = value?.trim() ?? '';
+  return trimmed.isEmpty ? null : trimmed;
+}

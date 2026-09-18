@@ -73,3 +73,31 @@ final class DeleteShoppingItem extends MealShoppingEvent {
   @override
   List<Object?> get props => [id];
 }
+
+final class AddGroceryStore extends MealShoppingEvent {
+  const AddGroceryStore(this.input);
+
+  final GroceryStoreInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class UpdateGroceryStore extends MealShoppingEvent {
+  const UpdateGroceryStore(this.id, this.input);
+
+  final int id;
+  final GroceryStoreInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeleteGroceryStore extends MealShoppingEvent {
+  const DeleteGroceryStore(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}

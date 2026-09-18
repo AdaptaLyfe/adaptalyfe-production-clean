@@ -17,6 +17,9 @@ enum MealShoppingAction {
   addingShoppingItem,
   completingShoppingItem,
   deletingShoppingItem,
+  addingGroceryStore,
+  updatingGroceryStore,
+  deletingGroceryStore,
 }
 
 class MealShoppingState extends Equatable {
@@ -25,6 +28,7 @@ class MealShoppingState extends Equatable {
     this.mealPlans = const [],
     this.shoppingItems = const [],
     this.activeShoppingItems = const [],
+    this.groceryStores = const [],
     this.action = MealShoppingAction.none,
     this.activeId,
     this.errorMessage,
@@ -36,6 +40,7 @@ class MealShoppingState extends Equatable {
   final List<MealPlanModel> mealPlans;
   final List<ShoppingItemModel> shoppingItems;
   final List<ShoppingItemModel> activeShoppingItems;
+  final List<GroceryStoreModel> groceryStores;
   final MealShoppingAction action;
   final int? activeId;
   final String? errorMessage;
@@ -50,6 +55,7 @@ class MealShoppingState extends Equatable {
     List<MealPlanModel>? mealPlans,
     List<ShoppingItemModel>? shoppingItems,
     List<ShoppingItemModel>? activeShoppingItems,
+    List<GroceryStoreModel>? groceryStores,
     MealShoppingAction? action,
     Object? activeId = _notSet,
     Object? errorMessage = _notSet,
@@ -61,6 +67,7 @@ class MealShoppingState extends Equatable {
       mealPlans: mealPlans ?? this.mealPlans,
       shoppingItems: shoppingItems ?? this.shoppingItems,
       activeShoppingItems: activeShoppingItems ?? this.activeShoppingItems,
+      groceryStores: groceryStores ?? this.groceryStores,
       action: action ?? this.action,
       activeId: identical(activeId, _notSet) ? this.activeId : activeId as int?,
       errorMessage: identical(errorMessage, _notSet)
@@ -79,6 +86,7 @@ class MealShoppingState extends Equatable {
         mealPlans,
         shoppingItems,
         activeShoppingItems,
+        groceryStores,
         action,
         activeId,
         errorMessage,

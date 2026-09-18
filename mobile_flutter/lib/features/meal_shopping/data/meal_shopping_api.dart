@@ -53,6 +53,26 @@ class MealShoppingApi {
     await client.delete<dynamic>('/api/shopping-lists/$id');
   }
 
+  Future<List<GroceryStoreModel>> getGroceryStores() =>
+      _getList('/api/grocery-stores', GroceryStoreModel.fromJson);
+
+  Future<GroceryStoreModel> createGroceryStore(GroceryStoreInput input) =>
+      _post('/api/grocery-stores', input.toJson(), GroceryStoreModel.fromJson);
+
+  Future<GroceryStoreModel> updateGroceryStore(
+    int id,
+    GroceryStoreInput input,
+  ) =>
+      _put(
+        '/api/grocery-stores/$id',
+        input.toJson(),
+        GroceryStoreModel.fromJson,
+      );
+
+  Future<void> deleteGroceryStore(int id) async {
+    await client.delete<dynamic>('/api/grocery-stores/$id');
+  }
+
   Future<List<T>> _getList<T>(
     String path,
     T Function(Map<String, dynamic>) fromJson,
@@ -82,6 +102,15 @@ class MealShoppingApi {
     T Function(Map<String, dynamic>) fromJson,
   ) async {
     final response = await client.patch<dynamic>(path, data: data);
+    return _parseItem(response.data, fromJson);
+  }
+
+  Future<T> _put<T>(
+    String path,
+    Map<String, dynamic> data,
+    T Function(Map<String, dynamic>) fromJson,
+  ) async {
+    final response = await client.put<dynamic>(path, data: data);
     return _parseItem(response.data, fromJson);
   }
 

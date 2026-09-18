@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -15,6 +17,9 @@ class MealShoppingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasMealPlanningAccess(context)) {
+      return const _MealPlanningPremiumPrompt();
+    }
     return BlocConsumer<MealShoppingBloc, MealShoppingState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
@@ -98,6 +103,70 @@ class MealShoppingScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+bool _hasMealPlanningAccess(BuildContext context) {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is! Authenticated) return false;
+  final user = authState.user;
+  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
+  if (isAdmin) return true;
+  final tier = user.subscriptionTier?.toLowerCase();
+  final status = user.subscriptionStatus?.toLowerCase();
+  return status == 'active' &&
+          (tier == 'premium' || tier == 'family') ||
+      status == 'trialing';
+}
+
+class _MealPlanningPremiumPrompt extends StatelessWidget {
+  const _MealPlanningPremiumPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Meal Planning & Shopping')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: AppResponsive.pagePadding(context),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.workspace_premium_outlined,
+                    size: 52,
+                    color: Color(0xFFF97316),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Meal Planning & Shopping',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Create personalized meal plans, manage recipes, and generate smart shopping lists. This premium feature helps you maintain a healthy diet and budget.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF6B7280)),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton(
+                    onPressed: () => context.push('/subscription'),
+                    child: const Text('View Premium Plans'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -413,6 +482,14 @@ class _ShoppingListTab extends StatelessWidget {
             actualTotal: actualTotal,
           ),
           const SizedBox(height: 16),
+          _GroceryStoresSection(
+            stores: state.groceryStores,
+            busyId: state.action == MealShoppingAction.deletingGroceryStore ||
+                    state.action == MealShoppingAction.updatingGroceryStore
+                ? state.activeId
+                : null,
+          ),
+          const SizedBox(height: 16),
           _IntroCard(
             icon: Icons.add_shopping_cart_rounded,
             title: 'Build your shopping list',
@@ -502,6 +579,232 @@ class _ShoppingStats extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _GroceryStoresSection extends StatelessWidget {
+  const _GroceryStoresSection({
+    required this.stores,
+    required this.busyId,
+  });
+
+  final List<GroceryStoreModel> stores;
+  final int? busyId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.store_outlined, color: Color(0xFF2563EB)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Your Grocery Stores',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _showStoreManagementDialog(context),
+                  icon: const Icon(Icons.settings_outlined, size: 17),
+                  label: const Text('Manage'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (stores.isEmpty)
+              const _EmptyState(
+                icon: Icons.store_outlined,
+                title: 'No grocery stores added yet',
+                subtitle: 'Add favourite stores for online ordering and pickup.',
+              )
+            else
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = constraints.maxWidth >= 720 ? 2 : 1;
+                  final width = columns == 2
+                      ? (constraints.maxWidth - 12) / 2
+                      : constraints.maxWidth;
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: stores
+                        .map(
+                          (store) => SizedBox(
+                            width: width,
+                            child: _GroceryStoreCard(
+                              store: store,
+                              isBusy: busyId == store.id,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GroceryStoreCard extends StatelessWidget {
+  const _GroceryStoreCard({
+    required this.store,
+    required this.isBusy,
+  });
+
+  final GroceryStoreModel store;
+  final bool isBusy;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: store.isPreferred
+            ? const Color(0xFFEFF6FF)
+            : const Color(0xFFF9FAFB),
+        border: Border.all(
+          color: store.isPreferred
+              ? const Color(0xFF3B82F6)
+              : const Color(0xFFE5E7EB),
+        ),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  store.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              if (store.isPreferred) const _StoreBadge(label: 'Preferred'),
+            ],
+          ),
+          if (_hasText(store.address) || _hasText(store.phoneNumber)) ...[
+            const SizedBox(height: 8),
+            if (_hasText(store.address))
+              _StoreDetail(
+                icon: Icons.location_on_outlined,
+                text: store.address!,
+              ),
+            if (_hasText(store.phoneNumber))
+              _StoreDetail(
+                icon: Icons.phone_outlined,
+                text: store.phoneNumber!,
+              ),
+          ],
+          if (store.deliveryAvailable || store.pickupAvailable) ...[
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                if (store.deliveryAvailable)
+                  const _StoreBadge(label: 'Delivery', outlined: true),
+                if (store.pickupAvailable)
+                  const _StoreBadge(label: 'Pickup', outlined: true),
+              ],
+            ),
+          ],
+          if (store.onlineOrderingUrl != null || store.website != null) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (store.onlineOrderingUrl != null)
+                  OutlinedButton.icon(
+                    onPressed: isBusy
+                        ? null
+                        : () => _openStoreUrl(store.onlineOrderingUrl!),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('Order online'),
+                  ),
+                if (store.website != null)
+                  TextButton.icon(
+                    onPressed: isBusy
+                        ? null
+                        : () => _openStoreUrl(store.website!),
+                    icon: const Icon(Icons.language, size: 16),
+                    label: const Text('Website'),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StoreDetail extends StatelessWidget {
+  const _StoreDetail({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFF6B7280)),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StoreBadge extends StatelessWidget {
+  const _StoreBadge({required this.label, this.outlined = false});
+
+  final String label;
+  final bool outlined;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: outlined ? Colors.transparent : const Color(0xFFDBEAFE),
+        border: outlined
+            ? Border.all(color: const Color(0xFF93C5FD))
+            : null,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF1D4ED8),
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -627,12 +930,26 @@ class _ShoppingItemCard extends StatelessWidget {
               value: item.isPurchased,
               onChanged: isBusy
                   ? null
-                  : (value) => context.read<MealShoppingBloc>().add(
-                        ToggleShoppingItem(
-                          item.id,
-                          value ?? false,
-                        ),
-                      ),
+                  : (value) async {
+                      final nextValue = value ?? false;
+                      double? actualCost;
+                      if (nextValue) {
+                        final result = await _showPurchaseCostDialog(
+                          context,
+                          item,
+                        );
+                        if (result == _purchaseCancelled) return;
+                        actualCost = result;
+                      }
+                      if (!context.mounted) return;
+                      context.read<MealShoppingBloc>().add(
+                            ToggleShoppingItem(
+                              item.id,
+                              nextValue,
+                              actualCost: actualCost,
+                            ),
+                          );
+                    },
             ),
             Expanded(
               child: Column(
@@ -1160,6 +1477,408 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
   estimatedCostController.dispose();
 }
 
+Future<void> _showStoreManagementDialog(BuildContext context) async {
+  final bloc = context.read<MealShoppingBloc>();
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Manage Grocery Stores'),
+      content: SizedBox(
+        width: 620,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 520),
+          child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
+            bloc: bloc,
+            builder: (context, state) {
+              final busy = state.action == MealShoppingAction.deletingGroceryStore;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Add favourite stores for easy online ordering and shopping list management.',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Your Stores',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      FilledButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () {
+                                Navigator.of(dialogContext).pop();
+                                _showStoreFormDialog(context);
+                              },
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add New Store'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Flexible(
+                    child: state.groceryStores.isEmpty
+                        ? const _EmptyState(
+                            icon: Icons.store_outlined,
+                            title: 'No stores added yet',
+                            subtitle: 'Add a store to get started.',
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: state.groceryStores.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final store = state.groceryStores[index];
+                              final isBusy = state.activeId == store.id &&
+                                  (state.action ==
+                                          MealShoppingAction
+                                              .deletingGroceryStore ||
+                                      state.action ==
+                                          MealShoppingAction
+                                              .updatingGroceryStore);
+                              return _StoreManagementRow(
+                                store: store,
+                                isBusy: isBusy,
+                                onEdit: () {
+                                  Navigator.of(dialogContext).pop();
+                                  _showStoreFormDialog(context, store: store);
+                                },
+                                onDelete: () =>
+                                    _confirmDeleteStore(context, store),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _StoreManagementRow extends StatelessWidget {
+  const _StoreManagementRow({
+    required this.store,
+    required this.isBusy,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final GroceryStoreModel store;
+  final bool isBusy;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.store_outlined, color: Color(0xFF2563EB)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      store.name,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    if (store.isPreferred)
+                      const _StoreBadge(label: 'Preferred'),
+                  ],
+                ),
+                if (_hasText(store.address))
+                  Text(
+                    store.address!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Edit ${store.name}',
+            onPressed: isBusy ? null : onEdit,
+            icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Delete ${store.name}',
+            onPressed: isBusy ? null : onDelete,
+            color: const Color(0xFFDC2626),
+            icon: isBusy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.delete_outline_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _showStoreFormDialog(
+  BuildContext context, {
+  GroceryStoreModel? store,
+}) async {
+  final bloc = context.read<MealShoppingBloc>();
+  final nameController = TextEditingController(text: store?.name ?? '');
+  final addressController = TextEditingController(text: store?.address ?? '');
+  final phoneController =
+      TextEditingController(text: store?.phoneNumber ?? '');
+  final websiteController =
+      TextEditingController(text: store?.website ?? '');
+  final orderingController =
+      TextEditingController(text: store?.onlineOrderingUrl ?? '');
+  final formKey = GlobalKey<FormState>();
+  var deliveryAvailable = store?.deliveryAvailable ?? false;
+  var pickupAvailable = store?.pickupAvailable ?? true;
+  var isPreferred = store?.isPreferred ?? false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(store == null ? 'Add New Store' : 'Edit Store'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Store Name',
+                    hintText: 'Kroger, Walmart, Target...',
+                  ),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Address',
+                    hintText: '123 Main St, Anytown, USA',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone Number',
+                    hintText: '(555) 123-4567',
+                  ),
+                  validator: _phoneValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: websiteController,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(
+                    labelText: 'Website',
+                    hintText: 'https://example.com',
+                  ),
+                  validator: _urlValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: orderingController,
+                  keyboardType: TextInputType.url,
+                  decoration: const InputDecoration(
+                    labelText: 'Online Ordering URL',
+                    hintText: 'https://grocery.example.com',
+                  ),
+                  validator: _urlValidator,
+                ),
+                const SizedBox(height: 8),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: deliveryAvailable,
+                  title: const Text('Delivery Available'),
+                  onChanged: (value) =>
+                      setState(() => deliveryAvailable = value ?? false),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: pickupAvailable,
+                  title: const Text('Pickup Available'),
+                  onChanged: (value) =>
+                      setState(() => pickupAvailable = value ?? false),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: isPreferred,
+                  title: const Text('Preferred Store'),
+                  onChanged: (value) =>
+                      setState(() => isPreferred = value ?? false),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              final input = GroceryStoreInput(
+                name: nameController.text,
+                address: addressController.text,
+                phoneNumber: phoneController.text,
+                website: websiteController.text,
+                onlineOrderingUrl: orderingController.text,
+                deliveryAvailable: deliveryAvailable,
+                pickupAvailable: pickupAvailable,
+                isPreferred: isPreferred,
+              );
+              if (store == null) {
+                bloc.add(AddGroceryStore(input));
+              } else {
+                bloc.add(UpdateGroceryStore(store.id, input));
+              }
+              Navigator.of(dialogContext).pop();
+            },
+            child: Text(store == null ? 'Add Store' : 'Update Store'),
+          ),
+        ],
+      ),
+    ),
+  );
+  nameController.dispose();
+  addressController.dispose();
+  phoneController.dispose();
+  websiteController.dispose();
+  orderingController.dispose();
+}
+
+Future<void> _confirmDeleteStore(
+  BuildContext context,
+  GroceryStoreModel store,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete grocery store?'),
+      content: Text('Remove “${store.name}” from your grocery stores?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed == true && context.mounted) {
+    context.read<MealShoppingBloc>().add(DeleteGroceryStore(store.id));
+  }
+}
+
+Future<void> _openStoreUrl(String value) async {
+  final uri = Uri.tryParse(value);
+  if (uri == null || !uri.hasScheme || !uri.hasAuthority) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+const _purchaseCancelled = -1.0;
+
+Future<double?> _showPurchaseCostDialog(
+  BuildContext context,
+  ShoppingItemModel item,
+) async {
+  final controller = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  final result = await showDialog<double?>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Mark as purchased'),
+      content: Form(
+        key: formKey,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [_nonNegativeMoneyFormatter],
+          decoration: InputDecoration(
+            labelText: 'Actual Cost (optional)',
+            hintText: item.estimatedCost == null
+                ? 'Leave blank if unknown'
+                : item.estimatedCost!.toStringAsFixed(2),
+            prefixText: '\$ ',
+          ),
+          validator: _optionalMoneyValidator,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(_purchaseCancelled),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            Navigator.of(dialogContext).pop(null);
+          },
+          child: const Text('Skip'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            Navigator.of(dialogContext).pop(
+              double.tryParse(controller.text.trim()),
+            );
+          },
+          child: const Text('Mark Purchased'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+  return result;
+}
+
 class _DatePickerField extends StatelessWidget {
   const _DatePickerField({
     required this.label,
@@ -1231,6 +1950,26 @@ String? _optionalMoneyValidator(String? value) {
   if (value == null || value.trim().isEmpty) return null;
   final parsed = double.tryParse(value.trim());
   if (parsed == null || parsed < 0) return 'Enter a valid non-negative amount';
+  return null;
+}
+
+String? _urlValidator(String? value) {
+  if (value == null || value.trim().isEmpty) return null;
+  final uri = Uri.tryParse(value.trim());
+  if (uri == null ||
+      (uri.scheme != 'http' && uri.scheme != 'https') ||
+      !uri.hasAuthority) {
+    return 'Enter a valid website URL';
+  }
+  return null;
+}
+
+String? _phoneValidator(String? value) {
+  if (value == null || value.trim().isEmpty) return null;
+  final digits = value.replaceAll(RegExp(r'[\s().-]'), '');
+  if (!RegExp(r'^\+?\d{7,15}$').hasMatch(digits)) {
+    return 'Enter a valid phone number';
+  }
   return null;
 }
 

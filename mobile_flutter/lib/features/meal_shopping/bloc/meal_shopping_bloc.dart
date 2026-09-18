@@ -16,6 +16,9 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     on<AddShoppingItem>(_addShoppingItem);
     on<ToggleShoppingItem>(_toggleShoppingItem);
     on<DeleteShoppingItem>(_deleteShoppingItem);
+    on<AddGroceryStore>(_addGroceryStore);
+    on<UpdateGroceryStore>(_updateGroceryStore);
+    on<DeleteGroceryStore>(_deleteGroceryStore);
   }
 
   final MealShoppingRepository repository;
@@ -222,6 +225,113 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     }
   }
 
+  Future<void> _addGroceryStore(
+    AddGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    await _runStoreMutation(
+      emit,
+      action: MealShoppingAction.addingGroceryStore,
+      operation: () => repository.createGroceryStore(event.input),
+      successMessage: 'The grocery store has been added successfully.',
+      failureMessage: 'Failed to add the grocery store. Please try again.',
+    );
+  }
+
+  Future<void> _updateGroceryStore(
+    UpdateGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    await _runStoreMutation(
+      emit,
+      action: MealShoppingAction.updatingGroceryStore,
+      activeId: event.id,
+      operation: () => repository.updateGroceryStore(event.id, event.input),
+      successMessage: 'The grocery store has been updated successfully.',
+      failureMessage: 'Failed to update the grocery store. Please try again.',
+    );
+  }
+
+  Future<void> _deleteGroceryStore(
+    DeleteGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingGroceryStore,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteGroceryStore(event.id);
+      await _reloadAfterStoreMutation(
+        emit,
+        successMessage: 'The grocery store has been removed successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete the grocery store. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _runStoreMutation(
+    Emitter<MealShoppingState> emit, {
+    required MealShoppingAction action,
+    int? activeId,
+    required Future<GroceryStoreModel> Function() operation,
+    required String successMessage,
+    required String failureMessage,
+  }) async {
+    emit(
+      state.copyWith(
+        action: action,
+        activeId: activeId,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await operation();
+      await _reloadAfterStoreMutation(
+        emit,
+        successMessage: successMessage,
+      );
+    } catch (error) {
+      _emitActionFailure(emit, error, failureMessage);
+    }
+  }
+
+  Future<void> _reloadAfterStoreMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    try {
+      final stores = await repository.getGroceryStores();
+      emit(
+        state.copyWith(
+          status: MealShoppingStatus.loaded,
+          groceryStores: stores,
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'The store was saved, but your grocery stores could not be refreshed.',
+      );
+    }
+  }
+
   Future<void> _reloadAfterMutation(
     Emitter<MealShoppingState> emit, {
     required String successMessage,
@@ -269,11 +379,18 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
         repository.getShoppingItems(),
         repository.getActiveShoppingItems(),
       ]);
+      List<GroceryStoreModel> stores = const [];
+      try {
+        stores = await repository.getGroceryStores();
+      } catch (_) {
+        // Grocery-store availability should not hide a usable shopping list.
+      }
       emit(
         state.copyWith(
           status: MealShoppingStatus.loaded,
           shoppingItems: results[0] as List<ShoppingItemModel>,
           activeShoppingItems: results[1] as List<ShoppingItemModel>,
+          groceryStores: stores,
           action: MealShoppingAction.none,
           activeId: null,
           errorMessage: null,
@@ -294,17 +411,25 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
       (
         List<MealPlanModel>,
         List<ShoppingItemModel>,
-        List<ShoppingItemModel>
+        List<ShoppingItemModel>,
+        List<GroceryStoreModel>
       )> _fetchAll() async {
     final results = await Future.wait([
       repository.getMealPlans(),
       repository.getShoppingItems(),
       repository.getActiveShoppingItems(),
     ]);
+    List<GroceryStoreModel> stores = const [];
+    try {
+      stores = await repository.getGroceryStores();
+    } catch (_) {
+      // Grocery-store availability should not block meal and list loading.
+    }
     return (
       results[0] as List<MealPlanModel>,
       results[1] as List<ShoppingItemModel>,
       results[2] as List<ShoppingItemModel>,
+      stores,
     );
   }
 
@@ -313,7 +438,8 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
     (
       List<MealPlanModel>,
       List<ShoppingItemModel>,
-      List<ShoppingItemModel>
+      List<ShoppingItemModel>,
+      List<GroceryStoreModel>
     ) snapshot, {
     String? actionMessage,
   }) {
@@ -323,6 +449,7 @@ class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
         mealPlans: snapshot.$1,
         shoppingItems: snapshot.$2,
         activeShoppingItems: snapshot.$3,
+        groceryStores: snapshot.$4,
         action: MealShoppingAction.none,
         activeId: null,
         errorMessage: null,
