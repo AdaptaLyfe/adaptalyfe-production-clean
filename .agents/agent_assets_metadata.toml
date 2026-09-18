@@ -855,3 +855,17 @@ mtime_ms = 1789733297570
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/857ac4f0-577b-41f5-be95-b7e8d93895af/52d4edc4-e53a-452e-8a53-17743a73bc81"
 storage_version_token = "1789733301492223"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d4rPRzKWhN36OFaV9u6cS"
+uri = "file://artifacts/adaptalyfe-flutter-meal-shopping-lifecycle-fix.zip"
+type = "unspecified"
+title = "Flutter Meal & Shopping lifecycle fix"
+description = "ZIP containing the changed Flutter Meal & Shopping screen only. React Native files are not included."
+logical_id = "ffe7618f-8fde-4422-a632-26cbd5af9c73"
+content_hash = "sha256:de021987eedd7e70c3e8499a66fc43a5a2ffa91ec9798e5b78341b011195c6a2"
+size = 12250
+mtime_ms = 1789733852230
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffe7618f-8fde-4422-a632-26cbd5af9c73/a4cff1c6-4d60-430c-add9-059bce287244"
+storage_version_token = "1789733855934793"
+content_type = "application/octet-stream"
