@@ -184,11 +184,12 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
       }
 
       recordFailure('conditions', snapshot[0]);
-      recordFailure('allergies', snapshot[1]);
-      recordFailure('contacts', snapshot[2]);
-      recordFailure('reactions', snapshot[3]);
-      recordFailure('providers', snapshot[4]);
-      recordFailure('symptoms', snapshot[5]);
+      recordFailure('medications', snapshot[1]);
+      recordFailure('allergies', snapshot[2]);
+      recordFailure('contacts', snapshot[3]);
+      recordFailure('reactions', snapshot[4]);
+      recordFailure('providers', snapshot[5]);
+      recordFailure('symptoms', snapshot[6]);
 
       if (successfulLoads == 0) {
         if (emit.isDone) return;
@@ -206,20 +207,23 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
           snapshot[0].value is List<MedicalConditionModel>
               ? snapshot[0].value as List<MedicalConditionModel>
               : state.conditions,
-          snapshot[1].value is List<AllergyModel>
-              ? snapshot[1].value as List<AllergyModel>
+          snapshot[1].value is List<MedicationModel>
+              ? snapshot[1].value as List<MedicationModel>
+              : state.medications,
+          snapshot[2].value is List<AllergyModel>
+              ? snapshot[2].value as List<AllergyModel>
               : state.allergies,
-          snapshot[2].value is List<EmergencyContactModel>
-              ? snapshot[2].value as List<EmergencyContactModel>
+          snapshot[3].value is List<EmergencyContactModel>
+              ? snapshot[3].value as List<EmergencyContactModel>
               : state.emergencyContacts,
-          snapshot[3].value is List<AdverseMedicationModel>
-              ? snapshot[3].value as List<AdverseMedicationModel>
+          snapshot[4].value is List<AdverseMedicationModel>
+              ? snapshot[4].value as List<AdverseMedicationModel>
               : state.adverseMedications,
-          snapshot[4].value is List<PrimaryCareProviderModel>
-              ? snapshot[4].value as List<PrimaryCareProviderModel>
+          snapshot[5].value is List<PrimaryCareProviderModel>
+              ? snapshot[5].value as List<PrimaryCareProviderModel>
               : state.primaryCareProviders,
-          snapshot[5].value is List<SymptomEntryModel>
-              ? snapshot[5].value as List<SymptomEntryModel>
+          snapshot[6].value is List<SymptomEntryModel>
+              ? snapshot[6].value as List<SymptomEntryModel>
               : state.symptomEntries,
         ),
         collectionErrors: failures,
@@ -267,6 +271,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
   Future<List<_MedicalCollectionResult>> _fetchAll() async {
     final results = await Future.wait([
       _capture(repository.getConditions()),
+      _capture(repository.getMedications()),
       _capture(repository.getAllergies()),
       _capture(repository.getEmergencyContacts()),
       _capture(repository.getAdverseMedications()),
@@ -288,6 +293,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     Emitter<MedicalState> emit,
     (
       List<MedicalConditionModel>,
+        List<MedicationModel>,
       List<AllergyModel>,
         List<EmergencyContactModel>,
         List<AdverseMedicationModel>,
@@ -301,11 +307,12 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
       state.copyWith(
         status: MedicalStatus.loaded,
         conditions: snapshot.$1,
-        allergies: snapshot.$2,
-        emergencyContacts: snapshot.$3,
-        adverseMedications: snapshot.$4,
-        primaryCareProviders: snapshot.$5,
-        symptomEntries: snapshot.$6,
+        medications: snapshot.$2,
+        allergies: snapshot.$3,
+        emergencyContacts: snapshot.$4,
+        adverseMedications: snapshot.$5,
+        primaryCareProviders: snapshot.$6,
+        symptomEntries: snapshot.$7,
         busySection: null,
         errorMessage: null,
         actionMessage: actionMessage,

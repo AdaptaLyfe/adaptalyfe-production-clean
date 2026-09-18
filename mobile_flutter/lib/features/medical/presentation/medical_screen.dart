@@ -14,7 +14,12 @@ import '../bloc/medical_state.dart';
 import '../models/medical_models.dart';
 
 class MedicalScreen extends StatelessWidget {
-  const MedicalScreen({super.key});
+  const MedicalScreen({
+    super.key,
+    this.initialTab = 0,
+  });
+
+  final int initialTab;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +66,8 @@ class MedicalScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          length: 6,
+          initialIndex: initialTab.clamp(0, 6).toInt(),
+          length: 7,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Health Records'),
@@ -73,15 +79,16 @@ class MedicalScreen extends StatelessWidget {
                   icon: const Icon(Icons.refresh_rounded),
                 ),
               ],
-              bottom: const TabBar(
-                isScrollable: true,
+              bottom: TabBar(
+                isScrollable: MediaQuery.of(context).size.width < 1000,
                 tabs: [
-                  Tab(text: 'Sensitivities'),
-                  Tab(text: 'Notes'),
-                  Tab(text: 'Reactions'),
-                  Tab(text: 'Trusted Contacts'),
-                  Tab(text: 'Healthcare Contacts'),
-                  Tab(text: 'Personal Notes'),
+                  const Tab(text: 'Sensitivities'),
+                  const Tab(text: 'Notes'),
+                  const Tab(text: 'Reactions'),
+                  const Tab(text: 'Trusted Contacts'),
+                  const Tab(text: 'Healthcare Contacts'),
+                  const Tab(text: 'Personal Notes'),
+                  const Tab(text: 'Medications'),
                 ],
               ),
             ),
@@ -97,6 +104,7 @@ class MedicalScreen extends StatelessWidget {
                       _ContactsTab(state: state),
                       _ProvidersTab(state: state),
                       _SymptomsTab(state: state),
+                      _MedicationsTab(state: state),
                     ],
                   ),
                 ),
@@ -242,6 +250,7 @@ class _MedicationsTab extends StatelessWidget {
       emptyTitle: 'No medications added yet',
       emptySubtitle: 'Add medications to keep your list available.',
       addLabel: 'Add Medication',
+      errorMessage: state.collectionErrors['medications'],
       onAdd: () => _showMedicationDialog(context),
       children: state.medications
           .map(
@@ -502,63 +511,74 @@ class _MedicalCollectionView extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-         padding: AppResponsive.pagePadding(context).add(
-           const EdgeInsets.only(top: 16, bottom: 32),
-         ),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
         children: [
-          if (header != null) ...[header!, const SizedBox(height: 14)],
-          LayoutBuilder(
-            builder: (context, constraints) => constraints.maxWidth < 430
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        emptyTitle.replaceFirst('No ', ''),
-                        style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      FilledButton.icon(
-                        onPressed: onAdd,
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(addLabel),
-                      ),
-                    ],
-                  )
-                : Row(
-            children: [
-              Expanded(
-                child: Text(
-                  emptyTitle.replaceFirst('No ', ''),
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (header != null) ...[header!, const SizedBox(height: 14)],
+                  LayoutBuilder(
+                    builder: (context, constraints) => constraints.maxWidth < 430
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                emptyTitle.replaceFirst('No ', ''),
+                                style: const TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              FilledButton.icon(
+                                onPressed: onAdd,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: Text(addLabel),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  emptyTitle.replaceFirst('No ', ''),
+                                  style: const TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              FilledButton.icon(
+                                onPressed: onAdd,
+                                icon: const Icon(Icons.add, size: 18),
+                                label: Text(addLabel),
+                              ),
+                            ],
+                          ),
                   ),
-                ),
+                  const SizedBox(height: 14),
+                  if (errorMessage != null)
+                    _MedicalInlineError(
+                      message: errorMessage!,
+                      onRetry: onRefresh,
+                    ),
+                  if (errorMessage == null && children.isEmpty)
+                    _MedicalEmpty(
+                      title: emptyTitle,
+                      subtitle: emptySubtitle,
+                    )
+                  else
+                    ...children,
+                ],
               ),
-              FilledButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(addLabel),
-              ),
-            ],
-          ),
-          ),
-          const SizedBox(height: 14),
-          if (errorMessage != null)
-            _MedicalInlineError(
-              message: errorMessage!,
-              onRetry: onRefresh,
             ),
-          if (errorMessage == null && children.isEmpty)
-            _MedicalEmpty(
-              title: emptyTitle,
-              subtitle: emptySubtitle,
-            )
-          else
-            ...children,
+          ),
         ],
       ),
     );
@@ -1094,21 +1114,16 @@ class _ResponsiveMedicalDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final availableHeight =
-        mediaQuery.size.height - mediaQuery.viewInsets.bottom;
-
     return AlertDialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: AppResponsive.isCompact(context) ? 12 : 24,
+        vertical: 24,
+      ),
       title: title,
       content: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: (mediaQuery.size.width - 32)
-              .clamp(0.0, 560.0)
-              .toDouble(),
-          maxHeight: (availableHeight - 180)
-              .clamp(120.0, 600.0)
-              .toDouble(),
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
         ),
         child: content,
       ),
@@ -2105,7 +2120,11 @@ Future<void> _showMedicationDialog(BuildContext context) async {
                   label: 'Next Refill Date',
                   date: nextRefillDate,
                   onPick: () async {
-                    final date = await _pickDate(context, nextRefillDate);
+                    final date = await _pickDate(
+                      context,
+                      nextRefillDate,
+                      allowFuture: true,
+                    );
                     if (date != null) setState(() => nextRefillDate = date);
                   },
                   onClear: nextRefillDate == null
@@ -2384,19 +2403,24 @@ class _DateTimeField extends StatelessWidget {
   }
 }
 
-Future<DateTime?> _pickDate(BuildContext context, DateTime? current) {
+Future<DateTime?> _pickDate(
+  BuildContext context,
+  DateTime? current, {
+  bool allowFuture = false,
+}) {
   final now = DateTime.now();
   final firstDate = DateTime(1900);
+  final lastDate = allowFuture ? DateTime(now.year + 20) : now;
   final initialDate = _clampDate(
     current?.toLocal() ?? now,
     firstDate,
-    now,
+    lastDate,
   );
   return showDatePicker(
     context: context,
     initialDate: initialDate,
     firstDate: firstDate,
-    lastDate: now,
+    lastDate: lastDate,
   );
 }
 

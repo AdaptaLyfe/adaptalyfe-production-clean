@@ -925,3 +925,17 @@ mtime_ms = 1789736662656
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4e478923-dc00-4b9b-ad52-09f1003b9adf/afa55f78-39ac-4c0b-8140-d99831f6c00d"
 storage_version_token = "1789736669264734"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ogXVM3jo_MSl717vtjrih"
+uri = "file://medical-flutter-changed-files.zip"
+type = "unspecified"
+title = "Medical Flutter changed files"
+description = "ZIP containing only the three Flutter files changed for the Medical section parity work."
+logical_id = "f04fcbc5-d5ca-4a55-a5b4-4bb796918456"
+content_hash = "sha256:012c0f23be510017edd618239346ab49fb71b9aecadc22976d091bf119061867"
+size = 18736
+mtime_ms = 1789738028050
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f04fcbc5-d5ca-4a55-a5b4-4bb796918456/f6632ca2-8c74-466a-9220-bf25ff781265"
+storage_version_token = "1789738033239664"
+content_type = "application/octet-stream"
