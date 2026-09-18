@@ -659,3 +659,17 @@ mtime_ms = 1789705710215
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a3d3c017-6a46-476f-b104-1eb6ff948263/93200c7a-8ae6-4bc8-9fb9-b71ed9aa2258"
 storage_version_token = "1789705714351237"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "veg-dG6D9nbE5DuLmu7-8"
+uri = "file://exports/adaptalyfe-flutter-login-shopping-fixes.zip"
+type = "unspecified"
+title = "Updated Flutter login and shopping files ZIP"
+description = "Contains the two Flutter source files changed for friendly login errors and negative shopping-cost protection."
+logical_id = "6fe2b54e-bde6-4cac-a2a0-b6b5079cb311"
+content_hash = "sha256:de56bb930d923b92bd32f37a7b41264193893a6c5ac0299096cf215bdb8eeff8"
+size = 2942
+mtime_ms = 1789707072481
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6fe2b54e-bde6-4cac-a2a0-b6b5079cb311/14612382-c331-466a-8ebe-458ed436ecdb"
+storage_version_token = "1789707076425996"
+content_type = "application/octet-stream"
