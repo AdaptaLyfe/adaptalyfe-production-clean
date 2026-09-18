@@ -161,7 +161,7 @@ class _MedicalPremiumPrompt extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   FilledButton.icon(
-                    onPressed: () => context.push('/subscription'),
+                    onPressed: () => context.go('/subscription'),
                     icon: const Icon(Icons.lock_open_outlined),
                     label: const Text('View Subscription Options'),
                   ),
@@ -1158,6 +1158,24 @@ class _MedicalDialogScope extends StatelessWidget {
   }
 }
 
+bool _medicalOverlayOpen = false;
+
+Future<T?> _showMedicalDialog<T>({
+  required BuildContext context,
+  required WidgetBuilder builder,
+}) async {
+  if (_medicalOverlayOpen) return null;
+  _medicalOverlayOpen = true;
+  try {
+    return await showDialog<T>(
+      context: context,
+      builder: builder,
+    );
+  } finally {
+    _medicalOverlayOpen = false;
+  }
+}
+
 Future<void> _showConditionDialog(
   BuildContext context, [
   MedicalConditionModel? existing,
@@ -1170,7 +1188,7 @@ Future<void> _showConditionDialog(
   var status = _supportedValue(existing?.status, _conditionStatuses) ?? '';
   var diagnosedDate = existing?.diagnosedDate;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -1285,7 +1303,7 @@ Future<void> _showAllergyDialog(
   final formKey = GlobalKey<FormState>();
   var severity = _supportedValue(existing?.severity, _severities) ?? '';
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -1398,7 +1416,7 @@ Future<void> _showAdverseMedicationDialog(
   var severity = _supportedValue(existing?.severity, _severities) ?? '';
   var reactionDate = existing?.reactionDate;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -1534,7 +1552,7 @@ Future<void> _showProviderDialog(
   final formKey = GlobalKey<FormState>();
   var isPrimary = existing?.isPrimary ?? false;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -1694,7 +1712,7 @@ Future<void> _showSymptomDialog(
   var startTime = existing?.startTime ?? DateTime.now();
   var endTime = existing?.endTime;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -1860,7 +1878,7 @@ Future<void> _showContactDialog(
   var isPrimary = existing?.isPrimary ?? false;
   var isEmergency = existing?.isEmergencyContact ?? true;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -2007,7 +2025,7 @@ Future<void> _showMedicationDialog(BuildContext context) async {
   var size = '';
   DateTime? nextRefillDate;
 
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => _MedicalDialogScope(
       bloc: medicalBloc,
@@ -2232,7 +2250,7 @@ Future<void> _confirmDelete(
   required String message,
   required VoidCallback onConfirm,
 }) async {
-  final confirmed = await showDialog<bool>(
+  final confirmed = await _showMedicalDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: Text(title),
@@ -2267,7 +2285,7 @@ Future<void> _showPhone(
     await launchUrl(phoneUri);
     return;
   }
-  await showDialog<void>(
+  await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: Text(contact.name),

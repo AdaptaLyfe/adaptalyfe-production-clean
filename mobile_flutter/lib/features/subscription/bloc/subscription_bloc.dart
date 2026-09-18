@@ -19,6 +19,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<PlanPurchaseRequested>(_purchase);
     on<RestorePurchasesRequested>(_restore);
     on<ManageSubscriptionRequested>(_manage);
+    on<ManagementUrlHandled>(_clearManagementUrl);
     on<PurchaseUpdatesReceived>(_handlePurchases);
     _purchaseSubscription = purchaseService.purchaseStream.listen(
       (purchases) => add(
@@ -34,6 +35,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   late final StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;
   List<ProductDetails> _products = [];
   bool _started = false;
+  bool _loadInFlight = false;
 
   void _loadPlans(
     LoadPlans event,
@@ -46,6 +48,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     SubscriptionEvent event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (_loadInFlight || state.isBusy) return;
+    _loadInFlight = true;
     emit(
       state.copyWith(
         status: SubscriptionStatus.loading,
@@ -89,6 +93,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: _messageFor(error),
         ),
       );
+    } finally {
+      _loadInFlight = false;
     }
   }
 
@@ -96,7 +102,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PlanPurchaseRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
-    if (!_started || state.hasActiveSubscription) return;
+    if (!_started || _loadInFlight || state.isBusy || state.hasActiveSubscription) {
+      return;
+    }
     final plan = _planFor(event.planId);
     if (plan == null) return;
     final product = _productFor(plan.productId);
@@ -142,6 +150,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     RestorePurchasesRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (_loadInFlight || state.isBusy) return;
     if (state.hasActiveSubscription) {
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
@@ -198,6 +207,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             : 'Open your ${state.subscription!.platformLabel} subscription settings.',
       ),
     );
+  }
+
+  void _clearManagementUrl(
+    ManagementUrlHandled event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (state.managementUrl == null) return;
+    emit(state.copyWith(managementUrl: null));
   }
 
   Future<void> _handlePurchases(

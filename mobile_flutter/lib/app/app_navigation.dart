@@ -80,6 +80,8 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     ),
   ];
 
+  bool _moreMenuOpen = false;
+
   int get _selectedIndex {
     final primaryIndex = _primaryItems.indexWhere(
       (item) =>
@@ -135,49 +137,55 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
     );
   }
 
-  Future<void> _showMoreMenu(BuildContext context) {
-    return showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Close More menu',
-      barrierColor: const Color(0x66000000),
-      transitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        final bottomInset = MediaQuery.paddingOf(dialogContext).bottom;
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(8, 0, 8, 72 + bottomInset),
-            child: Material(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 2.05,
-                  children: _moreDestinations
-                      .map(
-                        (item) => _MoreNavigationTile(
-                          item: item,
-                          active: _isRouteActive(widget.location, item.route),
-                          onTap: () {
-                            Navigator.of(dialogContext).pop();
-                            context.go(item.route);
-                          },
-                        ),
-                      )
-                      .toList(),
+  Future<void> _showMoreMenu(BuildContext context) async {
+    if (_moreMenuOpen) return;
+    _moreMenuOpen = true;
+    try {
+      await showGeneralDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        barrierLabel: 'Close More menu',
+        barrierColor: const Color(0x66000000),
+        transitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (dialogContext, animation, secondaryAnimation) {
+          final bottomInset = MediaQuery.paddingOf(dialogContext).bottom;
+          return Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(8, 0, 8, 72 + bottomInset),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 2.05,
+                    children: _moreDestinations
+                        .map(
+                          (item) => _MoreNavigationTile(
+                            item: item,
+                            active: _isRouteActive(widget.location, item.route),
+                            onTap: () {
+                              Navigator.of(dialogContext).pop();
+                              context.go(item.route);
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    } finally {
+      _moreMenuOpen = false;
+    }
   }
 }
 

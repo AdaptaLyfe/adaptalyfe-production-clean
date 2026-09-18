@@ -23,41 +23,24 @@ class _SplashScreenState extends State<SplashScreen> {
     final state = authBloc.state;
     if (state is AuthInitial) {
       authBloc.add(const CheckAuthentication());
-    } else if (state is Unauthenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/login');
-      });
-    } else if (state is Authenticated) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/home');
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is Authenticated) {
-          context.go('/home');
-        } else if (state is Unauthenticated) {
-          context.go('/login');
-        }
-      },
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, state) {
-          final isError = state is AuthError;
-          final errorMessage = isError ? state.message : null;
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        final isError = state is AuthError;
+        final errorMessage = isError ? state.message : null;
 
-          return _SplashView(
-            errorMessage: errorMessage,
-            onRetry: () {
-              context.read<AuthBloc>().add(const CheckAuthentication());
-            },
-            onContinueToLogin: () => context.go('/login'),
-          );
-        },
-      ),
+        return _SplashView(
+          errorMessage: errorMessage,
+          onRetry: () {
+            context.read<AuthBloc>().add(const CheckAuthentication());
+          },
+          onContinueToLogin: () => context.go('/login'),
+        );
+      },
     );
   }
 }

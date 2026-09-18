@@ -101,15 +101,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             onRefresh: () => _refreshDashboard(context),
           ),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              showDragHandle: true,
-              builder: (_) => BlocProvider.value(
-                value: context.read<HomeBloc>(),
-                child: const HomeChatSheet(),
-              ),
-            ),
+            onPressed: () => showHomeChatSheet(context),
             backgroundColor: const Color(0xFF059669),
             foregroundColor: Colors.white,
             icon: const Icon(Icons.auto_awesome_rounded),

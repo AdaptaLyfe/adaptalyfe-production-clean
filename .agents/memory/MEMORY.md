@@ -19,6 +19,7 @@
 - [Flutter architecture](flutter-architecture.md) — migrated features use presentation → BLoC → repository → API → ApiClient, with shared current-user access.
 - [Flutter medical mutations](flutter-medical-mutations.md) — Health Records mutations update only the affected collection; global post-mutation reloads can hide successful writes.
 - [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
+- [Flutter overlay safety](flutter-overlay-safety.md) — serialize feature overlays and use shell-scoped shared BLoCs to prevent duplicate modal routes and competing listeners.
 - [Flutter responsive layout](flutter-responsive-layout.md) — use available constraints, not device width alone, for nested surfaces and keyboard-aware mobile layouts.
 - [Flutter Home customization](flutter-home-customization.md) — Quick Actions and dashboard modules mirror React’s local reorder, visibility, premium, and auto-save semantics.
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.

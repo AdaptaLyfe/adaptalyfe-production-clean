@@ -158,7 +158,7 @@ class _MealPlanningPremiumPrompt extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   FilledButton(
-                    onPressed: () => context.push('/subscription'),
+                    onPressed: () => context.go('/subscription'),
                     child: const Text('View Premium Plans'),
                   ),
                 ],

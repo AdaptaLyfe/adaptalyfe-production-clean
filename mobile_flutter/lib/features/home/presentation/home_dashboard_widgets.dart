@@ -373,7 +373,7 @@ class HomeSubscriptionBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 9),
                 FilledButton.icon(
-                  onPressed: () => context.push('/subscription'),
+                  onPressed: () => context.go('/subscription'),
                   icon: const Icon(Icons.star_rounded, size: 16),
                   label: const Text('View Plans'),
                   style: FilledButton.styleFrom(

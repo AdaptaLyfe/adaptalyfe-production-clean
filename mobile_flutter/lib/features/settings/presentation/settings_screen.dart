@@ -278,7 +278,7 @@ class _SubscriptionStatusCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           FilledButton.icon(
-            onPressed: () => context.push('/subscription'),
+          onPressed: () => context.go('/subscription'),
             icon: const Icon(Icons.credit_card_rounded, size: 17),
             label: const Text('View Plans'),
             style: FilledButton.styleFrom(

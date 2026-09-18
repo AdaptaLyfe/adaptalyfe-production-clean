@@ -113,12 +113,6 @@ GoRouter createAppRouter(AuthBloc authBloc) {
     redirect: (context, state) {
       final location = state.uri.path;
       final authState = authBloc.state;
-      final isAuthRoute =
-          location == '/splash' ||
-          location == '/login' ||
-          location == '/signup' ||
-          location == '/forgot-password' ||
-          location == '/reset-password';
       final isPasswordRecoveryRoute =
           location == '/forgot-password' || location == '/reset-password';
 
@@ -128,9 +122,11 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             : '/splash';
       }
 
-      if (authState is Authenticated &&
-          isAuthRoute &&
-          !isPasswordRecoveryRoute) {
+      // Login and signup own their post-auth destination (including
+      // invitation and subscription flows). Redirecting them to /home at the
+      // same time creates competing navigation calls and can stack routes
+      // while an auth overlay is being removed.
+      if (authState is Authenticated && location == '/splash') {
         return '/home';
       }
 
@@ -218,9 +214,15 @@ GoRouter createAppRouter(AuthBloc authBloc) {
       ),
       ShellRoute(
         observers: [appRouteObserver],
-        builder: (context, state, child) => AppNavigationShell(
-          location: state.uri.path,
-          child: child,
+        builder: (context, state, child) => BlocProvider(
+          create: (_) => SubscriptionBloc(
+            _createSubscriptionRepository(),
+            PurchaseService(),
+          )..add(const SubscriptionStarted()),
+          child: AppNavigationShell(
+            location: state.uri.path,
+            child: child,
+          ),
         ),
         routes: [
           GoRoute(
@@ -251,12 +253,6 @@ GoRouter createAppRouter(AuthBloc authBloc) {
                   BlocProvider(
                     create: (_) => CalendarBloc(_createCalendarRepository())
                       ..add(const CalendarStarted()),
-                  ),
-                  BlocProvider(
-                    create: (_) => SubscriptionBloc(
-                      _createSubscriptionRepository(),
-                      PurchaseService(),
-                    )..add(const SubscriptionStarted()),
                   ),
                   BlocProvider(
                     create: (_) => MedicalBloc(_createMedicalRepository())
@@ -381,13 +377,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
           GoRoute(
             path: '/subscription',
-            builder: (context, state) => BlocProvider(
-              create: (_) => SubscriptionBloc(
-                _createSubscriptionRepository(),
-                PurchaseService(),
-              )..add(const SubscriptionStarted()),
-              child: const SubscriptionScreen(),
-            ),
+            builder: (context, state) => const SubscriptionScreen(),
           ),
           GoRoute(
             path: '/settings',

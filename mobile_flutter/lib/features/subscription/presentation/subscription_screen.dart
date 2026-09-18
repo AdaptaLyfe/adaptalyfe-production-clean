@@ -42,7 +42,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
   Widget build(BuildContext context) {
     return BlocListener<SubscriptionBloc, SubscriptionState>(
       listenWhen: (previous, current) =>
-          previous.managementUrl != current.managementUrl ||
+          (current.managementUrl != null &&
+              previous.managementUrl != current.managementUrl) ||
           previous.sessionInvalid != current.sessionInvalid ||
           previous.errorMessage != current.errorMessage ||
           previous.actionMessage != current.actionMessage ||
@@ -58,6 +59,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
             Uri.parse(url),
             mode: LaunchMode.externalApplication,
           );
+          if (context.mounted) {
+            context
+                .read<SubscriptionBloc>()
+                .add(const ManagementUrlHandled());
+          }
         }
         final message = state.errorMessage ?? state.actionMessage;
         if (message != null && context.mounted) {

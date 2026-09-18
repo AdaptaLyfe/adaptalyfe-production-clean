@@ -29,6 +29,33 @@ import '../bloc/home_state.dart';
 import '../models/home_models.dart';
 import '../../../models/user_model.dart';
 
+bool _homeOverlayOpen = false;
+
+Future<T?> _runHomeOverlay<T>(Future<T?> Function() open) async {
+  if (_homeOverlayOpen) return null;
+  _homeOverlayOpen = true;
+  try {
+    return await open();
+  } finally {
+    _homeOverlayOpen = false;
+  }
+}
+
+Future<void> showHomeChatSheet(BuildContext context) async {
+  final homeBloc = context.read<HomeBloc>();
+  await _runHomeOverlay<void>(
+    () => showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: homeBloc,
+        child: const HomeChatSheet(),
+      ),
+    ),
+  );
+}
+
 class HomeConfigurableQuickActions extends StatefulWidget {
   const HomeConfigurableQuickActions({super.key});
 
@@ -300,9 +327,11 @@ class _HomeConfigurableQuickActionsState
     BuildContext context,
     List<HomeQuickAction> actions,
   ) async {
-    final result = await showDialog<List<HomeQuickAction>>(
-      context: context,
-      builder: (_) => _CustomizeQuickActionsDialog(actions: actions),
+    final result = await _runHomeOverlay<List<HomeQuickAction>>(
+      () => showDialog<List<HomeQuickAction>>(
+        context: context,
+        builder: (_) => _CustomizeQuickActionsDialog(actions: actions),
+      ),
     );
     if (result != null && context.mounted) {
       context.read<HomeBloc>().add(SaveHomeQuickActionConfig(result));
@@ -343,15 +372,7 @@ class _HomeConfigurableQuickActionsState
   }
 
   void _openChat(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => BlocProvider.value(
-        value: context.read<HomeBloc>(),
-        child: const HomeChatSheet(),
-      ),
-    );
+    showHomeChatSheet(context);
   }
 }
 
@@ -1853,9 +1874,11 @@ class HomeDashboardModules extends StatelessWidget {
     BuildContext context,
     List<DashboardModuleModel> modules,
   ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (_) => _DashboardModuleEditor(modules: modules),
+    await _runHomeOverlay<void>(
+      () => showDialog<void>(
+        context: context,
+        builder: (_) => _DashboardModuleEditor(modules: modules),
+      ),
     );
   }
 }
@@ -2680,11 +2703,12 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
     );
   }
 
-  Future<void> _showMoodConfirmation(BuildContext context, int mood) {
+  Future<void> _showMoodConfirmation(BuildContext context, int mood) async {
     final feedback = _homeMoodFeedback(mood);
-    return showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+    await _runHomeOverlay<void>(
+      () => showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
         contentPadding: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
@@ -2813,6 +2837,7 @@ class _HomeMoodModuleState extends State<_HomeMoodModule> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

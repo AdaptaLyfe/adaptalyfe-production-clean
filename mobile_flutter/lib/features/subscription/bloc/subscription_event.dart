@@ -36,6 +36,10 @@ final class ManageSubscriptionRequested extends SubscriptionEvent {
   const ManageSubscriptionRequested();
 }
 
+final class ManagementUrlHandled extends SubscriptionEvent {
+  const ManagementUrlHandled();
+}
+
 final class PurchaseUpdatesReceived extends SubscriptionEvent {
   const PurchaseUpdatesReceived(this.purchases);
 
