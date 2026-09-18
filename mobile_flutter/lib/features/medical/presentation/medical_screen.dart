@@ -1139,16 +1139,16 @@ class _MedicalDialogScope extends StatelessWidget {
             previous.actionMessage != current.actionMessage &&
             current.actionMessage == successMessage,
         listener: (dialogContext, state) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (dialogContext.mounted) {
-              Navigator.of(dialogContext).pop();
-            }
-          });
+          if (dialogContext.mounted) {
+            Navigator.of(dialogContext).pop();
+          }
         },
         child: BlocBuilder<MedicalBloc, MedicalState>(
-          buildWhen: (previous, current) =>
-              previous.busySection != current.busySection &&
-              (previous.busySection == action || current.busySection == action),
+          buildWhen: (previous, current) {
+            if (previous.busySection == current.busySection) return false;
+            if (current.busySection == action) return true;
+            return current.busySection == null && current.errorMessage != null;
+          },
           builder: (context, state) =>
               builder(context, state.busySection == action),
         ),
