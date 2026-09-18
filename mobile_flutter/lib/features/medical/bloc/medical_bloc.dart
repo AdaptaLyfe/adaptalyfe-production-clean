@@ -170,6 +170,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     );
     try {
       final snapshot = await _fetchAll();
+      if (emit.isDone) return;
       final failures = <String, String>{};
       final successfulLoads =
           snapshot.where((result) => result.isSuccess).length;
@@ -190,6 +191,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
       recordFailure('symptoms', snapshot[5]);
 
       if (successfulLoads == 0) {
+        if (emit.isDone) return;
         _emitFailure(
           emit,
           snapshot.first.error ?? 'Unable to load medical records.',
@@ -197,6 +199,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         return;
       }
 
+      if (emit.isDone) return;
       _emitSnapshot(
         emit,
         (
@@ -225,6 +228,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
             : 'Some medical records could not be loaded. Try again.',
       );
     } catch (error) {
+      if (emit.isDone) return;
       _emitFailure(emit, error);
     }
   }
@@ -246,6 +250,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     );
     try {
       final result = await operation();
+      if (emit.isDone) return;
       _emitMutationSuccess(
         emit,
         action: action,
@@ -254,6 +259,7 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         successMessage: successMessage,
       );
     } catch (error) {
+      if (emit.isDone) return;
       _emitFailure(emit, error, keepLoadedState: true);
     }
   }

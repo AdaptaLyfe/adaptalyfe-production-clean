@@ -8,3 +8,9 @@ Health Records create, edit, and delete actions should update only the affected 
 **Why:** The React wrapper invalidates one query per mutation and loads collections independently. A Flutter-wide refresh or all-or-nothing initial load can fail on an unrelated collection and make a successful write or available records appear to the user as if they failed.
 
 **How to apply:** When adding a Health Records collection or mutation, return the created/updated model or delete id through the BLoC and update that collection locally. Capture each initial collection request separately, preserve successful results, and show a retryable error only for failed sections. Update payloads must include explicit nulls for cleared nullable fields; omission leaves the old database value intact.
+
+Edit forms must normalize persisted enum-like values before passing them to Flutter dropdowns, and clamp persisted dates before using them as date-picker initial values.
+
+**Why:** Older or manually edited records can contain values outside the current option lists or dates outside picker bounds; Flutter asserts during widget construction instead of rendering a recoverable validation error.
+
+**How to apply:** Apply the normalization at dialog initialization for every Health Records collection, including sensitivities, conditions, reactions, and symptom severity.

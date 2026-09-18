@@ -1166,7 +1166,7 @@ Future<void> _showConditionDialog(
       TextEditingController(text: existing?.condition ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
   final formKey = GlobalKey<FormState>();
-  var status = existing?.status ?? '';
+  var status = _supportedValue(existing?.status, _conditionStatuses) ?? '';
   var diagnosedDate = existing?.diagnosedDate;
 
   await showDialog<void>(
@@ -1282,7 +1282,7 @@ Future<void> _showAllergyDialog(
       TextEditingController(text: existing?.reaction ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
   final formKey = GlobalKey<FormState>();
-  var severity = existing?.severity ?? '';
+  var severity = _supportedValue(existing?.severity, _severities) ?? '';
 
   await showDialog<void>(
     context: context,
@@ -1394,7 +1394,7 @@ Future<void> _showAdverseMedicationDialog(
       TextEditingController(text: existing?.reaction ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
   final formKey = GlobalKey<FormState>();
-  var severity = existing?.severity ?? '';
+  var severity = _supportedValue(existing?.severity, _severities) ?? '';
   var reactionDate = existing?.reactionDate;
 
   await showDialog<void>(
@@ -1689,7 +1689,7 @@ Future<void> _showSymptomDialog(
       TextEditingController(text: existing?.description ?? '');
   final notesController = TextEditingController(text: existing?.notes ?? '');
   final formKey = GlobalKey<FormState>();
-  var severity = existing?.severity ?? 1;
+  var severity = (existing?.severity ?? 1).clamp(1, 10).toInt();
   var startTime = existing?.startTime ?? DateTime.now();
   var endTime = existing?.endTime;
 
@@ -2367,21 +2367,34 @@ class _DateTimeField extends StatelessWidget {
 
 Future<DateTime?> _pickDate(BuildContext context, DateTime? current) {
   final now = DateTime.now();
+  final firstDate = DateTime(1900);
+  final initialDate = _clampDate(
+    current?.toLocal() ?? now,
+    firstDate,
+    now,
+  );
   return showDatePicker(
     context: context,
-    initialDate: current != null && !current.isAfter(now) ? current : now,
-    firstDate: DateTime(1900),
+    initialDate: initialDate,
+    firstDate: firstDate,
     lastDate: now,
   );
 }
 
 Future<DateTime?> _pickDateTime(BuildContext context, DateTime? current) async {
   final now = DateTime.now();
+  final firstDate = DateTime(1900);
+  final lastDate = DateTime(now.year + 20);
+  final initialDate = _clampDate(
+    current?.toLocal() ?? now,
+    firstDate,
+    lastDate,
+  );
   final date = await showDatePicker(
     context: context,
-    initialDate: current ?? now,
-    firstDate: DateTime(1900),
-    lastDate: DateTime(now.year + 20),
+    initialDate: initialDate,
+    firstDate: firstDate,
+    lastDate: lastDate,
   );
   if (date == null || !context.mounted) return null;
   final time = await showTimePicker(
@@ -2438,6 +2451,18 @@ int? _parseInt(String value) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String? _supportedValue(String? value, List<String> supported) {
+  final normalized = value?.trim().toLowerCase();
+  if (normalized == null || !supported.contains(normalized)) return null;
+  return normalized;
+}
+
+DateTime _clampDate(DateTime value, DateTime first, DateTime last) {
+  if (value.isBefore(first)) return first;
+  if (value.isAfter(last)) return last;
+  return value;
+}
 
 String _formatDate(DateTime date) {
   final local = date.toLocal();

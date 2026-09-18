@@ -743,3 +743,17 @@ mtime_ms = 1789717782196
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0773571a-64b3-4b18-8491-2553eba4fbfd/07c9b33d-ef0a-4aa3-8c3e-ad067b7c5ea9"
 storage_version_token = "1789717789167676"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "bJ2e0x09-68CKXY0WISRm"
+uri = "file://exports/adaptalyfe-flutter-health-records-crash-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Crash Fix"
+description = "Updated Flutter Health Records feature ZIP. Protects all CRUD flows from late BLoC emissions after navigation, normalizes persisted dropdown values, clamps legacy dates for date pickers, and includes Sensitivities, Notes, Reactions, Trusted Contacts, Healthcare Contacts, Personal Notes, plus routing and navigation files."
+logical_id = "2f5e0123-77e7-4968-95de-5e3aedd59d86"
+content_hash = "sha256:5e3f2e5794b71a93611ba53a66884e51774a931bd127452b064f1040d4bea3d8"
+size = 31570
+mtime_ms = 1789718547212
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f5e0123-77e7-4968-95de-5e3aedd59d86/a23bb4ff-3b0e-4906-8191-1ebe46bdf994"
+storage_version_token = "1789718568853933"
+content_type = "application/octet-stream"
