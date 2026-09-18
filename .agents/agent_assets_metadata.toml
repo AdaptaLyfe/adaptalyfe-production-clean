@@ -827,3 +827,17 @@ mtime_ms = 1789730796889
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3cd93914-8904-44fe-ac6f-edeb8bad4469/d659ac4c-558a-45b2-ba6e-e6fd168da47d"
 storage_version_token = "1789730802307912"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DxgSvAoZmD9OtoQqpNYIV"
+uri = "file://artifacts/adaptalyfe-flutter-overlay-fix-updated-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter overlay fix files"
+description = "ZIP containing the 12 updated Flutter source files for duplicate overlay, dialog, navigation, and subscription BLoC fixes."
+logical_id = "02df1206-02ea-4e99-94ef-b57393674327"
+content_hash = "sha256:f5ddf2a602c082ea12cf537642cbd2f62f1af8205f29e8720094aed71768ca94"
+size = 93422
+mtime_ms = 1789732327045
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02df1206-02ea-4e99-94ef-b57393674327/44e22c63-1bb3-448d-aa19-bbf6c772627e"
+storage_version_token = "1789732331932444"
+content_type = "application/octet-stream"
