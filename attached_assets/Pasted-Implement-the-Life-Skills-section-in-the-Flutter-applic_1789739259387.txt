@@ -1,0 +1,159 @@
+Implement the **Life Skills** section in the Flutter application from scratch.
+
+Important:
+
+* The current Life Skills implementation in Flutter is not working properly.
+* Do **not** try to patch or reuse the broken Flutter implementation.
+* Start the Life Skills implementation again from **Step 1**.
+* First inspect the existing React Native + Wrapper implementation and use it as the source of truth for the functionality, UI, navigation, API calls, data flow, and behavior.
+* The Flutter version should match the existing React Native + Wrapper functionality as closely as possible.
+
+### Step 1 — Analyze Existing Implementation
+
+Before writing Flutter code:
+
+1. Find all React Native + Wrapper files related to Life Skills.
+2. Understand:
+
+   * Life Skills screen/UI
+   * Navigation/routes
+   * Components
+   * API calls
+   * Request/response models
+   * State management
+   * Loading states
+   * Error handling
+   * Empty states
+   * User interactions
+   * Add/edit/delete/update functionality, if available
+   * Any dialogs, bottom sheets, or popups
+3. Identify all dependencies used by the existing implementation.
+4. Do not assume functionality. Follow the existing React Native + Wrapper behavior.
+
+### Step 2 — Create Flutter Structure
+
+Create the Life Skills feature using the existing Flutter project's architecture and conventions.
+
+Use:
+
+* Flutter
+* Dart
+* BLoC for state management
+* Repository pattern if already used in the project
+* Existing API/service layer where possible
+* Existing theme, colors, typography, reusable widgets, and navigation
+
+Create only the required files and folders for Life Skills.
+
+Example structure:
+
+lib/
+└── features/
+└── life_skills/
+├── data/
+├── domain/
+└── presentation/
+├── bloc/
+├── pages/
+└── widgets/
+
+Adjust this structure if the existing Flutter project already follows a different architecture.
+
+### Step 3 — Implement UI
+
+Recreate the Life Skills UI from the React Native + Wrapper version.
+
+Make sure:
+
+* UI matches the existing app
+* Responsive layout works on different mobile screen sizes
+* Existing app theme is reused
+* Buttons and interactions work
+* Loading indicator works
+* Error messages work
+* Empty state works
+* No blank white screens
+* No unnecessary redesign
+
+### Step 4 — Implement Functionality
+
+Connect the Flutter Life Skills screen to the same backend/API used by React Native.
+
+Implement all functionality that exists in React Native + Wrapper, including:
+
+* Fetch Life Skills data
+* Display data
+* Add/create
+* Edit/update
+* Delete
+* Search/filter if available
+* Navigation
+* Loading state
+* Error state
+* Empty state
+* Refresh/reload if available
+
+Do not invent new functionality.
+
+### Step 5 — BLoC
+
+Create simple and understandable BLoC events and states.
+
+For example, use the actual requirements discovered from React Native rather than blindly copying these names:
+
+Events:
+
+* LoadLifeSkills
+* AddLifeSkill
+* UpdateLifeSkill
+* DeleteLifeSkill
+
+States:
+
+* Initial
+* Loading
+* Loaded
+* Error
+* Empty
+
+Keep the BLoC code simple and maintainable.
+
+### Step 6 — Navigation
+
+Connect Life Skills to the existing Flutter navigation.
+
+Make sure:
+
+* Life Skills opens correctly from the same place as React Native
+* Back navigation works
+* Any child/detail/add/edit screens navigate correctly
+* No route errors occur
+
+### Step 7 — Testing
+
+After implementation, verify:
+
+1. Open Life Skills.
+2. Data loads correctly.
+3. Loading state appears correctly.
+4. Existing data displays correctly.
+5. Add works.
+6. Edit works.
+7. Delete works.
+8. API errors are handled.
+9. Empty state works.
+10. Navigation works.
+11. App does not crash.
+12. No duplicate API calls.
+13. No duplicate error messages.
+14. No blank/white screen.
+
+### Important Rules
+
+* Start from Step 1 because the current Flutter implementation is broken.
+* Do not modify unrelated Flutter features.
+* Do not break existing React Native + Wrapper functionality.
+* Do not create fake/mock data when the real API exists.
+* Reuse existing Flutter API, authentication, theme, and reusable components where appropriate.
+* First inspect and understand the React Native + Wrapper implementation, then implement Flutter.
+* At the end, provide a list of files created/modified and explain what was implemented.
