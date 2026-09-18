@@ -1664,7 +1664,7 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
       ),
       actions: [
         TextButton(
-          onPressed: busy ? null : () => Navigator.of(dialogContext).pop(),
+          onPressed: () => Navigator.of(dialogContext).pop(),
           child: const Text('Close'),
         ),
       ],
