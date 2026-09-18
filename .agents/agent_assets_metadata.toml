@@ -813,3 +813,17 @@ mtime_ms = 1789724391024
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c39aabf5-df82-4006-9c92-d666d46cfd65/94ea697d-a17a-44c9-bf8c-cc0868d9e466"
 storage_version_token = "1789724396431901"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PCXm3MT8jDoDTj-msyTNn"
+uri = "file://artifacts/adaptalyfe-flutter-changed-files-fixed.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter changed files"
+description = "ZIP containing the 8 updated Flutter source files, including the auth type fix and unused calendar import cleanup."
+logical_id = "3cd93914-8904-44fe-ac6f-edeb8bad4469"
+content_hash = "sha256:f005baf0e34e57cc4a93f98a0ea9592e49317e62449d3843a8d2dd407b67e558"
+size = 24119
+mtime_ms = 1789730796889
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3cd93914-8904-44fe-ac6f-edeb8bad4469/d659ac4c-558a-45b2-ba6e-e6fd168da47d"
+storage_version_token = "1789730802307912"
+content_type = "application/octet-stream"
