@@ -799,3 +799,17 @@ mtime_ms = 1789721448801
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e06cb15a-0f25-4ffc-9651-c818ae61a567/ff66c867-5184-4ce4-864b-3d0f16a36ea3"
 storage_version_token = "1789721452998183"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "3_jh7z8QtCgomjgAuRk7z"
+uri = "file://artifacts/adaptalyfe-cross-platform-auth-subscription-updates.zip"
+type = "unspecified"
+title = "Adaptalyfe auth and subscription updates"
+description = "ZIP containing the 7 Flutter files changed for shared account authentication, entitlement refresh, subscription restore handling, and expiry data."
+logical_id = "c39aabf5-df82-4006-9c92-d666d46cfd65"
+content_hash = "sha256:cf66efb11e94b16220a6f135ae3192ccebf54d7411b991cefe58451eeb9825bc"
+size = 13037
+mtime_ms = 1789724391024
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c39aabf5-df82-4006-9c92-d666d46cfd65/94ea697d-a17a-44c9-bf8c-cc0868d9e466"
+storage_version_token = "1789724396431901"
+content_type = "application/octet-stream"
