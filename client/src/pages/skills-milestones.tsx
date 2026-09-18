@@ -99,10 +99,18 @@ export default function SkillsMilestones() {
   });
 
   // Fetch transition skills data
-  const { data: transitionSkills = [], isLoading: skillsLoading, refetch: refetchSkills } = useQuery<TransitionSkill[]>({
+  const {
+    data: transitionSkillsData,
+    isLoading: skillsLoading,
+    refetch: refetchSkills,
+  } = useQuery<TransitionSkill[] | null>({
     queryKey: ["/api/transition-skills"],
     staleTime: 0,
   });
+  const transitionSkills = Array.isArray(transitionSkillsData)
+    ? transitionSkillsData
+    : [];
+  const skillsRequestFailed = transitionSkillsData === null;
 
   // Create skill mutation
   const createSkillMutation = useMutation({
@@ -252,6 +260,19 @@ export default function SkillsMilestones() {
         <div className="text-center py-12">
           <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-600">Loading your skills and milestones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (skillsRequestFailed) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <p className="text-gray-600 mb-4">
+            Unable to load your skills and milestones right now.
+          </p>
+          <Button onClick={() => refetchSkills()}>Try again</Button>
         </div>
       </div>
     );

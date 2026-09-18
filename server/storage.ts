@@ -88,6 +88,114 @@ const legacyDailyTaskColumns = {
   lastOverdueReminder: dailyTasks.lastOverdueReminder,
 };
 
+type TransitionSkillSchemaCapabilities = {
+  hasTable: boolean;
+  hasPriority: boolean;
+};
+
+let transitionSkillSchemaCapabilitiesPromise:
+  | Promise<TransitionSkillSchemaCapabilities>
+  | undefined;
+
+const transitionSkillBaseColumns = {
+  id: transitionSkills.id,
+  userId: transitionSkills.userId,
+  skillCategory: transitionSkills.skillCategory,
+  skillName: transitionSkills.skillName,
+  description: transitionSkills.description,
+  currentLevel: transitionSkills.currentLevel,
+  targetLevel: transitionSkills.targetLevel,
+  practiceActivities: transitionSkills.practiceActivities,
+  milestones: transitionSkills.milestones,
+  lastPracticed: transitionSkills.lastPracticed,
+  createdAt: transitionSkills.createdAt,
+  updatedAt: transitionSkills.updatedAt,
+};
+
+async function getTransitionSkillSchemaCapabilities(): Promise<TransitionSkillSchemaCapabilities> {
+  if (!transitionSkillSchemaCapabilitiesPromise) {
+    transitionSkillSchemaCapabilitiesPromise = (async () => {
+      try {
+        const result = await db.execute(sql`
+          SELECT
+            EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = 'transition_skills'
+            ) AS has_table,
+            EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'transition_skills'
+                AND column_name = 'priority'
+            ) AS has_priority
+        `);
+        const row = result.rows[0] as {
+          has_table?: boolean;
+          has_priority?: boolean;
+        } | undefined;
+        const capabilities = {
+          hasTable: Boolean(row?.has_table),
+          hasPriority: Boolean(row?.has_priority),
+        };
+
+        if (!capabilities.hasTable || !capabilities.hasPriority) {
+          console.warn(
+            "Transition skill schema is behind the application schema; using compatibility mode.",
+            capabilities,
+          );
+        }
+
+        return capabilities;
+      } catch (error) {
+        console.warn(
+          "Could not inspect transition skill schema; using legacy compatibility mode.",
+          error,
+        );
+        return { hasTable: false, hasPriority: false };
+      }
+    })();
+  }
+
+  return transitionSkillSchemaCapabilitiesPromise;
+}
+
+function normalizeTransitionSkill(
+  skill: Omit<TransitionSkill, "priority"> & { priority?: string | null },
+): TransitionSkill {
+  return {
+    ...skill,
+    priority: skill.priority || "medium",
+  };
+}
+
+async function getTransitionSkillById(
+  skillId: number,
+  capabilities: TransitionSkillSchemaCapabilities,
+): Promise<TransitionSkill | undefined> {
+  if (!capabilities.hasTable) return undefined;
+
+  const rows = capabilities.hasPriority
+    ? await db
+        .select({
+          ...transitionSkillBaseColumns,
+          priority: transitionSkills.priority,
+        })
+        .from(transitionSkills)
+        .where(eq(transitionSkills.id, skillId))
+        .limit(1)
+    : await db
+        .select(transitionSkillBaseColumns)
+        .from(transitionSkills)
+        .where(eq(transitionSkills.id, skillId))
+        .limit(1);
+
+  const skill = rows[0];
+  return skill ? normalizeTransitionSkill(skill) : undefined;
+}
+
 async function getDailyTaskSchemaCapabilities(): Promise<DailyTaskSchemaCapabilities> {
   if (!dailyTaskSchemaCapabilitiesPromise) {
     dailyTaskSchemaCapabilitiesPromise = (async () => {
@@ -2748,19 +2856,75 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransitionSkillsByUser(userId: number): Promise<TransitionSkill[]> {
-    return await db.select().from(transitionSkills).where(eq(transitionSkills.userId, userId));
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      return [];
+    }
+
+    const rows = capabilities.hasPriority
+      ? await db
+          .select({
+            ...transitionSkillBaseColumns,
+            priority: transitionSkills.priority,
+          })
+          .from(transitionSkills)
+          .where(eq(transitionSkills.userId, userId))
+      : await db
+          .select(transitionSkillBaseColumns)
+          .from(transitionSkills)
+          .where(eq(transitionSkills.userId, userId));
+
+    return rows.map(normalizeTransitionSkill);
   }
 
   async createTransitionSkill(skillData: InsertTransitionSkill): Promise<TransitionSkill> {
-    const [skill] = await db.insert(transitionSkills).values(skillData).returning();
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      throw new Error("The transition_skills table is unavailable.");
+    }
+
+    const legacySkillData = { ...skillData } as Partial<InsertTransitionSkill>;
+    delete legacySkillData.priority;
+    const values = capabilities.hasPriority
+      ? skillData
+      : (legacySkillData as InsertTransitionSkill);
+    const [created] = await db
+      .insert(transitionSkills)
+      .values(values)
+      .returning({ id: transitionSkills.id });
+    const skill = created
+      ? await getTransitionSkillById(created.id, capabilities)
+      : undefined;
+    if (!skill) {
+      throw new Error("The transition skill could not be created.");
+    }
     return skill;
   }
 
   async updateTransitionSkill(skillId: number, updateData: Partial<TransitionSkill>): Promise<TransitionSkill> {
-    const [skill] = await db.update(transitionSkills)
-      .set(updateData)
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      throw new Error("The transition_skills table is unavailable.");
+    }
+
+    const compatibleUpdateData = {
+      ...updateData,
+      updatedAt: new Date(),
+    } as Partial<TransitionSkill>;
+    if (!capabilities.hasPriority) {
+      delete compatibleUpdateData.priority;
+    }
+
+    const [updated] = await db.update(transitionSkills)
+      .set(compatibleUpdateData)
       .where(eq(transitionSkills.id, skillId))
-      .returning();
+      .returning({ id: transitionSkills.id });
+    const skill = updated
+      ? await getTransitionSkillById(updated.id, capabilities)
+      : undefined;
+    if (!skill) {
+      throw new Error("The transition skill could not be updated.");
+    }
     return skill;
   }
 
