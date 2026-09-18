@@ -1560,7 +1560,7 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                               return _StoreManagementRow(
                                 store: store,
                                 isBusy: isBusy,
-                                onEdit: () {
+                                onEdit: () async {
                                   await _showStoreFormDialog(
                                     context,
                                     store: store,
