@@ -771,3 +771,17 @@ mtime_ms = 1789719210767
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/10d6af5b-afe5-4558-afb0-11efc03162db/33ccc571-f4bc-49f6-806e-617d1fca0909"
 storage_version_token = "1789719220152721"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zI8XgupHfqwMiBTj29ZTh"
+uri = "file://exports/adaptalyfe-flutter-health-records-update-build-scope-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Update Fix"
+description = "Final Flutter Health Records ZIP. Fixes the update crash by waiting for the Material submit-button animation to settle before closing the dialog, while preserving CRUD lifecycle guards, dropdown/date safety, complete medical feature files, routing, and navigation."
+logical_id = "7f3b611d-2fa5-485a-86f7-803ee817fd59"
+content_hash = "sha256:4425430ac7eb8a25ce1f6e97478ac34f6212028d2ba1add63516c2ca4153e3ff"
+size = 31592
+mtime_ms = 1789719651319
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7f3b611d-2fa5-485a-86f7-803ee817fd59/b46cff54-d9d5-4bf2-bee1-6f2efb0bfd7f"
+storage_version_token = "1789719657148778"
+content_type = "application/octet-stream"
