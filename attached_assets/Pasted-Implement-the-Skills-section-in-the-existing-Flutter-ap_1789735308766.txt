@@ -1,0 +1,47 @@
+Implement the **Skills section** in the existing Flutter application.
+
+Requirements:
+
+* Add a new **Skills section/screen** following the existing app structure and UI design.
+* Reuse the existing theme, colors, typography, spacing, buttons, cards, and components wherever possible.
+* Make the Skills UI fully responsive for **Android, iOS, Web, and Desktop**.
+* Display skills in a clean and professional layout.
+* Each skill should show:
+
+  * Skill name
+  * Skill category
+  * Skill level/progress if applicable
+* Support adding, editing, and deleting skills if the existing application requires CRUD functionality.
+* Add proper form validation for skill fields.
+* Use **BLoC** for state management, following the existing BLoC architecture in the project.
+* Keep business logic outside the UI.
+* Create/update the required:
+
+  * Skill Model
+  * Skill Event
+  * Skill State
+  * Skill BLoC
+  * Repository/data layer if required
+  * Skills UI/widgets
+* Follow the existing project folder structure and coding conventions.
+* Do not introduce unnecessary packages.
+* Do not break or modify existing features.
+* Handle loading, success, empty, and error states properly.
+* If the project already has a backend/API/database for user profile data, integrate the Skills section with the existing backend instead of creating a separate data system.
+* If the existing app already has a Skills section partially implemented, **modify and complete it instead of creating a duplicate screen**.
+
+Before coding:
+
+1. Inspect the existing Flutter project structure.
+2. Find the current profile/user-related screens and models.
+3. Check how BLoC, repositories, API/database, routing, and reusable widgets are currently implemented.
+4. Follow the existing architecture.
+
+After implementation:
+
+* Make sure the project compiles successfully.
+* Fix any errors caused by the implementation.
+* Verify navigation to the Skills section.
+* Verify add/edit/delete and validation functionality.
+* Verify responsive UI on mobile, tablet, web, and desktop.
+* Provide a short summary of the files changed and what was implemented.
