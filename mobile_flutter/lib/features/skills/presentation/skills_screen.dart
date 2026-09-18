@@ -63,10 +63,15 @@ class _SkillsScreenState extends State<SkillsScreen> {
             : state.skills
                 .where((skill) => skill.skillCategory == _category)
                 .toList();
-        final categories = <String>{
+        const categories = [
           'all',
-          ...state.skills.map((skill) => skill.skillCategory),
-        }.toList();
+          'academic',
+          'social',
+          'independent_living',
+          'career',
+          'personal',
+          'health',
+        ];
 
         return Scaffold(
           appBar: const _SkillsAppBar(),
@@ -96,7 +101,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Track your progress, set goals, and celebrate achievements.',
+                  'Track your progress in life skills, set goals, and celebrate achievements.',
                   style: TextStyle(color: Color(0xFF6B7280)),
                 ),
                 const SizedBox(height: 18),
@@ -126,7 +131,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                           ? null
                           : () => _addSkill(context),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Skill'),
+                      label: const Text('Add Skill Milestone'),
                     );
 
                     if (constraints.maxWidth < 520) {
@@ -153,22 +158,43 @@ class _SkillsScreenState extends State<SkillsScreen> {
                 if (visibleSkills.isEmpty)
                   const _EmptySkills()
                 else
-                  ...visibleSkills.map(
-                    (skill) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _SkillCard(
-                        skill: skill,
-                        busy: state.busyKey == 'skill-${skill.id}',
-                        onEdit: () => _editSkill(context, skill),
-                        onDelete: () => _deleteSkill(context, skill),
-                        onProgress: (level) => context.read<SkillsBloc>().add(
-                              UpdateSkillProgress(
-                                skillId: skill.id,
-                                currentLevel: level,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columns = constraints.maxWidth >= 980
+                          ? 3
+                          : constraints.maxWidth >= 620
+                              ? 2
+                              : 1;
+                      const gap = 12.0;
+                      final cardWidth = columns == 1
+                          ? constraints.maxWidth
+                          : (constraints.maxWidth - gap * (columns - 1)) /
+                              columns;
+                      return Wrap(
+                        spacing: gap,
+                        runSpacing: gap,
+                        children: visibleSkills
+                            .map(
+                              (skill) => SizedBox(
+                                width: cardWidth,
+                                child: _SkillCard(
+                                  skill: skill,
+                                  busy: state.busyKey == 'skill-${skill.id}',
+                                  onEdit: () => _editSkill(context, skill),
+                                  onDelete: () => _deleteSkill(context, skill),
+                                  onProgress: (level) =>
+                                      context.read<SkillsBloc>().add(
+                                    UpdateSkillProgress(
+                                      skillId: skill.id,
+                                      currentLevel: level,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                      ),
-                    ),
+                            )
+                            .toList(),
+                      );
+                    },
                   ),
               ],
             ),

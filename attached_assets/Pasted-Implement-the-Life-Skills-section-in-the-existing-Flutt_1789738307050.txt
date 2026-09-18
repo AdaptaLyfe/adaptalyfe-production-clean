@@ -1,0 +1,114 @@
+Implement the **Life Skills section** in the existing Flutter application.
+
+Important:
+
+* This is an existing Flutter project, so **do not create a new project**.
+* Follow the existing project architecture, navigation, UI theme, reusable widgets, API/service layer, and state-management pattern.
+* The Flutter implementation should match the existing **React Native + Wrapper Life Skills section** in functionality and user flow.
+
+### Requirements
+
+1. **Analyze Existing Implementation**
+
+* First inspect the existing React Native + Wrapper implementation of the Life Skills section.
+* Identify all screens, components, navigation/routes, API calls, data models, validation, loading states, empty states, error handling, and user interactions.
+* Reproduce the same functionality in Flutter.
+
+2. **Flutter UI**
+
+* Create the Life Skills screen matching the existing RN + Wrapper UI as closely as possible.
+* Maintain the same:
+
+  * Layout
+  * Text/content
+  * Buttons
+  * Cards
+  * Icons/images
+  * Colors
+  * Spacing
+  * Typography
+  * Navigation behavior
+  * Loading indicators
+  * Error/empty states
+* Make the UI responsive for Android, iOS, tablet, web, and desktop.
+
+3. **Functionality**
+
+* Implement all Life Skills features available in the existing RN + Wrapper version.
+* Connect the Flutter screen to the same backend/API.
+* Implement:
+
+  * API request/response handling
+  * Data loading
+  * Error handling
+  * Empty states
+  * User actions
+  * Add/Edit/Delete functionality if available
+  * Save/update functionality if available
+  * Navigation to related screens
+* Do not use dummy/mock data if the existing application already has real API data.
+
+4. **Architecture**
+   Follow the existing Flutter project's architecture.
+
+If BLoC is already being used, use:
+
+* LifeSkillsEvent
+* LifeSkillsState
+* LifeSkillsBloc
+* Repository
+* Data source/API service
+* Models
+
+Keep the implementation clean and simple. Do not introduce unnecessary architecture or packages.
+
+5. **Navigation**
+
+* Add the Life Skills route to the existing Flutter navigation system.
+* Ensure the Life Skills section can be opened from the same location as in the RN + Wrapper app.
+* Preserve back navigation and existing navigation behavior.
+
+6. **State Handling**
+   Handle these states properly:
+
+* Initial
+* Loading
+* Success
+* Empty
+* Error
+* Refreshing/updating where required
+
+Do not show blank screens when data is unavailable.
+
+7. **Authentication**
+
+* Use the existing Flutter authentication/session mechanism.
+* Send the required authentication token/credentials to the API.
+* Do not create a separate login/authentication flow.
+
+8. **Code Quality**
+
+* Reuse existing widgets and utilities wherever possible.
+* Follow the existing naming conventions.
+* Avoid duplicate code.
+* Do not modify unrelated features.
+* Do not break existing React Native/Wrapper or Flutter functionality.
+
+### Final Verification
+
+After implementation:
+
+* Run the Flutter project.
+* Test the complete Life Skills flow.
+* Compare it with the RN + Wrapper implementation.
+* Fix UI differences, navigation issues, API issues, and state-management bugs.
+* Verify Android, iOS, web, and desktop responsiveness where supported.
+
+Finally, provide:
+
+1. Files created/modified
+2. Routes added/changed
+3. API endpoints used
+4. BLoC/events/states added
+5. Any packages added
+6. Any issues or limitations found
