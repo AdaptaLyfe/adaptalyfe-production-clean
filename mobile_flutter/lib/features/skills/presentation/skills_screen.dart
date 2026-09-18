@@ -44,7 +44,16 @@ class _SkillsScreenState extends State<SkillsScreen> {
         if (state.isLoading && !state.hasSkills) {
           return const Scaffold(
             appBar: _SkillsAppBar(),
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 14),
+                  Text('Loading your skills and milestones...'),
+                ],
+              ),
+            ),
           );
         }
         if (state.status == SkillsStatus.failure && !state.hasSkills) {
@@ -91,6 +100,13 @@ class _SkillsScreenState extends State<SkillsScreen> {
                 const EdgeInsets.only(top: 18, bottom: 32),
               ),
               children: [
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1180),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                 const Text(
                   'Skills & Milestones',
                   style: TextStyle(
@@ -196,6 +212,10 @@ class _SkillsScreenState extends State<SkillsScreen> {
                       );
                     },
                   ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -290,7 +310,11 @@ class _SkillsStats extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth < 430 ? 2 : 3;
+        final columns = constraints.maxWidth < 430
+            ? 2
+            : constraints.maxWidth < 760
+                ? 2
+                : 4;
         final width =
             (constraints.maxWidth - ((columns - 1) * 8)) / columns;
         final cards = [
@@ -307,8 +331,14 @@ class _SkillsStats extends StatelessWidget {
             color: const Color(0xFF16A34A),
           ),
           _StatCard(
+            icon: Icons.schedule_rounded,
+            label: 'In Progress',
+            value: '${state.inProgressCount}',
+            color: const Color(0xFFEAB308),
+          ),
+          _StatCard(
             icon: Icons.trending_up_rounded,
-            label: 'Average',
+            label: 'Avg Progress',
             value: '${state.averageProgress}%',
             color: const Color(0xFF7C3AED),
           ),
@@ -390,6 +420,7 @@ class _SkillCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = skill.progressPercentage;
     final categoryColor = _categoryColor(skill.skillCategory);
+    final status = _progressStatus(skill.currentLevel, skill.targetLevel);
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -429,6 +460,15 @@ class _SkillCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (skill.isCompleted)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8),
+                    child: Icon(
+                      Icons.emoji_events_rounded,
+                      color: Color(0xFFEAB308),
+                      size: 21,
+                    ),
+                  ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') onEdit();
@@ -457,11 +497,9 @@ class _SkillCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  skill.isCompleted ? 'Completed' : 'In Progress',
+                  status.$1,
                   style: TextStyle(
-                    color: skill.isCompleted
-                        ? const Color(0xFF16A34A)
-                        : const Color(0xFF2563EB),
+                    color: status.$2,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -519,8 +557,8 @@ class _SkillCard extends StatelessWidget {
                 OutlinedButton(
                   onPressed: busy || skill.currentLevel >= skill.targetLevel
                       ? null
-                      : () => onProgress(skill.targetLevel),
-                  child: const Text('Max'),
+                      : () => onProgress(skill.currentLevel + 1),
+                  child: const Text('+'),
                 ),
               ],
             ),
@@ -589,17 +627,33 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.skill == null ? 'Add Skill Milestone' : 'Edit Skill'),
-      content: SizedBox(
-        width: 440,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.skill == null
+                        ? 'Set a new skill goal to track your progress.'
+                        : 'Update your skill details and progress goals.',
+                    style: const TextStyle(color: Color(0xFF6B7280)),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Skill name'),
+                  decoration: const InputDecoration(
+                    labelText: 'Skill Name',
+                    hintText: 'e.g., Time Management, Cooking, Communication',
+                  ),
                   validator: (value) =>
                       value == null || value.trim().isEmpty
                           ? 'Skill name is required.'
@@ -627,8 +681,9 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                       child: TextFormField(
                         controller: _currentController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Current level'),
+                        decoration: const InputDecoration(
+                          labelText: 'Current Level (1-10)',
+                        ),
                         validator: (_) => _levelError(),
                       ),
                     ),
@@ -637,8 +692,9 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                       child: TextFormField(
                         controller: _targetController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Target level'),
+                        decoration: const InputDecoration(
+                          labelText: 'Target Level (1-10)',
+                        ),
                         validator: (_) => _levelError(),
                       ),
                     ),
@@ -664,7 +720,9 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                   controller: _descriptionController,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
+                    labelText: 'Description (Optional)',
+                    hintText:
+                        'Describe what this skill involves and why it is important.',
                   ),
                 ),
               ],
@@ -771,13 +829,30 @@ class _SkillsError extends StatelessWidget {
 }
 
 String _categoryLabel(String category) {
-  if (category == 'all') return 'All categories';
-  return category
-      .split('_')
-      .map((word) => word.isEmpty
-          ? word
-          : '${word[0].toUpperCase()}${word.substring(1)}')
-      .join(' ');
+  if (category == 'all') return 'All Categories';
+  const labels = {
+    'academic': 'Academic Skills',
+    'social': 'Social Skills',
+    'independent_living': 'Independent Living',
+    'career': 'Career Readiness',
+    'personal': 'Personal Development',
+    'health': 'Health & Wellness',
+  };
+  return labels[category] ?? category;
+}
+
+(String, Color) _progressStatus(int current, int target) {
+  final percentage = target <= 0 ? 0 : (current / target) * 100;
+  if (percentage >= 100) {
+    return ('Completed', const Color(0xFF16A34A));
+  }
+  if (percentage >= 75) {
+    return ('Almost There', const Color(0xFF2563EB));
+  }
+  if (percentage >= 50) {
+    return ('Good Progress', const Color(0xFFEAB308));
+  }
+  return ('Getting Started', const Color(0xFF4B5563));
 }
 
 IconData _categoryIcon(String category) {
