@@ -883,3 +883,17 @@ mtime_ms = 1789734841449
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c8914d4d-25fb-4b2f-a345-1339ef8d5ac7/39c61ede-48eb-48a1-9d59-37fc15d0647e"
 storage_version_token = "1789734844919706"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xJaA67fsqU-UIULCozPTy"
+uri = "file://artifacts/flutter-skills-changed-files.zip"
+type = "unspecified"
+title = "Flutter Skills changed files"
+description = "ZIP containing the three changed Flutter Skills files."
+logical_id = "91f5a8c9-a68b-45bd-aa37-6e9843d4a6d2"
+content_hash = "sha256:0d1ef11bc0a2f7259d858cb8effe9c34d96c3367b87c94de39ee6f0a3163320d"
+size = 8064
+mtime_ms = 1789735522991
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/91f5a8c9-a68b-45bd-aa37-6e9843d4a6d2/f55dd41a-5386-4558-9861-da697da5daef"
+storage_version_token = "1789735526978654"
+content_type = "application/octet-stream"
