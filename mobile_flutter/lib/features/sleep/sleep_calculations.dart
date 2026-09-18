@@ -174,7 +174,8 @@ SleepStats? calculateSleepStats(
 
 int? _average(List<num> values) {
   if (values.isEmpty) return null;
-  return _round(values.reduce((a, b) => a + b) / values.length);
+  final total = values.fold<num>(0, (sum, value) => sum + value);
+  return _round(total / values.length);
 }
 
 int _weekdaySundayZero(int dayNumber) {

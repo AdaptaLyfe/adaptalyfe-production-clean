@@ -729,3 +729,17 @@ mtime_ms = 1789715477083
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82eabd64-3a19-439c-8a81-ad038083ea75/b31b28a3-1392-41ab-beb5-793327c34f43"
 storage_version_token = "1789715491651710"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "R2TegPONmbHBlnqFOgL1E"
+uri = "file://exports/adaptalyfe-flutter-sleep-feature-fixed.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Sleep Crash Fix"
+description = "Updated Flutter Sleep feature ZIP. Fixes the numeric stats crash after add, update, delete, and returning to the Sleep screen by replacing the mixed-type reduce with a safe numeric fold. Includes the complete Sleep feature source and routing/navigation files."
+logical_id = "0773571a-64b3-4b18-8491-2553eba4fbfd"
+content_hash = "sha256:ab74f49e59f0788b572909add78df015d165f50c9c844b6e0dff260bcbbf65d1"
+size = 27419
+mtime_ms = 1789717782196
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0773571a-64b3-4b18-8491-2553eba4fbfd/07c9b33d-ef0a-4aa3-8c3e-ad067b7c5ea9"
+storage_version_token = "1789717789167676"
+content_type = "application/octet-stream"
