@@ -841,3 +841,17 @@ mtime_ms = 1789732327045
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02df1206-02ea-4e99-94ef-b57393674327/44e22c63-1bb3-448d-aa19-bbf6c772627e"
 storage_version_token = "1789732331932444"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8UQTCrv5_SwQVZiRYZNV7"
+uri = "file://artifacts/adaptalyfe-flutter-meal-shopping-updated-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Meal & Shopping files"
+description = "ZIP containing the complete updated Flutter Meal & Shopping feature folder. React Native files are not included."
+logical_id = "857ac4f0-577b-41f5-be95-b7e8d93895af"
+content_hash = "sha256:ddf8728adb8ec6cd521d54a68575a68a0c36e9b38a11731267db4a6db770188c"
+size = 20329
+mtime_ms = 1789733297570
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/857ac4f0-577b-41f5-be95-b7e8d93895af/52d4edc4-e53a-452e-8a53-17743a73bc81"
+storage_version_token = "1789733301492223"
+content_type = "application/octet-stream"
