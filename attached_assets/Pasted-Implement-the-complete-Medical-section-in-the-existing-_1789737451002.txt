@@ -1,0 +1,131 @@
+Implement the complete **Medical section** in the existing Flutter application.
+
+Important:
+
+* This is an existing Flutter project. Do NOT create a new Flutter project.
+* Use the existing project structure, navigation, theme, components, API services, authentication, and state-management patterns.
+* The existing **React Native + Wrapper application** should be treated as the functional/UI reference. Replicate its Medical section behavior and flow in Flutter.
+* Do not change unrelated Flutter screens or features.
+
+### Medical Section Requirements
+
+1. **Medical Home Screen**
+
+   * Recreate the Medical screen from the React Native + Wrapper application.
+   * Match the existing UI, spacing, typography, cards, buttons, icons, colors, and layout as closely as possible.
+   * Make the screen responsive for Android, iOS, Web, and Desktop.
+
+2. **Medical Information**
+   Implement all medical-related information and functionality available in the React Native + Wrapper version, including:
+
+   * Medical profile/details
+   * Medical conditions
+   * Allergies
+   * Medications
+   * Doctors/providers
+   * Emergency medical information
+   * Medical notes
+   * Any other existing medical fields or sections
+
+3. **Add / Edit / Delete**
+
+   * Allow users to add medical information.
+   * Allow users to edit existing information.
+   * Allow users to delete information where supported by the existing application.
+   * Show confirmation dialogs where the React Native version does so.
+   * Preserve the same validation rules and error handling.
+
+4. **API Integration**
+
+   * Use the existing Flutter API/service layer if available.
+   * Connect the Medical section to the same backend/API used by the React Native + Wrapper application.
+   * Do not create fake/mock data unless the existing application uses mock data.
+   * Handle loading, success, empty, and error states properly.
+   * Keep authentication/session handling consistent with the rest of the Flutter application.
+
+5. **State Management**
+
+   * Follow the existing Flutter state-management architecture.
+   * If the project uses BLoC, implement the Medical section using BLoC.
+   * Create appropriate:
+
+     * MedicalEvent
+     * MedicalState
+     * MedicalBloc
+   * Keep the implementation simple and consistent with the existing project.
+
+6. **Navigation**
+
+   * Add the Medical section to the existing Flutter navigation.
+   * Make sure opening Medical from the existing Drawer/Bottom Navigation works correctly.
+   * Preserve the existing route structure where possible.
+   * Add child routes/screens required for Medical details, add, and edit flows.
+
+7. **Validation & Error Handling**
+
+   * Match the React Native + Wrapper validation behavior.
+   * Show user-friendly error messages.
+   * Prevent submission when required fields are invalid or empty.
+   * Avoid duplicate error messages/popups.
+
+8. **Responsive UI**
+   The Medical section must work properly on:
+
+   * Android
+   * iOS
+   * Web
+   * Windows/Desktop
+
+   Do not simply stretch the mobile UI on larger screens. Follow the existing responsive design pattern used in the Flutter project.
+
+9. **Existing Functionality**
+   Before implementing, inspect the React Native + Wrapper Medical section and identify:
+
+   * Screens
+   * Components
+   * API calls
+   * Request/response models
+   * Validation
+   * Navigation
+   * Add/edit/delete operations
+   * Popups/dialogs
+   * Empty states
+   * Loading states
+   * Error states
+
+   Then reproduce the same functionality in Flutter.
+
+### Code Quality
+
+* Reuse existing Flutter widgets/components where possible.
+* Do not duplicate common code.
+* Keep files organized according to the existing project architecture.
+* Use proper models and repositories/services.
+* Do not break existing functionality.
+* Do not modify unrelated sections.
+
+### Final Verification
+
+After implementation:
+
+1. Run the Flutter analyzer.
+2. Fix all compilation errors.
+3. Verify Medical navigation.
+4. Test loading state.
+5. Test empty state.
+6. Test add medical information.
+7. Test edit medical information.
+8. Test delete functionality if available.
+9. Test validation and error messages.
+10. Test API success and failure cases.
+11. Verify Android/iOS/Web/Desktop responsive behavior.
+
+Finally, provide:
+
+* Files created/modified
+* API endpoints used
+* Routes added/changed
+* BLoC events/states created
+* Any issues that could not be implemented because the React Native/Wrapper implementation does not contain the required functionality.
+
+Do not implement unrelated features or redesign the Medical section.
