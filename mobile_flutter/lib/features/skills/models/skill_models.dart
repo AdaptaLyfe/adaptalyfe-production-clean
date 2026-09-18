@@ -24,6 +24,9 @@ class TransitionSkillInput extends Equatable {
 
   String? get validationError {
     if (skillName.trim().isEmpty) return 'Skill name is required.';
+    if (!_skillCategories.contains(skillCategory)) {
+      return 'Choose a valid skill category.';
+    }
     if (currentLevel < 1 || currentLevel > 10) {
       return 'Current level must be between 1 and 10.';
     }
@@ -31,6 +34,9 @@ class TransitionSkillInput extends Equatable {
       return 'Target level must be between 1 and 10.';
     }
     if (currentLevel > targetLevel) return skillLevelRangeError;
+    if (!_skillPriorities.contains(priority)) {
+      return 'Choose a valid priority.';
+    }
     return null;
   }
 
@@ -194,3 +200,14 @@ DateTime? _asDate(Object? value) {
 
 String? _nullableText(String? value) =>
     value == null || value.trim().isEmpty ? null : value.trim();
+
+const _skillCategories = [
+  'academic',
+  'social',
+  'independent_living',
+  'career',
+  'personal',
+  'health',
+];
+
+const _skillPriorities = ['low', 'medium', 'high', 'critical'];

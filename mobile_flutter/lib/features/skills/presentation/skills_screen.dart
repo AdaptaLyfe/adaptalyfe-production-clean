@@ -102,38 +102,52 @@ class _SkillsScreenState extends State<SkillsScreen> {
                 const SizedBox(height: 18),
                 _SkillsStats(state: state),
                 const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: categories.contains(_category)
-                            ? _category
-                            : 'all',
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                          prefixIcon: Icon(Icons.filter_list_rounded),
-                        ),
-                        items: categories
-                            .map(
-                              (category) => DropdownMenuItem(
-                                value: category,
-                                child: Text(_categoryLabel(category)),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) =>
-                            setState(() => _category = value ?? 'all'),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final categoryFilter = DropdownButtonFormField<String>(
+                      value: categories.contains(_category) ? _category : 'all',
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        prefixIcon: Icon(Icons.filter_list_rounded),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    FilledButton.icon(
+                      items: categories
+                          .map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(_categoryLabel(category)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _category = value ?? 'all'),
+                    );
+                    final addButton = FilledButton.icon(
                       onPressed: state.busyKey == 'create'
                           ? null
                           : () => _addSkill(context),
                       icon: const Icon(Icons.add),
                       label: const Text('Add Skill'),
-                    ),
-                  ],
+                    );
+
+                    if (constraints.maxWidth < 520) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          categoryFilter,
+                          const SizedBox(height: 10),
+                          addButton,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: categoryFilter),
+                        const SizedBox(width: 12),
+                        addButton,
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 if (visibleSkills.isEmpty)
@@ -248,35 +262,40 @@ class _SkillsStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth < 430 ? 2 : 3;
+        final width =
+            (constraints.maxWidth - ((columns - 1) * 8)) / columns;
+        final cards = [
+          _StatCard(
             icon: Icons.track_changes_rounded,
             label: 'Total Skills',
             value: '${state.skills.length}',
             color: const Color(0xFF2563EB),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
+          _StatCard(
             icon: Icons.check_circle_outline_rounded,
             label: 'Completed',
             value: '${state.completedCount}',
             color: const Color(0xFF16A34A),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _StatCard(
+          _StatCard(
             icon: Icons.trending_up_rounded,
             label: 'Average',
             value: '${state.averageProgress}%',
             color: const Color(0xFF7C3AED),
           ),
-        ),
-      ],
+        ];
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: cards
+              .map((card) => SizedBox(width: width, child: card))
+              .toList(),
+        );
+      },
     );
   }
 }

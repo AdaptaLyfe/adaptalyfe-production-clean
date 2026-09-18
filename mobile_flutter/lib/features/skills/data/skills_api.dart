@@ -8,6 +8,9 @@ class SkillsApi {
 
   Future<List<TransitionSkillModel>> getSkills() async {
     final response = await client.get<dynamic>('/api/transition-skills');
+    if (response.data == null) {
+      return const [];
+    }
     if (response.data is! List) {
       throw const FormatException('Invalid transition skills response');
     }
