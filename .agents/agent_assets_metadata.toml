@@ -869,3 +869,17 @@ mtime_ms = 1789733852230
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffe7618f-8fde-4422-a632-26cbd5af9c73/a4cff1c6-4d60-430c-add9-059bce287244"
 storage_version_token = "1789733855934793"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "B31ceLgffHpxmVwr1p5Tc"
+uri = "file://artifacts/flutter-resources-changed-file.zip"
+type = "unspecified"
+title = "Flutter Resources changed file"
+description = "ZIP containing the changed Flutter Resources BLoC file."
+logical_id = "c8914d4d-25fb-4b2f-a345-1339ef8d5ac7"
+content_hash = "sha256:009f6c065d8d469b49583b000fd23e754236b059b8b2c256839232228e386614"
+size = 2456
+mtime_ms = 1789734841449
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c8914d4d-25fb-4b2f-a345-1339ef8d5ac7/39c61ede-48eb-48a1-9d59-37fc15d0647e"
+storage_version_token = "1789734844919706"
+content_type = "application/octet-stream"
