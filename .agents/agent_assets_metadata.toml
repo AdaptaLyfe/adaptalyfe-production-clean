@@ -645,3 +645,17 @@ mtime_ms = 1789537116543
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9fd00bdb-b484-498e-8907-132e1f8145ae/9b076c81-50e5-4db6-ad2a-90230e4adae5"
 storage_version_token = "1789537120620910"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "me6Om4VtDOMQLNmp8WDmP"
+uri = "file://exports/adaptalyfe-flutter-updated-files.zip"
+type = "unspecified"
+title = "Updated Flutter file ZIP"
+description = "Contains the updated mobile Flutter subscription BLoC file with the specific no-subscription restore message."
+logical_id = "a3d3c017-6a46-476f-b104-1eb6ff948263"
+content_hash = "sha256:1c5321e192aba80219c2c9e08271daedf545bb8254371a6681d2e134f3bc3059"
+size = 2632
+mtime_ms = 1789705710215
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a3d3c017-6a46-476f-b104-1eb6ff948263/93200c7a-8ae6-4bc8-9fb9-b71ed9aa2258"
+storage_version_token = "1789705714351237"
+content_type = "application/octet-stream"
