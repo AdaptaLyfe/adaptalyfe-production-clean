@@ -1284,46 +1284,76 @@ class _ResourcesPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 15, 14, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final titleContent = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: color),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
-                      Text(subtitle,
-                          style: const TextStyle(
-                              color: Color(0xFF6B7280), fontSize: 13)),
-                    ],
+            Icon(icon, color: color),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton.icon(
-                  onPressed: onAdd,
-                  style: FilledButton.styleFrom(backgroundColor: color),
-                  icon: const Icon(Icons.add_rounded, size: 17),
-                  label: Text(addLabel),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+        final addButton = FilledButton.icon(
+          onPressed: onAdd,
+          style: FilledButton.styleFrom(backgroundColor: color),
+          icon: const Icon(Icons.add_rounded, size: 17),
+          label: Text(addLabel),
+        );
+        final header = constraints.maxWidth < 600
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  titleContent,
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerRight, child: addButton),
+                ],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: titleContent),
+                  const SizedBox(width: 8),
+                  addButton,
+                ],
+              );
+
+        return Card(
+          color: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 15, 14, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                const SizedBox(height: 16),
+                child,
               ],
             ),
-            const SizedBox(height: 16),
-            child,
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

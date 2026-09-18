@@ -1,0 +1,41 @@
+Implement the **Resources section** in the existing Flutter application.
+
+Important:
+
+* Do NOT create a new Flutter project.
+* Use the existing Flutter project structure, theme, routing, API services, authentication, and state-management pattern.
+* The Flutter Resources section should match the existing **React Native + Wrapper Resources section** in functionality, UI flow, and behavior.
+* First inspect the existing React Native + Wrapper implementation and understand all Resources-related screens, components, API calls, models, navigation, loading states, empty states, errors, and user interactions.
+* Then implement the same functionality in Flutter.
+
+Requirements:
+
+1. Create the Resources screen in Flutter.
+2. Match the existing React Native + Wrapper UI as closely as possible.
+3. Implement all existing Resources features and actions.
+4. Connect the same backend/API endpoints used by the React Native + Wrapper app.
+5. Create proper Flutter models for Resource data.
+6. Implement API/repository/service integration using the existing Flutter architecture.
+7. Use the project's existing BLoC pattern for state management.
+8. Add loading, success, empty, and error states.
+9. Handle API errors with user-friendly messages.
+10. Preserve authentication and authorization behavior from the existing app.
+11. Add the Resources route to the existing Flutter navigation/router.
+12. Make the screen responsive for Android, iOS, Web, and Desktop.
+13. Reuse existing Flutter components, colors, typography, buttons, spacing, and common widgets wherever possible.
+14. Do not break or modify unrelated existing features.
+
+Before coding:
+
+* Inspect the existing React Native + Wrapper Resources implementation.
+* Identify every screen, component, API, model, navigation action, and user interaction related to Resources.
+* Check the existing Flutter project for reusable architecture and components.
+
+After implementation:
+
+* Verify the complete Resources flow.
+* Test loading, data display, empty state, API failure, and navigation.
+* Fix any compile errors.
+* Make sure existing Flutter features continue working.
+
+Do not implement unrelated sections or features.
