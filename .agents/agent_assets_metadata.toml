@@ -911,3 +911,17 @@ mtime_ms = 1789736127740
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc934327-7f3e-4dc9-8f40-9c46268ce35f/6f2da258-803f-4197-ad49-e3a590237e0b"
 storage_version_token = "1789736131245826"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "HfxHRu-DdbXLo1-dWUIju"
+uri = "file://exports/adaptalyfe-resources-changed-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Resources Flutter Changed Files"
+description = "Only the two Flutter files changed during the React/Wrapper parity audit. No React Native files are included."
+logical_id = "4e478923-dc00-4b9b-ad52-09f1003b9adf"
+content_hash = "sha256:9a803eaf4d1533087621c85827f3a29b9ff068d1362b333fd974974c2f1a1256"
+size = 21855
+mtime_ms = 1789736662656
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4e478923-dc00-4b9b-ad52-09f1003b9adf/afa55f78-39ac-4c0b-8140-d99831f6c00d"
+storage_version_token = "1789736669264734"
+content_type = "application/octet-stream"

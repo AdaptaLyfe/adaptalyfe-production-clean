@@ -312,8 +312,10 @@ class _EmergencyContactsSection extends StatelessWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
-                      FilledButton.icon(
-                        onPressed: () => _showEmergencyContactEditor(context),
+                       FilledButton.icon(
+                         onPressed: state.busyKey == 'contact-create'
+                             ? null
+                             : () => _showEmergencyContactEditor(context),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFDC2626),
                         ),
@@ -337,7 +339,7 @@ class _EmergencyContactsSection extends StatelessWidget {
                               (contact) => SizedBox(
                                 width: width,
                                 child: FilledButton(
-                                  onPressed: () => _callContact(contact),
+                                  onPressed: () => _callContact(context, contact),
                                   style: FilledButton.styleFrom(
                                     minimumSize: const Size.fromHeight(52),
                                     backgroundColor: const Color(0xFFDC2626),
@@ -452,7 +454,9 @@ class _ContactGroup extends StatelessWidget {
                 ),
                 if (showAddButton)
                   FilledButton.icon(
-                    onPressed: () => _showEmergencyContactEditor(context),
+                    onPressed: state.busyKey == 'contact-create'
+                        ? null
+                        : () => _showEmergencyContactEditor(context),
                     icon: const Icon(Icons.person_add_alt_1, size: 17),
                     label: const Text('Add Contact'),
                   ),
@@ -495,93 +499,136 @@ class _EmergencyContactRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final busy = state.busyKey == 'contact-${contact.id}';
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(_relationshipIcon(contact.relationship),
-              color: _relationshipColor(contact.relationship), size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 4,
-                  children: [
-                    Text(contact.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700)),
-                    if (contact.isPrimary)
-                      const _StatusPill(
-                          label: 'Primary', color: Color(0xFF6B7280)),
-                    if (contact.isEmergencyContact)
-                      const _StatusPill(
-                          label: 'Emergency', color: Color(0xFFDC2626)),
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '${contact.relationship ?? 'Contact'} • ${contact.phoneNumber}',
-                  style: const TextStyle(
-                      color: Color(0xFF4B5563), fontSize: 13),
-                ),
-                if (contact.email?.isNotEmpty == true)
-                  Text(contact.email!,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final details = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              _relationshipIcon(contact.relationship),
+              color: _relationshipColor(contact.relationship),
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        contact.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      if (contact.isPrimary)
+                        const _StatusPill(
+                          label: 'Primary',
+                          color: Color(0xFF6B7280),
+                        ),
+                      if (contact.isEmergencyContact)
+                        const _StatusPill(
+                          label: 'Emergency',
+                          color: Color(0xFFDC2626),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${contact.relationship ?? 'Contact'} • ${contact.phoneNumber}',
+                    style: const TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (contact.email?.isNotEmpty == true)
+                    Text(
+                      contact.email!,
                       style: const TextStyle(
-                          color: Color(0xFF6B7280), fontSize: 13)),
-                if (contact.notes?.isNotEmpty == true)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(contact.notes!,
+                        color: Color(0xFF6B7280),
+                        fontSize: 13,
+                      ),
+                    ),
+                  if (contact.notes?.isNotEmpty == true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        contact.notes!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            color: Color(0xFF6B7280), fontSize: 12)),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Wrap(
-            spacing: 2,
-            children: [
-              IconButton(
-                tooltip: 'Call ${contact.name}',
-                onPressed: busy ? null : () => _callContact(contact),
-                icon: const Icon(Icons.phone_rounded, color: Color(0xFF16A34A)),
-              ),
-              IconButton(
-                tooltip: 'Edit ${contact.name}',
-                onPressed: busy
-                    ? null
-                    : () => _showEmergencyContactEditor(context, contact: contact),
-                icon: const Icon(Icons.edit_outlined),
-              ),
-              IconButton(
-                tooltip: 'Delete ${contact.name}',
-                onPressed: busy
-                    ? null
-                    : () => _confirmDelete(
-                          context,
-                          title: 'Delete contact?',
-                          message:
-                              'This will remove "${contact.name}" from your contacts.',
-                          onConfirm: () => context
-                              .read<ResourcesBloc>()
-                              .add(DeleteEmergencyContact(contact.id)),
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
                         ),
-                icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ),
+                ],
               ),
-            ],
+            ),
+          ],
+        );
+        final actions = Wrap(
+          spacing: 2,
+          children: [
+            IconButton(
+              tooltip: 'Call ${contact.name}',
+              onPressed: busy ? null : () => _callContact(context, contact),
+              icon: const Icon(Icons.phone_rounded, color: Color(0xFF16A34A)),
+            ),
+            IconButton(
+              tooltip: 'Edit ${contact.name}',
+              onPressed: busy
+                  ? null
+                  : () => _showEmergencyContactEditor(
+                        context,
+                        contact: contact,
+                      ),
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            IconButton(
+              tooltip: 'Delete ${contact.name}',
+              onPressed: busy
+                  ? null
+                  : () => _confirmDelete(
+                        context,
+                        title: 'Delete contact?',
+                        message:
+                            'This will remove "${contact.name}" from your contacts.',
+                        onConfirm: () => context
+                            .read<ResourcesBloc>()
+                            .add(DeleteEmergencyContact(contact.id)),
+                      ),
+              icon: const Icon(Icons.delete_outline_rounded),
+            ),
+          ],
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
+          child: constraints.maxWidth < 460
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    details,
+                    const SizedBox(height: 8),
+                    Align(alignment: Alignment.centerRight, child: actions),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: details),
+                    const SizedBox(width: 8),
+                    actions,
+                  ],
+                ),
+        );
+      },
     );
   }
 }
@@ -650,9 +697,28 @@ Color _relationshipColor(String? relationship) {
   }
 }
 
-Future<void> _callContact(EmergencyContactModel contact) async {
+Future<void> _callContact(
+  BuildContext context,
+  EmergencyContactModel contact,
+) async {
   final uri = Uri(scheme: 'tel', path: contact.phoneNumber);
-  await launchUrl(uri);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+  } else if (context.mounted) {
+    _showMessage(context, 'Unable to call ${contact.name} on this device.');
+  }
+}
+
+Future<void> _callEmergencyResource(
+  BuildContext context,
+  String phoneNumber,
+) async {
+  final uri = Uri(scheme: 'tel', path: phoneNumber);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri);
+  } else if (context.mounted) {
+    _showMessage(context, 'Unable to call this resource on your device.');
+  }
 }
 
 class _TrustedContactsSection extends StatelessWidget {
@@ -1196,12 +1262,14 @@ class _EmergencyResourcesPanel extends StatelessWidget {
       icon: Icons.emergency_outlined,
       color: const Color(0xFFDC2626),
       addLabel: 'Add Resource',
+      isBusy: state.busyKey == 'emergency-create',
       onAdd: () => _showEmergencyEditor(context),
       child: state.emergencyResources.isEmpty
           ? const _EmptyCard(
               icon: Icons.emergency_outlined,
-              title: 'No emergency resources yet',
-              message: 'Add a crisis line, hospital, counselor, or support group.',
+              title: 'No emergency resources added yet.',
+              message:
+                  'Caregivers can add local crisis support and counseling resources.',
             )
           : Column(
               children: state.emergencyResources
@@ -1234,6 +1302,7 @@ class _PersonalResourcesPanel extends StatelessWidget {
       icon: Icons.bookmark_outline_rounded,
       color: const Color(0xFF2563EB),
       addLabel: 'Add Resource',
+      isBusy: state.busyKey == 'personal-create',
       onAdd: () => _showPersonalEditor(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1272,6 +1341,7 @@ class _ResourcesPanel extends StatelessWidget {
     required this.addLabel,
     required this.onAdd,
     required this.child,
+    this.isBusy = false,
   });
 
   final String title;
@@ -1281,6 +1351,7 @@ class _ResourcesPanel extends StatelessWidget {
   final String addLabel;
   final VoidCallback onAdd;
   final Widget child;
+  final bool isBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -1316,10 +1387,16 @@ class _ResourcesPanel extends StatelessWidget {
           ],
         );
         final addButton = FilledButton.icon(
-          onPressed: onAdd,
+          onPressed: isBusy ? null : onAdd,
           style: FilledButton.styleFrom(backgroundColor: color),
-          icon: const Icon(Icons.add_rounded, size: 17),
-          label: Text(addLabel),
+          icon: isBusy
+              ? const SizedBox(
+                  width: 17,
+                  height: 17,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.add_rounded, size: 17),
+          label: Text(isBusy ? 'Saving…' : addLabel),
         );
         final header = constraints.maxWidth < 600
             ? Column(
@@ -1631,6 +1708,8 @@ class _EmergencyContactDialogState extends State<_EmergencyContactDialog> {
                             ))
                         .toList(),
                     onChanged: (value) => setState(() => _relationship = value),
+                    validator: (value) =>
+                        value == null ? 'Select a relationship' : null,
                   ),
                   const SizedBox(height: 12),
                   _field(_phoneController, 'Phone Number',
@@ -1955,6 +2034,36 @@ class _PersonalResourceCard extends StatelessWidget {
                       const SizedBox(height: 9),
                     ],
                     _Tag(text: _displayCategory(resource.category)),
+                    if (resource.tags?.trim().isNotEmpty == true) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: resource.tags!
+                            .split(',')
+                            .map((tag) => tag.trim())
+                            .where((tag) => tag.isNotEmpty)
+                            .map(
+                              (tag) => _Tag(
+                                text: tag,
+                                color: const Color(0xFFF3F4F6),
+                                textColor: const Color(0xFF4B5563),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
+                    if (resource.accessCount > 0) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Accessed ${resource.accessCount} '
+                        '${resource.accessCount == 1 ? 'time' : 'times'}',
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1966,6 +2075,7 @@ class _PersonalResourceCard extends StatelessWidget {
                   action,
                 ),
                 itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Edit')),
                   PopupMenuItem(value: 'open', child: Text('Open link')),
                   PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
@@ -1982,7 +2092,9 @@ class _PersonalResourceCard extends StatelessWidget {
     PersonalResourceModel resource,
     String action,
   ) async {
-    if (action == 'open') {
+    if (action == 'edit') {
+      await _showPersonalEditor(context, resource: resource);
+    } else if (action == 'open') {
       await _openPersonalResource(context, resource);
     } else if (action == 'delete') {
       await _confirmDelete(
@@ -2102,6 +2214,7 @@ class _EmergencyResourceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typeColor = _emergencyResourceColor(resource.resourceType);
     return Card(
       elevation: 1,
       color: Colors.white,
@@ -2118,9 +2231,9 @@ class _EmergencyResourceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ResourceIcon(
-                    icon: Icons.emergency_rounded,
-                    color: const Color(0xFFDC2626),
-                    background: const Color(0xFFFEF2F2),
+                    icon: _emergencyResourceIcon(resource.resourceType),
+                    color: typeColor,
+                    background: typeColor.withOpacity(.10),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -2137,7 +2250,7 @@ class _EmergencyResourceCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _displayCategory(resource.resourceType),
+                          _displayEmergencyResourceType(resource.resourceType),
                           style: const TextStyle(
                             color: Color(0xFF6B7280),
                             fontSize: 13,
@@ -2186,10 +2299,17 @@ class _EmergencyResourceCard extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     if (resource.phoneNumber != null)
-                      _Tag(
-                        text: resource.phoneNumber!,
-                        color: const Color(0xFFEFF6FF),
-                        textColor: const Color(0xFF1D4ED8),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: () => _callEmergencyResource(
+                          context,
+                          resource.phoneNumber!,
+                        ),
+                        child: _Tag(
+                          text: resource.phoneNumber!,
+                          color: const Color(0xFFEFF6FF),
+                          textColor: const Color(0xFF1D4ED8),
+                        ),
                       ),
                     if (resource.isAvailable24_7)
                       const _Tag(
@@ -2784,6 +2904,57 @@ String _displayCategory(String value) {
       .join(' ');
 }
 
+String _displayEmergencyResourceType(String value) {
+  switch (value) {
+    case 'crisis':
+      return 'Crisis Hotline';
+    case 'counselor':
+      return 'Personal Counselor';
+    case 'hospital':
+      return 'Hospital/ER';
+    case 'mental_health':
+      return 'Mental Health Center';
+    case 'support_group':
+      return 'Support Group';
+    default:
+      return _displayCategory(value);
+  }
+}
+
+IconData _emergencyResourceIcon(String value) {
+  switch (value) {
+    case 'crisis':
+      return Icons.warning_amber_rounded;
+    case 'counselor':
+      return Icons.favorite_rounded;
+    case 'hospital':
+      return Icons.local_hospital_rounded;
+    case 'mental_health':
+      return Icons.headphones_rounded;
+    case 'support_group':
+      return Icons.groups_rounded;
+    default:
+      return Icons.shield_outlined;
+  }
+}
+
+Color _emergencyResourceColor(String value) {
+  switch (value) {
+    case 'crisis':
+      return const Color(0xFFDC2626);
+    case 'counselor':
+      return const Color(0xFF2563EB);
+    case 'hospital':
+      return const Color(0xFF7C3AED);
+    case 'mental_health':
+      return const Color(0xFF16A34A);
+    case 'support_group':
+      return const Color(0xFFF97316);
+    default:
+      return const Color(0xFF6B7280);
+  }
+}
+
 IconData _personalResourceIcon(String category) {
   switch (category.toLowerCase()) {
     case 'music':
@@ -3039,22 +3210,28 @@ class _EmergencyResourceDialog extends StatefulWidget {
 class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _typeController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
   late final TextEditingController _websiteController;
   late final TextEditingController _availabilityController;
   late final TextEditingController _descriptionController;
+  late String _resourceType;
   late bool _isEmergencyOnly;
   late bool _isAvailable24_7;
+
+  static const _resourceTypes = [
+    'crisis',
+    'counselor',
+    'hospital',
+    'mental_health',
+    'support_group',
+  ];
 
   @override
   void initState() {
     super.initState();
     final resource = widget.resource;
     _nameController = TextEditingController(text: resource?.name);
-    _typeController =
-        TextEditingController(text: resource?.resourceType ?? 'crisis');
     _phoneController = TextEditingController(text: resource?.phoneNumber);
     _addressController = TextEditingController(text: resource?.address);
     _websiteController = TextEditingController(text: resource?.website);
@@ -3062,6 +3239,9 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
         TextEditingController(text: resource?.availabilityHours);
     _descriptionController =
         TextEditingController(text: resource?.description);
+    _resourceType = _resourceTypes.contains(resource?.resourceType)
+        ? resource!.resourceType
+        : 'crisis';
     _isEmergencyOnly = resource?.isEmergencyOnly ?? false;
     _isAvailable24_7 = resource?.isAvailable24_7 ?? false;
   }
@@ -3069,7 +3249,6 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _typeController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
     _websiteController.dispose();
@@ -3107,13 +3286,25 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
                 validator: (value) =>
                     value == null || value.trim().isEmpty ? 'Enter a name' : null,
               ),
-              _formField(
-                controller: _typeController,
-                label: 'Resource type',
-                helperText: 'For example: crisis line, clinic, or community',
-                validator: (value) => value == null || value.trim().isEmpty
-                    ? 'Enter a resource type'
-                    : null,
+              DropdownButtonFormField<String>(
+                value: _resourceType,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: _resourceTypes
+                    .map(
+                      (type) => DropdownMenuItem(
+                        value: type,
+                        child: Text(_displayEmergencyResourceType(type)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _resourceType = value);
+                  }
+                },
               ),
               _formField(
                 controller: _phoneController,
@@ -3202,7 +3393,7 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
       context,
       EmergencyResourceInput(
         name: _nameController.text,
-        resourceType: _typeController.text,
+        resourceType: _resourceType,
         phoneNumber: _phoneController.text,
         address: _addressController.text,
         website: _websiteController.text,

@@ -7,6 +7,15 @@ import '../../medical/models/medical_models.dart';
 import 'resources_event.dart';
 import 'resources_state.dart';
 
+class _ResourceLoadResult<T> {
+  const _ResourceLoadResult.success(this.value) : error = null;
+
+  const _ResourceLoadResult.failure(this.error) : value = null;
+
+  final T? value;
+  final Object? error;
+}
+
 class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
   ResourcesBloc(this.repository) : super(const ResourcesState()) {
     on<ResourcesStarted>(_loadResources);
@@ -126,21 +135,39 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     FilterPersonalResources event,
     Emitter<ResourcesState> emit,
   ) {
-    emit(state.copyWith(selectedCategory: event.category));
+    emit(
+      state.copyWith(
+        selectedCategory: event.category,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
   }
 
   void _searchPersonalResources(
     SearchPersonalResources event,
     Emitter<ResourcesState> emit,
   ) {
-    emit(state.copyWith(searchQuery: event.query));
+    emit(
+      state.copyWith(
+        searchQuery: event.query,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
   }
 
   Future<void> _createPersonalResource(
     CreatePersonalResource event,
     Emitter<ResourcesState> emit,
   ) async {
-    emit(state.copyWith(busyKey: 'personal-create', errorMessage: null));
+    emit(
+      state.copyWith(
+        busyKey: 'personal-create',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
     try {
       final created = await repository.createPersonalResource(event.input);
       if (emit.isDone) return;
@@ -166,15 +193,6 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         fallback: 'Unable to add that resource.',
       );
     }
-  }
-
-class _ResourceLoadResult<T> {
-  const _ResourceLoadResult.success(this.value) : error = null;
-
-  const _ResourceLoadResult.failure(this.error) : value = null;
-
-  final T? value;
-  final Object? error;
 }
 
   Future<void> _updatePersonalResource(
@@ -271,13 +289,22 @@ class _ResourceLoadResult<T> {
     OpenPersonalResource event,
     Emitter<ResourcesState> emit,
   ) async {
+    emit(
+      state.copyWith(
+        busyKey: 'personal-${event.id}',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
     try {
       final updated = await repository.recordPersonalResourceAccess(event.id);
       if (emit.isDone) return;
       emit(
         state.copyWith(
           personalResources: _replacePersonal(updated),
+          busyKey: null,
           errorMessage: null,
+          actionMessage: null,
           sessionInvalid: false,
         ),
       );
@@ -286,14 +313,19 @@ class _ResourceLoadResult<T> {
       // Access tracking should not prevent the URL from opening on the device.
       emit(
         state.copyWith(
+          busyKey: null,
           errorMessage: error.type == ApiErrorType.unauthorized
               ? error.message
               : null,
+          actionMessage: null,
           sessionInvalid: error.type == ApiErrorType.unauthorized,
         ),
       );
     } catch (_) {
       // The caller can still open the resource even if tracking fails.
+      if (!emit.isDone) {
+        emit(state.copyWith(busyKey: null, actionMessage: null));
+      }
     }
   }
 
@@ -301,7 +333,13 @@ class _ResourceLoadResult<T> {
     CreateEmergencyResource event,
     Emitter<ResourcesState> emit,
   ) async {
-    emit(state.copyWith(busyKey: 'emergency-create', errorMessage: null));
+    emit(
+      state.copyWith(
+        busyKey: 'emergency-create',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
     try {
       final created = await repository.createEmergencyResource(event.input);
       if (emit.isDone) return;
@@ -411,7 +449,13 @@ class _ResourceLoadResult<T> {
     CreateEmergencyContact event,
     Emitter<ResourcesState> emit,
   ) async {
-    emit(state.copyWith(busyKey: 'contact-create', errorMessage: null));
+    emit(
+      state.copyWith(
+        busyKey: 'contact-create',
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
     try {
       final created = await repository.createEmergencyContact(event.input);
       if (emit.isDone) return;
