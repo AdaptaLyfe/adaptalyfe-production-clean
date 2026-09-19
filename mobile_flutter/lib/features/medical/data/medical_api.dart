@@ -49,6 +49,27 @@ class MedicalApi {
   Future<MedicationModel> createMedication(MedicationInput input) =>
       _post('/api/medications', input.toJson(), MedicationModel.fromJson);
 
+  Future<List<PharmacyModel>> getPharmacies() =>
+      _getList('/api/pharmacies', PharmacyModel.fromJson);
+
+  Future<PharmacyModel> createPharmacy(PharmacyInput input) =>
+      _post('/api/pharmacies', input.toJson(), PharmacyModel.fromJson);
+
+  Future<List<UserPharmacyModel>> getUserPharmacies() =>
+      _getList('/api/user-pharmacies', UserPharmacyModel.fromJson);
+
+  Future<UserPharmacyModel> linkPharmacy(UserPharmacyInput input) =>
+      _post('/api/user-pharmacies', input.toJson(), UserPharmacyModel.fromJson);
+
+  Future<List<MedicationModel>> getMedicationsDueForRefill() =>
+      _getList('/api/medications/due-for-refill', MedicationModel.fromJson);
+
+  Future<List<RefillOrderModel>> getRefillOrders() =>
+      _getList('/api/refill-orders', RefillOrderModel.fromJson);
+
+  Future<RefillOrderModel> createRefillReminder(RefillOrderInput input) =>
+      _post('/api/refill-orders', input.toJson(), RefillOrderModel.fromJson);
+
   Future<List<EmergencyContactModel>> getEmergencyContacts() =>
       _getList('/api/emergency-contacts', EmergencyContactModel.fromJson);
 

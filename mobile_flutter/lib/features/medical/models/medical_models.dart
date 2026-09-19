@@ -221,6 +221,285 @@ class MedicationInput extends Equatable {
       ];
 }
 
+class PharmacyModel extends Equatable {
+  const PharmacyModel({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.address,
+    required this.phoneNumber,
+    required this.hours,
+    required this.website,
+    required this.refillUrl,
+    required this.isActive,
+    required this.isCustom,
+  });
+
+  factory PharmacyModel.fromJson(Map<String, dynamic> json) {
+    return PharmacyModel(
+      id: _asInt(json['id']),
+      name: _asString(json['name']),
+      type: _asString(json['type']),
+      address: _asNullableString(json['address']),
+      phoneNumber: _asNullableString(json['phoneNumber']),
+      hours: _asNullableString(json['hours']),
+      website: _asNullableString(json['website']),
+      refillUrl: _asNullableString(json['refillUrl']),
+      isActive: json['isActive'] != false,
+      isCustom: json['isCustom'] == true,
+    );
+  }
+
+  final int id;
+  final String name;
+  final String type;
+  final String? address;
+  final String? phoneNumber;
+  final String? hours;
+  final String? website;
+  final String? refillUrl;
+  final bool isActive;
+  final bool isCustom;
+
+  @override
+  List<Object?> get props => [
+        id,
+        name,
+        type,
+        address,
+        phoneNumber,
+        hours,
+        website,
+        refillUrl,
+        isActive,
+        isCustom,
+      ];
+}
+
+class PharmacyInput extends Equatable {
+  const PharmacyInput({
+    required this.name,
+    this.address,
+    this.phoneNumber,
+    this.website,
+    this.refillUrl,
+    this.hours,
+  });
+
+  final String name;
+  final String? address;
+  final String? phoneNumber;
+  final String? website;
+  final String? refillUrl;
+  final String? hours;
+
+  Map<String, dynamic> toJson() => {
+        'name': name.trim(),
+        if (_hasText(address)) 'address': address!.trim(),
+        if (_hasText(phoneNumber)) 'phoneNumber': phoneNumber!.trim(),
+        if (_hasText(website)) 'website': website!.trim(),
+        if (_hasText(refillUrl)) 'refillUrl': refillUrl!.trim(),
+        if (_hasText(hours)) 'hours': hours!.trim(),
+      };
+
+  @override
+  List<Object?> get props => [name, address, phoneNumber, website, refillUrl, hours];
+}
+
+class UserPharmacyModel extends Equatable {
+  const UserPharmacyModel({
+    required this.id,
+    required this.pharmacyId,
+    required this.isPrimary,
+    required this.accountNumber,
+    required this.membershipId,
+    required this.insuranceProvider,
+    required this.autoRefillEnabled,
+    required this.pharmacy,
+  });
+
+  factory UserPharmacyModel.fromJson(Map<String, dynamic> json) {
+    final nested = json['pharmacy'];
+    return UserPharmacyModel(
+      id: _asInt(json['id']),
+      pharmacyId: _asInt(json['pharmacyId']),
+      isPrimary: json['isPrimary'] == true,
+      accountNumber: _asNullableString(json['accountNumber']),
+      membershipId: _asNullableString(json['membershipId']),
+      insuranceProvider: _asNullableString(json['insuranceProvider']),
+      autoRefillEnabled: json['autoRefillEnabled'] == true,
+      pharmacy: nested is Map
+          ? PharmacyModel.fromJson(Map<String, dynamic>.from(nested))
+          : null,
+    );
+  }
+
+  final int id;
+  final int pharmacyId;
+  final bool isPrimary;
+  final String? accountNumber;
+  final String? membershipId;
+  final String? insuranceProvider;
+  final bool autoRefillEnabled;
+  final PharmacyModel? pharmacy;
+
+  UserPharmacyModel copyWith({PharmacyModel? pharmacy}) => UserPharmacyModel(
+        id: id,
+        pharmacyId: pharmacyId,
+        isPrimary: isPrimary,
+        accountNumber: accountNumber,
+        membershipId: membershipId,
+        insuranceProvider: insuranceProvider,
+        autoRefillEnabled: autoRefillEnabled,
+        pharmacy: pharmacy ?? this.pharmacy,
+      );
+
+  @override
+  List<Object?> get props => [
+        id,
+        pharmacyId,
+        isPrimary,
+        accountNumber,
+        membershipId,
+        insuranceProvider,
+        autoRefillEnabled,
+        pharmacy,
+      ];
+}
+
+class UserPharmacyInput extends Equatable {
+  const UserPharmacyInput({
+    required this.pharmacyId,
+    this.isPrimary = false,
+    this.accountNumber,
+    this.membershipId,
+    this.insuranceProvider,
+    this.autoRefillEnabled = false,
+  });
+
+  final int pharmacyId;
+  final bool isPrimary;
+  final String? accountNumber;
+  final String? membershipId;
+  final String? insuranceProvider;
+  final bool autoRefillEnabled;
+
+  Map<String, dynamic> toJson() => {
+        'pharmacyId': pharmacyId,
+        'isPrimary': isPrimary,
+        'autoRefillEnabled': autoRefillEnabled,
+        if (_hasText(accountNumber)) 'accountNumber': accountNumber!.trim(),
+        if (_hasText(membershipId)) 'membershipId': membershipId!.trim(),
+        if (_hasText(insuranceProvider))
+          'insuranceProvider': insuranceProvider!.trim(),
+      };
+
+  @override
+  List<Object?> get props => [
+        pharmacyId,
+        isPrimary,
+        accountNumber,
+        membershipId,
+        insuranceProvider,
+        autoRefillEnabled,
+      ];
+}
+
+class RefillOrderModel extends Equatable {
+  const RefillOrderModel({
+    required this.id,
+    required this.medicationId,
+    required this.pharmacyId,
+    required this.orderNumber,
+    required this.status,
+    required this.orderDate,
+    required this.readyDate,
+    required this.medication,
+    required this.pharmacy,
+  });
+
+  factory RefillOrderModel.fromJson(Map<String, dynamic> json) {
+    final medication = json['medication'];
+    final pharmacy = json['pharmacy'];
+    return RefillOrderModel(
+      id: _asInt(json['id']),
+      medicationId: _asInt(json['medicationId']),
+      pharmacyId: _asInt(json['pharmacyId']),
+      orderNumber: _asNullableString(json['orderNumber']),
+      status: _asString(json['status'], fallback: 'pending'),
+      orderDate: _asDate(json['orderDate']),
+      readyDate: _asDate(json['readyDate']),
+      medication: medication is Map
+          ? MedicationModel.fromJson(Map<String, dynamic>.from(medication))
+          : null,
+      pharmacy: pharmacy is Map
+          ? PharmacyModel.fromJson(Map<String, dynamic>.from(pharmacy))
+          : null,
+    );
+  }
+
+  final int id;
+  final int medicationId;
+  final int pharmacyId;
+  final String? orderNumber;
+  final String status;
+  final DateTime? orderDate;
+  final DateTime? readyDate;
+  final MedicationModel? medication;
+  final PharmacyModel? pharmacy;
+
+  RefillOrderModel copyWith({
+    MedicationModel? medication,
+    PharmacyModel? pharmacy,
+  }) =>
+      RefillOrderModel(
+        id: id,
+        medicationId: medicationId,
+        pharmacyId: pharmacyId,
+        orderNumber: orderNumber,
+        status: status,
+        orderDate: orderDate,
+        readyDate: readyDate,
+        medication: medication ?? this.medication,
+        pharmacy: pharmacy ?? this.pharmacy,
+      );
+
+  @override
+  List<Object?> get props => [
+        id,
+        medicationId,
+        pharmacyId,
+        orderNumber,
+        status,
+        orderDate,
+        readyDate,
+        medication,
+        pharmacy,
+      ];
+}
+
+class RefillOrderInput extends Equatable {
+  const RefillOrderInput({
+    required this.medicationId,
+    required this.pharmacyId,
+    this.pickupMethod = 'in_store',
+  });
+
+  final int medicationId;
+  final int pharmacyId;
+  final String pickupMethod;
+
+  Map<String, dynamic> toJson() => {
+        'medicationId': medicationId,
+        'pharmacyId': pharmacyId,
+        'pickupMethod': pickupMethod,
+        'status': 'pending',
+      };
+
+  @override
+  List<Object?> get props => [medicationId, pharmacyId, pickupMethod];
+}
+
 class AllergyModel extends Equatable {
   const AllergyModel({
     required this.id,

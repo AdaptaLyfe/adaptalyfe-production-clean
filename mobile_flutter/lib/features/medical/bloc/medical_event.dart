@@ -54,6 +54,33 @@ final class AddMedication extends MedicalEvent {
   List<Object?> get props => [input];
 }
 
+final class AddCustomPharmacy extends MedicalEvent {
+  const AddCustomPharmacy(this.input);
+
+  final PharmacyInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class LinkPharmacy extends MedicalEvent {
+  const LinkPharmacy(this.input);
+
+  final UserPharmacyInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class CreateRefillReminder extends MedicalEvent {
+  const CreateRefillReminder(this.input);
+
+  final RefillOrderInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
 final class AddAllergy extends MedicalEvent {
   const AddAllergy(this.input);
 

@@ -14,6 +14,10 @@ class MedicalState extends Equatable {
     this.status = MedicalStatus.initial,
     this.conditions = const [],
     this.medications = const [],
+    this.pharmacies = const [],
+    this.userPharmacies = const [],
+    this.medicationsDue = const [],
+    this.refillOrders = const [],
     this.allergies = const [],
     this.emergencyContacts = const [],
     this.adverseMedications = const [],
@@ -29,6 +33,10 @@ class MedicalState extends Equatable {
   final MedicalStatus status;
   final List<MedicalConditionModel> conditions;
   final List<MedicationModel> medications;
+  final List<PharmacyModel> pharmacies;
+  final List<UserPharmacyModel> userPharmacies;
+  final List<MedicationModel> medicationsDue;
+  final List<RefillOrderModel> refillOrders;
   final List<AllergyModel> allergies;
   final List<EmergencyContactModel> emergencyContacts;
   final List<AdverseMedicationModel> adverseMedications;
@@ -44,6 +52,10 @@ class MedicalState extends Equatable {
   bool get hasData =>
       conditions.isNotEmpty ||
       medications.isNotEmpty ||
+      pharmacies.isNotEmpty ||
+      userPharmacies.isNotEmpty ||
+      medicationsDue.isNotEmpty ||
+      refillOrders.isNotEmpty ||
       allergies.isNotEmpty ||
       emergencyContacts.isNotEmpty ||
       adverseMedications.isNotEmpty ||
@@ -54,6 +66,10 @@ class MedicalState extends Equatable {
     MedicalStatus? status,
     List<MedicalConditionModel>? conditions,
     List<MedicationModel>? medications,
+    List<PharmacyModel>? pharmacies,
+    List<UserPharmacyModel>? userPharmacies,
+    List<MedicationModel>? medicationsDue,
+    List<RefillOrderModel>? refillOrders,
     List<AllergyModel>? allergies,
     List<EmergencyContactModel>? emergencyContacts,
     List<AdverseMedicationModel>? adverseMedications,
@@ -69,6 +85,10 @@ class MedicalState extends Equatable {
       status: status ?? this.status,
       conditions: conditions ?? this.conditions,
       medications: medications ?? this.medications,
+      pharmacies: pharmacies ?? this.pharmacies,
+      userPharmacies: userPharmacies ?? this.userPharmacies,
+      medicationsDue: medicationsDue ?? this.medicationsDue,
+      refillOrders: refillOrders ?? this.refillOrders,
       allergies: allergies ?? this.allergies,
       emergencyContacts: emergencyContacts ?? this.emergencyContacts,
       adverseMedications: adverseMedications ?? this.adverseMedications,
@@ -93,6 +113,10 @@ class MedicalState extends Equatable {
         status,
         conditions,
         medications,
+        pharmacies,
+        userPharmacies,
+        medicationsDue,
+        refillOrders,
         allergies,
         emergencyContacts,
         adverseMedications,

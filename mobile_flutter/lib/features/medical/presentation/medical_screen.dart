@@ -245,21 +245,268 @@ class _MedicationsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 4,
+      child: Column(
+        children: [
+          Material(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: TabBar(
+              isScrollable: MediaQuery.of(context).size.width < 700,
+              tabs: const [
+                Tab(text: 'Medication List'),
+                Tab(text: 'Refill Reminders'),
+                Tab(text: 'Reminder History'),
+                Tab(text: 'Pharmacy Notes'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _MedicationListTab(state: state),
+                _RefillRemindersTab(state: state),
+                _ReminderHistoryTab(state: state),
+                _PharmacyNotesTab(state: state),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MedicationListTab extends StatelessWidget {
+  const _MedicationListTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
     return _MedicalCollectionView(
       onRefresh: () => _refresh(context),
       emptyTitle: 'No medications added yet',
       emptySubtitle: 'Add medications to keep your list available.',
       addLabel: 'Add Medication',
       errorMessage: state.collectionErrors['medications'],
-      onAdd: () => _showMedicationDialog(context),
+      onAdd: () => _showMedicationDialog(context, state),
       children: state.medications
           .map(
             (item) => _MedicationCard(
               medication: item,
               busy: state.busySection == 'medication',
+              onSetReminder: () => _setRefillReminder(context, item, state),
+              linkedPharmacy: _pharmacyForMedication(item, state),
             ),
           )
           .toList(),
+    );
+  }
+}
+
+class _RefillRemindersTab extends StatelessWidget {
+  const _RefillRemindersTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MedicalCollectionView(
+      onRefresh: () => _refresh(context),
+      emptyTitle: 'No refills needed right now',
+      emptySubtitle: 'Check back when medications are running low.',
+      addLabel: 'Refresh',
+      onAdd: () => context.read<MedicalBloc>().add(const RefreshMedical()),
+      errorMessage: state.collectionErrors['medicationsDue'],
+      children: state.medicationsDue
+          .map(
+            (item) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: Color(0xFFEA580C)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.medicationName,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700)),
+                          Text(
+                            item.nextRefillDate == null
+                                ? 'Due soon'
+                                : 'Due: ${_formatDate(item.nextRefillDate!)}',
+                            style: const TextStyle(color: Color(0xFFEA580C)),
+                          ),
+                          const SizedBox(height: 6),
+                          _StatusBadge(
+                            data: _BadgeData(
+                              '${item.refillsRemaining} refills left',
+                              const Color(0xFFEA580C),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: state.busySection == 'refillOrder'
+                          ? null
+                          : () => _setRefillReminder(context, item, state),
+                      child: const Text('Set Reminder'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _ReminderHistoryTab extends StatelessWidget {
+  const _ReminderHistoryTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MedicalCollectionView(
+      onRefresh: () => _refresh(context),
+      emptyTitle: 'No reminders set yet',
+      emptySubtitle: 'Your refill reminder history will appear here.',
+      addLabel: 'Refresh',
+      onAdd: () => context.read<MedicalBloc>().add(const RefreshMedical()),
+      errorMessage: state.collectionErrors['refillOrders'],
+      children: state.refillOrders
+          .map(
+            (order) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.refresh_rounded,
+                        color: Color(0xFF2563EB)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.medication?.medicationName ??
+                                'Medication #${order.medicationId}',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(order.pharmacy?.name ??
+                              'Pharmacy #${order.pharmacyId}'),
+                          if (order.orderDate != null)
+                            Text(
+                              'Ordered: ${_formatDate(order.orderDate!)}',
+                              style:
+                                  const TextStyle(color: Color(0xFF6B7280)),
+                            ),
+                          if (_hasText(order.orderNumber))
+                            Text('Order #${order.orderNumber}',
+                                style: const TextStyle(
+                                    color: Color(0xFF6B7280))),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _StatusBadge(
+                          data: _BadgeData(
+                            _titleCase(order.status),
+                            _refillStatusColor(order.status),
+                          ),
+                        ),
+                        if (order.readyDate != null)
+                          Text(
+                            'Ready: ${_formatDate(order.readyDate!)}',
+                            style: const TextStyle(
+                                color: Color(0xFF6B7280), fontSize: 12),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _PharmacyNotesTab extends StatelessWidget {
+  const _PharmacyNotesTab({required this.state});
+
+  final MedicalState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () => _refresh(context),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Your Pharmacies',
+                          style: TextStyle(
+                              fontSize: 19, fontWeight: FontWeight.w700)),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => _showCreatePharmacyDialog(context),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Create Custom'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () => _showLinkPharmacyDialog(context, state),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Link Pharmacy'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (state.collectionErrors['userPharmacies'] != null)
+                  _MedicalInlineError(
+                    message: state.collectionErrors['userPharmacies']!,
+                    onRetry: () => _refresh(context),
+                  ),
+                if (state.userPharmacies.isEmpty)
+                  const _MedicalEmpty(
+                    title: 'No pharmacies linked yet',
+                    subtitle: 'Add a pharmacy to start ordering refills.',
+                  )
+                else
+                  ...state.userPharmacies.map(
+                    (item) => _UserPharmacyCard(item: item),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -756,10 +1003,14 @@ class _MedicationCard extends StatelessWidget {
   const _MedicationCard({
     required this.medication,
     required this.busy,
+    required this.onSetReminder,
+    required this.linkedPharmacy,
   });
 
   final MedicationModel medication;
   final bool busy;
+  final VoidCallback onSetReminder;
+  final PharmacyModel? linkedPharmacy;
 
   @override
   Widget build(BuildContext context) {
@@ -850,17 +1101,139 @@ class _MedicationCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (busy)
-              const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+             const SizedBox(width: 10),
+             Column(
+               crossAxisAlignment: CrossAxisAlignment.end,
+               children: [
+                 FilledButton(
+                   onPressed: busy || medication.refillsRemaining == 0
+                       ? null
+                       : onSetReminder,
+                   child: Text(
+                     medication.refillsRemaining == 0
+                         ? 'No Refills'
+                         : 'Set Refill Reminder',
+                   ),
+                 ),
+                 if (linkedPharmacy?.refillUrl != null)
+                   OutlinedButton.icon(
+                     onPressed: () => _openExternalUrl(
+                       context,
+                       linkedPharmacy!.refillUrl!,
+                     ),
+                     icon: const Icon(Icons.refresh_rounded, size: 16),
+                     label: const Text('Online'),
+                   ),
+                 if (busy)
+                   const SizedBox(
+                     width: 22,
+                     height: 22,
+                     child: CircularProgressIndicator(strokeWidth: 2),
+                   ),
+               ],
+             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _UserPharmacyCard extends StatelessWidget {
+  const _UserPharmacyCard({required this.item});
+
+  final UserPharmacyModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    final pharmacy = item.pharmacy;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.local_pharmacy_outlined,
+                    color: Color(0xFF2563EB)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    pharmacy?.name ?? 'Pharmacy #${item.pharmacyId}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700, fontSize: 16),
+                  ),
+                ),
+                if (item.isPrimary)
+                  const _StatusBadge(
+                    data: _BadgeData('Primary', Color(0xFF16A34A)),
+                  ),
+              ],
+            ),
+            if (_hasText(pharmacy?.address))
+              _PharmacyDetail(Icons.location_on_outlined, pharmacy!.address!),
+            if (_hasText(pharmacy?.phoneNumber))
+              _PharmacyDetail(Icons.phone_outlined, pharmacy!.phoneNumber!),
+            if (_hasText(pharmacy?.hours))
+              _PharmacyDetail(Icons.schedule_outlined, pharmacy!.hours!),
+            if (_hasText(item.accountNumber))
+              Text('Account: ${item.accountNumber}',
+                  style: const TextStyle(color: Color(0xFF6B7280))),
+            if (_hasText(item.insuranceProvider))
+              Text('Insurance: ${item.insuranceProvider}',
+                  style: const TextStyle(color: Color(0xFF6B7280))),
+            if (pharmacy?.website != null || pharmacy?.refillUrl != null) ...[
+              const Divider(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (pharmacy?.website != null)
+                    OutlinedButton.icon(
+                      onPressed: () =>
+                          _openExternalUrl(context, pharmacy!.website!),
+                      icon: const Icon(Icons.public, size: 16),
+                      label: const Text('Visit Website'),
+                    ),
+                  if (pharmacy?.refillUrl != null)
+                    FilledButton.icon(
+                      onPressed: () =>
+                          _openExternalUrl(context, pharmacy!.refillUrl!),
+                      icon: const Icon(Icons.refresh_rounded, size: 16),
+                      label: const Text('Order Refills'),
+                    ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PharmacyDetail extends StatelessWidget {
+  const _PharmacyDetail(this.icon, this.value);
+
+  final IconData icon;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: 5),
+        child: Row(
+          children: [
+            Icon(icon, size: 15, color: const Color(0xFF6B7280)),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(value,
+                  style: const TextStyle(color: Color(0xFF6B7280))),
+            ),
+          ],
+        ),
+      );
 }
 
 class _QuickDial extends StatelessWidget {
@@ -2022,7 +2395,10 @@ Future<void> _showContactDialog(
   }
 }
 
-Future<void> _showMedicationDialog(BuildContext context) async {
+Future<void> _showMedicationDialog(
+  BuildContext context,
+  MedicalState state,
+) async {
   final medicalBloc = context.read<MedicalBloc>();
   final nameController = TextEditingController();
   final dosageController = TextEditingController();
@@ -2030,7 +2406,6 @@ Future<void> _showMedicationDialog(BuildContext context) async {
   final quantityController = TextEditingController();
   final refillsController = TextEditingController();
   final prescribedByController = TextEditingController();
-  final pharmacyController = TextEditingController();
   final instructionsController = TextEditingController();
   final colorController = TextEditingController();
   final markingsController = TextEditingController();
@@ -2038,6 +2413,10 @@ Future<void> _showMedicationDialog(BuildContext context) async {
   final formKey = GlobalKey<FormState>();
   var shape = '';
   var size = '';
+  final primaryPharmacies =
+      state.userPharmacies.where((item) => item.isPrimary).toList();
+  int? pharmacyId =
+      primaryPharmacies.isEmpty ? null : primaryPharmacies.first.pharmacyId;
   DateTime? nextRefillDate;
 
   await _showMedicalDialog<void>(
@@ -2106,14 +2485,21 @@ Future<void> _showMedicationDialog(BuildContext context) async {
                   ),
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: pharmacyController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Pharmacy ID',
-                    hintText: 'Optional',
-                  ),
-                  validator: _optionalNonNegativeIntValidator,
+                DropdownButtonFormField<int>(
+                  value: pharmacyId,
+                  decoration: const InputDecoration(labelText: 'Pharmacy'),
+                  items: state.userPharmacies
+                      .map(
+                        (item) => DropdownMenuItem<int>(
+                          value: item.pharmacyId,
+                          child: Text(
+                            item.pharmacy?.name ??
+                                'Pharmacy #${item.pharmacyId}',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => pharmacyId = value),
                 ),
                 const SizedBox(height: 12),
                 _DateField(
@@ -2216,7 +2602,7 @@ Future<void> _showMedicationDialog(BuildContext context) async {
                       quantity: _parseInt(quantityController.text),
                       refillsRemaining: _parseInt(refillsController.text),
                       prescribedBy: prescribedByController.text,
-                      pharmacyId: _parseInt(pharmacyController.text),
+                       pharmacyId: pharmacyId,
                       nextRefillDate: nextRefillDate,
                       instructions: instructionsController.text,
                       pillColor: colorController.text,
@@ -2241,11 +2627,322 @@ Future<void> _showMedicationDialog(BuildContext context) async {
     quantityController,
     refillsController,
     prescribedByController,
-    pharmacyController,
     instructionsController,
     colorController,
     markingsController,
     descriptionController,
+  ]) {
+    controller.dispose();
+  }
+}
+
+PharmacyModel? _pharmacyForMedication(
+  MedicationModel medication,
+  MedicalState state,
+) {
+  final linked = state.userPharmacies.where(
+    (item) => item.pharmacyId == medication.pharmacyId,
+  );
+  if (linked.isNotEmpty) return linked.first.pharmacy;
+  return null;
+}
+
+Future<void> _setRefillReminder(
+  BuildContext context,
+  MedicationModel medication,
+  MedicalState state,
+) async {
+  if (medication.refillsRemaining == 0) return;
+  final linked = state.userPharmacies.where(
+    (item) => item.pharmacyId == medication.pharmacyId,
+  );
+  final primary = state.userPharmacies.where((item) => item.isPrimary);
+  final pharmacyId = primary.isNotEmpty
+      ? primary.first.pharmacyId
+      : medication.pharmacyId ??
+          (linked.isNotEmpty
+              ? linked.first.pharmacyId
+              : state.userPharmacies.isNotEmpty
+                  ? state.userPharmacies.first.pharmacyId
+                  : null);
+  if (pharmacyId == null) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Link a pharmacy before setting a refill reminder.'),
+        ),
+      );
+    return;
+  }
+  context.read<MedicalBloc>().add(
+        CreateRefillReminder(
+          RefillOrderInput(
+            medicationId: medication.id,
+            pharmacyId: pharmacyId,
+          ),
+        ),
+      );
+}
+
+Color _refillStatusColor(String status) {
+  switch (status.toLowerCase()) {
+    case 'ready':
+      return const Color(0xFF16A34A);
+    case 'processing':
+      return const Color(0xFF2563EB);
+    case 'pending':
+      return const Color(0xFFD97706);
+    default:
+      return const Color(0xFF6B7280);
+  }
+}
+
+Future<void> _openExternalUrl(BuildContext context, String value) async {
+  final uri = Uri.tryParse(value);
+  if (uri == null || !(await canLaunchUrl(uri))) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Unable to open this pharmacy link.')),
+    );
+    return;
+  }
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _showCreatePharmacyDialog(BuildContext context) async {
+  final medicalBloc = context.read<MedicalBloc>();
+  final nameController = TextEditingController();
+  final addressController = TextEditingController();
+  final phoneController = TextEditingController();
+  final websiteController = TextEditingController();
+  final refillUrlController = TextEditingController();
+  final hoursController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+
+  await _showMedicalDialog<void>(
+    context: context,
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'pharmacy',
+      successMessage: 'Custom pharmacy created successfully.',
+      builder: (context, isSubmitting) => _ResponsiveMedicalDialog(
+        title: const Text('Add Custom Pharmacy'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Pharmacy Name'),
+                  validator: _requiredValidator,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: addressController,
+                  decoration: const InputDecoration(labelText: 'Address'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                  keyboardType: TextInputType.phone,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: websiteController,
+                  decoration: const InputDecoration(labelText: 'Website'),
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: refillUrlController,
+                  decoration:
+                      const InputDecoration(labelText: 'Online Refill URL'),
+                  keyboardType: TextInputType.url,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: hoursController,
+                  decoration: const InputDecoration(labelText: 'Hours'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: isSubmitting
+                ? null
+                : () {
+                    if (!formKey.currentState!.validate()) return;
+                    medicalBloc.add(
+                      AddCustomPharmacy(
+                        PharmacyInput(
+                          name: nameController.text,
+                          address: addressController.text,
+                          phoneNumber: phoneController.text,
+                          website: websiteController.text,
+                          refillUrl: refillUrlController.text,
+                          hours: hoursController.text,
+                        ),
+                      ),
+                    );
+                  },
+            child: Text(isSubmitting ? 'Creating...' : 'Create Pharmacy'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  for (final controller in [
+    nameController,
+    addressController,
+    phoneController,
+    websiteController,
+    refillUrlController,
+    hoursController,
+  ]) {
+    controller.dispose();
+  }
+}
+
+Future<void> _showLinkPharmacyDialog(
+  BuildContext context,
+  MedicalState state,
+) async {
+  if (state.pharmacies.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No available pharmacies were found to link.'),
+      ),
+    );
+    return;
+  }
+
+  final medicalBloc = context.read<MedicalBloc>();
+  final accountController = TextEditingController();
+  final membershipController = TextEditingController();
+  final insuranceController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  int? pharmacyId;
+  var isPrimary = false;
+  var autoRefillEnabled = false;
+
+  await _showMedicalDialog<void>(
+    context: context,
+    builder: (dialogContext) => _MedicalDialogScope(
+      bloc: medicalBloc,
+      action: 'userPharmacy',
+      successMessage: 'Pharmacy added to your account.',
+      builder: (context, isSubmitting) => StatefulBuilder(
+        builder: (context, setState) => _ResponsiveMedicalDialog(
+          title: const Text('Add Pharmacy to Your Account'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<int>(
+                    value: pharmacyId,
+                    decoration: const InputDecoration(
+                      labelText: 'Select Pharmacy',
+                    ),
+                    items: state.pharmacies
+                        .where((item) => item.isActive)
+                        .map(
+                          (item) => DropdownMenuItem<int>(
+                            value: item.id,
+                            child: Text(item.name),
+                          ),
+                        )
+                        .toList(),
+                    validator: (value) =>
+                        value == null ? 'Select a pharmacy' : null,
+                    onChanged: (value) => setState(() => pharmacyId = value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: accountController,
+                    decoration:
+                        const InputDecoration(labelText: 'Account Number'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: membershipController,
+                    decoration: const InputDecoration(
+                      labelText: 'Membership/Insurance ID',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: insuranceController,
+                    decoration:
+                        const InputDecoration(labelText: 'Insurance Provider'),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Set as primary pharmacy'),
+                    value: isPrimary,
+                    onChanged: (value) => setState(() => isPrimary = value),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Enable automatic refills'),
+                    value: autoRefillEnabled,
+                    onChanged: (value) =>
+                        setState(() => autoRefillEnabled = value),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () {
+                      if (!formKey.currentState!.validate() ||
+                          pharmacyId == null) {
+                        return;
+                      }
+                      medicalBloc.add(
+                        LinkPharmacy(
+                          UserPharmacyInput(
+                            pharmacyId: pharmacyId!,
+                            isPrimary: isPrimary,
+                            accountNumber: accountController.text,
+                            membershipId: membershipController.text,
+                            insuranceProvider: insuranceController.text,
+                            autoRefillEnabled: autoRefillEnabled,
+                          ),
+                        ),
+                      );
+                    },
+              child: Text(isSubmitting ? 'Adding...' : 'Add Pharmacy'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  for (final controller in [
+    accountController,
+    membershipController,
+    insuranceController,
   ]) {
     controller.dispose();
   }

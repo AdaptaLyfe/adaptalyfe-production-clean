@@ -20,6 +20,19 @@ class MedicalRepository {
   Future<MedicationModel> createMedication(MedicationInput input) =>
       api.createMedication(input);
 
+  Future<List<PharmacyModel>> getPharmacies() => api.getPharmacies();
+  Future<PharmacyModel> createPharmacy(PharmacyInput input) =>
+      api.createPharmacy(input);
+  Future<List<UserPharmacyModel>> getUserPharmacies() =>
+      api.getUserPharmacies();
+  Future<UserPharmacyModel> linkPharmacy(UserPharmacyInput input) =>
+      api.linkPharmacy(input);
+  Future<List<MedicationModel>> getMedicationsDueForRefill() =>
+      api.getMedicationsDueForRefill();
+  Future<List<RefillOrderModel>> getRefillOrders() => api.getRefillOrders();
+  Future<RefillOrderModel> createRefillReminder(RefillOrderInput input) =>
+      api.createRefillReminder(input);
+
   Future<List<AllergyModel>> getAllergies() => api.getAllergies();
   Future<AllergyModel> createAllergy(AllergyInput input) =>
       api.createAllergy(input);

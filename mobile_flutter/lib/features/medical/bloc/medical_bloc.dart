@@ -38,6 +38,24 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
           successMessage: 'Medication added successfully.',
           operation: () => repository.createMedication(event.input),
         ));
+    on<AddCustomPharmacy>((event, emit) => _runMutation(
+          emit,
+          action: 'pharmacy',
+          successMessage: 'Custom pharmacy created successfully.',
+          operation: () => repository.createPharmacy(event.input),
+        ));
+    on<LinkPharmacy>((event, emit) => _runMutation(
+          emit,
+          action: 'userPharmacy',
+          successMessage: 'Pharmacy added to your account.',
+          operation: () => repository.linkPharmacy(event.input),
+        ));
+    on<CreateRefillReminder>((event, emit) => _runMutation(
+          emit,
+          action: 'refillOrder',
+          successMessage: 'Refill reminder set successfully.',
+          operation: () => repository.createRefillReminder(event.input),
+        ));
     on<AddAllergy>((event, emit) => _runMutation(
           emit,
           action: 'allergy',
@@ -185,11 +203,15 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
 
       recordFailure('conditions', snapshot[0]);
       recordFailure('medications', snapshot[1]);
-      recordFailure('allergies', snapshot[2]);
-      recordFailure('contacts', snapshot[3]);
-      recordFailure('reactions', snapshot[4]);
-      recordFailure('providers', snapshot[5]);
-      recordFailure('symptoms', snapshot[6]);
+      recordFailure('pharmacies', snapshot[2]);
+      recordFailure('userPharmacies', snapshot[3]);
+      recordFailure('medicationsDue', snapshot[4]);
+      recordFailure('refillOrders', snapshot[5]);
+      recordFailure('allergies', snapshot[6]);
+      recordFailure('contacts', snapshot[7]);
+      recordFailure('reactions', snapshot[8]);
+      recordFailure('providers', snapshot[9]);
+      recordFailure('symptoms', snapshot[10]);
 
       if (successfulLoads == 0) {
         if (emit.isDone) return;
@@ -210,21 +232,33 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
           snapshot[1].value is List<MedicationModel>
               ? snapshot[1].value as List<MedicationModel>
               : state.medications,
-          snapshot[2].value is List<AllergyModel>
-              ? snapshot[2].value as List<AllergyModel>
-              : state.allergies,
-          snapshot[3].value is List<EmergencyContactModel>
-              ? snapshot[3].value as List<EmergencyContactModel>
-              : state.emergencyContacts,
-          snapshot[4].value is List<AdverseMedicationModel>
-              ? snapshot[4].value as List<AdverseMedicationModel>
-              : state.adverseMedications,
-          snapshot[5].value is List<PrimaryCareProviderModel>
-              ? snapshot[5].value as List<PrimaryCareProviderModel>
-              : state.primaryCareProviders,
-          snapshot[6].value is List<SymptomEntryModel>
-              ? snapshot[6].value as List<SymptomEntryModel>
-              : state.symptomEntries,
+           snapshot[2].value is List<PharmacyModel>
+               ? snapshot[2].value as List<PharmacyModel>
+               : state.pharmacies,
+           snapshot[3].value is List<UserPharmacyModel>
+               ? snapshot[3].value as List<UserPharmacyModel>
+               : state.userPharmacies,
+           snapshot[4].value is List<MedicationModel>
+               ? snapshot[4].value as List<MedicationModel>
+               : state.medicationsDue,
+           snapshot[5].value is List<RefillOrderModel>
+               ? snapshot[5].value as List<RefillOrderModel>
+               : state.refillOrders,
+           snapshot[6].value is List<AllergyModel>
+               ? snapshot[6].value as List<AllergyModel>
+               : state.allergies,
+           snapshot[7].value is List<EmergencyContactModel>
+               ? snapshot[7].value as List<EmergencyContactModel>
+               : state.emergencyContacts,
+           snapshot[8].value is List<AdverseMedicationModel>
+               ? snapshot[8].value as List<AdverseMedicationModel>
+               : state.adverseMedications,
+           snapshot[9].value is List<PrimaryCareProviderModel>
+               ? snapshot[9].value as List<PrimaryCareProviderModel>
+               : state.primaryCareProviders,
+           snapshot[10].value is List<SymptomEntryModel>
+               ? snapshot[10].value as List<SymptomEntryModel>
+               : state.symptomEntries,
         ),
         collectionErrors: failures,
         actionMessage: firstFailure == null
@@ -272,6 +306,10 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     final results = await Future.wait([
       _capture(repository.getConditions()),
       _capture(repository.getMedications()),
+      _capture(repository.getPharmacies()),
+      _capture(repository.getUserPharmacies()),
+      _capture(repository.getMedicationsDueForRefill()),
+      _capture(repository.getRefillOrders()),
       _capture(repository.getAllergies()),
       _capture(repository.getEmergencyContacts()),
       _capture(repository.getAdverseMedications()),
@@ -293,12 +331,16 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
     Emitter<MedicalState> emit,
     (
       List<MedicalConditionModel>,
-        List<MedicationModel>,
+      List<MedicationModel>,
+      List<PharmacyModel>,
+      List<UserPharmacyModel>,
+      List<MedicationModel>,
+      List<RefillOrderModel>,
       List<AllergyModel>,
-        List<EmergencyContactModel>,
-        List<AdverseMedicationModel>,
-        List<PrimaryCareProviderModel>,
-        List<SymptomEntryModel>
+      List<EmergencyContactModel>,
+      List<AdverseMedicationModel>,
+      List<PrimaryCareProviderModel>,
+      List<SymptomEntryModel>
     ) snapshot, {
     String? actionMessage,
     Map<String, String> collectionErrors = const {},
@@ -308,11 +350,15 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
         status: MedicalStatus.loaded,
         conditions: snapshot.$1,
         medications: snapshot.$2,
-        allergies: snapshot.$3,
-        emergencyContacts: snapshot.$4,
-        adverseMedications: snapshot.$5,
-        primaryCareProviders: snapshot.$6,
-        symptomEntries: snapshot.$7,
+        pharmacies: snapshot.$3,
+        userPharmacies: snapshot.$4,
+        medicationsDue: snapshot.$5,
+        refillOrders: snapshot.$6,
+        allergies: snapshot.$7,
+        emergencyContacts: snapshot.$8,
+        adverseMedications: snapshot.$9,
+        primaryCareProviders: snapshot.$10,
+        symptomEntries: snapshot.$11,
         busySection: null,
         errorMessage: null,
         actionMessage: actionMessage,
@@ -361,6 +407,68 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
             ),
           ),
         );
+      case 'pharmacy':
+        emit(
+          baseState.copyWith(
+            pharmacies: _replaceOrRemove(
+              state.pharmacies,
+              result,
+              deletedId,
+              (item) => item.id,
+            ),
+          ),
+        );
+      case 'userPharmacy':
+        if (result is UserPharmacyModel) {
+          final pharmacy = state.pharmacies
+              .where((item) => item.id == result.pharmacyId)
+              .isEmpty
+              ? null
+              : state.pharmacies.firstWhere(
+                  (item) => item.id == result.pharmacyId,
+                );
+          emit(
+            baseState.copyWith(
+              userPharmacies: _replaceOrRemove(
+                state.userPharmacies,
+                pharmacy == null ? result : result.copyWith(pharmacy: pharmacy),
+                deletedId,
+                (item) => item.id,
+              ),
+            ),
+          );
+        } else {
+          emit(baseState);
+        }
+      case 'refillOrder':
+        if (result is RefillOrderModel) {
+          final medication = state.medications
+              .where((item) => item.id == result.medicationId)
+              .isEmpty
+              ? null
+              : state.medications.firstWhere(
+                  (item) => item.id == result.medicationId,
+                );
+          final pharmacy = state.pharmacies
+              .where((item) => item.id == result.pharmacyId)
+              .isEmpty
+              ? null
+              : state.pharmacies.firstWhere(
+                  (item) => item.id == result.pharmacyId,
+                );
+          emit(
+            baseState.copyWith(
+              refillOrders: _replaceOrRemove(
+                state.refillOrders,
+                result.copyWith(medication: medication, pharmacy: pharmacy),
+                deletedId,
+                (item) => item.id,
+              ),
+            ),
+          );
+        } else {
+          emit(baseState);
+        }
       case 'allergy':
         emit(
           baseState.copyWith(

@@ -3436,8 +3436,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Refill Order Routes
   app.get("/api/refill-orders", async (req, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
-      const refillOrders = await storage.getRefillOrdersByUser(userId);
+      const user = (req as any).session?.user || (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const refillOrders = await storage.getRefillOrdersByUser(user.id);
       res.json(refillOrders);
     } catch (error) {
       console.error("Error fetching refill orders:", error);
@@ -3447,7 +3450,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/refill-orders", async (req, res) => {
     try {
-      const validatedData = insertRefillOrderSchema.parse(req.body);
+      const user = (req as any).session?.user || (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const validatedData = insertRefillOrderSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
       const refillOrder = await storage.createRefillOrder(validatedData);
       res.status(201).json(refillOrder);
     } catch (error) {
