@@ -1,0 +1,126 @@
+Fix the Flutter errors in the **Health Record** section of the existing application.
+
+### Problem 1 — Personal Notes → Edit → Update Contact
+
+Flow:
+
+1. Open **Health Record**.
+2. Go to **Personal Notes**.
+3. Open/edit an existing note.
+4. Click **Update Contact**.
+
+The following errors occur:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Problem 2 — Personal Notes → Log Symptom → Add Entry
+
+Flow:
+
+1. Open **Health Record**.
+2. Go to **Personal Notes**.
+3. Select **Log Symptom**.
+4. Enter the required information.
+5. Click **Add Entry**.
+
+The same errors occur:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Required Fix
+
+Investigate the root cause instead of simply hiding or catching the errors.
+
+Focus especially on:
+
+* `TextEditingController` lifecycle.
+* `dispose()` being called too early.
+* Controllers being reused after a dialog/bottom sheet/widget is closed.
+* Controllers being disposed while an async operation is still running.
+* `setState()` or widget rebuilds happening after the widget has been disposed.
+* `BuildContext` being used after an async operation when the widget is no longer mounted.
+* Dialog/bottom-sheet closing while its controllers are still being accessed.
+* Provider/BLoC state updates triggering rebuilds during an incorrect build scope.
+* Any `FocusNode`, `ScrollController`, or other disposable objects that may have a similar lifecycle problem.
+* Nested dialogs/bottom sheets or `showDialog`/`showModalBottomSheet` implementations in these flows.
+
+### Important Requirements
+
+1. Find the actual source of the error in the Health Record / Personal Notes implementation.
+2. Properly manage every `TextEditingController`.
+3. A controller must remain alive while the corresponding `TextField` is using it.
+4. Do not call methods on a controller after it has been disposed.
+5. Do not dispose a controller from a parent/widget while a child widget still depends on it.
+6. Before calling `setState()` after an async operation, verify that the widget is still mounted.
+7. Before using `context` after an async operation, make sure the widget/context is still valid.
+8. Make sure BLoC/API success or failure states do not trigger UI updates on a disposed widget.
+9. Do not fix the problem by adding random `try/catch`, delaying code with `Future.delayed`, or suppressing Flutter assertions.
+10. Do not change unrelated Health Record functionality.
+11. Keep the existing UI, styling, API behavior, validation, and user flow unchanged.
+
+### Check Both Flows
+
+After making the fix, verify these complete flows:
+
+**Flow A**
+
+```text
+Health Record
+→ Personal Notes
+→ Edit
+→ Update Contact
+```
+
+**Flow B**
+
+```text
+Health Record
+→ Personal Notes
+→ Log Symptom
+→ Add Entry
+```
+
+### Testing
+
+Test each flow multiple times:
+
+* Open and close the form.
+* Edit and submit.
+* Cancel and reopen.
+* Submit successfully.
+* Submit with validation errors.
+* Quickly open/close the dialog or bottom sheet.
+* Navigate away before an API request finishes.
+* Reopen the same form and submit again.
+
+There should be:
+
+* No `A TextEditingController was used after being disposed` error.
+* No `Tried to build dirty widget in the wrong build scope` error.
+* No `_dependents.isEmpty` assertion.
+* No duplicate API calls.
+* No broken UI or navigation.
+
+### Final Response
+
+After fixing the issue, explain:
+
+1. Which file(s) caused the problem.
+2. What lifecycle issue caused the controller disposal error.
+3. What caused the dirty widget/build scope error.
+4. Exactly what was changed.
+5. How both Personal Notes flows were tested.
+
+Do not rewrite the entire Health Record module. Make the smallest safe fix to the existing code.
