@@ -284,11 +284,7 @@ class _HomeConfigurableQuickActionsState
                           isReorderMode: _isReorderMode,
                           isDragging: _draggingActionId == action.id,
                           onTap: () {
-                            if (action.id == 'ai-chat') {
-                              _openChat(context);
-                            } else {
-                              context.push(_safeRoute(action.route));
-                            }
+                            context.push(_safeRoute(action.route));
                           },
                           onMove: (direction) => _moveQuickAction(
                             context,
@@ -371,9 +367,6 @@ class _HomeConfigurableQuickActionsState
         );
   }
 
-  void _openChat(BuildContext context) {
-    showHomeChatSheet(context);
-  }
 }
 
 class _CustomizeQuickActionsDialog extends StatefulWidget {
@@ -3792,7 +3785,9 @@ class _HomeFeatureModule extends StatelessWidget {
 }
 
 class HomeChatSheet extends StatefulWidget {
-  const HomeChatSheet({super.key});
+  const HomeChatSheet({this.page = false, super.key});
+
+  final bool page;
 
   @override
   State<HomeChatSheet> createState() => _HomeChatSheetState();
@@ -3821,9 +3816,11 @@ class _HomeChatSheetState extends State<HomeChatSheet> {
           MediaQuery.viewInsetsOf(context).bottom + 12,
         ),
         child: SizedBox(
-          height: _fullScreen
-              ? MediaQuery.sizeOf(context).height * .94
-              : MediaQuery.sizeOf(context).height * .78,
+          height: widget.page
+              ? double.infinity
+              : _fullScreen
+                  ? MediaQuery.sizeOf(context).height * .94
+                  : MediaQuery.sizeOf(context).height * .78,
           child: BlocBuilder<HomeBloc, HomeState>(
             builder: (context, state) {
               final loaded = state is HomeLoaded;
@@ -4445,6 +4442,8 @@ IconData _iconFor(String value) {
       return Icons.calendar_month_outlined;
     case 'sparkles':
       return Icons.auto_awesome_rounded;
+    case 'message_square':
+      return Icons.chat_bubble_outline_rounded;
     case 'people':
       return Icons.people_outline_rounded;
     case 'medication':
@@ -4453,6 +4452,8 @@ IconData _iconFor(String value) {
       return Icons.menu_book_outlined;
     case 'emoji_events':
       return Icons.emoji_events_outlined;
+    case 'star':
+      return Icons.star_outline_rounded;
     case 'school':
       return Icons.school_outlined;
     case 'description':
