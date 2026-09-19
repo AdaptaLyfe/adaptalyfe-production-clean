@@ -2795,9 +2795,7 @@ class _TrustedContactDialogState extends State<_TrustedContactDialog> {
 Future<void> _showMedicationDialog(
   BuildContext context,
   MedicalState state,
-  [
-  MedicationModel? existing,
-  ]
+  [MedicationModel? existing]
 ) async {
   final medicalBloc = context.read<MedicalBloc>();
 
@@ -2878,8 +2876,15 @@ class _MedicationDialogState extends State<_MedicationDialog> {
     _size = _supportedValue(existing?.pillSize, _pillSizes) ?? '';
     final primaryPharmacies =
         widget.userPharmacies.where((item) => item.isPrimary).toList();
-    _pharmacyId = existing?.pharmacyId ??
-        (primaryPharmacies.isEmpty ? null : primaryPharmacies.first.pharmacyId);
+    final availablePharmacyIds =
+        widget.userPharmacies.map((item) => item.pharmacyId).toSet();
+    final existingPharmacyId = existing?.pharmacyId;
+    _pharmacyId = existingPharmacyId != null &&
+            availablePharmacyIds.contains(existingPharmacyId)
+        ? existingPharmacyId
+        : (primaryPharmacies.isEmpty
+            ? null
+            : primaryPharmacies.first.pharmacyId);
     _nextRefillDate = existing?.nextRefillDate;
   }
 
