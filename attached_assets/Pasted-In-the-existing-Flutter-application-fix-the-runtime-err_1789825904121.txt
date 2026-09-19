@@ -1,0 +1,81 @@
+In the existing Flutter application, fix the runtime errors in the **Medication List → Pharmacy Notes → Create Custom → Create Pharmacy** flow.
+
+### Current issue
+
+When the user goes to:
+
+**Medication List → Pharmacy Notes → Create Custom → Create Pharmacy**
+
+the app throws these errors:
+
+1. `Tried to build dirty widget in the wrong build scope.`
+2. `package:flutter/src/widgets/framework.dart': Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.`
+3. `A TextEditingController was used after being disposed.`
+
+### What to do
+
+Analyze the existing code and identify the root cause instead of applying a temporary workaround.
+
+Pay special attention to:
+
+* `TextEditingController` lifecycle.
+* Controllers being disposed while a `TextField` or widget is still using them.
+* `StatefulWidget` lifecycle (`initState`, `build`, `dispose`).
+* Dialogs, bottom sheets, overlays, or nested routes used for **Create Custom / Create Pharmacy**.
+* `Provider`, `Bloc`, `setState`, or other state-management code involved in this screen.
+* Calling `setState()` after the widget has been disposed.
+* Rebuilding widgets after a dialog/bottom sheet has already been closed.
+* Reusing the same `TextEditingController` across multiple dialogs/screens.
+* Calling `dispose()` manually from places other than the owning `State.dispose()`.
+* Controllers or focus nodes being disposed too early.
+* Async callbacks that update the UI after the screen/dialog has been removed.
+
+### Required fix
+
+* Fix the `TextEditingController was used after being disposed` issue properly.
+* Ensure every controller has exactly one owner and is disposed only by that owner.
+* Make sure controllers remain alive for the complete lifetime of the widgets using them.
+* Prevent `setState()` or widget rebuilds after disposal.
+* Properly handle async operations when the Create Pharmacy dialog/screen is closed.
+* Fix the widget build-scope/dependent assertion rather than suppressing the error.
+* Do not add arbitrary delays, `Future.delayed()`, or try/catch blocks just to hide the error.
+* Do not remove existing validation or functionality.
+
+### Important
+
+Do not redesign the UI.
+
+Do not change:
+
+* Existing Medication List UI
+* Pharmacy Notes UI
+* Create Custom UI
+* Create Pharmacy functionality
+* Existing validation
+* API/Firebase logic
+* Navigation behavior
+* Existing state-management architecture
+
+Only make the minimum code changes required to fix the lifecycle and widget rebuild issues.
+
+### Testing
+
+After making the fix, verify this complete flow:
+
+**Medication List → Pharmacy Notes → Create Custom → Create Pharmacy**
+
+Test:
+
+1. Open Create Pharmacy.
+2. Enter text in all fields.
+3. Close the dialog/screen.
+4. Open it again.
+5. Enter text again.
+6. Submit the pharmacy.
+7. Navigate back and open Create Pharmacy again.
+8. Confirm there are no crashes or Flutter framework assertions.
+9. Confirm no `TextEditingController was used after being disposed` error.
+10. Confirm no `Tried to build dirty widget in the wrong build scope` error.
+11. Confirm no `_dependents.isEmpty` assertion.
+
+First inspect the existing implementation and explain which widget/controller lifecycle issue is causing the errors. Then implement the fix and provide a concise summary of the files changed and why.
