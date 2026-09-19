@@ -1,0 +1,82 @@
+Implement the **Academic Planner** section in the Flutter application so that it matches the existing **React Native + Wrapper** application exactly.
+
+Important:
+
+* Use the existing React Native + Wrapper implementation as the **reference/source of truth**.
+* Do not redesign or create a new flow.
+* First inspect the existing React Native + Wrapper Academic Planner implementation and understand all screens, navigation, UI, API calls, data models, validations, states, and user interactions.
+* Then implement the same functionality in Flutter.
+
+### Requirements
+
+1. **UI Parity**
+
+   * Recreate the same Academic Planner UI in Flutter.
+   * Match the existing React Native + Wrapper:
+
+     * Screen layout
+     * Text and labels
+     * Fonts and font sizes
+     * Colors
+     * Spacing and padding
+     * Buttons
+     * Cards
+     * Icons
+     * Input fields
+     * Empty states
+     * Loading states
+     * Error states
+     * Success messages
+     * Dialogs/popups
+   * Make the UI responsive for different mobile screen sizes.
+
+2. **Functionality Parity**
+   Implement all Academic Planner functionality currently available in React Native + Wrapper, including:
+
+   * View academic planner data
+   * Add/create academic planner items
+   * Edit/update items
+   * Delete items
+   * View item details
+   * Any existing search/filter/sort functionality
+   * Any existing date/time functionality
+   * Any existing status or completion functionality
+   * All validations
+   * All existing error handling
+   * All success messages
+   * All loading indicators
+
+3. **API / Backend**
+
+   * Use the same API/backend endpoints as the React Native + Wrapper application.
+   * Match the existing request and response structure.
+   * Do not create duplicate APIs or change backend behavior.
+   * Handle API loading, success, empty, and error states correctly.
+   * Make sure data created/updated from Flutter is saved correctly and appears in the existing application/backend.
+
+4. **Navigation**
+
+   * Match the existing React Native + Wrapper navigation flow.
+   * Make sure Academic Planner can be opened from the same location.
+   * Preserve back navigation behavior.
+   * Ensure navigation works correctly after add/edit/delete operations.
+
+5. **Flutter Architecture**
+   Follow the existing Flutter project's architecture and coding style.
+   Use:
+
+   * Flutter
+   * Dart
+   * BLoC/Cubit if the project already uses BLoC
+   * Repository/service layer if already present
+   * Existing API/networking layer
+   * Existing reusable widgets/components where possible
+
+6. **Do Not Break Existing Features**
+
+   * Do not modify unrelated Flutter features.
+   * Do not change existing React Native + Wrapper code.
+   * Do not change backend APIs unless absolutely required.
+   * Reuse existing Flutter components and services whenever possible.
+
+### Important Impleme
