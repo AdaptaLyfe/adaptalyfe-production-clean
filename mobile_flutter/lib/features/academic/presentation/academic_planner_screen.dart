@@ -2079,7 +2079,7 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                   },
                 ),
                 const SizedBox(height: 10),
-                if (context.read<AcademicBloc>().state.classes.isNotEmpty)
+                if (bloc.state.classes.isNotEmpty)
                   DropdownButtonFormField<int?>(
                     value: classId,
                     decoration:
@@ -2089,7 +2089,7 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                         value: null,
                         child: Text('No class'),
                       ),
-                      ...context.read<AcademicBloc>().state.classes.map(
+                      ...bloc.state.classes.map(
                             (item) => DropdownMenuItem<int?>(
                               value: item.id,
                               child: Text(item.className),
@@ -2098,7 +2098,7 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                     ],
                     onChanged: (value) => setState(() => classId = value),
                   ),
-                if (context.read<AcademicBloc>().state.classes.isNotEmpty)
+                if (bloc.state.classes.isNotEmpty)
                   const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   value: priority,

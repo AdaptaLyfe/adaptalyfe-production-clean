@@ -97,10 +97,20 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
       ),
     );
     try {
-      await repository.createClass(event.input);
-      await _reloadAfterMutation(
-        emit,
-        successMessage: 'Class added successfully.',
+      final createdClass = await repository.createClass(event.input);
+      final classes = [
+        createdClass,
+        ...state.classes.where((item) => item.id != createdClass.id),
+      ];
+      emit(
+        state.copyWith(
+          status: AcademicStatus.loaded,
+          classes: classes,
+          action: AcademicAction.none,
+          errorMessage: null,
+          actionMessage: 'Class added successfully.',
+          sessionInvalid: false,
+        ),
       );
     } catch (error) {
       _emitActionFailure(emit, error, 'Failed to add class. Please try again.');
