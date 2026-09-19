@@ -273,7 +273,7 @@ class _HomeConfigurableQuickActionsState
                           isReorderMode: _isReorderMode,
                           isDragging: _draggingActionId == action.id,
                           onTap: () {
-                            context.push(_safeRoute(action.route));
+                            _openQuickAction(context, action);
                           },
                           onMove: (direction) => _moveQuickAction(
                             context,
@@ -290,6 +290,13 @@ class _HomeConfigurableQuickActionsState
         );
       },
     );
+  }
+
+  void _openQuickAction(BuildContext context, HomeQuickAction action) {
+    final route = action.id == 'ai-chat'
+        ? '/ai-chat'
+        : _safeRoute(action.route);
+    context.push(route);
   }
 
   void _toggleReorderMode() {

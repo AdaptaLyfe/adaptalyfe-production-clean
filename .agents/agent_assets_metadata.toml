@@ -1331,3 +1331,17 @@ mtime_ms = 1789816154626
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82d39391-c42d-4822-bceb-ac42757b6e22/2f600c5d-7f66-4b72-a270-e4d642793730"
 storage_version_token = "1789816159027104"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k0XfqJ03x1Rq_t7Lm37Y0"
+uri = "file://artifacts/quick-action-ai-chat-navigation-changed-files.zip"
+type = "unspecified"
+title = "Quick Action AI Chat navigation fix — changed file"
+description = "ZIP containing the updated Quick Actions navigation source file only."
+logical_id = "16e90a6e-7f20-4a1e-9769-4897f9d196dc"
+content_hash = "sha256:e86278e86338818ebf357813bbe017d5556b17d94fa3d209efeca657371f403d"
+size = 26453
+mtime_ms = 1789817137177
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/16e90a6e-7f20-4a1e-9769-4897f9d196dc/9665c761-d4bd-4565-9e29-d4317cf58bb1"
+storage_version_token = "1789817142811961"
+content_type = "application/octet-stream"
