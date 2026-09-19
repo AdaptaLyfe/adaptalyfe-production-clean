@@ -1303,3 +1303,17 @@ mtime_ms = 1789814909778
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/33007798-7364-4b0a-87d4-18abeb932505/3cb9ec9d-b178-4af7-a757-7ca2387f5ad6"
 storage_version_token = "1789814914382731"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BfaxfT-7JmXDIc66G-Dyh"
+uri = "file://artifacts/ai-chat-assistant-full-screen-changed-files.zip"
+type = "unspecified"
+title = "AI Chat Assistant full-screen update — changed files"
+description = "ZIP containing the route update, reusable chat UI navigation change, and dedicated AIChatAssistantScreen."
+logical_id = "deeacab1-c465-4c52-83bd-5f02c95795c9"
+content_hash = "sha256:231c6313e341fe7045a714a411e98caf19e2bdc8fc6f777ba6e975b54532fc1d"
+size = 30266
+mtime_ms = 1789815748758
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/deeacab1-c465-4c52-83bd-5f02c95795c9/5722c901-dd67-4c7f-9782-5ae622ba20d4"
+storage_version_token = "1789815752971670"
+content_type = "application/octet-stream"
