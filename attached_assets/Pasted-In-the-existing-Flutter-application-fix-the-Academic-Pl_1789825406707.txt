@@ -1,0 +1,48 @@
+In the existing Flutter application, fix the **Academic Planner → Schedule → Add Class** flow.
+
+### Current issue
+
+* Go to **Academic Planner → Schedule**.
+* Tap **Add Class**.
+* Fill in the class details.
+* Tap **Add Class**.
+* The app shows the message **"Class added successfully"**.
+* However, the newly added class data does **not appear on the Schedule screen**.
+
+### Required fix
+
+1. Debug the complete Add Class flow.
+2. Verify that the class data is actually being saved successfully to the existing backend/database/API.
+3. After successful creation, refresh or update the Schedule screen state so the newly added class appears immediately.
+4. Make sure the newly added class is displayed with the correct:
+
+   * Class name
+   * Subject/course
+   * Date
+   * Start time
+   * End time
+   * Teacher/instructor (if available)
+   * Location (if available)
+   * Any other existing class fields
+5. If the Schedule screen loads data only once, update the existing state management logic so it reloads the classes after adding a new class.
+6. If using BLoC, Provider, Riverpod, setState, or another existing state-management approach, follow the **existing project architecture**. Do not introduce a new state-management system.
+7. Do not create duplicate API/database calls.
+8. Do not change the existing UI design or unrelated functionality.
+9. Preserve the existing **"Class added successfully"** message.
+10. Handle loading, success, and error states properly.
+11. Make sure the class still appears after navigating away from Schedule and returning to it.
+12. Also verify that the class appears after completely reopening the Academic Planner screen.
+
+### Important
+
+* First inspect the existing code and understand how Academic Planner → Schedule currently works.
+* Reuse the existing model, repository/service, API/database methods, and state management wherever possible.
+* Do not create mock/hardcoded class data.
+* Fix the root cause rather than only forcing the UI to display the data.
+* Keep the fix limited to the Academic Planner Schedule/Add Class functionality.
+
+### Final verification
+
+Test this complete flow:
+
+**Academic Planner → Schedule → Add Class → Enter details → Add Class → "Class added successfully" → Return to Schedule → Newly added class is visible with correct data.**

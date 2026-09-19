@@ -353,6 +353,13 @@ class _ScheduleTab extends StatelessWidget {
         .where((item) => item.isActive && item.dayOfWeek == today)
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final otherClasses = state.classes
+        .where((item) => item.isActive && item.dayOfWeek != today)
+        .toList()
+      ..sort((a, b) {
+        final day = a.dayOfWeek.compareTo(b.dayOfWeek);
+        return day == 0 ? a.startTime.compareTo(b.startTime) : day;
+      });
     final upcoming = state.assignments
         .where((item) => item.dueDate.isAfter(DateTime.now()) && !item.isCompleted)
         .toList()
@@ -381,6 +388,19 @@ class _ScheduleTab extends StatelessWidget {
             )
           else
             ...todayClasses.map((item) => _ClassCard(item: item)),
+          if (otherClasses.isNotEmpty || todayClasses.isEmpty && state.classes.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            _SectionHeader(
+              icon: Icons.school_outlined,
+              title: todayClasses.isEmpty ? 'Your Classes' : 'Other Classes',
+              actionLabel: 'Add Class',
+              onAction: () => _showClassDialog(context),
+            ),
+            const SizedBox(height: 10),
+            ...(todayClasses.isEmpty ? state.classes : otherClasses)
+                .where((item) => item.isActive)
+                .map((item) => _ClassCard(item: item)),
+          ],
           const SizedBox(height: 22),
           _SectionHeader(
             icon: Icons.assignment_outlined,
@@ -989,6 +1009,23 @@ class _ClassCard extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFF6B7280),
                         fontSize: 13,
+                      ),
+                    ),
+                  Text(
+                    item.semester,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (_hasText(item.notes))
+                    Text(
+                      item.notes!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 12,
                       ),
                     ),
                 ],
