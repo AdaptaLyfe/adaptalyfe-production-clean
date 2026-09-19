@@ -1233,3 +1233,17 @@ mtime_ms = 1789810335720
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9b0fac8b-db29-4c35-ab10-8034b9741289/d78c3cad-4b7f-4292-bf1e-73624b489a02"
 storage_version_token = "1789810341258258"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "jg9i8LRjr7C3rM7BLotcv"
+uri = "file://artifacts/meal-shopping-add-store-changed-files.zip"
+type = "unspecified"
+title = "Meal & Shopping Add New Store fix"
+description = "ZIP containing only the changed Flutter source file for the Add New Store flow."
+logical_id = "d64a02b9-6d1f-4a72-aada-5a345a5763b5"
+content_hash = "sha256:edf17ac5492317762fd2be6f53ddcb8627bebeb0b0483e790804e1198d735e03"
+size = 12630
+mtime_ms = 1789810881059
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d64a02b9-6d1f-4a72-aada-5a345a5763b5/8034de13-4b38-4457-86ec-229a92f3502c"
+storage_version_token = "1789810887026096"
+content_type = "application/octet-stream"

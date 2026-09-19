@@ -2050,8 +2050,7 @@ Future<void> _confirmDeleteStore(
   {
   required MealShoppingBloc bloc,
   required GroceryStoreModel store,
-  }
-) async {
+}) async {
   final overlayKey = 'delete-store-${store.id}';
   if (!_openMealShoppingOverlays.add(overlayKey)) return;
   try {
@@ -2235,15 +2234,6 @@ Future<void> _refresh(BuildContext context) async {
   );
   bloc.add(const RefreshMealShopping());
   await completion;
-}
-
-Future<bool> _waitForActionCompletion(MealShoppingBloc bloc) async {
-  final completed = await bloc.stream.firstWhere(
-    (state) =>
-        state.action == MealShoppingAction.none &&
-        (state.actionMessage != null || state.errorMessage != null),
-  );
-  return completed.errorMessage == null;
 }
 
 String? _requiredValidator(String? value) {
