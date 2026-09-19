@@ -1289,33 +1289,104 @@ class _MealShoppingError extends StatelessWidget {
 Future<void> _showMealPlanDialog(BuildContext context) async {
   if (!_openMealShoppingOverlays.add('add-meal')) return;
   final mealShoppingBloc = context.read<MealShoppingBloc>();
-  final nameController = TextEditingController();
-  final cookingTimeController = TextEditingController(text: '30');
-  final recipeController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var mealType = 'breakfast';
-  var plannedDate = _dateOnly(DateTime.now());
 
   try {
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
-          MealShoppingState>(
-        bloc: mealShoppingBloc,
+      builder: (_) => _AddMealPlanDialog(bloc: mealShoppingBloc),
+    );
+  } finally {
+    _openMealShoppingOverlays.remove('add-meal');
+  }
+}
+
+class _AddMealPlanDialog extends StatefulWidget {
+  const _AddMealPlanDialog({required this.bloc});
+
+  final MealShoppingBloc bloc;
+
+  @override
+  State<_AddMealPlanDialog> createState() => _AddMealPlanDialogState();
+}
+
+class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _cookingTimeController;
+  late final TextEditingController _recipeController;
+  final _formKey = GlobalKey<FormState>();
+  var _mealType = 'breakfast';
+  var _plannedDate = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _cookingTimeController = TextEditingController(text: '30');
+    _recipeController = TextEditingController();
+    _plannedDate = _dateOnly(DateTime.now());
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _cookingTimeController.dispose();
+    _recipeController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    widget.bloc.add(
+      AddMealPlan(
+        MealPlanInput(
+          mealType: _mealType,
+          mealName: _nameController.text,
+          plannedDate: _plannedDate,
+          recipe: _recipeController.text,
+          cookingTime:
+              int.tryParse(_cookingTimeController.text.trim()) ?? 0,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDate() async {
+    final picked = await _pickDate(
+      context,
+      DateTime.tryParse(_plannedDate) ?? DateTime.now(),
+      firstDate: DateTime.now(),
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _plannedDate = _dateOnly(picked));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MealShoppingBloc, MealShoppingState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.action != MealShoppingAction.none &&
+          current.action == MealShoppingAction.none &&
+          current.actionMessage != null &&
+          current.errorMessage == null,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
+        bloc: widget.bloc,
         builder: (context, state) {
           final isBusy = state.isBusy;
           final isSaving = state.action == MealShoppingAction.addingMeal;
           return AlertDialog(
             title: const Text('Add New Meal'),
             content: Form(
-              key: formKey,
+              key: _formKey,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: _nameController,
                       enabled: !isBusy,
                       decoration: const InputDecoration(
                         labelText: 'Meal Name',
@@ -1325,7 +1396,7 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: mealType,
+                      value: _mealType,
                       decoration: const InputDecoration(labelText: 'Meal Type'),
                       items: _mealTypes
                           .map(
@@ -1337,31 +1408,21 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
                           .toList(),
                       onChanged: isBusy
                           ? null
-                          : (value) =>
-                              setState(() => mealType = value ?? mealType),
+                          : (value) => setState(
+                                () => _mealType = value ?? _mealType,
+                              ),
                       validator: (value) =>
                           value == null ? 'Meal type is required' : null,
                     ),
                     const SizedBox(height: 12),
                     _DatePickerField(
                       label: 'Planned Date',
-                      value: plannedDate,
-                      onTap: isBusy
-                          ? () {}
-                          : () async {
-                              final picked = await _pickDate(
-                                context,
-                                DateTime.tryParse(plannedDate) ??
-                                    DateTime.now(),
-                                firstDate: DateTime.now(),
-                              );
-                              if (!context.mounted || picked == null) return;
-                              setState(() => plannedDate = _dateOnly(picked));
-                            },
+                      value: _plannedDate,
+                      onTap: isBusy ? () {} : _selectDate,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: cookingTimeController,
+                      controller: _cookingTimeController,
                       enabled: !isBusy,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
@@ -1372,7 +1433,7 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: recipeController,
+                      controller: _recipeController,
                       enabled: !isBusy,
                       minLines: 3,
                       maxLines: 5,
@@ -1387,36 +1448,11 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
             ),
             actions: [
               TextButton(
-                onPressed:
-                    isBusy ? null : () => Navigator.pop(dialogContext),
+                onPressed: isBusy ? null : () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                onPressed: isBusy
-                    ? null
-                    : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        mealShoppingBloc.add(
-                          AddMealPlan(
-                            MealPlanInput(
-                              mealType: mealType,
-                              mealName: nameController.text,
-                              plannedDate: plannedDate,
-                              recipe: recipeController.text,
-                              cookingTime: int.tryParse(
-                                    cookingTimeController.text.trim(),
-                                  ) ??
-                                  0,
-                            ),
-                          ),
-                        );
-                        final succeeded = await _waitForActionCompletion(
-                          mealShoppingBloc,
-                        );
-                        if (succeeded && dialogContext.mounted) {
-                          Navigator.pop(dialogContext);
-                        }
-                      },
+                onPressed: isBusy ? null : _submit,
                 child: isSaving
                     ? const SizedBox(
                         width: 20,
@@ -1429,13 +1465,7 @@ Future<void> _showMealPlanDialog(BuildContext context) async {
           );
         },
       ),
-      ),
     );
-  } finally {
-    nameController.dispose();
-    cookingTimeController.dispose();
-    recipeController.dispose();
-    _openMealShoppingOverlays.remove('add-meal');
   }
 }
 
