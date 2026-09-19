@@ -46,6 +46,7 @@ import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_quick_actions_store.dart';
 import '../features/home/data/home_repository.dart';
+import '../features/home/presentation/ai_chat_assistant_screen.dart';
 import '../features/home/presentation/home_extended_widgets.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/medical/bloc/medical_bloc.dart';
@@ -278,9 +279,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             builder: (context, state) => BlocProvider(
               create: (_) => HomeBloc(_createHomeRepository())
                 ..add(const HomeStarted()),
-              child: const Scaffold(
-                body: HomeChatSheet(page: true),
-              ),
+              child: const AIChatAssistantScreen(),
             ),
           ),
           GoRoute(

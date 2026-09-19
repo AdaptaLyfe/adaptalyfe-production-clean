@@ -29,31 +29,8 @@ import '../bloc/home_state.dart';
 import '../models/home_models.dart';
 import '../../../models/user_model.dart';
 
-bool _homeOverlayOpen = false;
-
-Future<T?> _runHomeOverlay<T>(Future<T?> Function() open) async {
-  if (_homeOverlayOpen) return null;
-  _homeOverlayOpen = true;
-  try {
-    return await open();
-  } finally {
-    _homeOverlayOpen = false;
-  }
-}
-
 Future<void> showHomeChatSheet(BuildContext context) async {
-  final homeBloc = context.read<HomeBloc>();
-  await _runHomeOverlay<void>(
-    () => showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => BlocProvider.value(
-        value: homeBloc,
-        child: const HomeChatSheet(),
-      ),
-    ),
-  );
+  await context.push<void>('/ai-chat');
 }
 
 class HomeConfigurableQuickActions extends StatefulWidget {
