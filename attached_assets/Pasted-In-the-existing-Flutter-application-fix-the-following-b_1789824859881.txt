@@ -1,0 +1,197 @@
+In the existing Flutter application, fix the following bugs in the **Academic Planner** section.
+
+IMPORTANT:
+
+* Do NOT redesign the UI.
+* Do NOT change existing features or business logic unnecessarily.
+* Preserve the existing API/backend integration, navigation, BLoC/state management, and UI design.
+* First inspect the existing implementation and identify the root cause of each issue.
+* Fix the root cause instead of adding temporary workarounds.
+* Make sure the fixes work on Android and iOS.
+* After making changes, run/analyze the affected files and fix any compilation, analyzer, or runtime errors.
+
+## 1. Academic Planner → Schedule → Add Class
+
+Current flow:
+Academic Planner → Schedule → Add Class → Add Class
+
+Issue:
+
+* User fills/selects the required class information.
+* When the user clicks **Add Class**, the class is not being added/displayed.
+
+Required fix:
+
+* Investigate why the Add Class action is not completing.
+* Check the button callback, form validation, state/BLoC events, API/database operation, response handling, and UI refresh.
+* Make sure the class is successfully created.
+* After successful creation, update the schedule list immediately without requiring the user to restart or manually refresh the screen.
+* Keep the existing Add Class UI and validation behavior.
+* Show the existing success/error feedback mechanism if already implemented.
+
+## 2. Academic Planner → Assignment → Delete Assignment
+
+Current issue:
+
+* There is no option to delete an assignment.
+
+Required fix:
+
+* Add a **Delete Assignment** option using the existing UI style/pattern used elsewhere in the application.
+* Before deletion, show a confirmation dialog such as:
+  "Are you sure you want to delete this assignment?"
+* If the user confirms, delete the assignment using the existing backend/state-management architecture.
+* Remove the deleted assignment from the UI immediately after successful deletion.
+* Handle API/database errors properly.
+* Do not affect assignment creation or editing.
+
+## 3. Academic Planner → Study → Delete Study
+
+Current issue:
+
+* When the user tries to delete a study item, an HTML/code error is displayed instead of a proper application error message or successful deletion.
+
+Required fix:
+
+* Investigate the delete-study flow.
+* Find the source of the HTML/code response.
+* Properly handle the backend/API response and error parsing.
+* The user should never see raw HTML, JSON, stack traces, or Flutter exception text in the UI.
+* If deletion succeeds, remove the study item from the list.
+* If deletion fails, show a clean user-friendly error message using the application's existing error handling pattern.
+* Do not change unrelated Study functionality.
+
+## 4. Academic Planner → Campus → Add Location → Start Session
+
+Current issue:
+Flow:
+Campus → Add Location → Start Session
+
+When the user clicks **Start Session**, these errors occur:
+
+A TextEditingController was used after being disposed.
+
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true
+
+Required fix:
+
+* Find the exact widget/controller lifecycle problem.
+* Inspect all TextEditingController instances used by the Add Location and Start Session flow.
+* Make sure controllers are not disposed while they are still being used by widgets, callbacks, async operations, listeners, or state updates.
+* Dispose controllers only in the correct lifecycle method.
+* Check for dialogs, bottom sheets, navigation, async callbacks, BLoC listeners, and setState calls that may execute after the widget has been disposed.
+* Prevent state updates after the relevant widget has been removed.
+* Fix the `_dependents.isEmpty` assertion by identifying the incorrect widget lifecycle/state dependency rather than suppressing the assertion.
+* Start Session should work normally after the fix.
+
+## 5. Academic Planner → Campus → Add Route
+
+Current issue:
+Flow:
+Campus → Add Route → Add Route button
+
+When the user clicks **Add Route**, these errors occur:
+
+Tried to build dirty widget in the wrong build scope.
+
+A TextEditingController was used after being disposed.
+
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true
+
+Required fix:
+
+* Investigate the complete Add Route flow.
+* Check TextEditingController creation, usage, listeners, and disposal.
+* Check whether a controller is being disposed when a dialog/bottom sheet/widget is still using it.
+* Check async callbacks and navigation occurring after widget disposal.
+* Check setState/BLoC state changes triggered during an invalid widget lifecycle.
+* Fix the "Tried to build dirty widget in the wrong build scope" issue at its root.
+* Ensure Add Route completes successfully without Flutter framework exceptions.
+* Preserve the current Add Route UI and behavior.
+
+## 6. Academic Planner → Study Group → Create Group
+
+Current issue:
+Flow:
+Study Group → Create Group → Create Group button
+
+When the user clicks **Create Group**, these errors occur:
+
+Tried to build dirty widget in the wrong build scope.
+
+A TextEditingController was used after being disposed.
+
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true
+
+Required fix:
+
+* Investigate the complete Create Group flow.
+* Inspect all TextEditingController instances used by the Create Group screen/dialog/bottom sheet.
+* Fix incorrect controller lifecycle and disposal.
+* Check async operations, BLoC listeners, navigation, dialogs, bottom sheets, and callbacks.
+* Make sure no disposed controller is accessed.
+* Make sure no state/widget update occurs after the widget has been disposed.
+* Fix the wrong build scope error at its root.
+* After successful creation, show/update the created group according to the existing application flow.
+* Preserve the existing UI and functionality.
+
+## General Flutter Requirements
+
+For all fixes:
+
+1. Inspect the existing code before changing anything.
+2. Identify the root cause of each error.
+3. Follow the existing project architecture and state-management pattern.
+4. Do not create duplicate BLoCs, repositories, services, or controllers if existing ones can be reused.
+5. Handle TextEditingController lifecycle correctly:
+
+   * Create controllers in the appropriate lifecycle location.
+   * Add listeners only when necessary.
+   * Remove listeners when appropriate.
+   * Dispose controllers exactly once and only when they are no longer used.
+6. Check async code for widget lifecycle issues.
+7. Avoid calling setState or updating UI after disposal.
+8. Properly handle dialogs, bottom sheets, navigation, and callbacks.
+9. Do not hide exceptions with try/catch only. Fix the underlying lifecycle problem.
+10. Do not use `Future.delayed` or arbitrary delays as a workaround.
+11. Do not suppress Flutter assertions.
+12. Do not change unrelated screens/features.
+13. Keep existing UI/UX and styling.
+14. Keep existing API contracts unless a backend issue is clearly identified.
+15. Make error messages user-friendly. Never display raw HTML, stack traces, or framework exceptions to users.
+
+## Testing Checklist
+
+After implementation, test these flows:
+
+* Academic Planner → Schedule → Add Class → Add Class
+* Academic Planner → Assignment → Delete Assignment
+* Academic Planner → Study → Delete Study
+* Academic Planner → Campus → Add Location → Start Session
+* Academic Planner → Campus → Add Route → Add Route
+* Academic Planner → Study Group → Create Group → Create Group
+
+Also test:
+
+* Canceling dialogs
+* Going back before an async operation finishes
+* Opening and closing the same dialog multiple times
+* Creating/deleting multiple items
+* Navigating away and returning
+* Empty/invalid form submissions
+* API/database failure cases
+
+Finally:
+
+* Run `flutter analyze`.
+* Fix all errors related to these changes.
+* Verify there are no `TextEditingController used after being disposed` errors.
+* Verify there are no `Tried to build dirty widget in the wrong build scope` errors.
+* Verify there are no `_dependents.isEmpty` assertion errors.
+* Give me a short summary of the root cause and files changed.
