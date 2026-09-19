@@ -1149,3 +1149,17 @@ mtime_ms = 1789804983530
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c495c5fd-d1f2-40d6-a13f-8a66dc709490/74c2ea9f-0547-49ec-8128-fff31d9feb36"
 storage_version_token = "1789804988082744"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "7ZU5cmibgJiHxEXN6ez1a"
+uri = "file://artifacts/medical-flutter-changed-files.zip"
+type = "unspecified"
+title = "Medical Flutter changed files"
+description = "ZIP containing the changed Flutter medical feature files and the refill-order backend route update."
+logical_id = "30ca9c67-c9cb-4e16-b476-530c886443e0"
+content_hash = "sha256:25eb75d1ff5f8fcfd999453841519a76f5b438fcaed8a19317553f5a57bcdeaa"
+size = 76324
+mtime_ms = 1789806604010
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30ca9c67-c9cb-4e16-b476-530c886443e0/63b8d6ad-36ae-47fc-8971-76896617a8e5"
+storage_version_token = "1789806608156354"
+content_type = "application/octet-stream"
