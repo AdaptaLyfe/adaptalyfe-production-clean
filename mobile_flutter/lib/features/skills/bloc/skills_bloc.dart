@@ -57,11 +57,15 @@ class SkillsBloc extends Bloc<SkillsEvent, SkillsState> {
     }
     emit(state.copyWith(busyKey: 'create', errorMessage: null));
     try {
-      final skill = await repository.createSkill(event.input);
+      final createdSkill = await repository.createSkill(event.input);
+      final refreshedSkills = await _refreshAfterCreate(createdSkill);
+      final skills = refreshedSkills.any((skill) => skill.id == createdSkill.id)
+          ? refreshedSkills
+          : [...refreshedSkills, createdSkill];
       emit(
         state.copyWith(
           status: SkillsStatus.loaded,
-          skills: [...state.skills, skill],
+          skills: skills,
           busyKey: null,
           actionMessage: 'New skill milestone added!',
           errorMessage: null,
@@ -69,6 +73,18 @@ class SkillsBloc extends Bloc<SkillsEvent, SkillsState> {
       );
     } catch (error) {
       _emitFailure(emit, error, fallback: 'Unable to add this skill.');
+    }
+  }
+
+  Future<List<TransitionSkillModel>> _refreshAfterCreate(
+    TransitionSkillModel createdSkill,
+  ) async {
+    try {
+      return await repository.getSkills();
+    } catch (_) {
+      // The POST is already acknowledged by the server. Keep the saved item
+      // visible if a follow-up read is temporarily unavailable.
+      return [...state.skills, createdSkill];
     }
   }
 

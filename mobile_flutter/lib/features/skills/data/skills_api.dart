@@ -52,6 +52,9 @@ class SkillsApi {
   }
 
   TransitionSkillModel _parseItem(Object? data) {
+    if (data is Map && data['skill'] is Map) {
+      data = data['skill'];
+    }
     if (data is! Map) {
       throw const FormatException('Invalid transition skill response');
     }

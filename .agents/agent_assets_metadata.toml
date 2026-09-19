@@ -953,3 +953,17 @@ mtime_ms = 1789738712559
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cabf8ffb-7bca-4262-912d-32af49053612/9753865c-959d-48df-bb4c-3c0d7c4582cf"
 storage_version_token = "1789738741559292"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "URF04WCxzYnY5h_BRYgsb"
+uri = "file://life-skills-flutter-save-fix.zip"
+type = "unspecified"
+title = "Life Skills Flutter save fix"
+description = "Contains the two Flutter files changed to persist newly added Life Skills and refresh the saved collection."
+logical_id = "5a2a6be7-e9d5-4fd4-937e-e58ebe040ea1"
+content_hash = "sha256:e04a87a4e407efbfc0c7166cd0c1a46cdfbf6028c54d9dc1fc7b4eae9b5569c0"
+size = 2444
+mtime_ms = 1789791332063
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5a2a6be7-e9d5-4fd4-937e-e58ebe040ea1/47b44a46-d662-4c53-865e-8834f01b5e8b"
+storage_version_token = "1789791340950351"
+content_type = "application/octet-stream"
