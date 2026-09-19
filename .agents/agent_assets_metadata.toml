@@ -1177,3 +1177,17 @@ mtime_ms = 1789807403632
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0a55ce8d-94e0-4357-869f-5a9243f2c206/6af28db2-64c9-43c8-b614-4c5dfb2b8dbe"
 storage_version_token = "1789807422736645"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9lRnwWlpzqCB-8BKdjNnT"
+uri = "file://artifacts/adaptalyfe-medication-health-records-full-review.zip"
+type = "unspecified"
+title = "Full Flutter medical and meal changes"
+description = "ZIP containing the reviewed Flutter routing, Health Records, Medication List, Meal & Shopping Add Meal fix, and backend refill route files."
+logical_id = "cff129ee-cb5e-438d-8ab4-a1653996da51"
+content_hash = "sha256:eaef76d4e40dee26e7b7df9b8e7f3e8f8020c22d5ec6a5de8b9bf4a7ee2e96c6"
+size = 93033
+mtime_ms = 1789808567147
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cff129ee-cb5e-438d-8ab4-a1653996da51/7eb28147-5163-4ed0-8360-d91fa9c288ff"
+storage_version_token = "1789808574654838"
+content_type = "application/octet-stream"
