@@ -1163,3 +1163,17 @@ mtime_ms = 1789806604010
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30ca9c67-c9cb-4e16-b476-530c886443e0/63b8d6ad-36ae-47fc-8971-76896617a8e5"
 storage_version_token = "1789806608156354"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "83GOSXN10GBARHbKP8WJ5"
+uri = "file://artifacts/adaptalyfe-medication-health-records-separated.zip"
+type = "unspecified"
+title = "Medication List and Health Records Flutter files"
+description = "Changed Flutter routing, medical feature files, and authenticated refill-order backend route. The ZIP mirrors the React separation: /medical for Health Records and /pharmacy for Medication List."
+logical_id = "0a55ce8d-94e0-4357-869f-5a9243f2c206"
+content_hash = "sha256:968a020fcd48dcaab476c63dca1acaec3c7814a5a47f49c3710f695eefbf408e"
+size = 80363
+mtime_ms = 1789807403632
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0a55ce8d-94e0-4357-869f-5a9243f2c206/6af28db2-64c9-43c8-b614-4c5dfb2b8dbe"
+storage_version_token = "1789807422736645"
+content_type = "application/octet-stream"

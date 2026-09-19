@@ -175,6 +175,38 @@ class PharmacyScreen extends StatelessWidget {
           body: Column(
             children: [
               if (state.isLoading) const LinearProgressIndicator(minHeight: 2),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Keep a personal list of medications for reference and reminders.',
+                          style: TextStyle(color: Color(0xFF4B5563)),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          margin: EdgeInsets.zero,
+                          color: const Color(0xFFEFF6FF),
+                          child: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text(
+                              'Disclaimer: Medication information is entered by the user and stored for personal reference only. This app does not provide medical advice or prescription services.',
+                              style: TextStyle(
+                                color: Color(0xFF1E40AF),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               Expanded(child: _MedicationsTab(state: state)),
             ],
           ),
@@ -227,7 +259,7 @@ class _MedicalPremiumPrompt extends StatelessWidget {
                     color: Color(0xFFF97316),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -236,7 +268,7 @@ class _MedicalPremiumPrompt extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     description,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF4B5563)),
@@ -263,8 +295,7 @@ class _MedicalAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
   @override
-  Widget build(BuildContext context) =>
-      AppBar(title: Text(title));
+  Widget build(BuildContext context) => AppBar(title: Text(title));
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
