@@ -1219,3 +1219,17 @@ mtime_ms = 1789809260134
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3c0bbe38-7b93-4479-9b9d-b32009765ff8/f61348e5-5b69-475b-8f21-3c5d2a0a89b3"
 storage_version_token = "1789809271228036"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8BXRB9DqtEUEzzkLVvGSQ"
+uri = "file://artifacts/meal-shopping-mark-purchased-crash-fix-changed-files.zip"
+type = "unspecified"
+title = "Meal & Shopping Mark Purchased crash fix"
+description = "ZIP containing only the changed Flutter source file for the Mark Purchased controller lifecycle fix."
+logical_id = "9b0fac8b-db29-4c35-ab10-8034b9741289"
+content_hash = "sha256:4923f85bcd7c4b900971e2d69c359b3d12d34f715cb31a5e665ebf07a0ecbca5"
+size = 12636
+mtime_ms = 1789810335720
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9b0fac8b-db29-4c35-ab10-8034b9741289/d78c3cad-4b7f-4292-bf1e-73624b489a02"
+storage_version_token = "1789810341258258"
+content_type = "application/octet-stream"
