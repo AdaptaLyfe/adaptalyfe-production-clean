@@ -1429,3 +1429,17 @@ mtime_ms = 1789821802652
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c5bd714-d2e8-4938-86f1-0ffd53d320e6/020a425f-b1cd-4ca3-8311-626865933e56"
 storage_version_token = "1789821813623510"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fjxIPZbVeym6qaLPe8tpP"
+uri = "file://artifacts/daily-tasks-fix-changed-files.zip"
+type = "unspecified"
+title = "Daily Tasks fix — changed files ZIP"
+description = "Contains only server/storage.ts with the legacy daily_tasks persistence compatibility fix."
+logical_id = "8e8e6e4f-aae7-4db0-a1a7-e1c8917a3ecb"
+content_hash = "sha256:c7cfb45f2453da59a99847bcad70dafc0cf4ddac8826128b141543ab081b8598"
+size = 25592
+mtime_ms = 1789822697024
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e8e6e4f-aae7-4db0-a1a7-e1c8917a3ecb/84f5e6e4-655b-4d2d-867d-6bdb3962b751"
+storage_version_token = "1789822711599210"
+content_type = "application/octet-stream"

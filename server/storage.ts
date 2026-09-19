@@ -231,12 +231,12 @@ async function getDailyTaskSchemaCapabilities(): Promise<DailyTaskSchemaCapabili
             ) AS has_completions
         `);
         const row = result.rows[0] as {
-          has_created_at?: boolean;
-          has_completions?: boolean;
+          has_created_at?: unknown;
+          has_completions?: unknown;
         } | undefined;
         const capabilities = {
-          hasCreatedAt: Boolean(row?.has_created_at),
-          hasCompletions: Boolean(row?.has_completions),
+          hasCreatedAt: schemaCapabilityIsTrue(row?.has_created_at),
+          hasCompletions: schemaCapabilityIsTrue(row?.has_completions),
         };
 
         if (!capabilities.hasCreatedAt || !capabilities.hasCompletions) {
@@ -1039,20 +1039,74 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDailyTask(insertTask: InsertDailyTask): Promise<DailyTask> {
-    const [task] = await db
-      .insert(dailyTasks)
-      .values(insertTask)
-      .returning();
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    if (capabilities.hasCreatedAt) {
+      const [task] = await db
+        .insert(dailyTasks)
+        .values(insertTask)
+        .returning();
+      return task;
+    }
+
+    const legacyFields = [
+      ['user_id', insertTask.userId],
+      ['title', insertTask.title],
+      ['description', insertTask.description],
+      ['category', insertTask.category],
+      ['frequency', insertTask.frequency],
+      ['estimated_minutes', insertTask.estimatedMinutes],
+      ['point_value', insertTask.pointValue],
+      ['scheduled_time', insertTask.scheduledTime],
+      ['is_completed', insertTask.isCompleted],
+      ['completed_at', insertTask.completedAt],
+      ['due_date', insertTask.dueDate],
+      ['last_completed', insertTask.lastCompleted],
+      ['last_reminder_sent', insertTask.lastReminderSent],
+      ['last_overdue_reminder', insertTask.lastOverdueReminder],
+    ].filter(([, value]) => value !== undefined) as [string, unknown][];
+    const columns = sql.join(
+      legacyFields.map(([column]) => sql.raw(`"${column}"`)),
+      sql`, `,
+    );
+    const values = sql.join(
+      legacyFields.map(([, value]) => sql`${value}`),
+      sql`, `,
+    );
+    const result = await db.execute(sql`
+      INSERT INTO daily_tasks (${columns})
+      VALUES (${values})
+      RETURNING id
+    `);
+    const insertedId = Number(
+      (result.rows[0] as { id?: number | string } | undefined)?.id,
+    );
+    const task = Number.isInteger(insertedId)
+      ? await this.getTaskById(insertedId)
+      : undefined;
+    if (!task) {
+      throw new Error('The daily task could not be created.');
+    }
     return task;
   }
 
   async updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined> {
-    const [task] = await db
-      .update(dailyTasks)
-      .set(updates)
-      .where(eq(dailyTasks.id, taskId))
-      .returning();
-    return task || undefined;
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const [task] = capabilities.hasCreatedAt
+      ? await db
+          .update(dailyTasks)
+          .set(updates)
+          .where(eq(dailyTasks.id, taskId))
+          .returning()
+      : await db
+          .update(dailyTasks)
+          .set(updates)
+          .where(eq(dailyTasks.id, taskId))
+          .returning(legacyDailyTaskColumns);
+    return task
+      ? capabilities.hasCreatedAt
+          ? task
+          : { ...task, createdAt: null } as DailyTask
+      : undefined;
   }
 
   async updateTaskCompletion(
