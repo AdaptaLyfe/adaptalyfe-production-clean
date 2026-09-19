@@ -1009,3 +1009,17 @@ mtime_ms = 1789795181252
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eb51964d-e348-4484-a923-fa65fa376dd5/5e716c26-07ca-4c3d-9131-fd83c5152520"
 storage_version_token = "1789795195633121"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "0gUwyoKnlXtg0V-fdA5R2"
+uri = "file://life-skills-flutter-create-fix.zip"
+type = "unspecified"
+title = "Flutter Life Skill creation fix"
+description = "Flutter BLoC and API response fixes for immediate Life Skill creation and reliable response handling."
+logical_id = "45651410-e6e0-4252-aa3c-c146c4362fea"
+content_hash = "sha256:edeed01acf84e39765efea30f726f563e64aa12edfa3933bfc5549235f6d104c"
+size = 2557
+mtime_ms = 1789795329803
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/45651410-e6e0-4252-aa3c-c146c4362fea/713e6efe-2afc-404a-951a-4e1abd29745f"
+storage_version_token = "1789795334354355"
+content_type = "application/octet-stream"
