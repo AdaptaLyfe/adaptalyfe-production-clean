@@ -1,0 +1,39 @@
+In the Flutter app, fix the issue in the **Meal & Shopping → Shopping List** section.
+
+### Current Issue
+
+1. Open **Meal & Shopping**.
+2. Go to **Shopping List**.
+3. Click the **Manage** button.
+4. A **Manage Grocery Store** dialog opens.
+5. Inside the dialog, there is an **Add New Store** button.
+6. The **Add New Store** button is currently not working when clicked.
+
+### Required Fix
+
+* Investigate why the **Add New Store** button click is not triggering any action.
+* Make the button fully functional.
+* When the user clicks **Add New Store**, open the existing add-store flow/dialog/form if one already exists in the project.
+* If the add-store UI does not exist, create a simple dialog/form to enter the grocery store name.
+* Validate that the store name is not empty.
+* After successfully adding a store:
+
+  * Close the add-store dialog.
+  * Update the **Manage Grocery Store** list immediately.
+  * Show the newly added store without requiring the user to restart or refresh the app.
+* Make sure the existing **Manage Grocery Store** functionality continues to work.
+* Do not change unrelated Meal & Shopping or Shopping List functionality.
+
+### Important
+
+* First inspect the existing code and identify the current `Manage Grocery Store` dialog and `Add New Store` button implementation.
+* Reuse the existing architecture, BLoC/state management, models, repository, and UI components where available.
+* Do not create duplicate screens, dialogs, models, or state-management logic if an existing implementation can be reused.
+* Follow the project's existing Flutter coding style.
+* Ensure the button has a working `onPressed`/tap handler.
+* Check for issues such as disabled buttons, incorrect callbacks, missing state updates, dialog context problems, or navigation issues.
+* Test the complete flow:
+
+**Meal & Shopping → Shopping List → Manage → Add New Store → Enter Store Name → Save → Store appears in the list**
+
+Do not modify unrelated features.

@@ -1674,7 +1674,10 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                         onPressed: busy
                             ? null
                             : () async {
-                                await _showStoreFormDialog(context);
+                                await _showStoreFormDialog(
+                                  context,
+                                  bloc: bloc,
+                                );
                               },
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('Add New Store'),
@@ -1709,11 +1712,16 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                                 onEdit: () async {
                                   await _showStoreFormDialog(
                                     context,
+                                    bloc: bloc,
                                     store: store,
                                   );
                                 },
                                 onDelete: () =>
-                                    _confirmDeleteStore(context, store),
+                                    _confirmDeleteStore(
+                                      context,
+                                      bloc: bloc,
+                                      store: store,
+                                    ),
                               );
                             },
                           ),
@@ -1816,46 +1824,120 @@ class _StoreManagementRow extends StatelessWidget {
 
 Future<void> _showStoreFormDialog(
   BuildContext context, {
+  required MealShoppingBloc bloc,
   GroceryStoreModel? store,
 }) async {
   final overlayKey = store == null ? 'add-store' : 'edit-store-${store.id}';
   if (!_openMealShoppingOverlays.add(overlayKey)) return;
-  final bloc = context.read<MealShoppingBloc>();
-  final nameController = TextEditingController(text: store?.name ?? '');
-  final addressController = TextEditingController(text: store?.address ?? '');
-  final phoneController =
-      TextEditingController(text: store?.phoneNumber ?? '');
-  final websiteController =
-      TextEditingController(text: store?.website ?? '');
-  final orderingController =
-      TextEditingController(text: store?.onlineOrderingUrl ?? '');
-  final formKey = GlobalKey<FormState>();
-  var deliveryAvailable = store?.deliveryAvailable ?? false;
-  var pickupAvailable = store?.pickupAvailable ?? true;
-  var isPreferred = store?.isPreferred ?? false;
 
   try {
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
-          MealShoppingState>(
-        bloc: bloc,
+      builder: (_) => _StoreFormDialog(bloc: bloc, store: store),
+    );
+  } finally {
+    _openMealShoppingOverlays.remove(overlayKey);
+  }
+}
+
+class _StoreFormDialog extends StatefulWidget {
+  const _StoreFormDialog({
+    required this.bloc,
+    this.store,
+  });
+
+  final MealShoppingBloc bloc;
+  final GroceryStoreModel? store;
+
+  @override
+  State<_StoreFormDialog> createState() => _StoreFormDialogState();
+}
+
+class _StoreFormDialogState extends State<_StoreFormDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _websiteController;
+  late final TextEditingController _orderingController;
+  final _formKey = GlobalKey<FormState>();
+  late var _deliveryAvailable = widget.store?.deliveryAvailable ?? false;
+  late var _pickupAvailable = widget.store?.pickupAvailable ?? true;
+  late var _isPreferred = widget.store?.isPreferred ?? false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.store?.name ?? '');
+    _addressController =
+        TextEditingController(text: widget.store?.address ?? '');
+    _phoneController =
+        TextEditingController(text: widget.store?.phoneNumber ?? '');
+    _websiteController =
+        TextEditingController(text: widget.store?.website ?? '');
+    _orderingController =
+        TextEditingController(text: widget.store?.onlineOrderingUrl ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _websiteController.dispose();
+    _orderingController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = GroceryStoreInput(
+      name: _nameController.text,
+      address: _addressController.text,
+      phoneNumber: _phoneController.text,
+      website: _websiteController.text,
+      onlineOrderingUrl: _orderingController.text,
+      deliveryAvailable: _deliveryAvailable,
+      pickupAvailable: _pickupAvailable,
+      isPreferred: _isPreferred,
+    );
+    final store = widget.store;
+    if (store == null) {
+      widget.bloc.add(AddGroceryStore(input));
+    } else {
+      widget.bloc.add(UpdateGroceryStore(store.id, input));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MealShoppingBloc, MealShoppingState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.action != MealShoppingAction.none &&
+          current.action == MealShoppingAction.none &&
+          current.actionMessage != null &&
+          current.errorMessage == null,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
+        bloc: widget.bloc,
         builder: (context, state) {
           final isBusy = state.isBusy;
           final isSaving = state.action ==
                   MealShoppingAction.addingGroceryStore ||
               state.action == MealShoppingAction.updatingGroceryStore;
+          final store = widget.store;
           return AlertDialog(
             title: Text(store == null ? 'Add New Store' : 'Edit Store'),
             content: Form(
-              key: formKey,
+              key: _formKey,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: _nameController,
                       enabled: !isBusy,
                       decoration: const InputDecoration(
                         labelText: 'Store Name',
@@ -1865,7 +1947,7 @@ Future<void> _showStoreFormDialog(
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: addressController,
+                      controller: _addressController,
                       enabled: !isBusy,
                       decoration: const InputDecoration(
                         labelText: 'Address',
@@ -1874,7 +1956,7 @@ Future<void> _showStoreFormDialog(
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: phoneController,
+                      controller: _phoneController,
                       enabled: !isBusy,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
@@ -1885,7 +1967,7 @@ Future<void> _showStoreFormDialog(
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: websiteController,
+                      controller: _websiteController,
                       enabled: !isBusy,
                       keyboardType: TextInputType.url,
                       decoration: const InputDecoration(
@@ -1896,7 +1978,7 @@ Future<void> _showStoreFormDialog(
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: orderingController,
+                      controller: _orderingController,
                       enabled: !isBusy,
                       keyboardType: TextInputType.url,
                       decoration: const InputDecoration(
@@ -1908,32 +1990,32 @@ Future<void> _showStoreFormDialog(
                     const SizedBox(height: 8),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      value: deliveryAvailable,
+                      value: _deliveryAvailable,
                       title: const Text('Delivery Available'),
                       onChanged: isBusy
                           ? null
                           : (value) => setState(
-                                () => deliveryAvailable = value ?? false,
+                                () => _deliveryAvailable = value ?? false,
                               ),
                     ),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      value: pickupAvailable,
+                      value: _pickupAvailable,
                       title: const Text('Pickup Available'),
                       onChanged: isBusy
                           ? null
                           : (value) => setState(
-                                () => pickupAvailable = value ?? false,
+                                () => _pickupAvailable = value ?? false,
                               ),
                     ),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
-                      value: isPreferred,
+                      value: _isPreferred,
                       title: const Text('Preferred Store'),
                       onChanged: isBusy
                           ? null
                           : (value) => setState(
-                                () => isPreferred = value ?? false,
+                                () => _isPreferred = value ?? false,
                               ),
                     ),
                   ],
@@ -1942,35 +2024,11 @@ Future<void> _showStoreFormDialog(
             ),
             actions: [
               TextButton(
-                onPressed:
-                    isBusy ? null : () => Navigator.of(dialogContext).pop(),
+                onPressed: isBusy ? null : () => Navigator.of(context).pop(),
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                onPressed: isBusy
-                    ? null
-                    : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        final input = GroceryStoreInput(
-                          name: nameController.text,
-                          address: addressController.text,
-                          phoneNumber: phoneController.text,
-                          website: websiteController.text,
-                          onlineOrderingUrl: orderingController.text,
-                          deliveryAvailable: deliveryAvailable,
-                          pickupAvailable: pickupAvailable,
-                          isPreferred: isPreferred,
-                        );
-                        if (store == null) {
-                          bloc.add(AddGroceryStore(input));
-                        } else {
-                          bloc.add(UpdateGroceryStore(store.id, input));
-                        }
-                        final succeeded = await _waitForActionCompletion(bloc);
-                        if (succeeded && dialogContext.mounted) {
-                          Navigator.of(dialogContext).pop();
-                        }
-                      },
+                onPressed: isBusy ? null : _submit,
                 child: isSaving
                     ? const SizedBox(
                         width: 20,
@@ -1983,21 +2041,16 @@ Future<void> _showStoreFormDialog(
           );
         },
       ),
-      ),
     );
-  } finally {
-    nameController.dispose();
-    addressController.dispose();
-    phoneController.dispose();
-    websiteController.dispose();
-    orderingController.dispose();
-    _openMealShoppingOverlays.remove(overlayKey);
   }
 }
 
 Future<void> _confirmDeleteStore(
   BuildContext context,
-  GroceryStoreModel store,
+  {
+  required MealShoppingBloc bloc,
+  required GroceryStoreModel store,
+  }
 ) async {
   final overlayKey = 'delete-store-${store.id}';
   if (!_openMealShoppingOverlays.add(overlayKey)) return;
@@ -2023,7 +2076,7 @@ Future<void> _confirmDeleteStore(
       ),
     );
     if (confirmed == true && context.mounted) {
-      context.read<MealShoppingBloc>().add(DeleteGroceryStore(store.id));
+      bloc.add(DeleteGroceryStore(store.id));
     }
   } finally {
     _openMealShoppingOverlays.remove(overlayKey);
