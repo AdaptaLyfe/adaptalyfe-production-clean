@@ -1,0 +1,110 @@
+In my existing **React Native + Wrapper project and Flutter project**, CRUD operations were working properly before, but now they work inconsistently.
+
+### Problem
+
+Sometimes these operations work:
+
+* Create / Add
+* Read / Fetch
+* Update / Edit
+* Delete
+
+But sometimes they suddenly stop working or do nothing.
+
+### Important
+
+Do NOT rewrite the CRUD functionality from scratch.
+
+Investigate the existing implementation and find the actual root cause.
+
+Check the complete CRUD flow in both projects:
+
+**UI → State Management → API/Service → Repository → Backend → Database → Response → UI update**
+
+Check for issues such as:
+
+* API requests failing silently
+* Incorrect or expired authentication token
+* 401/403 responses
+* Firebase authentication/session issues
+* Network/API timeout
+* Race conditions
+* Multiple API calls being triggered
+* Duplicate requests
+* Incorrect loading state
+* Loading state not being reset
+* BLoC/Event/State issues in Flutter
+* Redux/Context/state issues in React Native
+* Stale state or cached data
+* Incorrect async/await handling
+* Missing error handling
+* Exceptions being swallowed
+* Incorrect request payload
+* Incorrect IDs when updating/deleting
+* Backend response handling
+* Database permission/rules issues
+* Firestore read/write failures
+* Pagination or refresh logic interfering with CRUD
+* Screen lifecycle/navigation causing requests to stop
+* Component/widget rebuild issues
+* Race conditions between create/update/delete and refresh
+* Wrapper communication/API bridge issues
+* Different behavior between React Native and Flutter implementations
+
+### Required debugging
+
+Add proper logging temporarily so we can identify exactly where the operation stops.
+
+For every CRUD operation, log:
+
+1. User action
+2. Request/event triggered
+3. Request payload
+4. API/service method called
+5. Authentication/token status
+6. API/backend response status
+7. Response body/error
+8. State change
+9. Final UI update
+
+Do not hide or ignore exceptions.
+
+### Expected behavior
+
+Every CRUD operation should:
+
+* Work consistently
+* Show loading state while processing
+* Show success message after successful operation
+* Show a clear user-friendly error when it fails
+* Stop loading even when an error occurs
+* Refresh/update the UI correctly after success
+* Never silently fail
+
+### Important constraint
+
+Before changing code, compare the current implementation with the previously working CRUD flow and identify what changed or what is causing the intermittent behavior.
+
+Fix the **root cause**, not just the visible symptom.
+
+Keep the existing UI, architecture, API contracts, and functionality unchanged unless a change is required to fix the issue.
+
+After fixing it, test:
+
+* Create multiple records
+* Read/refresh repeatedly
+* Update multiple records
+* Delete multiple records
+* Quickly perform operations one after another
+* Logout/login and test CRUD again
+* Test with slow/interrupted network
+* Test Android and iOS
+* Test both React Native + Wrapper and Flutter
+
+Finally, explain:
+
+1. What was causing the intermittent CRUD issue
+2. Which files were changed
+3. What was fixed
+4. Why the issue sometimes worked and sometimes stopped
+5. How the fix prevents the issue from happening again
