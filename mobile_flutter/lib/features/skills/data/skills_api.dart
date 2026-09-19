@@ -8,13 +8,20 @@ class SkillsApi {
 
   Future<List<TransitionSkillModel>> getSkills() async {
     final response = await client.get<dynamic>('/api/transition-skills');
-    if (response.data == null) {
-      return const [];
-    }
-    if (response.data is! List) {
-      throw const FormatException('Invalid transition skills response');
-    }
-    return (response.data as List)
+    final rawItems = switch (response.data) {
+      null => const <dynamic>[],
+      List<dynamic> items => items,
+      Map<dynamic, dynamic> payload => payload['skills'] is List
+          ? payload['skills'] as List<dynamic>
+          : payload['transitionSkills'] is List
+              ? payload['transitionSkills'] as List<dynamic>
+              : payload['data'] is List
+                  ? payload['data'] as List<dynamic>
+                  : const <dynamic>[],
+      _ => throw const FormatException('Invalid transition skills response'),
+    };
+
+    return rawItems
         .whereType<Map>()
         .map((item) => TransitionSkillModel.fromJson(
               Map<String, dynamic>.from(item),

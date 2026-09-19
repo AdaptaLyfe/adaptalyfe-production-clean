@@ -540,8 +540,12 @@ export interface IStorage {
   createStudyGroup(groupData: InsertStudyGroup): Promise<StudyGroup>;
   getTransitionSkillsByUser(userId: number): Promise<TransitionSkill[]>;
   createTransitionSkill(skillData: InsertTransitionSkill): Promise<TransitionSkill>;
-  updateTransitionSkill(skillId: number, updateData: Partial<TransitionSkill>): Promise<TransitionSkill>;
-  deleteTransitionSkill(skillId: number): Promise<void>;
+  updateTransitionSkill(
+    skillId: number,
+    userId: number,
+    updateData: Partial<TransitionSkill>,
+  ): Promise<TransitionSkill>;
+  deleteTransitionSkill(skillId: number, userId: number): Promise<boolean>;
 
   // Calendar Events
   getCalendarEventsByUser(userId: number): Promise<CalendarEvent[]>;
@@ -2901,7 +2905,11 @@ export class DatabaseStorage implements IStorage {
     return skill;
   }
 
-  async updateTransitionSkill(skillId: number, updateData: Partial<TransitionSkill>): Promise<TransitionSkill> {
+  async updateTransitionSkill(
+    skillId: number,
+    userId: number,
+    updateData: Partial<TransitionSkill>,
+  ): Promise<TransitionSkill> {
     const capabilities = await getTransitionSkillSchemaCapabilities();
     if (!capabilities.hasTable) {
       throw new Error("The transition_skills table is unavailable.");
@@ -2917,7 +2925,12 @@ export class DatabaseStorage implements IStorage {
 
     const [updated] = await db.update(transitionSkills)
       .set(compatibleUpdateData)
-      .where(eq(transitionSkills.id, skillId))
+      .where(
+        and(
+          eq(transitionSkills.id, skillId),
+          eq(transitionSkills.userId, userId),
+        ),
+      )
       .returning({ id: transitionSkills.id });
     const skill = updated
       ? await getTransitionSkillById(updated.id, capabilities)
@@ -2928,8 +2941,16 @@ export class DatabaseStorage implements IStorage {
     return skill;
   }
 
-  async deleteTransitionSkill(skillId: number): Promise<void> {
-    await db.delete(transitionSkills).where(eq(transitionSkills.id, skillId));
+  async deleteTransitionSkill(skillId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(transitionSkills)
+      .where(
+        and(
+          eq(transitionSkills.id, skillId),
+          eq(transitionSkills.userId, userId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
   }
 
   // Calendar Events implementation

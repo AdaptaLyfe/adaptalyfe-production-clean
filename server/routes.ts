@@ -180,6 +180,27 @@ import { initializeComprehensiveDemo } from "./demo-data";
 import { shouldAllowAutoLogin, shouldInitializeDemoData, PRODUCTION_CONFIG } from "./production-config";
 import { configureForProduction } from "./production-environment";
 
+const transitionSkillUpdateSchema = z
+  .object({
+    skillCategory: z.string().min(1).optional(),
+    skillName: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    currentLevel: z.number().int().min(1).max(10).optional(),
+    targetLevel: z.number().int().min(1).max(10).optional(),
+    priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    practiceActivities: z.array(z.string()).optional(),
+  })
+  .refine(
+    (value) =>
+      value.currentLevel === undefined ||
+      value.targetLevel === undefined ||
+      value.currentLevel <= value.targetLevel,
+    {
+      message: "Current level cannot be greater than target level.",
+      path: ["targetLevel"],
+    },
+  );
+
 // Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -2106,11 +2127,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/transition-skills", async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
+      const user = req.session?.user || req.user;
+      if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const user = req.session.user;
       const skills = await storage.getTransitionSkillsByUser(user.id);
       res.json(skills);
     } catch (error) {
@@ -2152,13 +2173,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const skillId = parseInt(req.params.id);
-      const updateData = req.body;
+      if (!Number.isInteger(skillId) || skillId <= 0) {
+        return res.status(400).json({ message: "Invalid transition skill id" });
+      }
+
+      const updateData = transitionSkillUpdateSchema.parse(req.body);
       
-      const skill = await storage.updateTransitionSkill(skillId, updateData);
+      const skill = await storage.updateTransitionSkill(
+        skillId,
+        user.id,
+        updateData,
+      );
       res.json(skill);
     } catch (error) {
       console.error("Failed to update transition skill:", error);
-      res.status(500).json({ message: "Failed to update transition skill" });
+      res.status(error instanceof z.ZodError ? 400 : 500).json({
+        message: error instanceof z.ZodError
+          ? error.issues[0]?.message || "Invalid transition skill data"
+          : "Failed to update transition skill",
+      });
     }
   });
 
@@ -2170,8 +2203,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const skillId = parseInt(req.params.id);
+      if (!Number.isInteger(skillId) || skillId <= 0) {
+        return res.status(400).json({ message: "Invalid transition skill id" });
+      }
       
-      await storage.deleteTransitionSkill(skillId);
+      const deleted = await storage.deleteTransitionSkill(skillId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Transition skill not found" });
+      }
       res.json({ message: "Transition skill deleted successfully" });
     } catch (error) {
       console.error("Failed to delete transition skill:", error);

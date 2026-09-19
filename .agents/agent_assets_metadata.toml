@@ -981,3 +981,17 @@ mtime_ms = 1789792462113
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/342cc1da-029e-4e05-a8fc-5fd60c976ac6/8094a642-9386-4a63-846d-c949cede740a"
 storage_version_token = "1789792467422944"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "647C30Pr9rjvV5a1jVm96"
+uri = "file://life-skills-flutter-crud-changes.zip"
+type = "unspecified"
+title = "Life Skills Flutter CRUD changes"
+description = "Updated Flutter Life Skills files plus the authenticated server persistence fixes."
+logical_id = "be3d1ef5-eaeb-4e30-9108-1a36b5bf87a2"
+content_hash = "sha256:6d9c8e255c4c133a0d8449e4650628e7719365dd11eae63bd66b3108e7fb4964"
+size = 85417
+mtime_ms = 1789794729165
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be3d1ef5-eaeb-4e30-9108-1a36b5bf87a2/7af38777-de1a-4bec-b4b8-cf21794dc8e3"
+storage_version_token = "1789794733629626"
+content_type = "application/octet-stream"
