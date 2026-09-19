@@ -995,3 +995,17 @@ mtime_ms = 1789794729165
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be3d1ef5-eaeb-4e30-9108-1a36b5bf87a2/7af38777-de1a-4bec-b4b8-cf21794dc8e3"
 storage_version_token = "1789794733629626"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T1dW-boIcEKSAYSErwhy0"
+uri = "file://life-skill-create-fix.zip"
+type = "unspecified"
+title = "Life Skill creation fix"
+description = "React Life Skill create flow, wrapper request error handling, and server response fixes."
+logical_id = "eb51964d-e348-4484-a923-fa65fa376dd5"
+content_hash = "sha256:1b9f5beddd7e64d0e6091193ec8ed4d06e19ee1f5f04359f20bc3df9cd3b16d2"
+size = 57290
+mtime_ms = 1789795181252
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eb51964d-e348-4484-a923-fa65fa376dd5/5e716c26-07ca-4c3d-9131-fd83c5152520"
+storage_version_token = "1789795195633121"
+content_type = "application/octet-stream"

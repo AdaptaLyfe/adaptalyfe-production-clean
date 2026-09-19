@@ -2157,10 +2157,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(skill);
     } catch (error) {
       console.error("Failed to create transition skill:", error);
-      res.status(400).json({
-        message: error instanceof z.ZodError
+      const isValidationError = error instanceof z.ZodError;
+      res.status(isValidationError ? 400 : 500).json({
+        message: isValidationError
           ? error.issues[0]?.message || "Invalid transition skill data"
-          : "Failed to create transition skill",
+          : "Unable to save this skill right now. Please try again.",
       });
     }
   });

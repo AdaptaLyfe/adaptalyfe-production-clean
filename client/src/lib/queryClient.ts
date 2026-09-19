@@ -155,7 +155,14 @@ export class ApiError extends Error {
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    let payload: { error?: unknown; code?: unknown; type?: unknown } | undefined;
+    let payload:
+      | {
+          error?: unknown;
+          message?: unknown;
+          code?: unknown;
+          type?: unknown;
+        }
+      | undefined;
     try {
       payload = JSON.parse(text);
     } catch {
@@ -163,7 +170,11 @@ async function throwIfResNotOk(res: Response) {
     }
 
     const message =
-      typeof payload?.error === "string" ? payload.error : text;
+      typeof payload?.message === "string"
+        ? payload.message
+        : typeof payload?.error === "string"
+          ? payload.error
+          : text;
     throw new ApiError(
       res.status,
       message,

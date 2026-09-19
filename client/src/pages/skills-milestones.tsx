@@ -55,6 +55,8 @@ const skillFormSchema = z.object({
   },
 );
 
+type SkillFormValues = z.infer<typeof skillFormSchema>;
+
 const categoryConfig = {
   academic: { label: "Academic Skills", icon: BookOpen, color: "bg-blue-500" },
   social: { label: "Social Skills", icon: Users, color: "bg-green-500" },
@@ -114,12 +116,35 @@ export default function SkillsMilestones() {
 
   // Create skill mutation
   const createSkillMutation = useMutation({
-    mutationFn: async (skillData: any) => {
-      return apiRequest("POST", "/api/transition-skills", skillData);
+    mutationFn: async (skillData: SkillFormValues): Promise<TransitionSkill> => {
+      const response = await apiRequest("POST", "/api/transition-skills", {
+        skillName: skillData.skillName.trim(),
+        description: skillData.description?.trim() || null,
+        skillCategory: skillData.skillCategory,
+        currentLevel: skillData.currentLevel,
+        targetLevel: skillData.targetLevel,
+        priority: skillData.priority,
+      });
+      const responseData = await response.json();
+      const createdSkill =
+        responseData?.skill ?? responseData?.data ?? responseData;
+
+      if (!createdSkill || typeof createdSkill.id !== "number") {
+        throw new Error("The new skill was saved, but the server returned an invalid response.");
+      }
+
+      return createdSkill as TransitionSkill;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
+    onSuccess: (createdSkill) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) => [
+          createdSkill,
+          ...currentSkills.filter((skill) => skill.id !== createdSkill.id),
+        ],
+      );
+      void queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
+      void refetchSkills();
       setIsAddSkillOpen(false);
       form.reset();
       toast({
@@ -127,10 +152,14 @@ export default function SkillsMilestones() {
         description: "New skill milestone added!",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      const message =
+        error instanceof Error && error.message
+          ? error.message.replace(/^\d+:\s*/, "")
+          : "Unable to save this skill right now. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to add skill milestone",
+        description: message,
         variant: "destructive",
       });
     },
