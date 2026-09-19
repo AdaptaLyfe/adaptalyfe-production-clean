@@ -92,11 +92,51 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
 
     try {
       final createdTask = await repository.createTask(event.input);
-      await _reloadAfterMutation(
-        emit,
-        successMessage: 'New task added to your daily list.',
-        fallbackTasks: [...state.tasks, createdTask],
+      final fallbackTasks = [
+        createdTask,
+        ...state.tasks.where((task) => task.id != createdTask.id),
+      ];
+      emit(
+        state.copyWith(
+          status: DailyTasksStatus.loaded,
+          tasks: fallbackTasks,
+          action: DailyTaskAction.none,
+          activeTaskId: null,
+          errorMessage: null,
+          actionMessage: 'New task added to your daily list.',
+          sessionInvalid: false,
+        ),
       );
+
+      try {
+        final refreshedTasks = await repository.getTasks(date: _requestDate);
+        emit(
+          state.copyWith(
+            status: DailyTasksStatus.loaded,
+            tasks: refreshedTasks,
+            action: DailyTaskAction.none,
+            activeTaskId: null,
+            errorMessage: null,
+            actionMessage: null,
+            sessionInvalid: false,
+          ),
+        );
+      } catch (error) {
+        emit(
+          state.copyWith(
+            status: DailyTasksStatus.loaded,
+            tasks: fallbackTasks,
+            action: DailyTaskAction.none,
+            activeTaskId: null,
+            errorMessage:
+                'The task was saved, but the list could not be refreshed. '
+                'Pull to refresh and try again.',
+            actionMessage: null,
+            sessionInvalid:
+                error is ApiException && error.type == ApiErrorType.unauthorized,
+          ),
+        );
+      }
     } catch (error) {
       _emitActionError(emit, error, 'Failed to create task. Please try again.');
     }

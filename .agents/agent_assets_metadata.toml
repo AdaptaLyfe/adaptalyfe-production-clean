@@ -1443,3 +1443,17 @@ mtime_ms = 1789822697024
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e8e6e4f-aae7-4db0-a1a7-e1c8917a3ecb/84f5e6e4-655b-4d2d-867d-6bdb3962b751"
 storage_version_token = "1789822711599210"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "CotcpWHQSqQntU5ixzT5o"
+uri = "file://artifacts/flutter-daily-tasks-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks fix — changed files ZIP"
+description = "Contains the updated DailyTasksBloc and server storage compatibility fix for legacy daily_tasks schemas."
+logical_id = "b0e49796-1279-4e1f-b808-8a6474aeb207"
+content_hash = "sha256:92fa8bd4d8d32431e5414f8201f74417723ee2faf9e6426e9a0e0ffdb43a8ae5"
+size = 27734
+mtime_ms = 1789822793116
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0e49796-1279-4e1f-b808-8a6474aeb207/8174b84f-3568-443b-8c68-cdd871a86e47"
+storage_version_token = "1789822798673498"
+content_type = "application/octet-stream"
