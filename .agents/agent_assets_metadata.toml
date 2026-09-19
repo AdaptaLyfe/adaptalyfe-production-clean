@@ -1275,3 +1275,17 @@ mtime_ms = 1789813321843
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2701a4fc-327f-4b78-ab08-4c40f0f36c89/0843e3ec-daf9-4fb7-898b-9f9fcf7c4939"
 storage_version_token = "1789813327259132"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8R_VHrgMSkjK6aJKoiBcj"
+uri = "file://artifacts/healthcare-contact-update-crash-changed-files.zip"
+type = "unspecified"
+title = "Healthcare Contact update crash fix — changed files"
+description = "ZIP containing only the updated Flutter medical presentation source file."
+logical_id = "ef896b9e-db3a-40ea-9acd-82d374597a92"
+content_hash = "sha256:c3eb936f9e1e02e50d5315304360081bb10811fc5be6dc716839bb457184c407"
+size = 16773
+mtime_ms = 1789814525118
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ef896b9e-db3a-40ea-9acd-82d374597a92/5d0a8005-38d0-4c71-8669-6a14674187a0"
+storage_version_token = "1789814529123889"
+content_type = "application/octet-stream"
