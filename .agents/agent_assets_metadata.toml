@@ -1121,3 +1121,17 @@ mtime_ms = 1789804199260
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e76b7620-2c7c-43b1-b4c4-fde0635b7d61/49397c8e-803a-472c-a136-963dafbf75cf"
 storage_version_token = "1789804204080072"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DUu2iFuROn9FPpBUbLBui"
+uri = "file://exports/flutter-daily-tasks-complete-fix.zip"
+type = "unspecified"
+title = "Complete Flutter Daily Tasks fix"
+description = "Updated Daily Tasks feature with create, read, update, delete, completion handling, save-response fallback, and a form that remains open when saving fails."
+logical_id = "ba437dac-9ccf-40a0-b123-c96f15f7e93e"
+content_hash = "sha256:26bd07dbe04782a6883c51c19fdda93874cb0cd6cdfa69f0f8826ae1fd158510"
+size = 15937
+mtime_ms = 1789804315987
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba437dac-9ccf-40a0-b123-c96f15f7e93e/538f489b-0842-4d0e-877e-68581b601b87"
+storage_version_token = "1789804368102661"
+content_type = "application/octet-stream"
