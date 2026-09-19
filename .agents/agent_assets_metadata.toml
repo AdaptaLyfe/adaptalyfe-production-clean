@@ -1289,3 +1289,17 @@ mtime_ms = 1789814525118
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ef896b9e-db3a-40ea-9acd-82d374597a92/5d0a8005-38d0-4c71-8669-6a14674187a0"
 storage_version_token = "1789814529123889"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kqk7FKfd9mov-YPrtWGhu"
+uri = "file://artifacts/health-record-personal-notes-crash-changed-files.zip"
+type = "unspecified"
+title = "Health Record Personal Notes crash fix — changed files"
+description = "ZIP containing only the updated Flutter medical presentation source file."
+logical_id = "33007798-7364-4b0a-87d4-18abeb932505"
+content_hash = "sha256:263fef37e70639942b20e3d8d6b7dff7460bec81553440230acebcc89ca95a19"
+size = 17150
+mtime_ms = 1789814909778
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/33007798-7364-4b0a-87d4-18abeb932505/3cb9ec9d-b178-4af7-a757-7ca2387f5ad6"
+storage_version_token = "1789814914382731"
+content_type = "application/octet-stream"

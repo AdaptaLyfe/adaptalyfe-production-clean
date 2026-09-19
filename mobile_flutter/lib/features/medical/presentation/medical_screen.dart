@@ -1676,113 +1676,184 @@ Future<void> _showConditionDialog(
   MedicalConditionModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final conditionController =
-      TextEditingController(text: existing?.condition ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final formKey = GlobalKey<FormState>();
-  var status = _supportedValue(existing?.status, _conditionStatuses) ?? '';
-  var diagnosedDate = existing?.diagnosedDate;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _MedicalConditionDialog(
       bloc: medicalBloc,
-      action: 'condition',
-      successMessage: existing == null
-          ? 'Note added successfully.'
-          : 'Note updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(existing == null ? 'Add Medical Condition' : 'Edit Medical Condition'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: conditionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Condition',
-                    hintText: 'e.g., Diabetes, Asthma',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: status.isEmpty ? null : status,
-                  decoration: const InputDecoration(labelText: 'Status'),
-                  items: _conditionStatuses
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_titleCase(value)),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => status = value ?? ''),
-                  validator: (value) =>
-                      value == null ? 'Status is required' : null,
-                ),
-                const SizedBox(height: 12),
-                _DateField(
-                  label: 'Diagnosed Date',
-                  date: diagnosedDate,
-                  onPick: () async {
-                    final date = await _pickDate(context, diagnosedDate);
-                    if (date != null) setState(() => diagnosedDate = date);
-                  },
-                  onClear: diagnosedDate == null
-                      ? null
-                      : () => setState(() => diagnosedDate = null),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Additional information',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-              if (!formKey.currentState!.validate()) return;
-              final input = MedicalConditionInput(
-                condition: conditionController.text,
-                status: status,
-                diagnosedDate: diagnosedDate,
-                notes: notesController.text,
-              );
-              medicalBloc.add(
-                existing == null
-                    ? AddCondition(input)
-                    : EditCondition(existing.id, input),
-              );
-            },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null ? 'Add Condition' : 'Update Condition'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  conditionController.dispose();
-  notesController.dispose();
+}
+
+class _MedicalConditionDialog extends StatefulWidget {
+  const _MedicalConditionDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final MedicalConditionModel? existing;
+
+  @override
+  State<_MedicalConditionDialog> createState() =>
+      _MedicalConditionDialogState();
+}
+
+class _MedicalConditionDialogState
+    extends State<_MedicalConditionDialog> {
+  late final TextEditingController _conditionController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late String _status;
+  late DateTime? _diagnosedDate;
+
+  String get _successMessage => widget.existing == null
+      ? 'Note added successfully.'
+      : 'Note updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _conditionController =
+        TextEditingController(text: widget.existing?.condition ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+    _status =
+        _supportedValue(widget.existing?.status, _conditionStatuses) ?? '';
+    _diagnosedDate = widget.existing?.diagnosedDate;
+  }
+
+  @override
+  void dispose() {
+    _conditionController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = MedicalConditionInput(
+      condition: _conditionController.text,
+      status: _status,
+      diagnosedDate: _diagnosedDate,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddCondition(input)
+          : EditCondition(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'condition' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'condition') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'condition';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(
+              existing == null
+                  ? 'Add Medical Condition'
+                  : 'Edit Medical Condition',
+            ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _conditionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Condition',
+                        hintText: 'e.g., Diabetes, Asthma',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _status.isEmpty ? null : _status,
+                      decoration: const InputDecoration(labelText: 'Status'),
+                      items: _conditionStatuses
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _status = value ?? ''),
+                      validator: (value) =>
+                          value == null ? 'Status is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _DateField(
+                      label: 'Diagnosed Date',
+                      date: _diagnosedDate,
+                      onPick: () async {
+                        final date =
+                            await _pickDate(context, _diagnosedDate);
+                        if (!mounted || date == null) return;
+                        setState(() => _diagnosedDate = date);
+                      },
+                      onClear: _diagnosedDate == null
+                          ? null
+                          : () => setState(() => _diagnosedDate = null),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _notesController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Additional information',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null
+                          ? 'Add Condition'
+                          : 'Update Condition'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 Future<void> _showAllergyDialog(
@@ -2256,165 +2327,232 @@ Future<void> _showSymptomDialog(
   SymptomEntryModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final nameController =
-      TextEditingController(text: existing?.symptomName ?? '');
-  final locationController =
-      TextEditingController(text: existing?.location ?? '');
-  final triggersController =
-      TextEditingController(text: existing?.triggers ?? '');
-  final descriptionController =
-      TextEditingController(text: existing?.description ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final formKey = GlobalKey<FormState>();
-  var severity = (existing?.severity ?? 1).clamp(1, 10).toInt();
-  var startTime = existing?.startTime ?? DateTime.now();
-  var endTime = existing?.endTime;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _SymptomDialog(
       bloc: medicalBloc,
-      action: 'symptom',
-      successMessage: existing == null
-          ? 'Personal note added successfully.'
-          : 'Personal note updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(existing == null ? 'Log New Symptom' : 'Edit Symptom Entry'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Symptom Name',
-                    hintText: 'e.g., Headache, Nausea, Pain',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<int>(
-                  value: severity,
-                  decoration: const InputDecoration(
-                    labelText: 'Severity (1-10)',
-                  ),
-                  items: List.generate(
-                    10,
-                    (index) => DropdownMenuItem(
-                      value: index + 1,
-                      child: Text('${index + 1} - ${_symptomSeverityLabel(index + 1)}'),
-                    ),
-                  ),
-                  onChanged: (value) => setState(() => severity = value ?? 1),
-                ),
-                const SizedBox(height: 12),
-                _DateTimeField(
-                  label: 'Start Time',
-                  value: startTime,
-                  onPick: () async {
-                    final value = await _pickDateTime(context, startTime);
-                    if (value != null) setState(() => startTime = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                _DateTimeField(
-                  label: 'End Time (Optional)',
-                  value: endTime,
-                  onPick: () async {
-                    final value = await _pickDateTime(context, endTime);
-                    if (value != null) setState(() => endTime = value);
-                  },
-                  onClear: endTime == null
-                      ? null
-                      : () => setState(() => endTime = null),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location (Optional)',
-                    hintText: 'e.g., Head, Stomach, Back',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: triggersController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Possible Triggers (Optional)',
-                    hintText: 'e.g., Stress, Food, Weather',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descriptionController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    hintText: 'Describe the symptom in detail',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = SymptomEntryInput(
-                      symptomName: nameController.text,
-                      severity: severity,
-                      startTime: startTime,
-                      endTime: endTime,
-                      triggers: triggersController.text,
-                      location: locationController.text,
-                      description: descriptionController.text,
-                      notes: notesController.text,
-                    );
-                    medicalBloc.add(
-                    existing == null
-                        ? AddSymptomEntry(input)
-                        : EditSymptomEntry(existing.id, input),
-                  );
-                  },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null ? 'Add Entry' : 'Update Entry'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  for (final controller in [
-    nameController,
-    locationController,
-    triggersController,
-    descriptionController,
-    notesController,
-  ]) {
-    controller.dispose();
+}
+
+class _SymptomDialog extends StatefulWidget {
+  const _SymptomDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final SymptomEntryModel? existing;
+
+  @override
+  State<_SymptomDialog> createState() => _SymptomDialogState();
+}
+
+class _SymptomDialogState extends State<_SymptomDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _triggersController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late int _severity;
+  late DateTime _startTime;
+  late DateTime? _endTime;
+
+  String get _successMessage => widget.existing == null
+      ? 'Personal note added successfully.'
+      : 'Personal note updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.existing?.symptomName ?? '');
+    _locationController =
+        TextEditingController(text: widget.existing?.location ?? '');
+    _triggersController =
+        TextEditingController(text: widget.existing?.triggers ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.existing?.description ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+    _severity = (widget.existing?.severity ?? 1).clamp(1, 10).toInt();
+    _startTime = widget.existing?.startTime ?? DateTime.now();
+    _endTime = widget.existing?.endTime;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _locationController.dispose();
+    _triggersController.dispose();
+    _descriptionController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = SymptomEntryInput(
+      symptomName: _nameController.text,
+      severity: _severity,
+      startTime: _startTime,
+      endTime: _endTime,
+      triggers: _triggersController.text,
+      location: _locationController.text,
+      description: _descriptionController.text,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddSymptomEntry(input)
+          : EditSymptomEntry(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'symptom' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'symptom') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'symptom';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(
+              existing == null ? 'Log New Symptom' : 'Edit Symptom Entry',
+            ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Symptom Name',
+                        hintText: 'e.g., Headache, Nausea, Pain',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: _severity,
+                      decoration: const InputDecoration(
+                        labelText: 'Severity (1-10)',
+                      ),
+                      items: List.generate(
+                        10,
+                        (index) => DropdownMenuItem(
+                          value: index + 1,
+                          child: Text(
+                            '${index + 1} - '
+                            '${_symptomSeverityLabel(index + 1)}',
+                          ),
+                        ),
+                      ),
+                      onChanged: (value) =>
+                          setState(() => _severity = value ?? 1),
+                    ),
+                    const SizedBox(height: 12),
+                    _DateTimeField(
+                      label: 'Start Time',
+                      value: _startTime,
+                      onPick: () async {
+                        final value =
+                            await _pickDateTime(context, _startTime);
+                        if (!mounted || value == null) return;
+                        setState(() => _startTime = value);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _DateTimeField(
+                      label: 'End Time (Optional)',
+                      value: _endTime,
+                      onPick: () async {
+                        final value =
+                            await _pickDateTime(context, _endTime);
+                        if (!mounted || value == null) return;
+                        setState(() => _endTime = value);
+                      },
+                      onClear: _endTime == null
+                          ? null
+                          : () => setState(() => _endTime = null),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Location (Optional)',
+                        hintText: 'e.g., Head, Stomach, Back',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _triggersController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Possible Triggers (Optional)',
+                        hintText: 'e.g., Stress, Food, Weather',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _descriptionController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description (Optional)',
+                        hintText: 'Describe the symptom in detail',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _notesController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: const InputDecoration(labelText: 'Notes'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null ? 'Add Entry' : 'Update Entry'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
