@@ -1,0 +1,93 @@
+In my existing Flutter application, there is a **Meal & Shopping** section with a **Shopping List**.
+
+### Current Flow
+
+1. User opens **Meal & Shopping**.
+2. User adds a shopping item.
+3. The item appears in the **Shopping List**.
+4. User taps the shopping item.
+5. A dialog opens with an option/button **"Mark as Purchased"**.
+6. User taps **"Mark as Purchased"**.
+7. The app throws these errors:
+
+```text
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Task
+
+Investigate and fix the root cause of these errors.
+
+### Important Requirements
+
+* Do **not** remove the Mark as Purchased functionality.
+* Do **not** disable the dialog.
+* Do **not** simply hide or catch the error.
+* Find the actual lifecycle/disposal issue.
+* Check all `TextEditingController` instances used by:
+
+  * Shopping List
+  * Add Shopping Item dialog/screen
+  * Edit Shopping Item dialog/screen
+  * Mark as Purchased dialog
+  * Any parent widget that controls these dialogs
+* Make sure a `TextEditingController` is never accessed after `dispose()`.
+* Check whether a dialog is being closed while its controller is still being used by `setState`, callbacks, async operations, listeners, or `TextField`.
+* Check for controllers being disposed in the wrong widget or at the wrong time.
+* If controllers are created inside a `StatefulWidget`, initialize them properly and dispose them only in that widget's `dispose()` method.
+* If a controller is passed to a dialog/child widget, make sure the parent does not dispose it while the child is still using it.
+* Check `showDialog`, `Navigator.pop`, `setState`, async callbacks, and `Future` operations around the Mark as Purchased action.
+* Check for `setState()` or controller updates occurring after the widget/dialog has been removed from the widget tree.
+* If an async operation is involved, verify `mounted` before calling `setState()` or updating UI.
+* Investigate the `_dependents.isEmpty` assertion as a possible widget lifecycle/dependency issue rather than hiding the assertion.
+
+### Expected Behavior
+
+When the user taps **"Mark as Purchased"**:
+
+1. The item should be marked as purchased successfully.
+2. The dialog should close normally.
+3. The shopping list should update correctly.
+4. No crash should occur.
+5. No Flutter assertion should appear.
+6. No `TextEditingController was used after being disposed` error should appear.
+7. Existing add, edit, delete, and shopping-list functionality must continue working.
+
+### Code Quality
+
+Before making changes:
+
+* Inspect the existing shopping/meal code and identify the exact controller lifecycle problem.
+* Reuse the existing architecture and state management.
+* Do not rewrite the entire feature.
+* Make the smallest safe fix.
+* Do not introduce unnecessary new packages.
+* Preserve the existing UI and styling.
+
+After fixing:
+
+* Run/analyze the Flutter project.
+* Check for compile errors and analyzer warnings.
+* Test this complete flow:
+
+Add Shopping Item → Shopping List → Tap Item → Mark as Purchased → Dialog Closes → Item Updates
+
+Also test:
+
+* Add item
+* Edit item
+* Delete item
+* Mark purchased
+* Open and close dialog without taking action
+* Open dialog multiple times
+
+At the end, explain:
+
+1. What caused the `TextEditingController was used after being disposed` error.
+2. What caused or contributed to the `_dependents.isEmpty` assertion.
+3. Which files were changed.
+4. What was changed in each file.
+5. Confirm that existing functionality was preserved.

@@ -2044,57 +2044,88 @@ Future<double?> _showPurchaseCostDialog(
 ) async {
   final overlayKey = 'purchase-cost-${item.id}';
   if (!_openMealShoppingOverlays.add(overlayKey)) return _purchaseCancelled;
-  final controller = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+
   try {
     return await showDialog<double?>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Mark as purchased'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [_nonNegativeMoneyFormatter],
-            decoration: InputDecoration(
-              labelText: 'Actual Cost (optional)',
-              hintText: item.estimatedCost == null
-                  ? 'Leave blank if unknown'
-                  : item.estimatedCost!.toStringAsFixed(2),
-              prefixText: '\$ ',
-            ),
-            validator: _optionalMoneyValidator,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(_purchaseCancelled),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              Navigator.of(dialogContext).pop(null);
-            },
-            child: const Text('Skip'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              Navigator.of(dialogContext).pop(
-                double.tryParse(controller.text.trim()),
-              );
-            },
-            child: const Text('Mark Purchased'),
-          ),
-        ],
-      ),
+      builder: (_) => _PurchaseCostDialog(item: item),
     );
   } finally {
-    controller.dispose();
     _openMealShoppingOverlays.remove(overlayKey);
+  }
+}
+
+class _PurchaseCostDialog extends StatefulWidget {
+  const _PurchaseCostDialog({required this.item});
+
+  final ShoppingItemModel item;
+
+  @override
+  State<_PurchaseCostDialog> createState() => _PurchaseCostDialogState();
+}
+
+class _PurchaseCostDialogState extends State<_PurchaseCostDialog> {
+  late final TextEditingController _controller;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool _validate() => _formKey.currentState?.validate() ?? false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Mark as purchased'),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [_nonNegativeMoneyFormatter],
+          decoration: InputDecoration(
+            labelText: 'Actual Cost (optional)',
+            hintText: widget.item.estimatedCost == null
+                ? 'Leave blank if unknown'
+                : widget.item.estimatedCost!.toStringAsFixed(2),
+            prefixText: '\$ ',
+          ),
+          validator: _optionalMoneyValidator,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () =>
+              Navigator.of(context).pop(_purchaseCancelled),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            if (!_validate()) return;
+            Navigator.of(context).pop(null);
+          },
+          child: const Text('Skip'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!_validate()) return;
+            Navigator.of(context).pop(
+              double.tryParse(_controller.text.trim()),
+            );
+          },
+          child: const Text('Mark Purchased'),
+        ),
+      ],
+    );
   }
 }
 
