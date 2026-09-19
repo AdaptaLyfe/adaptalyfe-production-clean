@@ -543,6 +543,7 @@ export interface IStorage {
   createAssignment(assignmentData: InsertAssignment): Promise<Assignment>;
   getStudySessionsByUser(userId: number): Promise<StudySession[]>;
   createStudySession(sessionData: InsertStudySession): Promise<StudySession>;
+  deleteStudySession(sessionId: number, userId: number): Promise<boolean>;
   getCampusLocationsByUser(userId: number): Promise<CampusLocation[]>;
   createCampusLocation(locationData: InsertCampusLocation): Promise<CampusLocation>;
   getStudyGroupsByUser(userId: number): Promise<StudyGroup[]>;
@@ -2917,6 +2918,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(studySessions.id, sessionId))
       .returning();
     return session;
+  }
+
+  async deleteStudySession(sessionId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(studySessions)
+      .where(
+        and(
+          eq(studySessions.id, sessionId),
+          eq(studySessions.userId, userId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
   }
 
   async getCampusLocationsByUser(userId: number): Promise<CampusLocation[]> {

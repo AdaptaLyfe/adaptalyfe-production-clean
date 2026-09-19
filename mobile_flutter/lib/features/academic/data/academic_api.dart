@@ -37,6 +37,10 @@ class AcademicApi {
         StudySessionModel.fromJson,
       );
 
+  Future<void> deleteStudySession(int id) async {
+    await client.delete<dynamic>('/api/study-sessions/$id');
+  }
+
   Future<List<CampusLocationModel>> getCampusLocations() =>
       _getList('/api/campus-locations', CampusLocationModel.fromJson);
 

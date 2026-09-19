@@ -28,6 +28,8 @@ class AcademicRepository {
   }) =>
       api.completeStudySession(id, effectiveness: effectiveness);
 
+  Future<void> deleteStudySession(int id) => api.deleteStudySession(id);
+
   Future<List<CampusLocationModel>> getCampusLocations() =>
       api.getCampusLocations();
 

@@ -1485,3 +1485,17 @@ mtime_ms = 1789823703114
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/af0f550b-c0cc-4fd0-b738-2c6252b3cad3/a6186db5-1d18-48be-b879-2d9b70b8a223"
 storage_version_token = "1789823707888099"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "msGxheNO68S8p8KAbPG_k"
+uri = "file://artifacts/flutter-academic-study-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Study fix — changed files ZIP"
+description = "Contains the Study Start Session lifecycle fix, confirmed Delete flow, BLoC/API/repository updates, and server persistence route/storage changes."
+logical_id = "f7b93865-e6d1-41cc-8ab4-3520c4f92d68"
+content_hash = "sha256:9b52dd0e546259e053c83988c6e9b562539a0ffba4763245ac89ccffcf7e0a2f"
+size = 93110
+mtime_ms = 1789824103068
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f7b93865-e6d1-41cc-8ab4-3520c4f92d68/814c1e98-5a1b-4708-8058-5e7c4ae9bda0"
+storage_version_token = "1789824111575773"
+content_type = "application/octet-stream"

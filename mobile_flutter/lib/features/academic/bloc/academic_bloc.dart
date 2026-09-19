@@ -14,6 +14,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     on<AddAssignment>(_addAssignment);
     on<AddStudySession>(_addStudySession);
     on<CompleteStudySession>(_completeStudySession);
+    on<DeleteStudySession>(_deleteStudySession);
     on<AddCampusLocation>(_addCampusLocation);
     on<AddCampusTransport>(_addCampusTransport);
     on<AddStudyGroup>(_addStudyGroup);
@@ -194,6 +195,32 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         emit,
         error,
         'Failed to complete study session. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _deleteStudySession(
+    DeleteStudySession event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.deletingStudySession,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteStudySession(event.sessionId);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Study session deleted.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete study session. Please try again.',
       );
     }
   }

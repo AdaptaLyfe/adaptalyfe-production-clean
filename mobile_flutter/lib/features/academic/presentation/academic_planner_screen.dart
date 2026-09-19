@@ -577,6 +577,10 @@ class _StudySessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDeleting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.deletingStudySession,
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -637,17 +641,58 @@ class _StudySessionCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (!session.isCompleted)
-              TextButton(
-                onPressed: () => context.read<AcademicBloc>().add(
-                      CompleteStudySession(sessionId: session.id),
-                    ),
-                child: const Text('Complete'),
-              ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!session.isCompleted)
+                  TextButton(
+                    onPressed: isDeleting
+                        ? null
+                        : () => context.read<AcademicBloc>().add(
+                              CompleteStudySession(sessionId: session.id),
+                            ),
+                    child: const Text('Complete'),
+                  ),
+                TextButton(
+                  onPressed: isDeleting ? null : () => _confirmDelete(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB91C1C),
+                  ),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Study Session?'),
+        content: const Text(
+          'Are you sure you want to delete this study session?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    context.read<AcademicBloc>().add(DeleteStudySession(session.id));
   }
 }
 
@@ -1185,39 +1230,92 @@ class _EmptyCard extends StatelessWidget {
   }
 }
 
-Future<void> _showStudySessionDialog(BuildContext context) async {
+Future<void> _showStudySessionDialog(BuildContext context) {
   final academicBloc = context.read<AcademicBloc>();
-  final subjectController = TextEditingController();
-  final topicController = TextEditingController();
-  final notesController = TextEditingController();
-  final durationController = TextEditingController(text: '60');
-  final formKey = GlobalKey<FormState>();
-  var technique = _studyTechniques.first;
-
-  await showDialog<void>(
+  return showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (_) => BlocProvider.value(
+      value: academicBloc,
+      child: const _StudySessionDialog(),
+    ),
+  );
+}
+
+class _StudySessionDialog extends StatefulWidget {
+  const _StudySessionDialog();
+
+  @override
+  State<_StudySessionDialog> createState() => _StudySessionDialogState();
+}
+
+class _StudySessionDialogState extends State<_StudySessionDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _subjectController;
+  late final TextEditingController _topicController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _durationController;
+  String _technique = _studyTechniques.first;
+
+  @override
+  void initState() {
+    super.initState();
+    _subjectController = TextEditingController();
+    _topicController = TextEditingController();
+    _notesController = TextEditingController();
+    _durationController = TextEditingController(text: '60');
+  }
+
+  @override
+  void dispose() {
+    _subjectController.dispose();
+    _topicController.dispose();
+    _notesController.dispose();
+    _durationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSubmitting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.addingStudySession,
+    );
+
+    return BlocListener<AcademicBloc, AcademicState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == AcademicAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
         title: const Text('Start New Study Session'),
         content: Form(
-          key: formKey,
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: subjectController,
+                  controller: _subjectController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Subject'),
                   validator: _requiredField('Subject is required'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: topicController,
+                  controller: _topicController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Topic'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: technique,
+                  value: _technique,
                   decoration: const InputDecoration(labelText: 'Technique'),
                   items: _studyTechniques
                       .map(
@@ -1227,12 +1325,15 @@ Future<void> _showStudySessionDialog(BuildContext context) async {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) =>
-                      setState(() => technique = value ?? technique),
+                  onChanged: isSubmitting
+                      ? null
+                      : (value) =>
+                          setState(() => _technique = value ?? _technique),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: durationController,
+                  controller: _durationController,
+                  enabled: !isSubmitting,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Duration (minutes)',
@@ -1247,7 +1348,8 @@ Future<void> _showStudySessionDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: notesController,
+                  controller: _notesController,
+                  enabled: !isSubmitting,
                   minLines: 2,
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Notes'),
@@ -1258,36 +1360,32 @@ Future<void> _showStudySessionDialog(BuildContext context) async {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              academicBloc.add(
-                AddStudySession(
-                  StudySessionInput(
-                    subject: subjectController.text,
-                    topic: topicController.text,
-                    duration: int.parse(durationController.text.trim()),
-                    technique: technique,
-                    notes: notesController.text,
-                  ),
-                ),
-              );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Start Session'),
+            onPressed: isSubmitting ? null : _submit,
+            child: Text(isSubmitting ? 'Starting...' : 'Start Session'),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  subjectController.dispose();
-  topicController.dispose();
-  notesController.dispose();
-  durationController.dispose();
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    context.read<AcademicBloc>().add(
+          AddStudySession(
+            StudySessionInput(
+              subject: _subjectController.text,
+              topic: _topicController.text,
+              duration: int.parse(_durationController.text.trim()),
+              technique: _technique,
+              notes: _notesController.text,
+            ),
+          ),
+        );
+  }
 }
 
 Future<void> _showCampusLocationDialog(BuildContext context) async {

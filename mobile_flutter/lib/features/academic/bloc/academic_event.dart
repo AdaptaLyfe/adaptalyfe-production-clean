@@ -57,6 +57,15 @@ final class CompleteStudySession extends AcademicEvent {
   List<Object?> get props => [sessionId, effectiveness];
 }
 
+final class DeleteStudySession extends AcademicEvent {
+  const DeleteStudySession(this.sessionId);
+
+  final int sessionId;
+
+  @override
+  List<Object?> get props => [sessionId];
+}
+
 final class AddCampusLocation extends AcademicEvent {
   const AddCampusLocation(this.input);
 
