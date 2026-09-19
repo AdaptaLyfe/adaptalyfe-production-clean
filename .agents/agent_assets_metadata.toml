@@ -1401,3 +1401,17 @@ mtime_ms = 1789821247173
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cd6aa04a-bc42-41ac-a3fd-1ab44c6beb27/a37e14ef-b90d-47b5-b726-772cbe013359"
 storage_version_token = "1789821254574434"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k88ySwhSQIor3a10rC4GA"
+uri = "file://artifacts/flutter-skill-save-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Skill save fix — changed files ZIP"
+description = "Contains the updated Flutter Skill screen and the required transition_skills priority migration."
+logical_id = "e1ab02bc-d775-4513-9345-c1e8520d81b7"
+content_hash = "sha256:57c95bd2484fb2759444f6f294f609042301df7a9b10bfe29f53d64ec7d6a8c9"
+size = 6542
+mtime_ms = 1789821329558
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e1ab02bc-d775-4513-9345-c1e8520d81b7/6aa5e631-5ca6-48d8-b33c-25a2716ee8dd"
+storage_version_token = "1789821333788344"
+content_type = "application/octet-stream"

@@ -225,12 +225,14 @@ class _SkillsScreenState extends State<SkillsScreen> {
   }
 
   Future<void> _addSkill(BuildContext context) async {
+    final bloc = context.read<SkillsBloc>();
+    if (bloc.state.busyKey == 'create') return;
     final input = await showDialog<TransitionSkillInput>(
       context: context,
       builder: (_) => const _SkillFormDialog(),
     );
     if (input != null && context.mounted) {
-      context.read<SkillsBloc>().add(CreateSkill(input));
+      bloc.add(CreateSkill(input));
     }
   }
 
