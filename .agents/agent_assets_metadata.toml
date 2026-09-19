@@ -1135,3 +1135,17 @@ mtime_ms = 1789804315987
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba437dac-9ccf-40a0-b123-c96f15f7e93e/538f489b-0842-4d0e-877e-68581b601b87"
 storage_version_token = "1789804368102661"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wSM7QrY5coeXQM0xGJhMu"
+uri = "file://exports/full-mobile-flutter-project.zip"
+type = "unspecified"
+title = "Full Flutter project"
+description = "Complete mobile_flutter project source, including Android, iOS, assets, pubspec, and lib code. Generated build/cache folders are excluded."
+logical_id = "c495c5fd-d1f2-40d6-a13f-8a66dc709490"
+content_hash = "sha256:1a86bdbfd9e72afe48d02a442f5690e134665b99de7b58fe8d14cf85b0024ce3"
+size = 496403
+mtime_ms = 1789804983530
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c495c5fd-d1f2-40d6-a13f-8a66dc709490/74c2ea9f-0547-49ec-8128-fff31d9feb36"
+storage_version_token = "1789804988082744"
+content_type = "application/octet-stream"
