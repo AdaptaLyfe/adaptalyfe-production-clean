@@ -1513,3 +1513,17 @@ mtime_ms = 1789825051547
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dab9527d-c11d-4e0c-a38d-da72d4d06329/959065d0-5243-4d55-81b0-c732039f654b"
 storage_version_token = "1789825060103198"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q2MqE3LH50qsuD-LXEkDL"
+uri = "file://artifacts/academic-planner-schedule-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Schedule Add Class fix — changed files ZIP"
+description = "Contains the Academic Planner screen with the Add Class persistence/state visibility fix and full saved class details rendering."
+logical_id = "e698b088-62b0-4c52-9f40-b502f9ab2f00"
+content_hash = "sha256:e4fac78162d60c4c93eaa2545ebbc70b8e87ec3eaa0d53c18692709bb173fd20"
+size = 14017
+mtime_ms = 1789825524551
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e698b088-62b0-4c52-9f40-b502f9ab2f00/e3faee5d-6e4b-41d8-9fd8-ec7a18c0cc26"
+storage_version_token = "1789825528663517"
+content_type = "application/octet-stream"
