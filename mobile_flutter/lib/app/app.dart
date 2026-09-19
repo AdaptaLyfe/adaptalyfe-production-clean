@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../core/analytics/firebase_analytics_service.dart';
 import '../core/notifications/native_notification_service.dart';
+import '../core/theme/app_theme.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_event.dart';
 import '../features/auth/bloc/auth_state.dart';
@@ -156,12 +157,7 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
         },
         child: MaterialApp.router(
           title: 'Adaptalyfe',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF2E7D6B),
-            ),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light,
           routerConfig: _router,
         ),
       ),

@@ -1,0 +1,151 @@
+Update the existing Flutter project with a **professional, clean, modern, and simple app theme**.
+
+Important:
+
+* Do NOT change existing app functionality.
+* Do NOT change navigation, BLoC, API, Firebase, models, or business logic.
+* Only improve the overall theme, colors, typography, and reusable UI styling.
+* Keep the design consistent across all existing screens.
+
+### Theme Requirements
+
+Create a centralized theme using `ThemeData` so the entire application follows the same design system.
+
+Use a professional color combination:
+
+* Primary: Deep Blue / Indigo
+* Secondary: Soft Blue
+* Background: Very Light Gray / Off-White
+* Surface/Card: White
+* Text Primary: Dark Charcoal
+* Text Secondary: Gray
+* Success: Green
+* Error: Red
+* Warning: Orange
+
+Keep colors professional and not too bright.
+
+### UI Style
+
+Apply the theme consistently to:
+
+* AppBar
+* Buttons
+* ElevatedButton
+* OutlinedButton
+* TextButton
+* TextFields
+* Cards
+* Dialogs
+* Bottom Navigation Bar
+* Navigation Drawer
+* Checkboxes
+* Switches
+* Dropdowns
+* SnackBars
+* Tabs
+* Loading indicators
+
+### Typography
+
+Use a clean modern font style.
+
+Create consistent text styles for:
+
+* App title
+* Screen title
+* Section title
+* Body text
+* Caption
+* Button text
+* Input labels
+* Error messages
+
+Avoid excessive font sizes, bold text, or decorative styling.
+
+### Cards
+
+Make cards:
+
+* White background
+* Slightly rounded corners
+* Subtle border or shadow
+* Consistent padding
+* Consistent spacing
+
+Avoid heavy shadows.
+
+### Buttons
+
+Create consistent buttons with:
+
+* Rounded corners
+* Proper height
+* Professional primary color
+* Clear text
+* Consistent horizontal padding
+
+### Text Fields
+
+Use a clean input style:
+
+* Rounded borders
+* Proper focused border color
+* Clear label/hint colors
+* Proper error styling
+* Consistent padding
+
+### Spacing
+
+Create consistent spacing throughout the application.
+
+Use a simple spacing system such as:
+
+* 4
+* 8
+* 12
+* 16
+* 20
+* 24
+* 32
+
+Avoid random padding/margins across screens where possible.
+
+### Responsive Design
+
+Make sure the theme works properly on:
+
+* Android
+* iOS
+* Web
+* Windows/Desktop
+
+Do not create a mobile-only design.
+
+### Code Structure
+
+Create centralized theme files if they do not already exist, for example:
+
+lib/
+core/
+theme/
+app_theme.dart
+app_colors.dart
+app_text_styles.dart
+
+Use reusable constants instead of hardcoding colors throughout widgets.
+
+### Final Requirements
+
+1. First inspect the existing Flutter project structure.
+2. Reuse the existing design where functionality depends on it.
+3. Create the centralized theme.
+4. Apply the theme to existing screens.
+5. Remove unnecessary hardcoded colors where safe.
+6. Keep the UI simple and professional.
+7. Make sure dark/light mode behavior is not broken if the project already supports it.
+8. Do not modify business logic.
+9. Do not break existing BLoC, Firebase, API, routing, or authentication code.
+10. Run/analyze the project and fix any theme-related compilation errors.
+
+The final result should look like a **professional production Flutter application**, not an overly colorful or heavily designed template.
