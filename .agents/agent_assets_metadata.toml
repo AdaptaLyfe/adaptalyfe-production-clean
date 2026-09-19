@@ -1373,3 +1373,17 @@ mtime_ms = 1789819085497
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/25fca634-dcca-4ab6-a48e-c9c609836ad4/da520a9d-1870-449b-aa21-1811f50ac7e1"
 storage_version_token = "1789819100034847"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "CI3uHQGv_wcvX12xOUD5a"
+uri = "file://artifacts/academic-planner-add-class-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Add Class fix — changed file"
+description = "ZIP containing the updated Academic Planner screen with the lifecycle-safe Add Class dialog."
+logical_id = "d0e972c5-3377-4473-a60a-57d375564a72"
+content_hash = "sha256:c934a51890b34922b506b0b5f7bb2757e700964f6c3e3a0ade8ad2b61709fd7f"
+size = 13263
+mtime_ms = 1789820224110
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d0e972c5-3377-4473-a60a-57d375564a72/9420584b-f2d6-4fb4-9835-b415a14dcff5"
+storage_version_token = "1789820235112950"
+content_type = "application/octet-stream"

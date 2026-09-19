@@ -1711,203 +1711,295 @@ class _AcademicError extends StatelessWidget {
   }
 }
 
+bool _classDialogOpen = false;
+
 Future<void> _showClassDialog(BuildContext context) async {
-  final bloc = context.read<AcademicBloc>();
-  final nameController = TextEditingController();
-  final instructorController = TextEditingController();
-  final buildingController = TextEditingController();
-  final roomController = TextEditingController();
-  final notesController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var dayOfWeek = 1;
-  var startTime = '';
-  var endTime = '';
-  var credits = 3;
-  var semester = 'Fall 2025';
+  if (_classDialogOpen) return;
+  _classDialogOpen = true;
+  try {
+    final bloc = context.read<AcademicBloc>();
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _AcademicClassDialog(bloc: bloc),
+    );
+  } finally {
+    _classDialogOpen = false;
+  }
+}
 
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Add New Class'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Class name'),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: instructorController,
-                  decoration: const InputDecoration(labelText: 'Instructor'),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: buildingController,
-                        decoration:
-                            const InputDecoration(labelText: 'Building'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: roomController,
-                        decoration: const InputDecoration(labelText: 'Room'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _TimeField(
-                        label: 'Start time',
-                        value: startTime,
-                        onTap: () async {
-                          final picked = await _pickTime(context, startTime);
-                          if (picked != null) setState(() => startTime = picked);
-                        },
-                        validator: _requiredValidator,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _TimeField(
-                        label: 'End time',
-                        value: endTime,
-                        onTap: () async {
-                          final picked = await _pickTime(context, endTime);
-                          if (picked != null) setState(() => endTime = picked);
-                        },
-                        validator: _requiredValidator,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
-                  value: dayOfWeek,
-                  decoration: const InputDecoration(labelText: 'Day'),
-                  items: List.generate(
-                    5,
-                    (index) => DropdownMenuItem(
-                      value: index + 1,
-                      child: Text(_dayName(index + 1)),
-                    ),
-                  ),
-                  onChanged: (value) =>
-                      setState(() => dayOfWeek = value ?? dayOfWeek),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: '$credits',
-                        keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Credits'),
-                         validator: (value) {
-                           final parsed = int.tryParse(value?.trim() ?? '');
-                           if (parsed == null || parsed < 1 || parsed > 6) {
-                             return 'Enter 1 to 6 credits';
-                           }
-                           return null;
-                         },
-                        onChanged: (value) =>
-                            credits = int.tryParse(value) ?? credits,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: semester,
-                        decoration:
-                            const InputDecoration(labelText: 'Semester'),
-                        items: _semesters
-                            .map(
-                              (value) => DropdownMenuItem(
-                                value: value,
-                                child: Text(value),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) =>
-                            setState(() => semester = value ?? semester),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: notesController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
-                  ),
-                ),
-              ],
-            ),
-          ),
+class _AcademicClassDialog extends StatefulWidget {
+  const _AcademicClassDialog({required this.bloc});
+
+  final AcademicBloc bloc;
+
+  @override
+  State<_AcademicClassDialog> createState() => _AcademicClassDialogState();
+}
+
+class _AcademicClassDialogState extends State<_AcademicClassDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _instructorController;
+  late final TextEditingController _buildingController;
+  late final TextEditingController _roomController;
+  late final TextEditingController _creditsController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  var _dayOfWeek = 1;
+  var _startTime = '';
+  var _endTime = '';
+  var _semester = 'Fall 2025';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _instructorController = TextEditingController();
+    _buildingController = TextEditingController();
+    _roomController = TextEditingController();
+    _creditsController = TextEditingController(text: '3');
+    _notesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _instructorController.dispose();
+    _buildingController.dispose();
+    _roomController.dispose();
+    _creditsController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    if (_startTime.compareTo(_endTime) >= 0) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(content: Text('End time must be after start time.')),
+        );
+      return;
+    }
+
+    final credits = int.tryParse(_creditsController.text.trim());
+    if (credits == null) return;
+    widget.bloc.add(
+      AddAcademicClass(
+        AcademicClassInput(
+          className: _nameController.text,
+          instructor: _instructorController.text,
+          building: _buildingController.text,
+          room: _roomController.text,
+          startTime: _startTime,
+          endTime: _endTime,
+          dayOfWeek: _dayOfWeek,
+          credits: credits.clamp(1, 6).toInt(),
+          semester: _semester,
+          notes: _notesController.text,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              if (startTime.compareTo(endTime) >= 0) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    const SnackBar(
-                      content: Text('End time must be after start time.'),
+      ),
+    );
+  }
+
+  Future<void> _pickStartTime() async {
+    final picked = await _pickTime(context, _startTime);
+    if (!mounted || picked == null) return;
+    setState(() => _startTime = picked);
+  }
+
+  Future<void> _pickEndTime() async {
+    final picked = await _pickTime(context, _endTime);
+    if (!mounted || picked == null) return;
+    setState(() => _endTime = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AcademicBloc, AcademicState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.action == AcademicAction.addingClass &&
+          current.action == AcademicAction.none &&
+          current.actionMessage == 'Class added successfully.',
+      listener: (context, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          Navigator.of(context).pop();
+        });
+      },
+      child: BlocBuilder<AcademicBloc, AcademicState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.action == current.action) return false;
+          if (current.action == AcademicAction.addingClass) return true;
+          return current.action == AcademicAction.none &&
+              current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.action == AcademicAction.addingClass;
+          return AlertDialog(
+            title: const Text('Add New Class'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      enabled: !isSubmitting,
+                      decoration:
+                          const InputDecoration(labelText: 'Class name'),
+                      validator: _requiredValidator,
                     ),
-                  );
-                return;
-              }
-              bloc.add(
-                    AddAcademicClass(
-                      AcademicClassInput(
-                        className: nameController.text,
-                        instructor: instructorController.text,
-                        building: buildingController.text,
-                        room: roomController.text,
-                        startTime: startTime,
-                        endTime: endTime,
-                        dayOfWeek: dayOfWeek,
-                        credits: credits.clamp(1, 6).toInt(),
-                        semester: semester,
-                        notes: notesController.text,
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _instructorController,
+                      enabled: !isSubmitting,
+                      decoration:
+                          const InputDecoration(labelText: 'Instructor'),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _buildingController,
+                            enabled: !isSubmitting,
+                            decoration: const InputDecoration(
+                              labelText: 'Building',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _roomController,
+                            enabled: !isSubmitting,
+                            decoration:
+                                const InputDecoration(labelText: 'Room'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _TimeField(
+                            label: 'Start time',
+                            value: _startTime,
+                            onTap: isSubmitting ? () {} : _pickStartTime,
+                            validator: _requiredValidator,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _TimeField(
+                            label: 'End time',
+                            value: _endTime,
+                            onTap: isSubmitting ? () {} : _pickEndTime,
+                            validator: _requiredValidator,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<int>(
+                      value: _dayOfWeek,
+                      decoration: const InputDecoration(labelText: 'Day'),
+                      items: List.generate(
+                        5,
+                        (index) => DropdownMenuItem(
+                          value: index + 1,
+                          child: Text(_dayName(index + 1)),
+                        ),
+                      ),
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(
+                                () => _dayOfWeek = value ?? _dayOfWeek,
+                              ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _creditsController,
+                            enabled: !isSubmitting,
+                            keyboardType: TextInputType.number,
+                            decoration:
+                                const InputDecoration(labelText: 'Credits'),
+                            validator: (value) {
+                              final parsed =
+                                  int.tryParse(value?.trim() ?? '');
+                              if (parsed == null ||
+                                  parsed < 1 ||
+                                  parsed > 6) {
+                                return 'Enter 1 to 6 credits';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _semester,
+                            decoration:
+                                const InputDecoration(labelText: 'Semester'),
+                            items: _semesters
+                                .map(
+                                  (value) => DropdownMenuItem(
+                                    value: value,
+                                    child: Text(value),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: isSubmitting
+                                ? null
+                                : (value) => setState(
+                                      () => _semester = value ?? _semester,
+                                    ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _notesController,
+                      enabled: !isSubmitting,
+                      maxLines: 2,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes (optional)',
                       ),
                     ),
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Add Class'),
-          ),
-        ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () {
+                        if (mounted) Navigator.of(context).pop();
+                      },
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(isSubmitting ? 'Adding...' : 'Add Class'),
+              ),
+            ],
+          );
+        },
       ),
-    ),
-  );
-
-  nameController.dispose();
-  instructorController.dispose();
-  buildingController.dispose();
-  roomController.dispose();
-  notesController.dispose();
+    );
+  }
 }
 
 Future<void> _showAssignmentDialog(BuildContext context) async {
