@@ -1037,3 +1037,17 @@ mtime_ms = 1789795825664
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd84a894-d6e6-4e85-89e5-eb33deeedcf6/e0c38530-b798-4005-aae7-09ee25b4b2df"
 storage_version_token = "1789795839111766"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "khRfq594tVi5WFziq5Zg7"
+uri = "file://life-skill-crud-fix.zip"
+type = "unspecified"
+title = "Life Skills CRUD fix"
+description = "React/wrapper Life Skills CRUD improvements plus server update-not-found handling and production schema compatibility."
+logical_id = "76a2f06f-eba8-4c1f-a165-e177fefd8612"
+content_hash = "sha256:c7b736bdd67ebf6edc5cb35cc41241f1ed074165cefdd05a80db9cb113d25b19"
+size = 79175
+mtime_ms = 1789796439496
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/76a2f06f-eba8-4c1f-a165-e177fefd8612/d0de6ef2-0961-4a0e-aa2b-a0a6ba113bea"
+storage_version_token = "1789796445525476"
+content_type = "application/octet-stream"

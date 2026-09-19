@@ -548,7 +548,7 @@ export interface IStorage {
     skillId: number,
     userId: number,
     updateData: Partial<TransitionSkill>,
-  ): Promise<TransitionSkill>;
+  ): Promise<TransitionSkill | undefined>;
   deleteTransitionSkill(skillId: number, userId: number): Promise<boolean>;
 
   // Calendar Events
@@ -2913,7 +2913,7 @@ export class DatabaseStorage implements IStorage {
     skillId: number,
     userId: number,
     updateData: Partial<TransitionSkill>,
-  ): Promise<TransitionSkill> {
+  ): Promise<TransitionSkill | undefined> {
     const capabilities = await getTransitionSkillSchemaCapabilities();
     if (!capabilities.hasTable) {
       throw new Error("The transition_skills table is unavailable.");
@@ -2939,9 +2939,6 @@ export class DatabaseStorage implements IStorage {
     const skill = updated
       ? await getTransitionSkillById(updated.id, capabilities)
       : undefined;
-    if (!skill) {
-      throw new Error("The transition skill could not be updated.");
-    }
     return skill;
   }
 

@@ -2185,6 +2185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.id,
         updateData,
       );
+      if (!skill) {
+        return res.status(404).json({ message: "Transition skill not found" });
+      }
       res.json(skill);
     } catch (error) {
       console.error("Failed to update transition skill:", error);

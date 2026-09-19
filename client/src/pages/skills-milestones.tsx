@@ -57,6 +57,32 @@ const skillFormSchema = z.object({
 
 type SkillFormValues = z.infer<typeof skillFormSchema>;
 
+function parseTransitionSkillResponse(responseData: unknown): TransitionSkill {
+  const candidate =
+    (responseData as { skill?: unknown; transitionSkill?: unknown; data?: unknown } | null)
+      ?.skill ??
+    (responseData as { transitionSkill?: unknown; data?: unknown } | null)?.transitionSkill ??
+    (responseData as { data?: unknown } | null)?.data ??
+    responseData;
+
+  if (
+    !candidate ||
+    typeof candidate !== "object" ||
+    typeof (candidate as { id?: unknown }).id !== "number"
+  ) {
+    throw new Error("The server returned an invalid skill response.");
+  }
+
+  return candidate as TransitionSkill;
+}
+
+function getSkillMutationErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message.replace(/^\d+:\s*/, "");
+  }
+  return fallback;
+}
+
 const categoryConfig = {
   academic: { label: "Academic Skills", icon: BookOpen, color: "bg-blue-500" },
   social: { label: "Social Skills", icon: Users, color: "bg-green-500" },
@@ -125,15 +151,7 @@ export default function SkillsMilestones() {
         targetLevel: skillData.targetLevel,
         priority: skillData.priority,
       });
-      const responseData = await response.json();
-      const createdSkill =
-        responseData?.skill ?? responseData?.data ?? responseData;
-
-      if (!createdSkill || typeof createdSkill.id !== "number") {
-        throw new Error("The new skill was saved, but the server returned an invalid response.");
-      }
-
-      return createdSkill as TransitionSkill;
+      return parseTransitionSkillResponse(await response.json());
     },
     onSuccess: (createdSkill) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -169,7 +187,7 @@ export default function SkillsMilestones() {
   const updateSkillMutation = useMutation({
     mutationFn: async ({ id, currentLevel }: { id: number; currentLevel: number }) => {
       const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
-      return (await response.json()) as TransitionSkill;
+      return parseTransitionSkillResponse(await response.json());
     },
     onMutate: ({ id }) => {
       setUpdatingSkillIds((currentIds) => new Set(currentIds).add(id));
@@ -198,12 +216,26 @@ export default function SkillsMilestones() {
 
   // Edit skill mutation
   const editSkillMutation = useMutation({
-    mutationFn: async ({ id, skillData }: { id: number; skillData: any }) => {
-      return apiRequest("PATCH", `/api/transition-skills/${id}`, skillData);
+    mutationFn: async ({ id, skillData }: { id: number; skillData: SkillFormValues }) => {
+      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, {
+        skillName: skillData.skillName.trim(),
+        description: skillData.description?.trim() || null,
+        skillCategory: skillData.skillCategory,
+        currentLevel: skillData.currentLevel,
+        targetLevel: skillData.targetLevel,
+        priority: skillData.priority,
+      });
+      return parseTransitionSkillResponse(await response.json());
     },
-    onSuccess: () => {
+    onSuccess: (updatedSkill) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) =>
+          currentSkills.map((skill) =>
+            skill.id === updatedSkill.id ? { ...skill, ...updatedSkill } : skill,
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
       setIsEditSkillOpen(false);
       setEditingSkill(null);
       editForm.reset();
@@ -212,10 +244,10 @@ export default function SkillsMilestones() {
         description: "Skill updated successfully!",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update skill",
+        description: getSkillMutationErrorMessage(error, "Failed to update skill"),
         variant: "destructive",
       });
     },
@@ -224,20 +256,25 @@ export default function SkillsMilestones() {
   // Delete skill mutation
   const deleteSkillMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/transition-skills/${id}`);
+      await apiRequest("DELETE", `/api/transition-skills/${id}`);
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedSkillId) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) =>
+          currentSkills.filter((skill) => skill.id !== deletedSkillId),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
       toast({
         title: "Success",
         description: "Skill deleted successfully!",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to delete skill",
+        description: getSkillMutationErrorMessage(error, "Failed to delete skill"),
         variant: "destructive",
       });
     },
