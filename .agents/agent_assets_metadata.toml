@@ -1093,3 +1093,17 @@ mtime_ms = 1789801047464
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d5766944-552e-41c7-a81a-7ae4d0e21b10/5866565f-c9cb-483a-861c-403f27a5d6a3"
 storage_version_token = "1789801052471919"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wB7xF9dWWQt7frDAmWjt6"
+uri = "file://exports/flutter-compile-fixes.zip"
+type = "unspecified"
+title = "Flutter compile fixes"
+description = "Updated Flutter files matching the reported analyzer errors, with project-relative paths preserved."
+logical_id = "cfedd236-665f-483d-9a37-4416b10dbfa5"
+content_hash = "sha256:b117e4cf8de29b4fa6bd9faf10c2d8e60f5c4dd5db298a1b12547ec1bb2da43c"
+size = 35370
+mtime_ms = 1789801604680
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cfedd236-665f-483d-9a37-4416b10dbfa5/5204be62-4f47-46f6-8f48-4f901c73e3bc"
+storage_version_token = "1789801610163285"
+content_type = "application/octet-stream"
