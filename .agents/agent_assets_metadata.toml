@@ -1079,3 +1079,17 @@ mtime_ms = 1789800403584
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7dac977d-6f1d-4a95-a8ea-bc177c4da041/b65ed6e5-7ae4-40cc-b73b-a084b2d94e58"
 storage_version_token = "1789800407022400"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kEfX06qR3fvLHp58ZJPM2"
+uri = "file://exports/flutter-daily-tasks-updated-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks updated files"
+description = "Zip archive containing the updated Flutter routes, Daily Tasks BLoC, and Home screen files with project-relative paths preserved."
+logical_id = "d5766944-552e-41c7-a81a-7ae4d0e21b10"
+content_hash = "sha256:3c9409ba51b580d31fe2b84b43607c4f4d7a72191a15e96745551f50a5a0d7d6"
+size = 7489
+mtime_ms = 1789801047464
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d5766944-552e-41c7-a81a-7ae4d0e21b10/5866565f-c9cb-483a-861c-403f27a5d6a3"
+storage_version_token = "1789801052471919"
+content_type = "application/octet-stream"
