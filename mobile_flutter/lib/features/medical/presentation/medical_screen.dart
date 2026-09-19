@@ -2360,145 +2360,211 @@ Future<void> _showContactDialog(
   EmergencyContactModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final nameController = TextEditingController(text: existing?.name ?? '');
-  final phoneController =
-      TextEditingController(text: existing?.phoneNumber ?? '');
-  final emailController = TextEditingController(text: existing?.email ?? '');
-  final addressController =
-      TextEditingController(text: existing?.address ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final relationshipController =
-      TextEditingController(text: existing?.relationship ?? '');
-  final formKey = GlobalKey<FormState>();
-  var isPrimary = existing?.isPrimary ?? false;
-  var isEmergency = existing?.isEmergencyContact ?? true;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _TrustedContactDialog(
       bloc: medicalBloc,
-      action: 'contact',
-      successMessage: existing == null
-          ? 'Trusted contact added successfully.'
-          : 'Trusted contact updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name *'),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: relationshipController,
-                  decoration: const InputDecoration(
-                    labelText: 'Relationship',
-                    hintText: 'e.g., Parent, Sibling, Friend',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  decoration: const InputDecoration(labelText: 'Phone Number *'),
-                  validator: _phoneValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  validator: _emailValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: addressController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Primary contact'),
-                  value: isPrimary,
-                  onChanged: (value) => setState(() => isPrimary = value),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Emergency contact'),
-                  value: isEmergency,
-                  onChanged: (value) => setState(() => isEmergency = value),
-                ),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Special instructions or notes',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = EmergencyContactInput(
-                      name: nameController.text,
-                      relationship: relationshipController.text,
-                      phoneNumber: phoneController.text,
-                      email: emailController.text,
-                      address: addressController.text,
-                      isPrimary: isPrimary,
-                      isEmergencyContact: isEmergency,
-                      notes: notesController.text,
-                    );
-                    medicalBloc.add(
-                    existing == null
-                        ? AddEmergencyContact(input)
-                        : EditEmergencyContact(existing.id, input),
-                  );
-                  },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null ? 'Save Contact' : 'Update Contact'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  for (final controller in [
-    nameController,
-    relationshipController,
-    phoneController,
-    emailController,
-    addressController,
-    notesController,
-  ]) {
-    controller.dispose();
+}
+
+class _TrustedContactDialog extends StatefulWidget {
+  const _TrustedContactDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final EmergencyContactModel? existing;
+
+  @override
+  State<_TrustedContactDialog> createState() => _TrustedContactDialogState();
+}
+
+class _TrustedContactDialogState extends State<_TrustedContactDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _relationshipController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late var _isPrimary = widget.existing?.isPrimary ?? false;
+  late var _isEmergency = widget.existing?.isEmergencyContact ?? true;
+
+  String get _successMessage => widget.existing == null
+      ? 'Trusted contact added successfully.'
+      : 'Trusted contact updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.existing?.name ?? '');
+    _relationshipController =
+        TextEditingController(text: widget.existing?.relationship ?? '');
+    _phoneController =
+        TextEditingController(text: widget.existing?.phoneNumber ?? '');
+    _emailController =
+        TextEditingController(text: widget.existing?.email ?? '');
+    _addressController =
+        TextEditingController(text: widget.existing?.address ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _relationshipController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = EmergencyContactInput(
+      name: _nameController.text,
+      relationship: _relationshipController.text,
+      phoneNumber: _phoneController.text,
+      email: _emailController.text,
+      address: _addressController.text,
+      isPrimary: _isPrimary,
+      isEmergencyContact: _isEmergency,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddEmergencyContact(input)
+          : EditEmergencyContact(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'contact' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'contact';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(existing == null ? 'Add Contact' : 'Edit Contact'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(labelText: 'Name *'),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _relationshipController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Relationship',
+                        hintText: 'e.g., Parent, Sibling, Friend',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phoneController,
+                      enabled: !isSubmitting,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                      decoration:
+                          const InputDecoration(labelText: 'Phone Number *'),
+                      validator: _phoneValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _emailController,
+                      enabled: !isSubmitting,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      validator: _emailValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _addressController,
+                      enabled: !isSubmitting,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration:
+                          const InputDecoration(labelText: 'Address'),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Primary contact'),
+                      value: _isPrimary,
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(() => _isPrimary = value),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Emergency contact'),
+                      value: _isEmergency,
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(() => _isEmergency = value),
+                    ),
+                    TextFormField(
+                      controller: _notesController,
+                      enabled: !isSubmitting,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Special instructions or notes',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null ? 'Save Contact' : 'Update Contact'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
