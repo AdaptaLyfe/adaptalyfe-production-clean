@@ -1,0 +1,89 @@
+In the existing Flutter application, fix the crash in:
+
+**Academic Planner → Add Assignment → Add Assignment button**
+
+### Current issue
+
+When the user fills the Add Assignment form and taps **Add Assignment**, the app crashes with these errors:
+
+```text
+A TextEditingController was used after being disposed.
+
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true.
+```
+
+### Task
+
+Debug the existing Add Assignment implementation and fix the root cause.
+
+Please:
+
+1. Inspect the Add Assignment screen/widget, especially:
+
+   * `TextEditingController`
+   * `FocusNode`
+   * `StatefulWidget` lifecycle
+   * `initState()`
+   * `dispose()`
+   * `showDialog()`
+   * `showModalBottomSheet()`
+   * `Navigator.pop()`
+   * BLoC events/states if used
+   * Provider/Riverpod listeners if used
+
+2. Find where a `TextEditingController` is being disposed while it is still being used.
+
+3. Make sure controllers are:
+
+   * Created at the correct lifecycle level.
+   * Not disposed before the Add Assignment operation finishes.
+   * Not reused after `dispose()`.
+   * Disposed exactly once in the correct `dispose()` method.
+
+4. Check whether the Add Assignment button triggers:
+
+   * A dialog/bottom sheet closing too early.
+   * A widget rebuild that recreates controllers incorrectly.
+   * An async operation that continues using controllers after the widget/dialog has been closed.
+   * A BLoC state change that causes the form widget to be removed while controller values are still being accessed.
+
+5. For async code, make sure the widget is still mounted before updating UI or accessing widget-related objects after `await`.
+
+6. Fix the `_dependents.isEmpty` assertion as well. Do not simply suppress the assertion or add unrelated workarounds. Find the widget lifecycle/dependency issue causing it.
+
+### Important
+
+* Do **not** rewrite the entire Academic Planner.
+* Do **not** change the existing UI design.
+* Do **not** change the Add Assignment fields or business logic.
+* Do **not** change API/Firebase/database behavior unless required to fix this crash.
+* Keep the existing architecture and coding style.
+* Make the smallest safe fix possible.
+
+### Expected behavior
+
+After the fix:
+
+1. Open **Academic Planner**.
+2. Open **Add Assignment**.
+3. Enter assignment details.
+4. Tap **Add Assignment**.
+5. Assignment should be successfully added.
+6. No crash should occur.
+7. No `TextEditingController was used after being disposed` error.
+8. No `_dependents.isEmpty` assertion.
+9. The existing success/navigation behavior should remain unchanged.
+
+### Before making changes
+
+First inspect the relevant files and explain:
+
+* Which controller/widget lifecycle is causing the problem.
+* Why the controller is being used after disposal.
+* What is causing the `_dependents.isEmpty` assertion.
+
+Then implement the fix and provide the exact files/sections changed.
+
+Do not create duplicate screens or duplicate controllers.

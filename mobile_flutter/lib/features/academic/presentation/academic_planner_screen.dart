@@ -2002,37 +2002,90 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
   }
 }
 
-Future<void> _showAssignmentDialog(BuildContext context) async {
+Future<void> _showAssignmentDialog(BuildContext context) {
   final bloc = context.read<AcademicBloc>();
-  final titleController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final hoursController = TextEditingController(text: '2');
-  final formKey = GlobalKey<FormState>();
-  var type = 'homework';
-  var priority = 'medium';
-  DateTime? dueDate;
-  int? classId;
-
-  await showDialog<void>(
+  return showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (_) => BlocProvider.value(
+      value: bloc,
+      child: const _AssignmentDialog(),
+    ),
+  );
+}
+
+class _AssignmentDialog extends StatefulWidget {
+  const _AssignmentDialog();
+
+  @override
+  State<_AssignmentDialog> createState() => _AssignmentDialogState();
+}
+
+class _AssignmentDialogState extends State<_AssignmentDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _hoursController;
+  String _type = 'homework';
+  String _priority = 'medium';
+  DateTime? _dueDate;
+  int? _classId;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _hoursController = TextEditingController(text: '2');
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _hoursController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<AcademicBloc>();
+    final isSubmitting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.addingAssignment,
+    );
+    final classes = bloc.state.classes;
+
+    return BlocListener<AcademicBloc, AcademicState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == AcademicAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
         title: const Text('Add New Assignment'),
         content: Form(
-          key: formKey,
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: titleController,
+                  controller: _titleController,
+                  enabled: !isSubmitting,
                   decoration:
                       const InputDecoration(labelText: 'Assignment title'),
                   validator: _requiredValidator,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: descriptionController,
+                  controller: _descriptionController,
+                  enabled: !isSubmitting,
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Description (optional)',
@@ -2040,7 +2093,7 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: type,
+                  value: _type,
                   decoration: const InputDecoration(labelText: 'Type'),
                   items: _assignmentTypes
                       .map(
@@ -2050,38 +2103,20 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) => setState(() => type = value ?? type),
+                  onChanged: isSubmitting
+                      ? null
+                      : (value) => setState(() => _type = value ?? _type),
                 ),
                 const SizedBox(height: 10),
                 _DateField(
                   label: 'Due date',
-                  value: dueDate,
-                  onTap: () async {
-                    final initialDate =
-                        dueDate ?? DateTime.now().add(const Duration(days: 1));
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: initialDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(DateTime.now().year + 5),
-                    );
-                    if (picked != null) {
-                      setState(
-                        () => dueDate = DateTime(
-                          picked.year,
-                          picked.month,
-                          picked.day,
-                          initialDate.hour,
-                          initialDate.minute,
-                        ),
-                      );
-                    }
-                  },
+                  value: _dueDate,
+                  onTap: isSubmitting ? () {} : _pickDueDate,
                 ),
                 const SizedBox(height: 10),
-                if (bloc.state.classes.isNotEmpty)
+                if (classes.isNotEmpty)
                   DropdownButtonFormField<int?>(
-                    value: classId,
+                    value: _classId,
                     decoration:
                         const InputDecoration(labelText: 'Class (optional)'),
                     items: [
@@ -2089,19 +2124,20 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                         value: null,
                         child: Text('No class'),
                       ),
-                      ...bloc.state.classes.map(
-                            (item) => DropdownMenuItem<int?>(
-                              value: item.id,
-                              child: Text(item.className),
-                            ),
-                          ),
+                      ...classes.map(
+                        (item) => DropdownMenuItem<int?>(
+                          value: item.id,
+                          child: Text(item.className),
+                        ),
+                      ),
                     ],
-                    onChanged: (value) => setState(() => classId = value),
+                    onChanged: isSubmitting
+                        ? null
+                        : (value) => setState(() => _classId = value),
                   ),
-                if (bloc.state.classes.isNotEmpty)
-                  const SizedBox(height: 10),
+                if (classes.isNotEmpty) const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: priority,
+                  value: _priority,
                   decoration: const InputDecoration(labelText: 'Priority'),
                   items: _priorities
                       .map(
@@ -2111,12 +2147,15 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) =>
-                      setState(() => priority = value ?? priority),
+                  onChanged: isSubmitting
+                      ? null
+                      : (value) =>
+                          setState(() => _priority = value ?? _priority),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: hoursController,
+                  controller: _hoursController,
+                  enabled: !isSubmitting,
                   keyboardType: TextInputType.number,
                   decoration:
                       const InputDecoration(labelText: 'Estimated hours'),
@@ -2134,46 +2173,63 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              if (dueDate == null) {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    const SnackBar(content: Text('Choose a due date.')),
-                  );
-                return;
-              }
-              bloc.add(
-                    AddAssignment(
-                      AssignmentInput(
-                        title: titleController.text,
-                        description: descriptionController.text,
-                        type: type,
-                        dueDate: dueDate!,
-                        priority: priority,
-                        classId: classId,
-                        estimatedHours:
-                            int.tryParse(hoursController.text.trim()) ?? 2,
-                      ),
-                    ),
-                  );
-              Navigator.pop(dialogContext);
-            },
-            child: const Text('Add Assignment'),
+            onPressed: isSubmitting ? null : _submit,
+            child: Text(isSubmitting ? 'Adding...' : 'Add Assignment'),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  titleController.dispose();
-  descriptionController.dispose();
-  hoursController.dispose();
+  Future<void> _pickDueDate() async {
+    final initialDate =
+        _dueDate ?? DateTime.now().add(const Duration(days: 1));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(DateTime.now().year + 5),
+    );
+    if (!mounted || picked == null) return;
+    setState(
+      () => _dueDate = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        initialDate.hour,
+        initialDate.minute,
+      ),
+    );
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_dueDate == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Choose a due date.')));
+      return;
+    }
+
+    context.read<AcademicBloc>().add(
+          AddAssignment(
+            AssignmentInput(
+              title: _titleController.text,
+              description: _descriptionController.text,
+              type: _type,
+              dueDate: _dueDate!,
+              priority: _priority,
+              classId: _classId,
+              estimatedHours:
+                  int.tryParse(_hoursController.text.trim()) ?? 2,
+            ),
+          ),
+        );
+  }
 }
 
 class _TimeField extends StatelessWidget {
