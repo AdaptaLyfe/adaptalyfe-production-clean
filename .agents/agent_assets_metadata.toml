@@ -1555,3 +1555,17 @@ mtime_ms = 1789826518147
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8a3143a2-c468-46d5-bf9e-bbb6a24915e2/7ea269e2-b395-4134-8d4f-01ae0b87b218"
 storage_version_token = "1789826522693699"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xMXeav4PvICMON8nslWEn"
+uri = "file://artifacts/flutter-theme-changes.zip"
+type = "unspecified"
+title = "Flutter theme changes — changed files ZIP"
+description = "Theme-only Flutter changes: centralized colors, text styles, ThemeData, and app theme wiring."
+logical_id = "4ef88a37-51c4-40bd-a7ac-f082b20cc10e"
+content_hash = "sha256:c3c23f4b7d9524db51fec5b854f0c315e7464ac93232b420a0d03631d5015692"
+size = 4738
+mtime_ms = 1789826997152
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4ef88a37-51c4-40bd-a7ac-f082b20cc10e/90bb92aa-ba19-4097-b62b-0315810e54d6"
+storage_version_token = "1789827006381741"
+content_type = "application/octet-stream"

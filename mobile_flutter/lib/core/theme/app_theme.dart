@@ -29,7 +29,6 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       canvasColor: AppColors.background,
-      fontFamily: 'sans',
       textTheme: const TextTheme(
         displayLarge: AppTextStyles.title,
         headlineMedium: AppTextStyles.title,
@@ -54,7 +53,7 @@ abstract final class AppTheme {
         color: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 1,
-        shadowColor: AppColors.primaryDark.withValues(alpha: 0.08),
+      shadowColor: AppColors.primaryDark.withOpacity(0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: AppColors.outlineSoft),
@@ -157,10 +156,11 @@ abstract final class AppTheme {
         indicatorColor: AppColors.primarySoft,
         elevation: 3,
         height: 68,
-        labelTextStyle: const WidgetStatePropertyAll(AppTextStyles.caption),
-        iconTheme: WidgetStateProperty.resolveWith(
+        labelTextStyle:
+            const MaterialStatePropertyAll(AppTextStyles.caption),
+        iconTheme: MaterialStateProperty.resolveWith(
           (states) => IconThemeData(
-            color: states.contains(WidgetState.selected)
+            color: states.contains(MaterialState.selected)
                 ? AppColors.primary
                 : AppColors.textSecondary,
           ),
@@ -172,29 +172,29 @@ abstract final class AppTheme {
         elevation: 8,
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
+        fillColor: MaterialStateProperty.resolveWith(
+          (states) => states.contains(MaterialState.selected)
               ? AppColors.primary
               : Colors.transparent,
         ),
-        checkColor: const WidgetStatePropertyAll(Colors.white),
+        checkColor: const MaterialStatePropertyAll(Colors.white),
         side: const BorderSide(color: AppColors.outline, width: 1.5),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
+        thumbColor: MaterialStateProperty.resolveWith(
+          (states) => states.contains(MaterialState.selected)
               ? Colors.white
               : AppColors.textSecondary,
         ),
-        trackColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
+        trackColor: MaterialStateProperty.resolveWith(
+          (states) => states.contains(MaterialState.selected)
               ? AppColors.primary
               : AppColors.outlineSoft,
         ),
-        trackOutlineColor: const WidgetStatePropertyAll(AppColors.outline),
+        trackOutlineColor: const MaterialStatePropertyAll(AppColors.outline),
       ),
       dropdownMenuTheme: DropdownMenuThemeData(
         inputDecorationTheme: InputDecorationTheme(
