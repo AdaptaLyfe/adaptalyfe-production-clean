@@ -470,6 +470,7 @@ class _SkillCard extends StatelessWidget {
                     ),
                   ),
                 PopupMenuButton<String>(
+                  enabled: !busy,
                   onSelected: (value) {
                     if (value == 'edit') onEdit();
                     if (value == 'delete') onDelete();

@@ -1051,3 +1051,17 @@ mtime_ms = 1789796439496
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/76a2f06f-eba8-4c1f-a165-e177fefd8612/d0de6ef2-0961-4a0e-aa2b-a0a6ba113bea"
 storage_version_token = "1789796445525476"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1qKOqbnBM-aXfraSSsaAl"
+uri = "file://life-skills-final-cross-platform-fix.zip"
+type = "unspecified"
+title = "Final Life Skills cross-platform fix"
+description = "Complete React/wrapper, Flutter, API logging, race-prevention, CRUD, and production-schema compatibility patch."
+logical_id = "966c2ba7-c9ec-42dc-823f-59e5ccc774d0"
+content_hash = "sha256:5a0ee86fcda014e0eb4e8bcb88debb17ec2a9dee727cf39873fb286c773b4f71"
+size = 96644
+mtime_ms = 1789797323088
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/966c2ba7-c9ec-42dc-823f-59e5ccc774d0/d138370c-215c-450a-8f86-1f478f230397"
+storage_version_token = "1789797330367920"
+content_type = "application/octet-stream"

@@ -15,6 +15,16 @@ function getApiUrl(path: string): string {
   return baseURL ? `${baseURL}${path}` : path;
 }
 
+function isLifeSkillsRequest(path: string): boolean {
+  return path.startsWith("/api/transition-skills");
+}
+
+function logLifeSkillsRequest(message: string, details?: unknown): void {
+  if (import.meta.env.DEV) {
+    console.debug(`[LifeSkills][ApiClient] ${message}`, details ?? "");
+  }
+}
+
 // Session token management for mobile auth
 const SESSION_TOKEN_KEY = 'adaptalyfe_session_token';
 
@@ -193,19 +203,45 @@ export async function apiRequest(
 ): Promise<Response> {
   const fullUrl = getApiUrl(url);
   const authHeaders = getAuthHeaders();
-  
-  const res = await fetch(fullUrl, {
-    method,
-    headers: {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      ...authHeaders, // Include Authorization header if session token exists
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
-  });
+  const lifeSkillsRequest = isLifeSkillsRequest(url);
+  if (lifeSkillsRequest) {
+    logLifeSkillsRequest(
+      `request method=${method} path=${url}`,
+      {
+        payload: data ?? null,
+        hasBearerToken: Boolean(authHeaders.Authorization),
+        nativeClient: isNativeClient(),
+      },
+    );
+  }
 
-  await throwIfResNotOk(res);
-  return res;
+  try {
+    const res = await fetch(fullUrl, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        ...authHeaders, // Include Authorization header if session token exists
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
+    });
+
+    if (lifeSkillsRequest) {
+      logLifeSkillsRequest(
+        `response method=${method} path=${url} status=${res.status}`,
+      );
+    }
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    if (lifeSkillsRequest) {
+      logLifeSkillsRequest(
+        `failure method=${method} path=${url}`,
+        error,
+      );
+    }
+    throw error;
+  }
 }
 
 export async function getAuthenticatedUser<T = unknown>(): Promise<T | null> {
@@ -245,6 +281,16 @@ export const getQueryFn: <T>(options: {
     try {
       const fullUrl = getApiUrl(queryKey[0] as string);
       const authHeaders = getAuthHeaders();
+        const lifeSkillsQuery = isLifeSkillsRequest(queryKey[0] as string);
+        if (lifeSkillsQuery) {
+          logLifeSkillsRequest(
+            "request method=GET path=/api/transition-skills",
+            {
+              hasBearerToken: Boolean(authHeaders.Authorization),
+              nativeClient: isNativeClient(),
+            },
+          );
+        }
       
       const res = await fetch(fullUrl, {
         headers: authHeaders, // Include Authorization header if session token exists
@@ -252,6 +298,11 @@ export const getQueryFn: <T>(options: {
       });
 
       console.log("Query response status:", res.status);
+      if (isLifeSkillsRequest(queryKey[0] as string)) {
+        logLifeSkillsRequest(
+          `response method=GET path=${queryKey[0]} status=${res.status}`,
+        );
+      }
       console.log("Query response headers:", Object.fromEntries(res.headers.entries()));
       
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 
 import '../constants/app_constants.dart';
@@ -12,6 +13,12 @@ enum ApiErrorType {
   network,
   timeout,
   unknown,
+}
+
+void _logLifeSkillsApi(String message) {
+  if (kDebugMode) {
+    debugPrint('[LifeSkills][ApiClient] $message');
+  }
 }
 
 /// A successful API result with the original status and parsed response data.
@@ -164,6 +171,16 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     T Function(dynamic data)? parser,
   }) async {
+    final isLifeSkillsRequest = path.startsWith('/api/transition-skills');
+    final requestHeaders = await _requestHeaders();
+    if (isLifeSkillsRequest) {
+      _logLifeSkillsApi(
+        'request method=$method path=$path '
+        'payload=${data ?? '<none>'} '
+        'hasBearerToken=${requestHeaders.containsKey('Authorization')}',
+      );
+    }
+
     try {
       final response = await _dio.request<dynamic>(
         path,
@@ -171,12 +188,18 @@ class ApiClient {
         queryParameters: queryParameters,
         options: Options(
           method: method,
-          headers: await _requestHeaders(),
+          headers: requestHeaders,
           validateStatus: _acceptHttpStatus,
         ),
       );
 
       final statusCode = response.statusCode;
+      if (isLifeSkillsRequest) {
+        _logLifeSkillsApi(
+          'response method=$method path=$path status=$statusCode '
+          'body=${response.data}',
+        );
+      }
       if (statusCode == null || statusCode < 200 || statusCode >= 300) {
         throw _httpException(response);
       }
@@ -188,10 +211,24 @@ class ApiClient {
         headers: response.headers,
       );
     } on ApiException {
+      if (isLifeSkillsRequest) {
+        _logLifeSkillsApi('normalized failure method=$method path=$path');
+      }
       rethrow;
     } on DioException catch (error) {
-      throw _dioException(error);
+      final normalized = _dioException(error);
+      if (isLifeSkillsRequest) {
+        _logLifeSkillsApi(
+          'dio failure method=$method path=$path error=$normalized',
+        );
+      }
+      throw normalized;
     } catch (error) {
+      if (isLifeSkillsRequest) {
+        _logLifeSkillsApi(
+          'unexpected failure method=$method path=$path error=$error',
+        );
+      }
       throw ApiException(
         type: ApiErrorType.unknown,
         message: 'Unexpected API error',

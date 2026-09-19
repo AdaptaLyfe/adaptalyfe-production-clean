@@ -57,6 +57,12 @@ const skillFormSchema = z.object({
 
 type SkillFormValues = z.infer<typeof skillFormSchema>;
 
+function logLifeSkill(operation: string, message: string, details?: unknown) {
+  if (import.meta.env.DEV) {
+    console.debug(`[LifeSkills][${operation}] ${message}`, details ?? "");
+  }
+}
+
 function parseTransitionSkillResponse(responseData: unknown): TransitionSkill {
   const candidate =
     (responseData as { skill?: unknown; transitionSkill?: unknown; data?: unknown } | null)
@@ -97,7 +103,7 @@ export default function SkillsMilestones() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<any>(null);
-  const [updatingSkillIds, setUpdatingSkillIds] = useState<Set<number>>(() => new Set());
+  const [busySkillIds, setBusySkillIds] = useState<Set<number>>(() => new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const form = useForm({
@@ -143,15 +149,19 @@ export default function SkillsMilestones() {
   // Create skill mutation
   const createSkillMutation = useMutation({
     mutationFn: async (skillData: SkillFormValues): Promise<TransitionSkill> => {
-      const response = await apiRequest("POST", "/api/transition-skills", {
+      const payload = {
         skillName: skillData.skillName.trim(),
         description: skillData.description?.trim() || null,
         skillCategory: skillData.skillCategory,
         currentLevel: skillData.currentLevel,
         targetLevel: skillData.targetLevel,
         priority: skillData.priority,
-      });
-      return parseTransitionSkillResponse(await response.json());
+      };
+      logLifeSkill("create", "request started", payload);
+      const response = await apiRequest("POST", "/api/transition-skills", payload);
+      const responseData = await response.json();
+      logLifeSkill("create", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
     },
     onSuccess: (createdSkill) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -161,8 +171,9 @@ export default function SkillsMilestones() {
           ...currentSkills.filter((skill) => skill.id !== createdSkill.id),
         ],
       );
-      void queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      void refetchSkills();
+      logLifeSkill("create", "state updated and UI success", {
+        id: createdSkill.id,
+      });
       setIsAddSkillOpen(false);
       form.reset();
       toast({
@@ -171,6 +182,7 @@ export default function SkillsMilestones() {
       });
     },
     onError: (error) => {
+      logLifeSkill("create", "failed", error);
       const message =
         error instanceof Error && error.message
           ? error.message.replace(/^\d+:\s*/, "")
@@ -186,11 +198,14 @@ export default function SkillsMilestones() {
   // Update skill progress mutation
   const updateSkillMutation = useMutation({
     mutationFn: async ({ id, currentLevel }: { id: number; currentLevel: number }) => {
+      logLifeSkill("progress", "request started", { id, currentLevel });
       const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
-      return parseTransitionSkillResponse(await response.json());
+      const responseData = await response.json();
+      logLifeSkill("progress", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
     },
     onMutate: ({ id }) => {
-      setUpdatingSkillIds((currentIds) => new Set(currentIds).add(id));
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
     },
     onSuccess: (updatedSkill: TransitionSkill, variables) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -200,13 +215,27 @@ export default function SkillsMilestones() {
             skill.id === variables.id ? { ...skill, ...updatedSkill } : skill,
           ),
       );
+      logLifeSkill("progress", "state updated and UI success", {
+        id: updatedSkill.id,
+      });
       toast({
         title: "Progress Updated",
         description: "Great job on improving your skills!",
       });
     },
+    onError: (error, variables) => {
+      logLifeSkill("progress", "failed", { id: variables.id, error });
+      toast({
+        title: "Error",
+        description: getSkillMutationErrorMessage(
+          error,
+          "Unable to update skill progress. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    },
     onSettled: (_data, _error, variables) => {
-      setUpdatingSkillIds((currentIds) => {
+      setBusySkillIds((currentIds) => {
         const nextIds = new Set(currentIds);
         nextIds.delete(variables.id);
         return nextIds;
@@ -217,15 +246,22 @@ export default function SkillsMilestones() {
   // Edit skill mutation
   const editSkillMutation = useMutation({
     mutationFn: async ({ id, skillData }: { id: number; skillData: SkillFormValues }) => {
-      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, {
+      const payload = {
         skillName: skillData.skillName.trim(),
         description: skillData.description?.trim() || null,
         skillCategory: skillData.skillCategory,
         currentLevel: skillData.currentLevel,
         targetLevel: skillData.targetLevel,
         priority: skillData.priority,
-      });
-      return parseTransitionSkillResponse(await response.json());
+      };
+      logLifeSkill("edit", "request started", { id, payload });
+      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, payload);
+      const responseData = await response.json();
+      logLifeSkill("edit", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
+    },
+    onMutate: ({ id }) => {
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
     },
     onSuccess: (updatedSkill) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -235,7 +271,9 @@ export default function SkillsMilestones() {
             skill.id === updatedSkill.id ? { ...skill, ...updatedSkill } : skill,
           ),
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
+      logLifeSkill("edit", "state updated and UI success", {
+        id: updatedSkill.id,
+      });
       setIsEditSkillOpen(false);
       setEditingSkill(null);
       editForm.reset();
@@ -245,10 +283,18 @@ export default function SkillsMilestones() {
       });
     },
     onError: (error) => {
+      logLifeSkill("edit", "failed", error);
       toast({
         title: "Error",
         description: getSkillMutationErrorMessage(error, "Failed to update skill"),
         variant: "destructive",
+      });
+    },
+    onSettled: (_data, _error, variables) => {
+      setBusySkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(variables.id);
+        return nextIds;
       });
     },
   });
@@ -256,8 +302,12 @@ export default function SkillsMilestones() {
   // Delete skill mutation
   const deleteSkillMutation = useMutation({
     mutationFn: async (id: number) => {
+      logLifeSkill("delete", "request started", { id });
       await apiRequest("DELETE", `/api/transition-skills/${id}`);
       return id;
+    },
+    onMutate: (id) => {
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
     },
     onSuccess: (deletedSkillId) => {
       queryClient.setQueryData<TransitionSkill[]>(
@@ -265,17 +315,27 @@ export default function SkillsMilestones() {
         (currentSkills = []) =>
           currentSkills.filter((skill) => skill.id !== deletedSkillId),
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
+      logLifeSkill("delete", "state updated and UI success", {
+        id: deletedSkillId,
+      });
       toast({
         title: "Success",
         description: "Skill deleted successfully!",
       });
     },
     onError: (error) => {
+      logLifeSkill("delete", "failed", error);
       toast({
         title: "Error",
         description: getSkillMutationErrorMessage(error, "Failed to delete skill"),
         variant: "destructive",
+      });
+    },
+    onSettled: (_data, _error, id) => {
+      setBusySkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(id);
+        return nextIds;
       });
     },
   });
@@ -803,7 +863,7 @@ export default function SkillsMilestones() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleProgressUpdate(skill.id, Math.max(1, (skill.currentLevel || 1) - 1))}
-                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) <= 1}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) <= 1}
                       >
                         -
                       </Button>
@@ -815,7 +875,7 @@ export default function SkillsMilestones() {
                           skill.id,
                           Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
                         )}
-                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         Update Progress
                       </Button>
@@ -826,7 +886,7 @@ export default function SkillsMilestones() {
                           skill.id,
                           Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
                         )}
-                        disabled={updatingSkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         +
                       </Button>
@@ -836,13 +896,14 @@ export default function SkillsMilestones() {
                       <EditButton
                         onClick={() => handleEditSkill(skill)}
                         aria-label={`Edit ${skill.skillName}`}
+                        disabled={busySkillIds.has(skill.id)}
                       />
                       <Button
                         variant="outline"
                         size="sm"
                         className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleDeleteSkill(skill.id)}
-                        disabled={deleteSkillMutation.isPending}
+                        disabled={busySkillIds.has(skill.id)}
                       >
                         <Trash2 size={14} className="mr-1" />
                         Delete
