@@ -18,6 +18,10 @@ class AcademicApi {
   Future<AssignmentModel> createAssignment(AssignmentInput input) =>
       _post('/api/assignments', input.toJson(), AssignmentModel.fromJson);
 
+  Future<void> deleteAssignment(int id) async {
+    await client.delete<dynamic>('/api/assignments/$id');
+  }
+
   Future<List<StudySessionModel>> getStudySessions() =>
       _getList('/api/study-sessions', StudySessionModel.fromJson);
 

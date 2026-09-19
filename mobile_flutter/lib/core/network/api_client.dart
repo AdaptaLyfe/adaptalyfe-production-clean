@@ -306,12 +306,16 @@ class ApiClient {
   static String _messageFromPayload(Object? payload, int? statusCode) {
     if (payload is Map) {
       final message = payload['message'] ?? payload['error'];
-      if (message is String && message.trim().isNotEmpty) {
+      if (message is String &&
+          message.trim().isNotEmpty &&
+          !_looksLikeRawError(message)) {
         return message;
       }
     }
 
-    if (payload is String && payload.trim().isNotEmpty) {
+    if (payload is String &&
+        payload.trim().isNotEmpty &&
+        !_looksLikeRawError(payload)) {
       return payload;
     }
 
@@ -327,6 +331,15 @@ class ApiClient {
       return 'The server could not complete the request';
     }
     return 'The request failed';
+  }
+
+  static bool _looksLikeRawError(String value) {
+    final trimmed = value.trimLeft();
+    return trimmed.startsWith('<') ||
+        trimmed.startsWith('{') ||
+        trimmed.startsWith('[') ||
+        trimmed.contains('package:flutter/') ||
+        RegExp(r'\bat [\w./\\:-]+\([^)]*\)').hasMatch(trimmed);
   }
 
   static bool _acceptHttpStatus(int? statusCode) {

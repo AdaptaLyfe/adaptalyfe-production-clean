@@ -1938,6 +1938,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/assignments/:id", async (req: any, res) => {
+    try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const assignmentId = Number.parseInt(req.params.id, 10);
+      if (!Number.isInteger(assignmentId)) {
+        return res.status(400).json({ message: "Invalid assignment id" });
+      }
+      const deleted = await storage.deleteAssignment(
+        assignmentId,
+        req.session.user.id,
+      );
+      if (!deleted) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting assignment:", error);
+      res.status(500).json({ message: "Failed to delete assignment" });
+    }
+  });
+
   app.get("/api/academic-classes", async (req: any, res) => {
     try {
       if (!req.session.userId || !req.session.user) {

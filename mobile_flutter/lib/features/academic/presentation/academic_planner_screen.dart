@@ -484,7 +484,7 @@ class _AssignmentsTab extends StatelessWidget {
           const SizedBox(height: 8),
           const _ApiCapabilityNotice(
             text:
-                'Assignment status and deadlines are shown from the existing API. The current backend does not expose edit, delete, or status-update endpoints.',
+                'Assignment status and deadlines are shown from the existing API. Editing and status updates are not available yet.',
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -1030,6 +1030,9 @@ class _AssignmentCard extends StatelessWidget {
     final isOverdue =
         item.dueDate.isBefore(DateTime.now()) && !item.isCompleted;
     final color = _priorityColor(item.priority);
+    final isDeleting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.deletingAssignment,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1116,12 +1119,44 @@ class _AssignmentCard extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
+                TextButton(
+                  onPressed: isDeleting ? null : () => _confirmDelete(context),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB91C1C),
+                  ),
+                  child: const Text('Delete'),
+                ),
               ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Assignment?'),
+        content: const Text('Are you sure you want to delete this assignment?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    context.read<AcademicBloc>().add(DeleteAssignment(item.id));
   }
 }
 
@@ -1388,45 +1423,99 @@ class _StudySessionDialogState extends State<_StudySessionDialog> {
   }
 }
 
-Future<void> _showCampusLocationDialog(BuildContext context) async {
+Future<void> _showCampusLocationDialog(BuildContext context) {
   final academicBloc = context.read<AcademicBloc>();
-  final nameController = TextEditingController();
-  final buildingController = TextEditingController();
-  final floorController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var category = _campusLocationCategories.first;
-
-  await showDialog<void>(
+  return showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
+    builder: (_) => BlocProvider.value(
+      value: academicBloc,
+      child: const _CampusLocationDialog(),
+    ),
+  );
+}
+
+class _CampusLocationDialog extends StatefulWidget {
+  const _CampusLocationDialog();
+
+  @override
+  State<_CampusLocationDialog> createState() => _CampusLocationDialogState();
+}
+
+class _CampusLocationDialogState extends State<_CampusLocationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _buildingController;
+  late final TextEditingController _floorController;
+  late final TextEditingController _descriptionController;
+  String _category = _campusLocationCategories.first;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _buildingController = TextEditingController();
+    _floorController = TextEditingController();
+    _descriptionController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _buildingController.dispose();
+    _floorController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSubmitting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.addingCampusLocation,
+    );
+
+    return BlocListener<AcademicBloc, AcademicState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == AcademicAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
         title: const Text('Add Campus Location'),
         content: Form(
-          key: formKey,
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: nameController,
+                  controller: _nameController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Name'),
                   validator: _requiredField('Name is required'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: buildingController,
+                  controller: _buildingController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Building'),
                   validator: _requiredField('Building is required'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: floorController,
+                  controller: _floorController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Floor'),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: category,
+                  value: _category,
                   decoration: const InputDecoration(labelText: 'Category'),
                   items: _campusLocationCategories
                       .map(
@@ -1436,12 +1525,15 @@ Future<void> _showCampusLocationDialog(BuildContext context) async {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) =>
-                      setState(() => category = value ?? category),
+                  onChanged: isSubmitting
+                      ? null
+                      : (value) =>
+                          setState(() => _category = value ?? _category),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: descriptionController,
+                  controller: _descriptionController,
+                  enabled: !isSubmitting,
                   minLines: 2,
                   maxLines: 3,
                   decoration:
@@ -1453,160 +1545,265 @@ Future<void> _showCampusLocationDialog(BuildContext context) async {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              academicBloc.add(
-                AddCampusLocation(
-                  CampusLocationInput(
-                    name: nameController.text,
-                    building: buildingController.text,
-                    floor: floorController.text,
-                    description: descriptionController.text,
-                    category: category,
-                  ),
-                ),
-              );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Add Location'),
+            onPressed: isSubmitting ? null : _submit,
+            child: Text(isSubmitting ? 'Adding...' : 'Add Location'),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  nameController.dispose();
-  buildingController.dispose();
-  floorController.dispose();
-  descriptionController.dispose();
-}
-
-Future<void> _showCampusTransportDialog(BuildContext context) async {
-  final academicBloc = context.read<AcademicBloc>();
-  final routeController = TextEditingController();
-  final fromController = TextEditingController();
-  final toController = TextEditingController();
-  final departureController = TextEditingController();
-  final durationController = TextEditingController(text: '15');
-  final formKey = GlobalKey<FormState>();
-
-  await showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Add Campus Transportation'),
-      content: Form(
-        key: formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: routeController,
-                decoration: const InputDecoration(labelText: 'Route name'),
-                validator: _requiredField('Route name is required'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: fromController,
-                decoration: const InputDecoration(labelText: 'From stop'),
-                validator: _requiredField('From stop is required'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: toController,
-                decoration: const InputDecoration(labelText: 'To stop'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: departureController,
-                decoration: const InputDecoration(
-                  labelText: 'Departure time',
-                  hintText: 'e.g. 08:30',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: durationController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Estimated duration (minutes)',
-                ),
-                validator: (value) {
-                  final duration = int.tryParse(value?.trim() ?? '');
-                  if (duration == null || duration < 5 || duration > 120) {
-                    return 'Enter a duration from 5 to 120 minutes';
-                  }
-                  return null;
-                },
-              ),
-            ],
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    context.read<AcademicBloc>().add(
+          AddCampusLocation(
+            CampusLocationInput(
+              name: _nameController.text,
+              building: _buildingController.text,
+              floor: _floorController.text,
+              description: _descriptionController.text,
+              category: _category,
+            ),
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () {
-            if (!formKey.currentState!.validate()) return;
-            academicBloc.add(
-              AddCampusTransport(
-                CampusTransportInput(
-                  routeName: routeController.text,
-                  fromStop: fromController.text,
-                  toStop: toController.text,
-                  departureTime: departureController.text,
-                  estimatedDuration: int.parse(durationController.text.trim()),
-                ),
-              ),
-            );
-            Navigator.of(dialogContext).pop();
-          },
-          child: const Text('Add Route'),
-        ),
-      ],
-    ),
-  );
-
-  routeController.dispose();
-  fromController.dispose();
-  toController.dispose();
-  departureController.dispose();
-  durationController.dispose();
+        );
+  }
 }
 
-Future<void> _showStudyGroupDialog(BuildContext context) async {
+Future<void> _showCampusTransportDialog(BuildContext context) {
   final academicBloc = context.read<AcademicBloc>();
-  final groupNameController = TextEditingController();
-  final subjectController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final locationController = TextEditingController();
-  final notesController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var meetingDay = 'Monday';
-  var meetingTime = '';
-  var isRecurring = false;
-  var recurringPattern = 'weekly';
-
-  await showDialog<void>(
+  return showDialog<void>(
     context: context,
-    builder: (dialogContext) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: const Text('Create Study Group'),
+    builder: (_) => BlocProvider.value(
+      value: academicBloc,
+      child: const _CampusTransportDialog(),
+    ),
+  );
+}
+
+class _CampusTransportDialog extends StatefulWidget {
+  const _CampusTransportDialog();
+
+  @override
+  State<_CampusTransportDialog> createState() => _CampusTransportDialogState();
+}
+
+class _CampusTransportDialogState extends State<_CampusTransportDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _routeController;
+  late final TextEditingController _fromController;
+  late final TextEditingController _toController;
+  late final TextEditingController _departureController;
+  late final TextEditingController _durationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _routeController = TextEditingController();
+    _fromController = TextEditingController();
+    _toController = TextEditingController();
+    _departureController = TextEditingController();
+    _durationController = TextEditingController(text: '15');
+  }
+
+  @override
+  void dispose() {
+    _routeController.dispose();
+    _fromController.dispose();
+    _toController.dispose();
+    _departureController.dispose();
+    _durationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSubmitting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.addingCampusTransport,
+    );
+
+    return BlocListener<AcademicBloc, AcademicState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == AcademicAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
+        title: const Text('Add Campus Transportation'),
         content: Form(
-          key: formKey,
+          key: _formKey,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: groupNameController,
+                  controller: _routeController,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(labelText: 'Route name'),
+                  validator: _requiredField('Route name is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _fromController,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(labelText: 'From stop'),
+                  validator: _requiredField('From stop is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _toController,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(labelText: 'To stop'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _departureController,
+                  enabled: !isSubmitting,
+                  decoration: const InputDecoration(
+                    labelText: 'Departure time',
+                    hintText: 'e.g. 08:30',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _durationController,
+                  enabled: !isSubmitting,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Estimated duration (minutes)',
+                  ),
+                  validator: (value) {
+                    final duration = int.tryParse(value?.trim() ?? '');
+                    if (duration == null || duration < 5 || duration > 120) {
+                      return 'Enter a duration from 5 to 120 minutes';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: isSubmitting ? null : _submit,
+            child: Text(isSubmitting ? 'Adding...' : 'Add Route'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    context.read<AcademicBloc>().add(
+          AddCampusTransport(
+            CampusTransportInput(
+              routeName: _routeController.text,
+              fromStop: _fromController.text,
+              toStop: _toController.text,
+              departureTime: _departureController.text,
+              estimatedDuration: int.parse(_durationController.text.trim()),
+            ),
+          ),
+        );
+  }
+}
+
+Future<void> _showStudyGroupDialog(BuildContext context) {
+  final academicBloc = context.read<AcademicBloc>();
+  return showDialog<void>(
+    context: context,
+    builder: (_) => BlocProvider.value(
+      value: academicBloc,
+      child: const _StudyGroupDialog(),
+    ),
+  );
+}
+
+class _StudyGroupDialog extends StatefulWidget {
+  const _StudyGroupDialog();
+
+  @override
+  State<_StudyGroupDialog> createState() => _StudyGroupDialogState();
+}
+
+class _StudyGroupDialogState extends State<_StudyGroupDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _groupNameController;
+  late final TextEditingController _subjectController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _notesController;
+  String _meetingDay = 'Monday';
+  String _meetingTime = '';
+  bool _isRecurring = false;
+  String _recurringPattern = 'weekly';
+
+  @override
+  void initState() {
+    super.initState();
+    _groupNameController = TextEditingController();
+    _subjectController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _locationController = TextEditingController();
+    _notesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _groupNameController.dispose();
+    _subjectController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSubmitting = context.select<AcademicBloc, bool>(
+      (bloc) => bloc.state.action == AcademicAction.addingStudyGroup,
+    );
+
+    return BlocListener<AcademicBloc, AcademicState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == AcademicAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
+        title: const Text('Create Study Group'),
+        content: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _groupNameController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Group name'),
                   validator: (value) =>
                       value == null || value.trim().isEmpty
@@ -1615,13 +1812,15 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: subjectController,
+                  controller: _subjectController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Subject'),
                   validator: _requiredField('Subject is required'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: descriptionController,
+                  controller: _descriptionController,
+                  enabled: !isSubmitting,
                   minLines: 2,
                   maxLines: 3,
                   decoration:
@@ -1629,7 +1828,8 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: locationController,
+                  controller: _locationController,
+                  enabled: !isSubmitting,
                   decoration: const InputDecoration(labelText: 'Location'),
                 ),
                 const SizedBox(height: 12),
@@ -1637,7 +1837,7 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: meetingDay,
+                        value: _meetingDay,
                         decoration:
                             const InputDecoration(labelText: 'Meeting day'),
                         items: _weekdays
@@ -1648,32 +1848,38 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                               ),
                             )
                             .toList(),
-                        onChanged: (value) =>
-                            setState(() => meetingDay = value ?? meetingDay),
+                        onChanged: isSubmitting
+                            ? null
+                            : (value) => setState(
+                                  () => _meetingDay = value ?? _meetingDay,
+                                ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextFormField(
+                        enabled: !isSubmitting,
                         decoration: const InputDecoration(
                           labelText: 'Meeting time',
                           hintText: 'e.g. 16:00',
                         ),
-                        onChanged: (value) => meetingTime = value,
+                        onChanged: (value) => _meetingTime = value,
                       ),
                     ),
                   ],
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
-                  value: isRecurring,
+                  value: _isRecurring,
                   title: const Text('Recurring meeting'),
-                  onChanged: (value) =>
-                      setState(() => isRecurring = value ?? false),
+                  onChanged: isSubmitting
+                      ? null
+                      : (value) =>
+                          setState(() => _isRecurring = value ?? false),
                 ),
-                if (isRecurring)
+                if (_isRecurring)
                   DropdownButtonFormField<String>(
-                    value: recurringPattern,
+                    value: _recurringPattern,
                     decoration:
                         const InputDecoration(labelText: 'Repeat pattern'),
                     items: const [
@@ -1683,12 +1889,16 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                         child: Text('Every two weeks'),
                       ),
                     ],
-                    onChanged: (value) =>
-                        setState(() => recurringPattern = value ?? 'weekly'),
+                    onChanged: isSubmitting
+                        ? null
+                        : (value) => setState(
+                              () => _recurringPattern = value ?? 'weekly',
+                            ),
                   ),
                 const SizedBox(height: 12),
                 TextFormField(
-                  controller: notesController,
+                  controller: _notesController,
+                  enabled: !isSubmitting,
                   minLines: 2,
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Notes'),
@@ -1699,46 +1909,43 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              if (!formKey.currentState!.validate()) return;
-              academicBloc.add(
-                AddStudyGroup(
-                  StudyGroupInput(
-                    groupName: groupNameController.text,
-                     meetingTime: _meetingDateTime(meetingDay, meetingTime),
-                    location: locationController.text,
-                    isRecurring: isRecurring,
-                    recurringPattern: isRecurring ? recurringPattern : null,
-                    topics: [
-                      if (_hasText(subjectController.text))
-                        subjectController.text.trim(),
-                    ],
-                    notes: [
-                      if (_hasText(descriptionController.text))
-                        descriptionController.text.trim(),
-                      if (_hasText(notesController.text))
-                        notesController.text.trim(),
-                    ].join('\n'),
-                  ),
-                ),
-              );
-              Navigator.of(dialogContext).pop();
-            },
-            child: const Text('Create Group'),
+            onPressed: isSubmitting ? null : _submit,
+            child: Text(isSubmitting ? 'Creating...' : 'Create Group'),
           ),
         ],
       ),
-    ),
-  );
-  groupNameController.dispose();
-  subjectController.dispose();
-  descriptionController.dispose();
-  locationController.dispose();
-  notesController.dispose();
+    );
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    context.read<AcademicBloc>().add(
+          AddStudyGroup(
+            StudyGroupInput(
+              groupName: _groupNameController.text,
+              meetingTime: _meetingDateTime(_meetingDay, _meetingTime),
+              location: _locationController.text,
+              isRecurring: _isRecurring,
+              recurringPattern:
+                  _isRecurring ? _recurringPattern : null,
+              topics: [
+                if (_hasText(_subjectController.text))
+                  _subjectController.text.trim(),
+              ],
+              notes: [
+                if (_hasText(_descriptionController.text))
+                  _descriptionController.text.trim(),
+                if (_hasText(_notesController.text))
+                  _notesController.text.trim(),
+              ].join('\n'),
+            ),
+          ),
+        );
+  }
 }
 
 class _AcademicLoading extends StatelessWidget {
@@ -1921,10 +2128,8 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
           current.action == AcademicAction.none &&
           current.actionMessage == 'Class added successfully.',
       listener: (context, state) {
-        Future<void>.delayed(const Duration(milliseconds: 350), () {
-          if (!mounted) return;
-          Navigator.of(context).pop();
-        });
+        if (!mounted) return;
+        Navigator.of(context).pop();
       },
       child: BlocBuilder<AcademicBloc, AcademicState>(
         bloc: widget.bloc,

@@ -1499,3 +1499,17 @@ mtime_ms = 1789824103068
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f7b93865-e6d1-41cc-8ab4-3520c4f92d68/814c1e98-5a1b-4708-8058-5e7c4ae9bda0"
 storage_version_token = "1789824111575773"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hcuyXe3YdNarBUligzOH5"
+uri = "file://artifacts/flutter-academic-planner-bugfix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Planner bugfix — changed files ZIP"
+description = "Contains the lifecycle fixes for Academic Planner dialogs, assignment deletion, study deletion handling, and the required backend persistence changes."
+logical_id = "dab9527d-c11d-4e0c-a38d-da72d4d06329"
+content_hash = "sha256:6d31156baeb8b27da39c5da577bfd7d3e327f6afa1551d6bf5314abc77c85cc0"
+size = 96078
+mtime_ms = 1789825051547
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dab9527d-c11d-4e0c-a38d-da72d4d06329/959065d0-5243-4d55-81b0-c732039f654b"
+storage_version_token = "1789825060103198"
+content_type = "application/octet-stream"

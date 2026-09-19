@@ -12,6 +12,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     on<RefreshAcademic>(_load);
     on<AddAcademicClass>(_addClass);
     on<AddAssignment>(_addAssignment);
+    on<DeleteAssignment>(_deleteAssignment);
     on<AddStudySession>(_addStudySession);
     on<CompleteStudySession>(_completeStudySession);
     on<DeleteStudySession>(_deleteStudySession);
@@ -140,6 +141,32 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         emit,
         error,
         'Failed to add assignment. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _deleteAssignment(
+    DeleteAssignment event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.deletingAssignment,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteAssignment(event.assignmentId);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Assignment deleted successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete assignment. Please try again.',
       );
     }
   }
