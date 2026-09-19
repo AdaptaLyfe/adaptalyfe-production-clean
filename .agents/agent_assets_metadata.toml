@@ -1527,3 +1527,17 @@ mtime_ms = 1789825524551
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e698b088-62b0-4c52-9f40-b502f9ab2f00/e3faee5d-6e4b-41d8-9fd8-ec7a18c0cc26"
 storage_version_token = "1789825528663517"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "qKp4LOBM7jEKW_gK1nmXu"
+uri = "file://artifacts/flutter-pharmacy-create-lifecycle-fix-changed-files.zip"
+type = "unspecified"
+title = "Create Pharmacy runtime-error fix — changed files ZIP"
+description = "Contains the stateful Create Pharmacy dialog fix with correct controller ownership, mounted success navigation, and no arbitrary delay or manual early disposal."
+logical_id = "eef0942e-524c-49db-86c6-2ccfef09baf3"
+content_hash = "sha256:a375b69409f7ab72e2ee2bf5aac79e9431d13b65bff5d1553e47920f5ea9a988"
+size = 17863
+mtime_ms = 1789826076873
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eef0942e-524c-49db-86c6-2ccfef09baf3/4a65f66c-0d52-4a81-afb8-409df6654f56"
+storage_version_token = "1789826086653406"
+content_type = "application/octet-stream"

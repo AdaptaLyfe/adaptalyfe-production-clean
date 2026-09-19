@@ -3239,107 +3239,161 @@ Future<void> _openExternalUrl(BuildContext context, String value) async {
   await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
-Future<void> _showCreatePharmacyDialog(BuildContext context) async {
+Future<void> _showCreatePharmacyDialog(BuildContext context) {
   final medicalBloc = context.read<MedicalBloc>();
-  final nameController = TextEditingController();
-  final addressController = TextEditingController();
-  final phoneController = TextEditingController();
-  final websiteController = TextEditingController();
-  final refillUrlController = TextEditingController();
-  final hoursController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-
-  await _showMedicalDialog<void>(
+  return _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
-      bloc: medicalBloc,
-      action: 'pharmacy',
-      successMessage: 'Custom pharmacy created successfully.',
-      builder: (context, isSubmitting) => _ResponsiveMedicalDialog(
-        title: const Text('Add Custom Pharmacy'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Pharmacy Name'),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone Number'),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: websiteController,
-                  decoration: const InputDecoration(labelText: 'Website'),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: refillUrlController,
-                  decoration:
-                      const InputDecoration(labelText: 'Online Refill URL'),
-                  keyboardType: TextInputType.url,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: hoursController,
-                  decoration: const InputDecoration(labelText: 'Hours'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    medicalBloc.add(
-                      AddCustomPharmacy(
-                        PharmacyInput(
-                          name: nameController.text,
-                          address: addressController.text,
-                          phoneNumber: phoneController.text,
-                          website: websiteController.text,
-                          refillUrl: refillUrlController.text,
-                          hours: hoursController.text,
-                        ),
-                      ),
-                    );
-                  },
-            child: Text(isSubmitting ? 'Creating...' : 'Create Pharmacy'),
-          ),
-        ],
-      ),
-    ),
+    builder: (_) => _CreatePharmacyDialog(bloc: medicalBloc),
   );
+}
 
-  for (final controller in [
-    nameController,
-    addressController,
-    phoneController,
-    websiteController,
-    refillUrlController,
-    hoursController,
-  ]) {
-    controller.dispose();
+class _CreatePharmacyDialog extends StatefulWidget {
+  const _CreatePharmacyDialog({required this.bloc});
+
+  final MedicalBloc bloc;
+
+  @override
+  State<_CreatePharmacyDialog> createState() => _CreatePharmacyDialogState();
+}
+
+class _CreatePharmacyDialogState extends State<_CreatePharmacyDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _websiteController;
+  late final TextEditingController _refillUrlController;
+  late final TextEditingController _hoursController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _addressController = TextEditingController();
+    _phoneController = TextEditingController();
+    _websiteController = TextEditingController();
+    _refillUrlController = TextEditingController();
+    _hoursController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _websiteController.dispose();
+    _refillUrlController.dispose();
+    _hoursController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    widget.bloc.add(
+      AddCustomPharmacy(
+        PharmacyInput(
+          name: _nameController.text,
+          address: _addressController.text,
+          phoneNumber: _phoneController.text,
+          website: _websiteController.text,
+          refillUrl: _refillUrlController.text,
+          hours: _hoursController.text,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection != current.busySection ||
+          previous.actionMessage != current.actionMessage,
+      listener: (context, state) {
+        if (state.busySection == null &&
+            state.actionMessage == 'Custom pharmacy created successfully.' &&
+            mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) =>
+            previous.busySection != current.busySection ||
+            previous.errorMessage != current.errorMessage,
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'pharmacy';
+          return _ResponsiveMedicalDialog(
+            title: const Text('Add Custom Pharmacy'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      enabled: !isSubmitting,
+                      decoration:
+                          const InputDecoration(labelText: 'Pharmacy Name'),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _addressController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(labelText: 'Address'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phoneController,
+                      enabled: !isSubmitting,
+                      decoration:
+                          const InputDecoration(labelText: 'Phone Number'),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _websiteController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(labelText: 'Website'),
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _refillUrlController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Online Refill URL',
+                      ),
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _hoursController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(labelText: 'Hours'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isSubmitting ? null : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(isSubmitting ? 'Creating...' : 'Create Pharmacy'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
