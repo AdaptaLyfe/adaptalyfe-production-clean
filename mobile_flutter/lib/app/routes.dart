@@ -328,7 +328,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             builder: (context, state) => BlocProvider(
               create: (_) => MedicalBloc(_createMedicalRepository())
                 ..add(const MedicalStarted()),
-              child: const MedicalScreen(initialTab: 6),
+              child: const PharmacyScreen(),
             ),
           ),
           GoRoute(

@@ -14,12 +14,7 @@ import '../bloc/medical_state.dart';
 import '../models/medical_models.dart';
 
 class MedicalScreen extends StatelessWidget {
-  const MedicalScreen({
-    super.key,
-    this.initialTab = 0,
-  });
-
-  final int initialTab;
+  const MedicalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +61,7 @@ class MedicalScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-          initialIndex: initialTab.clamp(0, 6).toInt(),
-          length: 7,
+          length: 6,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Health Records'),
@@ -88,7 +82,6 @@ class MedicalScreen extends StatelessWidget {
                   const Tab(text: 'Trusted Contacts'),
                   const Tab(text: 'Healthcare Contacts'),
                   const Tab(text: 'Personal Notes'),
-                  const Tab(text: 'Medications'),
                 ],
               ),
             ),
@@ -104,12 +97,86 @@ class MedicalScreen extends StatelessWidget {
                       _ContactsTab(state: state),
                       _ProvidersTab(state: state),
                       _SymptomsTab(state: state),
-                      _MedicationsTab(state: state),
                     ],
                   ),
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class PharmacyScreen extends StatelessWidget {
+  const PharmacyScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasMedicalAccess(context)) {
+      return const _MedicalPremiumPrompt(
+        title: 'Medication List',
+        description:
+            'Keep a personal list of medications for reference and reminders.',
+      );
+    }
+
+    return BlocConsumer<MedicalBloc, MedicalState>(
+      listener: (context, state) {
+        if (state.sessionInvalid) {
+          context.read<AuthBloc>().add(const CheckAuthentication());
+          return;
+        }
+        final message = state.actionMessage ?? state.errorMessage;
+        if (message == null || message.isEmpty) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: state.errorMessage != null
+                  ? const Color(0xFFB91C1C)
+                  : null,
+            ),
+          );
+      },
+      builder: (context, state) {
+        if (state.status == MedicalStatus.initial ||
+            (state.isLoading && !state.hasData)) {
+          return const Scaffold(
+            appBar: _MedicalAppBar(title: 'Medication List'),
+            body: _MedicalLoading(),
+          );
+        }
+        if (state.status == MedicalStatus.failure && !state.hasData) {
+          return Scaffold(
+            appBar: const _MedicalAppBar(title: 'Medication List'),
+            body: _MedicalError(
+              message: state.errorMessage ?? 'Unable to load medications.',
+              onRetry: () =>
+                  context.read<MedicalBloc>().add(const RefreshMedical()),
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Medication List'),
+            actions: [
+              IconButton(
+                tooltip: 'Refresh medications',
+                onPressed: () =>
+                    context.read<MedicalBloc>().add(const RefreshMedical()),
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              if (state.isLoading) const LinearProgressIndicator(minHeight: 2),
+              Expanded(child: _MedicationsTab(state: state)),
+            ],
           ),
         );
       },
@@ -132,12 +199,19 @@ bool _hasMedicalAccess(BuildContext context) {
 }
 
 class _MedicalPremiumPrompt extends StatelessWidget {
-  const _MedicalPremiumPrompt();
+  const _MedicalPremiumPrompt({
+    this.title = 'Health Records',
+    this.description =
+        'Store personal health-related details such as sensitivities and trusted contacts for reference.',
+  });
+
+  final String title;
+  final String description;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Health Records')),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: SingleChildScrollView(
           padding: AppResponsive.pagePadding(context),
@@ -154,7 +228,7 @@ class _MedicalPremiumPrompt extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   const Text(
-                    'Health Records',
+                    title,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 21,
@@ -163,7 +237,7 @@ class _MedicalPremiumPrompt extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Store personal health-related details such as sensitivities and trusted contacts for reference.',
+                    description,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Color(0xFF4B5563)),
                   ),
@@ -184,11 +258,13 @@ class _MedicalPremiumPrompt extends StatelessWidget {
 }
 
 class _MedicalAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _MedicalAppBar();
+  const _MedicalAppBar({this.title = 'Health Records'});
+
+  final String title;
 
   @override
   Widget build(BuildContext context) =>
-      AppBar(title: const Text('Health Records'));
+      AppBar(title: Text(title));
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
