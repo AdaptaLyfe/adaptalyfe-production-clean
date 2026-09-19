@@ -1472,19 +1472,79 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
 Future<void> _showShoppingItemDialog(BuildContext context) async {
   if (!_openMealShoppingOverlays.add('add-shopping-item')) return;
   final mealShoppingBloc = context.read<MealShoppingBloc>();
-  final nameController = TextEditingController();
-  final quantityController = TextEditingController();
-  final estimatedCostController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var category = 'produce';
 
   try {
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-      builder: (_, setState) => BlocBuilder<MealShoppingBloc,
-          MealShoppingState>(
-        bloc: mealShoppingBloc,
+      builder: (_) => _AddShoppingItemDialog(bloc: mealShoppingBloc),
+    );
+  } finally {
+    _openMealShoppingOverlays.remove('add-shopping-item');
+  }
+}
+
+class _AddShoppingItemDialog extends StatefulWidget {
+  const _AddShoppingItemDialog({required this.bloc});
+
+  final MealShoppingBloc bloc;
+
+  @override
+  State<_AddShoppingItemDialog> createState() => _AddShoppingItemDialogState();
+}
+
+class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _estimatedCostController;
+  final _formKey = GlobalKey<FormState>();
+  var _category = 'produce';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _quantityController = TextEditingController();
+    _estimatedCostController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    _estimatedCostController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    widget.bloc.add(
+      AddShoppingItem(
+        ShoppingItemInput(
+          itemName: _nameController.text,
+          category: _category,
+          quantity: _quantityController.text,
+          estimatedCost: double.tryParse(
+            _estimatedCostController.text.trim(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MealShoppingBloc, MealShoppingState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.action != MealShoppingAction.none &&
+          current.action == MealShoppingAction.none &&
+          current.actionMessage != null &&
+          current.errorMessage == null,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
+        bloc: widget.bloc,
         builder: (context, state) {
           final isBusy = state.isBusy;
           final isSaving =
@@ -1492,13 +1552,13 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
           return AlertDialog(
             title: const Text('Add Shopping Item'),
             content: Form(
-              key: formKey,
+              key: _formKey,
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      controller: nameController,
+                      controller: _nameController,
                       enabled: !isBusy,
                       decoration: const InputDecoration(
                         labelText: 'Item Name',
@@ -1508,7 +1568,7 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: category,
+                      value: _category,
                       decoration: const InputDecoration(labelText: 'Category'),
                       items: _shoppingCategories
                           .map(
@@ -1520,14 +1580,15 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
                           .toList(),
                       onChanged: isBusy
                           ? null
-                          : (value) =>
-                              setState(() => category = value ?? category),
+                          : (value) => setState(
+                                () => _category = value ?? _category,
+                              ),
                       validator: (value) =>
                           value == null ? 'Category is required' : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: quantityController,
+                      controller: _quantityController,
                       enabled: !isBusy,
                       decoration: const InputDecoration(
                         labelText: 'Quantity',
@@ -1536,7 +1597,7 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: estimatedCostController,
+                      controller: _estimatedCostController,
                       enabled: !isBusy,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -1554,34 +1615,11 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
             ),
             actions: [
               TextButton(
-                onPressed:
-                    isBusy ? null : () => Navigator.pop(dialogContext),
+                onPressed: isBusy ? null : () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                onPressed: isBusy
-                    ? null
-                    : () async {
-                        if (!formKey.currentState!.validate()) return;
-                        mealShoppingBloc.add(
-                          AddShoppingItem(
-                            ShoppingItemInput(
-                              itemName: nameController.text,
-                              category: category,
-                              quantity: quantityController.text,
-                              estimatedCost: double.tryParse(
-                                estimatedCostController.text.trim(),
-                              ),
-                            ),
-                          ),
-                        );
-                        final succeeded = await _waitForActionCompletion(
-                          mealShoppingBloc,
-                        );
-                        if (succeeded && dialogContext.mounted) {
-                          Navigator.pop(dialogContext);
-                        }
-                      },
+                onPressed: isBusy ? null : _submit,
                 child: isSaving
                     ? const SizedBox(
                         width: 20,
@@ -1594,13 +1632,7 @@ Future<void> _showShoppingItemDialog(BuildContext context) async {
           );
         },
       ),
-      ),
     );
-  } finally {
-    nameController.dispose();
-    quantityController.dispose();
-    estimatedCostController.dispose();
-    _openMealShoppingOverlays.remove('add-shopping-item');
   }
 }
 
