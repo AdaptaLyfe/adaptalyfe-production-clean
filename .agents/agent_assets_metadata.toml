@@ -1457,3 +1457,17 @@ mtime_ms = 1789822793116
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0e49796-1279-4e1f-b808-8a6474aeb207/8174b84f-3568-443b-8c68-cdd871a86e47"
 storage_version_token = "1789822798673498"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T5L_A2p6FPo27qF2J-RHw"
+uri = "file://artifacts/flutter-daily-tasks-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks changed-file ZIP"
+description = "Contains the Flutter DailyTasksBloc file changed for the Create Task flow."
+logical_id = "900a0f04-2088-4349-850a-6fc7bc28c907"
+content_hash = "sha256:84f9f0a05238840748368d8f15983567b3a4c007d7fd6f9ef9d041eb4ed84982"
+size = 2164
+mtime_ms = 1789823118657
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/900a0f04-2088-4349-850a-6fc7bc28c907/8f9b05b1-d787-4214-b11a-84deae0d80b6"
+storage_version_token = "1789823123038360"
+content_type = "application/octet-stream"
