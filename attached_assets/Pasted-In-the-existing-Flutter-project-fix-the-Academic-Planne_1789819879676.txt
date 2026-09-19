@@ -1,0 +1,73 @@
+In the existing Flutter project, fix the **Academic Planner → Add Class** functionality.
+
+### Current Issue
+
+When the user opens **Academic Planner** and clicks the **"Add Class"** button, the app throws these errors:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Required Fix
+
+Investigate the existing Academic Planner Add Class implementation and fix the root cause.
+
+1. **TextEditingController lifecycle**
+
+   * Find all `TextEditingController` instances used by the Add Class form.
+   * Make sure controllers are created and disposed only at the correct lifecycle point.
+   * Do NOT call `.dispose()` while the controller is still being used by a widget.
+   * Do NOT reuse a disposed controller.
+   * If the Add Class form is opened multiple times, make sure every new form gets valid controllers.
+
+2. **Widget lifecycle**
+
+   * Check whether `setState()`, `notifyListeners()`, BLoC state updates, or navigation are triggering a rebuild after the Add Class widget has been disposed.
+   * Prevent state updates after the widget has been removed from the widget tree.
+   * Use proper lifecycle handling such as `mounted` checks where required.
+   * Make sure dialogs, bottom sheets, forms, and overlays are closed safely.
+
+3. **Build scope error**
+
+   * Investigate the cause of:
+
+     ```text
+     Tried to build dirty widget in the wrong build scope.
+     ```
+   * Check for state changes occurring during the widget's build phase.
+   * Do not call `setState()` or trigger a rebuild directly inside `build()`.
+   * Check `Provider`, `BlocBuilder`, `BlocListener`, `ValueListenableBuilder`, dialogs, and callbacks involved in Add Class.
+   * Make sure state changes happen outside the active build phase.
+
+4. **Add Class behavior**
+
+   * Clicking **Add Class** should open the existing Add Class UI normally.
+   * User should be able to enter class details.
+   * Validation should continue working.
+   * Saving the class should work normally.
+   * The newly added class should appear in the Academic Planner.
+   * Opening and closing Add Class multiple times should not cause crashes.
+
+5. **Do not change unrelated functionality**
+
+   * Do not redesign the Academic Planner UI.
+   * Do not change existing colors, spacing, fonts, buttons, or layouts.
+   * Do not change API/database logic unless required to fix this lifecycle issue.
+   * Do not remove existing validation or functionality.
+   * Keep the existing project architecture and coding style.
+
+### Important
+
+Do not simply hide or suppress the Flutter errors. Find and fix the actual lifecycle/controller/build-scope problem.
+
+After making the fix:
+
+* Run/analyze the project.
+* Confirm there are no `TextEditingController was used after being disposed` errors.
+* Confirm there are no `dirty widget in the wrong build scope` errors.
+* Test **Academic Planner → Add Class** multiple times, including opening, closing, editing, saving, and reopening the form.
+* Provide a short explanation of the root cause and exactly which files were changed.
