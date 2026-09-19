@@ -1317,3 +1317,17 @@ mtime_ms = 1789815748758
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/deeacab1-c465-4c52-83bd-5f02c95795c9/5722c901-dd67-4c7f-9782-5ae622ba20d4"
 storage_version_token = "1789815752971670"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ZArwh3lrCIBLMrx0qfELJ"
+uri = "file://artifacts/ai-chat-overlay-helper-fix-changed-files.zip"
+type = "unspecified"
+title = "AI Chat Assistant helper fix — changed file"
+description = "ZIP containing the updated home chat widget source file only."
+logical_id = "82d39391-c42d-4822-bceb-ac42757b6e22"
+content_hash = "sha256:f8c1d79cf88d697ccc1fa9ea3159108ac865ae39be0636a5343036fae5f6378f"
+size = 26399
+mtime_ms = 1789816154626
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82d39391-c42d-4822-bceb-ac42757b6e22/2f600c5d-7f66-4b72-a270-e4d642793730"
+storage_version_token = "1789816159027104"
+content_type = "application/octet-stream"
