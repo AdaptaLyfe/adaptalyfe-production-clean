@@ -1387,3 +1387,17 @@ mtime_ms = 1789820577796
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d0e972c5-3377-4473-a60a-57d375564a72/877d2e1a-f478-408a-b09c-a90121f28c52"
 storage_version_token = "1789820583466756"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Y-IMh7buZlgeW-KxioY2b"
+uri = "file://artifacts/skills-add-fix-changed-files.zip"
+type = "unspecified"
+title = "Skill save fix — changed file ZIP"
+description = "Contains only migrations/0001_add_transition_skill_priority.sql, which adds the missing transition skill priority column."
+logical_id = "cd6aa04a-bc42-41ac-a3fd-1ab44c6beb27"
+content_hash = "sha256:e4c9e4e2302e8b47945b0416b3ccad9f8c2e654c54cf8de5197ebf1ef175e1e3"
+size = 346
+mtime_ms = 1789821247173
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cd6aa04a-bc42-41ac-a3fd-1ab44c6beb27/a37e14ef-b90d-47b5-b726-772cbe013359"
+storage_version_token = "1789821254574434"
+content_type = "application/octet-stream"
