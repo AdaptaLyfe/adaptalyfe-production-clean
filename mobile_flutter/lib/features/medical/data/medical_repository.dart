@@ -19,6 +19,12 @@ class MedicalRepository {
   Future<List<MedicationModel>> getMedications() => api.getMedications();
   Future<MedicationModel> createMedication(MedicationInput input) =>
       api.createMedication(input);
+  Future<MedicationModel> updateMedication(
+    int id,
+    MedicationInput input,
+  ) =>
+      api.updateMedication(id, input);
+  Future<void> deleteMedication(int id) => api.deleteMedication(id);
 
   Future<List<PharmacyModel>> getPharmacies() => api.getPharmacies();
   Future<PharmacyModel> createPharmacy(PharmacyInput input) =>

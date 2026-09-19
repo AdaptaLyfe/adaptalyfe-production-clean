@@ -54,6 +54,25 @@ final class AddMedication extends MedicalEvent {
   List<Object?> get props => [input];
 }
 
+final class EditMedication extends MedicalEvent {
+  const EditMedication(this.id, this.input);
+
+  final int id;
+  final MedicationInput input;
+
+  @override
+  List<Object?> get props => [id, input];
+}
+
+final class DeleteMedication extends MedicalEvent {
+  const DeleteMedication(this.id);
+
+  final int id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 final class AddCustomPharmacy extends MedicalEvent {
   const AddCustomPharmacy(this.input);
 

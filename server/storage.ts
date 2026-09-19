@@ -398,7 +398,12 @@ export interface IStorage {
   // Medications
   getMedicationsByUser(userId: number): Promise<Medication[]>;
   createMedication(medication: InsertMedication): Promise<Medication>;
-  updateMedication(medicationId: number, updates: Partial<InsertMedication>): Promise<Medication | undefined>;
+  updateMedication(
+    medicationId: number,
+    userId: number,
+    updates: Partial<InsertMedication>,
+  ): Promise<Medication | undefined>;
+  deleteMedication(medicationId: number, userId: number): Promise<boolean>;
   getMedicationsDueForRefill(userId: number): Promise<Medication[]>;
   
   // Refill Orders
@@ -1912,13 +1917,37 @@ export class DatabaseStorage implements IStorage {
     return medication;
   }
 
-  async updateMedication(medicationId: number, updates: Partial<InsertMedication>): Promise<Medication | undefined> {
+  async updateMedication(
+    medicationId: number,
+    userId: number,
+    updates: Partial<InsertMedication>,
+  ): Promise<Medication | undefined> {
     const [medication] = await db
       .update(medications)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(medications.id, medicationId))
+      .where(
+        and(
+          eq(medications.id, medicationId),
+          eq(medications.userId, userId),
+          eq(medications.isActive, true),
+        ),
+      )
       .returning();
     return medication || undefined;
+  }
+
+  async deleteMedication(medicationId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .update(medications)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(
+        and(
+          eq(medications.id, medicationId),
+          eq(medications.userId, userId),
+          eq(medications.isActive, true),
+        ),
+      );
+    return result.rowCount > 0;
   }
 
   async getMedicationsDueForRefill(userId: number): Promise<Medication[]> {

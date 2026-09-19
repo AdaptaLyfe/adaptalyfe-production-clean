@@ -49,6 +49,15 @@ class MedicalApi {
   Future<MedicationModel> createMedication(MedicationInput input) =>
       _post('/api/medications', input.toJson(), MedicationModel.fromJson);
 
+  Future<MedicationModel> updateMedication(
+    int id,
+    MedicationInput input,
+  ) =>
+      _put('/api/medications/$id', input.toUpdateJson(), MedicationModel.fromJson);
+
+  Future<void> deleteMedication(int id) =>
+      _delete('/api/medications/$id');
+
   Future<List<PharmacyModel>> getPharmacies() =>
       _getList('/api/pharmacies', PharmacyModel.fromJson);
 

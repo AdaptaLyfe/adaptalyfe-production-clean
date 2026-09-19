@@ -403,6 +403,15 @@ class _MedicationListTab extends StatelessWidget {
             (item) => _MedicationCard(
               medication: item,
               busy: state.busySection == 'medication',
+              onEdit: () => _showMedicationDialog(context, state, item),
+              onDelete: () => _confirmDelete(
+                context,
+                title: 'Delete medication?',
+                message: 'This medication will be removed from your list.',
+                onConfirm: () => context
+                    .read<MedicalBloc>()
+                    .add(DeleteMedication(item.id)),
+              ),
               onSetReminder: () => _setRefillReminder(context, item, state),
               linkedPharmacy: _pharmacyForMedication(item, state),
             ),
@@ -1110,12 +1119,16 @@ class _MedicationCard extends StatelessWidget {
   const _MedicationCard({
     required this.medication,
     required this.busy,
+    required this.onEdit,
+    required this.onDelete,
     required this.onSetReminder,
     required this.linkedPharmacy,
   });
 
   final MedicationModel medication;
   final bool busy;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
   final VoidCallback onSetReminder;
   final PharmacyModel? linkedPharmacy;
 
@@ -1212,8 +1225,18 @@ class _MedicationCard extends StatelessWidget {
              Column(
                crossAxisAlignment: CrossAxisAlignment.end,
                children: [
+                 PopupMenuButton<String>(
+                   onSelected: (value) {
+                     if (value == 'edit') onEdit();
+                     if (value == 'delete') onDelete();
+                   },
+                   itemBuilder: (context) => const [
+                     PopupMenuItem(value: 'edit', child: Text('Edit')),
+                     PopupMenuItem(value: 'delete', child: Text('Delete')),
+                   ],
+                 ),
                  FilledButton(
-                   onPressed: busy || medication.refillsRemaining == 0
+                    onPressed: busy || medication.refillsRemaining == 0
                        ? null
                        : onSetReminder,
                    child: Text(
@@ -2772,241 +2795,368 @@ class _TrustedContactDialogState extends State<_TrustedContactDialog> {
 Future<void> _showMedicationDialog(
   BuildContext context,
   MedicalState state,
+  [
+  MedicationModel? existing,
+  ]
 ) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final nameController = TextEditingController();
-  final dosageController = TextEditingController();
-  final prescriptionController = TextEditingController();
-  final quantityController = TextEditingController();
-  final refillsController = TextEditingController();
-  final prescribedByController = TextEditingController();
-  final instructionsController = TextEditingController();
-  final colorController = TextEditingController();
-  final markingsController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  var shape = '';
-  var size = '';
-  final primaryPharmacies =
-      state.userPharmacies.where((item) => item.isPrimary).toList();
-  int? pharmacyId =
-      primaryPharmacies.isEmpty ? null : primaryPharmacies.first.pharmacyId;
-  DateTime? nextRefillDate;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _MedicationDialog(
       bloc: medicalBloc,
-      action: 'medication',
-      successMessage: 'Medication added successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: const Text('Add New Medication'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Medication Name'),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: dosageController,
-                  decoration: const InputDecoration(
-                    labelText: 'Dosage',
-                    hintText: 'e.g., 10mg',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: prescriptionController,
-                  decoration:
-                      const InputDecoration(labelText: 'Prescription Number'),
-                ),
-                const SizedBox(height: 12),
-                Row(
+      existing: existing,
+      userPharmacies: state.userPharmacies,
+    ),
+  );
+}
+
+class _MedicationDialog extends StatefulWidget {
+  const _MedicationDialog({
+    required this.bloc,
+    required this.userPharmacies,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final List<UserPharmacyModel> userPharmacies;
+  final MedicationModel? existing;
+
+  @override
+  State<_MedicationDialog> createState() => _MedicationDialogState();
+}
+
+class _MedicationDialogState extends State<_MedicationDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _dosageController;
+  late final TextEditingController _prescriptionController;
+  late final TextEditingController _quantityController;
+  late final TextEditingController _refillsController;
+  late final TextEditingController _prescribedByController;
+  late final TextEditingController _instructionsController;
+  late final TextEditingController _colorController;
+  late final TextEditingController _markingsController;
+  late final TextEditingController _descriptionController;
+  final _formKey = GlobalKey<FormState>();
+  late String _shape;
+  late String _size;
+  late int? _pharmacyId;
+  late DateTime? _nextRefillDate;
+
+  bool get _isEditing => widget.existing != null;
+
+  String get _successMessage => _isEditing
+      ? 'Medication updated successfully.'
+      : 'Medication added successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existing;
+    _nameController =
+        TextEditingController(text: existing?.medicationName ?? '');
+    _dosageController = TextEditingController(text: existing?.dosage ?? '');
+    _prescriptionController =
+        TextEditingController(text: existing?.prescriptionNumber ?? '');
+    _quantityController = TextEditingController(
+      text: existing?.quantity?.toString() ?? '',
+    );
+    _refillsController = TextEditingController(
+      text: existing?.refillsRemaining.toString() ?? '',
+    );
+    _prescribedByController =
+        TextEditingController(text: existing?.prescribedBy ?? '');
+    _instructionsController =
+        TextEditingController(text: existing?.instructions ?? '');
+    _colorController =
+        TextEditingController(text: existing?.pillColor ?? '');
+    _markingsController =
+        TextEditingController(text: existing?.pillMarkings ?? '');
+    _descriptionController =
+        TextEditingController(text: existing?.pillDescription ?? '');
+    _shape = _supportedValue(existing?.pillShape, _pillShapes) ?? '';
+    _size = _supportedValue(existing?.pillSize, _pillSizes) ?? '';
+    final primaryPharmacies =
+        widget.userPharmacies.where((item) => item.isPrimary).toList();
+    _pharmacyId = existing?.pharmacyId ??
+        (primaryPharmacies.isEmpty ? null : primaryPharmacies.first.pharmacyId);
+    _nextRefillDate = existing?.nextRefillDate;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dosageController.dispose();
+    _prescriptionController.dispose();
+    _quantityController.dispose();
+    _refillsController.dispose();
+    _prescribedByController.dispose();
+    _instructionsController.dispose();
+    _colorController.dispose();
+    _markingsController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = MedicationInput(
+      medicationName: _nameController.text,
+      dosage: _dosageController.text,
+      prescriptionNumber: _prescriptionController.text,
+      quantity: _parseInt(_quantityController.text),
+      refillsRemaining: _parseInt(_refillsController.text),
+      prescribedBy: _prescribedByController.text,
+      pharmacyId: _pharmacyId,
+      nextRefillDate: _nextRefillDate,
+      instructions: _instructionsController.text,
+      pillColor: _colorController.text,
+      pillShape: _shape,
+      pillSize: _size,
+      pillMarkings: _markingsController.text,
+      pillDescription: _descriptionController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddMedication(input)
+          : EditMedication(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.actionMessage != current.actionMessage &&
+          current.actionMessage == _successMessage,
+      listener: (context, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          Navigator.of(context).pop();
+        });
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'medication') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'medication';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(existing == null
+                ? 'Add New Medication'
+                : 'Edit Medication'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: quantityController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Quantity'),
-                        validator: _optionalNonNegativeIntValidator,
+                    TextFormField(
+                      controller: _nameController,
+                      enabled: !isSubmitting,
+                      decoration:
+                          const InputDecoration(labelText: 'Medication Name'),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _dosageController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Dosage',
+                        hintText: 'e.g., 10mg',
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        controller: refillsController,
-                        keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'Refills Left'),
-                        validator: _optionalNonNegativeIntValidator,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _prescriptionController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                          labelText: 'Prescription Number'),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _quantityController,
+                            enabled: !isSubmitting,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                labelText: 'Quantity'),
+                            validator: _optionalNonNegativeIntValidator,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _refillsController,
+                            enabled: !isSubmitting,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                                labelText: 'Refills Left'),
+                            validator: _optionalNonNegativeIntValidator,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _prescribedByController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Prescribed By',
+                        hintText: 'e.g., Dr. Smith',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: _pharmacyId,
+                      decoration: const InputDecoration(labelText: 'Pharmacy'),
+                      items: widget.userPharmacies
+                          .map(
+                            (item) => DropdownMenuItem<int>(
+                              value: item.pharmacyId,
+                              child: Text(
+                                item.pharmacy?.name ??
+                                    'Pharmacy #${item.pharmacyId}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(() => _pharmacyId = value),
+                    ),
+                    const SizedBox(height: 12),
+                    _DateField(
+                      label: 'Next Refill Date',
+                      date: _nextRefillDate,
+                      onPick: isSubmitting ? () {} : _pickNextRefillDate,
+                      onClear: isSubmitting || _nextRefillDate == null
+                          ? null
+                          : () => setState(() => _nextRefillDate = null),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _instructionsController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Instructions',
+                        hintText: 'Take with food',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Pill Appearance (Optional)',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _colorController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Color',
+                        hintText: 'e.g., White, Blue',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _shape.isEmpty ? null : _shape,
+                      decoration: const InputDecoration(labelText: 'Shape'),
+                      items: _pillShapes
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(() => _shape = value ?? ''),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _size.isEmpty ? null : _size,
+                      decoration: const InputDecoration(labelText: 'Size'),
+                      items: _pillSizes
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(() => _size = value ?? ''),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _markingsController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Markings/Imprint',
+                        hintText: 'e.g., TYLENOL 500',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _descriptionController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Additional Description',
+                        hintText: 'e.g., Scored tablet, film-coated',
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: prescribedByController,
-                  decoration: const InputDecoration(
-                    labelText: 'Prescribed By',
-                    hintText: 'e.g., Dr. Smith',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<int>(
-                  value: pharmacyId,
-                  decoration: const InputDecoration(labelText: 'Pharmacy'),
-                  items: state.userPharmacies
-                      .map(
-                        (item) => DropdownMenuItem<int>(
-                          value: item.pharmacyId,
-                          child: Text(
-                            item.pharmacy?.name ??
-                                'Pharmacy #${item.pharmacyId}',
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => pharmacyId = value),
-                ),
-                const SizedBox(height: 12),
-                _DateField(
-                  label: 'Next Refill Date',
-                  date: nextRefillDate,
-                  onPick: () async {
-                    final date = await _pickDate(
-                      context,
-                      nextRefillDate,
-                      allowFuture: true,
-                    );
-                    if (date != null) setState(() => nextRefillDate = date);
-                  },
-                  onClear: nextRefillDate == null
-                      ? null
-                      : () => setState(() => nextRefillDate = null),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: instructionsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Instructions',
-                    hintText: 'Take with food',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Pill Appearance (Optional)',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: colorController,
-                  decoration: const InputDecoration(
-                    labelText: 'Color',
-                    hintText: 'e.g., White, Blue',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: shape.isEmpty ? null : shape,
-                  decoration: const InputDecoration(labelText: 'Shape'),
-                  items: _pillShapes
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_titleCase(value)),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => shape = value ?? ''),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: size.isEmpty ? null : size,
-                  decoration: const InputDecoration(labelText: 'Size'),
-                  items: _pillSizes
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_titleCase(value)),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => size = value ?? ''),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: markingsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Markings/Imprint',
-                    hintText: 'e.g., TYLENOL 500',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Additional Description',
-                    hintText: 'e.g., Scored tablet, film-coated',
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = MedicationInput(
-                      medicationName: nameController.text,
-                      dosage: dosageController.text,
-                      prescriptionNumber: prescriptionController.text,
-                      quantity: _parseInt(quantityController.text),
-                      refillsRemaining: _parseInt(refillsController.text),
-                      prescribedBy: prescribedByController.text,
-                       pharmacyId: pharmacyId,
-                      nextRefillDate: nextRefillDate,
-                      instructions: instructionsController.text,
-                      pillColor: colorController.text,
-                      pillShape: shape,
-                      pillSize: size,
-                      pillMarkings: markingsController.text,
-                      pillDescription: descriptionController.text,
-                    );
-                    medicalBloc.add(AddMedication(input));
-                  },
-            child: Text(isSubmitting ? 'Adding...' : 'Add Medication'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isSubmitting
+                    ? null
+                    : () {
+                        if (mounted) Navigator.of(context).pop();
+                      },
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null
+                          ? 'Add Medication'
+                          : 'Update Medication'),
+                ),
+              ),
+            ],
+          );
+        },
       ),
-      ),
-    ),
-  );
-  for (final controller in [
-    nameController,
-    dosageController,
-    prescriptionController,
-    quantityController,
-    refillsController,
-    prescribedByController,
-    instructionsController,
-    colorController,
-    markingsController,
-    descriptionController,
-  ]) {
-    controller.dispose();
+    );
+  }
+
+  Future<void> _pickNextRefillDate() async {
+    final date = await _pickDate(
+      context,
+      _nextRefillDate,
+      allowFuture: true,
+    );
+    if (!mounted || date == null) return;
+    setState(() => _nextRefillDate = date);
   }
 }
 

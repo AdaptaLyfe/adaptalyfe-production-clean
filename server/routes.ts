@@ -3419,6 +3419,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/medications/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const medicationData = {
+        ...req.body,
+        nextRefillDate: req.body.nextRefillDate
+          ? new Date(req.body.nextRefillDate)
+          : null,
+      };
+      const updateSchema = insertMedicationSchema
+        .partial()
+        .omit({ userId: true });
+      const validatedData = updateSchema.parse(medicationData);
+      const medication = await storage.updateMedication(
+        Number(req.params.id),
+        user.id,
+        validatedData,
+      );
+      if (!medication) {
+        return res.status(404).json({ message: "Medication not found" });
+      }
+      res.json(medication);
+    } catch (error) {
+      console.error("Error updating medication:", error);
+      res.status(500).json({ message: "Failed to update medication" });
+    }
+  });
+
+  app.delete("/api/medications/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const deleted = await storage.deleteMedication(
+        Number(req.params.id),
+        user.id,
+      );
+      if (!deleted) {
+        return res.status(404).json({ message: "Medication not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+      res.status(500).json({ message: "Failed to delete medication" });
+    }
+  });
+
   app.get("/api/medications/due-for-refill", async (req: any, res) => {
     try {
       const user = req.session?.user || req.user;

@@ -38,6 +38,22 @@ class MedicalBloc extends Bloc<MedicalEvent, MedicalState> {
           successMessage: 'Medication added successfully.',
           operation: () => repository.createMedication(event.input),
         ));
+    on<EditMedication>((event, emit) => _runMutation(
+          emit,
+          action: 'medication',
+          successMessage: 'Medication updated successfully.',
+          operation: () => repository.updateMedication(event.id, event.input),
+        ));
+    on<DeleteMedication>((event, emit) => _runMutation(
+          emit,
+          action: 'medication',
+          successMessage: 'Medication deleted successfully.',
+          deletedId: event.id,
+          operation: () async {
+            await repository.deleteMedication(event.id);
+            return null;
+          },
+        ));
     on<AddCustomPharmacy>((event, emit) => _runMutation(
           emit,
           action: 'pharmacy',

@@ -1345,3 +1345,17 @@ mtime_ms = 1789817137177
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/16e90a6e-7f20-4a1e-9769-4897f9d196dc/9665c761-d4bd-4565-9e29-d4317cf58bb1"
 storage_version_token = "1789817142811961"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hLy6WchHNW_FA0zlnTqjJ"
+uri = "file://artifacts/medication-list-fix-changed-files.zip"
+type = "unspecified"
+title = "Medication List fix — changed files"
+description = "ZIP containing the Flutter medication lifecycle, edit/delete flow, BLoC/API changes, and the matching server routes/storage updates."
+logical_id = "e72e8c6f-180a-45a0-852f-7b6b52af5a6c"
+content_hash = "sha256:35129424b783e3fc22ce778f3e3a00c9e8c40696f4207eb2309d127e45c4c9c9"
+size = 101446
+mtime_ms = 1789818206053
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e72e8c6f-180a-45a0-852f-7b6b52af5a6c/fb403c63-a143-4aca-a9c0-e9d3eaa81e34"
+storage_version_token = "1789818210683615"
+content_type = "application/octet-stream"

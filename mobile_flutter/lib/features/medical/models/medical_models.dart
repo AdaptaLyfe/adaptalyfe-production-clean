@@ -202,6 +202,24 @@ class MedicationInput extends Equatable {
           'pillDescription': pillDescription!.trim(),
       };
 
+  Map<String, dynamic> toUpdateJson() => {
+        'medicationName': medicationName.trim(),
+        'dosage': _nullableText(dosage),
+        'prescriptionNumber': _nullableText(prescriptionNumber),
+        'quantity': quantity,
+        'refillsRemaining': refillsRemaining,
+        'prescribedBy': _nullableText(prescribedBy),
+        'pharmacyId': pharmacyId,
+        'nextRefillDate':
+            nextRefillDate == null ? null : _dateOnly(nextRefillDate!),
+        'instructions': _nullableText(instructions),
+        'pillColor': _nullableText(pillColor),
+        'pillShape': _nullableText(pillShape),
+        'pillSize': _nullableText(pillSize),
+        'pillMarkings': _nullableText(pillMarkings),
+        'pillDescription': _nullableText(pillDescription),
+      };
+
   @override
   List<Object?> get props => [
         medicationName,
