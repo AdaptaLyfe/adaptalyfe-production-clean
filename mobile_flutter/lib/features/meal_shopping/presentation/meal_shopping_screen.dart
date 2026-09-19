@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
+import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/meal_shopping_bloc.dart';
@@ -1959,11 +1960,12 @@ class _StoreFormDialogState extends State<_StoreFormDialog> {
                       controller: _phoneController,
                       enabled: !isBusy,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: phoneNumberInputFormatters(),
                       decoration: const InputDecoration(
                         labelText: 'Phone Number',
-                        hintText: '(555) 123-4567',
+                        hintText: '10-digit phone number',
                       ),
-                      validator: _phoneValidator,
+                      validator: validatePhoneNumber,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -2262,15 +2264,6 @@ String? _urlValidator(String? value) {
       (uri.scheme != 'http' && uri.scheme != 'https') ||
       !uri.hasAuthority) {
     return 'Enter a valid website URL';
-  }
-  return null;
-}
-
-String? _phoneValidator(String? value) {
-  if (value == null || value.trim().isEmpty) return null;
-  final digits = value.replaceAll(RegExp(r'[\s().-]'), '');
-  if (!RegExp(r'^\+?\d{7,15}$').hasMatch(digits)) {
-    return 'Enter a valid phone number';
   }
   return null;
 }

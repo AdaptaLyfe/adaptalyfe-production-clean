@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
+import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../auth/bloc/auth_state.dart';
@@ -2280,11 +2281,13 @@ class _HealthcareContactDialogState
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: phoneNumberInputFormatters(),
                       decoration: const InputDecoration(
                         labelText: 'Phone Number',
                         hintText: 'Office phone number',
                       ),
-                      validator: _providerPhoneValidator,
+                      validator: (value) =>
+                          validatePhoneNumber(value, required: true),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -2714,13 +2717,11 @@ class _TrustedContactDialogState extends State<_TrustedContactDialog> {
                       controller: _phoneController,
                       enabled: !isSubmitting,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
+                      inputFormatters: phoneNumberInputFormatters(),
                       decoration:
                           const InputDecoration(labelText: 'Phone Number *'),
-                      validator: _phoneValidator,
+                      validator: (value) =>
+                          validatePhoneNumber(value, required: true),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -3349,9 +3350,11 @@ class _CreatePharmacyDialogState extends State<_CreatePharmacyDialog> {
                     TextFormField(
                       controller: _phoneController,
                       enabled: !isSubmitting,
+                      inputFormatters: phoneNumberInputFormatters(),
                       decoration:
                           const InputDecoration(labelText: 'Phone Number'),
                       keyboardType: TextInputType.phone,
+                      validator: validatePhoneNumber,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -3732,24 +3735,6 @@ Future<DateTime?> _pickDateTime(BuildContext context, DateTime? current) async {
 
 String? _requiredValidator(String? value) {
   if (value == null || value.trim().isEmpty) return 'This field is required';
-  return null;
-}
-
-String? _phoneValidator(String? value) {
-  if (value == null || value.trim().isEmpty) return 'Phone number is required';
-  if (!RegExp(r'^\d{10}$').hasMatch(value.trim())) {
-    return 'Enter a valid 10-digit phone number';
-  }
-  return null;
-}
-
-String? _providerPhoneValidator(String? value) {
-  if (value == null || value.trim().isEmpty) return 'Phone number is required';
-  final trimmed = value.trim();
-  if (!RegExp(r'^[0-9+\-()\s]+$').hasMatch(trimmed) ||
-      !RegExp(r'\d').hasMatch(trimmed)) {
-    return 'Enter a valid phone number';
-  }
   return null;
 }
 

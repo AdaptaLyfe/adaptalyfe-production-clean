@@ -1541,3 +1541,17 @@ mtime_ms = 1789826076873
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eef0942e-524c-49db-86c6-2ccfef09baf3/4a65f66c-0d52-4a81-afb8-409df6654f56"
 storage_version_token = "1789826086653406"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "e_2rQ3O1zIfeAA47rypzW"
+uri = "file://artifacts/flutter-phone-number-validation-changed-files.zip"
+type = "unspecified"
+title = "Flutter phone number validation — changed files ZIP"
+description = "Contains the shared 10-digit numeric formatter/validator and updates to every relevant Flutter phone-number field."
+logical_id = "8a3143a2-c468-46d5-bf9e-bbb6a24915e2"
+content_hash = "sha256:92d2c8ce9057e95fe91400c1a35f7cf25bbdb1ca10d469caedf416d4c8dfbf10"
+size = 50344
+mtime_ms = 1789826518147
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8a3143a2-c468-46d5-bf9e-bbb6a24915e2/7ea269e2-b395-4134-8d4f-01ae0b87b218"
+storage_version_token = "1789826522693699"
+content_type = "application/octet-stream"

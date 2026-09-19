@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/layout/responsive.dart';
+import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../bloc/resources_bloc.dart';
@@ -1713,7 +1715,11 @@ class _EmergencyContactDialogState extends State<_EmergencyContactDialog> {
                   ),
                   const SizedBox(height: 12),
                   _field(_phoneController, 'Phone Number',
-                      required: true, keyboardType: TextInputType.phone),
+                      required: true,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: phoneNumberInputFormatters(),
+                      validator: (value) =>
+                          validatePhoneNumber(value, required: true)),
                   _field(_emailController, 'Email',
                       keyboardType: TextInputType.emailAddress),
                   SwitchListTile.adaptive(
@@ -1753,17 +1759,21 @@ class _EmergencyContactDialogState extends State<_EmergencyContactDialog> {
     bool required = false,
     TextInputType? keyboardType,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         maxLines: maxLines,
-        validator: required
-            ? (value) =>
-                value == null || value.trim().isEmpty ? 'Required' : null
-            : null,
+        validator: validator ??
+            (required
+                ? (value) =>
+                    value == null || value.trim().isEmpty ? 'Required' : null
+                : null),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -3310,6 +3320,8 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
                 controller: _phoneController,
                 label: 'Phone number',
                 keyboardType: TextInputType.phone,
+                inputFormatters: phoneNumberInputFormatters(),
+                validator: validatePhoneNumber,
               ),
               _formField(
                 controller: _addressController,
@@ -3369,6 +3381,7 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
     String? helperText,
     TextInputType? keyboardType,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
   }) {
     return Padding(
@@ -3376,6 +3389,7 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         maxLines: maxLines,
         validator: validator,
         decoration: InputDecoration(
