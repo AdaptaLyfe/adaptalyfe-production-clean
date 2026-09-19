@@ -9,6 +9,12 @@ GitHub repo: Adaptalyfe/adaptalyfe-production-clean
 Deploy branch: ai-staging  
 Platform: Railway
 
+Staging can lag the workspace branch: verify the live asset hash and API behavior before assuming current source is deployed. Railway staging is separate from Replit deployment metadata.
+
+**Why:** A web create failure was reproduced on staging while the same browser-cookie flow succeeded locally; the live bundle was older than the workspace and Replit deployment metadata pointed to a different public app.
+
+**How to apply:** For staging-only bugs, reproduce against the staging domain, compare the served asset/build version with the current branch, and redeploy the Railway ai-staging branch after verifying the local fix.
+
 ## Database connections — CRITICAL
 The app has TWO separate DB connection strings in the environment:
 - `DATABASE_URL` — used by Drizzle ORM (`server/db.ts`) and by the running app. **Always use this for any data that must reach the app.**
