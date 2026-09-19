@@ -1359,3 +1359,17 @@ mtime_ms = 1789818206053
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e72e8c6f-180a-45a0-852f-7b6b52af5a6c/fb403c63-a143-4aca-a9c0-e9d3eaa81e34"
 storage_version_token = "1789818210683615"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "HwVAp3piseTJUVgCPQGV3"
+uri = "file://artifacts/medication-list-edit-delete-followup-changed-files.zip"
+type = "unspecified"
+title = "Medication List Edit/Delete fix — changed file"
+description = "ZIP containing the updated Flutter Medication List screen with the edit-form safety safeguard."
+logical_id = "25fca634-dcca-4ab6-a48e-c9c609836ad4"
+content_hash = "sha256:de33ad2bd5c3aba1f9bee22861dcf90337f40e4b4923e9de66744ce198812859"
+size = 17778
+mtime_ms = 1789819085497
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/25fca634-dcca-4ab6-a48e-c9c609836ad4/da520a9d-1870-449b-aa21-1811f50ac7e1"
+storage_version_token = "1789819100034847"
+content_type = "application/octet-stream"
