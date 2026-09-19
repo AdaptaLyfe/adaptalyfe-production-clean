@@ -1415,3 +1415,17 @@ mtime_ms = 1789821329558
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e1ab02bc-d775-4513-9345-c1e8520d81b7/6aa5e631-5ca6-48d8-b33c-25a2716ee8dd"
 storage_version_token = "1789821333788344"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "jVksyUYB9baqorvSyADeg"
+uri = "file://artifacts/academic-planner-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner fix — changed files ZIP"
+description = "Contains only the updated AcademicBloc and Academic Planner screen files."
+logical_id = "4c5bd714-d2e8-4938-86f1-0ffd53d320e6"
+content_hash = "sha256:c0e0a2c1e2dfb5cf6fde748851859557023ef336b9ee3361900821905f89e797"
+size = 15024
+mtime_ms = 1789821802652
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c5bd714-d2e8-4938-86f1-0ffd53d320e6/020a425f-b1cd-4ca3-8311-626865933e56"
+storage_version_token = "1789821813623510"
+content_type = "application/octet-stream"

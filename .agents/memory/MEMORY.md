@@ -25,3 +25,4 @@
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
 - [Resource collection safety](resource-collection-safety.md) — resource reads can resolve to null on API failure, so collection consumers must normalize before iteration.
+- [Academic Planner mutations](academic-planner-mutations.md) — keep successful class creation visible from the mutation response instead of depending on an unrelated full-dashboard reload.
