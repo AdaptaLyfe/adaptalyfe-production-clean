@@ -967,3 +967,17 @@ mtime_ms = 1789791332063
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5a2a6be7-e9d5-4fd4-937e-e58ebe040ea1/47b44a46-d662-4c53-865e-8834f01b5e8b"
 storage_version_token = "1789791340950351"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4dsYUnj-hEYZ0mo_r0krH"
+uri = "file://academic-planner-flutter-changes.zip"
+type = "unspecified"
+title = "Academic Planner Flutter changes"
+description = "ZIP containing the seven changed Academic Planner Flutter files."
+logical_id = "342cc1da-029e-4e05-a8fc-5fd60c976ac6"
+content_hash = "sha256:be8e501dbb952b8bb1274a8f79b76b1bdedd5a9108bbdcf97e063ff6fe09110d"
+size = 20637
+mtime_ms = 1789792462113
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/342cc1da-029e-4e05-a8fc-5fd60c976ac6/8094a642-9386-4a63-846d-c949cede740a"
+storage_version_token = "1789792467422944"
+content_type = "application/octet-stream"

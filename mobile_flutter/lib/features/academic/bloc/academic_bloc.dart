@@ -12,6 +12,10 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     on<RefreshAcademic>(_load);
     on<AddAcademicClass>(_addClass);
     on<AddAssignment>(_addAssignment);
+    on<AddStudySession>(_addStudySession);
+    on<CompleteStudySession>(_completeStudySession);
+    on<AddCampusLocation>(_addCampusLocation);
+    on<AddCampusTransport>(_addCampusTransport);
     on<AddStudyGroup>(_addStudyGroup);
     on<SetAssignmentFilter>(_setAssignmentFilter);
   }
@@ -36,13 +40,19 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
       final results = await Future.wait<Object>([
         repository.getClasses(),
         repository.getAssignments(),
+        repository.getStudySessions(),
+        repository.getCampusLocations(),
+        repository.getCampusTransport(),
         repository.getStudyGroups(),
       ]);
       _emitLoaded(
         emit,
         results[0] as List<AcademicClassModel>,
         results[1] as List<AssignmentModel>,
-        studyGroups: results[2] as List<StudyGroupModel>,
+        studySessions: results[2] as List<StudySessionModel>,
+        campusLocations: results[3] as List<CampusLocationModel>,
+        campusTransport: results[4] as List<CampusTransportModel>,
+        studyGroups: results[5] as List<StudyGroupModel>,
       );
     } catch (error) {
       _emitFailure(emit, error);
@@ -123,6 +133,113 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     }
   }
 
+  Future<void> _addStudySession(
+    AddStudySession event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.addingStudySession,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createStudySession(event.input);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Study session started successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to start study session. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _completeStudySession(
+    CompleteStudySession event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.completingStudySession,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.completeStudySession(
+        event.sessionId,
+        effectiveness: event.effectiveness,
+      );
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Study session completed.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to complete study session. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _addCampusLocation(
+    AddCampusLocation event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.addingCampusLocation,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createCampusLocation(event.input);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Campus location added successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to add campus location. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _addCampusTransport(
+    AddCampusTransport event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.addingCampusTransport,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createCampusTransport(event.input);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: 'Campus route added successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to add campus route. Please try again.',
+      );
+    }
+  }
+
   void _setAssignmentFilter(
     SetAssignmentFilter event,
     Emitter<AcademicState> emit,
@@ -143,13 +260,19 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     final results = await Future.wait<Object>([
       repository.getClasses(),
       repository.getAssignments(),
+      repository.getStudySessions(),
+      repository.getCampusLocations(),
+      repository.getCampusTransport(),
       repository.getStudyGroups(),
     ]);
     _emitLoaded(
       emit,
       results[0] as List<AcademicClassModel>,
       results[1] as List<AssignmentModel>,
-        studyGroups: results[2] as List<StudyGroupModel>,
+      studySessions: results[2] as List<StudySessionModel>,
+      campusLocations: results[3] as List<CampusLocationModel>,
+      campusTransport: results[4] as List<CampusTransportModel>,
+      studyGroups: results[5] as List<StudyGroupModel>,
       actionMessage: successMessage,
     );
   }
@@ -158,6 +281,9 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     Emitter<AcademicState> emit,
     List<AcademicClassModel> classes,
     List<AssignmentModel> assignments, {
+    required List<StudySessionModel> studySessions,
+    required List<CampusLocationModel> campusLocations,
+    required List<CampusTransportModel> campusTransport,
     required List<StudyGroupModel> studyGroups,
     String? actionMessage,
   }) {
@@ -166,6 +292,9 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         status: AcademicStatus.loaded,
         classes: classes,
         assignments: assignments,
+        studySessions: studySessions,
+        campusLocations: campusLocations,
+        campusTransport: campusTransport,
         studyGroups: studyGroups,
         action: AcademicAction.none,
         errorMessage: null,
@@ -181,6 +310,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         status: state.hasData ? AcademicStatus.loaded : AcademicStatus.failure,
         action: AcademicAction.none,
         errorMessage: _messageFor(error),
+        actionMessage: null,
         sessionInvalid:
             error is ApiException && error.type == ApiErrorType.unauthorized,
       ),
@@ -197,6 +327,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         status: state.hasData ? AcademicStatus.loaded : AcademicStatus.failure,
         action: AcademicAction.none,
         errorMessage: error is ApiException ? error.message : fallback,
+        actionMessage: null,
         sessionInvalid:
             error is ApiException && error.type == ApiErrorType.unauthorized,
       ),

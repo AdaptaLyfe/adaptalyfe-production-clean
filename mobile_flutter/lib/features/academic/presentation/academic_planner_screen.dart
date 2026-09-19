@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../auth/bloc/auth_state.dart';
 import '../bloc/academic_bloc.dart';
 import '../bloc/academic_event.dart';
 import '../bloc/academic_state.dart';
@@ -34,6 +36,9 @@ class AcademicPlannerScreen extends StatelessWidget {
           );
       },
       builder: (context, state) {
+        if (!_hasAcademicAccess(context)) {
+          return const _AcademicPremiumPrompt();
+        }
         if (state.status == AcademicStatus.initial ||
             (state.isLoading && !state.hasData)) {
           return const Scaffold(
@@ -54,7 +59,7 @@ class AcademicPlannerScreen extends StatelessWidget {
         }
 
         return DefaultTabController(
-           length: 4,
+          length: 5,
           child: Scaffold(
             appBar: AppBar(
               title: const Text('Academic Planner'),
@@ -81,12 +86,16 @@ class AcademicPlannerScreen extends StatelessWidget {
                       text: 'Schedule',
                     ),
                     Tab(
-                      icon: Icon(Icons.school_outlined),
-                      text: 'Classes',
-                    ),
-                    Tab(
                       icon: Icon(Icons.assignment_outlined),
                       text: 'Assignments',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.timer_outlined),
+                      text: 'Study',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.map_outlined),
+                      text: 'Campus',
                     ),
                     Tab(
                       icon: Icon(Icons.groups_outlined),
@@ -98,8 +107,9 @@ class AcademicPlannerScreen extends StatelessWidget {
                   child: TabBarView(
                     children: [
                       _ScheduleTab(state: state),
-                      _ClassesTab(state: state),
                       _AssignmentsTab(state: state),
+                      _StudyTab(state: state),
+                      _CampusTab(state: state),
                       _StudyGroupsTab(state: state),
                     ],
                   ),
@@ -109,6 +119,70 @@ class AcademicPlannerScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+bool _hasAcademicAccess(BuildContext context) {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is! Authenticated) return false;
+  final user = authState.user;
+  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
+  if (isAdmin) return true;
+  final tier = user.subscriptionTier?.toLowerCase();
+  final status = user.subscriptionStatus?.toLowerCase();
+  return status == 'active' &&
+          (tier == 'premium' || tier == 'family') ||
+      status == 'trialing';
+}
+
+class _AcademicPremiumPrompt extends StatelessWidget {
+  const _AcademicPremiumPrompt();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Academic Planner')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: AppResponsive.pagePadding(context),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.workspace_premium_outlined,
+                    size: 52,
+                    color: Color(0xFFF97316),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Academic Planner',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Manage classes, assignments, study sessions, and campus navigation with a premium plan.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF6B7280)),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton(
+                    onPressed: () => context.go('/subscription'),
+                    child: const Text('View Premium Plans'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -135,16 +209,17 @@ class _AcademicHeader extends StatelessWidget {
     final todayClasses = state.classes
         .where((item) => item.isActive && item.dayOfWeek == now.weekday % 7)
         .length;
-    final upcoming = state.assignments
+    final dueThisWeek = state.assignments
         .where((item) => item.dueDate.isAfter(now) && !item.isCompleted)
-        .length;
+        .toList()
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final completed =
         state.assignments.where((item) => item.isCompleted).length;
-    final studyHours = state.assignments.fold<int>(
+    final studyHours = state.studySessions.fold<int>(
           0,
-          (total, item) => total + (item.estimatedHours ?? 0),
+          (total, item) => total + item.duration,
         ) /
-        1;
+        60;
 
     return Container(
       width: double.infinity,
@@ -164,7 +239,7 @@ class _AcademicHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Stay on top of school',
+            'Academic Planner',
             style: TextStyle(
               color: Color(0xFF111827),
               fontSize: 24,
@@ -173,7 +248,7 @@ class _AcademicHeader extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Manage classes, deadlines, and academic tasks in one place.',
+            'Manage your classes, assignments, study sessions, and campus navigation',
             style: TextStyle(color: Color(0xFF4B5563), fontSize: 13),
           ),
           const SizedBox(height: 14),
@@ -190,21 +265,21 @@ class _AcademicHeader extends StatelessWidget {
                 const SizedBox(width: 8),
                 _SummaryCard(
                   icon: Icons.schedule_rounded,
-                  label: 'Upcoming',
-                  value: '$upcoming',
+                  label: 'Due This Week',
+                  value: '${dueThisWeek.take(5).length}',
                   color: const Color(0xFFF97316),
                 ),
                 const SizedBox(width: 8),
                 _SummaryCard(
                   icon: Icons.check_circle_outline_rounded,
-                  label: 'Completed',
+                  label: 'Assignment Progress',
                   value: '$completed/${state.assignments.length}',
                   color: const Color(0xFF16A34A),
                 ),
                 const SizedBox(width: 8),
                 _SummaryCard(
                   icon: Icons.hourglass_bottom_rounded,
-                  label: 'Est. Hours',
+                  label: 'Study Hours',
                   value: _formatNumber(studyHours),
                   color: const Color(0xFF9333EA),
                 ),
@@ -448,6 +523,238 @@ class _AssignmentsTab extends StatelessWidget {
   }
 }
 
+class _StudyTab extends StatelessWidget {
+  const _StudyTab({required this.state});
+
+  final AcademicState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final sessions = [...state.studySessions]
+      ..sort((a, b) => (b.startedAt ?? DateTime(0))
+          .compareTo(a.startedAt ?? DateTime(0)));
+
+    return RefreshIndicator(
+      onRefresh: () => _refresh(context),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
+        children: [
+          _SectionHeader(
+            icon: Icons.timer_outlined,
+            title: 'Study Tracker',
+            actionLabel: 'Start Session',
+            onAction: () => _showStudySessionDialog(context),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Track your study sessions and techniques.',
+            style: TextStyle(color: Color(0xFF6B7280)),
+          ),
+          const SizedBox(height: 12),
+          if (sessions.isEmpty)
+            const _EmptyCard(
+              icon: Icons.timer_outlined,
+              title: 'No study sessions yet',
+              subtitle: 'Start a session to track your focus time.',
+            )
+          else
+            ...sessions.take(5).map(
+                  (session) => _StudySessionCard(session: session),
+                ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StudySessionCard extends StatelessWidget {
+  const _StudySessionCard({required this.session});
+
+  final StudySessionModel session;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const CircleAvatar(
+              backgroundColor: Color(0xFFF3E8FF),
+              foregroundColor: Color(0xFF9333EA),
+              child: Icon(Icons.timer_outlined),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    session.subject,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 5),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 5,
+                    children: [
+                      _Badge(
+                        label: '${session.duration} minutes',
+                        color: const Color(0xFF7C3AED),
+                      ),
+                      _Badge(
+                        label: session.isCompleted ? 'Completed' : 'In Progress',
+                        color: session.isCompleted
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF2563EB),
+                      ),
+                    ],
+                  ),
+                  if (_hasText(session.technique) ||
+                      _hasText(session.location) ||
+                      session.startedAt != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        [
+                          if (_hasText(session.technique))
+                            _titleCase(session.technique!),
+                          if (_hasText(session.location)) session.location!,
+                          if (session.startedAt != null)
+                            _fullDate(session.startedAt!.toLocal()),
+                        ].join(' • '),
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (!session.isCompleted)
+              TextButton(
+                onPressed: () => context.read<AcademicBloc>().add(
+                      CompleteStudySession(sessionId: session.id),
+                    ),
+                child: const Text('Complete'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CampusTab extends StatelessWidget {
+  const _CampusTab({required this.state});
+
+  final AcademicState state;
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () => _refresh(context),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
+        children: [
+          _SectionHeader(
+            icon: Icons.location_on_outlined,
+            title: 'Campus Locations',
+            actionLabel: 'Add Location',
+            onAction: () => _showCampusLocationDialog(context),
+          ),
+          const SizedBox(height: 8),
+          if (state.campusLocations.isEmpty)
+            const _EmptyCard(
+              icon: Icons.location_on_outlined,
+              title: 'No campus locations saved',
+              subtitle: 'Save important places for quick reference.',
+            )
+          else
+            ...state.campusLocations.map(
+              (location) => Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFDBEAFE),
+                    foregroundColor: Color(0xFF2563EB),
+                    child: Icon(Icons.location_on_outlined),
+                  ),
+                  title: Text(
+                    location.name,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    [
+                      if (_hasText(location.building)) location.building!,
+                      if (_hasText(location.floor)) 'Floor ${location.floor}',
+                      if (_hasText(location.description))
+                        location.description!,
+                    ].join(' • '),
+                  ),
+                  trailing: _Badge(
+                    label: _titleCase(location.category),
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 20),
+          _SectionHeader(
+            icon: Icons.directions_bus_outlined,
+            title: 'Campus Transportation',
+            actionLabel: 'Add Route',
+            onAction: () => _showCampusTransportDialog(context),
+          ),
+          const SizedBox(height: 8),
+          if (state.campusTransport.isEmpty)
+            const _EmptyCard(
+              icon: Icons.directions_bus_outlined,
+              title: 'No campus routes saved',
+              subtitle: 'Add a route to keep transportation details handy.',
+            )
+          else
+            ...state.campusTransport.map(
+              (route) => Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFFE0F2FE),
+                    foregroundColor: Color(0xFF0369A1),
+                    child: Icon(Icons.directions_bus_outlined),
+                  ),
+                  title: Text(
+                    route.routeName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  subtitle: Text(
+                    [
+                      '${route.fromStop}${_hasText(route.toStop) ? ' → ${route.toStop}' : ''}',
+                      if (_hasText(route.departureTime))
+                        'Departs ${route.departureTime}',
+                    ].join(' • '),
+                  ),
+                  trailing: route.estimatedDuration == null
+                      ? null
+                      : Text('${route.estimatedDuration} min'),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StudyGroupsTab extends StatelessWidget {
   const _StudyGroupsTab({required this.state});
 
@@ -497,6 +804,7 @@ class _StudyGroupsTab extends StatelessWidget {
                   ),
                   subtitle: Text(
                     [
+                      if (group.topics.isNotEmpty) group.topics.first,
                       if (group.location != null) group.location!,
                       if (group.meetingTime != null)
                         _fullDate(group.meetingTime!.toLocal()),
@@ -877,13 +1185,314 @@ class _EmptyCard extends StatelessWidget {
   }
 }
 
+Future<void> _showStudySessionDialog(BuildContext context) async {
+  final academicBloc = context.read<AcademicBloc>();
+  final subjectController = TextEditingController();
+  final topicController = TextEditingController();
+  final notesController = TextEditingController();
+  final durationController = TextEditingController(text: '60');
+  final formKey = GlobalKey<FormState>();
+  var technique = _studyTechniques.first;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Start New Study Session'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: subjectController,
+                  decoration: const InputDecoration(labelText: 'Subject'),
+                  validator: _requiredField('Subject is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: topicController,
+                  decoration: const InputDecoration(labelText: 'Topic'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: technique,
+                  decoration: const InputDecoration(labelText: 'Technique'),
+                  items: _studyTechniques
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_titleCase(value)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) =>
+                      setState(() => technique = value ?? technique),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: durationController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration (minutes)',
+                  ),
+                  validator: (value) {
+                    final duration = int.tryParse(value?.trim() ?? '');
+                    if (duration == null || duration < 5 || duration > 300) {
+                      return 'Enter a duration from 5 to 300 minutes';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: notesController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              academicBloc.add(
+                AddStudySession(
+                  StudySessionInput(
+                    subject: subjectController.text,
+                    topic: topicController.text,
+                    duration: int.parse(durationController.text.trim()),
+                    technique: technique,
+                    notes: notesController.text,
+                  ),
+                ),
+              );
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Start Session'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  subjectController.dispose();
+  topicController.dispose();
+  notesController.dispose();
+  durationController.dispose();
+}
+
+Future<void> _showCampusLocationDialog(BuildContext context) async {
+  final academicBloc = context.read<AcademicBloc>();
+  final nameController = TextEditingController();
+  final buildingController = TextEditingController();
+  final floorController = TextEditingController();
+  final descriptionController = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  var category = _campusLocationCategories.first;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Add Campus Location'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: _requiredField('Name is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: buildingController,
+                  decoration: const InputDecoration(labelText: 'Building'),
+                  validator: _requiredField('Building is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: floorController,
+                  decoration: const InputDecoration(labelText: 'Floor'),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: category,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: _campusLocationCategories
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_titleCase(value)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) =>
+                      setState(() => category = value ?? category),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration:
+                      const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (!formKey.currentState!.validate()) return;
+              academicBloc.add(
+                AddCampusLocation(
+                  CampusLocationInput(
+                    name: nameController.text,
+                    building: buildingController.text,
+                    floor: floorController.text,
+                    description: descriptionController.text,
+                    category: category,
+                  ),
+                ),
+              );
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Add Location'),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  nameController.dispose();
+  buildingController.dispose();
+  floorController.dispose();
+  descriptionController.dispose();
+}
+
+Future<void> _showCampusTransportDialog(BuildContext context) async {
+  final academicBloc = context.read<AcademicBloc>();
+  final routeController = TextEditingController();
+  final fromController = TextEditingController();
+  final toController = TextEditingController();
+  final departureController = TextEditingController();
+  final durationController = TextEditingController(text: '15');
+  final formKey = GlobalKey<FormState>();
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Add Campus Transportation'),
+      content: Form(
+        key: formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: routeController,
+                decoration: const InputDecoration(labelText: 'Route name'),
+                validator: _requiredField('Route name is required'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: fromController,
+                decoration: const InputDecoration(labelText: 'From stop'),
+                validator: _requiredField('From stop is required'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: toController,
+                decoration: const InputDecoration(labelText: 'To stop'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: departureController,
+                decoration: const InputDecoration(
+                  labelText: 'Departure time',
+                  hintText: 'e.g. 08:30',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: durationController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Estimated duration (minutes)',
+                ),
+                validator: (value) {
+                  final duration = int.tryParse(value?.trim() ?? '');
+                  if (duration == null || duration < 5 || duration > 120) {
+                    return 'Enter a duration from 5 to 120 minutes';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!formKey.currentState!.validate()) return;
+            academicBloc.add(
+              AddCampusTransport(
+                CampusTransportInput(
+                  routeName: routeController.text,
+                  fromStop: fromController.text,
+                  toStop: toController.text,
+                  departureTime: departureController.text,
+                  estimatedDuration: int.parse(durationController.text.trim()),
+                ),
+              ),
+            );
+            Navigator.of(dialogContext).pop();
+          },
+          child: const Text('Add Route'),
+        ),
+      ],
+    ),
+  );
+
+  routeController.dispose();
+  fromController.dispose();
+  toController.dispose();
+  departureController.dispose();
+  durationController.dispose();
+}
+
 Future<void> _showStudyGroupDialog(BuildContext context) async {
   final academicBloc = context.read<AcademicBloc>();
   final groupNameController = TextEditingController();
+  final subjectController = TextEditingController();
+  final descriptionController = TextEditingController();
   final locationController = TextEditingController();
   final notesController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  DateTime? meetingTime;
+  var meetingDay = 'Monday';
+  var meetingTime = '';
   var isRecurring = false;
   var recurringPattern = 'weekly';
 
@@ -908,45 +1517,54 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
+                  controller: subjectController,
+                  decoration: const InputDecoration(labelText: 'Subject'),
+                  validator: _requiredField('Subject is required'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descriptionController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration:
+                      const InputDecoration(labelText: 'Description'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
                   controller: locationController,
                   decoration: const InputDecoration(labelText: 'Location'),
                 ),
                 const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    meetingTime == null
-                        ? 'Choose meeting time'
-                        : _fullDate(meetingTime!.toLocal()),
-                  ),
-                  leading: const Icon(Icons.schedule_outlined),
-                  onTap: () async {
-                    final now = DateTime.now();
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: meetingTime ?? now,
-                      firstDate: now.subtract(const Duration(days: 365)),
-                      lastDate: now.add(const Duration(days: 365)),
-                    );
-                    if (date == null || !context.mounted) return;
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: meetingTime == null
-                          ? TimeOfDay.fromDateTime(now)
-                          : TimeOfDay.fromDateTime(meetingTime!),
-                    );
-                    if (time != null) {
-                      setState(
-                        () => meetingTime = DateTime(
-                          date.year,
-                          date.month,
-                          date.day,
-                          time.hour,
-                          time.minute,
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: meetingDay,
+                        decoration:
+                            const InputDecoration(labelText: 'Meeting day'),
+                        items: _weekdays
+                            .map(
+                              (value) => DropdownMenuItem(
+                                value: value,
+                                child: Text(value),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) =>
+                            setState(() => meetingDay = value ?? meetingDay),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Meeting time',
+                          hintText: 'e.g. 16:00',
                         ),
-                      );
-                    }
-                  },
+                        onChanged: (value) => meetingTime = value,
+                      ),
+                    ),
+                  ],
                 ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
@@ -993,11 +1611,20 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
                 AddStudyGroup(
                   StudyGroupInput(
                     groupName: groupNameController.text,
-                    meetingTime: meetingTime,
+                     meetingTime: _meetingDateTime(meetingDay, meetingTime),
                     location: locationController.text,
                     isRecurring: isRecurring,
                     recurringPattern: isRecurring ? recurringPattern : null,
-                    notes: notesController.text,
+                    topics: [
+                      if (_hasText(subjectController.text))
+                        subjectController.text.trim(),
+                    ],
+                    notes: [
+                      if (_hasText(descriptionController.text))
+                        descriptionController.text.trim(),
+                      if (_hasText(notesController.text))
+                        notesController.text.trim(),
+                    ].join('\n'),
                   ),
                 ),
               );
@@ -1010,6 +1637,8 @@ Future<void> _showStudyGroupDialog(BuildContext context) async {
     ),
   );
   groupNameController.dispose();
+  subjectController.dispose();
+  descriptionController.dispose();
   locationController.dispose();
   notesController.dispose();
 }
@@ -1170,10 +1799,10 @@ Future<void> _showClassDialog(BuildContext context) async {
                   value: dayOfWeek,
                   decoration: const InputDecoration(labelText: 'Day'),
                   items: List.generate(
-                    7,
+                    5,
                     (index) => DropdownMenuItem(
-                      value: index,
-                      child: Text(_dayName(index)),
+                      value: index + 1,
+                      child: Text(_dayName(index + 1)),
                     ),
                   ),
                   onChanged: (value) =>
@@ -1188,6 +1817,13 @@ Future<void> _showClassDialog(BuildContext context) async {
                         keyboardType: TextInputType.number,
                         decoration:
                             const InputDecoration(labelText: 'Credits'),
+                         validator: (value) {
+                           final parsed = int.tryParse(value?.trim() ?? '');
+                           if (parsed == null || parsed < 1 || parsed > 6) {
+                             return 'Enter 1 to 6 credits';
+                           }
+                           return null;
+                         },
                         onChanged: (value) =>
                             credits = int.tryParse(value) ?? credits,
                       ),
@@ -1232,6 +1868,16 @@ Future<void> _showClassDialog(BuildContext context) async {
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
+              if (startTime.compareTo(endTime) >= 0) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(
+                      content: Text('End time must be after start time.'),
+                    ),
+                  );
+                return;
+              }
               bloc.add(
                     AddAcademicClass(
                       AcademicClassInput(
@@ -1272,7 +1918,8 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
   final formKey = GlobalKey<FormState>();
   var type = 'homework';
   var priority = 'medium';
-  var dueDate = DateTime.now().add(const Duration(days: 1));
+  DateTime? dueDate;
+  int? classId;
 
   await showDialog<void>(
     context: context,
@@ -1318,9 +1965,11 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                   label: 'Due date',
                   value: dueDate,
                   onTap: () async {
+                    final initialDate =
+                        dueDate ?? DateTime.now().add(const Duration(days: 1));
                     final picked = await showDatePicker(
                       context: context,
-                      initialDate: dueDate,
+                      initialDate: initialDate,
                       firstDate: DateTime.now(),
                       lastDate: DateTime(DateTime.now().year + 5),
                     );
@@ -1330,14 +1979,35 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                           picked.year,
                           picked.month,
                           picked.day,
-                          dueDate.hour,
-                          dueDate.minute,
+                          initialDate.hour,
+                          initialDate.minute,
                         ),
                       );
                     }
                   },
                 ),
                 const SizedBox(height: 10),
+                if (context.read<AcademicBloc>().state.classes.isNotEmpty)
+                  DropdownButtonFormField<int?>(
+                    value: classId,
+                    decoration:
+                        const InputDecoration(labelText: 'Class (optional)'),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('No class'),
+                      ),
+                      ...context.read<AcademicBloc>().state.classes.map(
+                            (item) => DropdownMenuItem<int?>(
+                              value: item.id,
+                              child: Text(item.className),
+                            ),
+                          ),
+                    ],
+                    onChanged: (value) => setState(() => classId = value),
+                  ),
+                if (context.read<AcademicBloc>().state.classes.isNotEmpty)
+                  const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   value: priority,
                   decoration: const InputDecoration(labelText: 'Priority'),
@@ -1358,7 +2028,13 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
                   keyboardType: TextInputType.number,
                   decoration:
                       const InputDecoration(labelText: 'Estimated hours'),
-                  validator: _positiveIntValidator,
+                  validator: (value) {
+                    final parsed = int.tryParse(value?.trim() ?? '');
+                    if (parsed == null || parsed < 1 || parsed > 100) {
+                      return 'Enter 1 to 100 hours';
+                    }
+                    return null;
+                  },
                 ),
               ],
             ),
@@ -1372,14 +2048,23 @@ Future<void> _showAssignmentDialog(BuildContext context) async {
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
+              if (dueDate == null) {
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(content: Text('Choose a due date.')),
+                  );
+                return;
+              }
               bloc.add(
                     AddAssignment(
                       AssignmentInput(
                         title: titleController.text,
                         description: descriptionController.text,
                         type: type,
-                        dueDate: dueDate,
+                        dueDate: dueDate!,
                         priority: priority,
+                        classId: classId,
                         estimatedHours:
                             int.tryParse(hoursController.text.trim()) ?? 2,
                       ),
@@ -1451,7 +2136,7 @@ class _DateField extends StatelessWidget {
   });
 
   final String label;
-  final DateTime value;
+  final DateTime? value;
   final VoidCallback onTap;
 
   @override
@@ -1464,7 +2149,9 @@ class _DateField extends StatelessWidget {
           suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
           border: OutlineInputBorder(),
         ),
-        child: Text(_fullDate(value)),
+         child: Text(
+           value == null ? 'Select a date' : _fullDate(value!),
+         ),
       ),
     );
   }
@@ -1480,6 +2167,27 @@ Future<String?> _pickTime(BuildContext context, String current) async {
   if (picked == null) return null;
   return '${picked.hour.toString().padLeft(2, '0')}:'
       '${picked.minute.toString().padLeft(2, '0')}';
+}
+
+DateTime? _meetingDateTime(String day, String time) {
+  final parts = time.trim().split(':');
+  final hour = int.tryParse(parts.first);
+  final minute = parts.length > 1 ? int.tryParse(parts[1]) : 0;
+  if (hour == null ||
+      minute == null ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59) {
+    return null;
+  }
+
+  final weekday = _weekdays.indexOf(day) + 1;
+  final now = DateTime.now();
+  var daysAhead = weekday - now.weekday;
+  if (daysAhead < 0) daysAhead += 7;
+  final date = now.add(Duration(days: daysAhead));
+  return DateTime(date.year, date.month, date.day, hour, minute);
 }
 
 Future<void> _refresh(BuildContext context) async {
@@ -1627,6 +2335,9 @@ String _formatNumber(double value) =>
 String? _requiredValidator(String? value) =>
     value == null || value.trim().isEmpty ? 'This field is required' : null;
 
+FormFieldValidator<String> _requiredField(String message) =>
+    (value) => value == null || value.trim().isEmpty ? message : null;
+
 String? _positiveIntValidator(String? value) {
   final parsed = int.tryParse(value?.trim() ?? '');
   if (parsed == null || parsed <= 0) return 'Enter a positive whole number';
@@ -1638,3 +2349,27 @@ bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 const _assignmentTypes = ['homework', 'project', 'exam', 'quiz', 'paper'];
 const _priorities = ['low', 'medium', 'high', 'urgent'];
 const _semesters = ['Fall 2025', 'Spring 2026', 'Summer 2025', 'Winter 2025'];
+const _studyTechniques = [
+  'reading',
+  'flashcards',
+  'practice-problems',
+  'note-taking',
+  'group-study',
+  'online-resources',
+];
+const _campusLocationCategories = [
+  'academic',
+  'dining',
+  'recreation',
+  'services',
+  'transportation',
+];
+const _weekdays = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];

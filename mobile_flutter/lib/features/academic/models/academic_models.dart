@@ -202,8 +202,10 @@ class AssignmentInput extends Equatable {
     required this.dueDate,
     required this.priority,
     required this.estimatedHours,
+    this.classId,
   });
 
+  final int? classId;
   final String title;
   final String description;
   final String type;
@@ -212,6 +214,7 @@ class AssignmentInput extends Equatable {
   final int estimatedHours;
 
   Map<String, dynamic> toJson() => {
+        'classId': classId,
         'title': title.trim(),
         'description': description.trim(),
         'type': type,
@@ -222,12 +225,273 @@ class AssignmentInput extends Equatable {
 
   @override
   List<Object?> get props => [
+        classId,
         title,
         description,
         type,
         dueDate,
         priority,
         estimatedHours,
+      ];
+}
+
+class StudySessionModel extends Equatable {
+  const StudySessionModel({
+    required this.id,
+    required this.userId,
+    required this.classId,
+    required this.subject,
+    required this.duration,
+    required this.technique,
+    required this.location,
+    required this.effectiveness,
+    required this.notes,
+    required this.startedAt,
+    required this.completedAt,
+  });
+
+  factory StudySessionModel.fromJson(Map<String, dynamic> json) {
+    return StudySessionModel(
+      id: _asInt(json['id']),
+      userId: _asInt(json['userId']),
+      classId: _asNullableInt(json['classId']),
+      subject: _asString(json['subject']),
+      duration: _asInt(json['duration']),
+      technique: _asNullableString(json['technique']),
+      location: _asNullableString(json['location']),
+      effectiveness: _asNullableInt(json['effectiveness']),
+      notes: _asNullableString(json['notes']),
+      startedAt: _asDateTime(json['startedAt']),
+      completedAt: _asDateTime(json['completedAt']),
+    );
+  }
+
+  final int id;
+  final int userId;
+  final int? classId;
+  final String subject;
+  final int duration;
+  final String? technique;
+  final String? location;
+  final int? effectiveness;
+  final String? notes;
+  final DateTime? startedAt;
+  final DateTime? completedAt;
+
+  bool get isCompleted => completedAt != null;
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        classId,
+        subject,
+        duration,
+        technique,
+        location,
+        effectiveness,
+        notes,
+        startedAt,
+        completedAt,
+      ];
+}
+
+class StudySessionInput extends Equatable {
+  const StudySessionInput({
+    required this.subject,
+    required this.duration,
+    this.classId,
+    this.topic,
+    this.technique,
+    this.location,
+    this.notes,
+  });
+
+  final int? classId;
+  final String subject;
+  final int duration;
+  final String? topic;
+  final String? technique;
+  final String? location;
+  final String? notes;
+
+  Map<String, dynamic> toJson() => {
+        'classId': classId,
+        'subject': subject.trim(),
+        'duration': duration,
+        // The web form collects topic, while the existing API schema does
+        // not have a topic column. Keep it in notes without changing the API.
+        'technique': _nullableText(technique),
+        'location': _nullableText(location),
+        'notes': _joinNotes(topic, notes),
+        'startedAt': DateTime.now().toUtc().toIso8601String(),
+        'completedAt': null,
+        'effectiveness': null,
+      };
+
+  @override
+  List<Object?> get props => [
+        classId,
+        subject,
+        duration,
+        topic,
+        technique,
+        location,
+        notes,
+      ];
+}
+
+class CampusLocationModel extends Equatable {
+  const CampusLocationModel({
+    required this.id,
+    required this.userId,
+    required this.name,
+    required this.building,
+    required this.floor,
+    required this.description,
+    required this.category,
+    required this.createdAt,
+  });
+
+  factory CampusLocationModel.fromJson(Map<String, dynamic> json) {
+    return CampusLocationModel(
+      id: _asInt(json['id']),
+      userId: _asInt(json['userId']),
+      name: _asString(json['name']),
+      building: _asNullableString(json['building']),
+      floor: _asNullableString(json['floor']),
+      description: _asNullableString(json['description']),
+      category: _asString(json['category'], fallback: 'academic'),
+      createdAt: _asDateTime(json['createdAt']),
+    );
+  }
+
+  final int id;
+  final int userId;
+  final String name;
+  final String? building;
+  final String? floor;
+  final String? description;
+  final String category;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        name,
+        building,
+        floor,
+        description,
+        category,
+        createdAt,
+      ];
+}
+
+class CampusLocationInput extends Equatable {
+  const CampusLocationInput({
+    required this.name,
+    required this.building,
+    this.floor,
+    this.description,
+    this.category = 'academic',
+  });
+
+  final String name;
+  final String building;
+  final String? floor;
+  final String? description;
+  final String category;
+
+  Map<String, dynamic> toJson() => {
+        'name': name.trim(),
+        'building': building.trim(),
+        'floor': _nullableText(floor),
+        'description': _nullableText(description),
+        'category': category,
+      };
+
+  @override
+  List<Object?> get props => [name, building, floor, description, category];
+}
+
+class CampusTransportModel extends Equatable {
+  const CampusTransportModel({
+    required this.id,
+    required this.userId,
+    required this.routeName,
+    required this.fromStop,
+    required this.toStop,
+    required this.departureTime,
+    required this.estimatedDuration,
+    required this.createdAt,
+  });
+
+  factory CampusTransportModel.fromJson(Map<String, dynamic> json) {
+    return CampusTransportModel(
+      id: _asInt(json['id']),
+      userId: _asInt(json['userId']),
+      routeName: _asString(json['routeName']),
+      fromStop: _asString(json['fromStop']),
+      toStop: _asNullableString(json['toStop']),
+      departureTime: _asNullableString(json['departureTime']),
+      estimatedDuration: _asNullableInt(json['estimatedDuration']),
+      createdAt: _asDateTime(json['createdAt']),
+    );
+  }
+
+  final int id;
+  final int userId;
+  final String routeName;
+  final String fromStop;
+  final String? toStop;
+  final String? departureTime;
+  final int? estimatedDuration;
+  final DateTime? createdAt;
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        routeName,
+        fromStop,
+        toStop,
+        departureTime,
+        estimatedDuration,
+        createdAt,
+      ];
+}
+
+class CampusTransportInput extends Equatable {
+  const CampusTransportInput({
+    required this.routeName,
+    required this.fromStop,
+    this.toStop,
+    this.departureTime,
+    this.estimatedDuration = 15,
+  });
+
+  final String routeName;
+  final String fromStop;
+  final String? toStop;
+  final String? departureTime;
+  final int estimatedDuration;
+
+  Map<String, dynamic> toJson() => {
+        'routeName': routeName.trim(),
+        'fromStop': fromStop.trim(),
+        'toStop': _nullableText(toStop),
+        'departureTime': _nullableText(departureTime),
+        'estimatedDuration': estimatedDuration,
+      };
+
+  @override
+  List<Object?> get props => [
+        routeName,
+        fromStop,
+        toStop,
+        departureTime,
+        estimatedDuration,
       ];
 }
 
@@ -377,3 +641,11 @@ bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
 String? _nullableText(String? value) =>
     _hasText(value) ? value!.trim() : null;
+
+String? _joinNotes(String? topic, String? notes) {
+  final values = [
+    if (_hasText(topic)) 'Topic: ${topic!.trim()}',
+    if (_hasText(notes)) notes!.trim(),
+  ];
+  return values.isEmpty ? null : values.join('\n');
+}

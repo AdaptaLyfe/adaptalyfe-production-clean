@@ -35,6 +35,46 @@ final class AddAssignment extends AcademicEvent {
   List<Object?> get props => [input];
 }
 
+final class AddStudySession extends AcademicEvent {
+  const AddStudySession(this.input);
+
+  final StudySessionInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class CompleteStudySession extends AcademicEvent {
+  const CompleteStudySession({
+    required this.sessionId,
+    this.effectiveness = 4,
+  });
+
+  final int sessionId;
+  final int effectiveness;
+
+  @override
+  List<Object?> get props => [sessionId, effectiveness];
+}
+
+final class AddCampusLocation extends AcademicEvent {
+  const AddCampusLocation(this.input);
+
+  final CampusLocationInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
+final class AddCampusTransport extends AcademicEvent {
+  const AddCampusTransport(this.input);
+
+  final CampusTransportInput input;
+
+  @override
+  List<Object?> get props => [input];
+}
+
 final class AddStudyGroup extends AcademicEvent {
   const AddStudyGroup(this.input);
 
