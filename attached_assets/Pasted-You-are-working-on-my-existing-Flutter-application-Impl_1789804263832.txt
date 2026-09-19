@@ -1,0 +1,267 @@
+You are working on my existing Flutter application.
+
+Implement and fix the **Daily Tasks** feature with complete **Create, Read, Update, Delete, and Mark as Completed** functionality.
+
+## Important
+
+* Do NOT create a new Flutter project.
+* Work with the existing project structure and existing Daily Tasks screen.
+* First inspect the existing code, models, repository/API/service layer, BLoC/Provider/state management, and UI.
+* Reuse the existing architecture, API endpoints, authentication, theme, components, and coding style wherever possible.
+* Do not break any existing features.
+* Do not change unrelated screens or functionality.
+* Keep the implementation clean, simple, and production-ready.
+
+## 1. Load Daily Tasks
+
+When the Daily Tasks screen opens:
+
+* Fetch the user's daily tasks from the existing backend/API/database.
+* Display all tasks for the selected/current date.
+* Show:
+
+  * Task title
+  * Task description/details if available
+  * Time/date if available
+  * Completed/Pending status
+  * Edit action
+  * Delete action
+  * Checkbox/toggle for completion
+
+Handle:
+
+* Loading state
+* Empty state
+* API/network error
+* Authentication/401 error
+* Successful data loading
+
+Do not show duplicate tasks.
+
+## 2. Create Daily Task
+
+Implement the existing Add Daily Task flow.
+
+Required fields should use the existing project validation rules.
+
+When the user creates a task:
+
+1. Validate the form.
+2. Call the existing create-task API/service.
+3. Save the task successfully.
+4. Close the Add Task UI/dialog/screen.
+5. Refresh/update the Daily Tasks list immediately.
+6. Show the existing success message/snackbar if the project already has one.
+
+If creation fails:
+
+* Keep the user on the form.
+* Show a clear user-friendly error.
+* Do not add a fake task to the list.
+
+## 3. Update Daily Task
+
+When the user taps Edit:
+
+1. Open the existing task edit UI.
+2. Pre-fill all existing task information.
+3. Allow the user to modify the task.
+4. Validate the updated information.
+5. Call the existing update-task API/service.
+6. Update the task in the UI immediately after success.
+7. Close the edit UI.
+8. Show the existing success feedback.
+
+Make sure the task ID is correctly passed when updating.
+
+Do not create a duplicate task during an update.
+
+## 4. Delete Daily Task
+
+When the user taps Delete:
+
+1. Show a confirmation dialog before deleting.
+2. Clearly show which task will be deleted.
+3. If the user cancels, do nothing.
+4. If the user confirms:
+
+   * Call the existing delete-task API/service.
+   * Remove the task from the UI after successful deletion.
+   * Show a success message if the project already uses one.
+
+If deletion fails:
+
+* Keep the task visible.
+* Show a user-friendly error.
+* Do not remove the task permanently from the UI until the backend confirms deletion.
+
+## 5. Mark Task as Completed / Uncompleted
+
+Implement the task checkbox/toggle.
+
+When the user marks a task as completed:
+
+* Update the task's completion status in the backend/API.
+* Update the UI immediately after successful response.
+* Show the task as completed using the existing UI style.
+* If the user taps it again, allow the task to become pending/uncompleted.
+* Persist the changed status.
+
+Important:
+
+* Do not create a new task when marking it completed.
+* Update only the existing task.
+* Use the task's unique ID.
+* Keep the completion status synchronized with the backend.
+
+## 6. State Management
+
+Use the existing state-management architecture in the project.
+
+If the project already uses BLoC/Cubit, follow the existing BLoC/Cubit pattern.
+
+For example, if BLoC is already used, support states/events equivalent to:
+
+Events:
+
+* LoadDailyTasks
+* CreateDailyTask
+* UpdateDailyTask
+* DeleteDailyTask
+* ToggleDailyTaskCompletion
+
+States should properly handle:
+
+* Initial
+* Loading
+* Loaded
+* Creating
+* Updating
+* Deleting
+* Success
+* Error
+
+Do NOT introduce another state-management package.
+
+## 7. API / Repository
+
+Before implementing anything:
+
+* Find the existing Daily Task API/service/repository.
+* Find the existing task model.
+* Find the existing authentication/token handling.
+* Reuse existing API endpoints if they already exist.
+
+Do not create fake/mock APIs if real APIs already exist.
+
+If an endpoint is missing, clearly identify the missing endpoint instead of silently creating fake functionality.
+
+## 8. UI Behavior
+
+The Daily Tasks screen should behave like this:
+
+```text
+Daily Tasks
+    |
+    +-- Add Task
+    |      |
+    |      +-- Create Task
+    |
+    +-- Task 1
+    |      +-- Checkbox
+    |      +-- Edit
+    |      +-- Delete
+    |
+    +-- Task 2
+           +-- Checkbox
+           +-- Edit
+           +-- Delete
+```
+
+After every successful operation, keep the UI synchronized with the backend.
+
+Required behavior:
+
+Create → Task appears in list
+
+Update → Existing task changes
+
+Delete → Task disappears
+
+Mark Complete → Existing task becomes completed
+
+Mark Incomplete → Existing task becomes pending
+
+## 9. Prevent Common Bugs
+
+Make sure:
+
+* Create does not create duplicate tasks.
+* Update does not create another task.
+* Delete removes the correct task using its ID.
+* Completion updates the correct task.
+* Rapid button taps do not trigger duplicate API requests.
+* Loading indicators are shown during API operations.
+* Failed operations do not incorrectly modify the UI.
+* The task list refreshes correctly after CRUD operations.
+* Existing authentication headers/token are preserved.
+* Existing date filtering continues to work.
+* Existing pagination/search/filter behavior, if present, is not broken.
+
+## 10. Error Handling
+
+Use user-friendly messages.
+
+Examples:
+
+Create failed:
+"Could not create task. Please try again."
+
+Update failed:
+"Could not update task. Please try again."
+
+Delete failed:
+"Could not delete task. Please try again."
+
+Completion failed:
+"Could not update task status. Please try again."
+
+Do not expose raw API/server error messages to the user unless the existing app already intentionally does so.
+
+## 11. Code Quality
+
+After implementation:
+
+* Remove unused code/imports.
+* Avoid duplicate API calls.
+* Avoid duplicate state listeners.
+* Follow the existing project naming conventions.
+* Keep widgets/components reusable.
+* Keep business logic outside the UI where the existing architecture expects it.
+* Do not rewrite unrelated code.
+
+## 12. Final Testing
+
+Test these scenarios:
+
+1. Open Daily Tasks → tasks load.
+2. No tasks → empty state appears.
+3. Create task → task appears.
+4. Create invalid task → validation works.
+5. Edit task → changes are saved.
+6. Delete task → confirmation appears and task is removed.
+7. Cancel delete → task remains.
+8. Mark pending task as completed → status changes.
+9. Mark completed task as pending → status changes back.
+10. API failure → user sees proper error and UI remains consistent.
+11. Logout/login → tasks still load correctly for the authenticated user.
+12. Reopen Daily Tasks → saved changes remain.
+
+Finally, tell me:
+
+* Which files you changed
+* Which API/service/repository methods you reused or added
+* What was causing the Daily Tasks CRUD/marking issue
+* Any remaining backend/API issue that cannot be fixed from Flutter alone
+
+Do not modify unrelated functionality.

@@ -191,18 +191,14 @@ class _DailyTasksBody extends StatelessWidget {
     BuildContext context, {
     DailyTaskModel? task,
   }) async {
-    final input = await showDialog<DailyTaskInput>(
-      context: context,
-      builder: (_) => _TaskFormDialog(task: task),
-    );
-    if (input == null || !context.mounted) return;
-
     final bloc = context.read<DailyTasksBloc>();
-    if (task == null) {
-      bloc.add(AddDailyTask(input));
-    } else {
-      bloc.add(EditDailyTask(taskId: task.id, input: input));
-    }
+    await showDialog<void>(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: _TaskFormDialog(task: task),
+      ),
+    );
   }
 }
 
@@ -682,14 +678,14 @@ class _TaskTile extends StatelessWidget {
   }
 
   Future<void> _editTask(BuildContext context) async {
-    final input = await showDialog<DailyTaskInput>(
+    final bloc = context.read<DailyTasksBloc>();
+    await showDialog<void>(
       context: context,
-      builder: (_) => _TaskFormDialog(task: task),
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: _TaskFormDialog(task: task),
+      ),
     );
-    if (input == null || !context.mounted) return;
-    context.read<DailyTasksBloc>().add(
-          EditDailyTask(taskId: task.id, input: input),
-        );
   }
 
   Future<void> _deleteTask(BuildContext context) async {
@@ -987,146 +983,183 @@ class _TaskFormDialogState extends State<_TaskFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.task != null;
+    final isSaving = context.select<DailyTasksBloc, bool>(
+      (bloc) => bloc.state.action != DailyTaskAction.none,
+    );
     final categoryOptions = [..._categories];
     if (!categoryOptions.any((option) => option.$1 == _category)) {
       categoryOptions.add((_category, _prettyLabel(_category)));
     }
 
-    return AlertDialog(
-      title: Text(isEditing ? 'Edit Task' : 'Add New Daily Task'),
-       content: SizedBox(
-         width: AppResponsive.dialogWidth(context),
-         height: AppResponsive.dialogMaxHeight(context, fraction: .78),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _titleController,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Task title',
-                    hintText: 'What would you like to do?',
+    return BlocListener<DailyTasksBloc, DailyTasksState>(
+      listenWhen: (previous, current) =>
+          previous.action != current.action ||
+          previous.actionMessage != current.actionMessage ||
+          previous.errorMessage != current.errorMessage,
+      listener: (context, state) {
+        if (state.action == DailyTaskAction.none &&
+            state.actionMessage != null &&
+            state.errorMessage == null) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: AlertDialog(
+        title: Text(isEditing ? 'Edit Task' : 'Add New Daily Task'),
+        content: SizedBox(
+          width: AppResponsive.dialogWidth(context),
+          height: AppResponsive.dialogMaxHeight(context, fraction: .78),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Task title',
+                      hintText: 'What would you like to do?',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a task title';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a task title';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _descriptionController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    hintText: 'Description (optional)',
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      hintText: 'Description (optional)',
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _category,
-                  decoration: const InputDecoration(labelText: 'Category'),
-                  items: categoryOptions
-                      .map(
-                        (option) => DropdownMenuItem(
-                          value: option.$1,
-                          child: Text(option.$2),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _category = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _frequency,
-                  decoration: const InputDecoration(labelText: 'Frequency'),
-                  items: _frequencies
-                      .map(
-                        (option) => DropdownMenuItem(
-                          value: option.$1,
-                          child: Text(option.$2),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _frequency = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                _ScheduledTimeField(
-                  value: _scheduledTime,
-                  onChanged: (value) => setState(() => _scheduledTime = value),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _estimatedMinutesController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Estimated Time (minutes)',
-                    hintText: '1–480 minutes',
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _category,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items: categoryOptions
+                        .map(
+                          (option) => DropdownMenuItem(
+                            value: option.$1,
+                            child: Text(option.$2),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: isSaving
+                        ? null
+                        : (value) {
+                            if (value != null) setState(() => _category = value);
+                          },
                   ),
-                  validator: (value) {
-                    final minutes = int.tryParse(value ?? '');
-                    if (minutes == null || minutes < 1 || minutes > 480) {
-                      return 'Enter a number from 1 to 480';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _pointValueController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Point Value',
-                    hintText: '0–100 points',
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _frequency,
+                    decoration: const InputDecoration(labelText: 'Frequency'),
+                    items: _frequencies
+                        .map(
+                          (option) => DropdownMenuItem(
+                            value: option.$1,
+                            child: Text(option.$2),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: isSaving
+                        ? null
+                        : (value) {
+                            if (value != null) {
+                              setState(() => _frequency = value);
+                            }
+                          },
                   ),
-                  validator: (value) {
-                    final points = int.tryParse(value ?? '');
-                    if (points == null || points < 0 || points > 100) {
-                      return 'Enter a number from 0 to 100';
-                    }
-                    return null;
-                  },
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  _ScheduledTimeField(
+                    value: _scheduledTime,
+                    onChanged: isSaving
+                        ? (_) {}
+                        : (value) => setState(() => _scheduledTime = value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _estimatedMinutesController,
+                    enabled: !isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Estimated Time (minutes)',
+                      hintText: '1–480 minutes',
+                    ),
+                    validator: (value) {
+                      final minutes = int.tryParse(value ?? '');
+                      if (minutes == null || minutes < 1 || minutes > 480) {
+                        return 'Enter a number from 1 to 480';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _pointValueController,
+                    enabled: !isSaving,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Point Value',
+                      hintText: '0–100 points',
+                    ),
+                    validator: (value) {
+                      final points = int.tryParse(value ?? '');
+                      if (points == null || points < 0 || points > 100) {
+                        return 'Enter a number from 0 to 100';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: isSaving ? null : _submit,
+            child: isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(isEditing ? 'Update Task' : 'Create Task'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(isEditing ? 'Update Task' : 'Create Task'),
-        ),
-      ],
     );
   }
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    Navigator.of(context).pop(
-      DailyTaskInput(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category: _category,
-        frequency: _frequency,
-        estimatedMinutes: int.parse(_estimatedMinutesController.text),
-        pointValue: int.parse(_pointValueController.text),
-        scheduledTime: _scheduledTime,
-      ),
+    final input = DailyTaskInput(
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      category: _category,
+      frequency: _frequency,
+      estimatedMinutes: int.parse(_estimatedMinutesController.text),
+      pointValue: int.parse(_pointValueController.text),
+      scheduledTime: _scheduledTime,
     );
+    final bloc = context.read<DailyTasksBloc>();
+    final task = widget.task;
+    if (task == null) {
+      bloc.add(AddDailyTask(input));
+    } else {
+      bloc.add(EditDailyTask(taskId: task.id, input: input));
+    }
   }
 }
 
