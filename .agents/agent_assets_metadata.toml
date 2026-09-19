@@ -1471,3 +1471,17 @@ mtime_ms = 1789823118657
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/900a0f04-2088-4349-850a-6fc7bc28c907/8f9b05b1-d787-4214-b11a-84deae0d80b6"
 storage_version_token = "1789823123038360"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "gUAfsQSyjOzPNHbiNNbFJ"
+uri = "file://artifacts/flutter-academic-planner-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Planner fix — changed-file ZIP"
+description = "Contains the Academic Planner presentation file with the stateful Add Assignment dialog lifecycle fix."
+logical_id = "af0f550b-c0cc-4fd0-b738-2c6252b3cad3"
+content_hash = "sha256:2f54b3eb71bf16f57b0433714911e761d98e41bfdb944fd0c63dab93504f4909"
+size = 13482
+mtime_ms = 1789823703114
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/af0f550b-c0cc-4fd0-b738-2c6252b3cad3/a6186db5-1d18-48be-b879-2d9b70b8a223"
+storage_version_token = "1789823707888099"
+content_type = "application/octet-stream"
