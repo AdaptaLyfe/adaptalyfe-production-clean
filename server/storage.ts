@@ -93,6 +93,10 @@ type TransitionSkillSchemaCapabilities = {
   hasPriority: boolean;
 };
 
+function schemaCapabilityIsTrue(value: unknown): boolean {
+  return value === true || value === 1 || value === "true" || value === "t";
+}
+
 let transitionSkillSchemaCapabilitiesPromise:
   | Promise<TransitionSkillSchemaCapabilities>
   | undefined;
@@ -137,8 +141,8 @@ async function getTransitionSkillSchemaCapabilities(): Promise<TransitionSkillSc
           has_priority?: boolean;
         } | undefined;
         const capabilities = {
-          hasTable: Boolean(row?.has_table),
-          hasPriority: Boolean(row?.has_priority),
+          hasTable: schemaCapabilityIsTrue(row?.has_table),
+          hasPriority: schemaCapabilityIsTrue(row?.has_priority),
         };
 
         if (!capabilities.hasTable || !capabilities.hasPriority) {

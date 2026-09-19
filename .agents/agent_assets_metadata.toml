@@ -1023,3 +1023,17 @@ mtime_ms = 1789795329803
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/45651410-e6e0-4252-aa3c-c146c4362fea/713e6efe-2afc-404a-951a-4e1abd29745f"
 storage_version_token = "1789795334354355"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8pHEOo1sjy_HOUqRehDpH"
+uri = "file://life-skill-cross-platform-fix.zip"
+type = "unspecified"
+title = "Life Skill cross-platform fix"
+description = "React/wrapper, Flutter, and server schema-compatibility fixes for Life Skill creation."
+logical_id = "bd84a894-d6e6-4e85-89e5-eb33deeedcf6"
+content_hash = "sha256:61cc8517909e4111b82eaf86ec29f4736c4014c0dee02e9c63193e928cfb89e6"
+size = 84838
+mtime_ms = 1789795825664
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd84a894-d6e6-4e85-89e5-eb33deeedcf6/e0c38530-b798-4005-aae7-09ee25b4b2df"
+storage_version_token = "1789795839111766"
+content_type = "application/octet-stream"
