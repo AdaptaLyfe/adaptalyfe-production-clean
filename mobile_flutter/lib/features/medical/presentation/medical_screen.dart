@@ -2033,158 +2033,221 @@ Future<void> _showProviderDialog(
   PrimaryCareProviderModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final nameController = TextEditingController(text: existing?.name ?? '');
-  final specialtyController =
-      TextEditingController(text: existing?.specialty ?? '');
-  final practiceController =
-      TextEditingController(text: existing?.practiceName ?? '');
-  final phoneController =
-      TextEditingController(text: existing?.phoneNumber ?? '');
-  final emailController = TextEditingController(text: existing?.email ?? '');
-  final addressController =
-      TextEditingController(text: existing?.address ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final formKey = GlobalKey<FormState>();
-  var isPrimary = existing?.isPrimary ?? false;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _HealthcareContactDialog(
       bloc: medicalBloc,
-      action: 'provider',
-      successMessage: existing == null
-          ? 'Healthcare contact added successfully.'
-          : 'Healthcare contact updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(
-          existing == null
-              ? 'Add Primary Care Provider'
-              : 'Edit Healthcare Contact',
-        ),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Provider Name',
-                    hintText: 'Dr. Smith',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: specialtyController,
-                  decoration: const InputDecoration(
-                    labelText: 'Specialty',
-                    hintText: 'e.g., Family Medicine, Cardiology',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: practiceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Practice Name',
-                    hintText: 'Medical center or clinic name',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    hintText: 'Office phone number',
-                  ),
-                  validator: _providerPhoneValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  validator: _emailValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: addressController,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Address'),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Primary care provider'),
-                  value: isPrimary,
-                  onChanged: (value) => setState(() => isPrimary = value),
-                ),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Additional information',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = PrimaryCareProviderInput(
-                      name: nameController.text,
-                      specialty: specialtyController.text,
-                      practiceName: practiceController.text,
-                      phoneNumber: phoneController.text,
-                      email: emailController.text,
-                      address: addressController.text,
-                      isPrimary: isPrimary,
-                      notes: notesController.text,
-                    );
-                    medicalBloc.add(
-                    existing == null
-                        ? AddPrimaryCareProvider(input)
-                        : EditPrimaryCareProvider(existing.id, input),
-                  );
-                  },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null
-                      ? 'Add Healthcare Contact'
-                      : 'Update Contact'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  for (final controller in [
-    nameController,
-    specialtyController,
-    practiceController,
-    phoneController,
-    emailController,
-    addressController,
-    notesController,
-  ]) {
-    controller.dispose();
+}
+
+class _HealthcareContactDialog extends StatefulWidget {
+  const _HealthcareContactDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final PrimaryCareProviderModel? existing;
+
+  @override
+  State<_HealthcareContactDialog> createState() =>
+      _HealthcareContactDialogState();
+}
+
+class _HealthcareContactDialogState
+    extends State<_HealthcareContactDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _specialtyController;
+  late final TextEditingController _practiceController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _addressController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late var _isPrimary = widget.existing?.isPrimary ?? false;
+
+  String get _successMessage => widget.existing == null
+      ? 'Healthcare contact added successfully.'
+      : 'Healthcare contact updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController =
+        TextEditingController(text: widget.existing?.name ?? '');
+    _specialtyController =
+        TextEditingController(text: widget.existing?.specialty ?? '');
+    _practiceController =
+        TextEditingController(text: widget.existing?.practiceName ?? '');
+    _phoneController =
+        TextEditingController(text: widget.existing?.phoneNumber ?? '');
+    _emailController =
+        TextEditingController(text: widget.existing?.email ?? '');
+    _addressController =
+        TextEditingController(text: widget.existing?.address ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _specialtyController.dispose();
+    _practiceController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = PrimaryCareProviderInput(
+      name: _nameController.text,
+      specialty: _specialtyController.text,
+      practiceName: _practiceController.text,
+      phoneNumber: _phoneController.text,
+      email: _emailController.text,
+      address: _addressController.text,
+      isPrimary: _isPrimary,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddPrimaryCareProvider(input)
+          : EditPrimaryCareProvider(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'provider' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (context, state) {
+        if (mounted) Navigator.of(context).pop();
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'provider') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'provider';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(
+              existing == null
+                  ? 'Add Primary Care Provider'
+                  : 'Edit Healthcare Contact',
+            ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Provider Name',
+                        hintText: 'Dr. Smith',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _specialtyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Specialty',
+                        hintText: 'e.g., Family Medicine, Cardiology',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _practiceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Practice Name',
+                        hintText: 'Medical center or clinic name',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number',
+                        hintText: 'Office phone number',
+                      ),
+                      validator: _providerPhoneValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration:
+                          const InputDecoration(labelText: 'Email'),
+                      validator: _emailValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _addressController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration:
+                          const InputDecoration(labelText: 'Address'),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Primary care provider'),
+                      value: _isPrimary,
+                      onChanged: (value) =>
+                          setState(() => _isPrimary = value),
+                    ),
+                    TextFormField(
+                      controller: _notesController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Additional information',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null
+                          ? 'Add Healthcare Contact'
+                          : 'Update Contact'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
