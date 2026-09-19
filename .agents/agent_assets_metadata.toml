@@ -1065,3 +1065,17 @@ mtime_ms = 1789797323088
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/966c2ba7-c9ec-42dc-823f-59e5ccc774d0/d138370c-215c-450a-8f86-1f478f230397"
 storage_version_token = "1789797330367920"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nvyohplqSnftFQcW-n5gB"
+uri = "file://exports/flutter-quick-actions-changes.zip"
+type = "unspecified"
+title = "Flutter Quick Actions changed files"
+description = "Zip archive containing the three changed Flutter files with their project-relative paths preserved."
+logical_id = "7dac977d-6f1d-4a95-a8ea-bc177c4da041"
+content_hash = "sha256:824be7537cd5c76429263f213a05029a43a9b34b5c4d69173fe0f0ccb98afa78"
+size = 31885
+mtime_ms = 1789800403584
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7dac977d-6f1d-4a95-a8ea-bc177c4da041/b65ed6e5-7ae4-40cc-b73b-a084b2d94e58"
+storage_version_token = "1789800407022400"
+content_type = "application/octet-stream"
