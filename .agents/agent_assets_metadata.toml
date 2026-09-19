@@ -1191,3 +1191,17 @@ mtime_ms = 1789808567147
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cff129ee-cb5e-438d-8ab4-a1653996da51/7eb28147-5163-4ed0-8360-d91fa9c288ff"
 storage_version_token = "1789808574654838"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "04b5k0fJ6nj7rIyXPNeto"
+uri = "file://artifacts/changed-source-files-only.zip"
+type = "unspecified"
+title = "Changed source files only"
+description = "ZIP containing only the 10 changed Flutter and backend source files. No attached files, manifests, metadata, or extra directories included."
+logical_id = "311b6700-d1ac-45f6-9a31-1c457d830680"
+content_hash = "sha256:c147ab58b3afa489860b1d898e8ec9cacb9c7a948ac44ccd5bda1cc80f3c6b5f"
+size = 91555
+mtime_ms = 1789808653151
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/311b6700-d1ac-45f6-9a31-1c457d830680/d621bbf2-40ad-4210-a30e-41ef916e5277"
+storage_version_token = "1789808657251302"
+content_type = "application/octet-stream"
