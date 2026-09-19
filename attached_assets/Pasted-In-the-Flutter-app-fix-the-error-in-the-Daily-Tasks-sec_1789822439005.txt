@@ -1,0 +1,61 @@
+In the Flutter app, fix the error in the **Daily Tasks** section.
+
+### Issue
+
+Go to:
+
+**Daily Tasks → Add New Task → Fill task details → Create Task**
+
+When the user clicks **Create Task**, the task is not created and this error appears:
+
+**"We could not load your daily tasks"**
+
+### Required Fix
+
+1. Find the complete flow for:
+
+   * Add New Task screen
+   * Create Task button
+   * Task validation
+   * Task creation/API/Firebase operation
+   * Daily Tasks loading/refresh
+   * BLoC/State management related to Daily Tasks
+
+2. Identify why clicking **Create Task** triggers the **"We could not load your daily tasks"** error.
+
+3. Fix the root cause instead of hiding or removing the error message.
+
+4. After successfully creating a task:
+
+   * Save the task correctly.
+   * Close the Add New Task screen/dialog.
+   * Refresh the Daily Tasks list.
+   * Display the newly created task in the list.
+   * Do not show the "We could not load your daily tasks" error.
+
+5. If task creation succeeds but refreshing the list fails, handle these operations separately so that a refresh failure does not incorrectly report the task creation as a loading failure.
+
+6. Check the existing:
+
+   * Daily Task BLoC/events/states
+   * Repository
+   * Data source/API/Firebase calls
+   * Error handling
+   * Authentication/user ID
+   * Firestore/API permissions
+   * Request/response model
+   * Loading and success states
+
+7. Keep the existing UI design and functionality unchanged.
+
+8. Do not rewrite the Daily Tasks feature from scratch. Modify the existing implementation and follow the current project architecture.
+
+### Important
+
+Do not simply replace the error message or suppress the exception. Find the actual root cause and fix it.
+
+After making the fix, test this complete flow:
+
+**Daily Tasks → Add New Task → Enter details → Create Task → Task successfully appears in Daily Tasks**
+
+Also make sure existing **edit, update, delete, and load Daily Tasks** functionality continues to work.
