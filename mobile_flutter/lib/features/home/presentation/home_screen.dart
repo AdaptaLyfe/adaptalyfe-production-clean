@@ -61,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   void didPopNext() {
     if (mounted) {
       context.read<HomeBloc>().add(const RefreshHome());
+      context.read<DailyTasksBloc>().add(const RefreshDailyTasks());
     }
   }
 

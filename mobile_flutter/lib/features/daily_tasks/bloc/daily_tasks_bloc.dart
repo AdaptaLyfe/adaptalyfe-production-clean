@@ -18,16 +18,23 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
 
   final DailyTasksRepository repository;
   DateTime? _selectedDate;
+  bool _usesImplicitToday = true;
 
   Future<void> _loadTasks(
     DailyTasksEvent event,
     Emitter<DailyTasksState> emit,
   ) async {
-    _selectedDate = event is DailyTasksStarted
-        ? event.date
-        : event is RefreshDailyTasks
-            ? event.date ?? _selectedDate
-            : _selectedDate;
+    if (event is DailyTasksStarted) {
+      _selectedDate = event.date == null
+          ? null
+          : calendarDateOnly(event.date!);
+      _usesImplicitToday = event.date == null;
+    } else if (event is RefreshDailyTasks && event.date != null) {
+      _selectedDate = calendarDateOnly(event.date!);
+      _usesImplicitToday = false;
+    }
+
+    final requestDate = _requestDate;
     emit(
       state.copyWith(
         status: DailyTasksStatus.loading,
@@ -38,7 +45,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     );
 
     try {
-      final tasks = await repository.getTasks(date: _selectedDate);
+      final tasks = await repository.getTasks(date: requestDate);
       emit(
         state.copyWith(
           status: DailyTasksStatus.loaded,
@@ -148,7 +155,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
   ) async {
     final previousTasks = state.tasks;
     final taskIndex = previousTasks.indexWhere((task) => task.id == event.taskId);
-    final selectedDate = event.date ?? _selectedDate;
+    final selectedDate = event.date ?? _requestDate;
     final selectedDateKey =
         selectedDate == null ? null : calendarDateKey(selectedDate);
 
@@ -224,7 +231,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     required String successMessage,
   }) async {
     try {
-      final tasks = await repository.getTasks(date: _selectedDate);
+      final tasks = await repository.getTasks(date: _requestDate);
       emit(
         state.copyWith(
           status: DailyTasksStatus.loaded,
@@ -270,4 +277,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     if (error is FormatException) return error.message;
     return 'Unable to load your daily tasks. Please try again.';
   }
+
+  DateTime? get _requestDate =>
+      _usesImplicitToday ? calendarDateOnly(DateTime.now()) : _selectedDate;
 }

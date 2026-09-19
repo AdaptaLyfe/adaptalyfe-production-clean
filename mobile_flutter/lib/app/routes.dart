@@ -242,7 +242,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
                   ),
                   BlocProvider(
                     create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-                      ..add(DailyTasksStarted(date: DateTime.now())),
+                      ..add(const DailyTasksStarted()),
                   ),
                   BlocProvider(
                     create: (_) => MoodBloc(_createMoodRepository())
@@ -287,7 +287,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             path: '/daily-tasks',
             builder: (context, state) => BlocProvider(
               create: (_) => DailyTasksBloc(_createDailyTasksRepository())
-                ..add(DailyTasksStarted(date: DateTime.now())),
+                ..add(const DailyTasksStarted()),
               child: const DailyTasksScreen(),
             ),
           ),
