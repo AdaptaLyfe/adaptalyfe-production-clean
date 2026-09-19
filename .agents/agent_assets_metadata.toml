@@ -1107,3 +1107,17 @@ mtime_ms = 1789801604680
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cfedd236-665f-483d-9a37-4416b10dbfa5/5204be62-4f47-46f6-8f48-4f901c73e3bc"
 storage_version_token = "1789801610163285"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PnD2X3mPtZGQ-764Aw6LX"
+uri = "file://exports/flutter-daily-tasks-save-fix.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks save fix"
+description = "Complete Daily Tasks Flutter feature with mutation-response fallback so created, updated, and deleted tasks remain visible even if the follow-up refresh request fails."
+logical_id = "e76b7620-2c7c-43b1-b4c4-fde0635b7d61"
+content_hash = "sha256:e470dd2518374b70c5f6cca39e4a50f89b272a12e309e89a5a778f0a067bfe89"
+size = 15733
+mtime_ms = 1789804199260
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e76b7620-2c7c-43b1-b4c4-fde0635b7d61/49397c8e-803a-472c-a136-963dafbf75cf"
+storage_version_token = "1789804204080072"
+content_type = "application/octet-stream"

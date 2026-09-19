@@ -14,3 +14,9 @@ For Flutter’s implicit “today” task view, derive the local calendar date f
 **Why:** A screen can remain mounted across midnight, and retaining the opening timestamp makes later reads and toggles target yesterday’s completion record.
 
 **How to apply:** Start the normal Daily Tasks route without a fixed date, keep explicit date selection separate, and refresh the Home task BLoC when returning from the full task screen.
+
+Daily Task mutations should use the successful create/update/delete response to keep the local list current, with a refresh treated as reconciliation rather than the only way to display a committed change.
+
+**Why:** A successful mutation followed by a transient GET failure must not make a saved task appear to have been lost.
+
+**How to apply:** Preserve the mutation result as a fallback when the post-mutation list refresh fails, while still retrying or allowing a later pull-to-refresh.

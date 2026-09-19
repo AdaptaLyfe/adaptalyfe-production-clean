@@ -91,10 +91,11 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     );
 
     try {
-      await repository.createTask(event.input);
+      final createdTask = await repository.createTask(event.input);
       await _reloadAfterMutation(
         emit,
         successMessage: 'New task added to your daily list.',
+        fallbackTasks: [...state.tasks, createdTask],
       );
     } catch (error) {
       _emitActionError(emit, error, 'Failed to create task. Please try again.');
@@ -115,10 +116,13 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     );
 
     try {
-      await repository.updateTask(event.taskId, event.input);
+      final updatedTask = await repository.updateTask(event.taskId, event.input);
       await _reloadAfterMutation(
         emit,
         successMessage: 'Your task has been updated successfully.',
+        fallbackTasks: state.tasks
+            .map((task) => task.id == updatedTask.id ? updatedTask : task)
+            .toList(growable: false),
       );
     } catch (error) {
       _emitActionError(emit, error, 'Failed to update task. Please try again.');
@@ -143,6 +147,9 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
       await _reloadAfterMutation(
         emit,
         successMessage: 'The task was permanently deleted.',
+        fallbackTasks: state.tasks
+            .where((task) => task.id != event.taskId)
+            .toList(growable: false),
       );
     } catch (error) {
       _emitActionError(emit, error, 'Failed to delete task. Please try again.');
@@ -229,6 +236,7 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
   Future<void> _reloadAfterMutation(
     Emitter<DailyTasksState> emit, {
     required String successMessage,
+    List<DailyTaskModel>? fallbackTasks,
   }) async {
     try {
       final tasks = await repository.getTasks(date: _requestDate);
@@ -244,10 +252,19 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
         ),
       );
     } catch (error) {
-      _emitActionError(
-        emit,
-        error,
-        'The task changed, but the list could not be refreshed.',
+      emit(
+        state.copyWith(
+          status: DailyTasksStatus.loaded,
+          tasks: fallbackTasks ?? state.tasks,
+          action: DailyTaskAction.none,
+          activeTaskId: null,
+          errorMessage:
+              'The task was saved, but the list could not be refreshed. '
+              'Pull to refresh and try again.',
+          actionMessage: null,
+          sessionInvalid:
+              error is ApiException && error.type == ApiErrorType.unauthorized,
+        ),
       );
     }
   }
