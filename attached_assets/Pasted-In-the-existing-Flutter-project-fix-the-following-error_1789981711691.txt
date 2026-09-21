@@ -1,0 +1,89 @@
+In the existing Flutter project, fix the following errors in the **Health Records** section.
+
+### 1. Health Records → Sensitivities → Add New Sensitivity
+
+Issue:
+
+* An error is shown when the user enters the required sensitivity details and tries to add/save a new sensitivity.
+
+Required:
+
+* Find the existing Sensitivities add/create flow.
+* Identify the actual cause of the error.
+* Fix the issue without changing the existing UI/design or user flow.
+* Make sure valid sensitivity details can be saved successfully.
+* Keep the existing validation rules unless they are causing the bug.
+* Show the existing success behavior/message after successfully adding the sensitivity.
+
+### 2. Health Records → Sensitivities → Cancel
+
+Issue:
+
+* After the user enters details for a new sensitivity, tapping **"Cancel"** causes an error.
+
+Required:
+
+* Cancel should work without throwing any exception/error.
+* Discard the entered sensitivity data.
+* Close the add sensitivity form/modal/page and return to the previous screen.
+* Do not call the save/create API when Cancel is pressed.
+* Make sure no unnecessary validation is triggered when Cancel is pressed.
+* Clear/reset temporary form state properly.
+
+### 3. Health Records → Notes → Add Note
+
+Issue:
+
+* An error is shown when the user enters a note and tries to add/save it.
+
+Required:
+
+* Find the existing Notes add/create flow.
+* Identify and fix the root cause of the error.
+* Make sure valid notes can be added successfully.
+* Keep the existing UI, validation, API, state management, and navigation behavior unless a change is required to fix the bug.
+* Show the existing success behavior/message after successfully adding a note.
+
+### 4. Health Records → Notes → Cancel
+
+Issue:
+
+* After entering note details, tapping **"Cancel"** causes an error.
+
+Required:
+
+* Cancel should work without throwing any exception/error.
+* Discard the entered note data.
+* Close the add note form/modal/page and return to the previous screen.
+* Do not call the save/create API when Cancel is pressed.
+* Do not trigger note validation when Cancel is pressed.
+* Clear/reset temporary form state properly.
+
+### Important Requirements
+
+* First inspect the existing Flutter code and identify the root cause before making changes.
+* Do NOT rewrite the entire feature.
+* Make the smallest safe changes required to fix these issues.
+* Preserve the current UI/UX and design.
+* Preserve existing API contracts and backend behavior.
+* Check BLoC/provider/state-management logic if applicable.
+* Check controllers, form state, nullable values, API responses, and navigation/modal disposal for possible causes.
+* Prevent `setState()` or state updates after a widget has been disposed.
+* Properly dispose/reset controllers and temporary state where required.
+* Make sure Cancel actions never trigger save/update API calls.
+* Handle API failures gracefully instead of showing raw exceptions.
+* Do not modify unrelated Health Records features.
+
+### Testing
+
+After making the changes, verify these exact flows:
+
+1. Health Records → Sensitivities → Add Sensitivity → Enter valid details → Save → Successfully added.
+2. Health Records → Sensitivities → Add Sensitivity → Enter details → Cancel → No error and form closes.
+3. Health Records → Notes → Add Note → Enter valid details → Save → Successfully added.
+4. Health Records → Notes → Add Note → Enter details → Cancel → No error and form closes.
+5. Open and cancel both forms multiple times to ensure there are no state/disposal errors.
+6. Verify existing Sensitivities and Notes data still loads correctly.
+7. Verify edit/delete functionality is not affected.
+
+Before finishing, review the changes and make sure there are no new analyzer errors, compile errors, or runtime exceptions.
