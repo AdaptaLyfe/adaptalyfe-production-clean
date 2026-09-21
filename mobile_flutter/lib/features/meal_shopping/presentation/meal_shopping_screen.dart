@@ -1506,6 +1506,7 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
   late final TextEditingController _estimatedCostController;
   final _formKey = GlobalKey<FormState>();
   var _category = 'produce';
+  var _isClosing = false;
 
   @override
   void initState() {
@@ -1539,17 +1540,23 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
     );
   }
 
+  void _closeDialog() {
+    if (!mounted || _isClosing) return;
+    _isClosing = true;
+    Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<MealShoppingBloc, MealShoppingState>(
       bloc: widget.bloc,
       listenWhen: (previous, current) =>
-          previous.action != MealShoppingAction.none &&
+          previous.action == MealShoppingAction.addingShoppingItem &&
           current.action == MealShoppingAction.none &&
-          current.actionMessage != null &&
+          current.actionMessage == 'Shopping item added successfully!' &&
           current.errorMessage == null,
       listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+        _closeDialog();
       },
       child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
         bloc: widget.bloc,
@@ -1623,7 +1630,7 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
             ),
             actions: [
               TextButton(
-                onPressed: isBusy ? null : () => Navigator.pop(context),
+                onPressed: isBusy ? null : _closeDialog,
                 child: const Text('Cancel'),
               ),
               FilledButton(

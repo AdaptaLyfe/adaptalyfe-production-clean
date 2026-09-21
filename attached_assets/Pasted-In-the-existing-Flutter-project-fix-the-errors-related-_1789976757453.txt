@@ -1,0 +1,43 @@
+In the existing Flutter project, fix the errors related to the Shopping List feature.
+
+### Issues
+
+1. **Error while adding an item to the Shopping List**
+
+   * When the user opens the **Add Shopping Item** popup, enters the required details, and taps **Add/Save**, an error is shown.
+   * Find the root cause and fix it so the shopping item is added successfully.
+
+2. **Error while canceling an item after entering details**
+
+   * When the user opens the **Add Shopping Item** popup, enters item details, and then taps **Cancel**, an error is shown.
+   * Cancel should simply close the popup and discard the entered data.
+   * No API call, database update, validation error, or unexpected exception should occur when Cancel is pressed.
+
+### Requirements
+
+* First inspect the existing Shopping List flow, popup/dialog, validation, BLoC/state management, repository, API/local storage, and models to identify the actual root cause.
+* Do not rewrite the feature from scratch.
+* Fix the existing implementation with minimal changes.
+* Keep the current UI design, styling, navigation, and functionality unchanged.
+* Make sure **Add/Save** correctly adds the shopping item.
+* Make sure **Cancel** safely closes the popup without saving anything.
+* Handle null values and empty fields safely where required.
+* Do not introduce hardcoded/mock data.
+* Do not break existing Shopping List features such as edit, delete, search, or display.
+* Check the Flutter console/debug logs for the actual exception and fix the underlying issue rather than hiding the error.
+* Run/analyze the affected files and resolve any Dart analyzer or compilation errors caused by the fix.
+
+### Expected Result
+
+**Add Shopping Item:**
+Enter valid details → tap Add/Save → item is successfully added to the Shopping List → no error.
+
+**Cancel:**
+Open Add Shopping Item → enter details → tap Cancel → popup closes → entered data is discarded → no error → nothing is added or updated.
+
+After fixing, provide a short explanation of:
+
+1. Root cause of the Add error.
+2. Root cause of the Cancel error.
+3. Files changed.
+4. What was changed in each file.
