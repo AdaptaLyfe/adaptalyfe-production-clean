@@ -2125,130 +2125,207 @@ Future<void> _showAdverseMedicationDialog(
   AdverseMedicationModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final medicationController =
-      TextEditingController(text: existing?.medicationName ?? '');
-  final reactionController =
-      TextEditingController(text: existing?.reaction ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final formKey = GlobalKey<FormState>();
-  var severity = _supportedValue(existing?.severity, _severities) ?? '';
-  var reactionDate = existing?.reactionDate;
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _AdverseMedicationDialog(
       bloc: medicalBloc,
-      action: 'reaction',
-      successMessage: existing == null
-          ? 'Reaction added successfully.'
-          : 'Reaction updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(
-          existing == null ? 'Add Adverse Medication' : 'Edit Reaction',
-        ),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: medicationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Medication Name',
-                    hintText: 'e.g., Amoxicillin, Aspirin',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: reactionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Reaction',
-                    hintText: 'e.g., Rash, nausea, dizziness',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: severity.isEmpty ? null : severity,
-                  decoration: const InputDecoration(labelText: 'Severity'),
-                  items: _severities
-                      .map(
-                        (value) => DropdownMenuItem(
-                          value: value,
-                          child: Text(_titleCase(value)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => severity = value ?? ''),
-                  validator: (value) =>
-                      value == null ? 'Severity is required' : null,
-                ),
-                const SizedBox(height: 12),
-                _DateField(
-                  label: 'Reaction Date',
-                  date: reactionDate,
-                  onPick: () async {
-                    final date = await _pickDate(context, reactionDate);
-                    if (date != null) setState(() => reactionDate = date);
-                  },
-                  onClear: reactionDate == null
-                      ? null
-                      : () => setState(() => reactionDate = null),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Additional information',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = AdverseMedicationInput(
-                      medicationName: medicationController.text,
-                      reaction: reactionController.text,
-                      severity: severity,
-                      reactionDate: reactionDate,
-                      notes: notesController.text,
-                    );
-                    medicalBloc.add(
-                    existing == null
-                        ? AddAdverseMedication(input)
-                        : EditAdverseMedication(existing.id, input),
-                  );
-                  },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null ? 'Add Reaction' : 'Update Reaction'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  medicationController.dispose();
-  reactionController.dispose();
-  notesController.dispose();
+}
+
+class _AdverseMedicationDialog extends StatefulWidget {
+  const _AdverseMedicationDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final AdverseMedicationModel? existing;
+
+  @override
+  State<_AdverseMedicationDialog> createState() =>
+      _AdverseMedicationDialogState();
+}
+
+class _AdverseMedicationDialogState
+    extends State<_AdverseMedicationDialog> {
+  late final TextEditingController _medicationController;
+  late final TextEditingController _reactionController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late String _severity;
+  late DateTime? _reactionDate;
+
+  String get _successMessage => widget.existing == null
+      ? 'Reaction added successfully.'
+      : 'Reaction updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _medicationController =
+        TextEditingController(text: widget.existing?.medicationName ?? '');
+    _reactionController =
+        TextEditingController(text: widget.existing?.reaction ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+    _severity =
+        _supportedValue(widget.existing?.severity, _severities) ?? '';
+    _reactionDate = widget.existing?.reactionDate;
+  }
+
+  @override
+  void dispose() {
+    _medicationController.dispose();
+    _reactionController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = AdverseMedicationInput(
+      medicationName: _medicationController.text,
+      reaction: _reactionController.text,
+      severity: _severity,
+      reactionDate: _reactionDate,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddAdverseMedication(input)
+          : EditAdverseMedication(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'reaction' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'reaction') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'reaction';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(
+              existing == null
+                  ? 'Add Adverse Medication'
+                  : 'Edit Reaction',
+            ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _medicationController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Medication Name',
+                        hintText: 'e.g., Amoxicillin, Aspirin',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _reactionController,
+                      enabled: !isSubmitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Reaction',
+                        hintText: 'e.g., Rash, nausea, dizziness',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _severity.isEmpty ? null : _severity,
+                      decoration: const InputDecoration(labelText: 'Severity'),
+                      items: _severities
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) =>
+                              setState(() => _severity = value ?? ''),
+                      validator: (value) =>
+                          value == null ? 'Severity is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    _DateField(
+                      label: 'Reaction Date',
+                      date: _reactionDate,
+                      onPick: isSubmitting
+                          ? () {}
+                          : () async {
+                              final date =
+                                  await _pickDate(context, _reactionDate);
+                              if (!mounted || date == null) return;
+                              setState(() => _reactionDate = date);
+                            },
+                      onClear: isSubmitting || _reactionDate == null
+                          ? null
+                          : () => setState(() => _reactionDate = null),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _notesController,
+                      enabled: !isSubmitting,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Additional information',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isSubmitting ? null : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null ? 'Add Reaction' : 'Update Reaction'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 Future<void> _showProviderDialog(
