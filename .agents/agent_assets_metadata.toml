@@ -1583,3 +1583,17 @@ mtime_ms = 1789969027432
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c9dd060-806d-42c2-b5b8-9bce73941b61/ceda0c60-66cd-4095-b08e-ed51ca2d61e6"
 storage_version_token = "1789969031913141"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "lgmbcucgorVvVUPnns_aZ"
+uri = "file://artifacts/flutter-signup-validation-flow.zip"
+type = "unspecified"
+title = "Flutter Sign Up validation flow — changed file ZIP"
+description = "Contains only signup_screen.dart with sequential first-error validation while preserving the existing UI, messages, password checks, and submission behavior."
+logical_id = "0915dbd6-9a65-4736-92f1-00cadd67a636"
+content_hash = "sha256:621ca752402b4b4ac379890d22c1bed9c6f19ed6e6cbc1d964fe7aadff586f94"
+size = 5930
+mtime_ms = 1789969732631
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0915dbd6-9a65-4736-92f1-00cadd67a636/9b5b7fda-a60a-4ec9-9899-fbf0c5810740"
+storage_version_token = "1789969744269937"
+content_type = "application/octet-stream"
