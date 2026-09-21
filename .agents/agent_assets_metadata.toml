@@ -1765,3 +1765,17 @@ mtime_ms = 1789982851885
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc1eff7d-1202-46b7-811f-a75673842081/aa464b0e-5c54-4f0a-8d15-82a54c27b233"
 storage_version_token = "1789982856534891"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cMsn1q2cSieKs0yfSVfED"
+uri = "file://artifacts/flutter-phone-validation-fix.zip"
+type = "unspecified"
+title = "Flutter phone validation fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/core/utils/phone_number.dart. The shared validator now requires exactly 10 ASCII digits without trimming or accepting any other characters."
+logical_id = "0517db93-7f63-4954-a085-76ec5728f7f2"
+content_hash = "sha256:83ce1af4368a8934ac4200c0d3eaef6ebc5ad39299a62dc7df1958b3426f349f"
+size = 534
+mtime_ms = 1789983072787
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0517db93-7f63-4954-a085-76ec5728f7f2/aad7654d-3a4d-40c5-9e92-1c78ae94d0a6"
+storage_version_token = "1789983079079863"
+content_type = "application/octet-stream"
