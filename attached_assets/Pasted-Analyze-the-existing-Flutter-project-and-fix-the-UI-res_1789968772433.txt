@@ -1,0 +1,157 @@
+Analyze the existing Flutter project and fix the UI responsiveness across all supported screen sizes.
+
+### Problem
+
+The UI does not display properly on different screen sizes. Some screens have:
+
+* Overflow errors
+* Widgets going outside the screen
+* Incorrect spacing
+* Fixed widths/heights causing layout problems
+* Content getting cut off
+* Poor layout on small mobile screens
+* Excessive empty space on large screens
+* Problems when switching between portrait and landscape
+
+### Requirements
+
+1. **Do not redesign the application**
+
+   * Keep the existing UI design, colors, fonts, icons, navigation, and functionality.
+   * Only improve responsiveness and layout behavior.
+
+2. **Support all screen sizes**
+   Make the UI work properly on:
+
+   * Small Android phones
+   * Large Android phones
+   * iPhones
+   * Tablets
+   * Web browsers
+   * Desktop
+   * Different portrait/landscape orientations
+
+3. **Use proper Flutter responsive techniques**
+
+   * `LayoutBuilder`
+   * `MediaQuery`
+   * `Flexible`
+   * `Expanded`
+   * `Wrap`
+   * `ConstrainedBox`
+   * `FractionallySizedBox`
+   * `SingleChildScrollView`
+   * Responsive padding and spacing
+   * Breakpoints for mobile/tablet/desktop where required
+
+4. **Avoid hardcoded dimensions**
+   Identify unnecessary fixed:
+
+   * `width`
+   * `height`
+   * `margin`
+   * `padding`
+
+   Replace them with responsive values where appropriate.
+
+5. **Prevent overflow**
+   Check the entire project for:
+
+   * `RenderFlex overflow`
+   * `Row` overflow
+   * `Column` overflow
+   * Text overflow
+   * Bottom overflow
+   * Horizontal overflow
+
+6. **Text responsiveness**
+   Make sure long text does not break the layout.
+   Use:
+
+   * `maxLines`
+   * `TextOverflow.ellipsis`
+   * `Flexible`
+   * `Expanded`
+
+   where appropriate.
+
+7. **Responsive navigation**
+   Check navigation components such as:
+
+   * Bottom navigation
+   * Drawer
+   * AppBar
+   * Side navigation
+   * Tabs
+
+   Make them appropriate for mobile, tablet, web, and desktop.
+
+8. **Responsive cards and grids**
+   Make cards, lists, dashboards, and grids automatically adjust according to available screen width.
+
+9. **Keyboard and scrolling**
+   Ensure forms work correctly when the keyboard opens.
+   Users should be able to scroll to fields/buttons without UI being hidden.
+
+10. **Safe areas**
+    Properly handle:
+
+    * Status bar
+    * Notches
+    * Bottom navigation areas
+    * Different device aspect ratios
+
+### Important
+
+* First inspect the existing project structure and identify the screens/components causing responsiveness problems.
+* Do not create duplicate screens or duplicate widgets.
+* Reuse the existing components and architecture.
+* Do not change business logic, API calls, Firebase logic, BLoC logic, or navigation logic unless absolutely necessary for the UI fix.
+* Do not remove existing functionality.
+* Keep the code clean and maintainable.
+
+### Responsive breakpoints
+
+Use sensible breakpoints such as:
+
+* Mobile: `< 600px`
+* Tablet: `600px - 1024px`
+* Desktop/Web: `> 1024px`
+
+Do not blindly apply these values everywhere. Use the available constraints and existing UI structure.
+
+### Testing
+
+After making changes, test important screens at:
+
+**Mobile**
+
+* 320px
+* 360px
+* 390px
+* 430px
+
+**Tablet**
+
+* 600px
+* 768px
+* 1024px
+
+**Desktop/Web**
+
+* 1280px
+* 1440px
+* 1920px
+
+Also test portrait and landscape.
+
+### Final requirement
+
+Fix responsiveness throughout the existing Flutter application, not just one screen.
+
+After completing the changes:
+
+1. List the files changed.
+2. Explain what responsive issue was fixed in each file.
+3. Confirm that existing functionality was preserved.
+4. Mention any remaining screen-specific issues that could not be fixed automatically.
