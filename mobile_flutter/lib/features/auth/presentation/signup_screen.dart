@@ -29,10 +29,17 @@ class _SignupScreenState extends State<SignupScreen> {
   late final TextEditingController _confirmPasswordController;
   late final TextEditingController _invitationCodeController;
 
+  final _nameFieldKey = GlobalKey<FormFieldState<String>>();
+  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
+  final _usernameFieldKey = GlobalKey<FormFieldState<String>>();
+  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
+  final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
+
   bool _ageVerified = false;
   bool _agreeToTerms = false;
   bool _subscribeNewsletter = false;
   String? _localError;
+  String? _activeValidationField;
 
   @override
   void initState() {
@@ -63,7 +70,17 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
+    _activeValidationField = null;
+    _clearFieldValidationErrors();
     setState(() => _localError = null);
+
+    if (!_validateField(_nameFieldKey, 'name') ||
+        !_validateField(_emailFieldKey, 'email') ||
+        !_validateField(_usernameFieldKey, 'username') ||
+        !_validateField(_passwordFieldKey, 'password') ||
+        !_validateField(_confirmPasswordFieldKey, 'confirmPassword')) {
+      return;
+    }
 
     if (_passwordController.text != _confirmPasswordController.text) {
       _showLocalError('Password: Passwords do not match');
@@ -85,10 +102,6 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
-    }
-
     context.read<AuthBloc>().add(
           SignupSubmitted(
             name: _nameController.text.trim(),
@@ -99,6 +112,26 @@ class _SignupScreenState extends State<SignupScreen> {
             invitationCode: _invitationCodeController.text.trim(),
           ),
         );
+  }
+
+  bool _validateField(
+    GlobalKey<FormFieldState<String>> fieldKey,
+    String fieldName,
+  ) {
+    _activeValidationField = fieldName;
+    return fieldKey.currentState?.validate() ?? true;
+  }
+
+  void _clearFieldValidationErrors() {
+    for (final fieldKey in [
+      _nameFieldKey,
+      _emailFieldKey,
+      _usernameFieldKey,
+      _passwordFieldKey,
+      _confirmPasswordFieldKey,
+    ]) {
+      fieldKey.currentState?.validate();
+    }
   }
 
   void _showLocalError(String message) {
@@ -181,6 +214,11 @@ class _SignupScreenState extends State<SignupScreen> {
                             passwordController: _passwordController,
                             confirmPasswordController:
                                 _confirmPasswordController,
+                            nameFieldKey: _nameFieldKey,
+                            emailFieldKey: _emailFieldKey,
+                            usernameFieldKey: _usernameFieldKey,
+                            passwordFieldKey: _passwordFieldKey,
+                            confirmPasswordFieldKey: _confirmPasswordFieldKey,
                             invitationCodeController:
                                 _invitationCodeController,
                             hasInvitationCode: _hasInvitationCode,
@@ -190,6 +228,8 @@ class _SignupScreenState extends State<SignupScreen> {
                             localError: _localError,
                             backendError: backendError,
                             isLoading: isLoading,
+                            isValidationFieldActive: (field) =>
+                                _activeValidationField == field,
                             onAgeChanged: (value) {
                               setState(() => _ageVerified = value);
                             },
