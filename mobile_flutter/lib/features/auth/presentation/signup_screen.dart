@@ -210,6 +210,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             localError: _localError,
                             backendError: backendError,
                             isLoading: isLoading,
+                            onPasswordChanged: _handlePasswordChanged,
                             onAgeChanged: (value) {
                               setState(() {
                                 _ageVerified = value;
@@ -336,6 +337,7 @@ class _SignupCard extends StatelessWidget {
     required this.localError,
     required this.backendError,
     required this.isLoading,
+    required this.onPasswordChanged,
     required this.onAgeChanged,
     required this.onTermsChanged,
     required this.onNewsletterChanged,
@@ -357,6 +359,7 @@ class _SignupCard extends StatelessWidget {
   final String? localError;
   final String? backendError;
   final bool isLoading;
+  final VoidCallback onPasswordChanged;
   final ValueChanged<bool> onAgeChanged;
   final ValueChanged<bool> onTermsChanged;
   final ValueChanged<bool> onNewsletterChanged;
@@ -470,7 +473,7 @@ class _SignupCard extends StatelessWidget {
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
-                onChanged: (_) => _handlePasswordChanged(),
+                onChanged: (_) => onPasswordChanged(),
                 validator: (value) => _required(value, 'Password'),
               ),
               const SizedBox(height: 16),
@@ -481,7 +484,7 @@ class _SignupCard extends StatelessWidget {
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
-                onChanged: (_) => _handlePasswordChanged(),
+                onChanged: (_) => onPasswordChanged(),
                 validator: (value) => _required(value, 'Confirm password'),
               ),
               const SizedBox(height: 16),

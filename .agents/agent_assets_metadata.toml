@@ -1611,3 +1611,17 @@ mtime_ms = 1789970386374
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ecc8c65f-4465-4959-8298-a605e4f9cc5e/5231f04b-ccb5-440e-86d4-8753f8d3709b"
 storage_version_token = "1789970391655061"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X7yre1mvJDx-f8mS4MQuJ"
+uri = "file://artifacts/flutter-signup-live-validation-fixed.zip"
+type = "unspecified"
+title = "Flutter Sign Up validation fix — corrected ZIP"
+description = "Contains the corrected signup_screen.dart. The password-change callback is passed into _SignupCard, fixing the undefined-method errors while preserving live validation behavior."
+logical_id = "f489fb7f-8086-482a-9f07-e0e9b65d36b2"
+content_hash = "sha256:ef22e5a0cff0459d2317fa5b81b56f1f06bc1f4943ff9fa42cbbbcb9d2b8e73b"
+size = 5756
+mtime_ms = 1789970568074
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f489fb7f-8086-482a-9f07-e0e9b65d36b2/0ed93275-ac23-43f5-871f-41a99e989912"
+storage_version_token = "1789970574899224"
+content_type = "application/octet-stream"
