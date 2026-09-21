@@ -1,0 +1,106 @@
+In the existing Flutter project, fix phone number validation consistently across the entire application.
+
+### Current Issue
+
+In:
+**Health Records → Trusted Contacts → Edit Contact**
+
+When editing an existing contact, the validation shows:
+
+**"Enter a valid 10-digit phone number"**
+
+This happens when the saved phone number contains:
+
+* `+` sign
+* spaces
+* `-`
+* `()`
+* any other non-digit characters
+
+### Required Behavior
+
+1. **Phone numbers must contain digits only**
+
+   * Allow only `0-9`.
+   * Exactly **10 digits** are required.
+   * Do not allow `+`, spaces, hyphens, brackets, letters, or special characters.
+
+2. **Validation must happen when adding the phone number**
+
+   * When a user adds a new phone number, validate it immediately.
+   * Invalid values such as:
+
+     * `+91 9876543210`
+     * `98765 43210`
+     * `98765-43210`
+     * `(98765)43210`
+     * `98765abc210`
+       should not be accepted/saved.
+   * Show the existing validation message:
+     **"Enter a valid 10-digit phone number"**
+
+3. **Apply the same rule everywhere**
+   Find all screens, forms, dialogs, models, and flows where a phone number can be entered or saved, including:
+
+   * Health Records → Trusted Contacts
+   * Add Contact
+   * Edit Contact
+   * Profile
+   * Caregiver
+   * Emergency contacts
+   * Registration/signup
+   * Any other phone-number field
+
+   All phone-number fields must follow the same validation rule.
+
+4. **Input restriction**
+
+   * Use a numeric keyboard/input formatter where appropriate.
+   * Prevent users from entering non-digit characters.
+   * Still keep validation before submitting/saving, because values can come from existing data, autofill, API responses, or other sources.
+
+5. **Existing data**
+
+   * Do not silently modify existing stored phone numbers.
+   * If an existing invalid phone number contains `+`, spaces, or other characters, editing/saving should require the user to enter a valid 10-digit numeric phone number.
+   * Do not break existing valid 10-digit phone numbers.
+
+6. **Avoid duplicate validation logic**
+
+   * Check whether the project already has a common phone validation utility/helper.
+   * If one exists, update and reuse it instead of creating multiple different validators.
+   * If there is no common validator, create a reusable phone-number validator and use it across all relevant screens.
+
+### Important
+
+* Do not change unrelated functionality.
+* Do not change the existing UI design or styling.
+* Do not change API behavior except where necessary for the corrected phone-number validation.
+* Keep the existing error message exactly:
+  **"Enter a valid 10-digit phone number"**
+* Make sure Add and Edit flows use the same validation.
+* Search the entire Flutter project for all phone-number fields and validation logic before making changes.
+
+### Final Verification
+
+Test at least these cases:
+
+| Input            | Expected      |
+| ---------------- | ------------- |
+| `9876543210`     | ✅ Allowed     |
+| `1234567890`     | ✅ Allowed     |
+| `+919876543210`  | ❌ Not allowed |
+| `+91 9876543210` | ❌ Not allowed |
+| `98765 43210`    | ❌ Not allowed |
+| `98765-43210`    | ❌ Not allowed |
+| `(98765)43210`   | ❌ Not allowed |
+| `98765abc210`    | ❌ Not allowed |
+| `987654321`      | ❌ Not allowed |
+| `98765432101`    | ❌ Not allowed |
+
+After implementation, provide a short summary of:
+
+1. Files changed
+2. Phone validation/helper created or updated
+3. All places where the validation was applied
+4. Test results

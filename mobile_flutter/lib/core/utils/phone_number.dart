@@ -9,7 +9,7 @@ String? validatePhoneNumber(
   String? value, {
   bool required = false,
 }) {
-  final digits = value?.trim() ?? '';
+  final digits = value ?? '';
   if (digits.isEmpty) {
     return required ? 'Phone number is required' : null;
   }
