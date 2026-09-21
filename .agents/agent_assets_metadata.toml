@@ -1597,3 +1597,17 @@ mtime_ms = 1789969732631
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0915dbd6-9a65-4736-92f1-00cadd67a636/9b5b7fda-a60a-4ec9-9899-fbf0c5810740"
 storage_version_token = "1789969744269937"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4H6W-z7o3gn8pIDUsbqnm"
+uri = "file://artifacts/flutter-signup-live-validation.zip"
+type = "unspecified"
+title = "Flutter Sign Up live validation — changed file ZIP"
+description = "Contains only signup_screen.dart with immediate per-field validation updates while preserving existing rules, styling, auth logic, navigation, and BLoC behavior."
+logical_id = "ecc8c65f-4465-4959-8298-a605e4f9cc5e"
+content_hash = "sha256:367001e8d184df64abe2130851c223ac0850687074f9081144fa704014eee2ff"
+size = 5738
+mtime_ms = 1789970386374
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ecc8c65f-4465-4959-8298-a605e4f9cc5e/5231f04b-ccb5-440e-86d4-8753f8d3709b"
+storage_version_token = "1789970391655061"
+content_type = "application/octet-stream"

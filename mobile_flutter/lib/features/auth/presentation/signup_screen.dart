@@ -29,17 +29,10 @@ class _SignupScreenState extends State<SignupScreen> {
   late final TextEditingController _confirmPasswordController;
   late final TextEditingController _invitationCodeController;
 
-  final _nameFieldKey = GlobalKey<FormFieldState<String>>();
-  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
-  final _usernameFieldKey = GlobalKey<FormFieldState<String>>();
-  final _passwordFieldKey = GlobalKey<FormFieldState<String>>();
-  final _confirmPasswordFieldKey = GlobalKey<FormFieldState<String>>();
-
   bool _ageVerified = false;
   bool _agreeToTerms = false;
   bool _subscribeNewsletter = false;
   String? _localError;
-  final Set<String> _validatedFields = <String>{};
   bool _passwordMismatchValidated = false;
 
   @override
@@ -71,15 +64,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
-    _validatedFields.clear();
-    _clearFieldValidationErrors();
+    _passwordMismatchValidated = false;
     setState(() => _localError = null);
 
-    if (!_validateField(_nameFieldKey, 'name') ||
-        !_validateField(_emailFieldKey, 'email') ||
-        !_validateField(_usernameFieldKey, 'username') ||
-        !_validateField(_passwordFieldKey, 'password') ||
-        !_validateField(_confirmPasswordFieldKey, 'confirmPassword')) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
@@ -115,26 +103,6 @@ class _SignupScreenState extends State<SignupScreen> {
             invitationCode: _invitationCodeController.text.trim(),
           ),
         );
-  }
-
-  bool _validateField(
-    GlobalKey<FormFieldState<String>> fieldKey,
-    String fieldName,
-  ) {
-    _validatedFields.add(fieldName);
-    return fieldKey.currentState?.validate() ?? true;
-  }
-
-  void _clearFieldValidationErrors() {
-    for (final fieldKey in [
-      _nameFieldKey,
-      _emailFieldKey,
-      _usernameFieldKey,
-      _passwordFieldKey,
-      _confirmPasswordFieldKey,
-    ]) {
-      fieldKey.currentState?.validate();
-    }
   }
 
   void _showLocalError(String message) {
@@ -233,11 +201,6 @@ class _SignupScreenState extends State<SignupScreen> {
                             passwordController: _passwordController,
                             confirmPasswordController:
                                 _confirmPasswordController,
-                            nameFieldKey: _nameFieldKey,
-                            emailFieldKey: _emailFieldKey,
-                            usernameFieldKey: _usernameFieldKey,
-                            passwordFieldKey: _passwordFieldKey,
-                            confirmPasswordFieldKey: _confirmPasswordFieldKey,
                             invitationCodeController:
                                 _invitationCodeController,
                             hasInvitationCode: _hasInvitationCode,
@@ -247,8 +210,6 @@ class _SignupScreenState extends State<SignupScreen> {
                             localError: _localError,
                             backendError: backendError,
                             isLoading: isLoading,
-                            isValidationFieldActive: (field) =>
-                                _validatedFields.contains(field),
                             onAgeChanged: (value) {
                               setState(() {
                                 _ageVerified = value;
@@ -367,11 +328,6 @@ class _SignupCard extends StatelessWidget {
     required this.usernameController,
     required this.passwordController,
     required this.confirmPasswordController,
-    required this.nameFieldKey,
-    required this.emailFieldKey,
-    required this.usernameFieldKey,
-    required this.passwordFieldKey,
-    required this.confirmPasswordFieldKey,
     required this.invitationCodeController,
     required this.hasInvitationCode,
     required this.ageVerified,
@@ -380,7 +336,6 @@ class _SignupCard extends StatelessWidget {
     required this.localError,
     required this.backendError,
     required this.isLoading,
-    required this.isValidationFieldActive,
     required this.onAgeChanged,
     required this.onTermsChanged,
     required this.onNewsletterChanged,
@@ -394,11 +349,6 @@ class _SignupCard extends StatelessWidget {
   final TextEditingController usernameController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
-  final GlobalKey<FormFieldState<String>> nameFieldKey;
-  final GlobalKey<FormFieldState<String>> emailFieldKey;
-  final GlobalKey<FormFieldState<String>> usernameFieldKey;
-  final GlobalKey<FormFieldState<String>> passwordFieldKey;
-  final GlobalKey<FormFieldState<String>> confirmPasswordFieldKey;
   final TextEditingController invitationCodeController;
   final bool hasInvitationCode;
   final bool ageVerified;
@@ -407,7 +357,6 @@ class _SignupCard extends StatelessWidget {
   final String? localError;
   final String? backendError;
   final bool isLoading;
-  final bool Function(String field) isValidationFieldActive;
   final ValueChanged<bool> onAgeChanged;
   final ValueChanged<bool> onTermsChanged;
   final ValueChanged<bool> onNewsletterChanged;
@@ -486,70 +435,54 @@ class _SignupCard extends StatelessWidget {
               const SizedBox(height: 14),
               _textField(
                 controller: nameController,
-                fieldKey: nameFieldKey,
                 label: 'Full Name',
                 hint: 'Enter your full name',
                 enabled: !isLoading,
                 textInputAction: TextInputAction.next,
-                validator: (value) => isValidationFieldActive('name')
-                    ? _required(value, 'Full name')
-                    : null,
+                validator: (value) => _required(value, 'Full name'),
               ),
               const SizedBox(height: 16),
               _textField(
                 controller: emailController,
-                fieldKey: emailFieldKey,
                 label: 'Email Address',
                 hint: 'Enter your email',
                 enabled: !isLoading,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                validator: (value) => isValidationFieldActive('email')
-                    ? _emailValidator(value)
-                    : null,
+                validator: _emailValidator,
               ),
               const SizedBox(height: 24),
               const _SectionHeading('Account Setup'),
               const SizedBox(height: 14),
               _textField(
                 controller: usernameController,
-                fieldKey: usernameFieldKey,
                 label: 'Username',
                 hint: 'Choose a username',
                 enabled: !isLoading,
                 textInputAction: TextInputAction.next,
-                validator: (value) => isValidationFieldActive('username')
-                    ? _required(value, 'Username')
-                    : null,
+                validator: (value) => _required(value, 'Username'),
               ),
               const SizedBox(height: 16),
               _textField(
                 controller: passwordController,
-                fieldKey: passwordFieldKey,
                 label: 'Password',
                 hint: 'Create a strong password',
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => _handlePasswordChanged(),
-                validator: (value) => isValidationFieldActive('password')
-                    ? _required(value, 'Password')
-                    : null,
+                validator: (value) => _required(value, 'Password'),
               ),
               const SizedBox(height: 16),
               _textField(
                 controller: confirmPasswordController,
-                fieldKey: confirmPasswordFieldKey,
                 label: 'Confirm Password',
                 hint: 'Confirm your password',
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => _handlePasswordChanged(),
-                validator: (value) =>
-                    isValidationFieldActive('confirmPassword')
-                        ? _required(value, 'Confirm password')
-                        : null,
+                validator: (value) => _required(value, 'Confirm password'),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -744,7 +677,6 @@ class _SignupCard extends StatelessWidget {
 
   Widget _textField({
     required TextEditingController controller,
-    required GlobalKey<FormFieldState<String>> fieldKey,
     required String label,
     required String hint,
     required bool enabled,
@@ -755,7 +687,6 @@ class _SignupCard extends StatelessWidget {
     bool obscureText = false,
   }) {
     return TextFormField(
-      key: fieldKey,
       controller: controller,
       enabled: enabled,
       keyboardType: keyboardType,
