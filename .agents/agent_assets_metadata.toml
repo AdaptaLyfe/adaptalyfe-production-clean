@@ -1737,3 +1737,17 @@ mtime_ms = 1789981954837
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/00cb56ec-5895-44ea-a2e0-40df451c12ac/303bc63b-db18-4576-a1b2-7e3e4cf2cc6e"
 storage_version_token = "1789981961171669"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d3Bn1uIFKjW7J1KIFcfYM"
+uri = "file://artifacts/flutter-health-records-reactions-contacts-fix.zip"
+type = "unspecified"
+title = "Health Records Reactions and Trusted Contacts — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart. The Trusted Contact success listener is now mounted-safe and delayed; the existing Reaction lifecycle fix is preserved."
+logical_id = "b6f8c2aa-95ba-4325-bf9e-9181128c3ce2"
+content_hash = "sha256:2957e8b7dd99d3b25d00672db250034f8ee2c2d0cf8545eb9ef1b825106c1b2a"
+size = 17897
+mtime_ms = 1789982580623
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b6f8c2aa-95ba-4325-bf9e-9181128c3ce2/02528d45-c929-4674-a701-574e1f24ed1d"
+storage_version_token = "1789982585033643"
+content_type = "application/octet-stream"

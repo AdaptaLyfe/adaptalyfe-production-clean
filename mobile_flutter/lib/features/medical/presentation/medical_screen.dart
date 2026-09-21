@@ -2886,8 +2886,11 @@ class _TrustedContactDialogState extends State<_TrustedContactDialog> {
           previous.busySection == 'contact' &&
           current.busySection == null &&
           current.actionMessage == _successMessage,
-      listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
         bloc: widget.bloc,
