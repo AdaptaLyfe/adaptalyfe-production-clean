@@ -1709,3 +1709,17 @@ mtime_ms = 1789977022306
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e882dcc9-e8bd-40be-a488-47500937c6e7/6c989109-a796-40d2-816c-fa0e1ecb6d21"
 storage_version_token = "1789977034707683"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5XIpX7FGVjuBvCEDbXp3H"
+uri = "file://artifacts/flutter-mark-purchased-popup-fix.zip"
+type = "unspecified"
+title = "Mark as Purchased popup fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the safe purchase dialog lifecycle and action handling."
+logical_id = "0e127ac8-afa3-4c5f-ae6c-a2c485c27d25"
+content_hash = "sha256:7a12ff6da2536ba4b293a2b39477e72d5aff8793e966f1dbf44f7ddc023203e0"
+size = 12852
+mtime_ms = 1789978048987
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0e127ac8-afa3-4c5f-ae6c-a2c485c27d25/4cc26488-ac7d-4a3e-8447-be8e64b45b56"
+storage_version_token = "1789978055151343"
+content_type = "application/octet-stream"
