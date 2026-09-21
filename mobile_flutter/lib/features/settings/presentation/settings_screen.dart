@@ -242,51 +242,78 @@ class _SubscriptionStatusCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const CircleAvatar(
-            backgroundColor: Color(0x33FFFFFF),
-            foregroundColor: Colors.white,
-            child: Icon(Icons.workspace_premium_rounded),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Activate Your Subscription',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const info = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Activate Your Subscription',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
                 ),
-                SizedBox(height: 3),
-                Text(
-                  'Unlock all features — daily tasks, finance, mood tracking, appointments & more.',
-                  style: TextStyle(color: Color(0xD9FFFFFF), fontSize: 13),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Plans from \$4.99/month · Billed through Apple ID · Cancel anytime',
-                  style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-          onPressed: () => context.go('/subscription'),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Unlock all features — daily tasks, finance, mood tracking, appointments & more.',
+                style: TextStyle(color: Color(0xD9FFFFFF), fontSize: 13),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Plans from \$4.99/month · Billed through Apple ID · Cancel anytime',
+                style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
+              ),
+            ],
+          );
+          final action = FilledButton.icon(
+            onPressed: () => context.go('/subscription'),
             icon: const Icon(Icons.credit_card_rounded, size: 17),
             label: const Text('View Plans'),
             style: FilledButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: Color(0xFF0F766E),
+              foregroundColor: const Color(0xFF0F766E),
             ),
-          ),
-        ],
+          );
+          final compact = constraints.maxWidth < 420;
+          final identity = Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const CircleAvatar(
+                backgroundColor: Color(0x33FFFFFF),
+                foregroundColor: Colors.white,
+                child: Icon(Icons.workspace_premium_rounded),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(child: info),
+            ],
+          );
+
+          return compact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    identity,
+                    const SizedBox(height: 12),
+                    action,
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0x33FFFFFF),
+                      foregroundColor: Colors.white,
+                      child: Icon(Icons.workspace_premium_rounded),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(child: info),
+                    const SizedBox(width: 8),
+                    action,
+                  ],
+                );
+        },
       ),
     );
   }

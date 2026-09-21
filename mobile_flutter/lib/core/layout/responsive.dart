@@ -95,9 +95,9 @@ abstract final class AppResponsive {
         ? compactColumns
         : screenWidth < mediumBreakpoint
             ? mediumColumns
-            : math.max(
+            : math.min(
                 wideColumns,
-                (screenWidth / minimumItemWidth).floor(),
+                math.max(1, (screenWidth / minimumItemWidth).floor()),
               ).toInt();
     return maxColumns == null ? columns : math.min(columns, maxColumns).toInt();
   }

@@ -442,43 +442,72 @@ class _RefillRemindersTab extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               child: Padding(
                 padding: const EdgeInsets.all(14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.warning_amber_rounded,
-                        color: Color(0xFFEA580C)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.medicationName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700)),
-                          Text(
-                            item.nextRefillDate == null
-                                ? 'Due soon'
-                                : 'Due: ${_formatDate(item.nextRefillDate!)}',
-                            style: const TextStyle(color: Color(0xFFEA580C)),
-                          ),
-                          const SizedBox(height: 6),
-                          _StatusBadge(
-                            data: _BadgeData(
-                              '${item.refillsRemaining} refills left',
-                              const Color(0xFFEA580C),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    OutlinedButton(
-                      onPressed: state.busySection == 'refillOrder'
-                          ? null
-                          : () => _setRefillReminder(context, item, state),
-                      child: const Text('Set Reminder'),
-                    ),
-                  ],
-                ),
+                 child: LayoutBuilder(
+                   builder: (context, constraints) {
+                     final details = Column(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Text(
+                           item.medicationName,
+                           maxLines: 2,
+                           overflow: TextOverflow.ellipsis,
+                           style: const TextStyle(fontWeight: FontWeight.w700),
+                         ),
+                         Text(
+                           item.nextRefillDate == null
+                               ? 'Due soon'
+                               : 'Due: ${_formatDate(item.nextRefillDate!)}',
+                           style: const TextStyle(color: Color(0xFFEA580C)),
+                         ),
+                         const SizedBox(height: 6),
+                         _StatusBadge(
+                           data: _BadgeData(
+                             '${item.refillsRemaining} refills left',
+                             const Color(0xFFEA580C),
+                           ),
+                         ),
+                       ],
+                     );
+                     final action = OutlinedButton(
+                       onPressed: state.busySection == 'refillOrder'
+                           ? null
+                           : () => _setRefillReminder(context, item, state),
+                       child: const Text('Set Reminder'),
+                     );
+                     if (constraints.maxWidth < 440) {
+                       return Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Row(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               const Icon(
+                                 Icons.warning_amber_rounded,
+                                 color: Color(0xFFEA580C),
+                               ),
+                               const SizedBox(width: 12),
+                               Expanded(child: details),
+                             ],
+                           ),
+                           const SizedBox(height: 10),
+                           action,
+                         ],
+                       );
+                     }
+                     return Row(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         const Icon(
+                           Icons.warning_amber_rounded,
+                           color: Color(0xFFEA580C),
+                         ),
+                         const SizedBox(width: 12),
+                         Expanded(child: details),
+                         action,
+                       ],
+                     );
+                   },
+                 ),
               ),
             ),
           )
@@ -584,26 +613,57 @@ class _PharmacyNotesTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text('Your Pharmacies',
-                          style: TextStyle(
-                              fontSize: 19, fontWeight: FontWeight.w700)),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _showCreatePharmacyDialog(context),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Create Custom'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: () => _showLinkPharmacyDialog(context, state),
-                      icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Link Pharmacy'),
-                    ),
-                  ],
-                ),
+                 LayoutBuilder(
+                   builder: (context, constraints) {
+                     final actions = Wrap(
+                       spacing: 8,
+                       runSpacing: 8,
+                       children: [
+                         OutlinedButton.icon(
+                           onPressed: () =>
+                               _showCreatePharmacyDialog(context),
+                           icon: const Icon(Icons.add, size: 18),
+                           label: const Text('Create Custom'),
+                         ),
+                         FilledButton.icon(
+                           onPressed: () =>
+                               _showLinkPharmacyDialog(context, state),
+                           icon: const Icon(Icons.add, size: 18),
+                           label: const Text('Link Pharmacy'),
+                         ),
+                       ],
+                     );
+                     final title = const Text(
+                       'Your Pharmacies',
+                       style: TextStyle(
+                         fontSize: 19,
+                         fontWeight: FontWeight.w700,
+                       ),
+                     );
+                     if (constraints.maxWidth < 600) {
+                       return Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           title,
+                           const SizedBox(height: 10),
+                           actions,
+                         ],
+                       );
+                     }
+                     return Row(
+                       children: [
+                         const Expanded(child: Text(
+                           'Your Pharmacies',
+                           style: TextStyle(
+                             fontSize: 19,
+                             fontWeight: FontWeight.w700,
+                           ),
+                         )),
+                         actions,
+                       ],
+                     );
+                   },
+                 ),
                 const SizedBox(height: 14),
                 if (state.collectionErrors['userPharmacies'] != null)
                   _MedicalInlineError(

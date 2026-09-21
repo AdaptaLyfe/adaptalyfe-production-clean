@@ -207,8 +207,16 @@ class _HomeConfigurableQuickActionsState
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: visible.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                     crossAxisCount: AppResponsive.gridColumns(
+                       context,
+                       availableWidth: constraints.maxWidth,
+                       minimumItemWidth: 180,
+                       compactColumns: 1,
+                       mediumColumns: 2,
+                       wideColumns: 2,
+                       maxColumns: 2,
+                     ),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
                     mainAxisExtent: _isReorderMode ? 208 : 160,

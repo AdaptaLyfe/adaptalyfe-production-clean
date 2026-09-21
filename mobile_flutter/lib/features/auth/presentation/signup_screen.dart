@@ -166,7 +166,8 @@ class _SignupScreenState extends State<SignupScreen> {
                        padding: AppResponsive.pagePadding(context).add(
                          EdgeInsets.only(
                            top: AppResponsive.isCompact(context) ? 16 : 36,
-                           bottom: 40,
+                           bottom: 40 +
+                               MediaQuery.viewInsetsOf(context).bottom,
                          ),
                        ),
                       child: Center(

@@ -105,7 +105,8 @@ class _LoginScreenState extends State<LoginScreen> {
                        padding: AppResponsive.pagePadding(context).add(
                          EdgeInsets.only(
                            top: AppResponsive.isCompact(context) ? 20 : 48,
-                           bottom: 40,
+                            bottom: 40 +
+                                MediaQuery.viewInsetsOf(context).bottom,
                          ),
                        ),
                       child: Center(

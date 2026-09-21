@@ -1569,3 +1569,17 @@ mtime_ms = 1789826997152
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4ef88a37-51c4-40bd-a7ac-f082b20cc10e/90bb92aa-ba19-4097-b62b-0315810e54d6"
 storage_version_token = "1789827006381741"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "QiQZ68kKjb0ZLqRNyu84D"
+uri = "file://artifacts/flutter-responsive-ui-changes.zip"
+type = "unspecified"
+title = "Flutter responsive UI changes — changed files ZIP"
+description = "Contains the 12 Flutter files updated to improve responsive layouts, dialog sizing, keyboard handling, adaptive grids, and narrow-screen text/action behavior."
+logical_id = "4c9dd060-806d-42c2-b5b8-9bce73941b61"
+content_hash = "sha256:8eba567c722c0dfbd4bbf916fc86f35385d521dc262d327ac9cb980a2a4cc45a"
+size = 125787
+mtime_ms = 1789969027432
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c9dd060-806d-42c2-b5b8-9bce73941b61/ceda0c60-66cd-4095-b08e-ed51ca2d61e6"
+storage_version_token = "1789969031913141"
+content_type = "application/octet-stream"

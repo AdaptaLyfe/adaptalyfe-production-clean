@@ -1645,10 +1645,15 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
       context: context,
       builder: (dialogContext) => AlertDialog(
       title: const Text('Manage Grocery Stores'),
-      content: SizedBox(
-        width: 620,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 520),
+       content: SizedBox(
+         width: AppResponsive.dialogWidth(context, maxWidth: 620),
+         child: ConstrainedBox(
+           constraints: BoxConstraints(
+             maxHeight: AppResponsive.dialogMaxHeight(
+               context,
+               fraction: .8,
+             ),
+           ),
           child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
             bloc: bloc,
             builder: (context, state) {

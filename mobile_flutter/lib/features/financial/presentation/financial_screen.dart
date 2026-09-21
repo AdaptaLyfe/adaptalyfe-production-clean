@@ -520,13 +520,14 @@ class _BudgetUsageCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${_currency(state.totalExpenses)} spent'),
-              Text('${_currency(state.totalIncome)} budget'),
-            ],
-          ),
+           Wrap(
+             alignment: WrapAlignment.spaceBetween,
+             runSpacing: 4,
+             children: [
+               Text('${_currency(state.totalExpenses)} spent'),
+               Text('${_currency(state.totalIncome)} budget'),
+             ],
+           ),
           const SizedBox(height: 8),
           Center(
             child: _Pill(
@@ -710,25 +711,29 @@ class _TransactionsCard extends StatelessWidget {
             ...categoryTotals.entries.map(
               (item) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      item.key,
-                      style: const TextStyle(
-                        color: Color(0xFF374151),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      _currency(item.value),
-                      style: const TextStyle(
-                        color: Color(0xFFDC2626),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                 child: Row(
+                   children: [
+                     Expanded(
+                       child: Text(
+                         item.key,
+                         maxLines: 1,
+                         overflow: TextOverflow.ellipsis,
+                         style: const TextStyle(
+                           color: Color(0xFF374151),
+                           fontWeight: FontWeight.w600,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: 12),
+                     Text(
+                       _currency(item.value),
+                       style: const TextStyle(
+                         color: Color(0xFFDC2626),
+                         fontWeight: FontWeight.w700,
+                       ),
+                     ),
+                   ],
+                 ),
               ),
             ),
         ],

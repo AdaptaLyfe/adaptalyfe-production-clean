@@ -240,25 +240,45 @@ class _OverviewTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Recent Sleep Sessions',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () => DefaultTabController.of(context)
-                            .animateTo(1),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Log Sleep'),
-                      ),
-                    ],
-                  ),
+                   LayoutBuilder(
+                     builder: (context, constraints) {
+                       final action = OutlinedButton.icon(
+                         onPressed: () => DefaultTabController.of(context)
+                             .animateTo(1),
+                         icon: const Icon(Icons.add, size: 18),
+                         label: const Text('Log Sleep'),
+                       );
+                       final title = const Text(
+                         'Recent Sleep Sessions',
+                         style: TextStyle(
+                           fontSize: 18,
+                           fontWeight: FontWeight.w700,
+                         ),
+                       );
+                       if (constraints.maxWidth < 420) {
+                         return Column(
+                           crossAxisAlignment: CrossAxisAlignment.start,
+                           children: [
+                             title,
+                             const SizedBox(height: 8),
+                             action,
+                           ],
+                         );
+                       }
+                       return Row(
+                         children: [
+                           const Expanded(child: Text(
+                             'Recent Sleep Sessions',
+                             style: TextStyle(
+                               fontSize: 18,
+                               fontWeight: FontWeight.w700,
+                             ),
+                           )),
+                           action,
+                         ],
+                       );
+                     },
+                   ),
                   const SizedBox(height: 12),
                   if (recent.isEmpty)
                     _EmptySleepHistory(

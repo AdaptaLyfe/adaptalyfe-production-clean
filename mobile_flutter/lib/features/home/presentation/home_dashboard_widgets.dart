@@ -461,7 +461,15 @@ class HomeQuickActions extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _actions.length,
              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-               crossAxisCount: constraints.maxWidth < 360 ? 1 : 2,
+                crossAxisCount: AppResponsive.gridColumns(
+                  context,
+                  availableWidth: constraints.maxWidth,
+                  minimumItemWidth: 180,
+                  compactColumns: 1,
+                  mediumColumns: 2,
+                  wideColumns: 2,
+                  maxColumns: 2,
+                ),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
                childAspectRatio: 1.55,
