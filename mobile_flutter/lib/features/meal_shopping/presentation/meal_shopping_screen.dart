@@ -1695,7 +1695,7 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
                             ? null
                             : () async {
                                 await _showStoreFormDialog(
-                                  context,
+                                  dialogContext,
                                   bloc: bloc,
                                 );
                               },
