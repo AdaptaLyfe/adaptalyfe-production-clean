@@ -1653,3 +1653,17 @@ mtime_ms = 1789971538942
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ac88c8ee-5725-47e3-9824-2089210c9bc3/711df94a-5697-4c69-9432-029b0d92a2f5"
 storage_version_token = "1789971544807012"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Qe65t0z2tupsRAxCl-lbY"
+uri = "file://artifacts/flutter-resources-edit-fix.zip"
+type = "unspecified"
+title = "Flutter Resources edit fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/resources/data/resources_api.dart with the minimal response parsing fix."
+logical_id = "4069edea-ad56-4a69-8682-14986f578448"
+content_hash = "sha256:0cd9f7f179e8f8b744ed80912300306ef8ec004baad1db51a51ec44d7820a281"
+size = 1156
+mtime_ms = 1789972726176
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4069edea-ad56-4a69-8682-14986f578448/670f3113-f649-4a27-86e8-4206a3e6175e"
+storage_version_token = "1789972731356817"
+content_type = "application/octet-stream"

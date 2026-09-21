@@ -140,9 +140,19 @@ class ResourcesApi {
     Object? data,
     T Function(Map<String, dynamic>) fromJson,
   ) {
-    if (data is! Map) {
+    Object? payload = data;
+    if (payload is Map) {
+      payload = payload['resource'] ??
+          payload['personalResource'] ??
+          payload['emergencyResource'] ??
+          payload['data'] ??
+          payload;
+    } else if (payload is List && payload.length == 1) {
+      payload = payload.first;
+    }
+    if (payload is! Map) {
       throw const FormatException('Invalid resource response');
     }
-    return fromJson(Map<String, dynamic>.from(data));
+    return fromJson(Map<String, dynamic>.from(payload));
   }
 }
