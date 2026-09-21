@@ -1,0 +1,45 @@
+In the existing Flutter project, fix the following issues in the **Resources > Emergency Resources** section.
+
+### Issue 1: Spacing in Add Emergency Resource popup
+
+When the user taps **"Add Resource"** in the **Emergency Resources** section, an **"Add Emergency Resource"** popup/dialog opens.
+
+Problem:
+
+* There is incorrect/excessive spacing between the **"Type"** field and the **"Phone Number"** field.
+
+Required fix:
+
+* Adjust the vertical spacing between **Type** and **Phone Number** fields.
+* Make the spacing consistent with the other form fields in the popup.
+* Do not change the existing UI design, field styles, labels, validation, or functionality.
+
+### Issue 2: Failed to add emergency resource
+
+When the user tries to add an emergency resource, the app shows:
+
+**"Failed to add emergency resource"**
+
+Required fix:
+
+* Find the root cause of why the emergency resource is not being added.
+* Check the Flutter UI, BLoC/state management, repository, API/service, request model, Firebase/backend integration, and response/error handling as applicable.
+* Fix the actual issue instead of hiding or removing the error message.
+* Ensure the emergency resource is successfully saved after valid information is entered.
+* Keep the existing architecture and coding style of the project.
+* Do not break existing Resources functionality.
+
+### Validation
+
+After making the changes, test:
+
+1. Open **Resources > Emergency Resources**.
+2. Tap **Add Resource**.
+3. Verify the spacing between **Type** and **Phone Number** is correct.
+4. Enter valid emergency resource details.
+5. Tap **Save/Add**.
+6. Verify the resource is successfully added.
+7. Verify no **"Failed to add emergency resource"** error appears when the request succeeds.
+8. Verify existing emergency resource list and other Resources features still work.
+
+Before modifying code, inspect the existing implementation and identify the exact files responsible for the popup UI and emergency resource creation. Make the smallest necessary changes.

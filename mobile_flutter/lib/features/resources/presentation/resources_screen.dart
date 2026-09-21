@@ -3323,6 +3323,7 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
                   }
                 },
               ),
+              const SizedBox(height: 12),
               _formField(
                 controller: _phoneController,
                 label: 'Phone number',

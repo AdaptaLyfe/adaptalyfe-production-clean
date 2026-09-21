@@ -1667,3 +1667,17 @@ mtime_ms = 1789972726176
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4069edea-ad56-4a69-8682-14986f578448/670f3113-f649-4a27-86e8-4206a3e6175e"
 storage_version_token = "1789972731356817"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "C6kTh497NqdDkP1rMJtyR"
+uri = "file://artifacts/flutter-emergency-resource-add-fix.zip"
+type = "unspecified"
+title = "Flutter emergency resource add fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/resources/presentation/resources_screen.dart with the matching Type-to-Phone spacing adjustment."
+logical_id = "947e7953-c799-4221-b042-71a543b084e2"
+content_hash = "sha256:df9ac5c79892a08dabd603673e56675e9398cec575ef95ffb1d581477c34b2f7"
+size = 19569
+mtime_ms = 1789973198649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/947e7953-c799-4221-b042-71a543b084e2/d0cafd02-5889-4ff0-aa2a-847f6f747222"
+storage_version_token = "1789973204508548"
+content_type = "application/octet-stream"
