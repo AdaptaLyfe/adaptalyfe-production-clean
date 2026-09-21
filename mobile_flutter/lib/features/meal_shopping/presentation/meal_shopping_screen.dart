@@ -1317,6 +1317,7 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
   final _formKey = GlobalKey<FormState>();
   var _mealType = 'breakfast';
   var _plannedDate = '';
+  var _isClosing = false;
 
   @override
   void initState() {
@@ -1351,6 +1352,12 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
     );
   }
 
+  void _closeDialog() {
+    if (!mounted || _isClosing) return;
+    _isClosing = true;
+    Navigator.of(context).pop();
+  }
+
   Future<void> _selectDate() async {
     final picked = await _pickDate(
       context,
@@ -1366,12 +1373,12 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
     return BlocListener<MealShoppingBloc, MealShoppingState>(
       bloc: widget.bloc,
       listenWhen: (previous, current) =>
-          previous.action != MealShoppingAction.none &&
+          previous.action == MealShoppingAction.addingMeal &&
           current.action == MealShoppingAction.none &&
-          current.actionMessage != null &&
+          current.actionMessage == 'Meal plan saved successfully!' &&
           current.errorMessage == null,
       listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+        _closeDialog();
       },
       child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
         bloc: widget.bloc,
@@ -1449,7 +1456,7 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
             ),
             actions: [
               TextButton(
-                onPressed: isBusy ? null : () => Navigator.pop(context),
+                onPressed: isBusy ? null : _closeDialog,
                 child: const Text('Cancel'),
               ),
               FilledButton(

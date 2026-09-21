@@ -1681,3 +1681,17 @@ mtime_ms = 1789973198649
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/947e7953-c799-4221-b042-71a543b084e2/d0cafd02-5889-4ff0-aa2a-847f6f747222"
 storage_version_token = "1789973204508548"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xIXGjZGNRuXaNzXtPESw1"
+uri = "file://artifacts/flutter-meals-shopping-add-cancel-fix.zip"
+type = "unspecified"
+title = "Meals & Shopping Add/Cancel fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the dialog lifecycle and navigation fix."
+logical_id = "c0adaebc-e958-466a-ab3c-66aa3c795848"
+content_hash = "sha256:d450e4e7df9463bf595c2494e9b252cf44df785cb97521c3ff08f457054b8ad7"
+size = 12729
+mtime_ms = 1789976599869
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c0adaebc-e958-466a-ab3c-66aa3c795848/ee55259f-103d-47c6-ab09-2ef8f6ed4a14"
+storage_version_token = "1789976610411101"
+content_type = "application/octet-stream"
