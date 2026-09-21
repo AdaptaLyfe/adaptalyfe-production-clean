@@ -1639,3 +1639,17 @@ mtime_ms = 1789971005634
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1a8142c7-e1b6-4aeb-b258-7435f97a22de/9c7c296a-b679-4f48-9b1e-c05b5f1e2902"
 storage_version_token = "1789971016800974"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xFd8rTJpSEtUxQwHagQze"
+uri = "file://artifacts/flutter-emergency-contact-dropdown-fix.zip"
+type = "unspecified"
+title = "Flutter emergency contact dropdown fix — changed file ZIP"
+description = "Contains only resources_screen.dart with safe normalization for stored relationship values in the emergency contact Add/Edit dropdown."
+logical_id = "ac88c8ee-5725-47e3-9824-2089210c9bc3"
+content_hash = "sha256:42b100287daef4679b8c43647265abcb29f3c600c9048b92a5a4d3b28730b58b"
+size = 19571
+mtime_ms = 1789971538942
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ac88c8ee-5725-47e3-9824-2089210c9bc3/711df94a-5697-4c69-9432-029b0d92a2f5"
+storage_version_token = "1789971544807012"
+content_type = "application/octet-stream"

@@ -1664,9 +1664,16 @@ class _EmergencyContactDialogState extends State<_EmergencyContactDialog> {
     _phoneController = TextEditingController(text: contact?.phoneNumber);
     _emailController = TextEditingController(text: contact?.email);
     _notesController = TextEditingController(text: contact?.notes);
-    _relationship = contact?.relationship;
+    _relationship = _relationshipOption(contact?.relationship);
     _isPrimary = contact?.isPrimary ?? false;
     _isEmergency = contact?.isEmergencyContact ?? true;
+  }
+
+  String? _relationshipOption(String? value) {
+    final normalized = value?.trim().toLowerCase();
+    return normalized != null && _relationships.contains(normalized)
+        ? normalized
+        : null;
   }
 
   @override
