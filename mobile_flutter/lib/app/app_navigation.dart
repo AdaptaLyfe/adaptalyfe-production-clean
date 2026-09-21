@@ -149,33 +149,43 @@ class _AppBottomNavigationState extends State<AppBottomNavigation> {
         transitionDuration: const Duration(milliseconds: 180),
         pageBuilder: (dialogContext, animation, secondaryAnimation) {
           final bottomInset = MediaQuery.paddingOf(dialogContext).bottom;
+          final maxHeight = (MediaQuery.sizeOf(dialogContext).height -
+                  72 -
+                  bottomInset -
+                  16)
+              .clamp(1.0, double.infinity)
+              .toDouble();
           return Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.fromLTRB(8, 0, 8, 72 + bottomInset),
-              child: Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 2.05,
-                    children: _moreDestinations
-                        .map(
-                          (item) => _MoreNavigationTile(
-                            item: item,
-                            active: _isRouteActive(widget.location, item.route),
-                            onTap: () {
-                              Navigator.of(dialogContext).pop();
-                              context.go(item.route);
-                            },
-                          ),
-                        )
-                        .toList(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: Material(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 2.05,
+                      children: _moreDestinations
+                          .map(
+                            (item) => _MoreNavigationTile(
+                              item: item,
+                              active:
+                                  _isRouteActive(widget.location, item.route),
+                              onTap: () {
+                                Navigator.of(dialogContext).pop();
+                                context.go(item.route);
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
                 ),
               ),

@@ -313,7 +313,7 @@ class _MonthCalendar extends StatelessWidget {
               final inMonth = date.month == state.selectedDate.month;
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final maxVisibleItems = constraints.maxWidth < 40 ? 2 : 3;
+                  final maxVisibleItems = constraints.maxWidth < 52 ? 2 : 3;
                   return InkWell(
                     onTap: () {
                       final bloc = context.read<CalendarBloc>();
@@ -997,7 +997,14 @@ class _LegendItem extends StatelessWidget {
       children: [
         Icon(Icons.circle, size: 12, color: color),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
       ],
     );
   }

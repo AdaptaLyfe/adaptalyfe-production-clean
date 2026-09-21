@@ -346,6 +346,8 @@ class _MealPlanCard extends StatelessWidget {
                       children: [
                         Text(
                           meal.mealName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -389,6 +391,8 @@ class _MealPlanCard extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 7),
                         child: Text(
                           meal.recipe!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Color(0xFF4B5563),
                             fontSize: 13,
@@ -1387,12 +1391,20 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
           final isSaving = state.action == MealShoppingAction.addingMeal;
           return AlertDialog(
             title: const Text('Add New Meal'),
-            content: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: AppResponsive.dialogWidth(context),
+                maxHeight: AppResponsive.dialogMaxHeight(
+                  context,
+                  fraction: .78,
+                ),
+              ),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     TextFormField(
                       controller: _nameController,
                       enabled: !isBusy,
@@ -1450,7 +1462,8 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
                         hintText: 'Write simple cooking instructions or notes...',
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1566,12 +1579,20 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
               state.action == MealShoppingAction.addingShoppingItem;
           return AlertDialog(
             title: const Text('Add Shopping Item'),
-            content: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: AppResponsive.dialogWidth(context),
+                maxHeight: AppResponsive.dialogMaxHeight(
+                  context,
+                  fraction: .78,
+                ),
+              ),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     TextFormField(
                       controller: _nameController,
                       enabled: !isBusy,
@@ -1624,7 +1645,8 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
                       ),
                       validator: _optionalMoneyValidator,
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -1779,3 +1779,17 @@ mtime_ms = 1789983072787
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0517db93-7f63-4954-a085-76ec5728f7f2/aad7654d-3a4d-40c5-9e92-1c78ae94d0a6"
 storage_version_token = "1789983079079863"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IaumPfjJVnM7ALg218BEY"
+uri = "file://artifacts/flutter-responsive-layout-fix.zip"
+type = "unspecified"
+title = "Flutter responsive layout fix — changed files ZIP"
+description = "Contains only the eight Flutter files changed to address confirmed responsive overflow risks in navigation, shared dialog sizing, Home quick actions, Academic dialogs, Calendar, Meal Shopping, Medical cards, and Mood history."
+logical_id = "b186ef3f-cebc-4c3e-ad3c-5d340b5b689a"
+content_hash = "sha256:31f967f743fecf541b696fc9cb2f390c131a3d94e46cd70aa2e7f5fd4fed900d"
+size = 93802
+mtime_ms = 1789983621216
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b186ef3f-cebc-4c3e-ad3c-5d340b5b689a/cf328c01-eecd-44bb-a811-171cb30b954f"
+storage_version_token = "1789983632615005"
+content_type = "application/octet-stream"

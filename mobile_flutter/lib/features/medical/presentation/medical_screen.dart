@@ -1136,6 +1136,8 @@ class _MedicalCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
@@ -1220,6 +1222,8 @@ class _MedicationCard extends StatelessWidget {
                 children: [
                   Text(
                     medication.medicationName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -1228,6 +1232,8 @@ class _MedicationCard extends StatelessWidget {
                   if (_hasText(medication.dosage))
                     Text(
                       medication.dosage!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Color(0xFF6B7280)),
                     ),
                   const SizedBox(height: 8),
@@ -1254,6 +1260,8 @@ class _MedicationCard extends StatelessWidget {
                     const SizedBox(height: 9),
                     Text(
                       'Pill appearance: $appearance',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF2563EB),
                         fontSize: 12,
@@ -1263,6 +1271,8 @@ class _MedicationCard extends StatelessWidget {
                   if (_hasText(medication.pillDescription))
                     Text(
                       medication.pillDescription!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Color(0xFF6B7280),
                         fontSize: 12,
@@ -1273,6 +1283,8 @@ class _MedicationCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         medication.instructions!,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF4B5563),
                           fontSize: 13,
@@ -1283,9 +1295,10 @@ class _MedicationCard extends StatelessWidget {
               ),
             ),
              const SizedBox(width: 10),
-             Column(
-               crossAxisAlignment: CrossAxisAlignment.end,
-               children: [
+             Flexible(
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.end,
+                 children: [
                  PopupMenuButton<String>(
                    onSelected: (value) {
                      if (value == 'edit') onEdit();
@@ -1321,7 +1334,8 @@ class _MedicationCard extends StatelessWidget {
                      height: 22,
                      child: CircularProgressIndicator(strokeWidth: 2),
                    ),
-               ],
+                 ],
+               ),
              ),
           ],
         ),

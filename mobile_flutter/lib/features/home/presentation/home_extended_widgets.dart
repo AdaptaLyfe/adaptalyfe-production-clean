@@ -219,7 +219,7 @@ class _HomeConfigurableQuickActionsState
                      ),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
-                    mainAxisExtent: _isReorderMode ? 208 : 160,
+                    mainAxisExtent: _isReorderMode ? 220 : 188,
                   ),
                   itemBuilder: (context, index) {
                     final action = visible[index];

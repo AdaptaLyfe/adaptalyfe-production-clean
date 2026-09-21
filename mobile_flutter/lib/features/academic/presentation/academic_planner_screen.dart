@@ -620,6 +620,8 @@ class _StudySessionCard extends StatelessWidget {
                 children: [
                   Text(
                     session.subject,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 5),
@@ -652,6 +654,8 @@ class _StudySessionCard extends StatelessWidget {
                           if (session.startedAt != null)
                             _fullDate(session.startedAt!.toLocal()),
                         ].join(' • '),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF6B7280),
                           fontSize: 12,
@@ -661,9 +665,10 @@ class _StudySessionCard extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            Flexible(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 if (!session.isCompleted)
                   TextButton(
                     onPressed: isDeleting
@@ -680,7 +685,8 @@ class _StudySessionCard extends StatelessWidget {
                   ),
                   child: const Text('Delete'),
                 ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -1367,12 +1373,20 @@ class _StudySessionDialogState extends State<_StudySessionDialog> {
       },
       child: AlertDialog(
         title: const Text('Start New Study Session'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(
+              context,
+              fraction: .78,
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 TextFormField(
                   controller: _subjectController,
                   enabled: !isSubmitting,
@@ -1426,7 +1440,8 @@ class _StudySessionDialogState extends State<_StudySessionDialog> {
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Notes'),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1525,12 +1540,20 @@ class _CampusLocationDialogState extends State<_CampusLocationDialog> {
       },
       child: AlertDialog(
         title: const Text('Add Campus Location'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(
+              context,
+              fraction: .78,
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 TextFormField(
                   controller: _nameController,
                   enabled: !isSubmitting,
@@ -1576,7 +1599,8 @@ class _CampusLocationDialogState extends State<_CampusLocationDialog> {
                   decoration:
                       const InputDecoration(labelText: 'Description'),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1677,12 +1701,20 @@ class _CampusTransportDialogState extends State<_CampusTransportDialog> {
       },
       child: AlertDialog(
         title: const Text('Add Campus Transportation'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(
+              context,
+              fraction: .78,
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 TextFormField(
                   controller: _routeController,
                   enabled: !isSubmitting,
@@ -1727,7 +1759,8 @@ class _CampusTransportDialogState extends State<_CampusTransportDialog> {
                     return null;
                   },
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1832,12 +1865,20 @@ class _StudyGroupDialogState extends State<_StudyGroupDialog> {
       },
       child: AlertDialog(
         title: const Text('Create Study Group'),
-        content: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(
+              context,
+              fraction: .78,
+            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 TextFormField(
                   controller: _groupNameController,
                   enabled: !isSubmitting,
@@ -1940,7 +1981,8 @@ class _StudyGroupDialogState extends State<_StudyGroupDialog> {
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Notes'),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

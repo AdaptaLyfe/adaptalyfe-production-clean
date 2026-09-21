@@ -57,9 +57,12 @@ abstract final class AppResponsive {
         MediaQuery.viewInsetsOf(context).vertical -
         24;
     final safeAvailableHeight = math.max(0, availableHeight).toDouble();
-    return math.min(
-      safeAvailableHeight,
-      math.max(minimum, availableHeight * fraction),
+    return math.max(
+      1,
+      math.min(
+        safeAvailableHeight,
+        math.max(minimum, availableHeight * fraction),
+      ),
     ).toDouble();
   }
 
