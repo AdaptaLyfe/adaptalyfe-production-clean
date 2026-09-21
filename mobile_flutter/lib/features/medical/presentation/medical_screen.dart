@@ -1839,8 +1839,11 @@ class _MedicalConditionDialogState
           previous.busySection == 'condition' &&
           current.busySection == null &&
           current.actionMessage == _successMessage,
-      listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
         bloc: widget.bloc,
@@ -1945,111 +1948,176 @@ Future<void> _showAllergyDialog(
   AllergyModel? existing,
 ]) async {
   final medicalBloc = context.read<MedicalBloc>();
-  final allergenController =
-      TextEditingController(text: existing?.allergen ?? '');
-  final reactionController =
-      TextEditingController(text: existing?.reaction ?? '');
-  final notesController = TextEditingController(text: existing?.notes ?? '');
-  final formKey = GlobalKey<FormState>();
-  var severity = _supportedValue(existing?.severity, _severities) ?? '';
 
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _AllergyDialog(
       bloc: medicalBloc,
-      action: 'allergy',
-      successMessage: existing == null
-          ? 'Sensitivity added successfully.'
-          : 'Sensitivity updated successfully.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-        title: Text(existing == null ? 'Add New Allergy' : 'Edit Allergy'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: allergenController,
-                  decoration: const InputDecoration(
-                    labelText: 'Allergen',
-                    hintText: 'e.g., Peanuts, Penicillin',
-                  ),
-                  validator: _requiredValidator,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: severity.isEmpty ? null : severity,
-                  decoration: const InputDecoration(labelText: 'Severity'),
-                  items: _severities
-                      .map((value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(_titleCase(value)),
-                          ))
-                      .toList(),
-                  onChanged: (value) => setState(() => severity = value ?? ''),
-                  validator: (value) =>
-                      value == null ? 'Severity is required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: reactionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Reaction',
-                    hintText: 'e.g., Hives, difficulty breathing',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  minLines: 2,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                    hintText: 'Additional information',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: isSubmitting
-                ? null
-                : () {
-                    if (!formKey.currentState!.validate()) return;
-                    final input = AllergyInput(
-                      allergen: allergenController.text,
-                      severity: severity,
-                      reaction: reactionController.text,
-                      notes: notesController.text,
-                    );
-                    medicalBloc.add(
-                    existing == null
-                        ? AddAllergy(input)
-                        : EditAllergy(existing.id, input),
-                  );
-                  },
-            child: Text(
-              isSubmitting
-                  ? (existing == null ? 'Adding...' : 'Updating...')
-                  : (existing == null ? 'Add Allergy' : 'Update Allergy'),
-            ),
-          ),
-        ],
-      ),
-      ),
+      existing: existing,
     ),
   );
-  allergenController.dispose();
-  reactionController.dispose();
-  notesController.dispose();
+}
+
+class _AllergyDialog extends StatefulWidget {
+  const _AllergyDialog({
+    required this.bloc,
+    this.existing,
+  });
+
+  final MedicalBloc bloc;
+  final AllergyModel? existing;
+
+  @override
+  State<_AllergyDialog> createState() => _AllergyDialogState();
+}
+
+class _AllergyDialogState extends State<_AllergyDialog> {
+  late final TextEditingController _allergenController;
+  late final TextEditingController _reactionController;
+  late final TextEditingController _notesController;
+  final _formKey = GlobalKey<FormState>();
+  late String _severity;
+
+  String get _successMessage => widget.existing == null
+      ? 'Sensitivity added successfully.'
+      : 'Sensitivity updated successfully.';
+
+  @override
+  void initState() {
+    super.initState();
+    _allergenController =
+        TextEditingController(text: widget.existing?.allergen ?? '');
+    _reactionController =
+        TextEditingController(text: widget.existing?.reaction ?? '');
+    _notesController =
+        TextEditingController(text: widget.existing?.notes ?? '');
+    _severity = _supportedValue(widget.existing?.severity, _severities) ?? '';
+  }
+
+  @override
+  void dispose() {
+    _allergenController.dispose();
+    _reactionController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    final input = AllergyInput(
+      allergen: _allergenController.text,
+      severity: _severity,
+      reaction: _reactionController.text,
+      notes: _notesController.text,
+    );
+    final existing = widget.existing;
+    widget.bloc.add(
+      existing == null
+          ? AddAllergy(input)
+          : EditAllergy(existing.id, input),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.busySection == 'allergy' &&
+          current.busySection == null &&
+          current.actionMessage == _successMessage,
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) {
+          if (previous.busySection == current.busySection) return false;
+          if (current.busySection == 'allergy') return true;
+          return current.busySection == null && current.errorMessage != null;
+        },
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'allergy';
+          final existing = widget.existing;
+          return _ResponsiveMedicalDialog(
+            title: Text(
+              existing == null ? 'Add New Allergy' : 'Edit Allergy',
+            ),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _allergenController,
+                      decoration: const InputDecoration(
+                        labelText: 'Allergen',
+                        hintText: 'e.g., Peanuts, Penicillin',
+                      ),
+                      validator: _requiredValidator,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _severity.isEmpty ? null : _severity,
+                      decoration: const InputDecoration(labelText: 'Severity'),
+                      items: _severities
+                          .map(
+                            (value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(_titleCase(value)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _severity = value ?? ''),
+                      validator: (value) =>
+                          value == null ? 'Severity is required' : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _reactionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Reaction',
+                        hintText: 'e.g., Hives, difficulty breathing',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _notesController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Additional information',
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(
+                  isSubmitting
+                      ? (existing == null ? 'Adding...' : 'Updating...')
+                      : (existing == null ? 'Add Allergy' : 'Update Allergy'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 Future<void> _showAdverseMedicationDialog(

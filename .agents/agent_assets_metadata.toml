@@ -1723,3 +1723,17 @@ mtime_ms = 1789978048987
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0e127ac8-afa3-4c5f-ae6c-a2c485c27d25/4cc26488-ac7d-4a3e-8447-be8e64b45b56"
 storage_version_token = "1789978055151343"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ZcJ1y90j4gMK3-FvmvV9O"
+uri = "file://artifacts/flutter-health-records-sensitivity-notes-fix.zip"
+type = "unspecified"
+title = "Health Records fixes — changed Flutter file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart with the Sensitivity lifecycle fix and Notes dialog close-safety fix."
+logical_id = "00cb56ec-5895-44ea-a2e0-40df451c12ac"
+content_hash = "sha256:8c74ff9449beb0d2c57b781f8f142b1075098bb4610fdb9b2217c7916dd25bc7"
+size = 18142
+mtime_ms = 1789981954837
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/00cb56ec-5895-44ea-a2e0-40df451c12ac/303bc63b-db18-4576-a1b2-7e3e4cf2cc6e"
+storage_version_token = "1789981961171669"
+content_type = "application/octet-stream"
