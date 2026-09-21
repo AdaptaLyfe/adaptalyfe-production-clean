@@ -1,0 +1,56 @@
+In my existing Flutter project, fix the Resources edit functionality.
+
+### Current issue
+
+When editing a resource that was already added:
+
+* Sometimes the app shows **"Invalid resource response"** error.
+* Some resources can be added successfully, but editing certain existing resources fails with this error.
+* The issue appears to happen only for some existing resources, not all.
+
+### Required work
+
+1. Inspect the complete Resources flow:
+
+   * Resource list
+   * Add resource
+   * Edit resource
+   * Update resource API/repository
+   * Resource model/parsing
+   * BLoC/state management
+   * UI form
+
+2. Find the actual root cause of the **"Invalid resource response"** error.
+
+   * Check the API response structure.
+   * Check whether existing resources have different/missing fields.
+   * Check JSON parsing and model `fromJson`/`toJson`.
+   * Check resource ID handling during edit/update.
+   * Check null values and optional fields.
+   * Check whether the update API expects a different payload from the create API.
+
+3. Fix the issue properly at the root cause instead of hiding or removing the error message.
+
+4. Make sure:
+
+   * Newly added resources can be edited.
+   * Older/existing resources can be edited.
+   * Resources with optional or missing fields do not crash.
+   * The correct resource ID is sent when updating.
+   * Successful updates refresh the resource list correctly.
+   * The existing Add Resource functionality continues to work.
+   * Loading, success, and error states continue to work correctly.
+
+5. Do **not** change unrelated functionality or UI design.
+
+### Important
+
+Before making changes, inspect the existing code and identify exactly where **"Invalid resource response"** is generated.
+
+After finding the problem:
+
+* Explain the root cause briefly.
+* Make the minimum required code changes.
+* Keep the existing Flutter architecture and BLoC pattern.
+* Do not rewrite the entire Resources feature.
+* Make sure the project compiles without errors.
