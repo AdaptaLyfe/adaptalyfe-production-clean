@@ -1751,3 +1751,17 @@ mtime_ms = 1789982580623
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b6f8c2aa-95ba-4325-bf9e-9181128c3ce2/02528d45-c929-4674-a701-574e1f24ed1d"
 storage_version_token = "1789982585033643"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sBZ1JO71FS163fOOKnSkh"
+uri = "file://artifacts/flutter-health-records-provider-notes-medications-fix.zip"
+type = "unspecified"
+title = "Health Records dialog fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart with the shared safe success-navigation fix for Healthcare Contacts, Personal Notes, and Medications."
+logical_id = "dc1eff7d-1202-46b7-811f-a75673842081"
+content_hash = "sha256:99eba7cc4550b88bd31a0ef24026d33615e8b61e512bbafca13ddffb6e96b3dd"
+size = 17900
+mtime_ms = 1789982851885
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc1eff7d-1202-46b7-811f-a75673842081/aa464b0e-5c54-4f0a-8d15-82a54c27b233"
+storage_version_token = "1789982856534891"
+content_type = "application/octet-stream"
