@@ -2432,8 +2432,11 @@ class _HealthcareContactDialogState
           previous.busySection == 'provider' &&
           current.busySection == null &&
           current.actionMessage == _successMessage,
-      listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
         bloc: widget.bloc,
@@ -2652,8 +2655,11 @@ class _SymptomDialogState extends State<_SymptomDialog> {
           previous.busySection == 'symptom' &&
           current.busySection == null &&
           current.actionMessage == _successMessage,
-      listener: (context, state) {
-        if (mounted) Navigator.of(context).pop();
+      listener: (dialogContext, state) {
+        Future<void>.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
         bloc: widget.bloc,
@@ -3143,12 +3149,14 @@ class _MedicationDialogState extends State<_MedicationDialog> {
     return BlocListener<MedicalBloc, MedicalState>(
       bloc: widget.bloc,
       listenWhen: (previous, current) =>
+          previous.busySection == 'medication' &&
+          current.busySection == null &&
           previous.actionMessage != current.actionMessage &&
           current.actionMessage == _successMessage,
-      listener: (context, state) {
+      listener: (dialogContext, state) {
         Future<void>.delayed(const Duration(milliseconds: 350), () {
-          if (!mounted) return;
-          Navigator.of(context).pop();
+          if (!mounted || !dialogContext.mounted) return;
+          Navigator.of(dialogContext).pop();
         });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(

@@ -1,0 +1,88 @@
+In the existing Flutter project, fix the error that appears while working with **Health Records**.
+
+### Affected sections
+
+1. **Health Records → Healthcare Contacts**
+
+   * Error appears when adding a Healthcare Contact.
+   * Error also appears when canceling/closing the Healthcare Contact action.
+
+2. **Health Records → Personal Notes**
+
+   * The same error appears while adding, editing, saving, canceling, or otherwise working with Personal Notes.
+
+3. **Health Records → Medications**
+
+   * The same error appears while adding, editing, saving, canceling, or otherwise working with Medications.
+
+### Important requirements
+
+* First investigate the **root cause** of the common error instead of creating separate temporary fixes.
+* Check the related Flutter screens, widgets, BLoC/state management, repositories, API/service calls, models, navigation, dialogs, and error handling.
+* Check whether the error is caused by:
+
+  * incorrect API/request handling
+  * null or missing values
+  * incorrect response parsing
+  * state/BLoC handling
+  * dialog or navigation handling
+  * cancel action triggering an unintended API call
+  * incorrect error-state handling
+  * backend response/error mapping
+* Fix the root cause so the same issue is resolved consistently across all three sections.
+
+### Expected behavior
+
+**Healthcare Contacts**
+
+* Add contact → should work normally.
+* Cancel/close → should simply cancel/close without showing an incorrect error.
+* Valid API errors should still be shown correctly.
+
+**Personal Notes**
+
+* Add/edit/save note → should work normally.
+* Cancel/close → should not show an incorrect error.
+* Existing validation and error handling should continue working.
+
+**Medications**
+
+* Add/edit/save medication → should work normally.
+* Cancel/close → should not show an incorrect error.
+* Existing validation and error handling should continue working.
+
+### Do NOT
+
+* Do not rewrite the entire Health Records module.
+* Do not remove existing validation.
+* Do not hide all error messages just to make the issue disappear.
+* Do not change unrelated screens or features.
+* Do not change the UI design unless required for the fix.
+* Do not change API contracts unless the investigation proves it is necessary.
+* Do not introduce duplicate API calls or duplicate error messages.
+
+### Testing
+
+After making the fix, test all three sections:
+
+* Healthcare Contacts → Add / Edit / Cancel / Save
+* Personal Notes → Add / Edit / Cancel / Save
+* Medications → Add / Edit / Cancel / Save
+
+Also test:
+
+* successful operations
+* validation errors
+* API/server errors
+* cancel/close actions
+* loading states
+* retry behavior
+
+Make the **minimum required code changes** and preserve the existing Flutter architecture and coding style.
+
+At the end, provide:
+
+1. Root cause of the error.
+2. Files changed.
+3. What was fixed.
+4. How each of the three Health Records sections was tested.
