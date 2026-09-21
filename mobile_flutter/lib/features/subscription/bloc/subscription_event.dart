@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../data/stripe_payment_service.dart';
+
 sealed class SubscriptionEvent extends Equatable {
   const SubscriptionEvent();
 
@@ -26,6 +28,16 @@ final class PlanPurchaseRequested extends SubscriptionEvent {
 
   @override
   List<Object?> get props => [planId];
+}
+
+final class StripePaymentRequested extends SubscriptionEvent {
+  const StripePaymentRequested(this.planId, this.method);
+
+  final String planId;
+  final StripePaymentMethod method;
+
+  @override
+  List<Object?> get props => [planId, method];
 }
 
 final class RestorePurchasesRequested extends SubscriptionEvent {

@@ -1793,3 +1793,17 @@ mtime_ms = 1789983621216
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b186ef3f-cebc-4c3e-ad3c-5d340b5b689a/cf328c01-eecd-44bb-a811-171cb30b954f"
 storage_version_token = "1789983632615005"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Ze1xjmq3_r_IuximttRz9"
+uri = "file://artifacts/flutter-subscription-wallets-fix.zip"
+type = "unspecified"
+title = "Flutter subscription wallet implementation"
+description = "Changed Flutter, Android, and iOS files for Stripe card, Google Pay, and Apple Pay subscription checkout, with the existing native store flow preserved."
+logical_id = "e2605de5-4d86-4e73-8406-162f82ee0d88"
+content_hash = "sha256:74db598789ed63fecb2e951fc5e793454fe113b9fdd2c58c7dc0c4a9223b91e6"
+size = 25559
+mtime_ms = 1789990642711
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e2605de5-4d86-4e73-8406-162f82ee0d88/0fe0afea-4c2b-4eff-9632-380bd8d7309a"
+storage_version_token = "1789990649318181"
+content_type = "application/octet-stream"

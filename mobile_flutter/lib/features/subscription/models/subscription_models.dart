@@ -194,3 +194,34 @@ class PurchaseVerification extends Equatable {
   @override
   List<Object?> get props => [success, message, planType, expiresAt];
 }
+
+class StripeSubscriptionSetup extends Equatable {
+  const StripeSubscriptionSetup({
+    required this.subscriptionId,
+    required this.clientSecret,
+    required this.intentType,
+    this.requiresPayment = true,
+  });
+
+  final String subscriptionId;
+  final String? clientSecret;
+  final String? intentType;
+  final bool requiresPayment;
+
+  factory StripeSubscriptionSetup.fromJson(Map<String, dynamic> json) {
+    return StripeSubscriptionSetup(
+      subscriptionId: '${json['subscriptionId'] ?? ''}',
+      clientSecret: json['clientSecret'] as String?,
+      intentType: json['intentType'] as String?,
+      requiresPayment: json['requiresPayment'] != false,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        subscriptionId,
+        clientSecret,
+        intentType,
+        requiresPayment,
+      ];
+}

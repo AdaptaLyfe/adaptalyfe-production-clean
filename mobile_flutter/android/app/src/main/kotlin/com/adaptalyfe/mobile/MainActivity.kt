@@ -2,11 +2,11 @@ package com.adaptalyfe.app
 
 import android.speech.tts.TextToSpeech
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.plugin.common.MethodChannel
 import java.util.Locale
 
-class MainActivity : FlutterActivity(), TextToSpeech.OnInitListener {
+class MainActivity : FlutterFragmentActivity(), TextToSpeech.OnInitListener {
     private val channelName = "adaptalyfe/text_to_speech"
     private val deepLinkChannelName = "adaptalyfe/deep_links"
     private var textToSpeech: TextToSpeech? = null

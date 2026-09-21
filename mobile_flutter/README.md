@@ -66,3 +66,44 @@ messages while the existing server notification API remains unchanged.
 
 The existing React frontend, backend, database, and top-level Capacitor
 `android/` and `ios/` projects are separate and are not used as build inputs.
+
+## Stripe card and wallet subscriptions
+
+The Flutter subscription screen keeps the existing App Store/Google Play
+purchase flow and additionally uses Stripe PaymentSheet when a publishable key
+is supplied. It supports:
+
+- Credit/debit card on both mobile platforms.
+- Google Pay on Android when Google Pay is available and configured.
+- Apple Pay on iOS when Apple Pay is available and configured.
+
+The Flutter app never receives or stores a Stripe secret key, card number, or
+wallet token. The existing backend `/api/create-subscription` and
+`/api/confirm-subscription` routes create and verify the recurring Stripe
+subscription.
+
+Build with the non-secret client configuration:
+
+```bash
+flutter pub get
+flutter run \
+  --dart-define=ADAPTALYFE_API_BASE_URL=https://staging.getadaptalyfeapp.com/ \
+  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_... \
+  --dart-define=STRIPE_MERCHANT_IDENTIFIER=merchant.com.adaptalyfe.app \
+  --dart-define=STRIPE_MERCHANT_COUNTRY_CODE=US
+```
+
+For Android, enable Google Pay in the Google Pay/Stripe account settings and
+use a physical Android device with Google Pay configured. The manifest wallet
+flag and `FlutterFragmentActivity` are already included.
+
+For iOS, register `merchant.com.adaptalyfe.app` in the Apple Developer account,
+enable Apple Pay for the app identifier, attach the merchant capability to the
+Runner target, and use a physical device with a supported card in Apple Wallet.
+The merchant entitlement is included in `ios/Runner/Runner.entitlements`; the
+Runner Xcode target must reference this file if the generated iOS project does
+not do so automatically.
+
+Use Stripe test keys and test store accounts during development. The backend
+must have its existing Stripe configuration and webhook handling enabled
+before live subscriptions are offered.

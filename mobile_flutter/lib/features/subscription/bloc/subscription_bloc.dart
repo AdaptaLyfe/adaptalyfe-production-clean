@@ -5,18 +5,24 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../core/network/api_client.dart';
 import '../data/purchase_service.dart';
+import '../data/stripe_payment_service.dart';
 import '../data/subscription_repository.dart';
 import '../models/subscription_models.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
-  SubscriptionBloc(this.repository, this.purchaseService)
+  SubscriptionBloc(
+    this.repository,
+    this.purchaseService,
+    this.stripePaymentService,
+  )
       : super(const SubscriptionState()) {
     on<SubscriptionStarted>(_load);
     on<RefreshSubscription>(_load);
     on<LoadPlans>(_loadPlans);
     on<PlanPurchaseRequested>(_purchase);
+    on<StripePaymentRequested>(_payWithStripe);
     on<RestorePurchasesRequested>(_restore);
     on<ManageSubscriptionRequested>(_manage);
     on<ManagementUrlHandled>(_clearManagementUrl);
@@ -32,6 +38,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   final SubscriptionRepository repository;
   final PurchaseService purchaseService;
+  final StripePaymentService stripePaymentService;
   late final StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;
   List<ProductDetails> _products = [];
   bool _started = false;
@@ -62,6 +69,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     try {
       final subscription = await repository.getSubscription();
       final availability = await purchaseService.initialize();
+      final stripeAvailability = await stripePaymentService.initialize();
       _products = availability.products;
       _started = true;
       emit(
@@ -72,6 +80,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             for (final product in _products) product.id: product,
           },
           storeAvailable: availability.available,
+          stripeAvailable: stripeAvailability.configured,
+          walletAvailable: stripeAvailability.walletAvailable,
           errorMessage: availability.notFoundIds.isEmpty
               ? null
               : 'Some plans are not available in this store yet.',
@@ -95,6 +105,132 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
     } finally {
       _loadInFlight = false;
+    }
+  }
+
+  Future<void> _payWithStripe(
+    StripePaymentRequested event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    if (!_started ||
+        _loadInFlight ||
+        state.isBusy ||
+        state.hasActiveSubscription) {
+      return;
+    }
+    if (!state.stripeAvailable) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.notAvailable,
+          actionMessage: 'Card and wallet payments are not configured.',
+        ),
+      );
+      return;
+    }
+
+    final plan = _planFor(event.planId);
+    if (plan == null) return;
+
+    emit(
+      state.copyWith(
+        status: SubscriptionStatus.purchasing,
+        busyPlanId: plan.id,
+        errorMessage: null,
+        actionMessage: 'Preparing secure payment…',
+      ),
+    );
+
+    try {
+      final setup = await repository.createStripeSubscription(
+        planType: plan.id,
+        billingCycle: 'monthly',
+      );
+      if (setup.subscriptionId.isEmpty) {
+        throw const FormatException('The payment session was not created.');
+      }
+
+      if (setup.requiresPayment) {
+        final clientSecret = setup.clientSecret;
+        final intentType = setup.intentType;
+        if (clientSecret == null ||
+            clientSecret.isEmpty ||
+            (intentType != 'setup' && intentType != 'payment')) {
+          throw const StripePaymentException(
+            'Stripe did not return a valid payment session.',
+            configuration: true,
+          );
+        }
+        await stripePaymentService.presentSubscriptionPayment(
+          clientSecret: clientSecret,
+          intentType: intentType!,
+          method: event.method,
+        );
+      }
+
+      final confirmation = await repository.confirmStripeSubscription(
+        setup.subscriptionId,
+      );
+      if (!confirmation.success) {
+        throw ApiException(
+          type: ApiErrorType.unknown,
+          message: confirmation.message ??
+              'Payment could not be completed. Please try again.',
+        );
+      }
+
+      final subscription = await repository.getSubscription();
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: subscription,
+          busyPlanId: null,
+          errorMessage: null,
+          actionMessage: 'Payment successful! Your subscription is active.',
+        ),
+      );
+    } on StripeException catch (error) {
+      final cancelled = error.error.code == FailureCode.Canceled;
+      emit(
+        state.copyWith(
+          status: cancelled
+              ? SubscriptionStatus.cancelled
+              : SubscriptionStatus.failure,
+          busyPlanId: null,
+          errorMessage: cancelled
+              ? null
+              : 'Payment could not be completed. Please try again.',
+          actionMessage: cancelled ? 'Payment was cancelled.' : null,
+        ),
+      );
+    } on StripePaymentException catch (error) {
+      emit(
+        state.copyWith(
+          status: error.configuration
+              ? SubscriptionStatus.configurationError
+              : SubscriptionStatus.failure,
+          busyPlanId: null,
+          errorMessage: error.message,
+        ),
+      );
+    } on ApiException catch (error) {
+      emit(
+        state.copyWith(
+          status: error.type == ApiErrorType.unauthorized
+              ? SubscriptionStatus.failure
+              : SubscriptionStatus.ready,
+          busyPlanId: null,
+          errorMessage: error.message,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.failure,
+          busyPlanId: null,
+          errorMessage: _messageFor(error),
+        ),
+      );
     }
   }
 
@@ -351,6 +487,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   String _messageFor(Object error) {
     if (error is ApiException) return error.message;
     if (error is FormatException) return error.message;
+    if (error is StripePaymentException) return error.message;
     return 'Unable to complete this subscription action. Please try again.';
   }
 

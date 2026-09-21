@@ -37,4 +37,18 @@ class SubscriptionRepository {
     List<Map<String, dynamic>> purchases,
   ) =>
       api.restoreGooglePurchases(purchases);
+
+  Future<StripeSubscriptionSetup> createStripeSubscription({
+    required String planType,
+    required String billingCycle,
+  }) =>
+      api.createStripeSubscription(
+        planType: planType,
+        billingCycle: billingCycle,
+      );
+
+  Future<PurchaseVerification> confirmStripeSubscription(
+    String subscriptionId,
+  ) =>
+      api.confirmStripeSubscription(subscriptionId);
 }

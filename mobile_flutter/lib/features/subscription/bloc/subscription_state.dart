@@ -8,6 +8,9 @@ enum SubscriptionStatus {
   ready,
   purchasing,
   restoring,
+  cancelled,
+  notAvailable,
+  configurationError,
   failure,
 }
 
@@ -23,6 +26,8 @@ class SubscriptionState extends Equatable {
     this.storeAvailable = false,
     this.busyPlanId,
     this.managementUrl,
+    this.stripeAvailable = false,
+    this.walletAvailable = false,
   });
 
   final SubscriptionStatus status;
@@ -35,6 +40,8 @@ class SubscriptionState extends Equatable {
   final bool storeAvailable;
   final String? busyPlanId;
   final String? managementUrl;
+  final bool stripeAvailable;
+  final bool walletAvailable;
 
   bool get isLoading =>
       status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
@@ -43,6 +50,8 @@ class SubscriptionState extends Equatable {
       status == SubscriptionStatus.restoring;
   bool get hasActiveSubscription => subscription?.isActive == true;
   bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
+  bool get canUseStripe =>
+      stripeAvailable && !hasActiveSubscription && !isBusy;
 
   SubscriptionState copyWith({
     SubscriptionStatus? status,
@@ -55,6 +64,8 @@ class SubscriptionState extends Equatable {
     bool? storeAvailable,
     Object? busyPlanId = _notSet,
     Object? managementUrl = _notSet,
+    bool? stripeAvailable,
+    bool? walletAvailable,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
@@ -77,6 +88,8 @@ class SubscriptionState extends Equatable {
       managementUrl: identical(managementUrl, _notSet)
           ? this.managementUrl
           : managementUrl as String?,
+      stripeAvailable: stripeAvailable ?? this.stripeAvailable,
+      walletAvailable: walletAvailable ?? this.walletAvailable,
     );
   }
 
@@ -92,6 +105,8 @@ class SubscriptionState extends Equatable {
         storeAvailable,
         busyPlanId,
         managementUrl,
+        stripeAvailable,
+        walletAvailable,
       ];
 }
 
