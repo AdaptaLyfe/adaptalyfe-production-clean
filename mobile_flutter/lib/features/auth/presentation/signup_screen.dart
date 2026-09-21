@@ -39,7 +39,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _agreeToTerms = false;
   bool _subscribeNewsletter = false;
   String? _localError;
-  String? _activeValidationField;
+  final Set<String> _validatedFields = <String>{};
+  bool _passwordMismatchValidated = false;
 
   @override
   void initState() {
@@ -70,7 +71,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
-    _activeValidationField = null;
+    _validatedFields.clear();
     _clearFieldValidationErrors();
     setState(() => _localError = null);
 
@@ -83,9 +84,11 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     if (_passwordController.text != _confirmPasswordController.text) {
+      _passwordMismatchValidated = true;
       _showLocalError('Password: Passwords do not match');
       return;
     }
+    _passwordMismatchValidated = false;
 
     if (!_ageVerified) {
       _showLocalError(
@@ -118,7 +121,7 @@ class _SignupScreenState extends State<SignupScreen> {
     GlobalKey<FormFieldState<String>> fieldKey,
     String fieldName,
   ) {
-    _activeValidationField = fieldName;
+    _validatedFields.add(fieldName);
     return fieldKey.currentState?.validate() ?? true;
   }
 
@@ -136,6 +139,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void _showLocalError(String message) {
     setState(() => _localError = message);
+  }
+
+  void _handlePasswordChanged() {
+    if (!_passwordMismatchValidated) {
+      return;
+    }
+
+    const mismatchMessage = 'Password: Passwords do not match';
+    final passwordsMatch =
+        _passwordController.text == _confirmPasswordController.text;
+    if (passwordsMatch && _localError == mismatchMessage) {
+      setState(() => _localError = null);
+    } else if (!passwordsMatch &&
+        (_localError == null || _localError == mismatchMessage)) {
+      setState(() => _localError = mismatchMessage);
+    }
   }
 
   @override
@@ -229,12 +248,28 @@ class _SignupScreenState extends State<SignupScreen> {
                             backendError: backendError,
                             isLoading: isLoading,
                             isValidationFieldActive: (field) =>
-                                _activeValidationField == field,
+                                _validatedFields.contains(field),
                             onAgeChanged: (value) {
-                              setState(() => _ageVerified = value);
+                              setState(() {
+                                _ageVerified = value;
+                                if (value &&
+                                    _localError?.startsWith(
+                                          'Age Verification Required:',
+                                        ) ==
+                                        true) {
+                                  _localError = null;
+                                }
+                              });
                             },
                             onTermsChanged: (value) {
-                              setState(() => _agreeToTerms = value);
+                              setState(() {
+                                _agreeToTerms = value;
+                                if (value &&
+                                    _localError?.startsWith('Terms Required:') ==
+                                        true) {
+                                  _localError = null;
+                                }
+                              });
                             },
                             onNewsletterChanged: (value) {
                               setState(() => _subscribeNewsletter = value);
@@ -496,6 +531,7 @@ class _SignupCard extends StatelessWidget {
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
+                onChanged: (_) => _handlePasswordChanged(),
                 validator: (value) => isValidationFieldActive('password')
                     ? _required(value, 'Password')
                     : null,
@@ -509,6 +545,7 @@ class _SignupCard extends StatelessWidget {
                 enabled: !isLoading,
                 obscureText: true,
                 textInputAction: TextInputAction.next,
+                onChanged: (_) => _handlePasswordChanged(),
                 validator: (value) =>
                     isValidationFieldActive('confirmPassword')
                         ? _required(value, 'Confirm password')
@@ -712,6 +749,7 @@ class _SignupCard extends StatelessWidget {
     required String hint,
     required bool enabled,
     required String? Function(String?) validator,
+    ValueChanged<String>? onChanged,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
     bool obscureText = false,
@@ -723,6 +761,8 @@ class _SignupCard extends StatelessWidget {
       keyboardType: keyboardType,
       textInputAction: textInputAction,
       obscureText: obscureText,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
