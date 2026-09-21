@@ -1,0 +1,89 @@
+Review the entire existing Flutter project and make the UI fully responsive across different screen sizes.
+
+Current problems:
+
+* Some screens show **RenderFlex overflow / pixel overflow errors**.
+* UI looks messy or broken on smaller screens.
+* Some widgets are too wide or too tall.
+* Text gets clipped or overlaps.
+* Buttons, cards, forms, lists, and spacing are not adapting properly.
+* The layout may look good on one screen size but break on another.
+
+Requirements:
+
+1. Check **all existing screens**, not just one screen.
+2. Fix all horizontal and vertical overflow errors.
+3. Make the UI responsive for:
+
+   * Small mobile phones
+   * Large mobile phones
+   * Tablets
+   * Desktop
+   * Web browser with different window sizes
+4. Use Flutter responsive best practices such as:
+
+   * `LayoutBuilder`
+   * `MediaQuery`
+   * `Expanded`
+   * `Flexible`
+   * `Wrap`
+   * `SingleChildScrollView`
+   * `ListView`
+   * `GridView`
+   * Responsive constraints where appropriate
+5. Do not blindly add `SingleChildScrollView` everywhere. Choose the correct responsive solution based on the layout.
+6. Prevent fixed widths/heights from causing overflow. Replace hardcoded dimensions with responsive constraints where necessary.
+7. Make text responsive so it does not overflow, overlap, or get cut off.
+8. Make rows responsive. If multiple items cannot fit horizontally, allow them to wrap or change to a vertical layout.
+9. Make cards, buttons, input fields, dialogs, tables, lists, and grids adapt to available screen width.
+10. For desktop/web:
+
+    * Keep content centered.
+    * Use reasonable maximum content widths.
+    * Avoid excessively stretched UI.
+11. For mobile:
+
+    * Use the available width efficiently.
+    * Maintain proper padding and spacing.
+    * Allow vertical scrolling when content is larger than the screen.
+12. Maintain the existing:
+
+    * UI design
+    * Colors
+    * Fonts
+    * Functionality
+    * Navigation
+    * BLoC/business logic
+    * API calls
+    * Firebase functionality
+13. Do not rewrite the application architecture.
+14. Do not remove existing features just to fix responsiveness.
+
+Important:
+
+* First inspect the existing project structure and identify screens/widgets causing responsiveness issues.
+* Then fix them systematically.
+* Reuse existing widgets/components where possible.
+* Avoid unnecessary package additions.
+* Do not create duplicate screens or duplicate code.
+
+Testing:
+Test the important screens at multiple widths, including approximately:
+
+* 320px
+* 360px
+* 390px
+* 430px
+* 600px
+* 768px
+* 1024px
+* 1280px+
+
+Final result:
+The application should have a clean, professional responsive UI with **no RenderFlex overflow errors** and should look consistent and usable across Android, iOS, tablet, web, and desktop screen sizes.
+
+After making changes, list:
+
+1. Which screens were updated.
+2. What responsiveness issues were fixed.
+3. Any remaining issues that could not be fixed.
