@@ -1,0 +1,53 @@
+Fix the subscription issue in the existing Flutter project.
+
+### Problem
+
+After a user signs up from the **Android app**, they are redirected to the **Subscription page**.
+
+On the Subscription page:
+
+* All subscription plans are displayed.
+* The user cannot subscribe to any plan.
+* Below every plan, this message is displayed:
+
+**"This plan is not available in the current store"**
+
+### Required Fix
+
+Investigate and fix the Android in-app subscription/purchase flow so that the available subscription plans can be purchased successfully.
+
+Please check the complete subscription implementation, including:
+
+1. Android in-app purchase configuration.
+2. Google Play Billing integration.
+3. Product/subscription IDs used in Flutter.
+4. Whether the product IDs exactly match the IDs configured in Google Play Console.
+5. Product query/loading logic.
+6. Store availability checking logic.
+7. Subscription product response from Google Play.
+8. Purchase initiation logic.
+9. Handling of unavailable/invalid products.
+10. Android package/application ID configuration.
+11. Google Play Console subscription configuration.
+12. Testing configuration for Google Play Billing.
+
+### Important
+
+* Do **not** simply hide or remove the message **"This plan is not available in the current store"**.
+* Find the actual reason why Google Play is returning the plans as unavailable.
+* Do not hardcode a successful subscription response.
+* Do not bypass Google Play Billing.
+* Keep the existing subscription UI and design unchanged.
+* Keep the existing subscription plans and pricing unchanged unless the configuration is incorrect.
+* Keep iOS subscription behavior unchanged.
+* Do not modify unrelated features.
+
+### Expected Result
+
+After signup on Android:
+
+**Signup → Subscription Page → Plans Load Correctly → User Selects Plan → Google Play Purchase Flow Opens → Subscription Purchase Can Be Completed**
+
+If the plans are still unavailable after checking the Flutter code, clearly identify what must be configured in **Google Play Console** and which product IDs/configuration are required.
+
+Before making changes, inspect the existing subscription implementation and explain the root cause. Then make the minimum required code changes and verify that there are no Flutter/Dart compilation errors.
