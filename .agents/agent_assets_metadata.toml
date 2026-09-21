@@ -1625,3 +1625,17 @@ mtime_ms = 1789970568074
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f489fb7f-8086-482a-9f07-e0e9b65d36b2/0ed93275-ac23-43f5-871f-41a99e989912"
 storage_version_token = "1789970574899224"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9I3AI1EixC91n-nNRbw8z"
+uri = "file://artifacts/flutter-google-play-subscription-fix.zip"
+type = "unspecified"
+title = "Flutter Google Play subscription fix — changed files ZIP"
+description = "Contains only the two changed Android files that align the Flutter app package with the existing Google Play and server configuration."
+logical_id = "1a8142c7-e1b6-4aeb-b258-7435f97a22de"
+content_hash = "sha256:85a20fbefc48b90b0c058d34b5b2195181a02117e469952c665b67924aa125b9"
+size = 1850
+mtime_ms = 1789971005634
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1a8142c7-e1b6-4aeb-b258-7435f97a22de/9c7c296a-b679-4f48-9b1e-c05b5f1e2902"
+storage_version_token = "1789971016800974"
+content_type = "application/octet-stream"

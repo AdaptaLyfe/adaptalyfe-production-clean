@@ -1,4 +1,4 @@
-package com.adaptalyfe.mobile
+package com.adaptalyfe.app
 
 import android.speech.tts.TextToSpeech
 import io.flutter.embedding.engine.FlutterEngine

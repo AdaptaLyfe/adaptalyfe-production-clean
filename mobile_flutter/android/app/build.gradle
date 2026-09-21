@@ -12,12 +12,12 @@ def flutterVersionName = project.hasProperty("flutter.versionName")
         : "0.1.0"
 
 android {
-    namespace = "com.adaptalyfe.mobile"
+    namespace = "com.adaptalyfe.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     defaultConfig {
-        applicationId = "com.adaptalyfe.mobile"
+        applicationId = "com.adaptalyfe.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
