@@ -1695,3 +1695,17 @@ mtime_ms = 1789976599869
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c0adaebc-e958-466a-ab3c-66aa3c795848/ee55259f-103d-47c6-ab09-2ef8f6ed4a14"
 storage_version_token = "1789976610411101"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "77du0aw5y7ZPv9IfyxmWA"
+uri = "file://artifacts/flutter-shopping-list-add-cancel-fix.zip"
+type = "unspecified"
+title = "Shopping List Add/Cancel fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the Shopping List dialog lifecycle fix."
+logical_id = "e882dcc9-e8bd-40be-a488-47500937c6e7"
+content_hash = "sha256:7a12ff6da2536ba4b293a2b39477e72d5aff8793e966f1dbf44f7ddc023203e0"
+size = 12852
+mtime_ms = 1789977022306
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e882dcc9-e8bd-40be-a488-47500937c6e7/6c989109-a796-40d2-816c-fa0e1ecb6d21"
+storage_version_token = "1789977034707683"
+content_type = "application/octet-stream"
