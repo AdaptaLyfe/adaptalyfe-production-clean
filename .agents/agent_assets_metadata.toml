@@ -1891,3 +1891,17 @@ mtime_ms = 1790069396279
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9041ce59-6d2d-45fa-a667-1ff9c77d5ee5/49f9687b-6f30-4290-8bd3-388b0fe57229"
 storage_version_token = "1790069404649863"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5RaX9jsnVdI5Un5j0Z626"
+uri = "file://artifacts/flutter-medication-list-pharmacy-notes-crash-fix-changed-files.zip"
+type = "unspecified"
+title = "Link Pharmacy crash fix — changed file ZIP"
+description = "Contains the final medical_screen.dart lifecycle fix for the Link Pharmacy save flow."
+logical_id = "8bf803e5-91fb-49af-a5de-309461bbabc0"
+content_hash = "sha256:0116a5d37fc42b8805d1dc7bbb35023dd04ec77cb14cbadebd80e27de60c19e4"
+size = 17894
+mtime_ms = 1790069763520
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8bf803e5-91fb-49af-a5de-309461bbabc0/bf2420de-c6fd-46dd-a0fd-52ca24c28771"
+storage_version_token = "1790069768196201"
+content_type = "application/octet-stream"

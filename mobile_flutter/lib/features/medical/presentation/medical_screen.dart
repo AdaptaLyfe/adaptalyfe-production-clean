@@ -1736,7 +1736,7 @@ class _MedicalDialogScope extends StatelessWidget {
             previous.actionMessage != current.actionMessage &&
             current.actionMessage == successMessage,
         listener: (dialogContext, state) {
-          Future<void>.delayed(const Duration(milliseconds: 350), () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!dialogContext.mounted) return;
             Navigator.of(dialogContext).pop();
           });
@@ -3728,7 +3728,7 @@ class _LinkPharmacyDialogState extends State<_LinkPharmacyDialog> {
         _isClosing = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
-          Navigator.of(dialogContext).pop();
+          Navigator.of(context).pop();
         });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
