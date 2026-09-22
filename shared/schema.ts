@@ -1253,7 +1253,7 @@ export const assignments = pgTable("assignments", {
   description: text("description"),
   type: text("type").notNull(), // "homework", "project", "exam", "quiz", "paper"
   dueDate: timestamp("due_date").notNull(),
-  estimatedHours: integer("estimated_hours"),
+  estimatedHours: real("estimated_hours"),
   priority: text("priority").default("medium"), // "low", "medium", "high", "urgent"
   status: text("status").default("not_started"), // "not_started", "in_progress", "completed", "submitted"
   grade: text("grade"),

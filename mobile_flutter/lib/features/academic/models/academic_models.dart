@@ -151,7 +151,7 @@ class AssignmentModel extends Equatable {
       type: _asString(json['type']),
       dueDate: _asDateTime(json['dueDate']) ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      estimatedHours: _asNullableInt(json['estimatedHours']),
+      estimatedHours: _asNullableDouble(json['estimatedHours']),
       priority: _asString(json['priority'], fallback: 'medium'),
       status: _asString(json['status'], fallback: 'not_started'),
       grade: _asNullableString(json['grade']),
@@ -167,7 +167,7 @@ class AssignmentModel extends Equatable {
   final String? description;
   final String type;
   final DateTime dueDate;
-  final int? estimatedHours;
+  final double? estimatedHours;
   final String priority;
   final String status;
   final String? grade;
@@ -211,7 +211,7 @@ class AssignmentInput extends Equatable {
   final String type;
   final DateTime dueDate;
   final String priority;
-  final int estimatedHours;
+  final double estimatedHours;
 
   Map<String, dynamic> toJson() => {
         'classId': classId,
@@ -617,6 +617,11 @@ int? _asNullableInt(Object? value) {
       : value is num
           ? value.toInt()
           : int.tryParse('$value');
+}
+
+double? _asNullableDouble(Object? value) {
+  if (value == null) return null;
+  return value is num ? value.toDouble() : double.tryParse('$value');
 }
 
 String _asString(Object? value, {String fallback = ''}) =>

@@ -2417,6 +2417,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
   String _priority = 'medium';
   DateTime? _dueDate;
   int? _classId;
+  String? _dueDateError;
 
   @override
   void initState() {
@@ -2508,6 +2509,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                 _DateField(
                   label: 'Due date',
                   value: _dueDate,
+                  errorText: _dueDateError,
                   onTap: isSubmitting ? () {} : _pickDueDate,
                 ),
                 const SizedBox(height: 10),
@@ -2553,12 +2555,17 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                 TextFormField(
                   controller: _hoursController,
                   enabled: !isSubmitting,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration:
                       const InputDecoration(labelText: 'Estimated hours'),
                   validator: (value) {
-                    final parsed = int.tryParse(value?.trim() ?? '');
-                    if (parsed == null || parsed < 1 || parsed > 100) {
+                    final parsed = double.tryParse(value?.trim() ?? '');
+                    if (parsed == null ||
+                        !parsed.isFinite ||
+                        parsed < 1 ||
+                        parsed > 100) {
                       return 'Enter 1 to 100 hours';
                     }
                     return null;
@@ -2594,24 +2601,30 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
     );
     if (!mounted || picked == null) return;
     setState(
-      () => _dueDate = DateTime(
-        picked.year,
-        picked.month,
-        picked.day,
-        initialDate.hour,
-        initialDate.minute,
-      ),
+      () {
+        _dueDate = DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          initialDate.hour,
+          initialDate.minute,
+        );
+        _dueDateError = null;
+      },
     );
   }
 
   void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final formIsValid = _formKey.currentState?.validate() ?? false;
     if (_dueDate == null) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Choose a due date.')));
+      setState(() => _dueDateError = 'Choose a due date');
+    }
+    if (!formIsValid || _dueDate == null) {
       return;
     }
+
+    final estimatedHours = double.tryParse(_hoursController.text.trim());
+    if (estimatedHours == null) return;
 
     context.read<AcademicBloc>().add(
           AddAssignment(
@@ -2622,8 +2635,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
               dueDate: _dueDate!,
               priority: _priority,
               classId: _classId,
-              estimatedHours:
-                  int.tryParse(_hoursController.text.trim()) ?? 2,
+              estimatedHours: estimatedHours,
             ),
           ),
         );
@@ -2678,11 +2690,13 @@ class _DateField extends StatelessWidget {
   const _DateField({
     required this.label,
     required this.value,
+    this.errorText,
     required this.onTap,
   });
 
   final String label;
   final DateTime? value;
+  final String? errorText;
   final VoidCallback onTap;
 
   @override
@@ -2690,8 +2704,9 @@ class _DateField extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Due date',
+        decoration: InputDecoration(
+          labelText: label,
+          errorText: errorText,
           suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
           border: OutlineInputBorder(),
         ),

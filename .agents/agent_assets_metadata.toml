@@ -1933,3 +1933,17 @@ mtime_ms = 1790071056160
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4572ced5-82e1-437f-bdcf-d9c3a934ec1a/4a4a736d-be88-463a-935a-adb4c08e9a0a"
 storage_version_token = "1790071075264158"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "6wHuk14SGfoP7nGU0DlHV"
+uri = "file://artifacts/flutter-assignment-validation-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter assignment validation fix — changed files ZIP"
+description = "Contains the three changed files for in-dialog due-date validation, decimal estimated-hours support, and the shared assignment schema precision update."
+logical_id = "c7db39b6-c00d-4ac9-95f3-94171e2654c8"
+content_hash = "sha256:862d54c814652830dfa1f72f514e3d2f14c2554c7c462933721ffd02ff50392d"
+size = 34306
+mtime_ms = 1790071557274
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c7db39b6-c00d-4ac9-95f3-94171e2654c8/1d36312f-af81-44af-80ae-b46dfa2ae053"
+storage_version_token = "1790071564130312"
+content_type = "application/octet-stream"
