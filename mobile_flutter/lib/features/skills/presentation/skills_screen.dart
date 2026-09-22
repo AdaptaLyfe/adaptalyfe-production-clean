@@ -18,6 +18,7 @@ class SkillsScreen extends StatefulWidget {
 
 class _SkillsScreenState extends State<SkillsScreen> {
   String _category = 'all';
+  bool _skillDialogOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -143,7 +144,7 @@ class _SkillsScreenState extends State<SkillsScreen> {
                           setState(() => _category = value ?? 'all'),
                     );
                     final addButton = FilledButton.icon(
-                      onPressed: state.busyKey == 'create'
+                      onPressed: state.busyKey == 'create' || _skillDialogOpen
                           ? null
                           : () => _addSkill(context),
                       icon: const Icon(Icons.add),
@@ -227,27 +228,37 @@ class _SkillsScreenState extends State<SkillsScreen> {
   Future<void> _addSkill(BuildContext context) async {
     final bloc = context.read<SkillsBloc>();
     if (bloc.state.busyKey == 'create') return;
-    final input = await showDialog<TransitionSkillInput>(
-      context: context,
-      builder: (_) => const _SkillFormDialog(),
-    );
-    if (input != null && context.mounted) {
-      bloc.add(CreateSkill(input));
-    }
+    final input = await _openSkillDialog(context);
+    if (!mounted || input == null) return;
+    bloc.add(CreateSkill(input));
   }
 
   Future<void> _editSkill(
     BuildContext context,
     TransitionSkillModel skill,
   ) async {
-    final input = await showDialog<TransitionSkillInput>(
-      context: context,
-      builder: (_) => _SkillFormDialog(skill: skill),
-    );
-    if (input != null && context.mounted) {
-      context.read<SkillsBloc>().add(
-            UpdateSkill(skillId: skill.id, input: input),
-          );
+    final bloc = context.read<SkillsBloc>();
+    final input = await _openSkillDialog(context, skill: skill);
+    if (!mounted || input == null) return;
+    bloc.add(UpdateSkill(skillId: skill.id, input: input));
+  }
+
+  Future<TransitionSkillInput?> _openSkillDialog(
+    BuildContext context, {
+    TransitionSkillModel? skill,
+  }) async {
+    if (!mounted || _skillDialogOpen) return null;
+    setState(() => _skillDialogOpen = true);
+    try {
+      return await showDialog<TransitionSkillInput>(
+        context: context,
+        useRootNavigator: true,
+        builder: (_) => _SkillFormDialog(skill: skill),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _skillDialogOpen = false);
+      }
     }
   }
 
