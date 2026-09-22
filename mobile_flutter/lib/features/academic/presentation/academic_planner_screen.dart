@@ -1864,21 +1864,17 @@ class _StudyGroupDialogState extends State<_StudyGroupDialog> {
         }
       },
       child: AlertDialog(
+        scrollable: true,
         title: const Text('Create Study Group'),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: AppResponsive.dialogWidth(context),
-            maxHeight: AppResponsive.dialogMaxHeight(
-              context,
-              fraction: .78,
-            ),
           ),
           child: Form(
             key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 TextFormField(
                   controller: _groupNameController,
                   enabled: !isSubmitting,
@@ -1981,8 +1977,7 @@ class _StudyGroupDialogState extends State<_StudyGroupDialog> {
                   maxLines: 3,
                   decoration: const InputDecoration(labelText: 'Notes'),
                 ),
-                ],
-              ),
+              ],
             ),
           ),
         ),

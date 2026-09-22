@@ -1,0 +1,64 @@
+Fix the Flutter UI bug in:
+
+**Academic Planner / Student Planner → Study Groups → Create Study Group**
+
+### Current Issue
+
+When the user opens the **"Create Study Group"** popup/dialog, Flutter shows:
+
+**"BOTTOM OVERFLOWED BY 11 PIXELS"**
+
+The overflow happens because the content inside the popup does not fit within the available height, especially on smaller screen sizes or when the keyboard is open.
+
+### Required Fix
+
+Properly fix the layout so the overflow cannot happen again.
+
+### Important Requirements
+
+1. Find the exact **Create Study Group** dialog/popup widget.
+2. Identify which `Column`, `Container`, `ListView`, `SingleChildScrollView`, or fixed-height widget is causing the overflow.
+3. Do **not** simply hide or ignore the Flutter overflow warning.
+4. Make the popup content vertically scrollable when the available height is limited.
+5. Handle the keyboard opening correctly using `MediaQuery.viewInsets.bottom` or an equivalent responsive approach.
+6. Avoid hardcoded/fixed heights that can cause overflow.
+7. Keep the existing UI design, fields, buttons, validation, and functionality unchanged.
+8. Make the dialog responsive for:
+
+   * Small Android phones
+   * Large Android phones
+   * iOS
+   * Tablet
+   * Different screen orientations
+   * Keyboard opened/closed
+9. Make sure the **Create Study Group** button remains accessible when the keyboard is open.
+10. Ensure there is proper padding around the content and keyboard.
+11. Do not introduce nested scrolling unnecessarily.
+12. Do not modify unrelated Academic Planner screens or functionality.
+
+### Stability Requirement
+
+After fixing the layout, review the complete **Create Study Group** dialog for similar overflow risks. The solution should prevent the same overflow from returning when:
+
+* Device screen is small
+* Font size is increased
+* Keyboard is displayed
+* Text fields contain long text
+* Device orientation changes
+
+### Verification
+
+Run the app and test:
+
+**Academic Planner → Study Groups → Create Study Group**
+
+Verify:
+
+* No `BOTTOM OVERFLOWED BY ... PIXELS` error appears.
+* No yellow/black Flutter overflow indicator appears.
+* Dialog works correctly with keyboard open.
+* All fields can be accessed.
+* Create/Cancel buttons remain usable.
+* Existing functionality continues to work.
+
+First inspect the existing implementation and make the **smallest proper architectural/UI fix** rather than rewriting the entire screen.
