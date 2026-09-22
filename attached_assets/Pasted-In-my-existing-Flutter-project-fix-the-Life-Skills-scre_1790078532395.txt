@@ -1,0 +1,225 @@
+In my existing Flutter project, fix the **Life Skills** screen without breaking any existing functionality.
+
+## Problem
+
+On:
+
+**Life Skills → Add Skill Milestone**
+
+* When I click/tap **Add Skill Milestone**, the dialog does not open.
+
+Also:
+
+**Life Skills → Skill List → Edit**
+
+* When I click/tap **Edit** on an existing skill, the edit dialog does not open.
+
+When trying to open these dialogs, the following Flutter rendering error occurs:
+
+```text
+RenderBox was not laid out: RenderPhysicalShape#c6b4e relayoutBoundary=up2
+'package:flutter/src/rendering/box.dart':
+Failed assertion: line 2164 pos 12: 'hasSize'
+```
+
+## Required Fix
+
+Do a proper root-cause investigation before changing the code.
+
+### 1. Inspect the existing Life Skills implementation
+
+Find:
+
+* Life Skills screen/page
+* Skill list widget
+* Add Skill Milestone button/action
+* Edit skill action
+* Add milestone dialog
+* Edit skill dialog
+* Any shared/custom dialog widgets
+* Related BLoC/Provider/state management
+* Any `showDialog`, `AlertDialog`, `Dialog`, `StatefulBuilder`, `ListView`, `Column`, `Expanded`, `Flexible`, `SingleChildScrollView`, `LayoutBuilder`, or `FutureBuilder` involved in these flows.
+
+Do not rewrite the entire Life Skills feature.
+
+### 2. Fix the RenderBox error at the root
+
+Investigate why Flutter is trying to lay out a widget before it has a valid size.
+
+Pay special attention to:
+
+* `Expanded`/`Flexible` used inside dialogs incorrectly
+* `ListView` or other scrollables inside unconstrained `Column`
+* Nested scroll views
+* Dialog content without proper constraints
+* `Column(mainAxisSize: MainAxisSize.max)` inside an unconstrained dialog
+* `StatefulBuilder` causing an invalid rebuild/layout
+* Dialogs opened while the widget tree is rebuilding
+* Calling `showDialog()` from inside `build()`
+* Incorrect `BuildContext`
+* Controllers being created/disposed at the wrong time
+* `setState()` or BLoC state changes occurring while the dialog is being built
+* Any parent widget giving the dialog infinite/unbounded constraints
+* Incorrect use of `SizedBox`, `ConstrainedBox`, `IntrinsicHeight`, or `IntrinsicWidth`
+
+Do not simply hide/suppress the error.
+
+### 3. Fix Add Skill Milestone
+
+When the user taps:
+
+**Life Skills → Add Skill Milestone**
+
+The dialog must:
+
+* Open normally.
+* Have proper width/height constraints.
+* Display all existing fields.
+* Allow the user to enter data.
+* Preserve existing validation.
+* Preserve existing BLoC/API/database functionality.
+* Save the milestone correctly.
+* Close correctly after successful save.
+* Show existing error/validation messages correctly.
+
+### 4. Fix Edit Skill
+
+When the user taps:
+
+**Life Skills → Skill List → Edit**
+
+The edit dialog must:
+
+* Open normally.
+* Load the selected skill's existing data.
+* Populate the existing fields correctly.
+* Allow editing.
+* Preserve existing validation.
+* Update the correct skill.
+* Close correctly after successful update.
+* Refresh/update the list correctly.
+
+### 5. Dialog implementation
+
+Use a stable Flutter dialog structure with proper constraints.
+
+For example, if the current dialog has an unconstrained scrollable layout, restructure it safely using an appropriate combination of:
+
+```dart
+Dialog(
+  child: ConstrainedBox(
+    constraints: const BoxConstraints(
+      maxWidth: 500,
+      maxHeight: 700,
+    ),
+    child: ...
+  ),
+)
+```
+
+and, where needed:
+
+```dart
+SingleChildScrollView(
+  child: ...
+)
+```
+
+Do NOT blindly copy this example. First inspect the existing layout and apply the correct solution for this project.
+
+Avoid unnecessary `IntrinsicHeight`/`IntrinsicWidth` because they can create additional layout problems.
+
+### 6. BuildContext and dialog lifecycle
+
+Make sure:
+
+* `showDialog()` uses a valid context.
+* The dialog is not opened during `build()`.
+* Dialog actions do not use a disposed context.
+* TextEditingControllers are not disposed while the dialog is still using them.
+* Dialog state is handled safely.
+* No `setState()` is called after disposal.
+* BLoC/state changes do not cause the dialog to rebuild with invalid constraints.
+
+### 7. Do not create a workaround
+
+Do NOT:
+
+* Comment out the Add button.
+* Disable Edit.
+* Hide the error.
+* Add random delays such as `Future.delayed()` just to make the dialog appear.
+* Add unnecessary `setState()` calls.
+* Replace the entire Life Skills screen.
+* Remove existing validation/business logic.
+* Remove BLoC/state management.
+* Hardcode fake skill/milestone data.
+
+Fix the actual widget tree/layout/lifecycle problem.
+
+### 8. Responsive behavior
+
+The fix must work on:
+
+* Android
+* iOS
+* Flutter Web
+* Desktop
+
+The dialog should remain usable on:
+
+* Small mobile screens
+* Large mobile screens
+* Tablet
+* Web/Desktop
+
+Avoid hardcoded dimensions that can cause overflow on smaller screens.
+
+### 9. Check for similar bugs
+
+Because the error is:
+
+```text
+RenderBox was not laid out
+Failed assertion: line 2164 pos 12: 'hasSize'
+```
+
+inspect whether the same problematic dialog/layout pattern is shared between **Add Skill Milestone** and **Edit Skill**.
+
+If both dialogs use a shared widget/component, fix the shared component at the root so the issue does not return in another place.
+
+### 10. Verify the complete flow
+
+After making the fix, test these exact flows:
+
+1. Open Life Skills.
+2. Tap **Add Skill Milestone**.
+3. Verify dialog opens.
+4. Enter valid data.
+5. Save.
+6. Verify milestone appears in the list.
+7. Tap **Edit** on an existing skill.
+8. Verify edit dialog opens.
+9. Verify existing data is populated.
+10. Modify data.
+11. Save.
+12. Verify updated data appears in the list.
+13. Repeat Add/Edit multiple times.
+14. Verify no `RenderBox was not laid out` error.
+15. Test after navigating away from Life Skills and coming back.
+16. Test on different screen sizes.
+
+### Important
+
+Before finishing:
+
+* Run `flutter analyze`.
+* Fix any errors introduced by your changes.
+* Check the modified files for lifecycle/disposal issues.
+* Do not change unrelated features.
+* Keep the existing project architecture and coding style.
+* Explain the **root cause** of the RenderBox error.
+* Explain exactly what files/components were changed.
+* Confirm why the fix prevents the same bug from reopening.
+
+The final result should be a proper production-quality fix, not a temporary workaround.

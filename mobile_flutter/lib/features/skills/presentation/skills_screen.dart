@@ -664,6 +664,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: AppResponsive.dialogWidth(context),
+          maxHeight: AppResponsive.dialogMaxHeight(context),
         ),
         child: Form(
           key: _formKey,
