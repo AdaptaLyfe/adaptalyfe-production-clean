@@ -1,0 +1,107 @@
+You are working on an existing Flutter project.
+
+Fix the following bugs in the **Medication List** section. Do not rewrite unrelated functionality or change the existing UI/UX unnecessarily.
+
+## 1. Refill Reminders — Refresh Button Icon
+
+Screen:
+**Medication List → Refill Reminders**
+
+Issue:
+
+* The Refresh button currently displays a **"+" icon**.
+* It should display a proper **reload/refresh icon**.
+
+Required:
+
+* Replace the "+" icon with the standard Flutter refresh/reload icon:
+  `Icons.refresh`
+* Keep the existing button size, position, styling, colors, and behavior unchanged.
+* The button must continue refreshing/reloading the refill reminders data correctly.
+
+---
+
+## 2. Reminder History — Refresh Button Icon
+
+Screen:
+**Medication List → Reminder History**
+
+Issue:
+
+* The Refresh button currently displays a **"+" icon**.
+* It should display a proper **reload/refresh icon**.
+
+Required:
+
+* Replace the "+" icon with:
+  `Icons.refresh`
+* Keep the existing button layout, styling, size, position, and functionality unchanged.
+* Verify that tapping the button still refreshes the Reminder History data.
+
+---
+
+# 3. Pharmacy Notes — Flutter Framework Assertion Error
+
+Screen:
+**Medication List → Pharmacy Notes**
+
+Current error:
+
+```text
+package:flutter/src/widgets/framework.dart:
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true.
+```
+
+The error occurs with this flow:
+
+1. Open **Medication List**
+2. Open **Pharmacy Notes**
+3. Tap **Link Pharmacy**
+4. Tap any text/input field
+5. Start typing
+6. Tap **Cancel**
+7. Flutter throws:
+
+```text
+'_dependents.isEmpty': is not true
+```
+
+## Root Cause Investigation
+
+Do NOT simply hide or catch the error.
+
+Investigate the actual widget lifecycle problem.
+
+Look specifically for:
+
+* `BuildContext` being used after a widget/dialog has been removed.
+* `Provider`, `BlocProvider`, `InheritedWidget`, or other inherited dependencies being disposed/rebuilt incorrectly.
+* `showDialog`, `showModalBottomSheet`, `Navigator.pop`, or nested navigation causing an invalid widget dependency.
+* `TextEditingController` lifecycle problems.
+* `FocusNode` lifecycle problems.
+* `StatefulBuilder` being used with state/controllers that outlive the dialog.
+* Calling `setState()` after the dialog/widget has been disposed.
+* Calling `context.read()`, `context.watch()`, `Provider.of()`, or similar dependency lookups using a stale `BuildContext`.
+* Async callbacks completing after the dialog has been cancelled.
+* Dialog/bottom-sheet widgets being rebuilt using a context belonging to a disposed widget.
+* Any listener/subscription that is not properly removed in `dispose()`.
+
+## Required Fix
+
+Refactor the **Link Pharmacy** flow so that its widget and state lifecycle is safe.
+
+Requirements:
+
+1. Controllers created by the Link Pharmacy form must be disposed exactly once.
+2. `FocusNode`s must be disposed correctly if they are created manually.
+3. Do not use a `BuildContext` after its widget/dialog has been disposed.
+4. Do not call `setState()` after disposal.
+5. Cancel/remove listeners and subscriptions when the related widget is disposed.
+6. Make sure asynchronous operations check lifecycle state before updating UI.
+7. Do not keep references to a dialog's `BuildContext` after the dialog closes.
+8. If a dialog/bottom sheet uses `StatefulBuilder`, verify that its state is not being accessed after `Navigator.pop()`.
+9. If Provider/BLoC is involved, make sure the correct provider scope remains alive for the entire Link Pharmacy flow.
+10. Do not create duplicate Provider/BLoC instances unnecessarily.
+11. Do not solve the issue by adding random delays, `Future.delayed`, `try/catch`, or suppressing Flutter assertions.
+12. Preserve the current Link Pharmac
