@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
@@ -353,11 +354,13 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
           sessionInvalid: false,
         ),
       );
-    } on ApiException catch (error) {
+    } on ApiException catch (error, stackTrace) {
       if (emit.isDone) return;
+      _logResourceFailure('create emergency resource', error, stackTrace);
       _emitActionFailure(emit, error, 'emergency-create');
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (emit.isDone) return;
+      _logResourceFailure('create emergency resource', error, stackTrace);
       _emitActionFailure(
         emit,
         error,
@@ -618,5 +621,11 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
         sessionInvalid: apiError?.type == ApiErrorType.unauthorized,
       ),
     );
+  }
+
+  void _logResourceFailure(String operation, Object error, [StackTrace? stack]) {
+    if (!kDebugMode) return;
+    debugPrint('[ResourcesBloc] $operation failed: $error');
+    if (stack != null) debugPrintStack(stackTrace: stack);
   }
 }

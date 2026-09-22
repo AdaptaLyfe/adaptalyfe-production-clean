@@ -1807,3 +1807,17 @@ mtime_ms = 1789990642711
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e2605de5-4d86-4e73-8406-162f82ee0d88/0fe0afea-4c2b-4eff-9632-380bd8d7309a"
 storage_version_token = "1789990649318181"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9c8fxuhKJEofnoYqlitD_"
+uri = "file://artifacts/flutter-emergency-resource-add-fix-v2.zip"
+type = "unspecified"
+title = "Flutter Emergency Resource add fix"
+description = "Contains the two changed Flutter files for resilient Emergency Resource response parsing and debug exception logging."
+logical_id = "41ef0533-aadc-46fe-b76a-1805be32792e"
+content_hash = "sha256:635d409453a2c9ef94f74b28c091a5007af1027511be2e71356021d798f65a09"
+size = 3899
+mtime_ms = 1790064379480
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/41ef0533-aadc-46fe-b76a-1805be32792e/cea3d985-47fb-48b5-b12f-1574ffc2b3ea"
+storage_version_token = "1790064390421985"
+content_type = "application/octet-stream"
