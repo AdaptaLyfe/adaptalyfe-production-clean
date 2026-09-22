@@ -1961,3 +1961,17 @@ mtime_ms = 1790071787859
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/11885efa-0f78-47ae-b5a6-be26c5ecbf78/7d8f02c1-6a31-457f-bc12-3f072acfdf4b"
 storage_version_token = "1790071794180421"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XrxIQxnqdvAvMb7JM6rPl"
+uri = "file://artifacts/flutter-skill-milestone-level-label-fix-changed-files.zip"
+type = "unspecified"
+title = "Skill milestone level label fix — changed file ZIP"
+description = "Contains the single changed Flutter skills presentation file for responsive level labels and validation messages."
+logical_id = "78c03d4f-d3d3-4f21-aef9-7043e3557e93"
+content_hash = "sha256:8b1e2283357e09db27681e28aada19626c917dc4e63933db06ef0b80cc79888e"
+size = 6164
+mtime_ms = 1790072096785
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/78c03d4f-d3d3-4f21-aef9-7043e3557e93/22e33944-ea2e-4bb0-91b3-b17eb5c30637"
+storage_version_token = "1790072101199750"
+content_type = "application/octet-stream"

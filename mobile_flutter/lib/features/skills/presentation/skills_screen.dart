@@ -633,7 +633,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       keyboardType: TextInputType.number,
       decoration: const InputDecoration(
         label: Text('Current Level (1-10)', softWrap: true),
-        errorMaxLines: 2,
+        errorMaxLines: 3,
       ),
       validator: (_) => _levelError(),
     );
@@ -642,7 +642,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       keyboardType: TextInputType.number,
       decoration: const InputDecoration(
         label: Text('Target Level (1-10)', softWrap: true),
-        errorMaxLines: 2,
+        errorMaxLines: 3,
       ),
       validator: (_) => _levelError(),
     );
