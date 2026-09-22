@@ -1,0 +1,80 @@
+In the existing Flutter project, investigate and fix the subscription plan selection issue.
+
+### Current Issue
+
+On the **Subscription** screen:
+
+* User can see the available subscription plans.
+* User tries to select a plan.
+* After tapping/selecting a plan, **nothing happens**.
+* The selected plan does not continue to the next step or start the expected subscription/payment flow.
+
+### What to do
+
+1. **First inspect the existing subscription flow**
+
+   * Find the Subscription screen/UI.
+   * Find the plan selection widgets/buttons.
+   * Trace the complete flow from:
+     `Select Plan → Selected Plan State → Continue/Subscribe → Payment/Checkout → Subscription Confirmation`.
+   * Check the BLoC/Cubit, events, states, repository, API/service, and Stripe/payment integration already used by the project.
+   * Do NOT create a new subscription system if one already exists.
+
+2. **Find the root cause**
+   Check for:
+
+   * `onTap` / `onPressed` not firing.
+   * Plan selection state not updating.
+   * Incorrect `selectedPlan` / `selectedPriceId`.
+   * Missing BLoC event.
+   * BLoC state not rebuilding the UI.
+   * Disabled button condition.
+   * Null or incorrect Stripe Price ID/Product ID.
+   * Navigation not being triggered.
+   * API/payment method not being called.
+   * Exception being silently caught.
+   * Loading state getting stuck.
+   * Any incorrect conditional logic.
+
+3. **Fix the existing flow**
+   After the user selects a plan:
+
+   * The selected plan must visibly become selected.
+   * Store the correct plan/price information.
+   * Enable the next/Subscribe button if required.
+   * Continue through the existing subscription flow.
+   * If Stripe/payment checkout is already implemented, call the existing implementation.
+   * Do not replace the existing payment implementation.
+
+4. **Error handling**
+   If something fails:
+
+   * Do not silently fail.
+   * Show a clear user-friendly error message.
+   * Add appropriate debug logs so the exact failure can be identified.
+
+5. **Important**
+
+   * Preserve the existing UI/design.
+   * Do not change unrelated subscription features.
+   * Do not change the 1-day free trial configuration.
+   * Do not modify Firebase/Auth functionality.
+   * Do not create duplicate screens, BLoCs, repositories, or payment services.
+   * Reuse the existing architecture and code wherever possible.
+
+### Verification
+
+Test the complete flow:
+
+`Subscription Screen → Select Plan → Plan Selected → Continue/Subscribe → Payment/Checkout → Successful Subscription → Subscription Status Updated`
+
+Also test:
+
+* Selecting each available plan.
+* Changing from one plan to another.
+* Tapping Subscribe/Continue without selecting a plan.
+* Payment/API failure.
+* Loading state.
+* Returning to the Subscription screen after successful subscription.
+
+Before making changes, inspect the existing code and identify the exact reason why selecting a plan currently does nothing. Then make the **smallest necessary fix** and explain which files were changed and what caused the issue.
