@@ -1,0 +1,242 @@
+In the existing Flutter project, fix the **Life Skills** dialog issue properly and permanently.
+
+### Problem
+
+Go to:
+
+**Life Skills**
+
+There are two broken flows:
+
+1. Tap **Add Skill Milestone**
+
+   * The dialog does not open.
+   * Flutter throws:
+
+```text
+RenderBox was not laid out: RenderPhysicalShape#c6b4e relayoutBoundary=up2
+'package:flutter/src/rendering/box.dart':
+Failed assertion: line 2164 pos 12: 'hasSize'
+```
+
+2. In the **Skills List**, tap **Edit**
+
+   * The edit dialog does not open.
+   * The same `RenderBox was not laid out` / `hasSize` error can occur.
+
+### Requirements
+
+Fix the **root cause**, not just hide or catch the error.
+
+#### 1. Add Skill Milestone dialog
+
+* Find the existing Add Skill Milestone button/action.
+* Trace the complete flow from button click → dialog → dialog content.
+* Fix why the dialog's widget tree is receiving an invalid/unconstrained layout.
+* Ensure the dialog opens correctly on:
+
+  * Android
+  * iOS
+  * Small screens
+  * Large screens
+  * Different keyboard states
+* Keep the existing UI/design as much as possible.
+* Keep all existing fields, validation, BLoC events, API calls, and functionality.
+
+#### 2. Edit Skill dialog
+
+* Find the existing Edit action in the skill list.
+* Trace the complete flow from Edit → dialog → populated skill data.
+* Fix the same layout/build issue.
+* Ensure the selected skill data is correctly loaded into the dialog.
+* Ensure Save/Update continues to use the existing BLoC/API logic.
+* Do not create a separate duplicate implementation if an existing dialog/form can be reused safely.
+
+### Important: Fix RenderBox error correctly
+
+Investigate the actual widget causing:
+
+```text
+RenderBox was not laid out
+RenderPhysicalShape
+hasSize
+```
+
+Check especially for:
+
+* `Dialog`
+* `AlertDialog`
+* `showDialog`
+* `SingleChildScrollView`
+* `Column`
+* `Row`
+* `ListView`
+* `ListView.builder`
+* `Expanded`
+* `Flexible`
+* `ConstrainedBox`
+* `SizedBox`
+* `IntrinsicHeight`
+* nested scroll views
+* widgets receiving unbounded height/width
+* `StatefulBuilder`
+* `BlocBuilder`
+* `BlocConsumer`
+* dynamically generated form fields
+* keyboard/insets
+* dialog content with large lists
+
+Make sure the dialog content receives valid width and height constraints.
+
+### State Management
+
+The project uses Flutter/BLoC.
+
+Do NOT bypass BLoC or replace existing architecture with local temporary state just to make the dialog appear.
+
+Preserve:
+
+```text
+UI → BLoC → Repository → Data Source/API
+```
+
+If the dialog needs BLoC access, make sure it receives the correct existing BLoC instance instead of accidentally creating a second incorrect instance.
+
+Also check for:
+
+* `BuildContext` from the wrong widget tree
+* `ProviderNotFoundException`
+* accessing a disposed context
+* calling `showDialog()` during the wrong build phase
+* rebuilding/disposal problems
+* controllers being created/disposed incorrectly
+
+### Important stability requirement
+
+Do NOT simply add:
+
+```dart
+try/catch
+```
+
+around the error.
+
+Do NOT suppress the Flutter assertion.
+
+Do NOT use arbitrary fixed heights just to hide the problem.
+
+Do NOT remove existing widgets/features unless they are directly responsible for the layout bug.
+
+Find and fix the actual constraint/build problem.
+
+### Reusable Dialog
+
+If Add and Edit use almost the same form, create/reuse one properly designed dialog/form component, for example:
+
+```text
+SkillMilestoneDialog
+```
+
+It should support:
+
+```text
+Add mode
+Edit mode
+```
+
+without duplicating the entire UI.
+
+The dialog must:
+
+* Open reliably
+* Have proper constraints
+* Scroll correctly when content is larger than the screen
+* Work when the keyboard is visible
+* Work on small screens
+* Not overflow
+* Not produce `RenderBox was not laid out`
+* Not produce `hasSize`
+* Not produce duplicate BLoC instances
+* Properly dispose controllers
+* Preserve existing validation and API/BLoC behavior
+
+### Do not change unrelated features
+
+Only modify code necessary for the Life Skills Add/Edit dialog issue.
+
+Do not change:
+
+* Authentication
+* API contracts
+* Other Life Skills features
+* Navigation
+* Global theme
+* Unrelated screens
+* Existing business logic
+
+### Testing
+
+After making the fix:
+
+1. Run:
+
+```bash
+flutter clean
+flutter pub get
+flutter analyze
+```
+
+2. Test:
+
+```text
+Life Skills → Add Skill Milestone
+```
+
+Confirm the dialog opens.
+
+3. Test:
+
+```text
+Life Skills → Skill List → Edit
+```
+
+Confirm the edit dialog opens with the correct existing data.
+
+4. Test validation.
+
+5. Test Save/Create.
+
+6. Test Update/Edit.
+
+7. Test keyboard opening/closing.
+
+8. Test small and large screen sizes.
+
+9. Open and close the dialogs repeatedly.
+
+10. Test Add → Close → Add again.
+
+11. Test Edit → Close → Edit another skill.
+
+12. Check the debug console for:
+
+```text
+RenderBox was not laid out
+hasSize
+RenderPhysicalShape
+```
+
+There should be no such errors.
+
+### Final response
+
+After fixing, give me:
+
+1. Root cause of the error.
+2. Files changed.
+3. What was changed in each file.
+4. Why the fix prevents the bug from coming back.
+5. Testing performed.
+6. Any remaining warnings/errors, if any.
+
+Do not rewrite unrelated code.
