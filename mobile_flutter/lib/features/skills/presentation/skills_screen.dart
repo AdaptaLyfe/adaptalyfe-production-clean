@@ -628,19 +628,37 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final currentLevelField = TextFormField(
+      controller: _currentController,
+      keyboardType: TextInputType.number,
+      decoration: const InputDecoration(
+        label: Text('Current Level (1-10)', softWrap: true),
+        errorMaxLines: 2,
+      ),
+      validator: (_) => _levelError(),
+    );
+    final targetLevelField = TextFormField(
+      controller: _targetController,
+      keyboardType: TextInputType.number,
+      decoration: const InputDecoration(
+        label: Text('Target Level (1-10)', softWrap: true),
+        errorMaxLines: 2,
+      ),
+      validator: (_) => _levelError(),
+    );
+
     return AlertDialog(
+      scrollable: true,
       title: Text(widget.skill == null ? 'Add Skill Milestone' : 'Edit Skill'),
       content: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: AppResponsive.dialogWidth(context),
-          maxHeight: AppResponsive.dialogMaxHeight(context),
         ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -678,30 +696,25 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                       setState(() => _category = value ?? _category),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _currentController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Current Level (1-10)',
-                        ),
-                        validator: (_) => _levelError(),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _targetController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Target Level (1-10)',
-                        ),
-                        validator: (_) => _levelError(),
-                      ),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 480) {
+                      return Column(
+                        children: [
+                          currentLevelField,
+                          const SizedBox(height: 12),
+                          targetLevelField,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: currentLevelField),
+                        const SizedBox(width: 12),
+                        Expanded(child: targetLevelField),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -728,8 +741,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                         'Describe what this skill involves and why it is important.',
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
