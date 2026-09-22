@@ -36,6 +36,18 @@ DateTime? parseCalendarDate(Object? value, {bool dateOnly = false}) {
     );
   }
 
+  if (dateOnly) {
+    final datePrefix =
+        RegExp(r'^(\d{4})-(\d{2})-(\d{2})').firstMatch(text);
+    if (datePrefix != null) {
+      return DateTime(
+        int.parse(datePrefix.group(1)!),
+        int.parse(datePrefix.group(2)!),
+        int.parse(datePrefix.group(3)!),
+      );
+    }
+  }
+
   final parsed = DateTime.tryParse(text);
   if (parsed == null) return null;
   return dateOnly ? calendarDateOnly(parsed) : parsed.toLocal();

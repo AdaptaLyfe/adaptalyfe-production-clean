@@ -2304,7 +2304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/calendar-events/:id", async (req, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user || req.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2331,7 +2331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/calendar-events/:id", async (req, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user || req.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }

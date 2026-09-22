@@ -1905,3 +1905,17 @@ mtime_ms = 1790069763520
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8bf803e5-91fb-49af-a5de-309461bbabc0/bf2420de-c6fd-46dd-a0fd-52ca24c28771"
 storage_version_token = "1790069768196201"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sC8XDNUbWB6cTTpSENHx4"
+uri = "file://artifacts/flutter-calendar-bugs-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar bugs fix — changed file ZIP"
+description = "Contains the three files changed for calendar edit navigation and all-day date handling."
+logical_id = "6150add7-e4ac-4206-b473-8c7b3e7ebdd8"
+content_hash = "sha256:e18dac7effe8f46ceb9df1506ecad2ad50542e83d27d23f938091d7562a1f1d9"
+size = 59499
+mtime_ms = 1790070668142
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6150add7-e4ac-4206-b473-8c7b3e7ebdd8/df2bb51c-aba3-4c97-9828-7a6ce46e3008"
+storage_version_token = "1790070675365437"
+content_type = "application/octet-stream"

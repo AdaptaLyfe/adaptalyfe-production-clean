@@ -1147,7 +1147,8 @@ class _CalendarItem {
 
   String? get timeLabel {
     if (time != null && time!.isNotEmpty) return time;
-    if (allDay || type == _CalendarItemType.task && start.hour == 0) {
+    if (allDay) return 'Whole Day';
+    if (type == _CalendarItemType.task && start.hour == 0) {
       return null;
     }
     return _formatTimeStatic(start);
