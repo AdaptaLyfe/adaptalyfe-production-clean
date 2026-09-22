@@ -1849,3 +1849,17 @@ mtime_ms = 1790065215616
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6c49baab-46a6-4cf0-b85f-6eda0526e4d7/6acfb2a9-d21c-46a9-a72f-c5a32f10cb7c"
 storage_version_token = "1790065219827538"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5U8Wy6dEc60ycHgX6V4CL"
+uri = "file://artifacts/flutter-sleep-routine-wake-date-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Sleep Routine wake date fix"
+description = "Changed sleep form and validation files for Wake Date support and strict full DateTime ordering."
+logical_id = "c25d6af6-9616-4810-8847-1bd2aeb3ae69"
+content_hash = "sha256:5010970df1bb1a7e297f0e1e770dbf2c9b12cd4428028d069a95691646303d5f"
+size = 12256
+mtime_ms = 1790065878391
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c25d6af6-9616-4810-8847-1bd2aeb3ae69/ba6436e3-e112-4305-9b31-d164d0c760f5"
+storage_version_token = "1790065885335549"
+content_type = "application/octet-stream"

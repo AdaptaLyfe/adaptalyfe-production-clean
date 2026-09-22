@@ -28,3 +28,4 @@
 - [Academic Planner mutations](academic-planner-mutations.md) — keep successful class creation visible from the mutation response instead of depending on an unrelated full-dashboard reload.
 - [Daily task schema compatibility](daily-task-schema-compatibility.md) — normalize PostgreSQL boolean capability results before selecting legacy versus current persistence paths.
 - [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.
+- [Sleep wake date handling](sleep-wake-date-handling.md) — wake date is carried by the existing full wake timestamp; compare wake and fell-asleep DateTimes strictly.

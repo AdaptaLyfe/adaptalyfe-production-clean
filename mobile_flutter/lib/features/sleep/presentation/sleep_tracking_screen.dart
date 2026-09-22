@@ -642,9 +642,11 @@ class _SleepLogTab extends StatefulWidget {
 class _SleepLogTabState extends State<_SleepLogTab> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _dateController;
+  late TextEditingController _wakeDateController;
   late TextEditingController _notesController;
   DateTime? _bedtime;
   DateTime? _sleepTime;
+  DateTime? _wakeDate;
   DateTime? _wakeTime;
   String _quality = '';
   DateTime? _formDate;
@@ -655,6 +657,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
   void initState() {
     super.initState();
     _dateController = TextEditingController();
+    _wakeDateController = TextEditingController();
     _notesController = TextEditingController();
     _syncFromState();
   }
@@ -681,6 +684,10 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     _bedtime = session?.bedtime;
     _sleepTime = session?.sleepTime;
     _wakeTime = session?.wakeTime;
+    _wakeDate = session?.wakeTime == null
+        ? date
+        : _dateOnlyValue(session!.wakeTime!);
+    _wakeDateController.text = _dateOnly(_wakeDate!);
     _quality = session?.quality ?? '';
     _loadedSessionId = session?.id;
     _validationError = null;
@@ -689,6 +696,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
   @override
   void dispose() {
     _dateController.dispose();
+    _wakeDateController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -782,13 +790,31 @@ class _SleepLogTabState extends State<_SleepLogTab> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _TimePickerField(
-                    label: 'Wake Time',
-                    value: _wakeTime,
-                    baseDate: _formDate,
-                    onChanged: (value) => _setTime(
-                      () => _wakeTime = value,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _wakeDateController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Wake Date',
+                            suffixIcon: Icon(Icons.calendar_today_outlined),
+                          ),
+                          onTap: _pickWakeDate,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _TimePickerField(
+                          label: 'Wake Time',
+                          value: _wakeTime,
+                          baseDate: _wakeDate ?? _formDate,
+                          onChanged: (value) => _setTime(
+                            () => _wakeTime = value,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   if (_validationError != null) ...[
                     const SizedBox(height: 8),
@@ -849,9 +875,35 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     setState(() {
       _formDate = date;
       _dateController.text = _dateOnly(date);
+      if (_bedtime != null) _bedtime = _withDate(_bedtime!, date);
+      if (_sleepTime != null) _sleepTime = _withDate(_sleepTime!, date);
+      final wakeDate = _wakeDate == null || _wakeDate!.isBefore(date)
+          ? date
+          : _wakeDate!;
+      _wakeDate = wakeDate;
+      _wakeDateController.text = _dateOnly(wakeDate);
+      if (_wakeTime != null) _wakeTime = _withDate(_wakeTime!, wakeDate);
       _validationError = _currentValidationError();
     });
     widget.onDateChanged(date);
+  }
+
+  Future<void> _pickWakeDate() async {
+    final sleepDate = _formDate ?? DateTime.now();
+    final current = _wakeDate ?? sleepDate;
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: current.isBefore(sleepDate) ? sleepDate : current,
+      firstDate: sleepDate,
+      lastDate: DateTime(9999, 12, 31),
+    );
+    if (!mounted || selected == null) return;
+    setState(() {
+      _wakeDate = selected;
+      _wakeDateController.text = _dateOnly(selected);
+      if (_wakeTime != null) _wakeTime = _withDate(_wakeTime!, selected);
+      _validationError = _currentValidationError();
+    });
   }
 
   Future<void> _pickTime(
@@ -879,7 +931,10 @@ class _SleepLogTabState extends State<_SleepLogTab> {
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
-    if (_bedtime == null || _sleepTime == null || _wakeTime == null) {
+    if (_bedtime == null ||
+        _sleepTime == null ||
+        _wakeDate == null ||
+        _wakeTime == null) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -888,6 +943,9 @@ class _SleepLogTabState extends State<_SleepLogTab> {
       return;
     }
     final date = _formDate ?? DateTime.now();
+    final bedtime = _withDate(_bedtime!, date);
+    final sleepTime = _withDate(_sleepTime!, date);
+    final wakeTime = _withDate(_wakeTime!, _wakeDate!);
     final validationError = _currentValidationError();
     if (validationError != null) {
       setState(() => _validationError = validationError);
@@ -898,9 +956,9 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     }
     final input = SleepSessionInput(
       sleepDate: _dateOnly(date),
-      bedtime: _bedtime,
-      sleepTime: _sleepTime,
-      wakeTime: _wakeTime,
+      bedtime: bedtime,
+      sleepTime: sleepTime,
+      wakeTime: wakeTime,
       quality: _quality.isEmpty ? null : _quality,
       notes: _notesController.text,
     );
@@ -920,11 +978,31 @@ class _SleepLogTabState extends State<_SleepLogTab> {
   }
 
   String? _currentValidationError() {
+    final bedtime = _timeOnDate(_bedtime, _formDate);
+    final sleepTime = _timeOnDate(_sleepTime, _formDate);
+    final wakeTime = _timeOnDate(_wakeTime, _wakeDate);
     return sleepDateValidationError(
           _formDate == null ? null : _dateOnly(_formDate!),
         ) ??
-        sleepRoutineValidationError(_bedtime, _sleepTime, _wakeTime);
+        sleepRoutineValidationError(bedtime, sleepTime, wakeTime);
   }
+
+  DateTime _withDate(DateTime value, DateTime date) => DateTime(
+        date.year,
+        date.month,
+        date.day,
+        value.hour,
+        value.minute,
+        value.second,
+        value.millisecond,
+        value.microsecond,
+      );
+
+  DateTime? _timeOnDate(DateTime? value, DateTime? date) =>
+      value == null || date == null ? value : _withDate(value, date);
+
+  DateTime _dateOnlyValue(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
 }
 
 class _TimePickerField extends StatelessWidget {

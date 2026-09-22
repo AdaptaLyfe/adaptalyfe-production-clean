@@ -52,8 +52,8 @@ String? wakeTimeValidationError(
   DateTime? wakeTime,
 ) {
   if (sleepTime == null || wakeTime == null) return null;
-  if (wakeTime.isBefore(sleepTime)) {
-    return 'Wake time must be the same as or later than time fell asleep';
+  if (!wakeTime.isAfter(sleepTime)) {
+    return 'Wake time must be later than time fell asleep';
   }
   return null;
 }

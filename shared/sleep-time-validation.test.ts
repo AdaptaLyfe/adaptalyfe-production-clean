@@ -46,15 +46,42 @@ test("compares ISO timestamps and rejects malformed values", () => {
   );
 });
 
-test("allows equal and later wake times", () => {
-  assert.equal(getWakeTimeValidationError("22:00", "22:00"), null);
+test("compares complete wake timestamps across dates", () => {
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:30:00.000Z",
+      "2026-09-23T08:00:00.000Z",
+    ),
+    null,
+  );
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:00:00.000Z",
+      "2026-09-22T21:00:00.000Z",
+    ),
+    "Wake time must be later than time fell asleep",
+  );
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:00:00.000Z",
+      "2026-09-21T08:00:00.000Z",
+    ),
+    "Wake time must be later than time fell asleep",
+  );
+});
+
+test("rejects equal and allows later wake times", () => {
+  assert.equal(
+    getWakeTimeValidationError("22:00", "22:00"),
+    "Wake time must be later than time fell asleep",
+  );
   assert.equal(getWakeTimeValidationError("22:00", "22:30"), null);
 });
 
 test("rejects a wake time earlier than sleep time in 24-hour format", () => {
   assert.equal(
     getWakeTimeValidationError("22:30", "22:00"),
-    "Wake time must be the same as or later than time fell asleep",
+    "Wake time must be later than time fell asleep",
   );
 });
 
@@ -62,11 +89,11 @@ test("handles AM/PM wake-time comparisons", () => {
   assert.equal(getWakeTimeValidationError("10:00 AM", "10:30 AM"), null);
   assert.equal(
     getWakeTimeValidationError("10:00 AM", "9:30 AM"),
-    "Wake time must be the same as or later than time fell asleep",
+    "Wake time must be later than time fell asleep",
   );
   assert.equal(
     getWakeTimeValidationError("10:00 PM", "9:30 PM"),
-    "Wake time must be the same as or later than time fell asleep",
+    "Wake time must be later than time fell asleep",
   );
 });
 
@@ -77,6 +104,6 @@ test("applies both sleep-time ordering rules together", () => {
   );
   assert.equal(
     getSleepRoutineTimeValidationError("21:00", "22:00", "21:30"),
-    "Wake time must be the same as or later than time fell asleep",
+    "Wake time must be later than time fell asleep",
   );
 });

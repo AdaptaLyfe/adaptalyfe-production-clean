@@ -77,11 +77,11 @@ export function getWakeTimeValidationError(
     return "Time fell asleep and wake time must be valid times";
   }
 
-  const isEarlier = parsedSleepTime.timestamp !== undefined && parsedWakeTime.timestamp !== undefined
-    ? parsedWakeTime.timestamp < parsedSleepTime.timestamp
-    : parsedWakeTime.minutes! < parsedSleepTime.minutes!;
+  const isNotLater = parsedSleepTime.timestamp !== undefined && parsedWakeTime.timestamp !== undefined
+    ? parsedWakeTime.timestamp <= parsedSleepTime.timestamp
+    : parsedWakeTime.minutes! <= parsedSleepTime.minutes!;
 
-  return isEarlier ? "Wake time must be the same as or later than time fell asleep" : null;
+  return isNotLater ? "Wake time must be later than time fell asleep" : null;
 }
 
 export function getSleepRoutineTimeValidationError(
