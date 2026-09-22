@@ -20,3 +20,9 @@ Daily Task mutations should use the successful create/update/delete response to 
 **Why:** A successful mutation followed by a transient GET failure must not make a saved task appear to have been lost.
 
 **How to apply:** Preserve the mutation result as a fallback when the post-mutation list refresh fails, while still retrying or allowing a later pull-to-refresh.
+
+For Flutter’s completion interaction, key task tiles by task ID and scope the completion control’s rebuild to that task’s completion and busy state; do not refresh the whole list after a toggle.
+
+**Why:** A list-level rebuild can make every completion circle visibly refresh even when only one task changed.
+
+**How to apply:** Preserve other task models in the emitted list, use the completion response for the selected ID, and let refresh/navigation reconcile persisted state later.

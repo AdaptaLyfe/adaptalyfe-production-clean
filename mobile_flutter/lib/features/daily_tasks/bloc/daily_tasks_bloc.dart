@@ -245,18 +245,33 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     }
 
     try {
-      await repository.updateCompletion(
+      final updatedTask = await repository.updateCompletion(
         event.taskId,
         event.isCompleted,
         date: selectedDate,
       );
-      await _reloadAfterMutation(
-        emit,
-        successMessage: event.isCompleted && event.pointValue > 0
-            ? 'Excellent! You earned ${event.pointValue} points for completing this task!'
-            : event.isCompleted
-                ? 'Great job staying on track!'
-                : 'Task updated!',
+
+      final tasks = state.tasks
+          .map(
+            (task) => task.id == event.taskId
+                ? updatedTask.copyWith(completionDates: task.completionDates)
+                : task,
+          )
+          .toList(growable: false);
+      emit(
+        state.copyWith(
+          status: DailyTasksStatus.loaded,
+          tasks: tasks,
+          action: DailyTaskAction.none,
+          activeTaskId: null,
+          errorMessage: null,
+          actionMessage: event.isCompleted && event.pointValue > 0
+              ? 'Excellent! You earned ${event.pointValue} points for completing this task!'
+              : event.isCompleted
+                  ? 'Great job staying on track!'
+                  : 'Task updated!',
+          sessionInvalid: false,
+        ),
       );
     } catch (error) {
       emit(

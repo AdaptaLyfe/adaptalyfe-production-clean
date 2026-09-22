@@ -485,6 +485,7 @@ class _CategoryCard extends StatelessWidget {
             const SizedBox(height: 8),
             ...tasks.map(
               (task) => _TaskTile(
+                key: ValueKey(task.id),
                 task: task,
                 state: state,
               ),
@@ -511,8 +512,80 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
+class _TaskCompletionButton extends StatelessWidget {
+  const _TaskCompletionButton({required this.task});
+
+  final DailyTaskModel task;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<
+        DailyTasksBloc,
+        DailyTasksState,
+        ({bool isCompleted, bool isBusy, bool isEnabled})>(
+      selector: (state) {
+        final currentTask = state.tasks.firstWhere(
+          (candidate) => candidate.id == task.id,
+          orElse: () => task,
+        );
+        return (
+          isCompleted: currentTask.isCompleted,
+          isBusy: state.activeTaskId == task.id &&
+              state.action != DailyTaskAction.none,
+          isEnabled: state.action == DailyTaskAction.none,
+        );
+      },
+      builder: (context, completion) {
+        return IconButton(
+          tooltip: completion.isCompleted
+              ? 'Mark task incomplete'
+              : 'Mark task complete',
+          onPressed: completion.isEnabled
+              ? () {
+                  if (!completion.isCompleted) {
+                    FirebaseAnalyticsService.instance
+                        .logTaskCompletion(task.category);
+                  }
+                  context.read<DailyTasksBloc>().add(
+                        ToggleDailyTask(
+                          taskId: task.id,
+                          isCompleted: !completion.isCompleted,
+                          pointValue: task.pointValue,
+                        ),
+                      );
+                }
+              : null,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          style: IconButton.styleFrom(
+            backgroundColor: completion.isCompleted
+                ? const Color(0xFF16A34A)
+                : const Color(0xFF22C55E),
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+          ),
+          icon: completion.isBusy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  completion.isCompleted
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+        );
+      },
+    );
+  }
+}
+
 class _TaskTile extends StatelessWidget {
   const _TaskTile({
+    super.key,
     required this.task,
     required this.state,
   });
@@ -522,9 +595,6 @@ class _TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = state.activeTaskId == task.id;
-    final isBusy = isActive && state.action != DailyTaskAction.none;
-
     return Container(
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(16),
@@ -535,48 +605,7 @@ class _TaskTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(
-            tooltip: task.isCompleted
-                ? 'Mark task incomplete'
-                : 'Mark task complete',
-            onPressed: state.action == DailyTaskAction.none
-                ? () {
-                    if (!task.isCompleted) {
-                      FirebaseAnalyticsService.instance
-                          .logTaskCompletion(task.category);
-                    }
-                    context.read<DailyTasksBloc>().add(
-                          ToggleDailyTask(
-                            taskId: task.id,
-                            isCompleted: !task.isCompleted,
-                          pointValue: task.pointValue,
-                          ),
-                        );
-                  }
-                : null,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-            style: IconButton.styleFrom(
-              backgroundColor: task.isCompleted
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFF22C55E),
-              foregroundColor: Colors.white,
-              shape: const CircleBorder(),
-            ),
-            icon: isBusy
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    task.isCompleted
-                        ? Icons.check_circle_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-          ),
+          _TaskCompletionButton(task: task),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

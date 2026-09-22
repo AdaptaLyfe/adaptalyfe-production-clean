@@ -1821,3 +1821,17 @@ mtime_ms = 1790064379480
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/41ef0533-aadc-46fe-b76a-1805be32792e/cea3d985-47fb-48b5-b12f-1574ffc2b3ea"
 storage_version_token = "1790064390421985"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "w86U_Y2aKt9r-pV5wFxnH"
+uri = "file://artifacts/flutter-daily-tasks-completion-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks completion fix"
+description = "Changed files for the Daily Tasks completion-state and per-task rebuild fix."
+logical_id = "811e7eec-fec6-46d3-a82c-85c5587fd759"
+content_hash = "sha256:e8c304b915ac5b7e077e7cdba881c9852df1289af4f65ac74497afdc59d5476c"
+size = 10067
+mtime_ms = 1790064843055
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/811e7eec-fec6-46d3-a82c-85c5587fd759/8bb35195-9a25-4e16-8668-9555e631be5c"
+storage_version_token = "1790064852149406"
+content_type = "application/octet-stream"
