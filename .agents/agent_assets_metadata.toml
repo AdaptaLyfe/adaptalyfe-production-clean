@@ -1877,3 +1877,17 @@ mtime_ms = 1790067688666
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c0adedb-c0bd-4f5b-8f08-1722561e0f80/1aba426a-fb96-4a2b-a275-5268d5810e10"
 storage_version_token = "1790067694777426"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XbRirlfD-M4ids_x7J45Q"
+uri = "file://artifacts/flutter-medication-list-pharmacy-notes-fix-changed-files.zip"
+type = "unspecified"
+title = "Medication List fixes — changed file ZIP"
+description = "Contains the single Flutter presentation file changed for refresh icons and the Link Pharmacy lifecycle fix."
+logical_id = "9041ce59-6d2d-45fa-a667-1ff9c77d5ee5"
+content_hash = "sha256:bb4637272118a20ad36dc71a78b40b74abe769f4baef01fcfd10aa0bf1ec7544"
+size = 17812
+mtime_ms = 1790069396279
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9041ce59-6d2d-45fa-a667-1ff9c77d5ee5/49f9687b-6f30-4290-8bd3-388b0fe57229"
+storage_version_token = "1790069404649863"
+content_type = "application/octet-stream"

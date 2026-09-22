@@ -434,6 +434,7 @@ class _RefillRemindersTab extends StatelessWidget {
       emptyTitle: 'No refills needed right now',
       emptySubtitle: 'Check back when medications are running low.',
       addLabel: 'Refresh',
+      addIcon: Icons.refresh,
       onAdd: () => context.read<MedicalBloc>().add(const RefreshMedical()),
       errorMessage: state.collectionErrors['medicationsDue'],
       children: state.medicationsDue
@@ -528,6 +529,7 @@ class _ReminderHistoryTab extends StatelessWidget {
       emptyTitle: 'No reminders set yet',
       emptySubtitle: 'Your refill reminder history will appear here.',
       addLabel: 'Refresh',
+      addIcon: Icons.refresh,
       onAdd: () => context.read<MedicalBloc>().add(const RefreshMedical()),
       errorMessage: state.collectionErrors['refillOrders'],
       children: state.refillOrders
@@ -918,6 +920,7 @@ class _MedicalCollectionView extends StatelessWidget {
     required this.children,
     this.errorMessage,
     this.header,
+    this.addIcon = Icons.add,
   });
 
   final Future<void> Function() onRefresh;
@@ -928,6 +931,7 @@ class _MedicalCollectionView extends StatelessWidget {
   final List<Widget> children;
   final String? errorMessage;
   final Widget? header;
+  final IconData addIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -962,7 +966,7 @@ class _MedicalCollectionView extends StatelessWidget {
                               const SizedBox(height: 10),
                               FilledButton.icon(
                                 onPressed: onAdd,
-                                icon: const Icon(Icons.add, size: 18),
+                                icon: Icon(addIcon, size: 18),
                                 label: Text(addLabel),
                               ),
                             ],
@@ -980,7 +984,7 @@ class _MedicalCollectionView extends StatelessWidget {
                               ),
                               FilledButton.icon(
                                 onPressed: onAdd,
-                                icon: const Icon(Icons.add, size: 18),
+                                icon: Icon(addIcon, size: 18),
                                 label: Text(addLabel),
                               ),
                             ],
@@ -3644,123 +3648,182 @@ Future<void> _showLinkPharmacyDialog(
   }
 
   final medicalBloc = context.read<MedicalBloc>();
-  final accountController = TextEditingController();
-  final membershipController = TextEditingController();
-  final insuranceController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
-  int? pharmacyId;
-  var isPrimary = false;
-  var autoRefillEnabled = false;
-
   await _showMedicalDialog<void>(
     context: context,
-    builder: (dialogContext) => _MedicalDialogScope(
+    builder: (_) => _LinkPharmacyDialog(
       bloc: medicalBloc,
-      action: 'userPharmacy',
-      successMessage: 'Pharmacy added to your account.',
-      builder: (context, isSubmitting) => StatefulBuilder(
-        builder: (context, setState) => _ResponsiveMedicalDialog(
-          title: const Text('Add Pharmacy to Your Account'),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<int>(
-                    value: pharmacyId,
-                    decoration: const InputDecoration(
-                      labelText: 'Select Pharmacy',
-                    ),
-                    items: state.pharmacies
-                        .where((item) => item.isActive)
-                        .map(
-                          (item) => DropdownMenuItem<int>(
-                            value: item.id,
-                            child: Text(item.name),
-                          ),
-                        )
-                        .toList(),
-                    validator: (value) =>
-                        value == null ? 'Select a pharmacy' : null,
-                    onChanged: (value) => setState(() => pharmacyId = value),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: accountController,
-                    decoration:
-                        const InputDecoration(labelText: 'Account Number'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: membershipController,
-                    decoration: const InputDecoration(
-                      labelText: 'Membership/Insurance ID',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: insuranceController,
-                    decoration:
-                        const InputDecoration(labelText: 'Insurance Provider'),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Set as primary pharmacy'),
-                    value: isPrimary,
-                    onChanged: (value) => setState(() => isPrimary = value),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Enable automatic refills'),
-                    value: autoRefillEnabled,
-                    onChanged: (value) =>
-                        setState(() => autoRefillEnabled = value),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () {
-                      if (!formKey.currentState!.validate() ||
-                          pharmacyId == null) {
-                        return;
-                      }
-                      medicalBloc.add(
-                        LinkPharmacy(
-                          UserPharmacyInput(
-                            pharmacyId: pharmacyId!,
-                            isPrimary: isPrimary,
-                            accountNumber: accountController.text,
-                            membershipId: membershipController.text,
-                            insuranceProvider: insuranceController.text,
-                            autoRefillEnabled: autoRefillEnabled,
-                          ),
-                        ),
-                      );
-                    },
-              child: Text(isSubmitting ? 'Adding...' : 'Add Pharmacy'),
-            ),
-          ],
-        ),
-      ),
+      pharmacies: state.pharmacies,
     ),
   );
+}
 
-  for (final controller in [
-    accountController,
-    membershipController,
-    insuranceController,
-  ]) {
-    controller.dispose();
+class _LinkPharmacyDialog extends StatefulWidget {
+  const _LinkPharmacyDialog({
+    required this.bloc,
+    required this.pharmacies,
+  });
+
+  final MedicalBloc bloc;
+  final List<PharmacyModel> pharmacies;
+
+  @override
+  State<_LinkPharmacyDialog> createState() => _LinkPharmacyDialogState();
+}
+
+class _LinkPharmacyDialogState extends State<_LinkPharmacyDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _accountController;
+  late final TextEditingController _membershipController;
+  late final TextEditingController _insuranceController;
+  int? _pharmacyId;
+  bool _isPrimary = false;
+  bool _autoRefillEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _accountController = TextEditingController();
+    _membershipController = TextEditingController();
+    _insuranceController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _accountController.dispose();
+    _membershipController.dispose();
+    _insuranceController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!mounted ||
+        !(_formKey.currentState?.validate() ?? false) ||
+        _pharmacyId == null) {
+      return;
+    }
+    widget.bloc.add(
+      LinkPharmacy(
+        UserPharmacyInput(
+          pharmacyId: _pharmacyId!,
+          isPrimary: _isPrimary,
+          accountNumber: _accountController.text,
+          membershipId: _membershipController.text,
+          insuranceProvider: _insuranceController.text,
+          autoRefillEnabled: _autoRefillEnabled,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<MedicalBloc, MedicalState>(
+      bloc: widget.bloc,
+      listenWhen: (previous, current) =>
+          previous.actionMessage != current.actionMessage &&
+          current.actionMessage == 'Pharmacy added to your account.',
+      listener: (dialogContext, state) {
+        if (!mounted) return;
+        Navigator.of(dialogContext).pop();
+      },
+      child: BlocBuilder<MedicalBloc, MedicalState>(
+        bloc: widget.bloc,
+        buildWhen: (previous, current) =>
+            previous.busySection != current.busySection ||
+            previous.errorMessage != current.errorMessage,
+        builder: (context, state) {
+          final isSubmitting = state.busySection == 'userPharmacy';
+          return _ResponsiveMedicalDialog(
+            title: const Text('Add Pharmacy to Your Account'),
+            content: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<int>(
+                      value: _pharmacyId,
+                      decoration: const InputDecoration(
+                        labelText: 'Select Pharmacy',
+                      ),
+                      items: widget.pharmacies
+                          .where((item) => item.isActive)
+                          .map(
+                            (item) => DropdownMenuItem<int>(
+                              value: item.id,
+                              child: Text(item.name),
+                            ),
+                          )
+                          .toList(),
+                      validator: (value) =>
+                          value == null ? 'Select a pharmacy' : null,
+                      onChanged: !mounted
+                          ? null
+                          : (value) {
+                              if (!mounted) return;
+                              setState(() => _pharmacyId = value);
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _accountController,
+                      decoration:
+                          const InputDecoration(labelText: 'Account Number'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _membershipController,
+                      decoration: const InputDecoration(
+                        labelText: 'Membership/Insurance ID',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _insuranceController,
+                      decoration:
+                          const InputDecoration(labelText: 'Insurance Provider'),
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Set as primary pharmacy'),
+                      value: _isPrimary,
+                      onChanged: !mounted
+                          ? null
+                          : (value) {
+                              if (!mounted) return;
+                              setState(() => _isPrimary = value);
+                            },
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Enable automatic refills'),
+                      value: _autoRefillEnabled,
+                      onChanged: !mounted
+                          ? null
+                          : (value) {
+                              if (!mounted) return;
+                              setState(() => _autoRefillEnabled = value);
+                            },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed:
+                    isSubmitting ? null : () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: isSubmitting ? null : _submit,
+                child: Text(isSubmitting ? 'Adding...' : 'Add Pharmacy'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
