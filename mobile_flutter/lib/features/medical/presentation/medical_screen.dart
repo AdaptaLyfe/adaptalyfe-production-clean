@@ -3678,6 +3678,7 @@ class _LinkPharmacyDialogState extends State<_LinkPharmacyDialog> {
   int? _pharmacyId;
   bool _isPrimary = false;
   bool _autoRefillEnabled = false;
+  bool _isClosing = false;
 
   @override
   void initState() {
@@ -3723,8 +3724,12 @@ class _LinkPharmacyDialogState extends State<_LinkPharmacyDialog> {
           previous.actionMessage != current.actionMessage &&
           current.actionMessage == 'Pharmacy added to your account.',
       listener: (dialogContext, state) {
-        if (!mounted) return;
-        Navigator.of(dialogContext).pop();
+        if (!mounted || _isClosing) return;
+        _isClosing = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          Navigator.of(dialogContext).pop();
+        });
       },
       child: BlocBuilder<MedicalBloc, MedicalState>(
         bloc: widget.bloc,
