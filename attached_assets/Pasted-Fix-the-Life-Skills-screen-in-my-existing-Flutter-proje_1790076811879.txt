@@ -1,0 +1,160 @@
+Fix the **Life Skills** screen in my existing Flutter project.
+
+### Problem
+
+On:
+
+**Life Skills → Add Skill**
+**Life Skills → Edit Skill**
+
+the Add/Edit Skill UI is not opening correctly. Sometimes no dialog appears and Flutter throws:
+
+```text
+RenderBox was not laid out: RenderPhysicalShape#c6b4e relayoutBoundary=up2
+'package:flutter/src/rendering/box.dart':
+Failed assertion: line 2164 pos 12: 'hasSize'
+```
+
+I need a **proper root-cause fix**, not a temporary workaround.
+
+### Required behavior
+
+1. On **Life Skills → Add Skill**
+
+   * Tapping "Add Skill" must open the Add Skill UI correctly.
+   * The dialog/form must be fully visible.
+   * All fields and buttons must be usable.
+   * Save/Cancel must work normally.
+
+2. On **Life Skills → Edit Skill**
+
+   * Tapping Edit must open the Edit Skill UI correctly.
+   * Existing skill data must be populated.
+   * User must be able to modify and save the skill.
+   * Cancel must close the UI correctly.
+
+3. The Add/Edit UI should open reliably on:
+
+   * Android
+   * iOS
+   * Different screen sizes
+
+### Fix the RenderBox error properly
+
+Investigate the actual widget/layout problem causing:
+
+```text
+RenderBox was not laid out
+RenderPhysicalShape
+hasSize
+```
+
+Check especially for:
+
+* `Dialog`
+* `AlertDialog`
+* `showDialog`
+* `SingleChildScrollView`
+* `Column`
+* `Row`
+* `ListView`
+* `Expanded`
+* `Flexible`
+* `ConstrainedBox`
+* `SizedBox`
+* nested scrollable widgets
+* `ListView` inside `Column`
+* `Column` inside `SingleChildScrollView`
+* widgets receiving unbounded width/height constraints
+* incorrect use of `Expanded`/`Flexible` inside dialogs
+* dialog content receiving infinite height
+* `BuildContext` being used incorrectly
+* dialog being opened during `build()`
+* `setState()` or BLoC state changes causing the dialog/form to rebuild incorrectly
+* disposed `TextEditingController`s
+* controllers being created/disposed at the wrong lifecycle
+* nested `Scaffold`/`Material`/`Navigator` issues
+* `BlocBuilder`/`BlocListener` rebuilding the dialog incorrectly
+
+### Important
+
+Do NOT simply:
+
+* increase dialog height
+* add random `SizedBox`
+* add arbitrary `Expanded`
+* wrap everything with `SingleChildScrollView`
+* suppress the Flutter assertion
+* use `try/catch` to hide the error
+* delay the dialog with random `Future.delayed`
+* remove widgets until the error disappears
+
+Find the actual constraint/lifecycle problem and fix it correctly.
+
+### Architecture requirement
+
+Keep the existing project architecture and BLoC/state-management approach.
+
+Do not rewrite unrelated screens.
+
+Do not change:
+
+* API behavior
+* Firebase/backend logic
+* Life Skills data model unless required
+* existing navigation
+* existing UI design unnecessarily
+* other screens
+
+### Implementation requirements
+
+Create/reuse a proper reusable Add/Edit Skill form if appropriate.
+
+Make sure the dialog has safe constraints, for example:
+
+* bounded width
+* bounded maximum height
+* proper scrolling for smaller screens
+* no unbounded `Column`/`ListView` combination
+* keyboard-safe layout
+* proper handling of `MediaQuery.viewInsets`
+* proper controller lifecycle
+
+If the existing design is better implemented as a bottom sheet or full-screen page rather than a dialog, first inspect the current implementation and choose the solution that best matches the existing app's UI. Do not change the UX unnecessarily.
+
+### Validation
+
+After making the fix:
+
+1. Run/analyze the project.
+2. Test Add Skill.
+3. Test Edit Skill.
+4. Test opening Add Skill multiple times.
+5. Test opening Edit Skill multiple times.
+6. Save a new skill.
+7. Edit an existing skill.
+8. Cancel Add.
+9. Cancel Edit.
+10. Test with keyboard open.
+11. Test on a small screen.
+12. Test on a larger screen.
+13. Verify there are no:
+
+* `RenderBox was not laid out`
+* `hasSize`
+* overflow
+* disposed controller
+* duplicate dialog
+* navigation/context errors
+
+### Final response
+
+After fixing, explain:
+
+1. The exact root cause.
+2. Which file(s) were changed.
+3. What was changed.
+4. Why the new implementation prevents the `RenderBox` error from returning.
+5. What tests were performed.
+
+Do not modify unrelated functionality.
