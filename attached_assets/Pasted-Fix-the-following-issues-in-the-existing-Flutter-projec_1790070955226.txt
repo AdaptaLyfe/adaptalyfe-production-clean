@@ -1,0 +1,117 @@
+Fix the following issues in the existing Flutter project under:
+
+**Academic Planner / Student Planner → Schedule**
+
+Do NOT rewrite the feature from scratch. First inspect the existing Schedule screen, Add Class popup/dialog, models, controllers/BLoC/state management, validation, and semester data source.
+
+### Issue 1 — Add New Class popup overflow
+
+When the user taps:
+
+**"+ Add Class"**
+
+the **Add New Class** popup/dialog opens, but Flutter shows:
+
+**"OVERFLOWED BY 14 PIXELS"**
+
+This is a real UI/layout bug and must be fixed properly.
+
+Requirements:
+
+1. Find the exact widget causing the overflow.
+2. Check the complete Add New Class dialog layout.
+3. Make the dialog responsive for:
+
+   * small Android phones
+   * large Android phones
+   * iPhone
+   * tablet
+   * Flutter Web/Desktop
+   * different text scaling/font sizes
+4. The dialog must not overflow vertically or horizontally.
+5. If the content is taller than the available screen, make the dialog content scrollable instead of forcing fixed heights.
+6. Handle keyboard opening correctly when the user focuses on a TextField.
+7. Use `SingleChildScrollView`, `Flexible`, `ConstrainedBox`, `LayoutBuilder`, or appropriate responsive Flutter widgets where required.
+8. Avoid simply increasing the dialog height or adding a hardcoded height. The solution must work across different screen sizes.
+9. Do not remove existing fields or functionality to hide the overflow.
+10. Preserve the existing UI design as much as possible.
+
+### Issue 2 — Semester options
+
+Inside **Add New Class**, the semester dropdown currently shows:
+
+* Fall 2025
+* Spring 2026
+* Summer 2025
+* Winter 2025
+
+Investigate whether these semester values are hardcoded, generated dynamically, or coming from stored/user data.
+
+Do NOT blindly change the values.
+
+Requirements:
+
+1. Find where the semester options are created.
+2. Check the current date/year and the existing academic planner logic.
+3. Determine whether the semester list is supposed to be:
+
+   * dynamically generated based on the current year, or
+   * configured/stored by the application.
+4. If the current implementation is outdated/hardcoded, update it to a proper dynamic approach.
+5. The semester options should remain logically correct as the year changes; do not create another hardcoded year-specific solution.
+6. Preserve existing saved classes that may already contain older semester values.
+7. Do not break edit/view existing classes.
+8. Make sure the selected semester is correctly saved and displayed after creating/editing a class.
+
+### Important — Do not introduce regressions
+
+Before changing code:
+
+* Inspect the existing Schedule implementation.
+* Identify the root cause of both issues.
+* Follow the existing project architecture and state-management pattern.
+* Reuse existing models, BLoC/providers/repositories/services where applicable.
+* Do not create duplicate state management or duplicate models.
+* Do not modify unrelated Academic Planner features.
+
+### Testing
+
+After implementing the fix, verify:
+
+#### Add Class dialog
+
+* Open Schedule.
+* Tap "+ Add Class".
+* Dialog opens without any overflow warning.
+* No "OVERFLOWED BY XX PIXELS" appears.
+* Scroll works if content does not fit.
+* Keyboard does not cause overflow.
+* All fields remain accessible.
+* Save Class works.
+* Validation still works.
+* Edit Class still works.
+
+#### Semester
+
+Test the semester dropdown and verify:
+
+* options are logically correct for the current academic year/date
+* selected semester saves correctly
+* saved semester displays correctly
+* editing an existing class does not lose its semester
+* older existing semester data is still handled safely
+
+### Final requirement
+
+Do not just hide the overflow warning.
+
+Find and fix the **root cause** so this bug does not reopen on different screen sizes, keyboard states, or future semester/year changes.
+
+After fixing, run/analyze the relevant Flutter code and report:
+
+1. Root cause of the overflow.
+2. Files changed.
+3. What was changed.
+4. How the semester options work now.
+5. How you verified the fix.
+6. Confirm that no unrelated functionality was changed.

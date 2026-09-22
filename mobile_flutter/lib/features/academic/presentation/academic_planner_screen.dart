@@ -2128,10 +2128,11 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
   late final TextEditingController _creditsController;
   late final TextEditingController _notesController;
   final _formKey = GlobalKey<FormState>();
+  late final List<String> _semesterChoices;
   var _dayOfWeek = 1;
   var _startTime = '';
   var _endTime = '';
-  var _semester = 'Fall 2025';
+  late String _semester;
 
   @override
   void initState() {
@@ -2142,6 +2143,8 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
     _roomController = TextEditingController();
     _creditsController = TextEditingController(text: '3');
     _notesController = TextEditingController();
+    _semesterChoices = _buildSemesterChoices(DateTime.now());
+    _semester = _semesterChoices.first;
   }
 
   @override
@@ -2221,22 +2224,17 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
         builder: (context, state) {
           final isSubmitting = state.action == AcademicAction.addingClass;
           return AlertDialog(
+            scrollable: true,
             insetPadding: EdgeInsets.symmetric(
               horizontal: AppResponsive.isCompact(context) ? 12 : 24,
               vertical: 24,
             ),
             title: const Text('Add New Class'),
-            content: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: AppResponsive.dialogWidth(context),
-                maxHeight: AppResponsive.dialogMaxHeight(context),
-              ),
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                     TextFormField(
                       controller: _nameController,
                       enabled: !isSubmitting,
@@ -2342,7 +2340,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                             value: _semester,
                             decoration:
                                 const InputDecoration(labelText: 'Semester'),
-                            items: _semesters
+                            items: _semesterChoices
                                 .map(
                                   (value) => DropdownMenuItem(
                                     value: value,
@@ -2368,9 +2366,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                         labelText: 'Notes (optional)',
                       ),
                     ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
             actions: [
@@ -2898,7 +2894,16 @@ bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
 
 const _assignmentTypes = ['homework', 'project', 'exam', 'quiz', 'paper'];
 const _priorities = ['low', 'medium', 'high', 'urgent'];
-const _semesters = ['Fall 2025', 'Spring 2026', 'Summer 2025', 'Winter 2025'];
+List<String> _buildSemesterChoices(DateTime now) {
+  final year = now.year;
+  return [
+    'Spring $year',
+    'Summer $year',
+    'Fall $year',
+    'Winter $year',
+    'Spring ${year + 1}',
+  ];
+}
 const _studyTechniques = [
   'reading',
   'flashcards',
