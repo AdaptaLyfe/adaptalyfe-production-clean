@@ -1,0 +1,122 @@
+In the existing Flutter project, fix the following UI issues in the **Financial Management / Bill Reminder** section.
+
+### Issues to Fix
+
+#### 1. Add Expense / Add Income Popup — Fields Are Sticking Together
+
+In both the **Add Expense** and **Add Income** popup/dialog:
+
+* The input fields and sections are currently too close/stuck together.
+* Add proper vertical spacing between every field/section.
+* Make the spacing consistent and visually clean.
+* Do not change the existing field order, labels, validation, functionality, or design unnecessarily.
+* Make sure the spacing works correctly on different screen sizes.
+
+#### 2. Add Expense Button UI Does Not Match Add Income Button
+
+The **Add Expense** button currently looks different from the **Add Income** button.
+
+Make both buttons visually consistent.
+
+Match the Add Expense button with the existing Add Income button for:
+
+* Height
+* Width
+* Border radius
+* Background color
+* Text style
+* Font size/weight
+* Padding
+* Alignment
+* Icon, if applicable
+* Loading/disabled state, if applicable
+
+Use the existing **Add Income button styling as the source of truth** instead of creating a new design.
+
+#### 3. Add Expense Button Is Sticking to the Above Section
+
+The **Add Expense** button is too close/stuck to the section above it.
+
+* Add proper vertical spacing between the last input/section and the Add Expense button.
+* The spacing should match the spacing used above the **Add Income** button.
+* Ensure the button does not visually touch or overlap the previous section.
+* Keep the same spacing behavior across different screen sizes.
+
+### Important Implementation Requirements
+
+1. First inspect the existing Flutter code and identify the exact widgets/files responsible for:
+
+   * Add Expense popup
+   * Add Income popup
+   * Add Expense button
+   * Add Income button
+
+2. Do not create duplicate screens, duplicate widgets, or unnecessary new components.
+
+3. Reuse the existing Add Income button styling for Add Expense wherever possible.
+
+4. If Add Expense and Add Income use separate UI implementations, refactor them carefully so their common button styling/spacing is consistent.
+
+5. Use Flutter layout widgets such as `SizedBox`, `Padding`, `Gap`, or appropriate existing project spacing utilities instead of hardcoded random margins in multiple places.
+
+6. Follow the existing project's architecture and coding style.
+
+7. Do not modify:
+
+   * API logic
+   * BLoC/business logic
+   * Database logic
+   * Validation behavior
+   * Navigation
+   * Existing functionality
+
+8. Do not fix the issue only for one screen size. Check:
+
+   * Small Android phone
+   * Normal Android phone
+   * Large phone
+   * iOS if supported
+   * Tablet/web layout if this screen supports them
+
+### Bug Prevention / Regression Requirement
+
+This fix must be implemented at the correct reusable UI/layout level so the same issue does not return when the popup is rebuilt, opened again, or when data/validation states change.
+
+After making the changes:
+
+* Open Add Expense → verify spacing between all fields.
+* Open Add Income → verify spacing between all fields.
+* Compare Add Expense and Add Income buttons side by side.
+* Verify both buttons have matching UI.
+* Verify there is proper space above the Add Expense button.
+* Close and reopen both popups multiple times.
+* Test empty fields and validation-error states.
+* Test keyboard opening/closing.
+* Test different screen sizes.
+* Make sure no overflow, clipping, or layout errors occur.
+
+### Final Verification
+
+Before finishing:
+
+* Run `flutter analyze`.
+* Run the relevant tests if available.
+* Fix any new warnings/errors caused by the changes.
+* Review the final UI code to ensure there are no duplicate implementations or temporary/hardcoded fixes.
+
+### Expected Result
+
+The final result should be:
+
+**Add Expense**
+
+* Fields have clean, consistent spacing.
+* Proper space exists between the last section and the Add Expense button.
+* Button UI matches Add Income exactly.
+
+**Add Income**
+
+* Existing UI remains functional.
+* Field spacing is clean and consistent.
+
+Both popups should have a consistent, polished layout and the fixes should remain stable after rebuilding, reopening the popup, validation errors, and on different screen sizes.

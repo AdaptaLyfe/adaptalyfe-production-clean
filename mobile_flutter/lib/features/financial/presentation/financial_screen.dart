@@ -181,10 +181,11 @@ class _OverviewTab extends StatelessWidget {
           categoryTotals: categoryTotals,
           onDelete: (entry) => _confirmDeleteEntry(context, entry),
         ),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () => _showBudgetDialog(context, 'expense'),
                 icon: const Icon(Icons.remove_circle_outline),
                 label: const Text('Add Expense'),
@@ -276,10 +277,11 @@ class _BudgetTab extends StatelessWidget {
           title: 'Budget and income',
           subtitle: 'Add income or expenses and review your financial records.',
         ),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: FilledButton.icon(
                 onPressed: () => _showBudgetDialog(context, 'expense'),
                 icon: const Icon(Icons.remove_circle_outline),
                 label: const Text('Expense'),
@@ -1429,6 +1431,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
                   if (value != null) setState(() => _type = value);
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _categoryController,
                 decoration: const InputDecoration(
@@ -1439,6 +1442,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
                     ? 'Category is required'
                     : null,
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _amountController,
                 decoration: const InputDecoration(labelText: 'Amount'),
@@ -1451,6 +1455,7 @@ class _BudgetDialogState extends State<_BudgetDialog> {
                       : null;
                 },
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
                 decoration:

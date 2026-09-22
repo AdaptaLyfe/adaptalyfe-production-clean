@@ -1835,3 +1835,17 @@ mtime_ms = 1790064843055
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/811e7eec-fec6-46d3-a82c-85c5587fd759/8bb35195-9a25-4e16-8668-9555e631be5c"
 storage_version_token = "1790064852149406"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MhId4lHx4JHc6OC9aSD3v"
+uri = "file://artifacts/flutter-financial-bill-reminder-ui-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter financial UI fix"
+description = "Changed financial screen file with consistent budget dialog spacing and matching expense/income buttons."
+logical_id = "6c49baab-46a6-4cf0-b85f-6eda0526e4d7"
+content_hash = "sha256:950be87f13fca968c652dcae1e4a419295f1164192d8e7990391449e53e1970a"
+size = 8294
+mtime_ms = 1790065215616
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6c49baab-46a6-4cf0-b85f-6eda0526e4d7/6acfb2a9-d21c-46a9-a72f-c5a32f10cb7c"
+storage_version_token = "1790065219827538"
+content_type = "application/octet-stream"
