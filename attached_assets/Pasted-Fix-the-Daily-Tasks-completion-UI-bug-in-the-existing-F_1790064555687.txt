@@ -1,0 +1,70 @@
+Fix the Daily Tasks completion UI bug in the existing Flutter project.
+
+### Bug
+
+When the user completes a Daily Task by clicking the green circle/check button, **all task circles are refreshing/rebuilding** instead of only the circle of the selected task.
+
+Example:
+
+* Task A
+* Task B
+* Task C
+* User clicks the completion circle for Task B.
+* Currently, circles for A, B, and C refresh/change visually.
+* Expected: **Only Task B's circle should update.**
+
+### Required Fix
+
+1. Find the Daily Tasks screen, its BLoC/Cubit/state management, and the task completion logic.
+2. Identify why completing one task causes the entire list/task circles to refresh.
+3. Fix the state management so the selected task's completion state is updated correctly.
+4. Each task must maintain its own `isCompleted`/completion status.
+5. When a task is completed:
+
+   * Update only that task's state.
+   * The selected circle should immediately show the completed state.
+   * Other task circles must remain unchanged.
+6. Do not reset/recreate the completion state of other tasks.
+7. Avoid unnecessary full-list state replacement if it causes every task widget to rebuild.
+8. If using BLoC, make sure the emitted state preserves the existing completion status of all other tasks.
+9. Check `Equatable`, `copyWith`, list mapping, task IDs, and equality logic for incorrect state comparisons.
+10. Use the task's unique ID when updating completion status. Do not update tasks based only on list index.
+11. If the Daily Tasks list is rebuilt after an API/Firebase/local database update, make sure the returned data preserves the correct completion state for every task.
+12. Do not introduce temporary/local-only fixes that will be lost after refresh, navigation, or app restart.
+
+### Important
+
+Do NOT rewrite the Daily Tasks feature from scratch.
+
+First inspect the existing implementation and understand:
+
+* Daily Tasks UI
+* Task model
+* BLoC/Cubit
+* Events
+* States
+* Repository/data source
+* API/Firebase/local storage
+* Completion/update method
+
+Then make the **smallest proper architectural fix**.
+
+### Verify the Fix
+
+Test with at least 5 tasks:
+
+1. Complete Task 1 → only Task 1 circle changes.
+2. Complete Task 3 → Task 1 remains completed and only Task 3 changes.
+3. Complete Task 5 → Tasks 1 and 3 remain unchanged.
+4. Uncomplete a task → only that task's circle changes.
+5. Navigate away and return → each task still has the correct completion state.
+6. Refresh/reload Daily Tasks → completion states remain correct.
+7. Complete multiple tasks quickly → no other task circles should flicker or reset.
+8. Verify there is no duplicate API/database update.
+9. Verify there is no unnecessary full-list state reset.
+
+### Final Requirement
+
+After fixing, run/analyze the relevant Flutter code and make sure there are no new errors, warnings, or regressions.
+
+Do not just hide the visual refresh. Fix the **underlying state-management/rebuild issue** so this bug does not come back when the Daily Tasks list is refreshed, updated, or rebuilt.
