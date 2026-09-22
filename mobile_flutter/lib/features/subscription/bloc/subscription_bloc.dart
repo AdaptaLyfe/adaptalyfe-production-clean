@@ -21,6 +21,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<SubscriptionStarted>(_load);
     on<RefreshSubscription>(_load);
     on<LoadPlans>(_loadPlans);
+    on<PlanSelected>(_selectPlan);
     on<PlanPurchaseRequested>(_purchase);
     on<StripePaymentRequested>(_payWithStripe);
     on<RestorePurchasesRequested>(_restore);
@@ -51,6 +52,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(state.copyWith(plans: subscriptionPlans));
   }
 
+  void _selectPlan(
+    PlanSelected event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (state.hasActiveSubscription || state.isBusy) return;
+    if (_planFor(event.planId) == null) return;
+    emit(
+      state.copyWith(
+        selectedPlanId: event.planId,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+  }
+
   Future<void> _load(
     SubscriptionEvent event,
     Emitter<SubscriptionState> emit,
@@ -76,6 +92,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         state.copyWith(
           status: SubscriptionStatus.ready,
           subscription: subscription,
+          selectedPlanId: subscription.isActive ? null : state.selectedPlanId,
           products: {
             for (final product in _products) product.id: product,
           },
@@ -184,6 +201,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: SubscriptionStatus.ready,
           subscription: subscription,
           busyPlanId: null,
+          selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Payment successful! Your subscription is active.',
         ),
@@ -405,6 +423,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             status: SubscriptionStatus.ready,
             subscription: subscription,
             busyPlanId: null,
+            selectedPlanId: null,
             errorMessage: null,
             actionMessage: item.status == PurchaseStatus.restored
                 ? 'Your previous subscription was restored.'

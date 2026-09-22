@@ -1989,3 +1989,17 @@ mtime_ms = 1790080099251
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/15237d25-3ed3-4190-b031-00f748ed6ec0/7771528b-3312-4f1d-a623-c00e0cef7760"
 storage_version_token = "1790080103829565"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "WjVWmgE0JJ0D9hnLJVdnp"
+uri = "file://artifacts/flutter-subscription-plan-selection-changed-files.zip"
+type = "unspecified"
+title = "Flutter subscription plan selection — changed files ZIP"
+description = "Contains only the four changed Subscription BLoC and presentation files, preserving their project paths."
+logical_id = "bd4bd681-6a41-47e5-93f9-05db7c66100e"
+content_hash = "sha256:776a9bdbeb1c011546a573dfebfa59e9fcb33949ee0d94280810d1308550d24f"
+size = 10721
+mtime_ms = 1790083082230
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd4bd681-6a41-47e5-93f9-05db7c66100e/3eb9de9b-958c-4da9-8abb-0f0070147220"
+storage_version_token = "1790083089930165"
+content_type = "application/octet-stream"

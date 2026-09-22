@@ -178,6 +178,10 @@ class _SubscriptionBody extends StatelessWidget {
                         plan: plan,
                         product: state.products[plan.productId],
                         state: state,
+                        selected: state.selectedPlanId == plan.id,
+                        onSelect: () => context
+                            .read<SubscriptionBloc>()
+                            .add(PlanSelected(plan.id)),
                       ),
                     ),
                   ),
@@ -315,23 +319,36 @@ class _PlanCard extends StatelessWidget {
     required this.plan,
     required this.product,
     required this.state,
+    required this.selected,
+    required this.onSelect,
   });
 
   final SubscriptionPlan plan;
   final dynamic product;
   final SubscriptionState state;
+  final bool selected;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
     final storeAvailable = product != null && state.canPurchase;
     final stripeAvailable = state.canUseStripe;
+    final selectable = !state.hasActiveSubscription && !state.isBusy;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
-    return _Panel(
-      color: Colors.white,
-      borderColor: plan.popular ? const Color(0xFF8B5CF6) : const Color(0xFFE5E7EB),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Semantics(
+      selected: selected,
+      child: GestureDetector(
+        onTap: selectable ? onSelect : null,
+        child: _Panel(
+          color: selected ? const Color(0xFFEFF6FF) : Colors.white,
+          borderColor: selected
+              ? const Color(0xFF2563EB)
+              : plan.popular
+                  ? const Color(0xFF8B5CF6)
+                  : const Color(0xFFE5E7EB),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
            Row(
              crossAxisAlignment: CrossAxisAlignment.start,
              children: [
@@ -347,6 +364,15 @@ class _PlanCard extends StatelessWidget {
                    ),
                  ),
                ),
+                if (selected)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, top: 4),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF2563EB),
+                      size: 22,
+                    ),
+                  ),
                if (plan.popular) ...[
                  const SizedBox(width: 8),
                  const Chip(
@@ -392,7 +418,9 @@ class _PlanCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => _chooseStripePayment(context),
+                 onPressed: selectable
+                     ? () => _chooseStripePayment(context)
+                     : null,
                 icon: const Icon(Icons.account_balance_wallet_outlined),
                 label: const Text('Pay by card or wallet'),
               ),
@@ -402,13 +430,16 @@ class _PlanCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                 onPressed: selectable
+                     ? () {
+                   onSelect();
                   FirebaseAnalyticsService.instance
                       .logSubscriptionEvent('upgrade', plan.id);
                   context
                       .read<SubscriptionBloc>()
                       .add(PlanPurchaseRequested(plan.id));
-                },
+                 }
+                     : null,
                 child: Text(
                   state.busyPlanId == plan.id
                       ? 'Processing…'
@@ -424,12 +455,15 @@ class _PlanCard extends StatelessWidget {
                 style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
               ),
             ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Future<void> _chooseStripePayment(BuildContext context) async {
+    onSelect();
     final method = await showModalBottomSheet<StripePaymentMethod>(
       context: context,
       showDragHandle: true,

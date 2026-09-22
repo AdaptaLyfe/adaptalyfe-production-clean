@@ -21,6 +21,15 @@ final class LoadPlans extends SubscriptionEvent {
   const LoadPlans();
 }
 
+final class PlanSelected extends SubscriptionEvent {
+  const PlanSelected(this.planId);
+
+  final String planId;
+
+  @override
+  List<Object?> get props => [planId];
+}
+
 final class PlanPurchaseRequested extends SubscriptionEvent {
   const PlanPurchaseRequested(this.planId);
 
