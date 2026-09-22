@@ -658,19 +658,34 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       validator: (_) => _levelError(),
     );
 
-    return AlertDialog(
-      scrollable: true,
-      title: Text(widget.skill == null ? 'Add Skill Milestone' : 'Edit Skill'),
-      content: ConstrainedBox(
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: AppResponsive.dialogWidth(context),
           maxHeight: AppResponsive.dialogMaxHeight(context),
         ),
-        child: Form(
-          key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Text(
+                widget.skill == null ? 'Add Skill Milestone' : 'Edit Skill',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -753,20 +768,32 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                         'Describe what this skill involves and why it is important.',
                   ),
                 ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _submit,
+                    child: Text(
+                      widget.skill == null ? 'Add Skill' : 'Save Changes',
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(widget.skill == null ? 'Add Skill' : 'Save Changes'),
-        ),
-      ],
     );
   }
 
