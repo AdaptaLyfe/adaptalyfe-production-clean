@@ -1919,3 +1919,17 @@ mtime_ms = 1790070668142
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6150add7-e4ac-4206-b473-8c7b3e7ebdd8/df2bb51c-aba3-4c97-9828-7a6ce46e3008"
 storage_version_token = "1790070675365437"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8JzC2z6nUNQIgopCHA-dI"
+uri = "file://artifacts/flutter-academic-planner-schedule-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Schedule fix — changed file ZIP"
+description = "Contains the single changed Flutter file for the responsive Add New Class dialog and dynamic semester choices."
+logical_id = "4572ced5-82e1-437f-bdcf-d9c3a934ec1a"
+content_hash = "sha256:884ab6488a7cabee7a9d402c2823c67835966bff0b356a0f1148288f845f2ab1"
+size = 14173
+mtime_ms = 1790071056160
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4572ced5-82e1-437f-bdcf-d9c3a934ec1a/4a4a736d-be88-463a-935a-adb4c08e9a0a"
+storage_version_token = "1790071075264158"
+content_type = "application/octet-stream"
