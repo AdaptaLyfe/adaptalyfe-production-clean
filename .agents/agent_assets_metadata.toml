@@ -1975,3 +1975,17 @@ mtime_ms = 1790072096785
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/78c03d4f-d3d3-4f21-aef9-7043e3557e93/22e33944-ea2e-4bb0-91b3-b17eb5c30637"
 storage_version_token = "1790072101199750"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kcLYUKc_DIRdjR90shzEb"
+uri = "file://artifacts/flutter-life-skills-add-edit-dialog-fix-changed-files.zip"
+type = "unspecified"
+title = "Life Skills Add/Edit dialog fix — changed file ZIP"
+description = "Contains the single changed Flutter skills presentation file for reliable Add and Edit dialog lifecycle handling."
+logical_id = "15237d25-3ed3-4190-b031-00f748ed6ec0"
+content_hash = "sha256:c00a200b05ed911e20804545eac424cb5c71b8de967057b223dbb469b11936f1"
+size = 6293
+mtime_ms = 1790074456431
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/15237d25-3ed3-4190-b031-00f748ed6ec0/bf8969d2-a47c-4845-934a-46d6a443f4a3"
+storage_version_token = "1790074463729097"
+content_type = "application/octet-stream"
