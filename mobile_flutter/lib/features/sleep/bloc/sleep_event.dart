@@ -12,6 +12,10 @@ class RefreshSleep extends SleepEvent {
   const RefreshSleep();
 }
 
+class SleepLogOpened extends SleepEvent {
+  const SleepLogOpened();
+}
+
 class SleepDateSelected extends SleepEvent {
   const SleepDateSelected(this.date);
 

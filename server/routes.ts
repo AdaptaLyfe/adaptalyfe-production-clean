@@ -3818,6 +3818,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validationError) {
         return res.status(400).json({ error: validationError, message: validationError });
       }
+
+      const existingSession = await storage.getSleepSessionByDate(
+        req.session.user.id,
+        sessionData.sleepDate,
+      );
+      if (existingSession) {
+        return res.status(409).json({
+          message: "A sleep session already exists for this date",
+        });
+      }
       
       // Convert ISO strings to Date objects for TIMESTAMP columns
       if (sessionData.bedtime) {

@@ -123,13 +123,18 @@ class _SleepDashboardState extends State<_SleepDashboard> {
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
+            onTap: (index) {
+              if (index == 1) {
+                context.read<SleepBloc>().add(const SleepLogOpened());
+              }
+            },
             tabs: [
-              Tab(text: 'Overview'),
-              Tab(text: 'Log Sleep'),
-              Tab(text: 'Trends'),
-              Tab(text: 'Goals'),
+              const Tab(text: 'Overview'),
+              const Tab(text: 'Log Sleep'),
+              const Tab(text: 'Trends'),
+              const Tab(text: 'Goals'),
             ],
           ),
         ),
@@ -243,8 +248,12 @@ class _OverviewTab extends StatelessWidget {
                    LayoutBuilder(
                      builder: (context, constraints) {
                        final action = OutlinedButton.icon(
-                         onPressed: () => DefaultTabController.of(context)
-                             .animateTo(1),
+                          onPressed: () {
+                            context
+                                .read<SleepBloc>()
+                                .add(const SleepLogOpened());
+                            DefaultTabController.of(context).animateTo(1);
+                          },
                          icon: const Icon(Icons.add, size: 18),
                          label: const Text('Log Sleep'),
                        );
@@ -282,8 +291,12 @@ class _OverviewTab extends StatelessWidget {
                   const SizedBox(height: 12),
                   if (recent.isEmpty)
                     _EmptySleepHistory(
-                      onAdd: () =>
-                          DefaultTabController.of(context).animateTo(1),
+                      onAdd: () {
+                        context
+                            .read<SleepBloc>()
+                            .add(const SleepLogOpened());
+                        DefaultTabController.of(context).animateTo(1);
+                      },
                     )
                   else
                     ...recent.map(
@@ -875,15 +888,15 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     setState(() {
       _formDate = date;
       _dateController.text = _dateOnly(date);
-      if (_bedtime != null) _bedtime = _withDate(_bedtime!, date);
-      if (_sleepTime != null) _sleepTime = _withDate(_sleepTime!, date);
-      final wakeDate = _wakeDate == null || _wakeDate!.isBefore(date)
-          ? date
-          : _wakeDate!;
-      _wakeDate = wakeDate;
-      _wakeDateController.text = _dateOnly(wakeDate);
-      if (_wakeTime != null) _wakeTime = _withDate(_wakeTime!, wakeDate);
-      _validationError = _currentValidationError();
+      _notesController.clear();
+      _bedtime = null;
+      _sleepTime = null;
+      _wakeDate = date;
+      _wakeDateController.text = _dateOnly(date);
+      _wakeTime = null;
+      _quality = '';
+      _loadedSessionId = null;
+      _validationError = null;
     });
     widget.onDateChanged(date);
   }

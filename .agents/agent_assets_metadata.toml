@@ -1863,3 +1863,17 @@ mtime_ms = 1790065878391
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c25d6af6-9616-4810-8847-1bd2aeb3ae69/ba6436e3-e112-4305-9b31-d164d0c760f5"
 storage_version_token = "1790065885335549"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "EyhDjqnBMDg0Ryq0Lb5Tc"
+uri = "file://artifacts/flutter-sleep-routine-overview-create-edit-fix-changed-files.zip"
+type = "unspecified"
+title = "Sleep Routine Overview create/edit fix — changed files"
+description = "ZIP containing the four source files changed for the Sleep Routine create/edit and duplicate-date fix."
+logical_id = "2c0adedb-c0bd-4f5b-8f08-1722561e0f80"
+content_hash = "sha256:cdca69b3a0e1e1f0d208b07a700f1a33e42fe05fd80afa44c980645e904955cc"
+size = 60365
+mtime_ms = 1790067688666
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c0adedb-c0bd-4f5b-8f08-1722561e0f80/1aba426a-fb96-4a2b-a275-5268d5810e10"
+storage_version_token = "1790067694777426"
+content_type = "application/octet-stream"

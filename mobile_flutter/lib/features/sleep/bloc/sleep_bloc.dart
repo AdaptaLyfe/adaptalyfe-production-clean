@@ -9,9 +9,10 @@ import 'sleep_state.dart';
 
 class SleepBloc extends Bloc<SleepEvent, SleepState> {
   SleepBloc(this.repository)
-      : super(SleepState(selectedDate: DateTime.now())) {
+      : super(SleepState(selectedDate: _dateOnlyValue(DateTime.now()))) {
     on<SleepStarted>(_onStarted);
     on<RefreshSleep>(_onRefresh);
+    on<SleepLogOpened>(_onLogOpened);
     on<SleepDateSelected>(_onDateSelected);
     on<AddSleepSession>(_onAdd);
     on<UpdateSleepSession>(_onUpdate);
@@ -19,6 +20,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
   }
 
   final SleepRepository repository;
+  bool _hasExplicitDateSelection = false;
 
   Future<void> _onStarted(
     SleepStarted event,
@@ -35,13 +37,32 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     await _load(emit, keepData: state.hasData);
   }
 
+  void _onLogOpened(
+    SleepLogOpened event,
+    Emitter<SleepState> emit,
+  ) {
+    _hasExplicitDateSelection = false;
+    emit(
+      state.copyWith(
+        selectedDate: _dateOnlyValue(DateTime.now()),
+        dailySession: null,
+        busyAction: null,
+        errorMessage: null,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
+    );
+  }
+
   Future<void> _onDateSelected(
     SleepDateSelected event,
     Emitter<SleepState> emit,
   ) async {
+    final date = _dateOnlyValue(event.date);
+    _hasExplicitDateSelection = true;
     emit(
       state.copyWith(
-        selectedDate: event.date,
+        selectedDate: date,
         dailySession: null,
         busyAction: 'load-date',
         errorMessage: null,
@@ -50,7 +71,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       ),
     );
     try {
-      final session = await _getSessionOrNull(event.date);
+      final session = await _getSessionOrNull(date);
       emit(
         state.copyWith(
           dailySession: session,
@@ -73,6 +94,29 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       _emitValidationError(emit, validationError);
       return;
     }
+    try {
+      final existing =
+          await _getSessionOrNull(_parseDateOnly(event.input.sleepDate));
+      if (existing != null) {
+        _hasExplicitDateSelection = true;
+        emit(
+          state.copyWith(
+            selectedDate: _parseDateOnly(event.input.sleepDate),
+            dailySession: existing,
+            busyAction: null,
+            errorMessage:
+                'A sleep log already exists for this date. It is ready to edit.',
+            actionMessage: null,
+            sessionInvalid: false,
+          ),
+        );
+        return;
+      }
+    } catch (error) {
+      _emitFailure(emit, error, keepData: state.hasData, busyAction: null);
+      return;
+    }
+    _hasExplicitDateSelection = true;
     await _runMutation(
       emit,
       action: 'add',
@@ -126,7 +170,9 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
     );
     try {
       final sessions = await repository.getSessions();
-      final dailySession = await _getSessionOrNull(state.activeDate);
+      final dailySession = _hasExplicitDateSelection
+          ? await _getSessionOrNull(state.activeDate)
+          : null;
       emit(
         state.copyWith(
           status: SleepStatus.loaded,
@@ -248,4 +294,12 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       '${date.year.toString().padLeft(4, '0')}-'
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
+
+  DateTime _parseDateOnly(String value) {
+    final parts = value.split('-').map(int.parse).toList();
+    return DateTime(parts[0], parts[1], parts[2]);
+  }
+
+  static DateTime _dateOnlyValue(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 }
