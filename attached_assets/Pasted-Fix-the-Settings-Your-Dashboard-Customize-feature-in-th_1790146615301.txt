@@ -1,0 +1,149 @@
+Fix the **Settings → Your Dashboard → Customize** feature in the existing Flutter project.
+
+### Bug
+
+The dashboard customization is not being applied correctly.
+
+Current behavior:
+
+1. User opens **Settings → Your Dashboard → Customize**.
+2. User enables a previously disabled skill/module.
+3. User disables a previously enabled skill/module.
+4. User returns to **Your Dashboard**.
+5. The dashboard does not always reflect the latest customization.
+6. Some modules may still appear even after being disabled, or enabled modules may not appear.
+7. The issue may reappear after navigating away and coming back.
+
+### Required behavior
+
+The **Your Dashboard** must always exactly match the user's latest customization settings.
+
+Example:
+
+* If a module is **enabled** → it must appear on Your Dashboard.
+* If a module is **disabled** → it must not appear on Your Dashboard.
+* If the user changes multiple modules → all changes must be reflected immediately after returning to Your Dashboard.
+* The state must remain correct when navigating between Settings and Dashboard.
+* The state must remain correct after leaving and reopening the relevant screens.
+* Do not require the user to restart the app to see changes.
+
+### Important: Find the root cause
+
+Do NOT simply add `setState()` or force a screen refresh.
+
+First inspect the existing implementation and identify:
+
+* Where dashboard customization is stored.
+* Which state management approach is currently used (BLoC/Cubit/Provider/etc.).
+* How enabled/disabled modules are saved.
+* How Your Dashboard reads the customization state.
+* Whether Settings and Dashboard are using different state/data sources.
+* Whether the dashboard is using stale cached data.
+* Whether navigation keeps an old Dashboard widget/state alive.
+* Whether customization changes are persisted correctly.
+* Whether the dashboard list is generated from the latest customization data.
+
+### Fix requirements
+
+Implement a proper single source of truth for dashboard customization.
+
+When the user changes a module:
+
+1. Update the customization state.
+2. Persist the updated value using the project's existing storage/backend architecture.
+3. Notify/update the appropriate state manager.
+4. When Your Dashboard becomes visible, it must read the latest customization state.
+5. Rebuild only the necessary dashboard content.
+6. Make sure old/stale module visibility values cannot override the latest values.
+
+### Persistence
+
+Use the project's existing persistence mechanism.
+
+Do NOT introduce a new database, package, or state-management system if an existing solution is already being used.
+
+If customization is stored remotely:
+
+* Make sure the latest values are successfully saved.
+* Make sure Dashboard reads the updated values.
+* Handle loading and save failures properly.
+
+If customization is stored locally:
+
+* Make sure the latest values are persisted and loaded correctly.
+
+### Navigation
+
+Test these flows:
+
+Flow 1:
+Settings → Customize → Enable module → Save/Back → Your Dashboard
+
+Flow 2:
+Settings → Customize → Disable module → Save/Back → Your Dashboard
+
+Flow 3:
+Settings → Customize → Enable A + Disable B → Save/Back → Your Dashboard
+
+Flow 4:
+Settings → Customize → Change modules → Dashboard → Settings → Customize
+
+Flow 5:
+Change customization → leave screen → return to Dashboard
+
+Flow 6:
+Change customization → navigate to another section → return to Dashboard
+
+Flow 7:
+Change customization → completely restart the app → verify the Dashboard still matches the saved configuration.
+
+### Avoid regressions
+
+Do not change:
+
+* Existing dashboard UI design.
+* Existing module functionality.
+* Existing routes/navigation unless required for the fix.
+* Existing API contracts.
+* Existing database structure unless absolutely necessary.
+* Other Settings functionality.
+* Other dashboard features.
+
+Do not hardcode module visibility.
+
+### Code quality
+
+Follow the existing Flutter architecture and coding style.
+
+Avoid:
+
+* Duplicate sources of truth.
+* Temporary boolean variables that become stale.
+* Forced rebuild hacks.
+* `Future.delayed()` refresh hacks.
+* Unnecessary `setState()` calls.
+* Recreating the entire app state unnecessarily.
+
+Make the fix maintainable so this bug does not reopen when another module is enabled/disabled.
+
+### Final verification
+
+After implementing the fix:
+
+1. Run `flutter analyze`.
+2. Run the relevant tests if they exist.
+3. Check for compile errors.
+4. Test enabling a disabled module.
+5. Test disabling an enabled module.
+6. Test multiple changes at once.
+7. Test navigation back and forth.
+8. Test app restart/persistence.
+9. Verify that Dashboard always matches Customize settings.
+
+At the end, explain:
+
+* Root cause.
+* Files changed.
+* What was fixed.
+* How state synchronization now works.
+* How you verified the bug is fixed.
