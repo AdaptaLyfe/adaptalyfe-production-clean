@@ -57,12 +57,18 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) {
     if (state.hasActiveSubscription || state.isBusy) return;
-    if (_planFor(event.planId) == null) return;
+    final plan = _planFor(event.planId);
+    if (plan == null) return;
+    final storeProductAvailable = _productFor(plan.productId) != null;
     emit(
       state.copyWith(
         selectedPlanId: event.planId,
         errorMessage: null,
-        actionMessage: null,
+        actionMessage: _started &&
+                !storeProductAvailable &&
+                !state.canUseStripe
+            ? 'This plan is not available in the current store.'
+            : null,
       ),
     );
   }

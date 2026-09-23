@@ -182,6 +182,9 @@ class _SubscriptionBody extends StatelessWidget {
                         onSelect: () => context
                             .read<SubscriptionBloc>()
                             .add(PlanSelected(plan.id)),
+                        onPurchase: () => context
+                            .read<SubscriptionBloc>()
+                            .add(PlanPurchaseRequested(plan.id)),
                       ),
                     ),
                   ),
@@ -321,6 +324,7 @@ class _PlanCard extends StatelessWidget {
     required this.state,
     required this.selected,
     required this.onSelect,
+    required this.onPurchase,
   });
 
   final SubscriptionPlan plan;
@@ -328,6 +332,7 @@ class _PlanCard extends StatelessWidget {
   final SubscriptionState state;
   final bool selected;
   final VoidCallback onSelect;
+  final VoidCallback onPurchase;
 
   @override
   Widget build(BuildContext context) {
@@ -343,7 +348,12 @@ class _PlanCard extends StatelessWidget {
     return Semantics(
       selected: selected,
       child: GestureDetector(
-        onTap: selectable ? onSelect : null,
+        onTap: selectable
+            ? () {
+                onSelect();
+                if (storeAvailable) onPurchase();
+              }
+            : null,
         child: _Panel(
           color: selected ? const Color(0xFFEFF6FF) : Colors.white,
           borderColor: selected
@@ -437,13 +447,11 @@ class _PlanCard extends StatelessWidget {
               child: ElevatedButton(
                  onPressed: selectable
                      ? () {
-                   onSelect();
-                  FirebaseAnalyticsService.instance
-                      .logSubscriptionEvent('upgrade', plan.id);
-                  context
-                      .read<SubscriptionBloc>()
-                      .add(PlanPurchaseRequested(plan.id));
-                 }
+                          onSelect();
+                          FirebaseAnalyticsService.instance
+                              .logSubscriptionEvent('upgrade', plan.id);
+                          onPurchase();
+                        }
                      : null,
                 child: Text(
                   state.busyPlanId == plan.id
