@@ -1,0 +1,290 @@
+I have an existing **React Native + Wrapper application** where Google Pay and Apple Pay payments are already implemented and working.
+
+I am migrating the app to **Flutter**.
+
+Your task is to implement **Google Pay for Android** and **Apple Pay for iOS** in the Flutter project with the **same payment flow, behavior, backend integration, amount handling, success/failure handling, and UI flow as the existing React Native + Wrapper app**.
+
+IMPORTANT:
+
+* Do NOT create a new payment flow from scratch.
+* First inspect the existing React Native + Wrapper implementation.
+* Identify exactly how Google Pay and Apple Pay are currently implemented.
+* Identify the payment provider/backend/API being used.
+* Identify how PaymentIntent/payment session/client secret/payment token is created and confirmed.
+* Identify success, failure, cancellation, and loading states.
+* Then reproduce the same behavior in Flutter.
+
+### Requirements
+
+#### 1. Android — Google Pay
+
+Implement Google Pay in the Flutter Android app.
+
+* Show Google Pay only on Android.
+* Use the same payment provider and backend as the React Native + Wrapper app.
+* Use the same merchant/payment configuration where applicable.
+* Use the same currency and amount calculation.
+* Use the existing backend APIs instead of creating duplicate APIs.
+* Confirm the payment using the same backend/payment flow.
+* Handle:
+
+  * Google Pay available
+  * Google Pay unavailable
+  * User cancellation
+  * Payment success
+  * Payment failure
+  * Network/API errors
+  * Loading state
+* Do not show Apple Pay on Android.
+
+#### 2. iOS — Apple Pay
+
+Implement Apple Pay in the Flutter iOS app.
+
+* Show Apple Pay only on iOS.
+* Use the same payment provider and backend as the React Native + Wrapper app.
+* Use the same merchant configuration.
+* Use the same currency and amount calculation.
+* Use the existing backend APIs.
+* Handle:
+
+  * Apple Pay available
+  * Apple Pay unavailable
+  * User cancellation
+  * Payment success
+  * Payment failure
+  * Network/API errors
+  * Loading state
+* Do not show Google Pay on iOS.
+
+### 3. Keep the existing payment flow
+
+The Flutter implementation must follow this flow:
+
+1. User selects a product/subscription/payment option.
+2. Calculate the exact same amount as the React Native + Wrapper app.
+3. Call the existing backend/payment API.
+4. Receive the required payment information.
+5. Open:
+
+   * Google Pay on Android
+   * Apple Pay on iOS
+6. Complete/confirm the payment.
+7. Verify the payment result using the existing backend flow.
+8. Show the same success/failure result as the React Native + Wrapper app.
+9. Refresh subscription/payment status if the existing app does this.
+
+### 4. Flutter architecture
+
+Use the existing Flutter project's architecture.
+
+If the project already uses BLoC, implement payment using BLoC.
+
+Create/reuse something similar to:
+
+* PaymentBloc
+* PaymentEvent
+* PaymentState
+* PaymentRepository
+* PaymentDataSource/API service
+
+Keep business logic out of widgets.
+
+Use states such as:
+
+* PaymentInitial
+* PaymentLoading
+* PaymentReady
+* PaymentSuccess
+* PaymentFailure
+* PaymentCancelled
+
+Do not unnecessarily rewrite existing architecture.
+
+### 5. Platform-specific implementation
+
+Use proper Flutter platform support.
+
+Android:
+
+* Google Pay
+* Android configuration required by the selected payment provider
+
+iOS:
+
+* Apple Pay
+* Apple Pay capability
+* Merchant Identifier
+* Required entitlements/configuration
+* Required payment-provider configuration
+
+Do NOT hardcode secrets, API keys, client secrets, or private credentials in Flutter source code.
+
+Use the same secure configuration approach already used by the existing project.
+
+### 6. Existing React Native + Wrapper investigation
+
+Before modifying Flutter code, search the existing React Native + Wrapper codebase for:
+
+* Google Pay
+* Apple Pay
+* GooglePay
+* ApplePay
+* Stripe
+* PaymentIntent
+* client_secret
+* merchantIdentifier
+* merchant identifier
+* payment sheet
+* payment token
+* wallet
+* subscription
+* checkout
+* payment API
+* confirm payment
+
+Document what you find before implementation.
+
+If the React Native app uses Stripe or another payment provider, use the appropriate Flutter SDK/package for that SAME provider.
+
+Do not replace the payment provider.
+
+### 7. Important compatibility requirement
+
+The Flutter implementation must behave the same as the existing React Native + Wrapper application.
+
+Compare:
+
+React Native + Wrapper:
+
+* UI/payment button behavior
+* amount
+* currency
+* backend API
+* payment creation
+* payment confirmation
+* success handling
+* failure handling
+* cancellation handling
+* subscription update
+
+Flutter:
+
+* Must match the above behavior.
+
+### 8. Existing Flutter code
+
+Before creating new files, inspect the existing Flutter project and reuse:
+
+* existing payment service
+* existing subscription service
+* existing API client
+* existing authentication
+* existing BLoC
+* existing models
+* existing environment configuration
+* existing UI/payment screens
+
+Do not create duplicate services if equivalent code already exists.
+
+### 9. Error handling
+
+Use user-friendly messages.
+
+Examples:
+
+Google Pay unavailable:
+"Google Pay is not available on this device."
+
+Apple Pay unavailable:
+"Apple Pay is not available on this device."
+
+Payment cancelled:
+"Payment was cancelled."
+
+Payment failed:
+"Payment failed. Please try again."
+
+Network/API failure:
+"Something went wrong. Please try again."
+
+Use the existing application's error-message style if one already exists.
+
+### 10. Do not break existing payments
+
+IMPORTANT:
+
+There may already be card payment/subscription functionality in the Flutter app.
+
+Do NOT remove or break it.
+
+Google Pay and Apple Pay should be additional payment methods.
+
+Existing:
+
+* Card payment → continue working
+* Existing subscription flow → continue working
+* Existing backend → continue working
+
+Add:
+
+* Android → Google Pay
+* iOS → Apple Pay
+
+### 11. Testing
+
+After implementation, verify:
+
+Android:
+
+* Google Pay button visibility
+* Google Pay availability check
+* payment amount
+* payment confirmation
+* success
+* cancellation
+* failure
+
+iOS:
+
+* Apple Pay button visibility
+* Apple Pay availability check
+* payment amount
+* payment confirmation
+* success
+* cancellation
+* failure
+
+Also verify:
+
+* Google Pay is NOT shown on iOS.
+* Apple Pay is NOT shown on Android.
+* Existing card payment still works.
+* No duplicate payment is created.
+* No duplicate API calls occur.
+* Loading state prevents multiple payment submissions.
+
+### 12. Very important
+
+Do not guess the React Native implementation.
+
+If you cannot find the existing Google Pay/Apple Pay implementation, clearly tell me which files/code/configuration are missing and what you need to inspect.
+
+Do not replace working backend/payment logic with a different implementation without explaining why.
+
+First inspect the existing React Native + Wrapper implementation and the existing Flutter project.
+
+Then implement the Flutter version.
+
+At the end, provide:
+
+1. Files changed
+2. Files created
+3. Packages added/updated
+4. Android configuration changes
+5. iOS configuration changes
+6. Backend/API reused
+7. Exact testing steps
+8. Any manual setup required in Google Pay
+9. Any manual setup required in Apple Developer/App Store Connect
+10. Any issues or limitations found
