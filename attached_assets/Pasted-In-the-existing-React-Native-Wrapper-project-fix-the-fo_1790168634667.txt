@@ -1,0 +1,369 @@
+In the existing **React Native + Wrapper project**, fix the following two bugs properly. Do not create a new implementation from scratch. First inspect the existing code, navigation, screens, validation, API/service layer, state management, and Wrapper integration related to these features.
+
+## 1. Life Skill — "Something went wrong" Error
+
+### Current issue
+
+When the user opens **Life Skill**, the screen shows:
+
+**"Something went wrong"**
+
+### Required fix
+
+* Find the actual root cause instead of hiding the error.
+* Trace the complete Life Skill flow:
+
+  * Navigation
+  * Screen/component
+  * API/service call
+  * State management
+  * Data parsing/mapping
+  * Authentication/user ID if required
+  * Wrapper integration
+* Check the API response and make sure the frontend handles the actual response structure correctly.
+* Check for null/undefined data and unexpected/empty API responses.
+* Check whether the issue is caused by incorrect field names, response mapping, request parameters, authentication, or navigation.
+* Fix the root cause.
+* Keep existing Life Skill functionality and UI unchanged unless a change is required for the fix.
+* Do not replace the real error with a generic fallback.
+* Add safe handling for empty data and API failures so the screen does not unnecessarily crash.
+
+### Important
+
+If the backend/API is returning an error, clearly identify the actual reason from the existing implementation and fix the frontend/backend integration accordingly. Do not assume or guess the API response structure.
+
+---
+
+# 2. Sleep Routine → Log Sleep — Wake Date Missing
+
+### Current issue
+
+Go to:
+
+**Sleep Routine → Log Sleep**
+
+The form currently contains fields such as:
+
+* Sleep Date
+* Bed Time
+* Time Fell Asleep
+* Wake Time
+
+There is **no Wake Date**.
+
+This causes incorrect validation.
+
+Example:
+
+* Sleep Date: September 23
+* Bed Time: 10:00 PM
+* Time Fell Asleep: 10:30 PM
+* Wake Time: 8:00 AM
+
+The app currently treats both times as being on the same date and shows:
+
+**"Wake time cannot be less than sleep time."**
+
+But 8:00 AM normally means the user woke up the **next morning**, September 24.
+
+---
+
+# Required Solution
+
+Add a new field:
+
+**Wake Date**
+
+Place it beside/near the existing **Wake Time** field according to the existing UI design.
+
+The user should be able to select the actual date on which they woke up.
+
+Example:
+
+Sleep Date: September 23
+Bed Time: 10:00 PM
+Time Fell Asleep: 10:30 PM
+Wake Date: September 24
+Wake Time: 8:00 AM
+
+This should be accepted.
+
+---
+
+# Correct Date + Time Validation
+
+Do NOT compare only the time values.
+
+Combine the selected date and time into complete DateTime values.
+
+For example:
+
+```text
+Sleep Date + Time Fell Asleep
+Wake Date + Wake Time
+```
+
+Then compare the complete DateTime values.
+
+### Valid example
+
+```text
+Sleep Date: Sept 23
+Time Fell Asleep: 10:30 PM
+
+Wake Date: Sept 24
+Wake Time: 8:00 AM
+```
+
+Result:
+
+**Valid**
+
+### Invalid example
+
+```text
+Sleep Date: Sept 23
+Time Fell Asleep: 10:00 PM
+
+Wake Date: Sept 23
+Wake Time: 9:00 PM
+```
+
+Result:
+
+**Invalid**
+
+Show the existing validation error because the wake time is actually before the sleep time.
+
+### Another valid example
+
+```text
+Sleep Date: Sept 23
+Time Fell Asleep: 10:00 PM
+
+Wake Date: Sept 24
+Wake Time: 9:00 PM
+```
+
+This is technically valid because the selected Wake Date is the next day.
+
+The validation must use the selected dates rather than assuming that Wake Date is always the same date or always the next date.
+
+---
+
+# Date Selection Rules
+
+Implement sensible validation:
+
+1. Wake Date must not be earlier than Sleep Date.
+2. If Wake Date == Sleep Date:
+
+   * Wake Date + Wake Time must be greater than Time Fell Asleep.
+3. If Wake Date > Sleep Date:
+
+   * Compare the complete DateTime values.
+   * Wake Time can be earlier than the sleep time because it is on a later date.
+4. Do not automatically change the user's selected Wake Date.
+5. Preserve the selected Wake Date when editing an existing sleep record.
+6. When creating a new record, provide a sensible default Wake Date based on the existing sleep flow, but allow the user to change it.
+7. Handle midnight correctly.
+8. Handle 12 AM / 12 PM correctly.
+9. Prevent invalid dates from being submitted.
+
+---
+
+# Data/API/Backend Compatibility
+
+This is important.
+
+Before changing the UI, inspect how Sleep Routine data is currently stored and sent to the backend.
+
+Check:
+
+* Request payload
+* API/service methods
+* Database model
+* TypeScript interfaces/types
+* DTOs
+* Serialization/deserialization
+* Existing sleep history
+* Edit sleep functionality
+* Any Wrapper/native bridge data mapping
+
+If the backend already supports a wake-date field under another name, reuse the existing field.
+
+If the backend does NOT currently support Wake Date, determine the existing architecture and add the field consistently across the required layers.
+
+Do NOT simply add a UI field and leave the backend using the old logic.
+
+The saved sleep record must preserve:
+
+```text
+sleepDate
+bedTime
+fellAsleepTime
+wakeDate
+wakeTime
+```
+
+Use the project's existing naming conventions.
+
+---
+
+# Existing Records / Backward Compatibility
+
+There may already be sleep records without a Wake Date.
+
+Handle old records safely.
+
+For existing records:
+
+* Do not crash.
+* Do not make existing sleep history disappear.
+* If Wake Date is missing, use a safe backward-compatible fallback based on the existing data/business logic.
+* Do not silently corrupt existing records.
+* When the user edits an old record, make sure Wake Date is correctly populated before saving.
+
+---
+
+# UI Requirements
+
+Follow the existing Sleep Routine design.
+
+Add:
+
+**Wake Date**
+**Wake Time**
+
+Do not redesign the entire screen.
+
+Make sure:
+
+* Date picker opens correctly.
+* Time picker opens correctly.
+* Fields work on Android and iOS.
+* Validation messages are clear.
+* Layout does not overflow on small screens.
+* Keyboard does not cover the fields.
+* Existing form behavior remains intact.
+
+---
+
+# Testing Requirements
+
+After implementing the fix, test all of these cases:
+
+### Case 1 — Overnight sleep
+
+```text
+Sleep Date: Sept 23
+Fell Asleep: 10:00 PM
+Wake Date: Sept 24
+Wake Time: 8:00 AM
+```
+
+Expected: VALID
+
+### Case 2 — Same-day invalid
+
+```text
+Sleep Date: Sept 23
+Fell Asleep: 10:00 PM
+Wake Date: Sept 23
+Wake Time: 9:00 PM
+```
+
+Expected: INVALID
+
+### Case 3 — Same-day valid
+
+```text
+Sleep Date: Sept 23
+Fell Asleep: 10:00 PM
+Wake Date: Sept 23
+Wake Time: 11:00 PM
+```
+
+Expected: VALID
+
+### Case 4 — Multiple-day sleep
+
+```text
+Sleep Date: Sept 23
+Fell Asleep: 10:00 PM
+Wake Date: Sept 24
+Wake Time: 9:00 PM
+```
+
+Expected: VALID
+
+### Case 5 — Wake date before sleep date
+
+```text
+Sleep Date: Sept 23
+Wake Date: Sept 22
+```
+
+Expected: INVALID
+
+### Case 6 — Midnight
+
+```text
+Sleep Date: Sept 23
+Fell Asleep: 11:30 PM
+Wake Date: Sept 24
+Wake Time: 12:00 AM
+```
+
+Expected: VALID
+
+### Case 7 — 12 PM / 12 AM
+
+Verify that 12:00 AM and 12:00 PM are converted and compared correctly.
+
+### Case 8 — Edit existing sleep record
+
+Open an existing sleep record → Edit → verify Wake Date is displayed correctly → save → reopen → verify the same date/time remains.
+
+### Case 9 — Life Skill
+
+Open Life Skill multiple times and verify:
+
+* No "Something went wrong" error when the API/data is valid.
+* Existing Life Skill data loads correctly.
+* Empty data is handled safely.
+* API failure shows an appropriate error state without crashing.
+
+---
+
+# Important Development Rules
+
+1. **Inspect the existing code before modifying anything.**
+2. Find the root cause of both bugs.
+3. Do not rewrite unrelated features.
+4. Do not remove existing functionality.
+5. Do not use hardcoded fake data.
+6. Do not hide errors with `try/catch` without fixing the underlying problem.
+7. Follow the project's existing architecture and coding style.
+8. Reuse existing components, date pickers, time pickers, validation utilities, models, and API services where possible.
+9. Keep Android/iOS/Wrapper behavior consistent.
+10. Check both create and edit flows.
+11. Check API request and response mapping.
+12. Make the smallest safe changes necessary.
+13. Avoid introducing duplicate state for the same data.
+14. Avoid changing unrelated screens.
+15. Do not mark the task complete until the listed test cases pass.
+
+## Final response after implementation
+
+Tell me:
+
+1. Root cause of the Life Skill error.
+2. Root cause of the Sleep Routine validation bug.
+3. Files/components changed.
+4. Whether the backend/API model required changes.
+5. How Wake Date is stored and sent.
+6. How backward compatibility for old sleep records is handled.
+7. Test cases completed and their results.
+
+Do not just say "fixed". Explain what was actually changed.
