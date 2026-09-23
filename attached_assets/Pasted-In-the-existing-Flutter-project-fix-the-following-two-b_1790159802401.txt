@@ -1,0 +1,130 @@
+In the existing Flutter project, fix the following two bugs properly. Do not rewrite unrelated code or change the existing UI/design/flow.
+
+## 1. Daily Tasks — All task circles refresh when completing one task
+
+### Current issue
+
+In **Daily Tasks**, when the user completes a task by clicking the green circle/check button for one specific task:
+
+* The selected task is completed correctly, but
+* All task circles are refreshed/rebuilt.
+* This causes every task's circle UI/state to refresh instead of updating only the selected task.
+
+### Required fix
+
+* When the user completes/uncompletes a task, update only the affected task.
+* The other task circles must keep their current UI/state without unnecessary refresh.
+* Preserve the existing completed/uncompleted behavior.
+* Do not reload the entire Daily Tasks list unnecessarily.
+* Do not recreate/reinitialize the entire BLoC state if only one task changed.
+* Make sure the correct task ID is passed to the completion/update event.
+* Update the local list/state immutably so only the targeted task changes.
+* If the UI uses `ListView.builder`, `ValueKey`, `Key`, `BlocBuilder`, `BlocSelector`, or similar optimization, use them correctly so unrelated task widgets are not unnecessarily rebuilt.
+* After completion, the selected task should immediately show the correct completed state.
+* Other tasks should remain visually unchanged.
+* Verify that scrolling position and task list position are not reset.
+
+### Important
+
+Do not solve this by simply hiding the refresh visually. Find and fix the actual state-management/rebuild issue.
+
+---
+
+## 2. Resources > Emergency — Failed to add emergency resource
+
+### Current issue
+
+Go to:
+
+**Resources → Emergency → Add Emergency Resource**
+
+When the user submits a valid emergency resource, the app shows:
+
+**"Failed to add emergency resource"**
+
+even though the user has entered valid information.
+
+### Required investigation
+
+Trace the complete flow:
+
+UI Form
+→ validation
+→ Flutter/BLoC event
+→ BLoC
+→ Repository
+→ Data Source/API/Firebase/local storage
+→ response
+→ BLoC state
+→ UI
+
+Find the actual root cause instead of only changing the error message.
+
+### Required fix
+
+* Emergency resources must be created successfully with valid data.
+* Verify all required fields and their names/types.
+* Verify the model's `toJson()` / `fromJson()` mapping.
+* Verify the repository method.
+* Verify the API/Firebase/database request.
+* Verify the BLoC event and state handling.
+* Verify authentication/user ID requirements if applicable.
+* Handle null/missing optional fields safely.
+* Handle server/database errors correctly.
+* Do not show "Failed to add emergency resource" for a successful request.
+* After successful creation, update the Emergency Resources list correctly.
+* Prevent duplicate submissions while the request is loading.
+* Show the existing success behavior/message if the project already has one.
+* Preserve existing Emergency resource edit/delete functionality.
+
+### Error handling
+
+If the backend/API returns an actual error, show the real useful error to the user and log the technical error for debugging instead of always displaying a generic failure.
+
+---
+
+## Regression checks
+
+After fixing both issues, test these cases:
+
+### Daily Tasks
+
+1. Complete Task A → only Task A changes.
+2. Complete Task B → only Task B changes.
+3. Uncomplete a task → only that task changes.
+4. Complete multiple different tasks.
+5. Refresh/reopen Daily Tasks → correct completion states remain.
+6. Verify list scrolling does not unexpectedly reset.
+7. Verify no duplicate API/database calls are made.
+
+### Emergency Resources
+
+1. Add a valid emergency resource → successfully created.
+2. Verify it appears in the Emergency list.
+3. Add multiple emergency resources.
+4. Try invalid/missing required fields → proper validation.
+5. Try network/API/database failure → meaningful error.
+6. Verify existing emergency resources are not affected.
+7. Verify edit/delete still works.
+
+## Important implementation rules
+
+* First inspect the existing architecture and follow the project's current BLoC/repository/data-source pattern.
+* Do not introduce a new architecture unless absolutely necessary.
+* Do not remove existing functionality.
+* Do not change unrelated screens.
+* Do not use hardcoded/mock data to make the issue appear fixed.
+* Do not suppress errors or simply remove the error message.
+* Fix the root cause.
+* Keep the existing UI and design unchanged.
+* Avoid unnecessary full-list reloads and unnecessary BLoC state emissions.
+* Check for race conditions, duplicate listeners, duplicate API calls, and incorrect widget keys.
+* After making changes, run/analyze the relevant Flutter code and fix any compile/analyzer errors caused by the changes.
+
+Finally, explain:
+
+1. Root cause of the Daily Tasks refresh issue.
+2. Root cause of the Emergency resource creation failure.
+3. Files changed.
+4. Why the fixes prevent the bugs from coming back.
+5. What tests were performed.
