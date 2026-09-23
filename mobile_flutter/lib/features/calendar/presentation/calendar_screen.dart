@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/date/calendar_date.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
@@ -158,7 +159,11 @@ class _CalendarPageHeader extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             FilledButton.icon(
-              onPressed: () => _showCalendarEventDialog(context),
+              onPressed: () => _showCalendarEventDialog(
+                context,
+                null,
+                state.selectedDate,
+              ),
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Add Event'),
             ),
@@ -460,6 +465,8 @@ class _WeekCalendar extends StatelessWidget {
         children: List.generate(7, (index) {
           final date = start.add(Duration(days: index));
           final items = _itemsForDate(state, date);
+          final allDayItems = items.where((item) => item.allDay).toList();
+          final timedItems = items.where((item) => !item.allDay).toList();
           final isToday = DateUtils.isSameDay(date, DateTime.now());
           return Container(
             padding: const EdgeInsets.all(12),
@@ -512,29 +519,80 @@ class _WeekCalendar extends StatelessWidget {
                 else
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: items
-                          .map(
-                            (item) => _CalendarItemCard(
-                              item: item,
-                              compact: true,
-                              onEdit: item.eventId == null
-                                  ? null
-                                  : () => _showCalendarEventDialog(
-                                        context,
-                                        item.eventId,
-                                      ),
-                              onDelete: item.eventId == null
-                                  ? null
-                                  : () => _confirmDeleteEvent(
-                                        context,
-                                        item.eventId!,
-                                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (allDayItems.isNotEmpty) ...[
+                          const Text(
+                            'All Day',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
                             ),
-                          )
-                          .toList(),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: allDayItems
+                                .map(
+                                  (item) => _CalendarItemCard(
+                                    item: item,
+                                    compact: true,
+                                    onEdit: item.eventId == null
+                                        ? null
+                                        : () => _showCalendarEventDialog(
+                                              context,
+                                              item.eventId,
+                                            ),
+                                    onDelete: item.eventId == null
+                                        ? null
+                                        : () => _confirmDeleteEvent(
+                                              context,
+                                              item.eventId!,
+                                            ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                        if (timedItems.isNotEmpty) ...[
+                          if (allDayItems.isNotEmpty)
+                            const SizedBox(height: 8),
+                          const Text(
+                            'Timed',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: timedItems
+                                .map(
+                                  (item) => _CalendarItemCard(
+                                    item: item,
+                                    compact: true,
+                                    onEdit: item.eventId == null
+                                        ? null
+                                        : () => _showCalendarEventDialog(
+                                              context,
+                                              item.eventId,
+                                            ),
+                                    onDelete: item.eventId == null
+                                        ? null
+                                        : () => _confirmDeleteEvent(
+                                              context,
+                                              item.eventId!,
+                                            ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
               ],
@@ -554,6 +612,8 @@ class _DayCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = _itemsForDate(state, state.selectedDate);
+    final allDayItems = items.where((item) => item.allDay).toList();
+    final timedItems = items.where((item) => !item.allDay).toList();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -574,26 +634,67 @@ class _DayCalendar extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...items.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _CalendarItemCard(
-                        item: item,
-                        onEdit: item.eventId == null
-                            ? null
-                            : () => _showCalendarEventDialog(
-                                  context,
-                                  item.eventId,
-                                ),
-                        onDelete: item.eventId == null
-                            ? null
-                            : () => _confirmDeleteEvent(
-                                  context,
-                                  item.eventId!,
-                                ),
+                  if (allDayItems.isNotEmpty) ...[
+                    const Text(
+                      'All Day',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF374151),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    ...allDayItems.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _CalendarItemCard(
+                          item: item,
+                          onEdit: item.eventId == null
+                              ? null
+                              : () => _showCalendarEventDialog(
+                                    context,
+                                    item.eventId,
+                                  ),
+                          onDelete: item.eventId == null
+                              ? null
+                              : () => _confirmDeleteEvent(
+                                    context,
+                                    item.eventId!,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (timedItems.isNotEmpty) ...[
+                    if (allDayItems.isNotEmpty) const SizedBox(height: 4),
+                    const Text(
+                      'Timed',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...timedItems.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _CalendarItemCard(
+                          item: item,
+                          onEdit: item.eventId == null
+                              ? null
+                              : () => _showCalendarEventDialog(
+                                    context,
+                                    item.eventId,
+                                  ),
+                          onDelete: item.eventId == null
+                              ? null
+                              : () => _confirmDeleteEvent(
+                                    context,
+                                    item.eventId!,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
       ),
@@ -1247,7 +1348,7 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
     }
   }
   for (final event in state.calendarEvents) {
-    if (DateUtils.isSameDay(event.startDate, date)) {
+    if (_calendarEventOccursOnDate(event, date)) {
       items.add(
         _CalendarItem(
           title: event.title,
@@ -1327,6 +1428,21 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
   }
   items.sort((a, b) => a.start.compareTo(b.start));
   return items;
+}
+
+bool _calendarEventOccursOnDate(
+  CalendarEventModel event,
+  DateTime date,
+) {
+  if (!event.allDay) return DateUtils.isSameDay(event.startDate, date);
+
+  final day = calendarDateOnly(date);
+  final start = calendarDateOnly(event.startDate);
+  final storedEnd = event.endDate == null
+      ? start
+      : calendarDateOnly(event.endDate!);
+  final end = storedEnd.isBefore(start) ? start : storedEnd;
+  return !day.isBefore(start) && !day.isAfter(end);
 }
 
 String _headerLabel(CalendarState state) {
@@ -1429,6 +1545,7 @@ Future<void> _showAppointmentDialog(BuildContext context) async {
 Future<void> _showCalendarEventDialog(
   BuildContext context, [
   int? eventId,
+  DateTime? initialDate,
 ]) async {
   final state = context.read<CalendarBloc>().state;
   CalendarEventModel? existing;
@@ -1443,7 +1560,10 @@ Future<void> _showCalendarEventDialog(
   if (eventId != null && existing == null) return;
   final input = await showDialog<CalendarEventInput>(
     context: context,
-    builder: (_) => _CalendarEventFormDialog(existing: existing),
+    builder: (_) => _CalendarEventFormDialog(
+      existing: existing,
+      initialDate: initialDate,
+    ),
   );
   if (!context.mounted || input == null) return;
   if (eventId == null) {
@@ -1633,9 +1753,13 @@ class _AppointmentFormDialogState extends State<_AppointmentFormDialog> {
 }
 
 class _CalendarEventFormDialog extends StatefulWidget {
-  const _CalendarEventFormDialog({this.existing});
+  const _CalendarEventFormDialog({
+    this.existing,
+    this.initialDate,
+  });
 
   final CalendarEventModel? existing;
+  final DateTime? initialDate;
 
   @override
   State<_CalendarEventFormDialog> createState() =>
@@ -1648,6 +1772,7 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _locationController;
   late DateTime _startDate;
+  DateTime? _endDate;
   String _category = 'personal';
   bool _allDay = false;
 
@@ -1658,7 +1783,10 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
     _titleController = TextEditingController(text: existing?.title);
     _descriptionController = TextEditingController(text: existing?.description);
     _locationController = TextEditingController(text: existing?.location);
-    _startDate = existing?.startDate ?? DateTime.now();
+    _startDate = existing?.startDate ??
+        widget.initialDate?.toLocal() ??
+        DateTime.now();
+    _endDate = existing?.endDate;
     _category = existing?.category ?? 'personal';
     _allDay = existing?.allDay ?? false;
   }
@@ -1713,6 +1841,14 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
                   value: _allDay,
                   onChanged: (value) => setState(() => _allDay = value),
                 ),
+                if (_allDay)
+                  _DateTimeField(
+                    label: 'End date (optional)',
+                    value: _endDate == null
+                        ? 'Same day'
+                        : _formatLongDate(_endDate!),
+                    onTap: _pickEndDate,
+                  ),
                 DropdownButtonFormField<String>(
                   value: _category,
                   decoration: const InputDecoration(labelText: 'Category'),
@@ -1764,7 +1900,13 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
     );
     if (!mounted || date == null) return;
     if (_allDay) {
-      setState(() => _startDate = DateTime(date.year, date.month, date.day));
+      final nextStart = DateTime(date.year, date.month, date.day);
+      setState(() {
+        _startDate = nextStart;
+        if (_endDate != null && _endDate!.isBefore(nextStart)) {
+          _endDate = nextStart;
+        }
+      });
       return;
     }
     final time = await showTimePicker(
@@ -1783,6 +1925,22 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
     );
   }
 
+  Future<void> _pickEndDate() async {
+    final firstDate = calendarDateOnly(_startDate);
+    final currentEnd = _endDate;
+    final initialDate = currentEnd != null && !currentEnd.isBefore(firstDate)
+        ? calendarDateOnly(currentEnd)
+        : firstDate;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime(2100),
+    );
+    if (!mounted || date == null) return;
+    setState(() => _endDate = calendarDateOnly(date));
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     Navigator.of(context).pop(
@@ -1792,6 +1950,11 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
         startDate: _allDay
             ? DateTime(_startDate.year, _startDate.month, _startDate.day)
             : _startDate,
+        endDate: _endDate == null
+            ? null
+            : _allDay
+                ? calendarDateOnly(_endDate!)
+                : _endDate,
         allDay: _allDay,
         category: _category,
         location: _locationController.text,

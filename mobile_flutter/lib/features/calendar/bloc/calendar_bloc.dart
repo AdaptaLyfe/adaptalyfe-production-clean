@@ -116,42 +116,95 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     AddCalendarEvent event,
     Emitter<CalendarState> emit,
   ) async {
-    await _runMutation(
-      emit,
-      action: 'add-event',
-      successMessage: 'Event created successfully.',
-      operation: () async {
-        await repository.createCalendarEvent(event.input);
-      },
+    emit(
+      state.copyWith(
+        busyAction: 'add-event',
+        errorMessage: null,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
     );
+    try {
+      final created = await repository.createCalendarEvent(event.input);
+      emit(
+        state.copyWith(
+          status: CalendarStatus.loaded,
+          calendarEvents: [...state.calendarEvents, created],
+          busyAction: null,
+          actionMessage: 'Event created successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitFailure(emit, error, keepData: true, busyAction: null);
+    }
   }
 
   Future<void> _onEditCalendarEvent(
     EditCalendarEvent event,
     Emitter<CalendarState> emit,
   ) async {
-    await _runMutation(
-      emit,
-      action: 'edit-event',
-      successMessage: 'Event updated successfully.',
-      operation: () async {
-        await repository.updateCalendarEvent(event.id, event.input);
-      },
+    emit(
+      state.copyWith(
+        busyAction: 'edit-event',
+        errorMessage: null,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
     );
+    try {
+      final updated = await repository.updateCalendarEvent(
+        event.id,
+        event.input,
+      );
+      emit(
+        state.copyWith(
+          status: CalendarStatus.loaded,
+          calendarEvents: [
+            for (final item in state.calendarEvents)
+              if (item.id == updated.id) updated else item,
+          ],
+          busyAction: null,
+          actionMessage: 'Event updated successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitFailure(emit, error, keepData: true, busyAction: null);
+    }
   }
 
   Future<void> _onDeleteCalendarEvent(
     DeleteCalendarEvent event,
     Emitter<CalendarState> emit,
   ) async {
-    await _runMutation(
-      emit,
-      action: 'delete-event',
-      successMessage: 'Event deleted successfully.',
-      operation: () async {
-        await repository.deleteCalendarEvent(event.id);
-      },
+    emit(
+      state.copyWith(
+        busyAction: 'delete-event',
+        errorMessage: null,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
     );
+    try {
+      await repository.deleteCalendarEvent(event.id);
+      emit(
+        state.copyWith(
+          status: CalendarStatus.loaded,
+          calendarEvents: state.calendarEvents
+              .where((item) => item.id != event.id)
+              .toList(),
+          busyAction: null,
+          actionMessage: 'Event deleted successfully.',
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitFailure(emit, error, keepData: true, busyAction: null);
+    }
   }
 
   Future<void> _load(

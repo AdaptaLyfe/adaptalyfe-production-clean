@@ -2199,3 +2199,17 @@ mtime_ms = 1790158791744
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4af4f457-b39d-4076-98cf-6d63be6e8070/84650bff-2e58-4944-9042-7084d56434aa"
 storage_version_token = "1790158867740026"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4RRB1uEIpHJey7WZE0Zkv"
+uri = "file://deliverables/flutter-calendar-bugfix-changed-files.zip"
+type = "unspecified"
+title = "Flutter calendar bugfix changed files"
+description = "ZIP containing the three Flutter files changed for calendar event navigation, all-day persistence, date-range rendering, and focused event refresh."
+logical_id = "86b5bda7-880c-4a19-a7ce-dd298bff41a0"
+content_hash = "sha256:479f210c3663548d01dd82cff720b10c9dc323f15360f91186ff5ad314838042"
+size = 14806
+mtime_ms = 1790159633388
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86b5bda7-880c-4a19-a7ce-dd298bff41a0/5ad0bd49-a267-4868-a346-42ebd36a28ab"
+storage_version_token = "1790159646366658"
+content_type = "application/octet-stream"

@@ -186,10 +186,11 @@ class CalendarEventInput extends Equatable {
         'startDate': allDay
             ? calendarDateKey(startDate)
             : calendarDateTimeIso(startDate),
-        if (endDate != null)
-          'endDate': allDay
-              ? calendarDateKey(endDate!)
-              : calendarDateTimeIso(endDate!),
+        'endDate': endDate == null
+            ? null
+            : allDay
+                ? calendarDateKey(endDate!)
+                : calendarDateTimeIso(endDate!),
         'allDay': allDay,
         'category': category,
         'color': color,
