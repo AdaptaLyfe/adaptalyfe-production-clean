@@ -1,0 +1,94 @@
+In the existing React Native + Wrapper project, fix the following two bugs properly.
+
+## Bug 1: Underscore displayed in "Personal_care Tasks"
+
+Current issue:
+
+* The label is displayed as **"Personal_care Tasks"**.
+* The underscore `_` should NOT be visible in the user-facing label.
+
+Required behavior:
+
+* Display the label as:
+  **"Personal Care Tasks"**
+* Do not display or write `_` in any user-facing label.
+* Check where this label is generated/mapped from the backend, constants, enum, route, translation, or database value.
+* Do NOT simply hardcode the text in one screen if the original value comes from a shared mapping.
+* Fix the label formatting/mapping at the appropriate reusable/common location so the same issue does not appear on other screens.
+* Make sure internal values such as `personal_care` can remain unchanged if they are required for API/database functionality.
+* Only the user-facing display text should become **"Personal Care Tasks"**.
+* Do not change backend values, API parameters, database keys, routes, or internal identifiers unless absolutely required.
+
+## Bug 2: Added class does not appear in "Today's Schedule"
+
+Current issue:
+
+* When a user adds a class successfully, the class is saved/created.
+* However, the newly added class does NOT appear in the **"Today's Schedule"** list.
+* The user should immediately see the newly added class when it belongs to today's date.
+
+Required behavior:
+
+1. User opens "Today's Schedule".
+2. User adds a class.
+3. Class is successfully saved.
+4. After saving, refresh/update the schedule data.
+5. The newly added class should appear in "Today's Schedule" if its schedule/date matches today.
+6. The class should remain visible after navigating away and returning to the screen.
+7. It should also appear after app refresh/reload if the data was successfully persisted.
+
+IMPORTANT:
+
+* Investigate the ROOT CAUSE instead of adding a temporary UI workaround.
+* Trace the complete flow:
+  Add Class → Validation → API/Database Save → Response → State/Store → Today's Schedule query/filter → UI rendering.
+* Check whether the class is actually being persisted.
+* Check date/day filtering logic carefully.
+* Check whether the saved class uses a different date format, weekday value, timezone, or field name than the Today's Schedule query expects.
+* Check whether the schedule list is using stale cached/state data after class creation.
+* Check whether the add-class screen closes before the updated data is returned to the schedule screen.
+* Check whether the class needs a refetch, state update, cache invalidation, or Redux/store update after successful creation.
+* Make sure the newly created class is included using the same data model and filtering rules as existing classes.
+* Do not duplicate classes when refreshing.
+* Do not break existing classes, recurring classes, editing, deleting, or other schedule functionality.
+
+## Bug Prevention
+
+Before finishing:
+
+* Search the entire codebase for the label `Personal_care Tasks` and related mappings.
+* Search for all code responsible for creating classes and loading "Today's Schedule".
+* Identify the actual root cause of the schedule issue.
+* Implement the fix in the correct shared/data/state layer rather than using a screen-specific hack.
+* Verify loading, empty state, error state, refresh, navigation back, and app reload behavior.
+* Make sure existing functionality continues to work.
+
+## Testing
+
+Test these cases:
+
+### Label
+
+* Personal Care Tasks → displays correctly without `_`.
+* Internal/API/database value can remain `personal_care` if required.
+
+### Today's Schedule
+
+* Add a class for today → class appears immediately.
+* Add a class for another day → it should NOT incorrectly appear in today's list.
+* Add multiple classes today → all correct classes appear.
+* Navigate away and return → classes still appear.
+* Refresh/reload app → saved classes still appear.
+* Edit a class → Today's Schedule updates correctly.
+* Delete a class → Today's Schedule removes it correctly.
+* Existing classes continue to work.
+
+Do not modify unrelated features or UI.
+
+After fixing, explain:
+
+1. Root cause of each bug.
+2. Files/components changed.
+3. What was changed.
+4. How the fix prevents the bugs from returning.
+5. What tests were performed.
