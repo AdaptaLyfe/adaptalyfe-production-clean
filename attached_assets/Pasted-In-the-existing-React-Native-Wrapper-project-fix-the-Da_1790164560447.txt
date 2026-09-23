@@ -1,0 +1,165 @@
+In the existing **React Native + Wrapper project**, fix the Daily Tasks CRUD functionality properly.
+
+### Problems
+
+1. **Create Daily Task**
+
+   * User is unable to create a new daily task.
+   * Error shown:
+     **"Failed to create task. Please try again."**
+
+2. **Update Daily Task**
+
+   * User is unable to update an existing daily task.
+   * Error shown:
+     **"Failed to update task. Please try again."**
+
+### Important Requirement
+
+Do NOT simply hide, change, or bypass the error message.
+
+Find and fix the **actual root cause** so the bug does not reopen.
+
+### What to investigate
+
+First trace the complete flow for both operations:
+
+**Create:**
+UI → validation → Daily Task component → state/context/hook → API/service → backend/database → response → UI refresh
+
+**Update:**
+UI → validation → Daily Task component → state/context/hook → API/service → backend/database → response → UI refresh
+
+Check all existing code related to:
+
+* Daily Task screen
+* Add/Create Task form
+* Edit/Update Task form
+* Task API/service functions
+* API request payload
+* HTTP method
+* API endpoint
+* Authentication/token handling
+* User ID
+* Task ID
+* Required fields
+* Date/time format
+* Task status/completion fields
+* Request headers
+* Response parsing
+* Error handling
+* Backend validation
+* Database CRUD operations
+* Wrapper communication/data passing
+* State management
+* Cache/state refresh after create/update
+
+### Do not assume the frontend is the problem
+
+Check whether the failure is caused by:
+
+* Incorrect endpoint
+* Wrong HTTP method
+* Incorrect request body
+* Missing required field
+* Incorrect field name
+* Wrong task ID during update
+* Invalid user ID
+* Authentication problem
+* Incorrect date format
+* Backend validation
+* Database write/update failure
+* Response format mismatch
+* Wrapper-specific API handling
+* State synchronization problem
+
+Compare the Daily Task implementation with other **working CRUD features in the same project** and reuse the existing project pattern where appropriate.
+
+### Create Task Requirements
+
+After the fix:
+
+1. User opens Daily Tasks.
+2. User taps Add/Create Task.
+3. User enters valid task information.
+4. User submits the task.
+5. Correct API/database request is made.
+6. Task is successfully created.
+7. Success response is handled correctly.
+8. New task immediately appears in the Daily Task list.
+9. No duplicate task is created.
+10. Error is shown only when the operation actually fails.
+
+### Update Task Requirements
+
+After the fix:
+
+1. User opens an existing task.
+2. User edits task information.
+3. User saves the changes.
+4. Correct task ID is sent.
+5. Correct API/database update request is made.
+6. Existing task is updated instead of creating a new task.
+7. Updated data immediately appears in the task list/details.
+8. No duplicate task is created.
+9. Error is shown only when the operation actually fails.
+
+### Error Handling
+
+Keep meaningful error handling.
+
+Do not use a generic catch block that hides the actual backend/API error.
+
+During debugging, log:
+
+* Request endpoint
+* HTTP method
+* Request payload (exclude passwords/tokens/secrets)
+* Response status
+* Response body
+* Actual exception
+* Task ID for update
+
+After identifying the root cause, keep appropriate production-safe error handling.
+
+### Important
+
+* Do not rewrite the entire Daily Task module unnecessarily.
+* Do not remove existing functionality.
+* Do not change unrelated screens.
+* Do not create a second API/service implementation if one already exists.
+* Follow the existing architecture and coding style.
+* Reuse existing authentication and API configuration.
+* Preserve existing UI/UX.
+* Make the smallest reliable fix.
+* Check both Android/iOS React Native behavior and Wrapper behavior if both use this flow.
+
+### Regression Testing
+
+After fixing the issue, test all Daily Task operations:
+
+* Create task with valid data
+* Create task with invalid/missing data
+* Update task
+* Update multiple fields
+* Update task status/completion
+* Delete task if already supported
+* Refresh/reopen Daily Tasks
+* Logout/login and verify tasks still load
+* Verify the created task persists after app restart
+* Verify the updated task persists after app restart
+* Verify no duplicate records are created
+
+### Final Response
+
+After making the changes, explain:
+
+1. Root cause of the create-task failure.
+2. Root cause of the update-task failure.
+3. Files/components changed.
+4. Exact fix implemented.
+5. How you verified Create and Update.
+6. Any backend/API changes made.
+7. Any remaining issue, if one genuinely exists.
+
+Do not report the task as fixed until you have traced the request and verified that both **Create** and **Update** work successfully end-to-end.
