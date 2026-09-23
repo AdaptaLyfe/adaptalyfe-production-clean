@@ -154,7 +154,7 @@ export class ApiError extends Error {
     message: string,
     details?: { code?: string; type?: string },
   ) {
-    super(`${status}: ${message}`);
+    super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = details?.code;

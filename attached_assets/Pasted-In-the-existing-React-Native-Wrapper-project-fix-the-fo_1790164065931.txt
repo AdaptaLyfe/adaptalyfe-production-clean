@@ -1,0 +1,107 @@
+In the existing **React Native + Wrapper** project, fix the following bug properly and permanently.
+
+### Bug
+
+Path:
+**Contact Support → My Support Team**
+
+When a user tries to add a caregiver who does **not exist in the system**, the application displays an error containing the technical **404 error code**.
+
+Example of the current behavior:
+
+* `404`
+* `Error 404`
+* `404 - Caregiver not found`
+* or any other message exposing the HTTP/API status code.
+
+### Expected behavior
+
+When the caregiver does not exist:
+
+* Do **NOT** show `404` or any HTTP/status/error code to the end user.
+* Show only a clear, user-friendly error message.
+* The technical error code should remain available only for developer logging/debugging.
+* The existing error handling, API behavior, and caregiver-add functionality should remain unchanged.
+
+### Important requirement
+
+Do not simply hide `404` from one UI component.
+
+Trace the complete flow:
+
+**My Support Team → Add Caregiver → API request → API/service layer → error handling → state/store → Wrapper → UI/error message**
+
+Find where the HTTP/API error is converted into the user-facing message and fix it at the appropriate shared error-handling layer so the same issue cannot appear from another component.
+
+### Error handling requirements
+
+1. Detect HTTP/API status `404` when the caregiver does not exist.
+2. Convert it to a user-friendly message before it reaches the UI.
+3. Never expose the raw HTTP status code in the UI.
+4. Keep the original `404` and technical details available for console/debug logging where appropriate.
+5. Check whether the Wrapper has its own error formatting or fallback error handler and update it if necessary.
+6. Check for generic error handling such as:
+
+   * `error.status`
+   * `error.statusCode`
+   * `response.status`
+   * `error.response.status`
+   * `error.message`
+   * `HTTP 404`
+   * `404`
+   * API/network error formatters
+7. Make sure the UI does not concatenate the status code with the friendly message.
+8. Handle unexpected errors separately without breaking existing error handling.
+
+### User-friendly message
+
+For a caregiver that does not exist, show a simple message such as:
+
+**"Caregiver not found. Please check the details and try again."**
+
+Use the project's existing error-message style if one already exists rather than introducing a new design.
+
+### Search the entire codebase
+
+Before making changes, identify:
+
+* Add Caregiver screen/component
+* My Support Team flow
+* API/service function used to add caregiver
+* Error response parsing
+* Global/shared error handler
+* Redux/Context/state management if used
+* Wrapper error handling
+* Toast/Alert/modal component responsible for displaying the error
+
+Do not modify unrelated functionality.
+
+### Prevent regression
+
+After implementing the fix, verify these scenarios:
+
+1. Valid caregiver → caregiver is added successfully.
+2. Non-existing caregiver → only the friendly error is shown; **no `404` is visible**.
+3. Invalid input → existing validation still works.
+4. Network/server error → existing error handling still works.
+5. Other API errors → existing behavior remains unchanged.
+6. No duplicate error message is displayed.
+7. No raw API response or technical status code is rendered by the UI.
+
+### Code quality
+
+* Follow the existing project architecture and coding style.
+* Reuse existing error-handling utilities if available.
+* Do not create duplicate error-handling logic unnecessarily.
+* Do not hardcode a UI-only workaround if the problem originates in shared error parsing.
+* Keep technical error details for developers/logging but never expose them to end users.
+* Do not change unrelated screens or APIs.
+
+### Final verification
+
+After fixing:
+
+* Run the relevant tests/build/lint checks available in the project.
+* Search the codebase again for places where the `404` response from the caregiver-add API could reach the UI.
+* Confirm the fix works through the full **Contact Support → My Support Team → Add Caregiver** flow.
+* Clearly explain which root cause was found, which files were changed, and how the fix prevents the bug from reopening.
