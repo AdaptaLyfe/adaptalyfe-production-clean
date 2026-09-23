@@ -50,6 +50,31 @@ html, body {
   outline-offset: 2px;
 }
 
+/* Shared sizing for hand-built modal panels, including keyboard and safe-area
+   constrained mobile web views. */
+.responsive-modal-backdrop {
+  padding: max(1rem, var(--safe-area-inset-top))
+    max(1rem, var(--safe-area-inset-right))
+    max(1rem, var(--safe-area-inset-bottom))
+    max(1rem, var(--safe-area-inset-left));
+}
+
+.responsive-modal-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem;
+  min-width: 0;
+  max-height: calc(
+    100dvh - max(
+      2rem,
+      var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem
+    )
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Keep Academic Planner popup fields fully bordered inside their scrollable forms. */
 .academic-planner-form input,
 .academic-planner-form textarea,

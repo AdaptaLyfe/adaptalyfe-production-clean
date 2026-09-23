@@ -178,8 +178,8 @@ export function SymptomTracker() {
       {typeof document !== "undefined" && createPortal(
         <>
           {isAddDialogOpen && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>
@@ -434,8 +434,8 @@ export function SymptomTracker() {
       {typeof document !== "undefined" && createPortal(
         <>
           {editingEntry && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4 sm:p-6" onClick={() => setEditingEntry(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingEntry(null)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>

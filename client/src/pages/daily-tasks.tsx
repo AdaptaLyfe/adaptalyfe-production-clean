@@ -520,8 +520,8 @@ export default function DailyTasks() {
 
       {/* Add Task Dialog */}
       {isAddDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Daily Task</h2>
@@ -642,8 +642,8 @@ export default function DailyTasks() {
 
       {/* Edit Task Dialog */}
       {isEditDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsEditDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Task</h2>

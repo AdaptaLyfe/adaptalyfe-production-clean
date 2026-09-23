@@ -1,6 +1,11 @@
 import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import {
+  isValidContactEmail,
+  isValidContactPhoneNumber,
+  normalizeContactPhoneNumber,
+} from "./contact-validation.js";
 
 // Import banking schemas
 export * from './banking-schema';
@@ -745,13 +750,6 @@ export const insertCaregiverSchema = createInsertSchema(caregivers).omit({
   id: true,
 });
 
-const validContactPhoneNumber = (value: string) => {
-  return /^\d{10}$/.test(value.trim());
-};
-
-const validContactEmail = (value: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-
 export const insertMessageSchema = createInsertSchema(messages).omit({
   id: true,
   sentAt: true,
@@ -894,12 +892,12 @@ export const insertEmergencyContactSchema = createInsertSchema(emergencyContacts
   id: true,
   createdAt: true,
 }).extend({
-  phoneNumber: z.string().trim().refine(
-    validContactPhoneNumber,
+  phoneNumber: z.string().trim().transform(normalizeContactPhoneNumber).refine(
+    isValidContactPhoneNumber,
     "Please enter a valid phone number with 7 to 15 digits.",
   ),
   email: z.string().trim().optional().nullable().refine(
-    (value) => !value || validContactEmail(value),
+    (value) => !value || isValidContactEmail(value),
     "Please enter a valid email address.",
   ),
 });

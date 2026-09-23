@@ -23,6 +23,11 @@ import {
   Plus
 } from "lucide-react";
 import { SymptomTracker } from "./symptom-tracker";
+import {
+  isValidContactEmail,
+  isValidContactPhoneNumber,
+  normalizeContactPhoneNumber,
+} from "@shared/contact-validation";
 
 interface Allergy {
   id: number;
@@ -97,13 +102,6 @@ const getDateInputValue = (dateValue?: string | null) =>
 
 const isFutureDateInputValue = (dateValue: string) =>
   Boolean(dateValue) && dateValue > getTodayDateInputValue();
-
-const isValidContactEmail = (email: string) =>
-  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-const isValidContactPhoneNumber = (phoneNumber: string) => {
-  return /^\d{10}$/.test(phoneNumber.trim());
-};
 
 export default function MedicalInformationModule() {
   const { toast } = useToast();
@@ -638,8 +636,8 @@ export default function MedicalInformationModule() {
         <>
           {/* Condition Dialog */}
       {showConditionDialog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Medical Condition</h2>
@@ -729,8 +727,8 @@ export default function MedicalInformationModule() {
       
       {/* Allergy Dialog */}
       {showAllergyDialog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
@@ -808,8 +806,8 @@ export default function MedicalInformationModule() {
 
       {/* Adverse Medication Dialog */}
       {showAdverseMedDialog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Adverse Medication</h2>
@@ -905,8 +903,8 @@ export default function MedicalInformationModule() {
 
       {/* Emergency Contact Dialog */}
       {showContactDialog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
@@ -923,7 +921,7 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = (formData.get("phoneNumber") as string).trim();
+                const phoneNumber = normalizeContactPhoneNumber(formData.get("phoneNumber") as string);
                 const email = (formData.get("email") as string).trim();
 
                 if (!isValidContactPhoneNumber(phoneNumber)) {
@@ -969,22 +967,11 @@ export default function MedicalInformationModule() {
                   <Input 
                     name="phoneNumber" 
                     required 
-                    placeholder="Phone number" 
                     type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]{10}"
-                    maxLength={10}
-                    title="Enter exactly 10 digits"
-                    onKeyDown={(e) => {
-                      if (e.key.length === 1 && !/\d/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onPaste={(e) => {
-                      if (!/^\d{10}$/.test(e.clipboardData.getData("text"))) {
-                        e.preventDefault();
-                      }
-                    }}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="e.g. +1 (555) 123-4567"
+                    title="Enter 7 to 15 digits, optionally with a country code"
                   />
                 </div>
                 <div>
@@ -1033,8 +1020,8 @@ export default function MedicalInformationModule() {
 
       {/* Provider Dialog */}
       {showProviderDialog && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
@@ -1133,8 +1120,8 @@ export default function MedicalInformationModule() {
       
       {/* Edit Condition Dialog */}
       {editingCondition && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Medical Condition</h2>
@@ -1223,8 +1210,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Allergy Dialog */}
       {editingAllergy && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAllergy(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAllergy(null)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Allergy</h2>
@@ -1302,8 +1289,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Adverse Medication Dialog */}
       {editingAdverseMed && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingAdverseMed(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAdverseMed(null)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Adverse Medication</h2>
@@ -1400,8 +1387,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Emergency Contact Dialog */}
       {editingContact && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingContact(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingContact(null)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Emergency Contact</h2>
@@ -1417,7 +1404,7 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = (formData.get("phoneNumber") as string).trim();
+                const phoneNumber = normalizeContactPhoneNumber(formData.get("phoneNumber") as string);
                 const email = (formData.get("email") as string).trim();
 
                 if (!isValidContactPhoneNumber(phoneNumber)) {
@@ -1467,20 +1454,9 @@ export default function MedicalInformationModule() {
                     placeholder="Phone number" 
                     defaultValue={editingContact.phoneNumber}
                     type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]{10}"
-                    maxLength={10}
-                    title="Enter exactly 10 digits"
-                    onKeyDown={(e) => {
-                      if (e.key.length === 1 && !/\d/.test(e.key)) {
-                        e.preventDefault();
-                      }
-                    }}
-                    onPaste={(e) => {
-                      if (!/^\d{10}$/.test(e.clipboardData.getData("text"))) {
-                        e.preventDefault();
-                      }
-                    }}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    title="Enter 7 to 15 digits, optionally with a country code"
                   />
                 </div>
                 <div>
@@ -1523,8 +1499,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Provider Dialog */}
       {editingProvider && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setEditingProvider(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingProvider(null)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Primary Care Provider</h2>
