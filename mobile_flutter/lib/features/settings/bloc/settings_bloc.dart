@@ -12,15 +12,28 @@ const _invalidInvitationCodeMessage =
 const _genericInvitationCodeError =
     'Unable to redeem invitation code. Please try again.';
 
+EventTransformer<T> _sequential<T>() {
+  return (events, mapper) => events.asyncExpand(mapper);
+}
+
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc(this.repository) : super(const SettingsState()) {
     on<SettingsStarted>(_load);
     on<RefreshSettings>(_load);
     on<UpdatePreference>(_updatePreference);
     on<UpdateLocalSetting>(_updateLocalSetting);
-    on<ToggleDashboardModule>(_toggleDashboardModule);
-    on<MoveDashboardModule>(_moveDashboardModule);
-    on<ResetDashboardLayout>(_resetDashboardLayout);
+    on<ToggleDashboardModule>(
+      _toggleDashboardModule,
+      transformer: _sequential(),
+    );
+    on<MoveDashboardModule>(
+      _moveDashboardModule,
+      transformer: _sequential(),
+    );
+    on<ResetDashboardLayout>(
+      _resetDashboardLayout,
+      transformer: _sequential(),
+    );
     on<SelectCareRecipient>(_selectCareRecipient);
     on<LockCareRecipientSetting>(_lockCareRecipientSetting);
     on<UnlockCareRecipientSetting>(_unlockCareRecipientSetting);
@@ -188,15 +201,18 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     ToggleDashboardModule event,
     Emitter<SettingsState> emit,
   ) async {
-    final modules = state.dashboardModules
+    final modules = _normalizeDashboardModules(state.dashboardModules
         .map(
           (module) => module.id == event.moduleId
               ? module.copyWith(enabled: !module.enabled)
               : module,
         )
-        .toList();
-    await repository.saveDashboardLayout(modules);
-    emit(state.copyWith(dashboardModules: modules, actionMessage: 'Dashboard saved.'));
+        .toList());
+    await _persistDashboardLayout(
+      modules,
+      repository.saveDashboardLayout,
+      emit,
+    );
   }
 
   Future<void> _moveDashboardModule(
@@ -209,24 +225,81 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     if (index < 0 || nextIndex < 0 || nextIndex >= modules.length) return;
     final item = modules.removeAt(index);
     modules.insert(nextIndex, item);
-    final ordered = [
-      for (var i = 0; i < modules.length; i++) modules[i].copyWith(order: i),
-    ];
-    await repository.saveDashboardLayout(ordered);
-    emit(state.copyWith(dashboardModules: ordered, actionMessage: 'Dashboard saved.'));
+    final ordered = _normalizeDashboardModules(modules);
+    await _persistDashboardLayout(
+      ordered,
+      repository.saveDashboardLayout,
+      emit,
+    );
   }
 
   Future<void> _resetDashboardLayout(
     ResetDashboardLayout event,
     Emitter<SettingsState> emit,
   ) async {
-    await repository.resetDashboardLayout();
+    await _persistDashboardLayout(
+      _normalizeDashboardModules(defaultDashboardModules),
+      repository.resetDashboardLayout,
+      emit,
+      successMessage: 'Dashboard restored to defaults.',
+    );
+  }
+
+  Future<void> _persistDashboardLayout(
+    List<DashboardModuleModel> modules,
+    Future<void> Function() persist,
+    Emitter<SettingsState> emit, {
+    String successMessage = 'Dashboard saved.',
+  }) async {
+    final previous = state.dashboardModules;
     emit(
       state.copyWith(
-        dashboardModules: defaultDashboardModules,
-        actionMessage: 'Dashboard restored to defaults.',
+        status: SettingsStatus.saving,
+        dashboardModules: modules,
+        busyKey: 'dashboard',
+        errorMessage: null,
+        actionMessage: null,
       ),
     );
+    try {
+      await persist();
+      emit(
+        state.copyWith(
+          status: SettingsStatus.loaded,
+          dashboardModules: modules,
+          busyKey: null,
+          actionMessage: successMessage,
+          errorMessage: null,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: SettingsStatus.loaded,
+          dashboardModules: previous,
+          busyKey: null,
+          actionMessage: null,
+          errorMessage: _messageFor(error),
+          sessionInvalid:
+              error is ApiException && error.type == ApiErrorType.unauthorized,
+        ),
+      );
+    }
+  }
+
+  List<DashboardModuleModel> _normalizeDashboardModules(
+    List<DashboardModuleModel> modules,
+  ) {
+    final seen = <String>{};
+    final normalized = <DashboardModuleModel>[];
+    for (final module in modules) {
+      if (seen.add(module.id)) normalized.add(module);
+    }
+    return [
+      for (var index = 0; index < normalized.length; index++)
+        normalized[index].copyWith(order: index),
+    ];
   }
 
   Future<void> _selectCareRecipient(

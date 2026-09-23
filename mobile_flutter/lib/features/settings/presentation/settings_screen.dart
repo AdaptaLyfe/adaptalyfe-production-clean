@@ -100,6 +100,8 @@ class _SettingsBody extends StatelessWidget {
                 const SizedBox(height: 16),
                 _ReactAppearanceCard(state: state),
                 const SizedBox(height: 16),
+                _DashboardPreferencesCard(state: state),
+                const SizedBox(height: 16),
                 _ReactSafetyCard(state: state),
                 const SizedBox(height: 16),
                 _ReactPrivacyCaregiverCard(state: state),

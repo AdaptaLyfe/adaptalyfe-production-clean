@@ -2101,3 +2101,17 @@ mtime_ms = 1790146250543
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9f12aeec-a45b-4150-9d75-089cc81d904b/e0c89900-7eca-4cf9-b19b-a6651bc83778"
 storage_version_token = "1790146260596091"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "V241b03qKWH4ZTqdUIBVx"
+uri = "file://artifacts/settings-dashboard-customization-changed-files.zip"
+type = "unspecified"
+title = "Settings dashboard customization changed files"
+description = "ZIP containing only the two Flutter files changed for the Settings → Your Dashboard customization fix."
+logical_id = "29e99f4b-1d44-4836-9fc3-b7ca4d90d6c3"
+content_hash = "sha256:314805a32ad47c27076485d6d083626322fb0a368f986fcfde4124cf8f03a1b6"
+size = 16772
+mtime_ms = 1790146885649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/29e99f4b-1d44-4836-9fc3-b7ca4d90d6c3/d79e95ed-12ea-428a-89d8-6955d7d21f80"
+storage_version_token = "1790146891445737"
+content_type = "application/octet-stream"
