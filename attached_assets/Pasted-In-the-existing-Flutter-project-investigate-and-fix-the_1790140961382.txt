@@ -1,0 +1,79 @@
+In the existing Flutter project, investigate and fix the subscription purchase error:
+
+**"This plan is not available in this store."**
+
+### Problem
+
+After the user selects a subscription plan and tries to purchase it, the app displays:
+
+> This plan is not available in this store.
+
+### Requirements
+
+1. **Find the root cause**
+
+   * Check the existing subscription/IAP implementation.
+   * Check how subscription product IDs are configured.
+   * Check Android Google Play Billing configuration.
+   * Check iOS App Store / StoreKit configuration.
+   * Check whether the selected product ID matches the product configured in the stores.
+   * Check whether the correct store/product is being used for Android vs iOS.
+   * Check product availability, country/region, subscription status, and testing configuration.
+   * Check whether the app is using the correct package/bundle ID.
+
+2. **Do not blindly change the subscription logic**
+
+   * First identify why the store reports the product as unavailable.
+   * Reuse the existing subscription architecture where possible.
+   * Do not create duplicate payment/subscription implementations.
+
+3. **Platform-specific behavior**
+
+   * Android → use the Google Play subscription product.
+   * iOS → use the App Store subscription product.
+   * Make sure Android never tries to purchase an iOS product and vice versa.
+   * Make sure iOS never tries to purchase an Android product.
+
+4. **Product IDs**
+
+   * Locate all subscription product IDs in the Flutter code and configuration.
+   * Compare them with the IDs expected by Google Play Console and App Store Connect.
+   * Do not invent new product IDs.
+   * If a product ID is missing or incorrectly configured, clearly identify it.
+
+5. **Error handling**
+
+   * If the product is genuinely unavailable from the store, show a clear user-friendly message.
+   * Do not show "This plan is not available in this store" when the real problem is a configuration, product ID, billing connection, or store setup issue.
+
+6. **Testing**
+   Test the complete flow:
+
+   * Open subscription screen.
+   * Display available plans.
+   * Select a plan.
+   * Start purchase.
+   * Complete/cancel purchase.
+   * Verify purchase result.
+   * Verify subscription status.
+   * Verify Android and iOS separately.
+
+### Important
+
+Before modifying files, inspect the existing subscription implementation and explain:
+
+* Which package/library is being used.
+* Where the product IDs are defined.
+* Which product ID is being passed when the error occurs.
+* Whether the problem is in Flutter code or Google Play/App Store configuration.
+
+Then make the minimum required code changes and provide:
+
+1. Root cause
+2. Files changed
+3. Exact changes made
+4. Android testing steps
+5. iOS testing steps
+6. Any Google Play Console/App Store Connect configuration that must be completed manually
+
+Do not modify unrelated features or UI.
