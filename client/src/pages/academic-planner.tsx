@@ -205,11 +205,18 @@ export default function AcademicPlanner() {
   // Class creation mutation
   const createClassMutation = useMutation({
     mutationFn: async (classData: any) => {
-      return apiRequest("POST", "/api/academic-classes", classData);
+      const response = await apiRequest("POST", "/api/academic-classes", classData);
+      return response.json() as Promise<AcademicClass>;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/academic-classes"] });
-      refetchClasses(); // Force refetch
+    onSuccess: async (createdClass) => {
+      queryClient.setQueryData<AcademicClass[]>(
+        ["/api/academic-classes"],
+        (currentClasses = []) => [
+          createdClass,
+          ...currentClasses.filter((item) => item.id !== createdClass.id),
+        ],
+      );
+      await refetchClasses();
       setIsAddClassOpen(false);
       setNewClass({ className: "", instructor: "", building: "", room: "", startTime: "", endTime: "", dayOfWeek: 1, credits: 3, semester: "Fall 2025" });
     },

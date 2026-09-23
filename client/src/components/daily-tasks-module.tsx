@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeAgo } from "@/lib/utils";
+import { formatCategoryLabel } from "@/lib/display-labels";
 import type { DailyTask } from "@shared/schema";
 
 function getLocalCalendarDate(date = new Date()): string {
@@ -142,7 +143,7 @@ export default function DailyTasksModule() {
                             {task.frequency || 'daily'}
                           </Badge>
                           <span className="text-xs px-2 py-0 bg-gray-100 text-gray-600 rounded">
-                            {task.category}
+                            {formatCategoryLabel(task.category)}
                           </span>
                           <span className="text-xs text-gray-500 flex items-center gap-1">
                             <Clock className="w-3 h-3" />

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/responsive.dart';
+import '../../../core/utils/display_labels.dart';
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_state.dart';
 import '../../calendar/models/calendar_models.dart';
@@ -2375,7 +2376,7 @@ class _HomeSummaryModule extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                         leading: const Icon(Icons.schedule_rounded, color: Color(0xFF2563EB)),
                         title: Text(task.title),
-                        subtitle: Text(task.category),
+                        subtitle: Text(prettyDisplayLabel(task.category)),
                         trailing: TextButton(
                           onPressed: () => context.push('/daily-tasks'),
                           child: const Text('Open'),
@@ -4312,7 +4313,7 @@ class _TaskRow extends StatelessWidget {
             color: task.isCompleted ? const Color(0xFF94A3B8) : const Color(0xFF1F2937),
           ),
         ),
-        subtitle: Text('${task.category}${task.estimatedMinutes > 0 ? ' · ${task.estimatedMinutes} min' : ''}'),
+        subtitle: Text('${prettyDisplayLabel(task.category)}${task.estimatedMinutes > 0 ? ' · ${task.estimatedMinutes} min' : ''}'),
         onTap: () => context.push('/daily-tasks'),
       );
 }

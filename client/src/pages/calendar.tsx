@@ -29,6 +29,7 @@ import {
   toCalendarDateTimeIso,
 } from "@/lib/calendar-date";
 import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
+import { formatCategoryLabel } from "@/lib/display-labels";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
@@ -207,7 +208,7 @@ export default function Calendar() {
           title: task.title,
           time: null,
           completed: completedForDate,
-          category: task.category || 'daily',
+          category: formatCategoryLabel(task.category || 'daily'),
           icon: completedForDate ? CheckCircle : Circle,
           color: completedForDate ? 'text-green-600' : 'text-blue-600'
         });

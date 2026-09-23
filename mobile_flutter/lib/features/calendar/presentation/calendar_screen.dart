@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/date/calendar_date.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/utils/display_labels.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../daily_tasks/utils/daily_task_schedule.dart';
@@ -1374,7 +1375,9 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
           start: date,
           type: _CalendarItemType.task,
           isCompleted: task.isCompletedForDate(date),
-          category: task.category.isEmpty ? 'daily' : task.category,
+          category: prettyDisplayLabel(
+            task.category.isEmpty ? 'daily' : task.category,
+          ),
           location: null,
         ),
       );

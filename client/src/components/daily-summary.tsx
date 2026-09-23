@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, DollarSign, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 import type { DailyTask, Bill, MoodEntry } from "@shared/schema";
+import { formatCategoryLabel } from "@/lib/display-labels";
 
 export default function DailySummary() {
   const { data: tasksData } = useQuery<DailyTask[]>({
@@ -122,7 +123,7 @@ export default function DailySummary() {
                   <span className="text-gray-700">{task.title}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {task.category}
+                      {formatCategoryLabel(task.category)}
                     </Badge>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Clock className="w-3 h-3" />

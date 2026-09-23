@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { formatCategoryLabel } from "@/lib/display-labels";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Clock, CheckCircle, AlertCircle, Settings } from "lucide-react";
 
@@ -265,7 +266,7 @@ export default function TaskReminders() {
                               </>
                             )}
                             <span>•</span>
-                            <span className="capitalize">{task.category.replace('_', ' ')}</span>
+                            <span>{formatCategoryLabel(task.category)}</span>
                           </div>
                         </div>
                       </div>

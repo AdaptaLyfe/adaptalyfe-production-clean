@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Appointment, CalendarEvent, DailyTask, User } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { formatCategoryLabel } from "@/lib/display-labels";
 import { ethanDemoDay } from "./demo-data";
 import {
   ContextualSuggestion,
@@ -135,7 +136,7 @@ function createLiveTimeline(
         id: `task-${task.id}`,
         title: task.title,
         time: startsAt ? formatTime(startsAt) : undefined,
-        detail: task.category,
+        detail: formatCategoryLabel(task.category),
         kind: "task" as const,
         startsAt,
       };

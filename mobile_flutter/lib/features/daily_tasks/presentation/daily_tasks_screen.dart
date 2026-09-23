@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
+import '../../../core/utils/display_labels.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
@@ -464,7 +465,7 @@ class _CategoryCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    '${_prettyLabel(category)} Tasks',
+                    '${prettyDisplayLabel(category)} Tasks',
                     style: const TextStyle(
                       color: Color(0xFF1F2937),
                     fontSize: 18,
@@ -1020,7 +1021,7 @@ class _TaskFormDialogState extends State<_TaskFormDialog> {
     );
     final categoryOptions = [..._categories];
     if (!categoryOptions.any((option) => option.$1 == _category)) {
-      categoryOptions.add((_category, _prettyLabel(_category)));
+      categoryOptions.add((_category, prettyDisplayLabel(_category)));
     }
 
     return BlocListener<DailyTasksBloc, DailyTasksState>(
@@ -1267,15 +1268,4 @@ class _ScheduledTimeField extends StatelessWidget {
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     return '$hour:${time.minute.toString().padLeft(2, '0')} $period';
   }
-}
-
-String _prettyLabel(String value) {
-  return value
-      .split('_')
-      .map(
-        (word) => word.isEmpty
-            ? word
-            : '${word[0].toUpperCase()}${word.substring(1)}',
-      )
-      .join(' ');
 }

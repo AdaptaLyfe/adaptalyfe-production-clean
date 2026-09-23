@@ -84,6 +84,7 @@ import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { trackTaskCompletion, trackFeatureUsage } from "@/lib/firebase";
 import type { DailyTask } from "@shared/schema";
 import { TaskJourneySummary } from "@/components/ai-ready";
+import { formatCategoryLabel } from "@/lib/display-labels";
 
 
 export default function DailyTasks() {
@@ -405,7 +406,7 @@ export default function DailyTasks() {
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <div className={`w-6 h-6 sm:w-8 sm:h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-lg flex-shrink-0`}></div>
-                <span className="capitalize text-base sm:text-lg">{category} Tasks</span>
+                <span className="text-base sm:text-lg">{formatCategoryLabel(category)} Tasks</span>
                 <span className="text-xs sm:text-sm font-normal text-gray-600">
                   ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length})
                 </span>
