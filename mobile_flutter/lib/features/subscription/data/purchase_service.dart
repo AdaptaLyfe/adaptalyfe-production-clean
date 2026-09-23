@@ -15,8 +15,14 @@ class PurchaseService {
 
   Future<PurchaseAvailability> initialize() async {
     final storeName = _storeName;
+    final requestedProductIds =
+        subscriptionPlans.map((plan) => plan.productId).toSet();
+    debugPrint(
+      '[Subscription IAP] Requested Product IDs: $requestedProductIds',
+    );
     try {
       final available = await _store.isAvailable();
+      debugPrint('[Subscription IAP] Store Available: $available ($storeName)');
       if (!available) {
         return PurchaseAvailability(
           available: false,
@@ -27,9 +33,16 @@ class PurchaseService {
       }
 
       final response = await _store.queryProductDetails(
-        subscriptionPlans.map((plan) => plan.productId).toSet(),
+        requestedProductIds,
       );
       final products = response.productDetails;
+      final returnedProductIds = products.map((product) => product.id).toList();
+      debugPrint(
+        '[Subscription IAP] Returned Product IDs: $returnedProductIds',
+      );
+      debugPrint(
+        '[Subscription IAP] Not Found Product IDs: ${response.notFoundIDs}',
+      );
       final message = response.notFoundIDs.isNotEmpty
           ? '$storeName did not return one or more subscription products. '
               'Confirm the product IDs, app identifier, store listing, and '
@@ -46,7 +59,8 @@ class PurchaseService {
         notFoundIds: response.notFoundIDs,
         message: message,
       );
-    } catch (_) {
+    } catch (error) {
+      debugPrint('[Subscription IAP] Product query error: $error');
       return PurchaseAvailability(
         available: false,
         message:

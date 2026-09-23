@@ -2045,3 +2045,17 @@ mtime_ms = 1790141174017
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/078a62d1-fc13-4745-8003-3774065b5a85/0fa49994-e8d7-41dc-9535-0cd581972ec1"
 storage_version_token = "1790141182018614"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fO2fTN52OFvKKfkNRIx_s"
+uri = "file://artifacts/flutter-google-play-subscription-lookup-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Google Play subscription lookup fix — changed files ZIP"
+description = "Contains exactly the two Flutter subscription files changed to retry selected-product lookup and log requested, returned, missing, selected, and store-availability details."
+logical_id = "754186b6-1d73-4479-890c-46de75c7b08a"
+content_hash = "sha256:22ca167a38ac06a10cdc33d5ae6651e82c7a92ae25b66d2c041ee39f2c5c6f0f"
+size = 5321
+mtime_ms = 1790142253415
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/754186b6-1d73-4479-890c-46de75c7b08a/08c71279-2e32-4afe-b2aa-64e25f45b69d"
+storage_version_token = "1790142260463076"
+content_type = "application/octet-stream"

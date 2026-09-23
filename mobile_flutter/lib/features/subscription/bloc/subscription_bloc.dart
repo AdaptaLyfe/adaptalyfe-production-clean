@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
@@ -59,6 +60,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     if (state.hasActiveSubscription || state.isBusy) return;
     final plan = _planFor(event.planId);
     if (plan == null) return;
+    debugPrint(
+      '[Subscription IAP] Selected plan: ${plan.id}, '
+      'product ID: ${plan.productId}',
+    );
     final storeProductAvailable = _productFor(plan.productId) != null;
     final unavailableMessage = state.availabilityMessage ??
         'The selected subscription was not returned by the current store. '
@@ -269,8 +274,34 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
     final plan = _planFor(event.planId);
     if (plan == null) return;
-    final product = _productFor(plan.productId);
+    debugPrint(
+      '[Subscription IAP] Purchase requested: plan=${plan.id}, '
+      'product ID=${plan.productId}',
+    );
+    var product = _productFor(plan.productId);
     if (product == null) {
+      debugPrint(
+        '[Subscription IAP] Product ${plan.productId} was not cached; '
+        'retrying Google Play/App Store product lookup.',
+      );
+      final refreshedAvailability = await purchaseService.initialize();
+      _products = refreshedAvailability.products;
+      product = _productFor(plan.productId);
+      emit(
+        state.copyWith(
+          products: {
+            for (final item in _products) item.id: item,
+          },
+          storeAvailable: refreshedAvailability.available,
+          availabilityMessage: refreshedAvailability.message,
+        ),
+      );
+    }
+    if (product == null) {
+      debugPrint(
+        '[Subscription IAP] Selected product ${plan.productId} is still '
+        'unavailable after retry.',
+      );
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
         errorMessage: state.availabilityMessage ??
