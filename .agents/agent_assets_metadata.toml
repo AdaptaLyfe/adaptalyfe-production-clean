@@ -2185,3 +2185,17 @@ mtime_ms = 1790156971237
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/386a397d-9aca-406a-9474-2059d66b7bf9/7c411154-3d82-42c6-8d71-d837fac87c1f"
 storage_version_token = "1790156976585250"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XGOiS9QaWn6FWDTeEGEy4"
+uri = "file://deliverables/flutter-ui-overflow-changed-files.zip"
+type = "unspecified"
+title = "Flutter UI overflow changed file"
+description = "ZIP containing the single Flutter file changed for the responsive Create Study Group and Add New Class dialog fixes."
+logical_id = "4af4f457-b39d-4076-98cf-6d63be6e8070"
+content_hash = "sha256:d8c5e83d846a61f948e328f7ec97ef930930f53dd7053d81d12bac901e85b779"
+size = 14512
+mtime_ms = 1790158791744
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4af4f457-b39d-4076-98cf-6d63be6e8070/84650bff-2e58-4944-9042-7084d56434aa"
+storage_version_token = "1790158867740026"
+content_type = "application/octet-stream"
