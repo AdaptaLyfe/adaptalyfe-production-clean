@@ -48,12 +48,10 @@ import {
 import { db, pool } from "./db";
 import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-
-function daysBetween(startDay: string, endDay: string): number {
-  const start = new Date(`${startDay}T00:00:00.000Z`).getTime();
-  const end = new Date(`${endDay}T00:00:00.000Z`).getTime();
-  return Math.round((end - start) / (24 * 60 * 60 * 1000));
-}
+import {
+  calculateCurrentStreak,
+  normalizedActivityDates,
+} from "./activity-streak";
 
 function getServerCalendarDate(date = new Date()): string {
   return date.toISOString().slice(0, 10);
@@ -740,7 +738,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   async recordUserActivity(userId: number, activityDate = new Date()): Promise<number> {
-    const activityDay = activityDate.toISOString().slice(0, 10);
+    void activityDate;
+    return this.refreshUserActivityStreak(userId);
+  }
+
+  async refreshUserActivityStreak(userId: number): Promise<number> {
+    const today = getServerCalendarDate();
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const completionDates: unknown[] = [];
+
+    if (capabilities.hasCompletions) {
+      const completionRows = await db
+        .select({ completionDate: dailyTaskCompletions.completionDate })
+        .from(dailyTaskCompletions)
+        .where(eq(dailyTaskCompletions.userId, userId));
+      completionDates.push(...completionRows.map((row) => row.completionDate));
+    }
+
+    const [taskRows, shoppingRows] = await Promise.all([
+      db
+        .select({
+          isCompleted: dailyTasks.isCompleted,
+          completedAt: dailyTasks.completedAt,
+        })
+        .from(dailyTasks)
+        .where(eq(dailyTasks.userId, userId)),
+      db
+        .select({
+          isPurchased: shoppingLists.isPurchased,
+          purchasedDate: shoppingLists.purchasedDate,
+        })
+        .from(shoppingLists)
+        .where(eq(shoppingLists.userId, userId)),
+    ]);
+
+    completionDates.push(
+      ...taskRows
+        .filter((task) => task.isCompleted && task.completedAt)
+        .map((task) => task.completedAt),
+      ...shoppingRows
+        .filter((item) => item.isPurchased && item.purchasedDate)
+        .map((item) => item.purchasedDate),
+    );
+
+    const validCompletionDates = normalizedActivityDates(completionDates, today);
+    const streakDays = calculateCurrentStreak(validCompletionDates, today);
+    const latestActivityDate = validCompletionDates.at(-1) || null;
+
     const [existing] = await db
       .select()
       .from(streakTracking)
@@ -750,64 +794,27 @@ export class DatabaseStorage implements IStorage {
       ))
       .limit(1);
 
-    let streakDays = 1;
     if (existing) {
-      const lastActivityDay = existing.lastActivityDate;
-      if (lastActivityDay === activityDay) {
-        streakDays = existing.currentStreak || 1;
-      } else if (lastActivityDay && daysBetween(lastActivityDay, activityDay) === 1) {
-        streakDays = (existing.currentStreak || 0) + 1;
-      }
-
       await db
         .update(streakTracking)
         .set({
           currentStreak: streakDays,
           longestStreak: Math.max(existing.longestStreak || 0, streakDays),
-          lastActivityDate: activityDay,
-          isActive: true,
+          lastActivityDate: latestActivityDate,
+          isActive: streakDays > 0,
         })
         .where(eq(streakTracking.id, existing.id));
-    } else {
+    } else if (latestActivityDate) {
       await db.insert(streakTracking).values({
         userId,
         streakType: "daily_activity",
         currentStreak: streakDays,
         longestStreak: streakDays,
-        lastActivityDate: activityDay,
-        isActive: true,
+        lastActivityDate: latestActivityDate,
+        isActive: streakDays > 0,
       });
     }
 
-    await this.updateUserStreak(userId, streakDays);
-    return streakDays;
-  }
-
-  async refreshUserActivityStreak(userId: number): Promise<number> {
-    const [existing] = await db
-      .select()
-      .from(streakTracking)
-      .where(and(
-        eq(streakTracking.userId, userId),
-        eq(streakTracking.streakType, "daily_activity"),
-      ))
-      .limit(1);
-
-    if (!existing?.lastActivityDate) {
-      const user = await this.getUserById(userId);
-      return user?.streakDays || 0;
-    }
-
-    const today = new Date().toISOString().slice(0, 10);
-    const daysSinceActivity = daysBetween(existing.lastActivityDate, today);
-    const streakDays = daysSinceActivity > 1 ? 0 : (existing.currentStreak || 0);
-
-    if (streakDays !== (existing.currentStreak || 0)) {
-      await db
-        .update(streakTracking)
-        .set({ currentStreak: streakDays, isActive: streakDays > 0 })
-        .where(eq(streakTracking.id, existing.id));
-    }
     await this.updateUserStreak(userId, streakDays);
     return streakDays;
   }

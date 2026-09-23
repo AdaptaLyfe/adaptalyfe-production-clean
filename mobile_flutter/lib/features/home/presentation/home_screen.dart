@@ -10,6 +10,7 @@ import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_event.dart';
 import '../../daily_tasks/bloc/daily_tasks_bloc.dart';
 import '../../daily_tasks/bloc/daily_tasks_event.dart';
+import '../../daily_tasks/bloc/daily_tasks_state.dart';
 import '../../financial/bloc/financial_bloc.dart';
 import '../../financial/bloc/financial_event.dart';
 import '../../medical/bloc/medical_bloc.dart';
@@ -67,50 +68,60 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeBloc, HomeState>(
+    return BlocListener<DailyTasksBloc, DailyTasksState>(
+      listenWhen: (previous, current) =>
+          previous.action == DailyTaskAction.completing &&
+          current.action == DailyTaskAction.none &&
+          current.errorMessage == null &&
+          current.actionMessage != null,
       listener: (context, state) {
-        if (state is HomeLoaded &&
-            state.chatActionStatus == HomeChatActionStatus.completed) {
-          _refreshFeatureBlocs(context, state.user.id);
-        }
-        if (state is HomeError) {
-          if (state.sessionInvalid) {
-            context.read<AuthBloc>().add(const CheckAuthentication());
-            return;
+        context.read<HomeBloc>().add(const RefreshHome());
+      },
+      child: BlocConsumer<HomeBloc, HomeState>(
+        listener: (context, state) {
+          if (state is HomeLoaded &&
+              state.chatActionStatus == HomeChatActionStatus.completed) {
+            _refreshFeatureBlocs(context, state.user.id);
           }
+          if (state is HomeError) {
+            if (state.sessionInvalid) {
+              context.read<AuthBloc>().add(const CheckAuthentication());
+              return;
+            }
 
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                action: SnackBarAction(
-                  label: 'Retry',
-                  onPressed: () {
-                    context.read<HomeBloc>().add(const RefreshHome());
-                  },
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  action: SnackBarAction(
+                    label: 'Retry',
+                    onPressed: () {
+                      context.read<HomeBloc>().add(const RefreshHome());
+                    },
+                  ),
                 ),
-              ),
-            );
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: const _HomeAppBar(),
-          body: HomeDashboardBody(
-            homeState: state,
-            onRefresh: () => _refreshDashboard(context),
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => showHomeChatSheet(context),
-            backgroundColor: const Color(0xFF059669),
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.auto_awesome_rounded),
-             label: Text(AppResponsive.isCompact(context) ? 'AI' : 'AdaptAI'),
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        );
-      },
+              );
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+            appBar: const _HomeAppBar(),
+            body: HomeDashboardBody(
+              homeState: state,
+              onRefresh: () => _refreshDashboard(context),
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => showHomeChatSheet(context),
+              backgroundColor: const Color(0xFF059669),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.auto_awesome_rounded),
+              label: Text(AppResponsive.isCompact(context) ? 'AI' : 'AdaptAI'),
+            ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          );
+        },
+      ),
     );
   }
 
