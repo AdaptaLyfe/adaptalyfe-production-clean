@@ -1,0 +1,171 @@
+In the existing React Native + Wrapper project, fix the Sleep Routine navigation and Log Sleep behavior.
+
+### Bug
+
+Path:
+**Sleep Routine → Overview → Log Sleep**
+
+Currently, when the user clicks **"Log Sleep"** from the Sleep Routine Overview screen:
+
+* It redirects to the **Log Sleep** tab.
+* But an already existing sleep log is automatically opened in **Edit mode**.
+* Because of this, the user cannot create/add a new sleep log.
+
+### Required behavior
+
+When the user clicks **"Log Sleep"** from the Sleep Routine Overview:
+
+1. Navigate to the **Log Sleep** tab.
+2. Open the screen in **NEW/ADD mode**, not Edit mode.
+3. Show empty/default fields required for creating a new sleep log.
+4. Do NOT automatically load an existing sleep record.
+5. The user must be able to enter new sleep information and save it as a new record.
+6. Existing sleep logs must remain unchanged.
+
+### Important distinction
+
+There must be two separate flows:
+
+**Add New Sleep**
+
+* Overview → Click **Log Sleep**
+* Open Log Sleep screen in `ADD/CREATE` mode.
+* No existing record ID should be passed.
+* Do not populate the form from an existing sleep log.
+* Save should create a NEW sleep record.
+
+**Edit Existing Sleep**
+
+* User selects an existing sleep log.
+* Open Log Sleep screen in `EDIT` mode.
+* Pass the selected sleep log ID.
+* Load that specific record.
+* Save should update the existing record.
+
+### Root-cause investigation
+
+Before making changes, inspect the existing code and identify why the Overview's **Log Sleep** action is triggering edit mode.
+
+Check:
+
+* Sleep Routine Overview screen
+* Log Sleep tab/screen
+* Navigation/router configuration
+* Navigation parameters
+* Sleep log ID being passed during navigation
+* `isEdit`, `editMode`, `mode`, `sleepLogId`, or similar state/params
+* `useEffect`/initialization logic that loads an existing sleep record
+* Shared state/context/store used by Sleep Routine
+* Wrapper navigation handling, if the Wrapper controls or modifies the route
+* Any default selected sleep log logic
+
+Do NOT simply hide the existing data. Fix the actual navigation/state logic causing the wrong mode.
+
+### Prevent regression
+
+Make the add/edit mode explicit.
+
+Use a clear distinction such as:
+
+* `mode: "create"`
+* `mode: "edit"`
+
+or the equivalent pattern already used by this project.
+
+When navigating from Overview using **Log Sleep**, explicitly open:
+
+`mode = create`
+
+and ensure:
+
+`existingSleepLogId = null/undefined`
+
+When editing an existing log, explicitly open:
+
+`mode = edit`
+
+with the correct existing sleep log ID.
+
+Do not rely on the presence/absence of cached data or previously selected records to determine the mode.
+
+### Form initialization
+
+Make sure the Log Sleep screen resets correctly when opened in Create mode.
+
+Create mode:
+
+* Clear previous sleep log data from the form.
+* Apply only the intended default values.
+* Do not reuse values from the previously edited sleep log.
+* Do not automatically fetch an existing sleep record.
+
+Edit mode:
+
+* Load only the selected sleep record.
+* Populate the form with that record's data.
+
+Also handle navigation from Edit → Create correctly. If the user edits a sleep log and then goes back to Overview and clicks **Log Sleep**, the previous edit state must not remain active.
+
+### Save behavior
+
+Create mode:
+
+* Save = CREATE a new sleep log.
+* Do not call the update API/action with an old sleep log ID.
+
+Edit mode:
+
+* Save = UPDATE the selected sleep log.
+* Do not create a duplicate record.
+
+### Wrapper compatibility
+
+This is an existing **React Native + Wrapper** application.
+
+Do not rewrite the Sleep Routine feature or replace the existing navigation architecture.
+
+Preserve:
+
+* Existing routes
+* Existing UI
+* Existing API/backend
+* Existing CRUD behavior
+* Existing sleep log list
+* Existing edit functionality
+* Existing validation
+* Existing styling
+* Existing Wrapper behavior
+
+Only change the logic required to correctly separate Create and Edit flows.
+
+### Testing checklist
+
+After implementing the fix, test all of these cases:
+
+1. Overview → Log Sleep → should open empty Create mode.
+2. Create a new sleep log → should successfully save.
+3. Return to Overview → newly created log should appear.
+4. Select an existing sleep log → should open Edit mode.
+5. Edit existing sleep log → should update that record.
+6. After editing, return to Overview → click Log Sleep → must open Create mode, not the previous Edit record.
+7. Open Log Sleep multiple times → each new entry should start in Create mode.
+8. Cancel/back from Edit mode → then click Log Sleep → must still open Create mode.
+9. Verify no duplicate sleep records are created accidentally.
+10. Verify existing sleep logs are not modified when creating a new log.
+11. Test on the Wrapper flow as well as the normal React Native navigation flow if both are supported.
+
+### Important
+
+First inspect the existing implementation and find the actual root cause.
+
+Do not make a temporary UI-only workaround.
+
+Implement a permanent fix with explicit Create/Edit state so this bug does not come back after navigation, rerender, refresh, or reopening the screen.
+
+After fixing:
+
+* Tell me which files were changed.
+* Explain the root cause in simple words.
+* Explain exactly how Create mode and Edit mode are now separated.
+* Confirm that the existing Edit Sleep functionality still works.
+* Do not modify unrelated features.
