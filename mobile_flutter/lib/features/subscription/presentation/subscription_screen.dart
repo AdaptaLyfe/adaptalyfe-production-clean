@@ -335,6 +335,11 @@ class _PlanCard extends StatelessWidget {
     final stripeAvailable = state.canUseStripe;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
+    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
+        ? 'Subscribe via Google Play'
+        : defaultTargetPlatform == TargetPlatform.iOS
+            ? 'Subscribe via App Store'
+            : 'Subscribe through store';
     return Semantics(
       selected: selected,
       child: GestureDetector(
@@ -443,7 +448,7 @@ class _PlanCard extends StatelessWidget {
                 child: Text(
                   state.busyPlanId == plan.id
                       ? 'Processing…'
-                      : 'Subscribe through store',
+                      : storeButtonLabel,
                 ),
               ),
             ),

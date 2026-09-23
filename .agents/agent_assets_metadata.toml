@@ -2003,3 +2003,17 @@ mtime_ms = 1790083082230
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd4bd681-6a41-47e5-93f9-05db7c66100e/3eb9de9b-958c-4da9-8abb-0f0070147220"
 storage_version_token = "1790083089930165"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "FATdpUHrTijSm2NezMFCc"
+uri = "file://artifacts/flutter-native-wallet-flow-compatibility-changed-files.zip"
+type = "unspecified"
+title = "Flutter native wallet flow — changed files ZIP"
+description = "Contains only the two Flutter Subscription files changed after reviewing the existing React Native wrapper flow."
+logical_id = "9a115e06-d197-427f-b949-f28ffc8d160a"
+content_hash = "sha256:38ba70866e507864ed1910c2169074520068825c27107db15b11f5f843375107"
+size = 9012
+mtime_ms = 1790137616626
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9a115e06-d197-427f-b949-f28ffc8d160a/01758995-21ee-4698-8049-a97c912b4a2f"
+storage_version_token = "1790137624532252"
+content_type = "application/octet-stream"

@@ -386,12 +386,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
       if (item.status == PurchaseStatus.error) {
         await purchaseService.complete(item);
-        final message = item.error?.message ?? 'The purchase could not be completed.';
+        final errorCode = item.error?.code.toLowerCase() ?? '';
+        final errorMessage = item.error?.message.toLowerCase() ?? '';
+        final cancelled =
+            errorCode.contains('cancel') || errorMessage.contains('cancel');
         emit(
           state.copyWith(
-            status: SubscriptionStatus.failure,
+            status: cancelled
+                ? SubscriptionStatus.cancelled
+                : SubscriptionStatus.failure,
             busyPlanId: null,
-            errorMessage: message,
+            errorMessage: cancelled
+                ? null
+                : item.error?.message ??
+                    'Payment failed. Please try again.',
+            actionMessage: cancelled ? 'Payment was cancelled.' : null,
           ),
         );
         continue;
