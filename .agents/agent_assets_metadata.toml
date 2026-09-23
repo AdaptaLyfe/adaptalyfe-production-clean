@@ -2073,3 +2073,17 @@ mtime_ms = 1790144472645
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/da1c6c92-976d-44fb-9074-74bcb8c718f0/7274a95a-d49a-45d5-a1ef-cba138b80d8e"
 storage_version_token = "1790144478162536"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LS2JfldfrsdmZ8EzaKg3s"
+uri = "file://feature-menu-message-fix.zip"
+type = "unspecified"
+title = "Feature menu message fix"
+description = "ZIP containing only the changed Flutter navigation file."
+logical_id = "3dcc15fe-0028-4a1a-b0ea-f81a8a870772"
+content_hash = "sha256:91d9b46e3dd4dcb88680302674495d37e36652bd3b2d8c6374ae5ed969bbef0c"
+size = 5540
+mtime_ms = 1790145121369
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3dcc15fe-0028-4a1a-b0ea-f81a8a870772/24ac2010-1060-40f5-8036-3281cb1547ee"
+storage_version_token = "1790145125749998"
+content_type = "application/octet-stream"

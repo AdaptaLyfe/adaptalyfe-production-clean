@@ -542,7 +542,20 @@ class AppNavigationDrawer extends StatelessWidget {
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('This feature is not available in the Flutter app yet.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Feature Unavailable',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'This feature is not available at the moment. Please check back later.',
+            ),
+          ],
+        ),
       ),
     );
   }
