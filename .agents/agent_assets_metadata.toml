@@ -2227,3 +2227,17 @@ mtime_ms = 1790160204172
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4f25e305-537a-4aa2-9c36-a2b14cc181d2/6dfcfdcb-cf51-49f5-8d8b-ee9777b7af2f"
 storage_version_token = "1790160210437307"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KSSOTKv1qH1ky6iEjN9wN"
+uri = "file://artifacts/flutter-calendar-undefined-state-fix.zip"
+type = "unspecified"
+title = "Flutter calendar state fix"
+description = "ZIP containing only the changed calendar_screen.dart file."
+logical_id = "f8b1b9be-ef46-4a5a-894b-be46db31a3f2"
+content_hash = "sha256:710fbf796d762979e4d99f2d9bce4da75b6dee27bb66a8783656ed72092f8fe6"
+size = 11276
+mtime_ms = 1790160761150
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f8b1b9be-ef46-4a5a-894b-be46db31a3f2/3da84db3-572d-4178-8562-cd3f141c465c"
+storage_version_token = "1790160765180382"
+content_type = "application/octet-stream"

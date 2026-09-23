@@ -101,7 +101,7 @@ class _CalendarView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 28),
         children: [
-          const _CalendarPageHeader(),
+          _CalendarPageHeader(state: state),
           const SizedBox(height: 18),
           _CalendarNavigation(state: state),
           const SizedBox(height: 12),
@@ -128,7 +128,9 @@ class _CalendarView extends StatelessWidget {
 }
 
 class _CalendarPageHeader extends StatelessWidget {
-  const _CalendarPageHeader();
+  const _CalendarPageHeader({required this.state});
+
+  final CalendarState state;
 
   @override
   Widget build(BuildContext context) {
