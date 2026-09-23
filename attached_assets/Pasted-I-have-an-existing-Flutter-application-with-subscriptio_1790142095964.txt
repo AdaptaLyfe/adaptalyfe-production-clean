@@ -1,0 +1,120 @@
+I have an existing Flutter application with subscription plans using Google Play Billing.
+
+### Current Issue
+
+After the user selects a subscription plan, Google Play shows this error:
+
+"Google Play did not return one or more subscription products. Confirm the product IDs, app identifier, store listing, and tester account."
+
+### Goal
+
+Find the root cause and fix the subscription product lookup so that the selected subscription product is correctly returned from Google Play.
+
+### Important Requirements
+
+1. **Inspect the existing subscription/payment implementation first**
+
+   * Find where subscription product IDs are defined.
+   * Find where `queryProductDetails()` or the equivalent Google Play Billing API is called.
+   * Find where the selected subscription plan is mapped to a Google Play product ID.
+   * Do not rewrite the entire payment system.
+
+2. **Verify Product IDs**
+
+   * Check that the Flutter product IDs exactly match the subscription product IDs configured in Google Play Console.
+   * Product IDs are case-sensitive.
+   * Check for extra spaces, incorrect spelling, incorrect IDs, or incorrect environment-specific IDs.
+   * Make sure the correct product ID is being passed to Google Play Billing.
+
+3. **Verify Android App Identifier**
+
+   * Check `applicationId` in:
+     `android/app/build.gradle` or `android/app/build.gradle.kts`
+   * Confirm it matches the package name/application ID of the app configured in Google Play Console.
+   * Do not change the application ID unless absolutely necessary.
+
+4. **Check Google Play Console Configuration**
+   Verify the implementation against the expected Google Play setup:
+
+   * Subscription product exists.
+   * Subscription is active/published as required.
+   * Base plan exists.
+   * Base plan is active.
+   * Product ID matches the Flutter code exactly.
+   * The correct application is being used.
+   * The installed Android app corresponds to the same package/application ID.
+
+5. **Check Tester Setup**
+
+   * Verify that the Google account used on the Android device is configured as a Google Play license tester/test user where required.
+   * Make sure the tester is using the correct Google Play account.
+   * Make sure the app is installed through the appropriate Google Play testing track when required.
+   * Do not assume that simply installing a locally built APK will always make Play subscription products available.
+
+6. **Check Product Query Code**
+   Improve the existing code so it clearly handles:
+
+   * `isAvailable == false`
+   * Product ID not found
+   * Empty `productDetails`
+   * `notFoundIDs`
+   * Google Play billing errors
+   * Loading state
+   * User-friendly error messages
+
+7. **Add Debug Logging**
+   Temporarily add useful logs showing:
+
+   * Requested product IDs
+   * Returned product IDs
+   * `notFoundIDs`
+   * Store availability
+   * Selected subscription plan
+   * Any billing/query error
+
+   Example format:
+
+   ```
+   Requested Product IDs: [...]
+   Returned Product IDs: [...]
+   Not Found Product IDs: [...]
+   Store Available: true/false
+   ```
+
+8. **Do NOT**
+
+   * Do not remove the existing subscription plans.
+   * Do not change the UI unnecessarily.
+   * Do not replace the payment package unless there is a clear compatibility problem.
+   * Do not hardcode fake product information.
+   * Do not bypass Google Play Billing.
+   * Do not modify iOS/App Store subscription logic while fixing Android.
+   * Do not change Firebase or backend logic unless it is directly related to the subscription product lookup.
+
+9. **Important**
+   If the code is correct but Google Play Console is not configured correctly, clearly identify the configuration problem instead of changing working Flutter code.
+
+### Expected Result
+
+When a user selects a subscription plan:
+
+1. Flutter sends the correct Google Play product ID.
+2. Google Play returns the matching subscription product.
+3. The product details are successfully loaded.
+4. The purchase flow can continue normally.
+5. The error:
+   "Google Play did not return one or more subscription products..."
+   should no longer appear when the product is correctly configured.
+
+### Final Response
+
+After investigating, tell me:
+
+1. What caused the issue.
+2. Which files were changed.
+3. What code was changed and why.
+4. Which Google Play Console settings I need to verify manually.
+5. Whether the issue is from Flutter code, product IDs, package/application ID, Google Play Console configuration, testing track, or tester account.
+6. Give me exact steps to test the fix on a real Android device.
+
+First inspect the existing code and explain the root cause before making large changes.
