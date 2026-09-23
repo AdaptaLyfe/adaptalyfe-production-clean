@@ -106,6 +106,7 @@ class CareRelationshipModel extends Equatable {
   const CareRelationshipModel({
     required this.id,
     required this.caregiverId,
+    this.caregiverName,
     required this.userId,
     required this.relationship,
     required this.isPrimary,
@@ -118,6 +119,7 @@ class CareRelationshipModel extends Equatable {
     return CareRelationshipModel(
       id: _asInt(json['id']),
       caregiverId: _asInt(json['caregiverId']),
+      caregiverName: _asNullableString(json['caregiverName']),
       userId: _asInt(json['userId']),
       relationship: _asString(json['relationship'], fallback: 'caregiver'),
       isPrimary: json['isPrimary'] == true,
@@ -132,6 +134,7 @@ class CareRelationshipModel extends Equatable {
 
   final int id;
   final int caregiverId;
+  final String? caregiverName;
   final int userId;
   final String relationship;
   final bool isPrimary;
@@ -143,6 +146,7 @@ class CareRelationshipModel extends Equatable {
   List<Object?> get props => [
         id,
         caregiverId,
+        caregiverName,
         userId,
         relationship,
         isPrimary,

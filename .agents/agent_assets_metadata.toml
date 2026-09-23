@@ -2087,3 +2087,17 @@ mtime_ms = 1790145121369
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3dcc15fe-0028-4a1a-b0ea-f81a8a870772/24ac2010-1060-40f5-8036-3281cb1547ee"
 storage_version_token = "1790145125749998"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "3fjAsmQv3QieA-C8NLiCQ"
+uri = "file://caregiver-fix-changed-files.zip"
+type = "unspecified"
+title = "Caregiver fix — changed files"
+description = "ZIP containing only the five files changed for the caregiver acceptance, active-access, removal, and relogin fix."
+logical_id = "9f12aeec-a45b-4150-9d75-089cc81d904b"
+content_hash = "sha256:ec93d3e54fd2e887db176b7e046e09cd68a6c35b5e7561a61979bdbfcfb0f149"
+size = 83586
+mtime_ms = 1790146250543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9f12aeec-a45b-4150-9d75-089cc81d904b/e0c89900-7eca-4cf9-b19b-a6651bc83778"
+storage_version_token = "1790146260596091"
+content_type = "application/octet-stream"

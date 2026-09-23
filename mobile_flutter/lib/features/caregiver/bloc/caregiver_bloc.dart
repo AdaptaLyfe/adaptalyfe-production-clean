@@ -20,12 +20,14 @@ class CaregiverBloc extends Bloc<CaregiverEvent, CaregiverState> {
   }
 
   final CaregiverRepository repository;
+  int? _loadedUserId;
 
   Future<void> _loadSetup(
     CaregiverEvent event,
     Emitter<CaregiverState> emit,
   ) async {
     final userId = event is CaregiverStarted ? event.userId : (event as RefreshCaregiver).userId;
+    _loadedUserId = userId;
     emit(
       state.copyWith(
         status: CaregiverStatus.loading,
@@ -270,11 +272,20 @@ class CaregiverBloc extends Bloc<CaregiverEvent, CaregiverState> {
     );
     try {
       await repository.removeRelationship(event.id);
+      var relationships = state.relationships
+          .where((relationship) => relationship.id != event.id)
+          .toList();
+      final userId = _loadedUserId;
+      if (userId != null) {
+        try {
+          relationships = await repository.getRelationshipsForUser(userId);
+        } catch (_) {
+          // Keep the optimistic removal if a post-mutation refresh is unavailable.
+        }
+      }
       emit(
         state.copyWith(
-          relationships: state.relationships
-              .where((relationship) => relationship.id != event.id)
-              .toList(),
+          relationships: relationships,
           busyKey: null,
           actionMessage: 'Caregiver access removed.',
           errorMessage: null,

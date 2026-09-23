@@ -452,11 +452,11 @@ class _RelationshipCard extends StatelessWidget {
           child: Icon(Icons.volunteer_activism_rounded, color: Color(0xFF047857)),
         ),
         title: Text(
-          _relationshipLabel(relationship.relationship),
+          relationship.caregiverName ?? 'Caregiver',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
-          'Relationship #${relationship.id}'
+          '${_relationshipLabel(relationship.relationship)} • Relationship #${relationship.id}'
           '${relationship.isPrimary ? ' • Primary' : ''}'
           '${relationship.establishedAt == null ? '' : ' • ${_date(relationship.establishedAt!)}'}',
         ),

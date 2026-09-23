@@ -3198,7 +3198,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const relationships = await storage.getCareRelationshipsByUser(userId);
-      res.json(relationships);
+      const relationshipsWithNames = await Promise.all(
+        relationships.map(async (relationship) => {
+          const caregiver = await storage.getUser(relationship.caregiverId);
+          return {
+            ...relationship,
+            caregiverName: caregiver?.name || caregiver?.username || "Caregiver",
+          };
+        }),
+      );
+      res.json(relationshipsWithNames);
     } catch (error) {
       console.error("Error fetching care relationships:", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
@@ -3228,17 +3237,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Remove (deactivate) a care relationship — only the care recipient can do this
   app.delete("/api/care-relationships/:id", async (req: any, res) => {
     try {
-      const user = req.session?.user;
+      const user = req.session?.user || req.user;
       if (!user) return res.status(401).json({ message: "Authentication required" });
 
       const id = parseInt(req.params.id);
-      const relationships = await storage.getCareRelationshipsByUser(user.id);
-      const owned = relationships.find(r => r.id === id);
-      if (!owned) {
+      const relationship = await storage.getCareRelationshipById(id);
+      if (!relationship || relationship.userId !== user.id) {
         return res.status(403).json({ message: "You can only remove caregivers linked to your own account" });
       }
 
-      const success = await storage.removeCareRelationship(id);
+      const success = await storage.removeCareRelationship(id, user.id);
       if (!success) return res.status(404).json({ message: "Relationship not found" });
 
       res.json({ message: "Caregiver access removed successfully" });

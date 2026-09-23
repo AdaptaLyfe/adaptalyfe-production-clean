@@ -531,10 +531,11 @@ export interface IStorage {
   
   // Care Relationship Management
   createCareRelationship(relationship: InsertCareRelationship): Promise<CareRelationship>;
+  getCareRelationshipById(id: number): Promise<CareRelationship | undefined>;
   getCareRelationshipsByUser(userId: number): Promise<CareRelationship[]>;
   getCareRelationshipsByCaregiver(caregiverId: number): Promise<CareRelationship[]>;
   updateCareRelationship(id: number, updates: Partial<InsertCareRelationship>): Promise<CareRelationship | undefined>;
-  removeCareRelationship(id: number): Promise<boolean>;
+  removeCareRelationship(id: number, userId: number): Promise<boolean>;
 
   // Academic features
   getAcademicClassesByUser(userId: number): Promise<AcademicClass[]>;
@@ -2792,39 +2793,89 @@ export class DatabaseStorage implements IStorage {
   }
 
   async acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined> {
-    const invitation = await this.getCaregiverInvitation(invitationCode);
-    if (!invitation || invitation.status !== 'pending' || new Date() > new Date(invitation.expiresAt)) {
-      return undefined;
-    }
+    return await db.transaction(async (tx) => {
+      const [invitation] = await tx
+        .select()
+        .from(caregiverInvitations)
+        .where(eq(caregiverInvitations.invitationCode, invitationCode))
+        .for("update");
+      if (!invitation) return undefined;
 
-    const [updatedInvitation] = await db
-      .update(caregiverInvitations)
-      .set({
-        status: 'accepted',
-        acceptedAt: new Date(),
-        acceptedBy,
-      })
-      .where(eq(caregiverInvitations.invitationCode, invitationCode))
-      .returning();
+      const isAlreadyAccepted =
+        invitation.status === "accepted" && invitation.acceptedBy === acceptedBy;
+      if (
+        !isAlreadyAccepted &&
+        (invitation.status !== "pending" ||
+          new Date() > new Date(invitation.expiresAt))
+      ) {
+        if (
+          invitation.status === "pending" &&
+          new Date() > new Date(invitation.expiresAt)
+        ) {
+          await tx
+            .update(caregiverInvitations)
+            .set({ status: "expired" })
+            .where(eq(caregiverInvitations.id, invitation.id));
+        }
+        return undefined;
+      }
 
-    // Create care relationship.
-    // In caregiver_invitations, caregiverId holds the CARE RECIPIENT's ID (the person
-    // who created the invite from their own account). The person who accepts is
-    // the actual caregiver. So careRelationships must store them correctly:
-    //   caregiverId = acceptedBy  (the caregiver who accepted)
-    //   userId      = invitation.caregiverId  (the care recipient who sent it)
-    if (updatedInvitation) {
-      await this.createCareRelationship({
-        caregiverId: acceptedBy,                      // person who accepted = actual caregiver
-        userId: updatedInvitation.caregiverId,        // person who created invite = care recipient
-        relationship: updatedInvitation.relationship,
-        isPrimary: false,
-        isActive: true,
-        establishedVia: 'invitation',
-      });
-    }
+      let acceptedInvitation = invitation;
+      if (!isAlreadyAccepted) {
+        const [updatedInvitation] = await tx
+          .update(caregiverInvitations)
+          .set({
+            status: "accepted",
+            acceptedAt: new Date(),
+            acceptedBy,
+          })
+          .where(
+            and(
+              eq(caregiverInvitations.id, invitation.id),
+              eq(caregiverInvitations.status, "pending"),
+            ),
+          )
+          .returning();
+        if (!updatedInvitation) return undefined;
+        acceptedInvitation = updatedInvitation;
+      }
 
-    return updatedInvitation || undefined;
+      // caregiverId on an invitation is the care recipient who created it.
+      // acceptedBy is the caregiver account that accepted it.
+      const [existingRelationship] = await tx
+        .select()
+        .from(careRelationships)
+        .where(
+          and(
+            eq(careRelationships.userId, acceptedInvitation.caregiverId),
+            eq(careRelationships.caregiverId, acceptedBy),
+          ),
+        )
+        .for("update");
+
+      if (existingRelationship) {
+        if (!existingRelationship.isActive && !isAlreadyAccepted) {
+          await tx
+            .update(careRelationships)
+            .set({
+              relationship: acceptedInvitation.relationship,
+              isActive: true,
+            })
+            .where(eq(careRelationships.id, existingRelationship.id));
+        }
+      } else if (!isAlreadyAccepted) {
+        await tx.insert(careRelationships).values({
+          caregiverId: acceptedBy,
+          userId: acceptedInvitation.caregiverId,
+          relationship: acceptedInvitation.relationship,
+          isPrimary: false,
+          isActive: true,
+          establishedVia: "invitation",
+        });
+      }
+
+      return acceptedInvitation;
+    });
   }
 
   async expireCaregiverInvitation(invitationCode: string): Promise<boolean> {
@@ -2842,6 +2893,14 @@ export class DatabaseStorage implements IStorage {
       .values(relationship)
       .returning();
     return newRelationship;
+  }
+
+  async getCareRelationshipById(id: number): Promise<CareRelationship | undefined> {
+    const [relationship] = await db
+      .select()
+      .from(careRelationships)
+      .where(eq(careRelationships.id, id));
+    return relationship || undefined;
   }
 
   async getCareRelationshipsByUser(userId: number): Promise<CareRelationship[]> {
@@ -2873,12 +2932,24 @@ export class DatabaseStorage implements IStorage {
     return updatedRelationship || undefined;
   }
 
-  async removeCareRelationship(id: number): Promise<boolean> {
+  async removeCareRelationship(id: number, userId: number): Promise<boolean> {
+    const relationship = await this.getCareRelationshipById(id);
+    if (!relationship || relationship.userId !== userId) return false;
+    if (!relationship.isActive) return true;
+
     const result = await db
       .update(careRelationships)
       .set({ isActive: false })
-      .where(eq(careRelationships.id, id));
-    return (result.rowCount || 0) > 0;
+      .where(
+        and(
+          eq(careRelationships.id, id),
+          eq(careRelationships.userId, userId),
+          eq(careRelationships.isActive, true),
+        ),
+      );
+    if ((result.rowCount || 0) > 0) return true;
+    const current = await this.getCareRelationshipById(id);
+    return current?.isActive === false;
   }
 
   // Academic features implementation
