@@ -71,15 +71,38 @@ function parseTransitionSkillResponse(responseData: unknown): TransitionSkill {
     (responseData as { data?: unknown } | null)?.data ??
     responseData;
 
-  if (
-    !candidate ||
-    typeof candidate !== "object" ||
-    typeof (candidate as { id?: unknown }).id !== "number"
-  ) {
+  if (!candidate || typeof candidate !== "object") {
     throw new Error("The server returned an invalid skill response.");
   }
 
-  return candidate as TransitionSkill;
+  const id = Number((candidate as { id?: unknown }).id);
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error("The server returned an invalid skill response.");
+  }
+
+  return { ...(candidate as TransitionSkill), id };
+}
+
+function parseTransitionSkillsResponse(responseData: unknown): TransitionSkill[] {
+  const candidate =
+    (responseData as {
+      skills?: unknown;
+      transitionSkills?: unknown;
+      data?: unknown;
+    } | null)?.skills ??
+    (responseData as { transitionSkills?: unknown; data?: unknown } | null)
+      ?.transitionSkills ??
+    (responseData as { data?: unknown } | null)?.data ??
+    responseData;
+
+  if (candidate === null || candidate === undefined) return [];
+  if (!Array.isArray(candidate)) {
+    throw new Error("The server returned an invalid Life Skills list.");
+  }
+
+  return candidate
+    .filter((skill) => skill && typeof skill === "object")
+    .map(parseTransitionSkillResponse);
 }
 
 function getSkillMutationErrorMessage(error: unknown, fallback: string): string {
@@ -136,15 +159,18 @@ export default function SkillsMilestones() {
   const {
     data: transitionSkillsData,
     isLoading: skillsLoading,
+    isError: skillsQueryError,
     refetch: refetchSkills,
-  } = useQuery<TransitionSkill[] | null>({
+  } = useQuery<unknown, Error, TransitionSkill[] | null>({
     queryKey: ["/api/transition-skills"],
+    select: (responseData) =>
+      responseData === null ? null : parseTransitionSkillsResponse(responseData),
     staleTime: 0,
   });
   const transitionSkills = Array.isArray(transitionSkillsData)
     ? transitionSkillsData
     : [];
-  const skillsRequestFailed = transitionSkillsData === null;
+  const skillsRequestFailed = skillsQueryError || transitionSkillsData === null;
 
   // Create skill mutation
   const createSkillMutation = useMutation({

@@ -34,8 +34,12 @@ import {
 import {
   getLocalDateString,
   getSleepDateValidationError,
+  isValidSleepDate,
 } from '@shared/sleep-date-validation';
-import { getSleepRoutineTimeValidationError } from '@shared/sleep-time-validation';
+import {
+  combineLocalDateAndTime,
+  getSleepRoutineTimeValidationError,
+} from '@shared/sleep-time-validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -441,11 +445,13 @@ function SleepLoggingForm({
   dailySession?: SleepSession;
 }) {
   const [dateError, setDateError] = useState<string | null>(null);
+  const [wakeDateError, setWakeDateError] = useState<string | null>(null);
   const [timeError, setTimeError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     sleepDate: format(selectedDate, 'yyyy-MM-dd'),
     bedtime: '',
     sleepTime: '',
+    wakeDate: format(selectedDate, 'yyyy-MM-dd'),
     wakeTime: '',
     quality: '',
     notes: ''
@@ -457,17 +463,38 @@ function SleepLoggingForm({
         sleepDate: dailySession.sleepDate,
         bedtime: dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
         sleepTime: dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
+        wakeDate: dailySession.wakeTime
+          ? format(new Date(dailySession.wakeTime), 'yyyy-MM-dd')
+          : dailySession.sleepDate,
         wakeTime: dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
         quality: dailySession.quality || '',
         notes: dailySession.notes || ''
       });
-      setTimeError(getSleepRoutineTimeValidationError(
-        dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
-        dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
-        dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
-      ));
+      setWakeDateError(null);
+      setTimeError(getFormTimeValidationError({
+        sleepDate: dailySession.sleepDate,
+        bedtime: dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
+        sleepTime: dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
+        wakeDate: dailySession.wakeTime
+          ? format(new Date(dailySession.wakeTime), 'yyyy-MM-dd')
+          : dailySession.sleepDate,
+        wakeTime: dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
+      }));
     }
   }, [dailySession]);
+
+  const getFormTimeValidationError = (values: typeof formData): string | null => {
+    if (!values.bedtime || !values.sleepTime || !values.wakeTime) return null;
+
+    const bedtime = combineLocalDateAndTime(values.sleepDate, values.bedtime);
+    const sleepTime = combineLocalDateAndTime(values.sleepDate, values.sleepTime);
+    const wakeTime = combineLocalDateAndTime(values.wakeDate, values.wakeTime);
+    if (!bedtime || !sleepTime || !wakeTime) {
+      return 'Sleep dates and times must be valid';
+    }
+
+    return getSleepRoutineTimeValidationError(bedtime, sleepTime, wakeTime);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -479,22 +506,39 @@ function SleepLoggingForm({
     }
     setDateError(null);
 
-    const sleepTimeError = getSleepRoutineTimeValidationError(
-      formData.bedtime,
-      formData.sleepTime,
-      formData.wakeTime,
-    );
+    const wakeDateErrorMessage = !isValidSleepDate(formData.wakeDate)
+      ? 'Wake date must be a valid date'
+      : formData.wakeDate < formData.sleepDate
+        ? 'Wake date must be the same as or later than sleep date'
+        : null;
+    if (wakeDateErrorMessage) {
+      setWakeDateError(wakeDateErrorMessage);
+      return;
+    }
+    setWakeDateError(null);
+
+    const sleepTimeError = getFormTimeValidationError(formData);
     if (sleepTimeError) {
       setTimeError(sleepTimeError);
       return;
     }
     setTimeError(null);
     
+    const bedtime = combineLocalDateAndTime(formData.sleepDate, formData.bedtime);
+    const sleepTime = combineLocalDateAndTime(formData.sleepDate, formData.sleepTime);
+    const wakeTime = combineLocalDateAndTime(formData.wakeDate, formData.wakeTime);
+    if (!bedtime || !sleepTime || !wakeTime) {
+      setTimeError('Sleep dates and times must be valid');
+      return;
+    }
+
     const sleepData = {
-      ...formData,
-      bedtime: formData.bedtime ? new Date(`${formData.sleepDate}T${formData.bedtime}:00`).toISOString() : null,
-      sleepTime: formData.sleepTime ? new Date(`${formData.sleepDate}T${formData.sleepTime}:00`).toISOString() : null,
-      wakeTime: formData.wakeTime ? new Date(`${formData.sleepDate}T${formData.wakeTime}:00`).toISOString() : null,
+      sleepDate: formData.sleepDate,
+      bedtime: bedtime.toISOString(),
+      sleepTime: sleepTime.toISOString(),
+      wakeTime: wakeTime.toISOString(),
+      quality: formData.quality,
+      notes: formData.notes,
     };
     
     onSubmit(sleepData, dailySession?.id);
@@ -519,6 +563,7 @@ function SleepLoggingForm({
                   const sleepDate = e.target.value;
                   setFormData({ ...formData, sleepDate });
                   setDateError(getSleepDateValidationError(sleepDate));
+                   setTimeError(getFormTimeValidationError({ ...formData, sleepDate }));
                 }}
                 aria-invalid={dateError ? 'true' : undefined}
                 required
@@ -547,7 +592,7 @@ function SleepLoggingForm({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="bedtime">Bedtime</Label>
               <Input
@@ -557,11 +602,7 @@ function SleepLoggingForm({
                 onChange={(e) => {
                   const bedtime = e.target.value;
                   setFormData({ ...formData, bedtime });
-                  setTimeError(getSleepRoutineTimeValidationError(
-                    bedtime,
-                    formData.sleepTime,
-                    formData.wakeTime,
-                  ));
+                   setTimeError(getFormTimeValidationError({ ...formData, bedtime }));
                 }}
                 aria-invalid={timeError ? 'true' : undefined}
                 required
@@ -576,11 +617,7 @@ function SleepLoggingForm({
                 onChange={(e) => {
                   const sleepTime = e.target.value;
                   setFormData({ ...formData, sleepTime });
-                  setTimeError(getSleepRoutineTimeValidationError(
-                    formData.bedtime,
-                    sleepTime,
-                    formData.wakeTime,
-                  ));
+                   setTimeError(getFormTimeValidationError({ ...formData, sleepTime }));
                 }}
                 aria-invalid={timeError ? 'true' : undefined}
                 required
@@ -588,6 +625,35 @@ function SleepLoggingForm({
               {timeError && (
                 <p className="mt-1 text-sm text-red-600" role="alert">
                   {timeError}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="wakeDate">Wake Date</Label>
+              <Input
+                id="wakeDate"
+                type="date"
+                value={formData.wakeDate}
+                min={formData.sleepDate}
+                onChange={(e) => {
+                  const wakeDate = e.target.value;
+                  const nextFormData = { ...formData, wakeDate };
+                  setFormData(nextFormData);
+                  setWakeDateError(
+                    !isValidSleepDate(wakeDate)
+                      ? 'Wake date must be a valid date'
+                      : wakeDate < formData.sleepDate
+                        ? 'Wake date must be the same as or later than sleep date'
+                        : null,
+                  );
+                  setTimeError(getFormTimeValidationError(nextFormData));
+                }}
+                aria-invalid={wakeDateError || timeError ? 'true' : undefined}
+                required
+              />
+              {wakeDateError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {wakeDateError}
                 </p>
               )}
             </div>
@@ -600,11 +666,7 @@ function SleepLoggingForm({
                 onChange={(e) => {
                   const wakeTime = e.target.value;
                   setFormData({ ...formData, wakeTime });
-                  setTimeError(getSleepRoutineTimeValidationError(
-                    formData.bedtime,
-                    formData.sleepTime,
-                    wakeTime,
-                  ));
+                   setTimeError(getFormTimeValidationError({ ...formData, wakeTime }));
                 }}
                 aria-invalid={timeError ? 'true' : undefined}
                 required

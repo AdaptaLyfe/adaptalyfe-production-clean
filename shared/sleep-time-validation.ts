@@ -40,6 +40,37 @@ function parseSleepTime(value: SleepTimeValue): ParsedSleepTime | undefined {
   return Number.isNaN(timestamp) ? undefined : { timestamp };
 }
 
+export function combineLocalDateAndTime(
+  dateValue: string | null | undefined,
+  timeValue: SleepTimeValue,
+): Date | undefined {
+  if (
+    typeof dateValue !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(dateValue) ||
+    typeof timeValue !== "string"
+  ) {
+    return undefined;
+  }
+
+  const minutes = parseClockTime(timeValue);
+  if (minutes === undefined) return undefined;
+
+  const [year, month, day] = dateValue.split("-").map(Number);
+  const date = new Date(
+    year,
+    month - 1,
+    day,
+    Math.floor(minutes / 60),
+    minutes % 60,
+  );
+
+  return date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day
+    ? date
+    : undefined;
+}
+
 export function getSleepTimeValidationError(
   bedtime: SleepTimeValue,
   sleepTime: SleepTimeValue,

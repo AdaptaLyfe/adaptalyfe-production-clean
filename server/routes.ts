@@ -2184,14 +2184,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/transition-skills", async (req: any, res) => {
+  app.get("/api/transition-skills", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const skills = await storage.getTransitionSkillsByUser(user.id);
+      const skills = await storage.getTransitionSkillsByUser(req.user.id);
       res.json(skills);
     } catch (error) {
       console.error("Failed to fetch transition skills:", error);
@@ -2199,16 +2194,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/transition-skills", async (req: any, res) => {
+  app.post("/api/transition-skills", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const skillData = {
         ...req.body,
-        userId: user.id
+        userId: req.user.id
       };
 
       const validatedSkillData = insertTransitionSkillSchema.parse(skillData);
@@ -2225,13 +2215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/transition-skills/:id", async (req: any, res) => {
+  app.patch("/api/transition-skills/:id", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const skillId = parseInt(req.params.id);
       if (!Number.isInteger(skillId) || skillId <= 0) {
         return res.status(400).json({ message: "Invalid transition skill id" });
@@ -2241,7 +2226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const skill = await storage.updateTransitionSkill(
         skillId,
-        user.id,
+        req.user.id,
         updateData,
       );
       if (!skill) {
@@ -2258,19 +2243,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/transition-skills/:id", async (req: any, res) => {
+  app.delete("/api/transition-skills/:id", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const skillId = parseInt(req.params.id);
       if (!Number.isInteger(skillId) || skillId <= 0) {
         return res.status(400).json({ message: "Invalid transition skill id" });
       }
       
-      const deleted = await storage.deleteTransitionSkill(skillId, user.id);
+      const deleted = await storage.deleteTransitionSkill(skillId, req.user.id);
       if (!deleted) {
         return res.status(404).json({ message: "Transition skill not found" });
       }

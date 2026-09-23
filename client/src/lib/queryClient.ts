@@ -338,11 +338,17 @@ export const getQueryFn: <T>(options: {
       } catch (parseError) {
         console.error("JSON parse error. Raw text (first 200 chars):", text.substring(0, 200));
         console.error("Parse error details:", parseError);
+        if (lifeSkillsQuery) {
+          throw new Error("The Life Skills response was not valid JSON.");
+        }
         // Return empty array instead of throwing to prevent crashes
         return [];
       }
     } catch (error) {
       console.error("Query error:", error);
+      if (isLifeSkillsRequest(queryKey[0] as string)) {
+        throw error;
+      }
       // For mobile apps: Return null on network errors instead of crashing
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.log("Network error detected, returning null for graceful degradation");

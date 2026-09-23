@@ -2,10 +2,25 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  combineLocalDateAndTime,
   getSleepRoutineTimeValidationError,
   getSleepTimeValidationError,
   getWakeTimeValidationError,
 } from "./sleep-time-validation";
+
+test("combines a local calendar date and clock time without shifting the date", () => {
+  const combined = combineLocalDateAndTime("2026-09-23", "08:15");
+  assert.ok(combined);
+  assert.equal(combined.getFullYear(), 2026);
+  assert.equal(combined.getMonth(), 8);
+  assert.equal(combined.getDate(), 23);
+  assert.equal(combined.getHours(), 8);
+  assert.equal(combined.getMinutes(), 15);
+});
+
+test("rejects invalid calendar dates when combining sleep values", () => {
+  assert.equal(combineLocalDateAndTime("2026-02-30", "08:15"), undefined);
+});
 
 test("allows equal and later 24-hour times", () => {
   assert.equal(getSleepTimeValidationError("22:00", "22:00"), null);
