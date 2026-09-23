@@ -24,6 +24,7 @@ class SubscriptionState extends Equatable {
     this.actionMessage,
     this.sessionInvalid = false,
     this.storeAvailable = false,
+    this.availabilityMessage,
     this.busyPlanId,
     this.selectedPlanId,
     this.managementUrl,
@@ -39,6 +40,7 @@ class SubscriptionState extends Equatable {
   final String? actionMessage;
   final bool sessionInvalid;
   final bool storeAvailable;
+  final String? availabilityMessage;
   final String? busyPlanId;
   final String? selectedPlanId;
   final String? managementUrl;
@@ -64,6 +66,7 @@ class SubscriptionState extends Equatable {
     Object? actionMessage = _notSet,
     bool? sessionInvalid,
     bool? storeAvailable,
+    Object? availabilityMessage = _notSet,
     Object? busyPlanId = _notSet,
     Object? selectedPlanId = _notSet,
     Object? managementUrl = _notSet,
@@ -85,6 +88,9 @@ class SubscriptionState extends Equatable {
           : actionMessage as String?,
       sessionInvalid: sessionInvalid ?? this.sessionInvalid,
       storeAvailable: storeAvailable ?? this.storeAvailable,
+      availabilityMessage: identical(availabilityMessage, _notSet)
+          ? this.availabilityMessage
+          : availabilityMessage as String?,
       busyPlanId: identical(busyPlanId, _notSet)
           ? this.busyPlanId
           : busyPlanId as String?,
@@ -109,6 +115,7 @@ class SubscriptionState extends Equatable {
         actionMessage,
         sessionInvalid,
         storeAvailable,
+        availabilityMessage,
         busyPlanId,
     selectedPlanId,
         managementUrl,

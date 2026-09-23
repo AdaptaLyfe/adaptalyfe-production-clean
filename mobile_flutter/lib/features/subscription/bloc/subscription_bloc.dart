@@ -60,6 +60,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     final plan = _planFor(event.planId);
     if (plan == null) return;
     final storeProductAvailable = _productFor(plan.productId) != null;
+    final unavailableMessage = state.availabilityMessage ??
+        'The selected subscription was not returned by the current store. '
+            'Check the store configuration and tester account.';
     emit(
       state.copyWith(
         selectedPlanId: event.planId,
@@ -67,7 +70,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         actionMessage: _started &&
                 !storeProductAvailable &&
                 !state.canUseStripe
-            ? 'This plan is not available in the current store.'
+            ? unavailableMessage
             : null,
       ),
     );
@@ -103,11 +106,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             for (final product in _products) product.id: product,
           },
           storeAvailable: availability.available,
+          availabilityMessage: availability.message,
           stripeAvailable: stripeAvailability.configured,
           walletAvailable: stripeAvailability.walletAvailable,
-          errorMessage: availability.notFoundIds.isEmpty
-              ? null
-              : 'Some plans are not available in this store yet.',
+          errorMessage: availability.message,
           actionMessage: null,
         ),
       );
@@ -271,7 +273,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     if (product == null) {
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
-        errorMessage: 'This plan is not available in the current store.',
+        errorMessage: state.availabilityMessage ??
+            'The selected subscription was not returned by the current store. '
+                'Check the store configuration and tester account.',
       ));
       return;
     }

@@ -463,10 +463,7 @@ class _PlanCard extends StatelessWidget {
           if (!stripeAvailable && !storeAvailable)
             const Padding(
               padding: EdgeInsets.only(top: 7),
-              child: Text(
-                'This plan is not available in the current store.',
-                style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-              ),
+               child: _StoreAvailabilityMessage(),
             ),
             ],
           ),
@@ -590,6 +587,23 @@ class _ManageCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StoreAvailabilityMessage extends StatelessWidget {
+  const _StoreAvailabilityMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    final message = context.select(
+      (SubscriptionBloc bloc) => bloc.state.availabilityMessage,
+    );
+    return Text(
+      message ??
+          'The selected subscription was not returned by the current store. '
+              'Check the store configuration and tester account.',
+      style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
     );
   }
 }

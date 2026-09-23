@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../models/subscription_models.dart';
@@ -13,19 +14,46 @@ class PurchaseService {
   Stream<List<PurchaseDetails>> get purchaseStream => _store.purchaseStream;
 
   Future<PurchaseAvailability> initialize() async {
-    final available = await _store.isAvailable();
-    if (!available) {
-      return const PurchaseAvailability(available: false);
-    }
+    final storeName = _storeName;
+    try {
+      final available = await _store.isAvailable();
+      if (!available) {
+        return PurchaseAvailability(
+          available: false,
+          message:
+              '$storeName is not available. Install this app from the store '
+              'and try again.',
+        );
+      }
 
-    final response = await _store.queryProductDetails(
-      subscriptionPlans.map((plan) => plan.productId).toSet(),
-    );
-    return PurchaseAvailability(
-      available: true,
-      products: response.productDetails,
-      notFoundIds: response.notFoundIDs,
-    );
+      final response = await _store.queryProductDetails(
+        subscriptionPlans.map((plan) => plan.productId).toSet(),
+      );
+      final products = response.productDetails;
+      final message = response.notFoundIDs.isNotEmpty
+          ? '$storeName did not return one or more subscription products. '
+              'Confirm the product IDs, app identifier, store listing, and '
+              'tester account.'
+          : products.isEmpty
+              ? '$storeName returned no subscription products. Confirm that '
+                  'the products are configured for this app and available to '
+                  'the current tester account.'
+              : null;
+
+      return PurchaseAvailability(
+        available: products.isNotEmpty,
+        products: products,
+        notFoundIds: response.notFoundIDs,
+        message: message,
+      );
+    } catch (_) {
+      return PurchaseAvailability(
+        available: false,
+        message:
+            'Could not connect to $storeName. Check the store account and '
+            'billing setup, then try again.',
+      );
+    }
   }
 
   Future<bool> buy(ProductDetails product) {
@@ -43,6 +71,17 @@ class PurchaseService {
       await _store.completePurchase(purchase);
     }
   }
+
+  String get _storeName {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'Google Play';
+      case TargetPlatform.iOS:
+        return 'The App Store';
+      default:
+        return 'The app store';
+    }
+  }
 }
 
 class PurchaseAvailability {
@@ -50,9 +89,11 @@ class PurchaseAvailability {
     required this.available,
     this.products = const [],
     this.notFoundIds = const [],
+    this.message,
   });
 
   final bool available;
   final List<ProductDetails> products;
   final List<String> notFoundIds;
+  final String? message;
 }
