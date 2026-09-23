@@ -1,0 +1,95 @@
+In the existing **React Native + Wrapper project**, fix the **Add New Assignment** popup.
+
+### Issue
+
+When the user opens **Add New Assignment**, the **last input field** automatically contains the value `2`.
+
+This value is confusing because:
+
+* It is not clear to the user what `2` represents.
+* There is no visible explanation.
+* The user should not have to delete an unexplained default value before entering their own value.
+
+### Required fix
+
+1. Find the exact last field in the **Add New Assignment** popup that currently has `2` as its default value.
+2. Identify what this field represents by checking:
+
+   * Assignment form state/default values
+   * Form initialization
+   * Validation rules
+   * API request/payload
+   * Backend/model expectations
+   * Any Wrapper-related code
+3. Do **not** blindly replace `2` with an empty string without understanding the field's purpose.
+4. If the field is a user-entered value:
+
+   * Remove the hardcoded/default `2`.
+   * Show a clear, meaningful placeholder instead.
+   * Example: if the field represents a number, use an appropriate placeholder such as `Enter number of...`.
+   * The exact placeholder must match the actual purpose of the field.
+5. The field should remain empty until the user enters a value.
+6. Update validation so an empty value is handled correctly:
+
+   * If the field is required, show a clear validation message when the user submits without entering a value.
+   * If the field is optional, do not send an unintended default `2` to the backend.
+7. Check whether `2` is coming from:
+
+   * `useState`
+   * `useForm` / form defaults
+   * initial form object
+   * constants
+   * model defaults
+   * API transformation
+   * backend fallback
+   * Wrapper-specific implementation
+8. Make sure there is **no hidden code that puts `2` back** after:
+
+   * opening the popup
+   * closing/reopening the popup
+   * editing an assignment
+   * resetting the form
+   * validation failure
+   * API error
+9. Preserve existing:
+
+   * Add Assignment functionality
+   * Edit Assignment functionality
+   * API integration
+   * database behavior
+   * validation
+   * UI styling
+   * Wrapper behavior
+   * Android/iOS behavior
+
+### Important
+
+Do not make a superficial UI-only change.
+
+Trace the complete data flow from:
+
+**Add New Assignment → form initialization → input state → validation → API payload → backend/model**
+
+Then fix the root cause of the unwanted default `2`.
+
+### Testing
+
+After the fix, verify:
+
+* Open Add New Assignment → last field is empty and shows a meaningful placeholder.
+* User can enter a value normally.
+* Submit with empty value → correct validation appears if required.
+* Submit with a valid value → assignment is created successfully.
+* Close and reopen popup → field does not unexpectedly become `2`.
+* Reset form → field does not become `2`.
+* Edit existing assignment → existing saved value is still displayed correctly.
+* API payload does not contain an unintended default `2`.
+* No existing assignment functionality is broken.
+
+Finally, tell me:
+
+1. Which field had the default `2`.
+2. What the field is actually used for.
+3. Where the `2` was originally coming from.
+4. What files/components were changed.
+5. Why the fix prevents the issue from coming back.

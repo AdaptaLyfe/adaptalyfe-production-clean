@@ -73,7 +73,7 @@ export default function AcademicPlanner() {
     type: "homework",
     dueDate: "",
     priority: "medium",
-    estimatedHours: "2"
+    estimatedHours: ""
   });
   const [assignmentHoursError, setAssignmentHoursError] = useState<string | null>(null);
 
@@ -198,7 +198,7 @@ export default function AcademicPlanner() {
       refetchAssignments(); // Force refetch
       setIsAddAssignmentOpen(false);
       setAssignmentHoursError(null);
-      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: "2" });
+      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: "" });
     },
   });
 

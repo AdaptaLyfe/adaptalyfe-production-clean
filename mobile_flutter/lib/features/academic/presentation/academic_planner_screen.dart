@@ -2444,7 +2444,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-    _hoursController = TextEditingController(text: '2');
+    _hoursController = TextEditingController();
   }
 
   @override
