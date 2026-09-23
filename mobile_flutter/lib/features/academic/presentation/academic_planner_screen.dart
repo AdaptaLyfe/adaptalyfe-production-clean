@@ -2556,12 +2556,16 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                   decoration:
                       const InputDecoration(labelText: 'Estimated hours'),
                   validator: (value) {
-                    final parsed = double.tryParse(value?.trim() ?? '');
-                    if (parsed == null ||
-                        !parsed.isFinite ||
-                        parsed < 1 ||
-                        parsed > 100) {
-                      return 'Enter 1 to 100 hours';
+                    final text = value?.trim() ?? '';
+                    if (text.isEmpty) {
+                      return 'Estimated hours is required';
+                    }
+                    final parsed = double.tryParse(text);
+                    if (parsed == null || !parsed.isFinite) {
+                      return 'Enter a valid number of hours';
+                    }
+                    if (parsed <= 0 || parsed > 100) {
+                      return 'Enter more than 0 and at most 100 hours';
                     }
                     return null;
                   },
@@ -2619,7 +2623,12 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
     }
 
     final estimatedHours = double.tryParse(_hoursController.text.trim());
-    if (estimatedHours == null) return;
+    if (estimatedHours == null ||
+        !estimatedHours.isFinite ||
+        estimatedHours <= 0 ||
+        estimatedHours > 100) {
+      return;
+    }
 
     context.read<AcademicBloc>().add(
           AddAssignment(

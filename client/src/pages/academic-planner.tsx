@@ -73,8 +73,9 @@ export default function AcademicPlanner() {
     type: "homework",
     dueDate: "",
     priority: "medium",
-    estimatedHours: 2
+    estimatedHours: "2"
   });
+  const [assignmentHoursError, setAssignmentHoursError] = useState<string | null>(null);
 
   const [newClass, setNewClass] = useState({
     className: "",
@@ -196,7 +197,8 @@ export default function AcademicPlanner() {
       queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       refetchAssignments(); // Force refetch
       setIsAddAssignmentOpen(false);
-      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: 2 });
+      setAssignmentHoursError(null);
+      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: "2" });
     },
   });
 
@@ -299,8 +301,26 @@ export default function AcademicPlanner() {
     if (!newAssignment.title.trim() || !newAssignment.dueDate) {
       return;
     }
+
+    const hoursText = newAssignment.estimatedHours.trim();
+    if (!hoursText) {
+      setAssignmentHoursError("Estimated hours is required");
+      return;
+    }
+    const estimatedHours = Number(hoursText);
+    if (!Number.isFinite(estimatedHours)) {
+      setAssignmentHoursError("Enter a valid number of hours");
+      return;
+    }
+    if (estimatedHours <= 0 || estimatedHours > 100) {
+      setAssignmentHoursError("Enter more than 0 and at most 100 hours");
+      return;
+    }
+    setAssignmentHoursError(null);
+
     createAssignmentMutation.mutate({
       ...newAssignment,
+      estimatedHours,
       dueDate: new Date(newAssignment.dueDate).toISOString()
     });
   };
@@ -727,7 +747,13 @@ export default function AcademicPlanner() {
                 </div>
               )}
               <div className="flex justify-center">
-                <Dialog open={isAddAssignmentOpen} onOpenChange={setIsAddAssignmentOpen}>
+                <Dialog
+                  open={isAddAssignmentOpen}
+                  onOpenChange={(open) => {
+                    setIsAddAssignmentOpen(open);
+                    if (!open) setAssignmentHoursError(null);
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button className="mt-4" size="sm">
                       <Plus className="w-4 h-4 mr-2" />
@@ -790,10 +816,16 @@ export default function AcademicPlanner() {
                       type="number"
                       placeholder="Estimated hours"
                       value={newAssignment.estimatedHours}
-                      onChange={(e) => setNewAssignment({ ...newAssignment, estimatedHours: parseInt(e.target.value) || 2 })}
-                      min="1"
+                      onChange={(e) => {
+                        setAssignmentHoursError(null);
+                        setNewAssignment({ ...newAssignment, estimatedHours: e.target.value });
+                      }}
+                      min="0.01"
                       max="100"
                     />
+                    {assignmentHoursError && (
+                      <p className="text-sm text-red-600">{assignmentHoursError}</p>
+                    )}
                     <div className="flex space-x-2">
                       <Button
                         onClick={handleCreateAssignment}

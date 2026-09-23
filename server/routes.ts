@@ -1922,11 +1922,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(dueDate.getTime())) {
         throw new Error("Invalid due date provided");
       }
+
+      const rawEstimatedHours = req.body.estimatedHours;
+      const estimatedHours =
+        rawEstimatedHours === undefined || rawEstimatedHours === null
+          ? null
+          : Number(rawEstimatedHours);
+      if (
+        estimatedHours !== null &&
+        (!Number.isFinite(estimatedHours) ||
+          estimatedHours <= 0 ||
+          estimatedHours > 100)
+      ) {
+        throw new Error("Estimated hours must be greater than 0 and at most 100");
+      }
       
       const assignmentData = { 
         ...req.body, 
         userId: user.id,
-        dueDate: dueDate
+        dueDate,
+        estimatedHours,
       };
       
       const assignment = await storage.createAssignment(assignmentData);

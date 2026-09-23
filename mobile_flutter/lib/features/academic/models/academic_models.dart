@@ -220,7 +220,7 @@ class AssignmentInput extends Equatable {
         'type': type,
         'dueDate': dueDate.toUtc().toIso8601String(),
         'priority': priority,
-        'estimatedHours': estimatedHours,
+        'estimatedHours': _validatedEstimatedHours(estimatedHours),
       };
 
   @override
@@ -621,7 +621,19 @@ int? _asNullableInt(Object? value) {
 
 double? _asNullableDouble(Object? value) {
   if (value == null) return null;
-  return value is num ? value.toDouble() : double.tryParse('$value');
+  final parsed = value is num ? value.toDouble() : double.tryParse('$value');
+  return parsed?.isFinite == true ? parsed : null;
+}
+
+double _validatedEstimatedHours(double value) {
+  if (!value.isFinite || value <= 0 || value > 100) {
+    throw ArgumentError.value(
+      value,
+      'estimatedHours',
+      'Estimated hours must be greater than 0 and at most 100.',
+    );
+  }
+  return value;
 }
 
 String _asString(Object? value, {String fallback = ''}) =>

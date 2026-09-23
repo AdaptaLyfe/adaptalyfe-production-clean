@@ -131,10 +131,22 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
       ),
     );
     try {
-      await repository.createAssignment(event.input);
-      await _reloadAfterMutation(
-        emit,
-        successMessage: 'Assignment added successfully.',
+      final createdAssignment = await repository.createAssignment(event.input);
+      final assignments = [
+        createdAssignment,
+        ...state.assignments.where(
+          (item) => item.id != createdAssignment.id,
+        ),
+      ];
+      emit(
+        state.copyWith(
+          status: AcademicStatus.loaded,
+          assignments: assignments,
+          action: AcademicAction.none,
+          errorMessage: null,
+          actionMessage: 'Assignment added successfully.',
+          sessionInvalid: false,
+        ),
       );
     } catch (error) {
       _emitActionFailure(
