@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   formatLocalCalendarDate,
   getCalendarEventDateKey,
+  toCalendarEventDateValue,
   toCalendarDateTimeIso,
 } from "./calendar-date";
 
@@ -15,9 +16,16 @@ test("formats a calendar cell using its local date instead of UTC", () => {
 });
 
 test("keeps an all-day event on its stored date", () => {
+  for (const date of ["2026-08-31", "2026-09-01", "2026-09-02"]) {
+    assert.equal(toCalendarEventDateValue(date, "00:00", true), date);
+    assert.equal(getCalendarEventDateKey(`${date}T00:00:00.000Z`, true), date);
+  }
+});
+
+test("does not convert an all-day date into a timezone-shifted instant", () => {
   assert.equal(
-    getCalendarEventDateKey("2026-09-15T00:00:00.000Z", true),
-    "2026-09-15",
+    toCalendarEventDateValue("2026-09-01", "00:00", true),
+    "2026-09-01",
   );
 });
 

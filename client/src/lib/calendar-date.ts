@@ -40,3 +40,16 @@ export function toCalendarDateTimeIso(date: string, time: string): string {
   }
   return localDateTime.toISOString();
 }
+
+/**
+ * All-day events represent a calendar date, not an instant in time.
+ * Keep that value date-only so timezone conversion cannot move it to
+ * the previous or next day.
+ */
+export function toCalendarEventDateValue(
+  date: string,
+  time: string,
+  allDay: boolean,
+): string {
+  return allDay ? date : toCalendarDateTimeIso(date, time);
+}

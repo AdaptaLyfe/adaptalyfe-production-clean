@@ -26,7 +26,7 @@ import { apiRequest } from "@/lib/queryClient";
 import {
   getCalendarEventDateKey,
   formatLocalCalendarDate,
-  toCalendarDateTimeIso,
+  toCalendarEventDateValue,
 } from "@/lib/calendar-date";
 import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
 import { formatCategoryLabel } from "@/lib/display-labels";
@@ -100,16 +100,20 @@ export default function Calendar() {
     mutationFn: async (eventData: any) => {
       let startDateTime;
       
-      if (newEvent.allDay) {
-        startDateTime = toCalendarDateTimeIso(eventData.startDate, "00:00");
-      } else {
-        const timeStr = eventData.startTime || '12:00';
-        startDateTime = toCalendarDateTimeIso(eventData.startDate, timeStr);
-      }
+      const timeStr = eventData.startTime || '12:00';
+      startDateTime = toCalendarEventDateValue(
+        eventData.startDate,
+        timeStr,
+        eventData.allDay,
+      );
       
       let endDateTime = null;
       if (eventData.endDate && eventData.endTime) {
-        endDateTime = toCalendarDateTimeIso(eventData.endDate, eventData.endTime);
+        endDateTime = toCalendarEventDateValue(
+          eventData.endDate,
+          eventData.endTime,
+          eventData.allDay,
+        );
       }
 
       const payload = {
