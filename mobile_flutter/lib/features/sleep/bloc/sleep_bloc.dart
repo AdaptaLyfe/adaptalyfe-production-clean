@@ -46,6 +46,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       state.copyWith(
         selectedDate: _dateOnlyValue(DateTime.now()),
         dailySession: null,
+        logMode: SleepLogMode.create,
         busyAction: null,
         errorMessage: null,
         actionMessage: null,
@@ -64,6 +65,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       state.copyWith(
         selectedDate: date,
         dailySession: null,
+        logMode: SleepLogMode.create,
         busyAction: 'load-date',
         errorMessage: null,
         actionMessage: null,
@@ -75,6 +77,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
       emit(
         state.copyWith(
           dailySession: session,
+          logMode: session == null ? SleepLogMode.create : SleepLogMode.edit,
           busyAction: null,
           errorMessage: null,
           sessionInvalid: false,
@@ -103,6 +106,7 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
           state.copyWith(
             selectedDate: _parseDateOnly(event.input.sleepDate),
             dailySession: existing,
+            logMode: SleepLogMode.edit,
             busyAction: null,
             errorMessage:
                 'A sleep log already exists for this date. It is ready to edit.',
@@ -178,6 +182,11 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
           status: SleepStatus.loaded,
           sessions: sessions,
           dailySession: dailySession,
+          logMode: _hasExplicitDateSelection
+              ? (dailySession == null
+                  ? SleepLogMode.create
+                  : SleepLogMode.edit)
+              : state.logMode,
           busyAction: null,
           errorMessage: null,
           actionMessage: null,
@@ -221,6 +230,9 @@ class SleepBloc extends Bloc<SleepEvent, SleepState> {
           status: SleepStatus.loaded,
           sessions: sessions,
           dailySession: dailySession,
+          logMode: dailySession == null
+              ? SleepLogMode.create
+              : SleepLogMode.edit,
           busyAction: null,
           actionMessage: successMessage,
           errorMessage: null,

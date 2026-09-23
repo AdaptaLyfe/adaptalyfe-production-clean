@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Pencil, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import {
@@ -62,6 +62,31 @@ interface SleepSession {
   restingHeartRate: number | null;
 }
 
+type SleepLogMode = 'create' | 'edit';
+
+interface SleepFormData {
+  sleepDate: string;
+  bedtime: string;
+  sleepTime: string;
+  wakeDate: string;
+  wakeTime: string;
+  quality: string;
+  notes: string;
+}
+
+function getDefaultSleepFormData(date: Date): SleepFormData {
+  const dateValue = format(date, 'yyyy-MM-dd');
+  return {
+    sleepDate: dateValue,
+    bedtime: '',
+    sleepTime: '',
+    wakeDate: dateValue,
+    wakeTime: '',
+    quality: '',
+    notes: '',
+  };
+}
+
 interface SleepGoal {
   targetSleepDuration: number; // minutes
   targetBedtime: string; // HH:MM format
@@ -71,6 +96,8 @@ interface SleepGoal {
 export default function SleepTracking() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLogging, setIsLogging] = useState(false);
+  const [sleepLogMode, setSleepLogMode] = useState<SleepLogMode>('create');
+  const [editingSleepSession, setEditingSleepSession] = useState<SleepSession | null>(null);
   const [sleepGoals, setSleepGoals] = useState<SleepGoal>({
     targetSleepDuration: 480, // 8 hours
     targetBedtime: '22:00',
@@ -87,13 +114,6 @@ export default function SleepTracking() {
     queryFn: () => apiRequest('GET', '/api/sleep-sessions').then(res => res.json())
   });
 
-  // Fetch sleep session for selected date
-  const { data: dailySession } = useQuery({
-    queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-    queryFn: () => apiRequest('GET', `/api/sleep-sessions/date/${format(selectedDate, 'yyyy-MM-dd')}`).then(res => res.json()),
-    enabled: !!selectedDate
-  });
-
   // Create/update sleep session mutation
   const createSleepSession = useMutation({
     mutationFn: ({ data, sessionId }: { data: Partial<SleepSession>; sessionId?: number }) =>
@@ -104,11 +124,10 @@ export default function SleepTracking() {
       ).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
-      queryClient.invalidateQueries({
-        queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-      });
       toast({ title: 'Sleep session saved successfully!' });
       setIsLogging(false);
+      setSleepLogMode('create');
+      setEditingSleepSession(null);
     },
     onError: () => {
       toast({ title: 'Failed to save sleep session', variant: 'destructive' });
@@ -148,9 +167,6 @@ export default function SleepTracking() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
-      queryClient.invalidateQueries({
-        queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-      });
     },
   });
 
@@ -192,6 +208,20 @@ export default function SleepTracking() {
     return 'bg-red-500';
   };
 
+  const openCreateSleepLog = () => {
+    setSleepLogMode('create');
+    setEditingSleepSession(null);
+    setSelectedDate(new Date());
+    setIsLogging(true);
+  };
+
+  const openEditSleepLog = (session: SleepSession) => {
+    setSleepLogMode('edit');
+    setEditingSleepSession(session);
+    setSelectedDate(new Date(`${session.sleepDate}T00:00:00`));
+    setIsLogging(true);
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex items-center gap-4 mb-8">
@@ -204,7 +234,18 @@ export default function SleepTracking() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6" value={isLogging ? "log" : undefined} onValueChange={(value) => { if (value !== "log") setIsLogging(false); }}>
+       <Tabs
+         defaultValue="overview"
+         className="space-y-6"
+         value={isLogging ? "log" : undefined}
+         onValueChange={(value) => {
+           if (value === "log") {
+             openCreateSleepLog();
+           } else {
+             setIsLogging(false);
+           }
+         }}
+       >
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="log">Log Sleep</TabsTrigger>
@@ -276,17 +317,7 @@ export default function SleepTracking() {
                 <CardTitle>Recent Sleep Sessions</CardTitle>
                 <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow">
                   <Button 
-                    onClick={() => {
-                      setIsLogging(true);
-                      // Force tab switch by updating the component
-                      setTimeout(() => {
-                        const logTab = document.querySelector('[data-state="active"][value="log"]');
-                        if (!logTab) {
-                          const logButton = document.querySelector('[value="log"]') as HTMLButtonElement;
-                          if (logButton) logButton.click();
-                        }
-                      }, 100);
-                    }} 
+                     onClick={openCreateSleepLog}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                   >
@@ -333,6 +364,18 @@ export default function SleepTracking() {
                         </Badge>
                       )}
                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                         onClick={() => openEditSleepLog(session)}
+                         aria-label={`Edit sleep log from ${format(new Date(session.sleepDate), 'MMM dd, yyyy')}`}
+                         title="Edit sleep log"
+                       >
+                         <Pencil className="h-4 w-4 mr-1" />
+                         Edit
+                       </Button>
+                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
@@ -353,7 +396,7 @@ export default function SleepTracking() {
                     <Moon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No sleep sessions recorded yet</p>
                     <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow mt-4 inline-block">
-                      <Button onClick={() => setIsLogging(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                      <Button onClick={openCreateSleepLog} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                         Log your first sleep session
                       </Button>
                     </div>
@@ -410,7 +453,8 @@ export default function SleepTracking() {
             onSubmit={(data, sessionId) => createSleepSession.mutate({ data, sessionId })}
             isLoading={createSleepSession.isPending}
             selectedDate={selectedDate}
-            dailySession={dailySession}
+            mode={sleepLogMode}
+            existingSession={sleepLogMode === 'edit' ? editingSleepSession : undefined}
           />
         </TabsContent>
 
@@ -437,51 +481,50 @@ function SleepLoggingForm({
   onSubmit, 
   isLoading, 
   selectedDate, 
-  dailySession 
+  mode,
+  existingSession,
 }: {
   onSubmit: (data: any, sessionId?: number) => void;
   isLoading: boolean;
   selectedDate: Date;
-  dailySession?: SleepSession;
+  mode: SleepLogMode;
+  existingSession?: SleepSession | null;
 }) {
   const [dateError, setDateError] = useState<string | null>(null);
   const [wakeDateError, setWakeDateError] = useState<string | null>(null);
   const [timeError, setTimeError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    sleepDate: format(selectedDate, 'yyyy-MM-dd'),
-    bedtime: '',
-    sleepTime: '',
-    wakeDate: format(selectedDate, 'yyyy-MM-dd'),
-    wakeTime: '',
-    quality: '',
-    notes: ''
-  });
+  const [formData, setFormData] = useState<SleepFormData>(() => getDefaultSleepFormData(selectedDate));
 
   useEffect(() => {
-    if (dailySession) {
+    if (mode === 'edit' && existingSession) {
       setFormData({
-        sleepDate: dailySession.sleepDate,
-        bedtime: dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
-        sleepTime: dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
-        wakeDate: dailySession.wakeTime
-          ? format(new Date(dailySession.wakeTime), 'yyyy-MM-dd')
-          : dailySession.sleepDate,
-        wakeTime: dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
-        quality: dailySession.quality || '',
-        notes: dailySession.notes || ''
+        sleepDate: existingSession.sleepDate,
+        bedtime: existingSession.bedtime ? format(new Date(existingSession.bedtime), 'HH:mm') : '',
+        sleepTime: existingSession.sleepTime ? format(new Date(existingSession.sleepTime), 'HH:mm') : '',
+        wakeDate: existingSession.wakeTime
+          ? format(new Date(existingSession.wakeTime), 'yyyy-MM-dd')
+          : existingSession.sleepDate,
+        wakeTime: existingSession.wakeTime ? format(new Date(existingSession.wakeTime), 'HH:mm') : '',
+        quality: existingSession.quality || '',
+        notes: existingSession.notes || ''
       });
       setWakeDateError(null);
       setTimeError(getFormTimeValidationError({
-        sleepDate: dailySession.sleepDate,
-        bedtime: dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
-        sleepTime: dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
-        wakeDate: dailySession.wakeTime
-          ? format(new Date(dailySession.wakeTime), 'yyyy-MM-dd')
-          : dailySession.sleepDate,
-        wakeTime: dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
+        sleepDate: existingSession.sleepDate,
+        bedtime: existingSession.bedtime ? format(new Date(existingSession.bedtime), 'HH:mm') : '',
+        sleepTime: existingSession.sleepTime ? format(new Date(existingSession.sleepTime), 'HH:mm') : '',
+        wakeDate: existingSession.wakeTime
+          ? format(new Date(existingSession.wakeTime), 'yyyy-MM-dd')
+          : existingSession.sleepDate,
+        wakeTime: existingSession.wakeTime ? format(new Date(existingSession.wakeTime), 'HH:mm') : '',
       }));
+    } else if (mode === 'create') {
+      setFormData(getDefaultSleepFormData(selectedDate));
+      setDateError(null);
+      setWakeDateError(null);
+      setTimeError(null);
     }
-  }, [dailySession]);
+  }, [existingSession, mode, selectedDate]);
 
   const getFormTimeValidationError = (values: typeof formData): string | null => {
     if (!values.bedtime || !values.sleepTime || !values.wakeTime) return null;
@@ -541,7 +584,7 @@ function SleepLoggingForm({
       notes: formData.notes,
     };
     
-    onSubmit(sleepData, dailySession?.id);
+    onSubmit(sleepData, mode === 'edit' ? existingSession?.id : undefined);
   };
 
   return (

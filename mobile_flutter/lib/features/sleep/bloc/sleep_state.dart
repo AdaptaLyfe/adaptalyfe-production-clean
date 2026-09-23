@@ -9,12 +9,18 @@ enum SleepStatus {
   failure,
 }
 
+enum SleepLogMode {
+  create,
+  edit,
+}
+
 class SleepState extends Equatable {
   const SleepState({
     this.status = SleepStatus.initial,
     this.sessions = const [],
     this.selectedDate,
     this.dailySession,
+    this.logMode = SleepLogMode.create,
     this.busyAction,
     this.errorMessage,
     this.actionMessage,
@@ -25,6 +31,7 @@ class SleepState extends Equatable {
   final List<SleepSessionModel> sessions;
   final DateTime? selectedDate;
   final SleepSessionModel? dailySession;
+  final SleepLogMode logMode;
   final String? busyAction;
   final String? errorMessage;
   final String? actionMessage;
@@ -39,6 +46,7 @@ class SleepState extends Equatable {
     List<SleepSessionModel>? sessions,
     DateTime? selectedDate,
     Object? dailySession = _notSet,
+    SleepLogMode? logMode,
     Object? busyAction = _notSet,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
@@ -51,6 +59,7 @@ class SleepState extends Equatable {
       dailySession: identical(dailySession, _notSet)
           ? this.dailySession
           : dailySession as SleepSessionModel?,
+      logMode: logMode ?? this.logMode,
       busyAction: identical(busyAction, _notSet)
           ? this.busyAction
           : busyAction as String?,
@@ -70,6 +79,7 @@ class SleepState extends Equatable {
         sessions,
         selectedDate,
         dailySession,
+        logMode,
         busyAction,
         errorMessage,
         actionMessage,

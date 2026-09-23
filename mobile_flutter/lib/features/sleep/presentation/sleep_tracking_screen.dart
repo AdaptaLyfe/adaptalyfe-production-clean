@@ -681,13 +681,15 @@ class _SleepLogTabState extends State<_SleepLogTab> {
     final oldId = oldWidget.state.dailySession?.id;
     final newId = widget.state.dailySession?.id;
     if (oldId != newId ||
+        oldWidget.state.logMode != widget.state.logMode ||
         oldWidget.state.activeDate != widget.state.activeDate) {
       _syncFromState();
     }
   }
 
   void _syncFromState() {
-    final session = widget.state.dailySession;
+    final isEditMode = widget.state.logMode == SleepLogMode.edit;
+    final session = isEditMode ? widget.state.dailySession : null;
     final date = session == null
         ? widget.state.activeDate
         : _parseDateOnly(session.sleepDate);
@@ -702,7 +704,7 @@ class _SleepLogTabState extends State<_SleepLogTab> {
         : _dateOnlyValue(session!.wakeTime!);
     _wakeDateController.text = _dateOnly(_wakeDate!);
     _quality = session?.quality ?? '';
-    _loadedSessionId = session?.id;
+    _loadedSessionId = isEditMode ? session?.id : null;
     _validationError = null;
   }
 
@@ -716,7 +718,8 @@ class _SleepLogTabState extends State<_SleepLogTab> {
 
   @override
   Widget build(BuildContext context) {
-    final hasExisting = widget.state.dailySession != null;
+    final hasExisting = widget.state.logMode == SleepLogMode.edit &&
+        widget.state.dailySession != null;
     return ListView(
        padding: AppResponsive.pagePadding(context).add(
          const EdgeInsets.only(top: 18, bottom: 32),
