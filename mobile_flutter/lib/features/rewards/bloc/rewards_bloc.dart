@@ -247,6 +247,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
       repository.getRewards(),
       repository.getPointsBalance(),
       repository.getPointsTransactions(),
+      repository.getAchievements(),
     ]);
     emit(
       state.copyWith(
@@ -254,6 +255,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         rewards: results[0] as List<RewardModel>,
         pointsBalance: results[1] as PointsBalanceModel,
         transactions: results[2] as List<PointsTransactionModel>,
+        achievements: results[3] as List<AchievementBadgeModel>,
       ),
     );
   }

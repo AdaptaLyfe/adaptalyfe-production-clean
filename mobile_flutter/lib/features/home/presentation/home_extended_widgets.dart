@@ -3245,59 +3245,64 @@ class _HomeAchievementsModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<RewardsBloc, RewardsState>(
-      builder: (context, state) => _SurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _ModuleHeader(
-              title: 'Achievements',
-              icon: Icons.emoji_events_outlined,
-              action: TextButton(
-                onPressed: () => context.push('/rewards'),
-                child: const Text('View all'),
+      builder: (context, state) {
+        final earnedAchievements = state.achievements
+            .where((achievement) => achievement.isEarned)
+            .toList();
+        return _SurfaceCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ModuleHeader(
+                title: 'Achievements',
+                icon: Icons.emoji_events_outlined,
+                action: TextButton(
+                  onPressed: () => context.push('/rewards'),
+                  child: const Text('View all'),
+                ),
               ),
-            ),
-            if (state.isLoading)
-              const LinearProgressIndicator(minHeight: 3)
-            else if (state.errorMessage != null)
-              Text(
-                state.errorMessage!,
-                style: const TextStyle(color: Color(0xFFB91C1C)),
-              )
-            else ...[
-              Row(
-                children: [
-                  const Icon(Icons.stars_rounded, color: Color(0xFFF59E0B)),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${state.pointsBalance?.availablePoints ?? 0} points available',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              if (state.achievements.isEmpty)
-                const Text(
-                  'Complete tasks to build your first achievement streak.',
-                  style: TextStyle(color: Color(0xFF64748B)),
+              if (state.isLoading)
+                const LinearProgressIndicator(minHeight: 3)
+              else if (state.errorMessage != null)
+                Text(
+                  state.errorMessage!,
+                  style: const TextStyle(color: Color(0xFFB91C1C)),
                 )
-              else
-                ...state.achievements.take(3).map(
-                      (achievement) => ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                        leading: const Icon(
-                          Icons.military_tech_outlined,
-                          color: Color(0xFFF59E0B),
-                        ),
-                        title: Text(achievement.title),
-                        subtitle: Text(achievement.description),
-                      ),
+              else ...[
+                Row(
+                  children: [
+                    const Icon(Icons.stars_rounded, color: Color(0xFFF59E0B)),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${state.pointsBalance?.availablePoints ?? 0} points available',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (earnedAchievements.isEmpty)
+                  const Text(
+                    'Complete tasks to build your first achievement streak.',
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  )
+                else
+                  ...earnedAchievements.take(3).map(
+                        (achievement) => ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          leading: const Icon(
+                            Icons.military_tech_outlined,
+                            color: Color(0xFFF59E0B),
+                          ),
+                          title: Text(achievement.title),
+                          subtitle: Text(achievement.description),
+                        ),
+                      ),
+              ],
             ],
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

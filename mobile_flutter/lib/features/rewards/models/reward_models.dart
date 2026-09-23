@@ -235,6 +235,10 @@ class AchievementBadgeModel extends Equatable {
     required this.points,
     required this.level,
     required this.earnedAt,
+    this.isEarned = true,
+    this.progress = 0,
+    this.target = 0,
+    this.requirement = '',
   });
 
   factory AchievementBadgeModel.fromJson(Map<String, dynamic> json) {
@@ -252,6 +256,10 @@ class AchievementBadgeModel extends Equatable {
       points: _asInt(json['points']),
       level: _asInt(json['level'], fallback: 1),
       earnedAt: _asDate(json['earnedAt']),
+      isEarned: json.containsKey('isEarned') ? json['isEarned'] == true : true,
+      progress: _asInt(json['progress']),
+      target: _asInt(json['target']),
+      requirement: _asString(json['requirement']),
     );
   }
 
@@ -265,6 +273,10 @@ class AchievementBadgeModel extends Equatable {
   final int points;
   final int level;
   final DateTime? earnedAt;
+  final bool isEarned;
+  final int progress;
+  final int target;
+  final String requirement;
 
   @override
   List<Object?> get props => [
@@ -278,6 +290,10 @@ class AchievementBadgeModel extends Equatable {
         points,
         level,
         earnedAt,
+        isEarned,
+        progress,
+        target,
+        requirement,
       ];
 }
 

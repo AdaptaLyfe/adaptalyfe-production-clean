@@ -49,6 +49,11 @@ import { db, pool } from "./db";
 import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
+  countCompletedMilestones,
+  evaluateRewardBadges,
+} from "./reward-badges";
+import type { RewardBadgeView } from "./reward-badges";
+import {
   calculateCurrentStreak,
   normalizedActivityDates,
 } from "./activity-streak";
@@ -481,6 +486,7 @@ export interface IStorage {
   getUserAchievements(userId: number): Promise<UserAchievement[]>;
   getRecentUserAchievements(userId: number, limit?: number): Promise<UserAchievement[]>;
   createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement>;
+  getRewardBadges(userId: number): Promise<RewardBadgeView[]>;
   
   // Streak Tracking
   getStreaksByUser(userId: number): Promise<StreakTracking[]>;
@@ -2490,6 +2496,128 @@ export class DatabaseStorage implements IStorage {
   async createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement> {
     const [created] = await db.insert(userAchievements).values(achievement).returning();
     return created;
+  }
+
+  async getRewardBadges(userId: number): Promise<RewardBadgeView[]> {
+    const [
+      balance,
+      redemptionCount,
+      skillRows,
+      storedAchievements,
+      legacyAchievements,
+    ] = await Promise.all([
+      this.getExistingUserPointsBalance(userId),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rewardRedemptions)
+        .where(
+          and(
+            eq(rewardRedemptions.userId, userId),
+            inArray(rewardRedemptions.status, [
+              "pending",
+              "approved",
+              "completed",
+            ]),
+          ),
+        ),
+      db
+        .select({ milestones: transitionSkills.milestones })
+        .from(transitionSkills)
+        .where(eq(transitionSkills.userId, userId)),
+      db
+        .select()
+        .from(userAchievements)
+        .where(eq(userAchievements.userId, userId))
+        .orderBy(desc(userAchievements.earnedAt)),
+      db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.userId, userId))
+        .orderBy(desc(achievements.earnedAt)),
+    ]);
+
+    const stats = {
+      lifetimeEarned: Math.max(0, Number(balance?.lifetimeEarned ?? 0)),
+      rewardsRedeemed: Math.max(0, Number(redemptionCount[0]?.count ?? 0)),
+      completedMilestones: skillRows.reduce(
+        (total, skill) => total + countCompletedMilestones(skill.milestones),
+        0,
+      ),
+    };
+    const evaluations = evaluateRewardBadges(stats);
+    const storedByType = new Map<string, UserAchievement>();
+
+    for (const achievement of storedAchievements) {
+      if (!storedByType.has(achievement.achievementType)) {
+        storedByType.set(achievement.achievementType, achievement);
+      }
+    }
+
+    for (const badge of evaluations) {
+      if (!badge.isEarned || storedByType.has(badge.type)) continue;
+      const [created] = await db
+        .insert(userAchievements)
+        .values({
+          userId,
+          achievementType: badge.type,
+          title: badge.title,
+          description: badge.description,
+          iconName: badge.iconName,
+          category: badge.category,
+          points: badge.points,
+          level: 1,
+        })
+        .returning();
+      storedByType.set(badge.type, created);
+    }
+
+    const badges: RewardBadgeView[] = evaluations.map((badge, index) => {
+      const stored = storedByType.get(badge.type);
+      const isEarned = badge.isEarned || stored != null;
+      return {
+        id: stored?.id ?? -(index + 1),
+        userId,
+        achievementType: badge.type,
+        title: badge.title,
+        description: badge.description,
+        iconName: badge.iconName,
+        category: badge.category,
+        points: badge.points,
+        level: 1,
+        earnedAt: stored?.earnedAt ?? null,
+        isEarned,
+        progress: isEarned ? Math.max(badge.progress, badge.target) : badge.progress,
+        target: badge.target,
+        requirement: badge.requirement,
+      };
+    });
+    const knownTypes = new Set(badges.map((badge) => badge.achievementType));
+
+    for (const achievement of [...storedAchievements, ...legacyAchievements]) {
+      const type = "achievementType" in achievement
+        ? achievement.achievementType
+        : achievement.type;
+      if (knownTypes.has(type)) continue;
+      knownTypes.add(type);
+      badges.push({
+        id: achievement.id,
+        userId,
+        achievementType: type,
+        title: achievement.title,
+        description: achievement.description,
+        iconName: "iconName" in achievement ? achievement.iconName : achievement.icon,
+        category: "category" in achievement ? achievement.category : "achievement",
+        points: "points" in achievement ? achievement.points ?? 0 : 0,
+        level: "level" in achievement ? achievement.level ?? 1 : 1,
+        earnedAt: achievement.earnedAt ?? null,
+        isEarned: true,
+        progress: 1,
+        target: 1,
+        requirement: "Completed achievement requirement.",
+      });
+    }
+
+    return badges;
   }
 
   // Streak Tracking Implementation

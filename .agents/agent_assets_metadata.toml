@@ -2143,3 +2143,17 @@ mtime_ms = 1790149995376
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3c616c0d-8e86-4d7c-bb0c-7a4050d27b51/a10126a3-c340-41ee-a41c-2081ef2a15c9"
 storage_version_token = "1790149998773316"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YzahuCc8YTK_3cf3HvDKw"
+uri = "file://deliverables/rewards-badges-changed-files.zip"
+type = "unspecified"
+title = "Rewards and Badges changed files"
+description = "ZIP containing only the files changed for the Flutter Rewards → Badges implementation, server badge reconciliation, and focused tests."
+logical_id = "f2700f5d-0f09-47fe-acd9-348fa2a8108e"
+content_hash = "sha256:8363dfd182729ad1dc4276086450f3b1784e25f40b80c08313f2006bbeafb360"
+size = 120486
+mtime_ms = 1790150558263
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f2700f5d-0f09-47fe-acd9-348fa2a8108e/b43475fb-624f-4ea3-934a-54d93133fa61"
+storage_version_token = "1790150561882947"
+content_type = "application/octet-stream"

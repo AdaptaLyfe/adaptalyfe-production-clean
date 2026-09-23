@@ -475,6 +475,19 @@ class _BadgesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (state.status == RewardsStatus.failure &&
+        state.achievements.isEmpty &&
+        state.errorMessage != null) {
+      return _RewardsError(
+        message: state.errorMessage!,
+        onRetry: () =>
+            context.read<RewardsBloc>().add(const RefreshRewards()),
+      );
+    }
+
+    final earnedCount =
+        state.achievements.where((achievement) => achievement.isEarned).length;
+
     return RefreshIndicator(
       onRefresh: () => _refresh(context),
       child: ListView(
@@ -497,15 +510,18 @@ class _BadgesTab extends StatelessWidget {
             style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
           ),
           const SizedBox(height: 14),
-          if (state.achievements.isEmpty)
-            const _EmptyBadgeCard()
-          else
-            ...state.achievements.map(
-              (achievement) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _AchievementCard(achievement: achievement),
-              ),
+          const _BadgeInstructions(),
+          const SizedBox(height: 12),
+          if (earnedCount == 0) ...[
+            const _NoEarnedBadgesCard(),
+            const SizedBox(height: 12),
+          ],
+          ...state.achievements.map(
+            (achievement) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _AchievementCard(achievement: achievement),
             ),
+          ),
         ],
       ),
     );
@@ -524,6 +540,61 @@ class _BadgesTab extends StatelessWidget {
   }
 }
 
+class _BadgeInstructions extends StatelessWidget {
+  const _BadgeInstructions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white.withOpacity(0.9),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'How to earn badges',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Earn reward points, redeem rewards, or complete skill milestones. '
+              'Badges unlock automatically when you reach their requirement.',
+              style: TextStyle(
+                color: Color(0xFF4B5563),
+                fontSize: 13,
+                height: 1.35,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NoEarnedBadgesCard extends StatelessWidget {
+  const _NoEarnedBadgesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _EmptyCard(
+      icon: Icons.emoji_events_outlined,
+      title: 'No badges yet',
+      message: 'Start earning badges by completing the requirements below.',
+    );
+  }
+}
+
 class _AchievementCard extends StatelessWidget {
   const _AchievementCard({required this.achievement});
 
@@ -531,12 +602,23 @@ class _AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isEarned = achievement.isEarned;
+    final statusColor =
+        isEarned ? const Color(0xFFF59E0B) : const Color(0xFF64748B);
+    final progress = achievement.target > 0
+        ? achievement.progress > achievement.target
+            ? achievement.target
+            : achievement.progress
+        : achievement.progress;
+
     return Card(
-      color: const Color(0xFFFFFBEB),
+      color: isEarned ? const Color(0xFFFFFBEB) : Colors.white,
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFFDE68A)),
+        side: BorderSide(
+          color: isEarned ? const Color(0xFFFDE68A) : const Color(0xFFE5E7EB),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(15),
@@ -547,7 +629,7 @@ class _AchievementCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B),
+                color: statusColor,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
@@ -580,17 +662,59 @@ class _AchievementCard extends StatelessWidget {
                           color: const Color(0xFFFEF3C7),
                           textColor: const Color(0xFF92400E),
                         ),
+                      _RewardTag(
+                        text: isEarned ? 'Earned' : 'Locked',
+                        color: isEarned
+                            ? const Color(0xFFFEF3C7)
+                            : const Color(0xFFF3F4F6),
+                        textColor: isEarned
+                            ? const Color(0xFF92400E)
+                            : const Color(0xFF4B5563),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 5),
                   Text(
                     achievement.description,
                     style: const TextStyle(
-                      color: Color(0xFF92400E),
+                      color: Color(0xFF4B5563),
                       fontSize: 13,
                       height: 1.35,
                     ),
                   ),
+                  if (achievement.requirement.isNotEmpty) ...[
+                    const SizedBox(height: 7),
+                    Text(
+                      achievement.isEarned
+                          ? 'Requirement completed: ${achievement.requirement}'
+                          : achievement.requirement,
+                      style: TextStyle(
+                        color: isEarned
+                            ? const Color(0xFF92400E)
+                            : const Color(0xFF6B7280),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  if (achievement.target > 0) ...[
+                    const SizedBox(height: 10),
+                    LinearProgressIndicator(
+                      value: progress / achievement.target,
+                      minHeight: 7,
+                      borderRadius: BorderRadius.circular(99),
+                      backgroundColor: const Color(0xFFE5E7EB),
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Progress: $progress / ${achievement.target}',
+                      style: const TextStyle(
+                        color: Color(0xFF6B7280),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 9),
                   Wrap(
                     spacing: 8,
@@ -981,19 +1105,6 @@ class _EmptyRewardsCard extends StatelessWidget {
       icon: Icons.card_giftcard_outlined,
       title: 'No rewards available yet',
       message: 'Ask your caregiver to create some exciting rewards for you!',
-    );
-  }
-}
-
-class _EmptyBadgeCard extends StatelessWidget {
-  const _EmptyBadgeCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _EmptyCard(
-      icon: Icons.emoji_events_outlined,
-      title: 'No badges yet',
-      message: 'Keep using Adaptalyfe to unlock achievements.',
     );
   }
 }

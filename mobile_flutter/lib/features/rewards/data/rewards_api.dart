@@ -18,7 +18,7 @@ class RewardsApi {
       _getList('/api/points/transactions', PointsTransactionModel.fromJson);
 
   Future<List<AchievementBadgeModel>> getAchievements() =>
-      _getList('/api/achievements', AchievementBadgeModel.fromJson);
+      _getList('/api/rewards/badges', AchievementBadgeModel.fromJson);
 
   Future<RewardModel> createReward(RewardInput input) =>
       _post('/api/rewards', input.toJson(), RewardModel.fromJson);

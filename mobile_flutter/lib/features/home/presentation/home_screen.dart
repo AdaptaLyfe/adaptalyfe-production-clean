@@ -63,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (mounted) {
       context.read<HomeBloc>().add(const RefreshHome());
       context.read<DailyTasksBloc>().add(const RefreshDailyTasks());
+      context.read<RewardsBloc>().add(const RefreshRewards());
     }
   }
 
@@ -76,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           current.actionMessage != null,
       listener: (context, state) {
         context.read<HomeBloc>().add(const RefreshHome());
+        context.read<RewardsBloc>().add(const RefreshRewards());
       },
       child: BlocConsumer<HomeBloc, HomeState>(
         listener: (context, state) {
