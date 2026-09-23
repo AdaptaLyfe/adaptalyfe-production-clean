@@ -11,6 +11,7 @@ import { FieldLabel } from "@/components/ui/field-label";
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
 function to24h(hour: string, minute: string, ampm: string) {
+  if (!hour || !minute) return "";
   let h = parseInt(hour, 10);
   if (ampm === "PM" && h !== 12) h += 12;
   if (ampm === "AM" && h === 12) h = 0;
@@ -18,7 +19,7 @@ function to24h(hour: string, minute: string, ampm: string) {
 }
 
 function from24h(val: string): { hour: string; minute: string; ampm: string } {
-  if (!val) return { hour: "12", minute: "00", ampm: "AM" };
+  if (!val) return { hour: "", minute: "", ampm: "AM" };
   const [hStr, mStr] = val.split(":");
   let h = parseInt(hStr, 10);
   const ampm = h >= 12 ? "PM" : "AM";
@@ -56,11 +57,13 @@ function TimePicker({ value, onChange }: { value: string; onChange: (v: string) 
       <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
       <select className={selectCls} value={hour}
         onChange={e => { setHour(e.target.value); update(e.target.value, minute, ampm); }}>
+        <option value="" disabled>Hour</option>
         {hours.map(h => <option key={h} value={h}>{h}</option>)}
       </select>
       <span className="text-lg font-semibold text-muted-foreground">:</span>
       <select className={selectCls} value={minute}
         onChange={e => { setMinute(e.target.value); update(hour, e.target.value, ampm); }}>
+        <option value="" disabled>Min</option>
         {minutes.map(m => <option key={m} value={m}>{m}</option>)}
       </select>
       <select className={selectCls} style={{ minWidth: 60 }} value={ampm}

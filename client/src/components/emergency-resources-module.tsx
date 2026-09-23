@@ -66,9 +66,17 @@ export default function EmergencyResourcesModule() {
 
   const createMutation = useMutation({
     mutationFn: async (data: EmergencyResourceFormValues) => {
-      return await apiRequest("POST", "/api/emergency-resources", data);
+      const response = await apiRequest("POST", "/api/emergency-resources", data);
+      return await response.json() as EmergencyResource;
     },
-    onSuccess: () => {
+    onSuccess: (createdResource) => {
+      queryClient.setQueryData<EmergencyResource[] | null>(
+        ["/api/emergency-resources"],
+        (currentResources) => [
+          ...(Array.isArray(currentResources) ? currentResources : []),
+          createdResource,
+        ],
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-resources"] });
       toast({
         title: "Success",
@@ -88,9 +96,17 @@ export default function EmergencyResourcesModule() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<EmergencyResourceFormValues> }) => {
-      return await apiRequest("PUT", `/api/emergency-resources/${id}`, data);
+      const response = await apiRequest("PUT", `/api/emergency-resources/${id}`, data);
+      return await response.json() as EmergencyResource;
     },
-    onSuccess: () => {
+    onSuccess: (updatedResource) => {
+      queryClient.setQueryData<EmergencyResource[] | null>(
+        ["/api/emergency-resources"],
+        (currentResources) =>
+          (Array.isArray(currentResources) ? currentResources : []).map((resource) =>
+            resource.id === updatedResource.id ? updatedResource : resource,
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-resources"] });
       toast({
         title: "Success",
