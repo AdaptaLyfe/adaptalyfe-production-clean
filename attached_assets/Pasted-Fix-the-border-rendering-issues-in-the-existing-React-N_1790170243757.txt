@@ -1,0 +1,142 @@
+Fix the border rendering issues in the existing **React Native + Wrapper** project. Do not migrate to Flutter and do not rewrite unrelated components.
+
+## 1. Academic Planner → Schedule → Add New Class
+
+Bug:
+
+* Open **Academic Planner → Schedule**.
+* Click **Add Class** to open the **Add New Class** popup.
+* The **top border of the first text input** is partially hidden/not displayed correctly.
+* The **left border of other text inputs** is also partially hidden or not rendered correctly.
+* This makes the input boxes look broken, especially when focused/selected.
+
+Required fix:
+
+* Make sure every text input has a complete and clearly visible border on all four sides:
+
+  * Top
+  * Right
+  * Bottom
+  * Left
+* The border must remain visible when the input is:
+
+  * Unfocused
+  * Focused
+  * Selected
+  * Showing validation/error state
+* Do not allow parent containers, ScrollView, modal containers, padding, clipping, or overlapping elements to cover the borders.
+* Preserve the existing design, colors, border radius, spacing, and input behavior unless a small change is required to fix the rendering issue.
+
+## 2. Academic Planner → Assignment
+
+The **same border-rendering issue** exists in the Assignment flow.
+
+Check:
+
+* Add Assignment popup/form
+* All text inputs
+* Text areas
+* Selected/focused fields
+
+Make sure the complete border is always visible and is not clipped or covered.
+
+## 3. Academic Planner → Study Sessions
+
+The **same issue** exists in the Study Sessions flow.
+
+Check:
+
+* Add/Create Study Session popup/form
+* All text inputs
+* Text areas
+* Dropdown/selection fields if they use the same input component
+
+Make sure all borders render correctly on every side and remain visible when focused or selected.
+
+## 4. Achievements → Create New Rewards
+
+Bug:
+
+* Go to **Achievements → Create New Rewards**.
+* When adding a new reward, the **left vertical border** of the following controls gets hidden or disappears when the control is selected/focused/highlighted:
+
+  * Text inputs
+  * Text areas
+  * Selection fields
+  * Dropdown boxes
+
+Required fix:
+
+* Ensure the complete left border and all other borders remain visible in every state.
+* Check both focused and unfocused states.
+* Check dropdown opened/closed states.
+* Check validation/error states if applicable.
+* The border must not be clipped, covered, shifted, or hidden by another view.
+
+## Important: Find the REAL root cause
+
+Do not simply add random margin/padding to individual fields.
+
+First inspect the shared input/form components and determine why the border is being clipped or covered.
+
+Check for common causes such as:
+
+* `overflow: hidden`
+* Parent/container clipping
+* Incorrect `borderRadius`
+* `borderWidth` combined with nested backgrounds
+* Negative margins
+* Absolute-positioned elements
+* Focus/active styles replacing only part of the border
+* `zIndex` / stacking issues
+* `ScrollView` clipping
+* Modal/container layout
+* Wrapper-specific styling
+* Platform-specific React Native rendering differences
+* Different styles being applied to focused/selected components
+
+Prefer fixing the **shared/root component or styling logic** so the problem is solved consistently instead of creating separate hacks for each field.
+
+## Regression prevention
+
+After fixing the root cause, test all affected flows:
+
+1. Academic Planner → Schedule → Add Class
+2. Academic Planner → Assignment
+3. Academic Planner → Study Sessions
+4. Achievements → Create New Rewards
+
+For every field, test:
+
+* Initial state
+* Focused state
+* Unfocused state
+* Selected state
+* Dropdown open/closed
+* Validation/error state
+* Keyboard open state
+* Scrolling inside the popup
+* Different screen sizes
+
+Also verify both **Android and iOS** if the Wrapper supports both.
+
+## Important constraints
+
+* Do NOT change existing business logic.
+* Do NOT change API calls.
+* Do NOT change database behavior.
+* Do NOT change navigation.
+* Do NOT remove existing validation.
+* Do NOT redesign the UI.
+* Do NOT create duplicate input components unless necessary.
+* Keep the existing functionality exactly the same.
+* Make the smallest clean change that permanently fixes the border rendering issue.
+
+Before finishing:
+
+1. Identify the root cause.
+2. Fix it at the appropriate shared/component level.
+3. Search the project for other uses of the affected component/style and make sure the fix does not break them.
+4. Test all four affected areas.
+5. Ensure there is no border clipping or disappearing border in any input state.
+6. Give me a short summary of the root cause, files changed, and why the fix prevents the bug from returning.
