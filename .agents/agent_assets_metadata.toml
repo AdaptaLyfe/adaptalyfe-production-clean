@@ -2157,3 +2157,17 @@ mtime_ms = 1790150558263
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f2700f5d-0f09-47fe-acd9-348fa2a8108e/b43475fb-624f-4ea3-934a-54d93133fa61"
 storage_version_token = "1790150561882947"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "yVbmAAn0C1hI0D1PgF-oZ"
+uri = "file://deliverables/google-play-billing-changed-files.zip"
+type = "unspecified"
+title = "Google Play billing changed files"
+description = "ZIP containing the single server file changed for this billing safety fix. The Flutter purchase code and Android identifiers were already internally consistent and were not changed."
+logical_id = "b4bdbb83-c366-4473-b19e-0b01e59de36a"
+content_hash = "sha256:c4462159aed54d4bb3550557f18ede987a44d1558ba12d2fd815b1c5f6fc1e20"
+size = 48598
+mtime_ms = 1790156731925
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b4bdbb83-c366-4473-b19e-0b01e59de36a/c994d696-a269-4a32-800d-054313b80239"
+storage_version_token = "1790156737206775"
+content_type = "application/octet-stream"

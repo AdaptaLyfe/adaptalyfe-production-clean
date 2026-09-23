@@ -5806,11 +5806,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ message: "Purchase verification failed - API error" });
         }
       } else {
-        console.warn("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY not configured - accepting purchase in development mode only");
-        if (process.env.NODE_ENV === 'production') {
-          return res.status(503).json({ message: "Google Play verification not configured" });
-        }
-        verified = true;
+        console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
+        return res.status(503).json({ message: "Google Play verification not configured" });
       }
 
       if (!verified) {
@@ -5818,12 +5815,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!expiryTime) {
-        expiryTime = new Date();
-        if (planInfo.billingCycle === 'annual') {
-          expiryTime.setFullYear(expiryTime.getFullYear() + 1);
-        } else {
-          expiryTime.setMonth(expiryTime.getMonth() + 1);
-        }
+        return res.status(502).json({
+          message: "Google Play verification did not return an expiration time",
+        });
       }
 
       await storage.updateUser(user.id, {
@@ -6373,17 +6367,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("Restore verification error:", verifyError.message);
             continue;
           }
-        } else if (process.env.NODE_ENV === 'production') {
+        } else {
+          console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
           return res.status(503).json({ message: "Google Play verification not configured" });
         }
 
         if (!expiresAt) {
-          expiresAt = new Date();
-          if (planInfo.billingCycle === 'annual') {
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          } else {
-            expiresAt.setMonth(expiresAt.getMonth() + 1);
-          }
+          continue;
         }
 
         await storage.updateUser(user.id, {
