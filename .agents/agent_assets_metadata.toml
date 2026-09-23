@@ -2017,3 +2017,17 @@ mtime_ms = 1790137616626
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9a115e06-d197-427f-b949-f28ffc8d160a/01758995-21ee-4698-8049-a97c912b4a2f"
 storage_version_token = "1790137624532252"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "m0SVSYk-ijwNN7MYDNAjh"
+uri = "file://artifacts/flutter-subscription-plan-selection-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter subscription plan-selection fix — changed files ZIP"
+description = "Contains exactly the two Dart files changed to start native store checkout after selecting an available plan and show an unavailable-store message."
+logical_id = "609bfaa0-db4a-4117-a8a7-6154bfe59f8c"
+content_hash = "sha256:aca814b65c71f30d867d60ae344218ef41e66706ae6e60a79a17ac27736443bc"
+size = 8872
+mtime_ms = 1790139765578
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/609bfaa0-db4a-4117-a8a7-6154bfe59f8c/b4c3d6e4-036f-4539-a25a-bdcf0fe11082"
+storage_version_token = "1790139780938762"
+content_type = "application/octet-stream"
