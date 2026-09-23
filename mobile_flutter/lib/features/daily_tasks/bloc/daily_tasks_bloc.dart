@@ -200,6 +200,10 @@ class DailyTasksBloc extends Bloc<DailyTasksEvent, DailyTasksState> {
     ToggleDailyTask event,
     Emitter<DailyTasksState> emit,
   ) async {
+    // The button for the active task is disabled, but keep the guard in the
+    // bloc as well so queued taps cannot start a second completion request.
+    if (state.action != DailyTaskAction.none) return;
+
     final previousTasks = state.tasks;
     final taskIndex = previousTasks.indexWhere((task) => task.id == event.taskId);
     final selectedDate = event.date ?? _requestDate;

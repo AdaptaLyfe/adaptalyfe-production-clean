@@ -532,7 +532,10 @@ class _TaskCompletionButton extends StatelessWidget {
           isCompleted: currentTask.isCompleted,
           isBusy: state.activeTaskId == task.id &&
               state.action != DailyTaskAction.none,
-          isEnabled: state.action == DailyTaskAction.none,
+          // Keep this selector task-scoped. A different task completing must
+          // not change this button's selected value and rebuild its circle.
+          isEnabled: state.activeTaskId != task.id ||
+              state.action == DailyTaskAction.none,
         );
       },
       builder: (context, completion) {

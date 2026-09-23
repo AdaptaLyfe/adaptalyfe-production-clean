@@ -2213,3 +2213,17 @@ mtime_ms = 1790159633388
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86b5bda7-880c-4a19-a7ce-dd298bff41a0/5ad0bd49-a267-4868-a346-42ebd36a28ab"
 storage_version_token = "1790159646366658"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "moHl2gTvbVqhvFXTQnt9A"
+uri = "file://artifacts/flutter-daily-tasks-emergency-resource-fixes.zip"
+type = "unspecified"
+title = "Flutter daily tasks and emergency resource fixes"
+description = "ZIP containing only the four changed source files for this request."
+logical_id = "4f25e305-537a-4aa2-9c36-a2b14cc181d2"
+content_hash = "sha256:d1e915411a4cd8a1ec1737f76744922af4711fa025c84b4cebed99bffbbdc584"
+size = 61582
+mtime_ms = 1790160204172
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4f25e305-537a-4aa2-9c36-a2b14cc181d2/6dfcfdcb-cf51-49f5-8d8b-ee9777b7af2f"
+storage_version_token = "1790160210437307"
+content_type = "application/octet-stream"

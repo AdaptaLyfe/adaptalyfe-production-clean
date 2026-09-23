@@ -2614,7 +2614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Emergency resources routes
   app.get("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const resources = await storage.getEmergencyResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
@@ -2625,7 +2625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session.user.id;
+      const userId = req.user.id;
       const resourceData = insertEmergencyResourceSchema.parse({ ...req.body, userId });
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
@@ -2645,7 +2645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const resourceId = parseInt(req.params.id);
       const resources = await storage.getEmergencyResourcesByUser(
-        req.session.user.id,
+        req.user.id,
       );
       if (!resources.some((resource) => resource.id === resourceId)) {
         return res.status(404).json({ message: "Emergency resource not found" });
@@ -2670,7 +2670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const resourceId = parseInt(req.params.id);
       const resources = await storage.getEmergencyResourcesByUser(
-        req.session.user.id,
+        req.user.id,
       );
       if (!resources.some((resource) => resource.id === resourceId)) {
         return res.status(404).json({ message: "Emergency resource not found" });

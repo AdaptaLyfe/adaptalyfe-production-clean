@@ -334,6 +334,10 @@ class ResourcesBloc extends Bloc<ResourcesEvent, ResourcesState> {
     CreateEmergencyResource event,
     Emitter<ResourcesState> emit,
   ) async {
+    // Protect the API call as well as the form so repeated submissions cannot
+    // create duplicate emergency resources.
+    if (state.busyKey != null) return;
+
     emit(
       state.copyWith(
         busyKey: 'emergency-create',
