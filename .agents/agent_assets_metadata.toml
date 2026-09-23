@@ -2171,3 +2171,17 @@ mtime_ms = 1790156731925
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b4bdbb83-c366-4473-b19e-0b01e59de36a/c994d696-a269-4a32-800d-054313b80239"
 storage_version_token = "1790156737206775"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "W-vXm-vQj003ad6flaFK5"
+uri = "file://deliverables/flutter-google-play-billing-files.zip"
+type = "unspecified"
+title = "Flutter Google Play billing files"
+description = "ZIP containing the Flutter subscription BLoC and purchase service files used by the Google Play billing flow."
+logical_id = "386a397d-9aca-406a-9474-2059d66b7bf9"
+content_hash = "sha256:c9945708cf3ee2267ddb6d99b44495ff7fe06fa735bd7eb9e33bcdf74244430d"
+size = 5321
+mtime_ms = 1790156971237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/386a397d-9aca-406a-9474-2059d66b7bf9/7c411154-3d82-42c6-8d71-d837fac87c1f"
+storage_version_token = "1790156976585250"
+content_type = "application/octet-stream"
