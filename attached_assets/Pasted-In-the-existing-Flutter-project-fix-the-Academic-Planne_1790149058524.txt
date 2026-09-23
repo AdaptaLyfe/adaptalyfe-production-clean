@@ -1,0 +1,127 @@
+In the existing Flutter project, fix the Academic Planner / Student Planner → Assignment creation bug.
+
+### Bug
+
+When the user tries to add a new assignment and enters a decimal value such as:
+
+* `2.5` hours
+* `1.5` hours
+* `0.5` hours
+
+in the **Estimated Hours** field, the assignment popup shows:
+
+**"Invalid assignment data"**
+
+The assignment should be created successfully when a valid decimal number is entered.
+
+### Required behavior
+
+1. Find the complete Assignment creation flow:
+
+   * Assignment UI/form
+   * Estimated Hours TextField
+   * Form validation
+   * Assignment model
+   * BLoC/Event/State
+   * Repository
+   * Local storage/API/Firebase/database layer, whichever is used
+   * Serialization/deserialization (`toJson` / `fromJson`)
+   * Any backend/API request model
+
+2. Identify the ROOT CAUSE of why `2.5` is treated as invalid.
+
+3. Estimated Hours must support decimal values.
+
+Examples of valid values:
+
+* `0.5`
+* `1`
+* `1.5`
+* `2`
+* `2.5`
+* `10.75`
+
+4. Do NOT simply hide or remove the "Invalid assignment data" error.
+
+5. Fix the data type and conversion consistently throughout the entire assignment flow.
+
+   * Do not incorrectly convert a decimal value to `int`.
+   * Use an appropriate numeric type such as `double` where required.
+   * Handle TextField string → numeric conversion safely.
+   * Ensure JSON serialization/deserialization preserves decimal values.
+   * Ensure existing integer values such as `2` continue working.
+
+6. Validation:
+
+   * Empty Estimated Hours → show the existing required-field validation.
+   * Invalid text such as `abc` → show a proper validation message.
+   * Negative values → reject if the existing business rule does not allow them.
+   * Valid decimal values such as `2.5` → allow and save successfully.
+   * Do not introduce `NaN` or infinite values.
+
+7. Check whether the database/API/backend expects an integer.
+   If another layer currently expects `int`, update the model/request/database mapping properly so decimal hours are supported end-to-end instead of converting `2.5` incorrectly.
+
+8. Check both CREATE and EDIT assignment flows.
+   Existing assignments with values like `2`, `2.5`, etc. must load correctly.
+
+9. Preserve backward compatibility with existing assignment data.
+
+10. Keep the existing UI design, popup design, BLoC architecture, navigation, and unrelated functionality unchanged.
+
+### Important
+
+Do not make a superficial UI-only fix.
+
+Trace the value from:
+
+`Estimated Hours TextField`
+→ validation
+→ BLoC event
+→ assignment model
+→ repository
+→ database/API
+→ serialization
+→ saved assignment
+→ assignment list/details
+
+and make sure the type is consistent at every layer.
+
+### Testing required
+
+After fixing, test these cases:
+
+| Input   | Expected         |
+| ------- | ---------------- |
+| `2`     | Success          |
+| `2.5`   | Success          |
+| `1.5`   | Success          |
+| `0.5`   | Success          |
+| `10.75` | Success          |
+| empty   | Validation error |
+| `abc`   | Validation error |
+| `-2.5`  | Reject           |
+| `2..5`  | Validation error |
+
+Also test:
+
+* Create assignment with `2.5`
+* Close/reopen the screen
+* Edit the assignment
+* Verify `2.5` is still displayed correctly
+* Save the edited assignment
+* Verify no "Invalid assignment data" error appears
+
+### Bug prevention
+
+Before finishing, search the entire project for all Assignment `estimatedHours` references and make sure there is no remaining code that assumes the value must be an `int`.
+
+Do not change unrelated code.
+
+At the end, provide:
+
+1. Root cause
+2. Files changed
+3. Exact fix made
+4. Test cases completed
+5. Any database/API migration required
