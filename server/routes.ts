@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
-import { storage } from "./storage";
+import { storage, RewardRedemptionError } from "./storage";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import {
   generateAdaptAIChatTurn,
@@ -6828,24 +6828,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const redemptionData = {
-        ...req.body,
-        userId: user.id
-      };
+      const rewardId = Number(req.body?.rewardId);
+      if (!Number.isInteger(rewardId) || rewardId <= 0) {
+        return res.status(400).json({ message: "A valid reward is required" });
+      }
 
-      const redemption = await storage.createRewardRedemption(redemptionData);
-      
-      // Deduct points from user's balance
-      await storage.updateUserPoints(
-        user.id, 
-        -redemptionData.pointsSpent, 
-        "reward_redemption", 
-        `Redeemed reward: ${redemptionData.rewardId}`, 
-        user.id
-      );
+      const redemption = await storage.redeemReward(user.id, rewardId);
 
       res.json(redemption);
     } catch (error) {
+      if (error instanceof RewardRedemptionError) {
+        const status =
+          error.code === "REWARD_NOT_FOUND" ? 404 : 409;
+        return res.status(status).json({ message: error.message });
+      }
       console.error("Error redeeming reward:", error);
       res.status(500).json({ message: "Failed to redeem reward" });
     }

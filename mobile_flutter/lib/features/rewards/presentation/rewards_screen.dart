@@ -280,18 +280,21 @@ class _RewardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canAfford = availablePoints >= reward.pointsRequired;
+    final limitReached = reward.maxRedemptions != null &&
+        reward.currentRedemptions >= reward.maxRedemptions!;
+    final canRedeem = canAfford && !limitReached;
     final isBusy = busyKey == 'reward-${reward.id}' ||
         busyKey == 'redeem-${reward.id}';
     final rewardColor = _colorFromHex(reward.color);
 
     return Card(
       color: Colors.white,
-      elevation: canAfford ? 2 : 0,
+      elevation: canRedeem ? 2 : 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: canAfford ? const Color(0xFFBBF7D0) : const Color(0xFFE5E7EB),
-          width: canAfford ? 1.5 : 1,
+          color: canRedeem ? const Color(0xFFBBF7D0) : const Color(0xFFE5E7EB),
+          width: canRedeem ? 1.5 : 1,
         ),
       ),
       child: Padding(
@@ -398,7 +401,16 @@ class _RewardCard extends StatelessWidget {
                   ),
                 ] else
                   const Spacer(),
-                if (!canAfford)
+                if (limitReached)
+                  const Text(
+                    'Limit reached',
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                else if (!canAfford)
                   const Text(
                     'Not enough points',
                     style: TextStyle(
@@ -413,14 +425,14 @@ class _RewardCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: !canAfford || isBusy
+                onPressed: !canRedeem || isBusy
                     ? null
                     : () => _confirmRedeem(context, reward),
                 style: FilledButton.styleFrom(
                   backgroundColor:
-                      canAfford ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
+                      canRedeem ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
                   foregroundColor:
-                      canAfford ? Colors.white : const Color(0xFF6B7280),
+                      canRedeem ? Colors.white : const Color(0xFF6B7280),
                 ),
                 child: isBusy && busyKey == 'redeem-${reward.id}'
                     ? const SizedBox(
@@ -428,7 +440,13 @@ class _RewardCard extends StatelessWidget {
                         width: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(canAfford ? 'Redeem' : 'Not enough points'),
+                    : Text(
+                        limitReached
+                            ? 'Limit reached'
+                            : canAfford
+                                ? 'Redeem'
+                                : 'Not enough points',
+                      ),
               ),
             ),
           ],
@@ -1153,6 +1171,11 @@ Future<void> _confirmRedeem(
       context,
       'You need ${reward.pointsRequired} points but only have $available.',
     );
+    return;
+  }
+  if (reward.maxRedemptions != null &&
+      reward.currentRedemptions >= reward.maxRedemptions!) {
+    _showMessage(context, 'This reward has reached its maximum redemptions.');
     return;
   }
 

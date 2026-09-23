@@ -17,6 +17,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
   }
 
   final RewardsRepository repository;
+  final Set<int> _redeemingRewardIds = <int>{};
 
   Future<void> _loadRewards(
     RewardsEvent event,
@@ -174,6 +175,9 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
     RedeemReward event,
     Emitter<RewardsState> emit,
   ) async {
+    final redeemKey = 'redeem-${event.reward.id}';
+    if (!_redeemingRewardIds.add(event.reward.id)) return;
+
     final available = state.pointsBalance?.availablePoints ?? 0;
     if (available < event.reward.pointsRequired) {
       emit(
@@ -183,12 +187,26 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
           actionMessage: null,
         ),
       );
+      _redeemingRewardIds.remove(event.reward.id);
+      return;
+    }
+
+    final maxRedemptions = event.reward.maxRedemptions;
+    if (maxRedemptions != null &&
+        event.reward.currentRedemptions >= maxRedemptions) {
+      emit(
+        state.copyWith(
+          errorMessage: 'This reward has reached its maximum redemptions.',
+          actionMessage: null,
+        ),
+      );
+      _redeemingRewardIds.remove(event.reward.id);
       return;
     }
 
     emit(
       state.copyWith(
-        busyKey: 'redeem-${event.reward.id}',
+        busyKey: redeemKey,
         errorMessage: null,
         actionMessage: null,
       ),
@@ -209,14 +227,16 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         ),
       );
     } on ApiException catch (error) {
-      _emitActionFailure(emit, error, 'redeem-${event.reward.id}');
+      _emitActionFailure(emit, error, redeemKey);
     } catch (error) {
       _emitActionFailure(
         emit,
         error,
-        'redeem-${event.reward.id}',
+        redeemKey,
         fallback: 'Unable to redeem this reward.',
       );
+    } finally {
+      _redeemingRewardIds.remove(event.reward.id);
     }
   }
 

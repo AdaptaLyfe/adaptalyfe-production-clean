@@ -2059,3 +2059,17 @@ mtime_ms = 1790142253415
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/754186b6-1d73-4479-890c-46de75c7b08a/08c71279-2e32-4afe-b2aa-64e25f45b69d"
 storage_version_token = "1790142260463076"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fn4tpkcxC4F5_mCbwtQM-"
+uri = "file://rewards-redemption-limit-fix.zip"
+type = "unspecified"
+title = "Rewards redemption limit fix"
+description = "ZIP containing only the four changed Rewards source files."
+logical_id = "da1c6c92-976d-44fb-9074-74bcb8c718f0"
+content_hash = "sha256:9622f79de77c326db26fd0fb954eefea9ba7149815165d8240c89070b668ec8b"
+size = 85682
+mtime_ms = 1790144472645
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/da1c6c92-976d-44fb-9074-74bcb8c718f0/7274a95a-d49a-45d5-a1ef-cba138b80d8e"
+storage_version_token = "1790144478162536"
+content_type = "application/octet-stream"

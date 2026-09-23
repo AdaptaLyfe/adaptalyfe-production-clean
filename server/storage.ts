@@ -46,7 +46,7 @@ import {
   familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt } from "drizzle-orm";
+import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 function daysBetween(startDay: string, endDay: string): number {
@@ -583,6 +583,7 @@ export interface IStorage {
   getExistingUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined>;
   getPointsTransactions(userId: number): Promise<PointsTransaction[]>;
   getRecentPointsTransactionsByUser(userId: number, limit?: number): Promise<PointsTransaction[]>;
+  redeemReward(userId: number, rewardId: number): Promise<RewardRedemption>;
 
   // Organization Codes
   getAllOrgCodes(): Promise<OrganizationCode[]>;
@@ -599,6 +600,19 @@ export interface IStorage {
   revokeOrgMembership(membershipId: number, revokedBy: number): Promise<OrgMembership | undefined>;
   getOrgMembershipByUserAndCode(userId: number, orgCodeId: number): Promise<OrgMembership | undefined>;
   countActiveMembersByCode(orgCodeId: number): Promise<number>;
+}
+
+export class RewardRedemptionError extends Error {
+  constructor(
+    public readonly code:
+      | "REWARD_NOT_FOUND"
+      | "REWARD_LIMIT_REACHED"
+      | "INSUFFICIENT_POINTS",
+    message: string,
+  ) {
+    super(message);
+    this.name = "RewardRedemptionError";
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3211,16 +3225,82 @@ export class DatabaseStorage implements IStorage {
 
   // Rewards Program Methods
   async getRewardsByUser(userId: number): Promise<Reward[]> {
-    return await db.select().from(rewards).where(eq(rewards.userId, userId));
+    const userRewards = await db
+      .select()
+      .from(rewards)
+      .where(eq(rewards.userId, userId));
+
+    if (userRewards.length === 0) return userRewards;
+
+    const redemptionCounts = await db
+      .select({
+        rewardId: rewardRedemptions.rewardId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(rewardRedemptions)
+      .where(
+        and(
+          eq(rewardRedemptions.userId, userId),
+          inArray(
+            rewardRedemptions.rewardId,
+            userRewards.map((reward) => reward.id),
+          ),
+          or(
+            eq(rewardRedemptions.status, "pending"),
+            eq(rewardRedemptions.status, "approved"),
+            eq(rewardRedemptions.status, "completed"),
+          ),
+        ),
+      )
+      .groupBy(rewardRedemptions.rewardId);
+    const countsByRewardId = new Map(
+      redemptionCounts.map((row) => [row.rewardId, Number(row.count)]),
+    );
+
+    return userRewards.map((reward) => ({
+      ...reward,
+      currentRedemptions: countsByRewardId.get(reward.id) ?? 0,
+    }));
   }
 
   async getActiveRewardsByUser(userId: number, limit = 5): Promise<Reward[]> {
-    return await db
+    const activeRewards = await db
       .select()
       .from(rewards)
       .where(and(eq(rewards.userId, userId), eq(rewards.isActive, true)))
       .orderBy(desc(rewards.createdAt))
       .limit(Math.max(1, Math.min(limit, 20)));
+    if (activeRewards.length === 0) return activeRewards;
+
+    const redemptionCounts = await db
+      .select({
+        rewardId: rewardRedemptions.rewardId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(rewardRedemptions)
+      .where(
+        and(
+          eq(rewardRedemptions.userId, userId),
+          inArray(
+            rewardRedemptions.rewardId,
+            activeRewards.map((reward) => reward.id),
+          ),
+          or(
+            eq(rewardRedemptions.status, "pending"),
+            eq(rewardRedemptions.status, "approved"),
+            eq(rewardRedemptions.status, "completed"),
+          ),
+        ),
+      )
+      .groupBy(rewardRedemptions.rewardId);
+    const countsByRewardId = new Map(
+      redemptionCounts.map((row) => [row.rewardId, Number(row.count)]),
+    );
+
+    return activeRewards.map((reward) => ({
+      ...reward,
+      currentRedemptions: countsByRewardId.get(reward.id) ?? 0,
+    }));
   }
 
   async getRewardsByCaregiver(caregiverId: number): Promise<Reward[]> {
@@ -3336,6 +3416,120 @@ export class DatabaseStorage implements IStorage {
   async createRewardRedemption(redemptionData: InsertRewardRedemption): Promise<RewardRedemption> {
     const [redemption] = await db.insert(rewardRedemptions).values(redemptionData).returning();
     return redemption;
+  }
+
+  async redeemReward(userId: number, rewardId: number): Promise<RewardRedemption> {
+    return await db.transaction(async (tx) => {
+      // Lock the reward row so concurrent requests serialize before checking
+      // the limit and reserving the next redemption.
+      const [reward] = await tx
+        .select()
+        .from(rewards)
+        .where(and(eq(rewards.id, rewardId), eq(rewards.userId, userId)))
+        .for("update");
+
+      if (!reward) {
+        throw new RewardRedemptionError(
+          "REWARD_NOT_FOUND",
+          "This reward is no longer available.",
+        );
+      }
+
+      const [redemptionCount] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rewardRedemptions)
+        .where(
+          and(
+            eq(rewardRedemptions.userId, userId),
+            eq(rewardRedemptions.rewardId, rewardId),
+            or(
+              eq(rewardRedemptions.status, "pending"),
+              eq(rewardRedemptions.status, "approved"),
+              eq(rewardRedemptions.status, "completed"),
+            ),
+          ),
+        );
+      const currentRedemptions = Number(redemptionCount?.count ?? 0);
+
+      if (
+        reward.maxRedemptions !== null &&
+        currentRedemptions >= reward.maxRedemptions
+      ) {
+        throw new RewardRedemptionError(
+          "REWARD_LIMIT_REACHED",
+          "This reward has reached its maximum number of redemptions.",
+        );
+      }
+
+      let [balance] = await tx
+        .select()
+        .from(userPointsBalance)
+        .where(eq(userPointsBalance.userId, userId))
+        .for("update");
+      if (!balance) {
+        [balance] = await tx
+          .insert(userPointsBalance)
+          .values({
+            userId,
+            totalPoints: 0,
+            availablePoints: 0,
+            lifetimeEarned: 0,
+            lifetimeSpent: 0,
+          })
+          .returning();
+      }
+
+      if (balance.availablePoints < reward.pointsRequired) {
+        throw new RewardRedemptionError(
+          "INSUFFICIENT_POINTS",
+          `You need ${reward.pointsRequired} points but only have ${balance.availablePoints}.`,
+        );
+      }
+
+      await tx.insert(pointsTransactions).values({
+        userId,
+        points: -reward.pointsRequired,
+        transactionType: "reward_redemption",
+        source: `Redeemed reward: ${rewardId}`,
+        description: `Redeemed reward: ${rewardId}`,
+        awardedBy: userId,
+      });
+
+      const [updatedBalance] = await tx
+        .update(userPointsBalance)
+        .set({
+          totalPoints: balance.totalPoints - reward.pointsRequired,
+          availablePoints: balance.availablePoints - reward.pointsRequired,
+          lifetimeEarned: balance.lifetimeEarned,
+          lifetimeSpent: balance.lifetimeSpent + reward.pointsRequired,
+          updatedAt: new Date(),
+        })
+        .where(eq(userPointsBalance.userId, userId))
+        .returning();
+      if (!updatedBalance) {
+        throw new Error("Could not update user points balance");
+      }
+
+      const [redemption] = await tx
+        .insert(rewardRedemptions)
+        .values({
+          userId,
+          rewardId,
+          pointsSpent: reward.pointsRequired,
+          status: "pending",
+        })
+        .returning();
+
+      await tx
+        .update(rewards)
+        .set({
+          currentRedemptions: currentRedemptions + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(rewards.id, rewardId));
+
+      return redemption;
+    });
   }
 
   async updateRewardRedemptionStatus(redemptionId: number, status: string): Promise<RewardRedemption | undefined> {
