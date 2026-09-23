@@ -1864,120 +1864,133 @@ class _StudyGroupDialogState extends State<_StudyGroupDialog> {
         }
       },
       child: AlertDialog(
-        scrollable: true,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: AppResponsive.isCompact(context) ? 12 : 24,
+          vertical: 24,
+        ),
         title: const Text('Create Study Group'),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: AppResponsive.dialogWidth(context),
+            maxHeight: AppResponsive.dialogMaxHeight(
+              context,
+              fraction: .68,
+            ),
           ),
           child: Form(
             key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _groupNameController,
-                  enabled: !isSubmitting,
-                  decoration: const InputDecoration(labelText: 'Group name'),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty
-                          ? 'Group name is required'
-                          : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _subjectController,
-                  enabled: !isSubmitting,
-                  decoration: const InputDecoration(labelText: 'Subject'),
-                  validator: _requiredField('Subject is required'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _descriptionController,
-                  enabled: !isSubmitting,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration:
-                      const InputDecoration(labelText: 'Description'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _locationController,
-                  enabled: !isSubmitting,
-                  decoration: const InputDecoration(labelText: 'Location'),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _meetingDay,
-                        decoration:
-                            const InputDecoration(labelText: 'Meeting day'),
-                        items: _weekdays
-                            .map(
-                              (value) => DropdownMenuItem(
-                                value: value,
-                                child: Text(value),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: isSubmitting
-                            ? null
-                            : (value) => setState(
-                                  () => _meetingDay = value ?? _meetingDay,
-                                ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        enabled: !isSubmitting,
-                        decoration: const InputDecoration(
-                          labelText: 'Meeting time',
-                          hintText: 'e.g. 16:00',
-                        ),
-                        onChanged: (value) => _meetingTime = value,
-                      ),
-                    ),
-                  ],
-                ),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isRecurring,
-                  title: const Text('Recurring meeting'),
-                  onChanged: isSubmitting
-                      ? null
-                      : (value) =>
-                          setState(() => _isRecurring = value ?? false),
-                ),
-                if (_isRecurring)
-                  DropdownButtonFormField<String>(
-                    value: _recurringPattern,
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _groupNameController,
+                    enabled: !isSubmitting,
+                    decoration: const InputDecoration(labelText: 'Group name'),
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty
+                            ? 'Group name is required'
+                            : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _subjectController,
+                    enabled: !isSubmitting,
+                    decoration: const InputDecoration(labelText: 'Subject'),
+                    validator: _requiredField('Subject is required'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _descriptionController,
+                    enabled: !isSubmitting,
+                    minLines: 2,
+                    maxLines: 3,
                     decoration:
-                        const InputDecoration(labelText: 'Repeat pattern'),
-                    items: const [
-                      DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
-                      DropdownMenuItem(
-                        value: 'biweekly',
-                        child: Text('Every two weeks'),
+                        const InputDecoration(labelText: 'Description'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _locationController,
+                    enabled: !isSubmitting,
+                    decoration: const InputDecoration(labelText: 'Location'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _meetingDay,
+                          decoration:
+                              const InputDecoration(labelText: 'Meeting day'),
+                          items: _weekdays
+                              .map(
+                                (value) => DropdownMenuItem(
+                                  value: value,
+                                  child: Text(value),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: isSubmitting
+                              ? null
+                              : (value) => setState(
+                                    () => _meetingDay = value ?? _meetingDay,
+                                  ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          enabled: !isSubmitting,
+                          decoration: const InputDecoration(
+                            labelText: 'Meeting time',
+                            hintText: 'e.g. 16:00',
+                          ),
+                          onChanged: (value) => _meetingTime = value,
+                        ),
                       ),
                     ],
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isRecurring,
+                    title: const Text('Recurring meeting'),
                     onChanged: isSubmitting
                         ? null
-                        : (value) => setState(
-                              () => _recurringPattern = value ?? 'weekly',
-                            ),
+                        : (value) =>
+                            setState(() => _isRecurring = value ?? false),
                   ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _notesController,
-                  enabled: !isSubmitting,
-                  minLines: 2,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Notes'),
-                ),
-              ],
+                  if (_isRecurring)
+                    DropdownButtonFormField<String>(
+                      value: _recurringPattern,
+                      decoration:
+                          const InputDecoration(labelText: 'Repeat pattern'),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'weekly',
+                          child: Text('Weekly'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'biweekly',
+                          child: Text('Every two weeks'),
+                        ),
+                      ],
+                      onChanged: isSubmitting
+                          ? null
+                          : (value) => setState(
+                                () => _recurringPattern = value ?? 'weekly',
+                              ),
+                    ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _notesController,
+                    enabled: !isSubmitting,
+                    minLines: 2,
+                    maxLines: 3,
+                    decoration: const InputDecoration(labelText: 'Notes'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -2219,17 +2232,27 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
         builder: (context, state) {
           final isSubmitting = state.action == AcademicAction.addingClass;
           return AlertDialog(
-            scrollable: true,
             insetPadding: EdgeInsets.symmetric(
               horizontal: AppResponsive.isCompact(context) ? 12 : 24,
               vertical: 24,
             ),
             title: const Text('Add New Class'),
-            content: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: AppResponsive.dialogWidth(context),
+                maxHeight: AppResponsive.dialogMaxHeight(
+                  context,
+                  fraction: .68,
+                ),
+              ),
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     TextFormField(
                       controller: _nameController,
                       enabled: !isSubmitting,
@@ -2361,7 +2384,9 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                         labelText: 'Notes (optional)',
                       ),
                     ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
             actions: [

@@ -1,0 +1,83 @@
+Fix the following Flutter UI overflow issues in the existing project. Do NOT change the existing functionality, business logic, API, BLoC/state management, validation, or data flow.
+
+### Issue 1 — Study Groups → Create Study Group
+
+Path:
+**Academic Planner / Student Planner → Study Groups → Create Study Group**
+
+When the user opens the **"Create Study Group"** popup, Flutter shows:
+
+**"BOTTOM OVERFLOWED BY 11 PIXELS"**
+
+Fix the popup so it works correctly on:
+
+* Small mobile screens
+* Normal mobile screens
+* Large mobile screens
+* Different screen heights
+* Android and iOS
+
+Requirements:
+
+* Make the popup/dialog vertically responsive.
+* Do not use a fixed height that can cause overflow.
+* If the content is taller than the available screen, allow the dialog content to scroll.
+* Make sure buttons remain accessible and are not pushed outside the screen.
+* Keep the existing UI design, spacing, fields, buttons, colors, and functionality as close as possible.
+* Handle keyboard opening correctly when entering text.
+* Make sure there is no overflow when the keyboard is visible.
+
+### Issue 2 — Schedule → Add New Class
+
+Path:
+**Academic Planner / Student Planner → Schedule → "+ Add Class"**
+
+When the user taps **"+ Add Class"**, the **"Add New Class"** popup shows:
+
+**"BOTTOM OVERFLOWED BY 14 PIXELS"**
+
+Fix this popup using the same responsive approach.
+
+Requirements:
+
+* Remove the overflow completely.
+* Do not use a hardcoded/fixed dialog height that causes the issue.
+* Make the dialog adapt to different screen sizes.
+* Allow vertical scrolling when the content cannot fit.
+* Ensure all fields, dropdowns, date/time controls, and action buttons remain accessible.
+* Handle the keyboard correctly.
+* Do not break existing form validation or submission logic.
+
+### Important implementation requirements
+
+1. First inspect the existing implementation of both dialogs before making changes.
+2. Find the actual widget/layout causing the RenderFlex overflow.
+3. Fix the root cause instead of simply hiding the overflow.
+4. Prefer responsive Flutter layouts such as:
+
+   * `ConstrainedBox`
+   * `Flexible`
+   * `SingleChildScrollView`
+   * `LayoutBuilder`
+   * appropriate dialog constraints
+5. Avoid unnecessary changes to unrelated screens.
+6. Do NOT use `OverflowBox` or simply reduce text/font sizes as a workaround.
+7. Do NOT remove any existing fields or functionality.
+8. Preserve the current BLoC/state management and event handling.
+9. Make sure opening/closing the dialog still works correctly.
+10. Make sure form submission still works exactly as before.
+11. Test both dialogs with the keyboard opened and closed.
+12. Test on small and large screen sizes.
+
+### Final verification
+
+After implementing the fix:
+
+* Run `flutter analyze`.
+* Run the relevant tests if available.
+* Check both dialogs manually.
+* Confirm there is **no "BOTTOM OVERFLOWED BY..."** message.
+* Confirm there are no new layout exceptions.
+* Confirm existing functionality still works.
+
+Do not just suppress the Flutter overflow warning. Fix the underlying responsive layout problem so the issue does not come back on another screen size.
