@@ -1,7 +1,15 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
-import { storage, RewardRedemptionError } from "./storage";
+import {
+  storage,
+  RewardRedemptionError,
+  TransitionSkillPriorityUnavailableError,
+} from "./storage";
+import {
+  parseNewTransitionSkillPriority,
+  transitionSkillPrioritySchema,
+} from "@shared/skill-priority";
 import { calendarDateWithOffset } from "./activity-streak";
 import {
   AssignmentInputError,
@@ -225,7 +233,7 @@ const transitionSkillUpdateSchema = z
     description: z.string().nullable().optional(),
     currentLevel: z.number().int().min(1).max(10).optional(),
     targetLevel: z.number().int().min(1).max(10).optional(),
-    priority: z.enum(["low", "medium", "high", "critical"]).optional(),
+    priority: transitionSkillPrioritySchema.optional(),
     practiceActivities: z.array(z.string()).optional(),
   })
   .refine(
@@ -2286,14 +2294,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const validatedSkillData = insertTransitionSkillSchema.parse(skillData);
-      const skill = await storage.createTransitionSkill(validatedSkillData);
+      const skill = await storage.createTransitionSkill({
+        ...validatedSkillData,
+        priority: parseNewTransitionSkillPriority(validatedSkillData.priority),
+      });
       res.json(skill);
     } catch (error) {
       console.error("Failed to create transition skill:", error);
       const isValidationError = error instanceof z.ZodError;
-      res.status(isValidationError ? 400 : 500).json({
+      const isPrioritySchemaError =
+        error instanceof TransitionSkillPriorityUnavailableError;
+      res.status(isValidationError ? 400 : isPrioritySchemaError ? 503 : 500).json({
         message: isValidationError
           ? error.issues[0]?.message || "Invalid transition skill data"
+          : isPrioritySchemaError
+            ? error.message
           : "Unable to save this skill right now. Please try again.",
       });
     }
@@ -2319,10 +2334,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(skill);
     } catch (error) {
       console.error("Failed to update transition skill:", error);
-      res.status(error instanceof z.ZodError ? 400 : 500).json({
+      const isValidationError = error instanceof z.ZodError;
+      const isPrioritySchemaError =
+        error instanceof TransitionSkillPriorityUnavailableError;
+      res.status(isValidationError ? 400 : isPrioritySchemaError ? 503 : 500).json({
         message: error instanceof z.ZodError
           ? error.issues[0]?.message || "Invalid transition skill data"
-          : "Failed to update transition skill",
+          : isPrioritySchemaError
+            ? error.message
+            : "Failed to update transition skill",
       });
     }
   });

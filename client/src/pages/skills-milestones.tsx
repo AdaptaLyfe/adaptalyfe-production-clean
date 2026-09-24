@@ -21,6 +21,10 @@ import {
   skillLevelRangeError,
 } from "@/lib/skill-level-validation";
 import type { TransitionSkill } from "@shared/schema";
+import {
+  normalizeTransitionSkillPriority,
+  transitionSkillPrioritySchema,
+} from "@shared/skill-priority";
 import { 
   Star, 
   Trophy, 
@@ -46,7 +50,7 @@ const skillFormSchema = z.object({
   currentLevel: z.number().min(1).max(10).default(1),
   targetLevel: z.number().min(1).max(10).default(5),
   targetDate: z.string().optional(),
-  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  priority: transitionSkillPrioritySchema,
 }).refine(
   (values) => isValidSkillLevelRange(values.currentLevel, values.targetLevel),
   {
@@ -80,7 +84,12 @@ function parseTransitionSkillResponse(responseData: unknown): TransitionSkill {
     throw new Error("The server returned an invalid skill response.");
   }
 
-  return { ...(candidate as TransitionSkill), id };
+  const skill = candidate as TransitionSkill;
+  return {
+    ...skill,
+    id,
+    priority: normalizeTransitionSkillPriority(skill.priority) ?? "",
+  };
 }
 
 function parseTransitionSkillsResponse(responseData: unknown): TransitionSkill[] {
@@ -151,7 +160,6 @@ export default function SkillsMilestones() {
       currentLevel: 1,
       targetLevel: 5,
       targetDate: "",
-      priority: "medium" as const,
     },
   });
 
@@ -379,7 +387,7 @@ export default function SkillsMilestones() {
       currentLevel: skill.currentLevel || 1,
       targetLevel: skill.targetLevel || 5,
       targetDate: skill.targetDate || "",
-      priority: skill.priority || "medium",
+      priority: normalizeTransitionSkillPriority(skill.priority) ?? undefined,
     });
     setIsEditSkillOpen(true);
   };
@@ -795,7 +803,7 @@ export default function SkillsMilestones() {
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

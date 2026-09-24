@@ -106,8 +106,19 @@ type TransitionSkillSchemaCapabilities = {
   hasPriority: boolean;
 };
 
+export class TransitionSkillPriorityUnavailableError extends Error {
+  constructor() {
+    super(
+      "Skill priority cannot be saved because the transition skill priority column is missing. Sync the database schema and retry.",
+    );
+    this.name = "TransitionSkillPriorityUnavailableError";
+  }
+}
+
 function schemaCapabilityIsTrue(value: unknown): boolean {
-  return value === true || value === 1 || value === "true" || value === "t";
+  if (value === true || value === 1) return true;
+  return typeof value === "string" &&
+    ["true", "t", "1"].includes(value.trim().toLowerCase());
 }
 
 let transitionSkillSchemaCapabilitiesPromise:
@@ -130,8 +141,9 @@ const transitionSkillBaseColumns = {
 };
 
 async function getTransitionSkillSchemaCapabilities(): Promise<TransitionSkillSchemaCapabilities> {
-  if (!transitionSkillSchemaCapabilitiesPromise) {
-    transitionSkillSchemaCapabilitiesPromise = (async () => {
+  let capabilitiesPromise = transitionSkillSchemaCapabilitiesPromise;
+  if (!capabilitiesPromise) {
+    capabilitiesPromise = (async () => {
       try {
         const result = await db.execute(sql`
           SELECT
@@ -174,17 +186,26 @@ async function getTransitionSkillSchemaCapabilities(): Promise<TransitionSkillSc
         return { hasTable: false, hasPriority: false };
       }
     })();
+    transitionSkillSchemaCapabilitiesPromise = capabilitiesPromise;
   }
 
-  return transitionSkillSchemaCapabilitiesPromise;
+  const capabilities = await capabilitiesPromise;
+  if (
+    (!capabilities.hasTable || !capabilities.hasPriority) &&
+    transitionSkillSchemaCapabilitiesPromise === capabilitiesPromise
+  ) {
+    transitionSkillSchemaCapabilitiesPromise = undefined;
+  }
+  return capabilities;
 }
 
 function normalizeTransitionSkill(
   skill: Omit<TransitionSkill, "priority"> & { priority?: string | null },
 ): TransitionSkill {
+  const priority = skill.priority?.trim().toLowerCase() || "";
   return {
     ...skill,
-    priority: skill.priority || "medium",
+    priority,
   };
 }
 
@@ -3403,15 +3424,12 @@ export class DatabaseStorage implements IStorage {
     if (!capabilities.hasTable) {
       throw new Error("The transition_skills table is unavailable.");
     }
-
-    const legacySkillData = { ...skillData } as Partial<InsertTransitionSkill>;
-    delete legacySkillData.priority;
-    const values = capabilities.hasPriority
-      ? skillData
-      : (legacySkillData as InsertTransitionSkill);
+    if (!capabilities.hasPriority) {
+      throw new TransitionSkillPriorityUnavailableError();
+    }
     const [created] = await db
       .insert(transitionSkills)
-      .values(values)
+      .values(skillData)
       .returning({ id: transitionSkills.id });
     const skill = created
       ? await getTransitionSkillById(created.id, capabilities)
@@ -3431,14 +3449,14 @@ export class DatabaseStorage implements IStorage {
     if (!capabilities.hasTable) {
       throw new Error("The transition_skills table is unavailable.");
     }
+    if (!capabilities.hasPriority && updateData.priority !== undefined) {
+      throw new TransitionSkillPriorityUnavailableError();
+    }
 
     const compatibleUpdateData = {
       ...updateData,
       updatedAt: new Date(),
     } as Partial<TransitionSkill>;
-    if (!capabilities.hasPriority) {
-      delete compatibleUpdateData.priority;
-    }
 
     const [updated] = await db.update(transitionSkills)
       .set(compatibleUpdateData)
