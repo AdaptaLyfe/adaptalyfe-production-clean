@@ -189,6 +189,7 @@ export default function DailyTasks() {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/balance"] });
       
       const { isCompleted, task } = variables;

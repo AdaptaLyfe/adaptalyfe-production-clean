@@ -879,37 +879,50 @@ export class DatabaseStorage implements IStorage {
     const streakDays = calculateCurrentStreak(validCompletionDates, today);
     const latestActivityDate = validCompletionDates.at(-1) || null;
 
-    const [existing] = await db
-      .select()
-      .from(streakTracking)
-      .where(and(
-        eq(streakTracking.userId, userId),
-        eq(streakTracking.streakType, "daily_activity"),
-      ))
-      .limit(1);
+    // The dashboard reads users.streakDays. Persist that primary value before
+    // updating the supplemental streak history table so schema drift there
+    // cannot leave the dashboard stuck on an old value (often zero).
+    await this.updateUserStreak(userId, streakDays);
 
-    if (existing) {
-      await db
-        .update(streakTracking)
-        .set({
+    try {
+      const [existing] = await db
+        .select()
+        .from(streakTracking)
+        .where(and(
+          eq(streakTracking.userId, userId),
+          eq(streakTracking.streakType, "daily_activity"),
+        ))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(streakTracking)
+          .set({
+            currentStreak: streakDays,
+            longestStreak: Math.max(existing.longestStreak || 0, streakDays),
+            lastActivityDate: latestActivityDate,
+            isActive: streakDays > 0,
+          })
+          .where(eq(streakTracking.id, existing.id));
+      } else if (latestActivityDate) {
+        await db.insert(streakTracking).values({
+          userId,
+          streakType: "daily_activity",
           currentStreak: streakDays,
-          longestStreak: Math.max(existing.longestStreak || 0, streakDays),
+          longestStreak: streakDays,
           lastActivityDate: latestActivityDate,
           isActive: streakDays > 0,
-        })
-        .where(eq(streakTracking.id, existing.id));
-    } else if (latestActivityDate) {
-      await db.insert(streakTracking).values({
-        userId,
-        streakType: "daily_activity",
-        currentStreak: streakDays,
-        longestStreak: streakDays,
-        lastActivityDate: latestActivityDate,
-        isActive: streakDays > 0,
-      });
+        });
+      }
+    } catch (error) {
+      // The user-level streak remains usable even if the optional tracking
+      // table is not synchronized in a deployed environment yet.
+      console.error(
+        "Could not synchronize supplemental activity streak tracking:",
+        error,
+      );
     }
 
-    await this.updateUserStreak(userId, streakDays);
     return streakDays;
   }
 
