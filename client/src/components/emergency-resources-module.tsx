@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, ApiError } from "@/lib/queryClient";
 import { EditButton } from "@/components/ui/edit-button";
 import { insertEmergencyResourceSchema, type EmergencyResource } from "@shared/schema";
 import { z } from "zod";
@@ -85,10 +85,12 @@ export default function EmergencyResourcesModule() {
       form.reset();
       setShowForm(false);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to add emergency resource",
+        description: error instanceof ApiError && error.code === "RESOURCE_SCHEMA_UPDATE_REQUIRED"
+          ? error.message
+          : "Failed to add emergency resource",
         variant: "destructive",
       });
     },
@@ -115,10 +117,12 @@ export default function EmergencyResourcesModule() {
       setEditingResource(null);
       form.reset();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update emergency resource",
+        description: error instanceof ApiError && error.code === "RESOURCE_SCHEMA_UPDATE_REQUIRED"
+          ? error.message
+          : "Failed to update emergency resource",
         variant: "destructive",
       });
     },

@@ -26,6 +26,7 @@
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
 - [Resource collection safety](resource-collection-safety.md) — resource reads can resolve to null on API failure, so collection consumers must normalize before iteration.
+- [Emergency resource schema compatibility](emergency-resource-schema-compatibility.md) — old deployed tables may lack optional fields; preserve basic saves without discarding filled details.
 - [Academic Planner mutations](academic-planner-mutations.md) — keep successful class creation visible from the mutation response instead of depending on an unrelated full-dashboard reload.
 - [Daily task schema compatibility](daily-task-schema-compatibility.md) — normalize PostgreSQL boolean capability results before selecting legacy versus current persistence paths.
 - [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.

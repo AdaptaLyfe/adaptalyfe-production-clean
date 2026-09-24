@@ -121,6 +121,81 @@ function schemaCapabilityIsTrue(value: unknown): boolean {
     ["true", "t", "1"].includes(value.trim().toLowerCase());
 }
 
+type EmergencyResourceColumns = {
+  website: boolean;
+  availabilityHours: boolean;
+  isEmergencyOnly: boolean;
+};
+
+export class EmergencyResourceSchemaUnavailableError extends Error {
+  constructor() {
+    super("The emergency resources database needs an update before these extra details can be saved. Please apply the emergency resources migration and try again.");
+    this.name = "EmergencyResourceSchemaUnavailableError";
+  }
+}
+
+const emergencyResourceBaseColumns = {
+  id: emergencyResources.id,
+  userId: emergencyResources.userId,
+  name: emergencyResources.name,
+  resourceType: emergencyResources.resourceType,
+  phoneNumber: emergencyResources.phoneNumber,
+  address: emergencyResources.address,
+  description: emergencyResources.description,
+  isAvailable24_7: emergencyResources.isAvailable24_7,
+  createdAt: emergencyResources.createdAt,
+  updatedAt: emergencyResources.updatedAt,
+};
+
+async function getEmergencyResourceColumns(): Promise<EmergencyResourceColumns> {
+  const result = await db.execute(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'emergency_resources'
+      AND column_name IN ('website', 'availability_hours', 'is_emergency_only')
+  `);
+  const columns = new Set(result.rows.map((row) => String(row.column_name)));
+  return {
+    website: columns.has("website"),
+    availabilityHours: columns.has("availability_hours"),
+    isEmergencyOnly: columns.has("is_emergency_only"),
+  };
+}
+
+function emergencyResourceSelection(columns: EmergencyResourceColumns) {
+  return {
+    ...emergencyResourceBaseColumns,
+    ...(columns.website ? { website: emergencyResources.website } : {}),
+    ...(columns.availabilityHours ? { availabilityHours: emergencyResources.availabilityHours } : {}),
+    ...(columns.isEmergencyOnly ? { isEmergencyOnly: emergencyResources.isEmergencyOnly } : {}),
+  };
+}
+
+function normalizeEmergencyResource(
+  resource: Pick<EmergencyResource, "id" | "userId" | "name" | "resourceType"> & Partial<EmergencyResource>,
+): EmergencyResource {
+  return {
+    ...resource,
+    website: resource.website ?? null,
+    availabilityHours: resource.availabilityHours ?? null,
+    isEmergencyOnly: resource.isEmergencyOnly ?? false,
+  } as EmergencyResource;
+}
+
+function checkEmergencyResourceColumns(
+  resource: Partial<InsertEmergencyResource>,
+  columns: EmergencyResourceColumns,
+): void {
+  if (
+    (!columns.website && resource.website?.trim()) ||
+    (!columns.availabilityHours && resource.availabilityHours?.trim()) ||
+    (!columns.isEmergencyOnly && resource.isEmergencyOnly === true)
+  ) {
+    throw new EmergencyResourceSchemaUnavailableError();
+  }
+}
+
 let transitionSkillSchemaCapabilitiesPromise:
   | Promise<TransitionSkillSchemaCapabilities>
   | undefined;
@@ -1989,28 +2064,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmergencyResourcesByUser(userId: number): Promise<EmergencyResource[]> {
-    return await db
-      .select()
+    const columns = await getEmergencyResourceColumns();
+    const resources = await db
+      .select(emergencyResourceSelection(columns))
       .from(emergencyResources)
       .where(eq(emergencyResources.userId, userId))
       .orderBy(emergencyResources.resourceType, emergencyResources.name);
+    return resources.map(normalizeEmergencyResource);
   }
 
   async createEmergencyResource(insertResource: InsertEmergencyResource): Promise<EmergencyResource> {
+    const columns = await getEmergencyResourceColumns();
+    checkEmergencyResourceColumns(insertResource, columns);
     const [resource] = await db
       .insert(emergencyResources)
-      .values(insertResource)
-      .returning();
-    return resource;
+      .values({
+        userId: insertResource.userId,
+        name: insertResource.name,
+        resourceType: insertResource.resourceType,
+        phoneNumber: insertResource.phoneNumber,
+        address: insertResource.address,
+        description: insertResource.description,
+        isAvailable24_7: insertResource.isAvailable24_7,
+        ...(columns.website ? { website: insertResource.website } : {}),
+        ...(columns.availabilityHours ? { availabilityHours: insertResource.availabilityHours } : {}),
+        ...(columns.isEmergencyOnly ? { isEmergencyOnly: insertResource.isEmergencyOnly } : {}),
+      })
+      .returning(emergencyResourceSelection(columns));
+    return normalizeEmergencyResource(resource);
   }
 
   async updateEmergencyResource(resourceId: number, updates: Partial<InsertEmergencyResource>): Promise<EmergencyResource | undefined> {
+    const columns = await getEmergencyResourceColumns();
+    checkEmergencyResourceColumns(updates, columns);
+    const compatibleUpdates = { ...updates };
+    if (!columns.website) delete compatibleUpdates.website;
+    if (!columns.availabilityHours) delete compatibleUpdates.availabilityHours;
+    if (!columns.isEmergencyOnly) delete compatibleUpdates.isEmergencyOnly;
     const [resource] = await db
       .update(emergencyResources)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...compatibleUpdates, updatedAt: new Date() })
       .where(eq(emergencyResources.id, resourceId))
-      .returning();
-    return resource || undefined;
+      .returning(emergencyResourceSelection(columns));
+    return resource ? normalizeEmergencyResource(resource) : undefined;
   }
 
   async deleteEmergencyResource(resourceId: number): Promise<boolean> {

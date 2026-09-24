@@ -5,6 +5,7 @@ import {
   storage,
   RewardRedemptionError,
   TransitionSkillPriorityUnavailableError,
+  EmergencyResourceSchemaUnavailableError,
 } from "./storage";
 import {
   parseNewTransitionSkillPriority,
@@ -2717,6 +2718,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(resource);
     } catch (error) {
       console.error("Error creating emergency resource:", error);
+      if (error instanceof EmergencyResourceSchemaUnavailableError) {
+        return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Please provide a resource name and type.",
@@ -2748,6 +2752,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(resource);
     } catch (error) {
       console.error("Error updating emergency resource:", error);
+      if (error instanceof EmergencyResourceSchemaUnavailableError) {
+        return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
       res.status(500).json({ message: "Failed to update emergency resource" });
     }
   });
