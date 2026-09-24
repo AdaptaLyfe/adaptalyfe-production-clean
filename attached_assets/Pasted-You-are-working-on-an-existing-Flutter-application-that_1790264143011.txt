@@ -1,0 +1,645 @@
+You are working on an existing Flutter application that is being migrated from an existing **React Native + Wrapper application**.
+
+I need you to implement the **Flutter subscription system** with the SAME business flow, screens, behavior, subscription states, trial behavior, restore subscription behavior, and backend logic as the existing React Native + Wrapper application.
+
+## IMPORTANT — DO NOT START CODING IMMEDIATELY
+
+First inspect the entire existing project.
+
+### Step 1 — Inspect existing React Native + Wrapper implementation
+
+Find and understand:
+
+* Subscription screen
+* Subscription plans/products
+* Free trial logic
+* Android subscription implementation
+* iOS subscription implementation
+* Google Play Billing implementation
+* Apple App Store subscription implementation
+* Purchase flow
+* Restore subscription flow
+* Existing subscription status API
+* Backend subscription validation
+* Webhook handling if available
+* Trial status
+* Active subscription status
+* Expired subscription status
+* Cancelled subscription status
+* Grace period handling
+* Payment failure handling
+* Loading states
+* Error handling
+* Success handling
+* Navigation after successful subscription
+* "Restore My Subscription" behavior
+* What happens when a user signs up but has no subscription
+* What happens when the user already has an active subscription
+* Product IDs
+* Package IDs / Bundle IDs
+* Environment configuration
+* Firebase/backend integration
+* Any existing subscription-related local storage
+
+Search the entire repository, not just the currently open files.
+
+Do NOT assume how the React Native implementation works.
+
+Use the existing React Native + Wrapper implementation as the source of truth for business behavior.
+
+---
+
+# Step 2 — Compare Flutter implementation
+
+After understanding the React Native + Wrapper implementation:
+
+Inspect the Flutter project and identify:
+
+* Current subscription screen
+* Existing payment/subscription code
+* Existing BLoC/Cubit
+* Existing repository/service structure
+* Existing API services
+* Existing authentication
+* Existing user/subscription models
+* Existing Firebase configuration
+* Existing Stripe/payment code if present
+* Existing Android configuration
+* Existing iOS configuration
+* Existing product IDs
+* Existing navigation
+
+Do not create duplicate subscription systems.
+
+If subscription code already exists, refactor/fix it instead of creating another parallel implementation.
+
+---
+
+# Step 3 — Architecture
+
+Implement the subscription feature using the existing Flutter architecture.
+
+Prefer:
+
+UI
+↓
+SubscriptionBloc
+↓
+SubscriptionRepository
+↓
+SubscriptionService / Store Service
+↓
+Google Play Billing / Apple App Store
+
+Keep the architecture simple and maintainable.
+
+Do not put purchase logic directly inside widgets.
+
+Do not create multiple listeners for the same purchase stream.
+
+Do not create multiple purchase managers.
+
+There must be ONE source of truth for purchase updates.
+
+---
+
+# Step 4 — Android Google Play Subscription
+
+Implement proper Android subscription using the currently supported Flutter in-app purchase approach compatible with the project's Flutter/Dart version.
+
+Before adding/upgrading packages:
+
+Check the current Flutter version and Dart version.
+
+Do NOT blindly upgrade Flutter or unrelated dependencies.
+
+Do NOT break existing Stripe/payment functionality.
+
+Implement:
+
+* Google Play subscription product loading
+* Product availability checking
+* Subscription purchase
+* Purchase update handling
+* Purchase completion
+* Purchase verification
+* Restore purchases
+* Existing purchase detection
+* Subscription active state
+* Subscription expired state
+* Cancelled state where available
+* Pending purchase
+* Failed purchase
+* User cancellation
+* Network/store errors
+
+Handle Google Play billing lifecycle correctly.
+
+Never assume that receiving a purchase event automatically means the subscription is valid.
+
+Use the existing backend/server validation flow if the React Native application already has one.
+
+---
+
+# Step 5 — iOS Apple Subscription
+
+Implement proper Apple App Store subscription for iOS.
+
+Implement:
+
+* App Store product loading
+* Subscription purchase
+* Purchase update handling
+* Purchase completion
+* Restore purchases
+* Existing purchase detection
+* Subscription active state
+* Expired subscription state
+* Cancelled subscription state where available
+* Pending purchase
+* Failed purchase
+* User cancellation
+* Store/network errors
+
+Follow Apple's required purchase lifecycle.
+
+Do not mark a subscription as active only because the purchase button completed successfully.
+
+Use the existing backend/server validation flow if available.
+
+---
+
+# Step 6 — Product IDs
+
+DO NOT invent product IDs.
+
+Find the exact Android and iOS product IDs from:
+
+* React Native project
+* Wrapper project
+* Environment files
+* Backend
+* Existing configuration
+* App Store configuration
+* Google Play configuration
+
+If the IDs are not available in the repository, clearly identify the exact place where they must be configured.
+
+Create a single configuration source such as:
+
+SubscriptionProductConfig
+
+or an equivalent structure.
+
+Do not hard-code the same product ID in multiple files.
+
+---
+
+# Step 7 — Subscription BLoC
+
+Create or properly fix:
+
+SubscriptionEvent
+
+SubscriptionState
+
+SubscriptionBloc
+
+The BLoC should handle events such as:
+
+* LoadProducts
+* PurchaseSubscription
+* RestoreSubscription
+* CheckSubscription
+* PurchaseUpdated
+* PurchaseFailed
+* PurchaseCompleted
+
+Use the existing project's BLoC coding style.
+
+Do not introduce unnecessary complexity.
+
+---
+
+# Step 8 — Subscription states
+
+Create clear states for:
+
+* Initial
+* Loading
+* ProductsLoaded
+* Purchasing
+* PurchasePending
+* PurchaseSuccess
+* ActiveSubscription
+* NoSubscription
+* Restoring
+* RestoreSuccess
+* PurchaseFailed
+* RestoreFailed
+* ProductUnavailable
+
+Do not show multiple success/error dialogs for one purchase event.
+
+A single purchase event must produce one final UI result.
+
+---
+
+# Step 9 — Prevent recurring bugs
+
+This is VERY IMPORTANT.
+
+The subscription implementation has previously developed bugs repeatedly after being fixed.
+
+Do NOT apply temporary fixes.
+
+Find the root cause.
+
+Pay special attention to:
+
+### Purchase stream
+
+There must not be multiple subscriptions/listeners attached to the purchase update stream.
+
+Do not initialize the purchase listener every time the subscription screen opens.
+
+Initialize it once and dispose it correctly.
+
+### Duplicate events
+
+Prevent the same purchase event from being processed multiple times.
+
+### Duplicate dialogs
+
+A single purchase failure must display only one error.
+
+A successful purchase must display only one success state/message.
+
+### Widget lifecycle
+
+Prevent:
+
+* setState after dispose
+* Bloc usage after dispose
+* duplicate listeners
+* duplicate stream subscriptions
+* TextEditingController disposed errors
+* navigation after widget disposal
+
+### BLoC lifecycle
+
+Do not create multiple SubscriptionBloc instances unnecessarily.
+
+Use the existing dependency injection/provider structure.
+
+### Navigation
+
+Do not navigate multiple times after purchase.
+
+Protect navigation against duplicate purchase callbacks.
+
+### Restore
+
+Restore must not create a new purchase.
+
+Restore should only restore existing purchases and update the subscription state.
+
+### Pending purchase
+
+Do not show success until the purchase is actually completed/verified.
+
+### Failed purchase
+
+User cancellation must not be treated as a successful subscription.
+
+---
+
+# Step 10 — Backend verification
+
+Inspect the existing backend.
+
+If the React Native + Wrapper application sends purchase information to the backend, implement the SAME flow in Flutter.
+
+Do not create a fake local-only subscription status.
+
+The final subscription status should come from the same trusted backend/source used by the existing application.
+
+If backend verification already exists:
+
+Reuse it.
+
+Do not create another duplicate API.
+
+If backend verification does NOT exist:
+
+Do not invent a fake verification system.
+
+Clearly document what is required for production verification.
+
+---
+
+# Step 11 — Trial
+
+The existing application currently has subscription/trial behavior.
+
+Find the exact trial configuration from the existing React Native + Wrapper implementation.
+
+Flutter must follow the same behavior.
+
+Do not hard-code a different trial duration.
+
+Do not calculate trial status only from the Flutter device.
+
+Use the existing backend/store information where applicable.
+
+---
+
+# Step 12 — Restore My Subscription
+
+Implement the existing "Restore My Subscription" behavior exactly.
+
+Examples:
+
+If the user has previously purchased a subscription:
+
+→ Restore purchase
+→ Verify purchase
+→ Update backend if required
+→ Update Flutter subscription state
+→ Show the correct success state
+→ Navigate exactly like the existing React Native application
+
+If no subscription exists:
+
+→ Show the correct existing error/information message
+→ Do not treat restore as a purchase
+
+Do not create a new subscription during restore.
+
+---
+
+# Step 13 — UI
+
+Keep the existing Flutter UI as much as possible.
+
+Do not redesign the subscription screen unless necessary.
+
+Match the React Native + Wrapper behavior.
+
+The UI must clearly show:
+
+* Available plan
+* Price
+* Trial information
+* Subscribe button
+* Loading state
+* Purchase state
+* Restore subscription
+* Active subscription state
+* Error state
+
+Use the project's existing theme/components.
+
+---
+
+# Step 14 — Android configuration
+
+Inspect and correctly configure:
+
+* AndroidManifest.xml
+* Gradle files
+* applicationId
+* minimum SDK
+* compile SDK
+* billing dependencies
+* ProGuard/R8 if required
+
+Do not randomly upgrade:
+
+* Gradle
+* Kotlin
+* AGP
+* compileSdk
+* NDK
+* Flutter
+
+unless required by the subscription package.
+
+If a dependency conflict exists, identify the exact conflict and fix it with the smallest safe change.
+
+---
+
+# Step 15 — iOS configuration
+
+Inspect and correctly configure:
+
+* Bundle Identifier
+* App Store configuration
+* StoreKit requirements
+* iOS deployment target
+* Podfile
+* Info.plist if required
+
+Do not randomly upgrade CocoaPods or iOS dependencies.
+
+Make the smallest required configuration changes.
+
+---
+
+# Step 16 — Existing Stripe/payment code
+
+The Flutter project may already contain Stripe/payment functionality.
+
+DO NOT remove or break Stripe.
+
+Google Play subscriptions and Apple App Store subscriptions are separate from Stripe where store billing is required.
+
+Keep existing Stripe functionality untouched unless the current architecture requires a safe integration.
+
+---
+
+# Step 17 — Error handling
+
+Use user-friendly messages.
+
+Handle at least:
+
+* Product not found
+* Store unavailable
+* Network error
+* Purchase cancelled
+* Purchase failed
+* Purchase pending
+* Already subscribed
+* Restore failed
+* No previous purchase
+* Verification failed
+* Backend error
+* Unknown store error
+
+Do not expose raw technical exceptions to users.
+
+Log technical details for debugging.
+
+---
+
+# Step 18 — Testing
+
+After implementation, test the complete lifecycle.
+
+## Android
+
+Test:
+
+1. App opens
+2. Subscription screen opens
+3. Products load
+4. Price appears
+5. Subscribe button works
+6. Google Play purchase starts
+7. Purchase becomes pending
+8. Purchase completes
+9. Purchase is verified
+10. Subscription becomes active
+11. App restart
+12. Subscription remains active
+13. Restore subscription
+14. No subscription restore
+15. User cancels purchase
+16. Purchase failure
+17. Network failure
+18. Product unavailable
+
+## iOS
+
+Test:
+
+1. App opens
+2. Subscription screen opens
+3. Products load
+4. Price appears
+5. Subscribe button works
+6. Apple purchase starts
+7. Pending state
+8. Purchase completes
+9. Purchase is verified
+10. Subscription becomes active
+11. App restart
+12. Restore subscription
+13. No previous subscription
+14. User cancels purchase
+15. Purchase failure
+16. Network failure
+17. Product unavailable
+
+---
+
+# Step 19 — Regression testing
+
+This is mandatory.
+
+After fixing subscription, run:
+
+flutter clean
+flutter pub get
+flutter analyze
+
+Then build/test Android.
+
+Also verify that existing Flutter features still work.
+
+Especially check:
+
+* Login
+* Signup
+* Firebase
+* Navigation
+* Existing BLoCs
+* API calls
+* Existing payment functionality
+* Profile
+* Settings
+* Logout
+
+Do not consider the task complete if subscription works but another existing feature is broken.
+
+---
+
+# Step 20 — Important rule: do not repeatedly patch the same bug
+
+If the same subscription bug appears again:
+
+STOP.
+
+Do not add another conditional or another listener as a quick fix.
+
+Trace:
+
+UI
+→ BLoC
+→ Repository
+→ Purchase service
+→ Store
+→ Backend
+
+Find where the duplicate/incorrect event is generated.
+
+Fix the root cause.
+
+Then test the complete lifecycle again.
+
+---
+
+# Step 21 — Final code quality check
+
+Before finishing:
+
+Search the entire project for:
+
+* duplicate purchase listeners
+* duplicate purchase stream subscriptions
+* duplicate SubscriptionBloc
+* duplicate subscription services
+* hard-coded product IDs
+* multiple restore implementations
+* multiple purchase handlers
+* navigation after disposed widget
+* duplicate dialogs
+* old subscription implementation
+
+Remove or consolidate duplicates where appropriate.
+
+---
+
+# FINAL RESPONSE REQUIRED
+
+After completing the implementation, give me:
+
+1. Files created
+2. Files modified
+3. Packages added/changed
+4. Android configuration changes
+5. iOS configuration changes
+6. Product IDs found
+7. Purchase flow explanation
+8. Restore flow explanation
+9. Backend verification flow
+10. Trial flow
+11. Bugs/root causes fixed
+12. Exact commands to run
+13. Android testing steps
+14. iOS testing steps
+15. Any configuration I still need to do manually in Google Play Console
+16. Any configuration I still need to do manually in App Store Connect
+
+IMPORTANT:
+
+Do not tell me "implementation is complete" if the code only works with mocked products or fake subscription status.
+
+Do not use fake purchase success.
+
+Do not bypass Google Play/App Store verification.
+
+Do not create temporary fixes.
+
+Make the implementation production-oriented and consistent with the existing React Native + Wrapper application.
