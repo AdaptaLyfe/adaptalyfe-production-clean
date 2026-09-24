@@ -778,7 +778,10 @@ export default function AcademicPlanner() {
                       Add Assignment
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                  >
                     <DialogHeader>
                       <DialogTitle>Add New Assignment</DialogTitle>
                     </DialogHeader>
