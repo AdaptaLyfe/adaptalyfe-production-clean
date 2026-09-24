@@ -1,0 +1,159 @@
+In the existing **React Native + Wrapper** application, fix the following Calendar bug completely.
+
+### Bug
+
+Calendar: When creating/adding an event, the user selects **"All day Event"**, but after saving the event, it is **not actually treated as an all-day event**.
+
+The bug has reopened multiple times after previous fixes. Do NOT apply another temporary UI-only fix. Find and fix the complete data flow so this issue does not return.
+
+### Required investigation
+
+Trace the complete event flow:
+
+1. Calendar Add Event screen
+2. "All day Event" checkbox/toggle state
+3. Form state
+4. Event validation
+5. Event creation payload
+6. Wrapper/native calendar integration
+7. Backend/API request if applicable
+8. Event response/model mapping
+9. Local state/storage if applicable
+10. Calendar event rendering/display
+
+Find exactly where the `allDay` value is being lost, changed, converted, ignored, or overwritten.
+
+### Required behavior
+
+When the user selects:
+
+**All day Event = ON**
+
+the saved event must remain an all-day event throughout the entire flow.
+
+Make sure:
+
+* `allDay` is explicitly set to `true`.
+* The value is included correctly in the event creation payload.
+* The backend/API receives the correct value if the backend supports this field.
+* The Wrapper/native calendar receives the correct all-day configuration.
+* The saved event/model preserves `allDay: true`.
+* When the event is loaded again, it remains an all-day event.
+* Editing an all-day event keeps it as an all-day event unless the user intentionally disables the option.
+* The event does not accidentally receive a normal start/end time configuration that overrides the all-day setting.
+* Timezone/date conversion must not change an all-day event into a timed event.
+* If the native calendar requires specific start/end date formatting for all-day events, implement the correct format consistently.
+* Do not use hardcoded values that only work for one date or one screen.
+
+### Important
+
+Check for multiple event creation/update implementations in the project.
+
+There may be:
+
+* React Native Calendar logic
+* Wrapper logic
+* Native Android/iOS calendar integration
+* API service
+* Redux/context/state management
+* Event model/mapper
+* Edit event flow
+
+Fix the **shared/root implementation** where possible instead of adding separate patches in individual screens.
+
+### Prevent regression
+
+Create one reliable source of truth for the event's all-day state.
+
+For example, ensure the flow consistently uses:
+
+```text
+UI toggle
+   ↓
+event form state
+   ↓
+event model
+   ↓
+API/native payload
+   ↓
+saved event
+   ↓
+event mapping
+   ↓
+calendar display
+```
+
+Do not allow different parts of the application to use conflicting field names or values such as:
+
+```text
+allDay
+isAllDay
+all_day
+is_all_day
+```
+
+If multiple names are currently used, determine the correct existing contract and normalize the mapping rather than randomly renaming fields.
+
+### Date/time handling
+
+Pay special attention to date conversion.
+
+For an all-day event:
+
+* Do not convert the date into a normal timed event.
+* Do not add the user's current time automatically.
+* Do not allow timezone conversion to shift the event to another day.
+* Preserve the selected calendar date.
+* Use the correct start/end representation required by the existing backend/native calendar implementation.
+
+### Testing
+
+After fixing the root cause, test all of these cases:
+
+1. Create normal timed event → verify it has a time.
+2. Create all-day event → verify it is all-day.
+3. Close and reopen the Calendar → verify it remains all-day.
+4. Edit an all-day event → verify it remains all-day.
+5. Edit an all-day event and turn OFF "All day Event" → verify it becomes a timed event.
+6. Create another all-day event on a different date → verify the correct date.
+7. Test Android.
+8. Test iOS.
+9. Test through the Wrapper flow.
+10. If API/backend is involved, verify the actual request and response values.
+
+### Regression protection
+
+Add or update tests for the event creation/update logic so that:
+
+```text
+All day selected → allDay === true
+All day not selected → allDay === false
+```
+
+Also test the event mapping/API/native-wrapper conversion so `true` is not lost between layers.
+
+### Code quality requirements
+
+* Do not change unrelated Calendar functionality.
+* Do not remove existing features.
+* Do not hide the problem with UI changes.
+* Do not add duplicate event creation logic.
+* Do not introduce hardcoded dates/times.
+* Reuse the existing architecture and patterns.
+* Keep the fix compatible with the current React Native + Wrapper implementation.
+* Check both **create and edit/update** flows.
+* Check both **Android and iOS** behavior.
+* If the issue is caused by the backend/API contract, fix the mapping/request correctly rather than only modifying the UI.
+
+### Before finishing
+
+Explain:
+
+1. What was the root cause?
+2. Which files were changed?
+3. Where was the `allDay` value being lost/overwritten?
+4. How is the value now passed from UI → state → API/native wrapper → calendar?
+5. What tests were performed?
+6. Confirm that creating an event with **"All day Event" selected** now produces a real all-day event and that the fix is protected against regression.
+
+Do not tell me the bug is fixed until you have traced and verified the complete flow.
