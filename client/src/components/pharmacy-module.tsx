@@ -313,7 +313,10 @@ export default function PharmacyModule() {
                     Add Medication
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                >
                   <DialogHeader>
                     <DialogTitle>Add New Medication</DialogTitle>
                     <DialogDescription>
@@ -611,7 +614,10 @@ export default function PharmacyModule() {
                       Create Custom
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Custom Pharmacy</DialogTitle>
                       <DialogDescription>
@@ -656,7 +662,10 @@ export default function PharmacyModule() {
                       Link Pharmacy
                     </Button>
                   </DialogTrigger>
-                <DialogContent>
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                >
                   <DialogHeader>
                     <DialogTitle>Add Pharmacy to Your Account</DialogTitle>
                     <DialogDescription>

@@ -184,7 +184,10 @@ export default function PersonalResourcesModule() {
               Add Resource
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            overlayClassName="z-[110]"
+            className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+          >
             <DialogHeader>
               <DialogTitle>Add Personal Resource</DialogTitle>
             </DialogHeader>

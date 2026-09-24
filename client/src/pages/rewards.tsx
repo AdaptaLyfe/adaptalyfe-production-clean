@@ -408,7 +408,11 @@ export default function RewardsPage() {
                   Create Reward
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" aria-describedby="create-reward-description">
+              <DialogContent
+                overlayClassName="z-[110]"
+                className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                aria-describedby="create-reward-description"
+              >
                 <DialogHeader>
                   <DialogTitle>Create New Reward</DialogTitle>
                   <p id="create-reward-description" className="text-sm text-gray-600">

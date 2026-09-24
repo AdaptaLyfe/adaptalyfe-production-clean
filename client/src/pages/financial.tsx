@@ -946,7 +946,10 @@ export default function Financial() {
                         Add Goal
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>
                           {editingSavingsGoal ? "Edit Savings Goal" : "Create Savings Goal"}
@@ -1141,7 +1144,10 @@ export default function Financial() {
                         Add Category
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>
                           {editingCategory ? "Edit Category" : "Add New Category"}
@@ -1292,7 +1298,10 @@ export default function Financial() {
                         Add Bank Account
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>{editingBank ? "Edit Bank Account" : "Add Bank Account"}</DialogTitle>
                         <DialogDescription>
