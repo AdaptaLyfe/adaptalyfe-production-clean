@@ -10,6 +10,7 @@
     "check": "tsc",
     "test:chatbot-greeting": "tsx --test client/src/lib/chatbot-greeting.test.ts",
     "test:calendar-date": "tsx --test client/src/lib/calendar-date.test.ts",
+    "test:calendar-event": "tsx --test client/src/lib/calendar-event-display.test.ts client/src/lib/calendar-event-payload.test.ts server/calendar-event-input.test.ts",
     "test:daily-task-schedule": "tsx --test client/src/lib/daily-task-schedule.test.ts",
     "test:skill-progress": "tsx --test client/src/lib/skill-progress.test.ts",
     "test:skill-level-validation": "tsx --test client/src/lib/skill-level-validation.test.ts",

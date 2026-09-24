@@ -15,6 +15,10 @@ import {
   AssignmentInputError,
   parseAssignmentWriteInput,
 } from "./assignment-input";
+import {
+  CalendarEventWriteError,
+  normalizeCalendarEventWriteInput,
+} from "./calendar-event-input";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import {
   generateAdaptAIChatTurn,
@@ -2385,17 +2389,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      // Convert date strings to Date objects
       const eventData = {
-        ...req.body,
+        ...normalizeCalendarEventWriteInput(req.body),
         userId: req.session.userId,
-        startDate: new Date(req.body.startDate),
-        endDate: req.body.endDate ? new Date(req.body.endDate) : null
       };
       
       const event = await storage.createCalendarEvent(eventData);
       res.json(event);
     } catch (error) {
+      if (error instanceof CalendarEventWriteError) {
+        return res.status(400).json({ message: error.message });
+      }
       console.error("Failed to create calendar event:", error);
       res.status(500).json({ message: "Failed to create calendar event" });
     }
@@ -2409,20 +2413,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const eventId = parseInt(req.params.id);
       
-      // Convert date strings to Date objects if they exist
-      const updateData = {
-        ...req.body
-      };
-      if (req.body.startDate) {
-        updateData.startDate = new Date(req.body.startDate);
-      }
-      if (req.body.endDate) {
-        updateData.endDate = new Date(req.body.endDate);
-      }
+      const updateData = normalizeCalendarEventWriteInput(req.body, true);
       
       const event = await storage.updateCalendarEvent(eventId, updateData);
       res.json(event);
     } catch (error) {
+      if (error instanceof CalendarEventWriteError) {
+        return res.status(400).json({ message: error.message });
+      }
       console.error("Failed to update calendar event:", error);
       res.status(500).json({ message: "Failed to update calendar event" });
     }

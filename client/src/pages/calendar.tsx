@@ -26,8 +26,9 @@ import { apiRequest } from "@/lib/queryClient";
 import {
   getCalendarEventDateKey,
   formatLocalCalendarDate,
-  toCalendarEventDateValue,
 } from "@/lib/calendar-date";
+import { getCalendarEventDisplayFields } from "@/lib/calendar-event-display";
+import { buildCalendarEventPayload } from "@/lib/calendar-event-payload";
 import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
 import { formatCategoryLabel } from "@/lib/display-labels";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
@@ -98,35 +99,7 @@ export default function Calendar() {
   // Calendar event creation mutation
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
-      let startDateTime;
-      
-      const timeStr = eventData.startTime || '12:00';
-      startDateTime = toCalendarEventDateValue(
-        eventData.startDate,
-        timeStr,
-        eventData.allDay,
-      );
-      
-      let endDateTime = null;
-      if (eventData.endDate && eventData.endTime) {
-        endDateTime = toCalendarEventDateValue(
-          eventData.endDate,
-          eventData.endTime,
-          eventData.allDay,
-        );
-      }
-
-      const payload = {
-        title: eventData.title,
-        description: eventData.description || "",
-        startDate: startDateTime,
-        endDate: endDateTime,
-        allDay: eventData.allDay,
-        category: eventData.category,
-        color: eventData.color,
-        location: eventData.location || "",
-        reminderMinutes: eventData.reminderMinutes || 15
-      };
+      const payload = buildCalendarEventPayload(eventData);
 
       console.log("Creating calendar event with payload:", payload);
       return apiRequest("POST", "/api/calendar-events", payload);
@@ -177,20 +150,14 @@ export default function Calendar() {
 
     // Add calendar events
     calendarEvents.forEach(event => {
-      const eventDate = getCalendarEventDateKey(event.startDate, event.allDay);
-      if (eventDate === dateStr) {
-        let displayTime = null;
-        if (!event.allDay) {
-          // Create a new date object for proper time display
-          const eventDateTime = new Date(event.startDate);
-          displayTime = eventDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        
+      const display = getCalendarEventDisplayFields(event);
+      if (display.dateKey === dateStr) {
         events.push({
           id: `event-${event.id}`,
           type: 'event',
           title: event.title,
-          time: displayTime,
+          time: display.time,
+          allDay: display.allDay,
           completed: event.isCompleted,
           category: event.category,
           icon: CalendarIcon,
@@ -363,7 +330,9 @@ export default function Calendar() {
               >
                 <div className="flex items-center justify-between">
                   <div className="truncate flex-1">{event.title}</div>
-                  {event.time && (
+                  {event.allDay ? (
+                    <div className="ml-1 text-xs opacity-70 font-normal">All day</div>
+                  ) : event.time && (
                     <div className="ml-1 text-xs opacity-70 font-normal">
                       {event.time}
                     </div>
@@ -483,7 +452,9 @@ export default function Calendar() {
                         >
                           <div className="font-bold mb-2 leading-tight">{event.title}</div>
                           <div className="space-y-1">
-                            {event.time && (
+                            {event.allDay ? (
+                              <div className="text-sm opacity-90">All day</div>
+                            ) : event.time && (
                               <div className="text-sm opacity-90 flex items-center gap-2">
                                 <Clock className="w-4 h-4 flex-shrink-0" />
                                 <span>{event.time}</span>
@@ -564,7 +535,9 @@ export default function Calendar() {
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{event.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    {event.time && (
+                    {event.allDay ? (
+                      <Badge variant="outline" className="text-xs">All day</Badge>
+                    ) : event.time && (
                       <Badge variant="outline" className="text-xs">
                         <Clock className="w-3 h-3 mr-1" />
                         {event.time}
