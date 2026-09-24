@@ -1,0 +1,124 @@
+Fix the popup/modal sizing issue in the existing **React Native + Wrapper** application.
+
+### Problem
+
+Popups/modals used to add different items such as:
+
+* Contact
+* Reaction
+* and other similar add/edit forms
+
+are not fitting correctly according to the page/screen size.
+
+The popup may appear:
+
+* Too large or too small
+* Cut off on some screen sizes
+* With content going outside the visible area
+* With incorrect width/height on different devices
+* With keyboard overlapping the popup
+* With scrolling not working correctly
+
+### Important
+
+Do NOT apply a temporary fix for only one popup.
+
+Find the **root cause** in the shared popup/modal component, wrapper, styling, or responsive layout logic and fix it properly so the same issue does not reopen in other screens.
+
+### Requirements
+
+1. Inspect the existing popup/modal implementation and identify why its size is not responsive.
+
+2. Create/use a **shared responsive modal/popup behavior** that works consistently across the application.
+
+3. Popup width should adapt to the available screen width:
+
+   * Mobile: use an appropriate percentage of screen width with safe horizontal margins.
+   * Tablet: use a suitable maximum width.
+   * Desktop/Web: use a reasonable max width instead of stretching across the entire screen.
+
+4. Popup height must adapt to the content and available screen height.
+
+5. If the content is taller than the available screen:
+
+   * Make the popup content scrollable.
+   * Do not let the popup extend outside the screen.
+   * Keep header/title and action buttons usable.
+
+6. Handle the keyboard correctly:
+
+   * When the keyboard opens, the popup must remain visible.
+   * Input fields must not be hidden behind the keyboard.
+   * Avoid overflow and layout errors.
+
+7. Make the solution responsive for:
+
+   * Android
+   * iOS
+   * Web
+   * Different mobile screen sizes
+   * Tablet
+   * Desktop
+
+8. Check all existing popups/modals, especially:
+
+   * Contact
+   * Reaction
+   * Add forms
+   * Edit forms
+   * Any other reusable popup currently implemented.
+
+9. Do not create separate hardcoded width/height fixes for individual screens unless absolutely necessary.
+
+10. Preserve the existing:
+
+* UI design
+* Colors
+* Typography
+* Buttons
+* Form fields
+* Validation
+* API logic
+* Navigation
+* Existing functionality
+
+### Prevent Regression
+
+After implementing the fix:
+
+* Search the entire codebase for all modal/popup implementations.
+* Identify duplicate modal components or inconsistent responsive logic.
+* Consolidate the sizing behavior where appropriate.
+* Make sure future popups using the shared component automatically receive the responsive behavior.
+* Test opening and closing the popup multiple times.
+* Test switching between different popup types.
+* Test portrait and landscape orientations where applicable.
+* Test small and large screen sizes.
+* Test with the keyboard open and closed.
+* Confirm there are no overflow, clipping, or layout errors.
+
+### Very Important: Do Not Reopen the Same Bug
+
+Do not simply change random width/height values until the popup looks correct.
+
+First identify the **root cause**, then implement a reusable and responsive solution.
+
+Before finishing, verify that:
+
+* Contact popup fits correctly.
+* Reaction popup fits correctly.
+* Other add/edit popups fit correctly.
+* No popup content is clipped.
+* No popup extends outside the screen.
+* Scrolling works when content is large.
+* Keyboard does not cover the form.
+* Existing functionality still works.
+
+Do not modify unrelated features.
+
+After fixing, explain:
+
+1. Root cause of the issue.
+2. Files/components changed.
+3. What reusable solution was implemented.
+4. How you verified the fix does not regress.
