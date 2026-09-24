@@ -416,7 +416,7 @@ export default function RewardsPage() {
                   </p>
                 </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="reward-create-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="reward-create-form space-y-4 pr-2">
                   <FormField
                     control={form.control}
                     name="title"
