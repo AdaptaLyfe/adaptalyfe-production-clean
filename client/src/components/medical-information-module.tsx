@@ -23,6 +23,7 @@ import {
   Plus
 } from "lucide-react";
 import { SymptomTracker } from "./symptom-tracker";
+import { useHealthRecordsModalViewport } from "@/hooks/use-health-records-modal-viewport";
 import {
   isValidContactEmail,
   isValidContactPhoneNumber,
@@ -106,6 +107,7 @@ const isFutureDateInputValue = (dateValue: string) =>
 export default function MedicalInformationModule() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const modalViewportStyle = useHealthRecordsModalViewport();
   
   const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);
   const [editingCondition, setEditingCondition] = useState<MedicalCondition | null>(null);
@@ -636,8 +638,8 @@ export default function MedicalInformationModule() {
         <>
           {/* Condition Dialog */}
       {showConditionDialog && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowConditionDialog(false)} data-testid="dialog-backdrop-condition">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Medical Condition</h2>
@@ -727,8 +729,8 @@ export default function MedicalInformationModule() {
       
       {/* Allergy Dialog */}
       {showAllergyDialog && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowAllergyDialog(false)} data-testid="dialog-backdrop-allergy">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-allergy">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add New Allergy</h2>
@@ -806,8 +808,8 @@ export default function MedicalInformationModule() {
 
       {/* Adverse Medication Dialog */}
       {showAdverseMedDialog && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowAdverseMedDialog(false)} data-testid="dialog-backdrop-adverse">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-adverse">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Adverse Medication</h2>
@@ -903,8 +905,8 @@ export default function MedicalInformationModule() {
 
       {/* Emergency Contact Dialog */}
       {showContactDialog && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
@@ -1020,8 +1022,8 @@ export default function MedicalInformationModule() {
 
       {/* Provider Dialog */}
       {showProviderDialog && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
@@ -1120,8 +1122,8 @@ export default function MedicalInformationModule() {
       
       {/* Edit Condition Dialog */}
       {editingCondition && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingCondition(null)} data-testid="dialog-backdrop-edit-condition">
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-edit-condition">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Medical Condition</h2>
@@ -1210,8 +1212,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Allergy Dialog */}
       {editingAllergy && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAllergy(null)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingAllergy(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Allergy</h2>
@@ -1289,8 +1291,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Adverse Medication Dialog */}
       {editingAdverseMed && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingAdverseMed(null)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingAdverseMed(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Adverse Medication</h2>
@@ -1387,8 +1389,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Emergency Contact Dialog */}
       {editingContact && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingContact(null)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingContact(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Emergency Contact</h2>
@@ -1499,8 +1501,8 @@ export default function MedicalInformationModule() {
 
       {/* Edit Provider Dialog */}
       {editingProvider && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingProvider(null)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingProvider(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Primary Care Provider</h2>

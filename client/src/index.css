@@ -75,6 +75,20 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Health Records portals follow the visible viewport when a mobile keyboard opens. */
+.health-records-modal-backdrop {
+  box-sizing: border-box;
+}
+
+.health-records-modal-panel {
+  max-height: calc(
+    var(--health-records-modal-height, 100dvh) - max(
+      2rem,
+      var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem
+    )
+  );
+}
+
 /* Keep Academic Planner popup fields fully bordered inside their scrollable forms. */
 .academic-planner-form input,
 .academic-planner-form textarea,

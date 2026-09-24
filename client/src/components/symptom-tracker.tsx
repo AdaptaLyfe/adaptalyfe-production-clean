@@ -18,6 +18,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertSymptomEntrySchema, type SymptomEntry, type InsertSymptomEntry } from "@shared/schema";
 import { format, formatDistanceToNow } from "date-fns";
 import { z } from "zod";
+import { useHealthRecordsModalViewport } from "@/hooks/use-health-records-modal-viewport";
 
 // Extended schema with better validation messages
 const symptomFormSchema = insertSymptomEntrySchema.extend({
@@ -58,6 +59,7 @@ const blankSymptomFormValues: Partial<InsertSymptomEntry> = {
 export function SymptomTracker() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
+  const modalViewportStyle = useHealthRecordsModalViewport();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -178,8 +180,8 @@ export function SymptomTracker() {
       {typeof document !== "undefined" && createPortal(
         <>
           {isAddDialogOpen && (
-            <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setIsAddDialogOpen(false)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>
@@ -434,8 +436,8 @@ export function SymptomTracker() {
       {typeof document !== "undefined" && createPortal(
         <>
           {editingEntry && (
-          <div className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingEntry(null)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingEntry(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>
