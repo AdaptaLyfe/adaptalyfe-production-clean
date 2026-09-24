@@ -270,7 +270,10 @@ export default function PersonalDocuments() {
             setUploadedImageUrl("");
           }
         }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+          <DialogContent
+            overlayClassName="z-[110]"
+            className="z-[120] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain w-[95vw] sm:w-full"
+          >
             <DialogHeader>
               <DialogTitle>{editingDoc ? "Edit Document" : "Add New Document"}</DialogTitle>
               <DialogDescription>

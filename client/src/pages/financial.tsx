@@ -512,7 +512,7 @@ export default function Financial() {
                             Add Expense
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent overlayClassName="z-[110]" className="z-[120]">
                           <DialogHeader>
                             <DialogTitle>Add Budget Entry</DialogTitle>
                           </DialogHeader>
@@ -761,7 +761,7 @@ export default function Financial() {
                         Add Bill
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent overlayClassName="z-[110]" className="z-[120]">
                       <DialogHeader>
                         <DialogTitle>
                           {editingBill ? "Edit Bill" : "Add New Bill"}
