@@ -736,8 +736,8 @@ class _TrustedContactsSection extends StatelessWidget {
     ];
     return Card(
       color: Colors.white,
-      shape: const RoundedRectangleBorder(
-        border: Border(top: BorderSide(color: Color(0xFFEF4444), width: 4)),
+      shape: const Border(
+        top: BorderSide(color: Color(0xFFEF4444), width: 4),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 15, 16, 16),
@@ -839,8 +839,8 @@ class _WellbeingToolsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final breathing = Card(
       color: Colors.white,
-      shape: const RoundedRectangleBorder(
-        border: Border(top: BorderSide(color: Color(0xFF9333EA), width: 4)),
+      shape: const Border(
+        top: BorderSide(color: Color(0xFF9333EA), width: 4),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 15, 14, 18),
@@ -932,8 +932,8 @@ class _WellbeingToolsSection extends StatelessWidget {
 
     final coping = Card(
       color: Colors.white,
-      shape: const RoundedRectangleBorder(
-        border: Border(top: BorderSide(color: Color(0xFF16A34A), width: 4)),
+      shape: const Border(
+        top: BorderSide(color: Color(0xFF16A34A), width: 4),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 15, 14, 18),
@@ -1169,8 +1169,8 @@ class _EducationalResourcesSection extends StatelessWidget {
     ];
     return Card(
       color: Colors.white,
-      shape: const RoundedRectangleBorder(
-        border: Border(top: BorderSide(color: Color(0xFFF97316), width: 4)),
+      shape: const Border(
+        top: BorderSide(color: Color(0xFFF97316), width: 4),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 15, 14, 16),

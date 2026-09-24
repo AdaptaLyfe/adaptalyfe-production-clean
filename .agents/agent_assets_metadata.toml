@@ -2269,3 +2269,17 @@ mtime_ms = 1790227186416
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be889c05-085b-4c77-90b1-54bcb2210f59/257af242-27bc-415b-8887-d65f7b199ae5"
 storage_version_token = "1790227201279244"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hjQgokNWqEG5jX24wC9hd"
+uri = "file://attached_assets/flutter-reported-errors-changed-files.zip"
+type = "unspecified"
+title = "Flutter error fixes — changed file"
+description = "ZIP containing only the updated Resources screen with the four invalid border arguments corrected."
+logical_id = "0ea4af9b-29b9-49d0-9ee7-3fda481ba262"
+content_hash = "sha256:8ce47c6bbff1c6b35f23f40398df90d4d97a99d20f7fc39c908f5a39c34ea920"
+size = 20040
+mtime_ms = 1790227839334
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0ea4af9b-29b9-49d0-9ee7-3fda481ba262/cab78d31-93bc-41b9-a25a-60f68294661d"
+storage_version_token = "1790227845010448"
+content_type = "application/octet-stream"
