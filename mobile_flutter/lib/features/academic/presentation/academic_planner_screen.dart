@@ -2154,7 +2154,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
   late final TextEditingController _notesController;
   final _formKey = GlobalKey<FormState>();
   late final List<String> _semesterChoices;
-  var _dayOfWeek = 1;
+  var _dayOfWeek = DateTime.now().weekday % 7;
   var _startTime = '';
   var _endTime = '';
   late String _semester;
@@ -2335,10 +2335,10 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                       value: _dayOfWeek,
                       decoration: const InputDecoration(labelText: 'Day'),
                       items: List.generate(
-                        5,
+                        7,
                         (index) => DropdownMenuItem(
-                          value: index + 1,
-                          child: Text(_dayName(index + 1)),
+                          value: index,
+                          child: Text(_dayName(index)),
                         ),
                       ),
                       onChanged: isSubmitting

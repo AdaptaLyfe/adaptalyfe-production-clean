@@ -84,7 +84,7 @@ export default function AcademicPlanner() {
     room: "",
     startTime: "",
     endTime: "",
-    dayOfWeek: 1,
+    dayOfWeek: new Date().getDay(),
     credits: 3,
     semester: "Fall 2025"
   });
@@ -218,7 +218,7 @@ export default function AcademicPlanner() {
       );
       await refetchClasses();
       setIsAddClassOpen(false);
-      setNewClass({ className: "", instructor: "", building: "", room: "", startTime: "", endTime: "", dayOfWeek: 1, credits: 3, semester: "Fall 2025" });
+      setNewClass({ className: "", instructor: "", building: "", room: "", startTime: "", endTime: "", dayOfWeek: new Date().getDay(), credits: 3, semester: "Fall 2025" });
     },
   });
 
@@ -661,11 +661,13 @@ export default function AcademicPlanner() {
                             <SelectValue placeholder="Day of week" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
                             <SelectItem value="1">Monday</SelectItem>
                             <SelectItem value="2">Tuesday</SelectItem>
                             <SelectItem value="3">Wednesday</SelectItem>
                             <SelectItem value="4">Thursday</SelectItem>
                             <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
                           </SelectContent>
                         </Select>
                         <Input
