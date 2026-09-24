@@ -2395,3 +2395,17 @@ mtime_ms = 1790235989277
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02d9c6d7-3693-4e99-8148-c1adfa83b08e/cb3d5121-6948-4918-a7e4-003d4c175dac"
 storage_version_token = "1790235994791216"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Y-3dI88PSRYYQ0YyObShY"
+uri = "file://.agents/outputs/caregiver-invitation-fix.zip"
+type = "unspecified"
+title = "Caregiver invitation fix files"
+description = "ZIP containing only the four changed caregiver invitation source and regression-test files."
+logical_id = "5628a44e-2893-46fe-8163-621845a89717"
+content_hash = "sha256:97be2b37fb8bc6be079dc3739f2fb7aa1824f660d649205269a6208ae346444c"
+size = 78148
+mtime_ms = 1790237183048
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5628a44e-2893-46fe-8163-621845a89717/1485e71f-1f3a-47d7-b05b-3668fc87d5f0"
+storage_version_token = "1790237198436638"
+content_type = "application/octet-stream"

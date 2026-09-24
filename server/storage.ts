@@ -62,6 +62,7 @@ import {
   hasReachedRewardRedemptionLimit,
 } from "./reward-redemption-rules";
 import { careRelationshipFromAcceptedInvitation } from "./caregiver-invitation-relationships";
+import { normalizeCaregiverInvitationStatus } from "./caregiver-invitation-status";
 
 function getServerCalendarDate(date = new Date()): string {
   return date.toISOString().slice(0, 10);
@@ -2961,7 +2962,7 @@ export class DatabaseStorage implements IStorage {
         .for("update");
       if (!invitation) return undefined;
 
-      const invitationStatus = invitation.status.toLowerCase();
+      const invitationStatus = normalizeCaregiverInvitationStatus(invitation.status);
       const isAlreadyAccepted =
         invitationStatus === "accepted" && invitation.acceptedBy === acceptedBy;
       if (

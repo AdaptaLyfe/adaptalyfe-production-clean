@@ -59,6 +59,7 @@ import {
   shouldIncludeFinanceContext,
 } from "./finance";
 import { buildCaregiverContextResponse } from "./caregiver-context";
+import { normalizeCaregiverInvitationStatus } from "./caregiver-invitation-status";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -3139,7 +3140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(410).json({ message: "Invitation has expired" });
       }
 
-      if (invitation.status !== 'pending') {
+      if (normalizeCaregiverInvitationStatus(invitation.status) !== 'pending') {
         return res.status(400).json({ message: "Invitation is no longer valid" });
       }
 
