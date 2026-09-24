@@ -25,9 +25,9 @@ import {
 import { SymptomTracker } from "./symptom-tracker";
 import { useHealthRecordsModalViewport } from "@/hooks/use-health-records-modal-viewport";
 import {
-  isValidContactEmail,
-  isValidContactPhoneNumber,
+  getEmergencyContactFieldErrors,
   normalizeContactPhoneNumber,
+  type ContactFieldValidationErrors,
 } from "@shared/contact-validation";
 
 interface Allergy {
@@ -113,6 +113,8 @@ export default function MedicalInformationModule() {
   const [editingCondition, setEditingCondition] = useState<MedicalCondition | null>(null);
   const [editingAdverseMed, setEditingAdverseMed] = useState<AdverseMedication | null>(null);
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+  const [contactFormErrors, setContactFormErrors] = useState<ContactFieldValidationErrors>({});
+  const [editingContactFormErrors, setEditingContactFormErrors] = useState<ContactFieldValidationErrors>({});
   const [editingProvider, setEditingProvider] = useState<PrimaryCareProvider | null>(null);
   const [showConditionDialog, setShowConditionDialog] = useState(false);
   const [showAllergyDialog, setShowAllergyDialog] = useState(false);
@@ -262,6 +264,15 @@ export default function MedicalInformationModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
       toast({ title: "Success", description: "Trusted contact added successfully" });
+      setContactFormErrors({});
+      setShowContactDialog(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add trusted contact. Please check the details and try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -271,7 +282,15 @@ export default function MedicalInformationModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
       toast({ title: "Success", description: "Trusted contact updated successfully" });
+      setEditingContactFormErrors({});
       setEditingContact(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update trusted contact. Please check the details and try again.",
+        variant: "destructive",
+      });
     }
   });
 
@@ -512,7 +531,13 @@ export default function MedicalInformationModule() {
         <TabsContent value="contacts" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Trusted Contacts</h3>
-            <Button onClick={() => setShowContactDialog(true)} data-testid="button-add-trusted-contact">
+            <Button
+              onClick={() => {
+                setContactFormErrors({});
+                setShowContactDialog(true);
+              }}
+              data-testid="button-add-trusted-contact"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Contact
             </Button>
@@ -553,7 +578,10 @@ export default function MedicalInformationModule() {
                       </div>
                       <div className="flex gap-2">
                         <EditButton
-                          onClick={() => setEditingContact(contact)}
+                          onClick={() => {
+                            setEditingContactFormErrors({});
+                            setEditingContact(contact);
+                          }}
                           aria-label={`Edit ${contact.name}`}
                         />
                         <Button size="sm" variant="outline" onClick={() => deleteContact.mutate(contact.id)}>
@@ -905,13 +933,24 @@ export default function MedicalInformationModule() {
 
       {/* Emergency Contact Dialog */}
       {showContactDialog && (
-        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowContactDialog(false)} data-testid="dialog-backdrop-contact">
+        <div
+          className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50"
+          style={modalViewportStyle}
+          onClick={() => {
+            setContactFormErrors({});
+            setShowContactDialog(false);
+          }}
+          data-testid="dialog-backdrop-contact"
+        >
           <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-contact">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Emergency Contact</h2>
                 <button
-                  onClick={() => setShowContactDialog(false)}
+                  onClick={() => {
+                    setContactFormErrors({});
+                    setShowContactDialog(false);
+                  }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                   data-testid="button-close-contact-dialog"
                 >
@@ -923,26 +962,11 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = normalizeContactPhoneNumber(formData.get("phoneNumber") as string);
-                const email = (formData.get("email") as string).trim();
-
-                if (!isValidContactPhoneNumber(phoneNumber)) {
-                  toast({
-                    title: "Invalid Phone Number",
-                    description: "Please enter a valid phone number with 7 to 15 digits.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                if (email && !isValidContactEmail(email)) {
-                  toast({
-                    title: "Invalid Email Address",
-                    description: "Please enter a valid email address.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
+                const phoneNumber = normalizeContactPhoneNumber(String(formData.get("phoneNumber") ?? ""));
+                const email = String(formData.get("email") ?? "").trim();
+                const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber);
+                setContactFormErrors(fieldErrors);
+                if (fieldErrors.email || fieldErrors.phoneNumber) return;
 
                 createContact.mutate({
                   name: formData.get("name") as string,
@@ -953,8 +977,6 @@ export default function MedicalInformationModule() {
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
                 });
-                e.currentTarget.reset();
-                setShowContactDialog(false);
               }} className="space-y-4">
                 <div>
                   <Label htmlFor="name" required>Name</Label>
@@ -965,26 +987,56 @@ export default function MedicalInformationModule() {
                   <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
+                  <Label htmlFor="contact-phone-number" required>Phone Number</Label>
                   <Input 
+                    id="contact-phone-number"
                     name="phoneNumber" 
                     required 
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
                     placeholder="e.g. +1 (555) 123-4567"
-                    title="Enter 7 to 15 digits, optionally with a country code"
+                    aria-invalid={Boolean(contactFormErrors.phoneNumber)}
+                    aria-describedby={contactFormErrors.phoneNumber ? "contact-phone-number-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setContactFormErrors((current) => ({
+                        ...current,
+                        phoneNumber: "Please enter a valid phone number.",
+                      }));
+                    }}
+                    onChange={() => setContactFormErrors((current) => ({ ...current, phoneNumber: undefined }))}
                   />
+                  {contactFormErrors.phoneNumber && (
+                    <p id="contact-phone-number-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {contactFormErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="contact-email" required>Email</Label>
                   <Input
+                    id="contact-email"
                     name="email"
                     type="email"
+                    required
                     placeholder="Email address"
-                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
-                    title="Enter a valid email address"
+                    aria-invalid={Boolean(contactFormErrors.email)}
+                    aria-describedby={contactFormErrors.email ? "contact-email-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setContactFormErrors((current) => ({
+                        ...current,
+                        email: "Please enter a valid email address.",
+                      }));
+                    }}
+                    onChange={() => setContactFormErrors((current) => ({ ...current, email: undefined }))}
                   />
+                  {contactFormErrors.email && (
+                    <p id="contact-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {contactFormErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="address">Address</Label>
@@ -1009,7 +1061,10 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowContactDialog(false)}
+                    onClick={() => {
+                      setContactFormErrors({});
+                      setShowContactDialog(false);
+                    }}
                   >
                     Cancel
                   </Button>
@@ -1389,13 +1444,23 @@ export default function MedicalInformationModule() {
 
       {/* Edit Emergency Contact Dialog */}
       {editingContact && (
-        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingContact(null)}>
+        <div
+          className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50"
+          style={modalViewportStyle}
+          onClick={() => {
+            setEditingContactFormErrors({});
+            setEditingContact(null);
+          }}
+        >
           <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Emergency Contact</h2>
                 <button
-                  onClick={() => setEditingContact(null)}
+                  onClick={() => {
+                    setEditingContactFormErrors({});
+                    setEditingContact(null);
+                  }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                 >
                   ×
@@ -1406,39 +1471,24 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = normalizeContactPhoneNumber(formData.get("phoneNumber") as string);
-                const email = (formData.get("email") as string).trim();
+                const phoneNumber = normalizeContactPhoneNumber(String(formData.get("phoneNumber") ?? ""));
+                const email = String(formData.get("email") ?? "").trim();
+                const emailRequired = Boolean(editingContact.email?.trim());
+                const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber, { emailRequired });
+                setEditingContactFormErrors(fieldErrors);
+                if (fieldErrors.email || fieldErrors.phoneNumber) return;
 
-                if (!isValidContactPhoneNumber(phoneNumber)) {
-                  toast({
-                    title: "Invalid Phone Number",
-                    description: "Please enter a valid phone number with 7 to 15 digits.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                if (email && !isValidContactEmail(email)) {
-                  toast({
-                    title: "Invalid Email Address",
-                    description: "Please enter a valid email address.",
-                    variant: "destructive",
-                  });
-                  return;
-                }
-
-                updateContact.mutate({
+                const updates: Partial<EmergencyContact> & { id: number } = {
                   id: editingContact.id,
                   name: formData.get("name") as string,
                   relationship: formData.get("relationship") as string,
                   phoneNumber,
-                  email,
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
-                });
-                e.currentTarget.reset();
-                setEditingContact(null);
+                };
+                if (email) updates.email = email;
+                updateContact.mutate(updates);
               }} className="space-y-4">
                 <div>
                   <Label htmlFor="name" required>Name</Label>
@@ -1449,21 +1499,58 @@ export default function MedicalInformationModule() {
                   <Input name="relationship" placeholder="e.g., Parent, Sibling, Friend" defaultValue={editingContact.relationship || ""} />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
+                  <Label htmlFor="edit-contact-phone-number" required>Phone Number</Label>
                   <Input 
+                    id="edit-contact-phone-number"
                     name="phoneNumber" 
                     required 
-                    placeholder="Phone number" 
-                    defaultValue={editingContact.phoneNumber}
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
-                    title="Enter 7 to 15 digits, optionally with a country code"
+                    placeholder="e.g. +1 (650) 253-0000"
+                    defaultValue={editingContact.phoneNumber}
+                    aria-invalid={Boolean(editingContactFormErrors.phoneNumber)}
+                    aria-describedby={editingContactFormErrors.phoneNumber ? "edit-contact-phone-number-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setEditingContactFormErrors((current) => ({
+                        ...current,
+                        phoneNumber: "Please enter a valid phone number.",
+                      }));
+                    }}
+                    onChange={() => setEditingContactFormErrors((current) => ({ ...current, phoneNumber: undefined }))}
                   />
+                  {editingContactFormErrors.phoneNumber && (
+                    <p id="edit-contact-phone-number-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {editingContactFormErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input name="email" type="email" placeholder="Email address" defaultValue={editingContact.email || ""} />
+                  <Label htmlFor="edit-contact-email" required={Boolean(editingContact.email?.trim())}>Email</Label>
+                  <Input
+                    id="edit-contact-email"
+                    name="email"
+                    type="email"
+                    required={Boolean(editingContact.email?.trim())}
+                    placeholder="Email address"
+                    defaultValue={editingContact.email || ""}
+                    aria-invalid={Boolean(editingContactFormErrors.email)}
+                    aria-describedby={editingContactFormErrors.email ? "edit-contact-email-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setEditingContactFormErrors((current) => ({
+                        ...current,
+                        email: "Please enter a valid email address.",
+                      }));
+                    }}
+                    onChange={() => setEditingContactFormErrors((current) => ({ ...current, email: undefined }))}
+                  />
+                  {editingContactFormErrors.email && (
+                    <p id="edit-contact-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {editingContactFormErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="address">Address</Label>
@@ -1488,7 +1575,10 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setEditingContact(null)}
+                    onClick={() => {
+                      setEditingContactFormErrors({});
+                      setEditingContact(null);
+                    }}
                   >
                     Cancel
                   </Button>

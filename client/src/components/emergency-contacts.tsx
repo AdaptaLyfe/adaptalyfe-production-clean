@@ -12,6 +12,11 @@ import { EditButton } from "@/components/ui/edit-button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Phone, UserPlus, Shield, Heart, AlertTriangle, Star, Trash2 } from "lucide-react";
+import {
+  getEmergencyContactFieldErrors,
+  normalizeContactPhoneNumber,
+  type ContactFieldValidationErrors,
+} from "@shared/contact-validation";
 
 interface EmergencyContact {
   id: number;
@@ -28,7 +33,9 @@ export default function EmergencyContacts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isQuickDialogOpen, setIsQuickDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+  const [contactValidationErrors, setContactValidationErrors] = useState<ContactFieldValidationErrors>({});
   const [formData, setFormData] = useState({
     name: "",
     relationship: "",
@@ -58,6 +65,7 @@ export default function EmergencyContacts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-contacts"] });
       setIsDialogOpen(false);
+      setIsQuickDialogOpen(false);
       setEditingContact(null);
       resetForm();
       toast({
@@ -105,10 +113,12 @@ export default function EmergencyContacts() {
       isEmergencyContact: true,
       notes: ""
     });
+    setContactValidationErrors({});
   };
 
   const handleEdit = (contact: EmergencyContact) => {
     setEditingContact(contact);
+    setContactValidationErrors({});
     setFormData({
       name: contact.name,
       relationship: contact.relationship,
@@ -123,7 +133,22 @@ export default function EmergencyContacts() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveMutation.mutate(formData);
+    const email = formData.email.trim();
+    const phoneNumber = normalizeContactPhoneNumber(formData.phoneNumber);
+    const emailRequired = !editingContact || Boolean(editingContact.email?.trim());
+    const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber, { emailRequired });
+    setContactValidationErrors(fieldErrors);
+    if (fieldErrors.email || fieldErrors.phoneNumber) return;
+
+    saveMutation.mutate({
+      name: formData.name,
+      relationship: formData.relationship,
+      phoneNumber,
+      isPrimary: formData.isPrimary,
+      isEmergencyContact: formData.isEmergencyContact,
+      notes: formData.notes,
+      ...(email || !editingContact ? { email } : {}),
+    });
   };
 
   const handleCall = (phoneNumber: string, name: string) => {
@@ -157,6 +182,7 @@ export default function EmergencyContacts() {
   const primaryContacts = contacts.filter((c: EmergencyContact) => c.isPrimary);
   const emergencyContacts = contacts.filter((c: EmergencyContact) => c.isEmergencyContact && !c.isPrimary);
   const otherContacts = contacts.filter((c: EmergencyContact) => !c.isEmergencyContact && !c.isPrimary);
+  const emailRequired = !editingContact || Boolean(editingContact.email?.trim());
 
   return (
     <div className="space-y-6">
@@ -195,7 +221,14 @@ export default function EmergencyContacts() {
             <div className="text-center py-8">
               <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
               <p className="text-red-700 mb-4">No emergency contacts set up yet</p>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog
+                open={isQuickDialogOpen}
+                onOpenChange={(open) => {
+                  setIsQuickDialogOpen(open);
+                  if (open) setEditingContact(null);
+                  if (!open) resetForm();
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button variant="destructive">
                     <UserPlus className="w-4 h-4 mr-2" />
@@ -247,18 +280,53 @@ export default function EmergencyContacts() {
                         id="phoneNumber"
                         type="tel"
                         value={formData.phoneNumber}
-                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phoneNumber: e.target.value });
+                          setContactValidationErrors((current) => ({ ...current, phoneNumber: undefined }));
+                        }}
                         required
+                        aria-invalid={Boolean(contactValidationErrors.phoneNumber)}
+                        aria-describedby={contactValidationErrors.phoneNumber ? "quick-contact-phone-error" : undefined}
+                        onInvalid={(event) => {
+                          event.preventDefault();
+                          setContactValidationErrors((current) => ({
+                            ...current,
+                            phoneNumber: "Please enter a valid phone number.",
+                          }));
+                        }}
                       />
+                      {contactValidationErrors.phoneNumber && (
+                        <p id="quick-contact-phone-error" role="alert" className="mt-1 text-sm text-red-600">
+                          {contactValidationErrors.phoneNumber}
+                        </p>
+                      )}
                     </div>
                     <div>
-                      <FieldLabel htmlFor="email" optional>Email</FieldLabel>
+                      <FieldLabel htmlFor="email" required={emailRequired}>Email</FieldLabel>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          setContactValidationErrors((current) => ({ ...current, email: undefined }));
+                        }}
+                        required={emailRequired}
+                        aria-invalid={Boolean(contactValidationErrors.email)}
+                        aria-describedby={contactValidationErrors.email ? "quick-contact-email-error" : undefined}
+                        onInvalid={(event) => {
+                          event.preventDefault();
+                          setContactValidationErrors((current) => ({
+                            ...current,
+                            email: "Please enter a valid email address.",
+                          }));
+                        }}
                       />
+                      {contactValidationErrors.email && (
+                        <p id="quick-contact-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                          {contactValidationErrors.email}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <FieldLabel htmlFor="notes" optional>Notes</FieldLabel>
@@ -270,7 +338,15 @@ export default function EmergencyContacts() {
                       />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsQuickDialogOpen(false);
+                          setEditingContact(null);
+                          resetForm();
+                        }}
+                      >
                         Cancel
                       </Button>
                       <Button type="submit" disabled={saveMutation.isPending}>
@@ -410,18 +486,53 @@ export default function EmergencyContacts() {
                       id="phoneNumber"
                       type="tel"
                       value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, phoneNumber: e.target.value });
+                        setContactValidationErrors((current) => ({ ...current, phoneNumber: undefined }));
+                      }}
                       required
+                      aria-invalid={Boolean(contactValidationErrors.phoneNumber)}
+                      aria-describedby={contactValidationErrors.phoneNumber ? "contact-phone-error" : undefined}
+                      onInvalid={(event) => {
+                        event.preventDefault();
+                        setContactValidationErrors((current) => ({
+                          ...current,
+                          phoneNumber: "Please enter a valid phone number.",
+                        }));
+                      }}
                     />
+                    {contactValidationErrors.phoneNumber && (
+                      <p id="contact-phone-error" role="alert" className="mt-1 text-sm text-red-600">
+                        {contactValidationErrors.phoneNumber}
+                      </p>
+                    )}
                   </div>
                   <div>
-                    <FieldLabel htmlFor="email" optional>Email</FieldLabel>
+                    <FieldLabel htmlFor="email" required={emailRequired}>Email</FieldLabel>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        setContactValidationErrors((current) => ({ ...current, email: undefined }));
+                      }}
+                      required={emailRequired}
+                      aria-invalid={Boolean(contactValidationErrors.email)}
+                      aria-describedby={contactValidationErrors.email ? "contact-email-error" : undefined}
+                      onInvalid={(event) => {
+                        event.preventDefault();
+                        setContactValidationErrors((current) => ({
+                          ...current,
+                          email: "Please enter a valid email address.",
+                        }));
+                      }}
                     />
+                    {contactValidationErrors.email && (
+                      <p id="contact-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                        {contactValidationErrors.email}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center space-x-2">
                     <input
