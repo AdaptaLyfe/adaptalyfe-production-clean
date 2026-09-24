@@ -30,17 +30,10 @@ class RewardsApi {
     await client.delete<dynamic>('/api/rewards/$id');
   }
 
-  Future<void> redeemReward({
-    required int rewardId,
-    required int pointsSpent,
-  }) async {
+  Future<void> redeemReward({required int rewardId}) async {
     await client.post<dynamic>(
       '/api/rewards/redeem',
-      data: {
-        'rewardId': rewardId,
-        'pointsSpent': pointsSpent,
-        'status': 'pending',
-      },
+      data: {'rewardId': rewardId},
     );
   }
 

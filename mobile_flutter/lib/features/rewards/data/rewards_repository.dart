@@ -24,9 +24,6 @@ class RewardsRepository {
 
   Future<void> deleteReward(int id) => api.deleteReward(id);
 
-  Future<void> redeemReward({
-    required int rewardId,
-    required int pointsSpent,
-  }) =>
-      api.redeemReward(rewardId: rewardId, pointsSpent: pointsSpent);
+  Future<void> redeemReward({required int rewardId}) =>
+      api.redeemReward(rewardId: rewardId);
 }

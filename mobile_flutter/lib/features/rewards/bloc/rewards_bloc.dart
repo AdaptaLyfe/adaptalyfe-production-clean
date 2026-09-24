@@ -214,7 +214,6 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
     try {
       await repository.redeemReward(
         rewardId: event.reward.id,
-        pointsSpent: event.reward.pointsRequired,
       );
       await _reloadAfterRedemption(emit);
       emit(
