@@ -2409,3 +2409,17 @@ mtime_ms = 1790237183048
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5628a44e-2893-46fe-8163-621845a89717/1485e71f-1f3a-47d7-b05b-3668fc87d5f0"
 storage_version_token = "1790237198436638"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "L4XaYeRx4xNm_gEce6HMe"
+uri = "file://.agents/outputs/academic-planner-estimated-hours-regression.zip"
+type = "unspecified"
+title = "Academic Planner estimated-hours regression tests"
+description = "ZIP containing only the assignment-specific test files added or updated for decimal hours."
+logical_id = "782bcee6-a5d3-49ff-80aa-70ee08c50d65"
+content_hash = "sha256:4eb16c9fbefe81760f07f5af329f064d7dcfbf3ece6fdf5f42c643eb993bfded"
+size = 1949
+mtime_ms = 1790240753775
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/782bcee6-a5d3-49ff-80aa-70ee08c50d65/548688d1-04b6-4c37-b92c-72ff8e7d79e7"
+storage_version_token = "1790240783763138"
+content_type = "application/octet-stream"

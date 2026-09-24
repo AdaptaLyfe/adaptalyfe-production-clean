@@ -7,10 +7,14 @@ import {
   parseAssignmentWriteInput,
 } from "./assignment-input";
 
-test("keeps fractional estimated hours numeric", () => {
-  assert.equal(parseAssignmentEstimatedHours(2.5), 2.5);
-  assert.equal(parseAssignmentEstimatedHours("2.5"), 2.5);
-  assert.equal(parseAssignmentEstimatedHours(3.5), 3.5);
+test("keeps whole and fractional estimated hours numeric", () => {
+  for (const value of [0.5, 1, 1.5, 2, 2.5, 3.75, 10.5, 10.75]) {
+    assert.equal(parseAssignmentEstimatedHours(value), value);
+    assert.equal(typeof parseAssignmentEstimatedHours(value), "number");
+  }
+  for (const value of ["0.5", "2.5", "10.75"]) {
+    assert.equal(parseAssignmentEstimatedHours(value), Number(value));
+  }
 });
 
 test("accepts values at the supported estimated-hours boundaries", () => {
@@ -36,18 +40,20 @@ test("rejects missing, non-finite, zero, negative, and over-limit hours", () => 
 });
 
 test("validates assignment payloads without rounding decimal hours", () => {
-  const input = parseAssignmentWriteInput({
-    title: "Read chapter 4",
-    description: "",
-    type: "homework",
-    dueDate: "2026-10-02T16:00:00.000Z",
-    priority: "medium",
-    classId: null,
-    estimatedHours: 2.5,
-    userId: 999,
-  });
+  for (const estimatedHours of [2, 2.5, 0.5, 10.75]) {
+    const input = parseAssignmentWriteInput({
+      title: "Read chapter 4",
+      description: "",
+      type: "homework",
+      dueDate: "2026-10-02T16:00:00.000Z",
+      priority: "medium",
+      classId: null,
+      estimatedHours,
+      userId: 999,
+    });
 
-  assert.equal(input.estimatedHours, 2.5);
-  assert.equal(typeof input.estimatedHours, "number");
-  assert.equal("userId" in input, false);
+    assert.equal(input.estimatedHours, estimatedHours);
+    assert.equal(typeof input.estimatedHours, "number");
+    assert.equal("userId" in input, false);
+  }
 });
