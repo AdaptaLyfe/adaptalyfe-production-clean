@@ -2325,3 +2325,17 @@ mtime_ms = 1790229675444
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/190814a5-ca8d-472b-9cfd-96596a1a66db/eb633352-9112-484c-8394-6be4657afc49"
 storage_version_token = "1790229683884997"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Wn7V4iBTdKiRvh0bhpOre"
+uri = "file://attached_assets/flutter-reward-redemption-fix.zip"
+type = "unspecified"
+title = "Flutter reward redemption files"
+description = "Flutter-only ZIP with the three updated Rewards BLoC, repository, and API files. Extract at the mobile_flutter project root."
+logical_id = "8b6228c5-4b92-44e8-b516-38c5dde4648e"
+content_hash = "sha256:3ca9858ccaff584059ea3f6a3dcb792bb35630642831d3d2c7a7cb38846ca90f"
+size = 3108
+mtime_ms = 1790229821803
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8b6228c5-4b92-44e8-b516-38c5dde4648e/f139d0f6-71d8-4ab9-9d80-7922c202ce06"
+storage_version_token = "1790230049630579"
+content_type = "application/octet-stream"
