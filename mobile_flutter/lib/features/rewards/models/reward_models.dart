@@ -1,5 +1,22 @@
 import 'package:equatable/equatable.dart';
 
+abstract final class RewardRedemptionLimit {
+  static bool hasReached({
+    required int? maximum,
+    required int current,
+  }) =>
+      maximum != null && current >= maximum;
+
+  static int? remaining({
+    required int? maximum,
+    required int current,
+  }) {
+    if (maximum == null) return null;
+    final remaining = maximum - current;
+    return remaining > 0 ? remaining : 0;
+  }
+}
+
 class RewardModel extends Equatable {
   const RewardModel({
     required this.id,
@@ -60,6 +77,36 @@ class RewardModel extends Equatable {
   final String color;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  bool get hasReachedRedemptionLimit => RewardRedemptionLimit.hasReached(
+        maximum: maxRedemptions,
+        current: currentRedemptions,
+      );
+
+  int? get remainingRedemptions => RewardRedemptionLimit.remaining(
+        maximum: maxRedemptions,
+        current: currentRedemptions,
+      );
+
+  RewardModel withCurrentRedemptions(int value) => RewardModel(
+        id: id,
+        userId: userId,
+        caregiverId: caregiverId,
+        title: title,
+        description: description,
+        pointsRequired: pointsRequired,
+        category: category,
+        rewardType: rewardType,
+        value: this.value,
+        isActive: isActive,
+        maxRedemptions: maxRedemptions,
+        currentRedemptions: value,
+        expiresAt: expiresAt,
+        iconName: iconName,
+        color: color,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
 
   @override
   List<Object?> get props => [
@@ -163,6 +210,16 @@ class PointsBalanceModel extends Equatable {
   // The web page calls these values Total Earned and Total Spent.
   int get totalEarned => lifetimeEarned;
   int get totalSpent => lifetimeSpent;
+
+  PointsBalanceModel afterRedemption(int points, DateTime redeemedAt) =>
+      PointsBalanceModel(
+        userId: userId,
+        totalPoints: totalPoints - points,
+        availablePoints: availablePoints - points,
+        lifetimeEarned: lifetimeEarned,
+        lifetimeSpent: lifetimeSpent + points,
+        updatedAt: redeemedAt,
+      );
 
   @override
   List<Object?> get props => [

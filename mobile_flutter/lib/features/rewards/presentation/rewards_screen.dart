@@ -280,8 +280,7 @@ class _RewardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canAfford = availablePoints >= reward.pointsRequired;
-    final limitReached = reward.maxRedemptions != null &&
-        reward.currentRedemptions >= reward.maxRedemptions!;
+    final limitReached = reward.hasReachedRedemptionLimit;
     final canRedeem = canAfford && !limitReached;
     final isBusy = busyKey == 'reward-${reward.id}' ||
         busyKey == 'redeem-${reward.id}';
@@ -422,6 +421,19 @@ class _RewardCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
+            if (reward.maxRedemptions != null) ...[
+              Text(
+                'Your redemptions: ${reward.currentRedemptions} of '
+                '${reward.maxRedemptions} · '
+                '${reward.remainingRedemptions ?? 0} remaining',
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -1284,8 +1296,7 @@ Future<void> _confirmRedeem(
     );
     return;
   }
-  if (reward.maxRedemptions != null &&
-      reward.currentRedemptions >= reward.maxRedemptions!) {
+  if (reward.hasReachedRedemptionLimit) {
     _showMessage(context, 'This reward has reached its maximum redemptions.');
     return;
   }

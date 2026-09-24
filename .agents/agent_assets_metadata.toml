@@ -2381,3 +2381,17 @@ mtime_ms = 1790233877437
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/99cc5282-9c40-443c-936d-c19ed8d4e462/9ddde3d7-6152-4209-9809-7726ba166bed"
 storage_version_token = "1790233885575910"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "uEQC2WRqTQZSuNXhnQWqh"
+uri = "file://adaptalyfe-reward-redemption-fix.zip"
+type = "unspecified"
+title = "Reward redemption fix ZIP"
+description = "Only the Flutter Rewards source files and regression tests changed for this fix."
+logical_id = "02d9c6d7-3693-4e99-8148-c1adfa83b08e"
+content_hash = "sha256:f7f86c2f5d13f9a6a57dbaae414c702e08b633720dd2943196911e173fdf3870"
+size = 16431
+mtime_ms = 1790235989277
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02d9c6d7-3693-4e99-8148-c1adfa83b08e/cb3d5121-6948-4918-a7e4-003d4c175dac"
+storage_version_token = "1790235994791216"
+content_type = "application/octet-stream"

@@ -178,32 +178,6 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
     final redeemKey = 'redeem-${event.reward.id}';
     if (!_redeemingRewardIds.add(event.reward.id)) return;
 
-    final available = state.pointsBalance?.availablePoints ?? 0;
-    if (available < event.reward.pointsRequired) {
-      emit(
-        state.copyWith(
-          errorMessage:
-              'You need ${event.reward.pointsRequired} points but only have $available.',
-          actionMessage: null,
-        ),
-      );
-      _redeemingRewardIds.remove(event.reward.id);
-      return;
-    }
-
-    final maxRedemptions = event.reward.maxRedemptions;
-    if (maxRedemptions != null &&
-        event.reward.currentRedemptions >= maxRedemptions) {
-      emit(
-        state.copyWith(
-          errorMessage: 'This reward has reached its maximum redemptions.',
-          actionMessage: null,
-        ),
-      );
-      _redeemingRewardIds.remove(event.reward.id);
-      return;
-    }
-
     emit(
       state.copyWith(
         busyKey: redeemKey,
@@ -211,13 +185,89 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         actionMessage: null,
       ),
     );
+
+    var redemptionSubmitted = false;
     try {
-      await repository.redeemReward(
-        rewardId: event.reward.id,
-      );
-      await _reloadAfterRedemption(emit);
+      final latestData = await Future.wait<Object>([
+        repository.getRewards(),
+        repository.getPointsBalance(),
+      ]);
+      final latestRewards = latestData[0] as List<RewardModel>;
+      final latestBalance = latestData[1] as PointsBalanceModel;
+      RewardModel? latestReward;
+      for (final reward in latestRewards) {
+        if (reward.id == event.reward.id) {
+          latestReward = reward;
+          break;
+        }
+      }
+      final rewardToRedeem = latestReward;
+
       emit(
         state.copyWith(
+          status: RewardsStatus.loaded,
+          rewards: latestRewards,
+          pointsBalance: latestBalance,
+          busyKey: redeemKey,
+          errorMessage: null,
+          actionMessage: null,
+        ),
+      );
+
+      if (rewardToRedeem == null) {
+        emit(
+          state.copyWith(
+            busyKey: null,
+            errorMessage: 'This reward is no longer available.',
+          ),
+        );
+        return;
+      }
+
+      if (latestBalance.availablePoints < rewardToRedeem.pointsRequired) {
+        emit(
+          state.copyWith(
+            busyKey: null,
+            errorMessage:
+                'You need ${rewardToRedeem.pointsRequired} points but only have ${latestBalance.availablePoints}.',
+          ),
+        );
+        return;
+      }
+
+      if (rewardToRedeem.hasReachedRedemptionLimit) {
+        emit(
+          state.copyWith(
+            busyKey: null,
+            errorMessage: 'This reward has reached its maximum redemptions.',
+          ),
+        );
+        return;
+      }
+
+      redemptionSubmitted = true;
+      await repository.redeemReward(
+        rewardId: rewardToRedeem.id,
+      );
+
+      final redeemedAt = DateTime.now();
+      final optimisticallyUpdatedRewards = latestRewards
+          .map(
+            (reward) => reward.id == rewardToRedeem.id
+                ? reward.withCurrentRedemptions(
+                    reward.currentRedemptions + 1,
+                  )
+                : reward,
+          )
+          .toList(growable: false);
+      emit(
+        state.copyWith(
+          status: RewardsStatus.loaded,
+          rewards: optimisticallyUpdatedRewards,
+          pointsBalance: latestBalance.afterRedemption(
+            rewardToRedeem.pointsRequired,
+            redeemedAt,
+          ),
           busyKey: null,
           actionMessage:
               'Reward redeemed! Waiting for caregiver approval.',
@@ -225,9 +275,28 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
           sessionInvalid: false,
         ),
       );
+
+      try {
+        await _reloadAfterRedemption(emit);
+      } catch (_) {
+        emit(
+          state.copyWith(
+            busyKey: null,
+            actionMessage:
+                'Reward redeemed. Pull to refresh to update redemption history.',
+            errorMessage: null,
+          ),
+        );
+      }
     } on ApiException catch (error) {
+      if (redemptionSubmitted) {
+        await _refreshAfterRedemptionFailure(emit);
+      }
       _emitActionFailure(emit, error, redeemKey);
     } catch (error) {
+      if (redemptionSubmitted) {
+        await _refreshAfterRedemptionFailure(emit);
+      }
       _emitActionFailure(
         emit,
         error,
@@ -236,6 +305,29 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
       );
     } finally {
       _redeemingRewardIds.remove(event.reward.id);
+    }
+  }
+
+  Future<void> _refreshAfterRedemptionFailure(
+    Emitter<RewardsState> emit,
+  ) async {
+    try {
+      final latestData = await Future.wait<Object>([
+        repository.getRewards(),
+        repository.getPointsBalance(),
+      ]);
+      emit(
+        state.copyWith(
+          status: RewardsStatus.loaded,
+          rewards: latestData[0] as List<RewardModel>,
+          pointsBalance: latestData[1] as PointsBalanceModel,
+          busyKey: null,
+          actionMessage: null,
+        ),
+      );
+    } catch (_) {
+      // Preserve the redemption error while leaving stale eligibility visible
+      // only if the follow-up refresh itself is unavailable.
     }
   }
 
