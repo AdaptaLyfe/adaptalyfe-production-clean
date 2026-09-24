@@ -1,0 +1,261 @@
+In the Flutter application, fix the **Academic Planner / Student Planner → Assignment → Add New Assignment** bug.
+
+### Bug
+
+When the user creates a new assignment and enters a decimal value in **Estimated Hours**, for example:
+
+`2.5`
+
+the assignment popup/form shows:
+
+**"Invalid assignment data"**
+
+The value `2` may work, but decimal values such as `2.5`, `1.5`, `0.5`, etc. cause the validation/data error.
+
+This bug has been fixed/reopened multiple times, so **do not apply only a UI workaround**. Find and fix the actual root cause across the complete data flow.
+
+### Required investigation
+
+Trace the assignment creation flow completely:
+
+**Assignment Form → TextField → Controller → Validation → Assignment Model → BLoC/Event → Repository → Data Source/API/Firestore/Local Storage → Response → State → UI**
+
+Check every place where `estimatedHours` is:
+
+* Read from the TextEditingController
+* Parsed from String
+* Validated
+* Stored in the model
+* Converted to JSON
+* Sent to API/backend
+* Saved in Firestore/local database
+* Read back from storage/API
+* Converted from JSON to the model
+* Displayed in the UI
+
+### Root cause to check
+
+Look for incorrect integer parsing such as:
+
+```dart
+int.parse(...)
+```
+
+or:
+
+```dart
+int.tryParse(...)
+```
+
+when `estimatedHours` needs to support decimal values.
+
+Do NOT simply remove validation.
+
+The application must correctly support decimal estimated hours.
+
+Examples that should be valid:
+
+```text
+0.5
+1.5
+2.5
+3.25
+10.5
+```
+
+Examples that should remain invalid:
+
+```text
+abc
+-2
+-1.5
+empty
+```
+
+Also handle invalid/non-numeric input safely without throwing exceptions.
+
+### Correct data type
+
+Use an appropriate decimal-capable type throughout the assignment data flow.
+
+For example, in Dart:
+
+```dart
+double? estimatedHours;
+```
+
+When converting from the TextField:
+
+```dart
+final estimatedHours = double.tryParse(
+  estimatedHoursController.text.trim(),
+);
+```
+
+Do not convert the value back to `int` later in the flow.
+
+### Important
+
+Check the entire existing codebase before making changes.
+
+Search for:
+
+```text
+estimatedHours
+estimated_hours
+Estimated Hours
+Invalid assignment data
+Assignment
+AssignmentModel
+AddAssignment
+CreateAssignment
+```
+
+Check all related:
+
+* Models
+* DTOs
+* JSON serialization/deserialization
+* BLoC events
+* BLoC states
+* Repository
+* Firebase/Firestore code
+* API request/response models
+* Local database models
+* Form validation
+* Assignment UI
+* Edit Assignment flow
+
+### Backend / storage compatibility
+
+If the backend or Firestore currently expects an integer, update the mapping/storage logic so decimal values are supported.
+
+Make sure this works consistently:
+
+```text
+UI String "2.5"
+        ↓
+double 2.5
+        ↓
+Assignment Model
+        ↓
+BLoC
+        ↓
+Repository
+        ↓
+API / Firestore / Local DB
+        ↓
+double 2.5
+        ↓
+Assignment Model
+        ↓
+UI
+```
+
+Do not store `"2.5"` as a string if the existing data model expects a numeric value, unless the current backend architecture specifically requires strings.
+
+### Validation
+
+Estimated Hours should:
+
+* Accept positive whole numbers
+* Accept positive decimal numbers
+* Reject empty value if the field is required
+* Reject non-numeric values
+* Reject zero if the existing business rule requires hours greater than zero
+* Reject negative values
+* Not show "Invalid assignment data" for valid decimal values
+
+Use the existing project validation/business rules where possible. Do not introduce unrelated validation changes.
+
+### Error message
+
+"Invalid assignment data" should only appear when the assignment data is genuinely invalid.
+
+It must NOT appear simply because:
+
+```text
+Estimated Hours = 2.5
+```
+
+### Regression prevention
+
+After fixing the issue, test all of these cases:
+
+| Input  | Expected                                        |
+| ------ | ----------------------------------------------- |
+| `1`    | Valid                                           |
+| `2`    | Valid                                           |
+| `2.5`  | Valid                                           |
+| `1.5`  | Valid                                           |
+| `0.5`  | Valid if zero/positive business rule allows it  |
+| `3.25` | Valid                                           |
+| `10.5` | Valid                                           |
+| `abc`  | Invalid                                         |
+| `-2`   | Invalid                                         |
+| `-1.5` | Invalid                                         |
+| Empty  | Invalid if required                             |
+| `2.`   | Handle safely                                   |
+| `.5`   | Handle safely according to existing input rules |
+
+Also test:
+
+1. Add assignment with `2.5`
+2. Save successfully
+3. Close/reopen the Academic Planner
+4. Open the saved assignment
+5. Confirm `2.5` is displayed correctly
+6. Edit it to `3.5`
+7. Save successfully
+8. Edit it back to `2`
+9. Save successfully
+10. Confirm existing integer assignments still work
+
+### Important regression check
+
+Do NOT fix this by:
+
+* Hardcoding `2.5`
+* Removing the assignment validation
+* Hiding the error message
+* Converting decimal values to integers
+* Using `floor()`, `round()`, or `toInt()` to bypass the problem
+* Changing unrelated Academic Planner functionality
+
+The actual data-type/parsing/conversion issue must be fixed.
+
+### Code quality
+
+Follow the existing Flutter architecture and coding style.
+
+Do not rewrite unrelated files.
+
+Do not create duplicate models or duplicate validation logic.
+
+If the same `estimatedHours` conversion exists in multiple places, centralize/fix it properly so the bug cannot reappear from another code path.
+
+### Final verification
+
+Before finishing:
+
+* Run `flutter analyze`
+* Run the relevant tests
+* Build/run the Academic Planner
+* Test adding an assignment with `2.5`
+* Test editing an assignment with `2.5`
+* Test loading the assignment again
+* Test integer values
+* Test invalid values
+* Confirm there is no duplicate error message
+* Confirm no new runtime exceptions
+
+Finally, tell me:
+
+1. Root cause of the bug
+2. Files changed
+3. Exact fix applied
+4. How decimal hours are now stored/parsed
+5. Tests performed
+6. Whether Add, Edit, Save, and Reload all work with `2.5`
+
+**Do not stop after changing the TextField. Trace and fix the complete assignment data flow so this bug does not reopen again.**
