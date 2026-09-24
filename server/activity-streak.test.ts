@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   calendarDateWithOffset,
   calculateCurrentStreak,
+  completedMealActivityDates,
+  normalizeActivityDate,
   normalizedActivityDates,
   shouldIncludeLegacyTaskActivity,
 } from "./activity-streak";
@@ -71,6 +73,29 @@ test("uses the user's local calendar date when UTC is still on yesterday", () =>
   );
 });
 
+test("normalizes timestamp activity dates in the user's timezone", () => {
+  const completedAt = new Date("2026-09-24T20:00:00.000Z");
+
+  assert.equal(normalizeActivityDate(completedAt), "2026-09-24");
+  assert.equal(
+    normalizeActivityDate(completedAt, "Asia/Kolkata"),
+    "2026-09-25",
+  );
+  assert.equal(normalizeActivityDate(completedAt, 330), "2026-09-25");
+  assert.equal(
+    calculateCurrentStreak(
+      [completedAt],
+      "2026-09-25",
+      "Asia/Kolkata",
+    ),
+    1,
+  );
+  assert.equal(
+    calculateCurrentStreak([completedAt], "2026-09-25", 330),
+    1,
+  );
+});
+
 test("rejects invalid timezone offsets", () => {
   const now = new Date("2026-09-24T20:00:00.000Z");
 
@@ -84,4 +109,33 @@ test("uses date-scoped daily completions instead of stale legacy state", () => {
   assert.equal(shouldIncludeLegacyTaskActivity(true, "daily", false), true);
   assert.equal(shouldIncludeLegacyTaskActivity(true, "weekly", true), true);
   assert.equal(shouldIncludeLegacyTaskActivity(false, "daily", true), true);
+});
+
+test("uses planned dates only for completed meal plans", () => {
+  assert.deepEqual(
+    completedMealActivityDates([
+      { isCompleted: true, plannedDate: "2026-09-23" },
+      { isCompleted: false, plannedDate: "2026-09-24" },
+      { isCompleted: true, plannedDate: null },
+    ]),
+    ["2026-09-23"],
+  );
+});
+
+test("deduplicates task, meal, and shopping activity on the user's local dates", () => {
+  const activityDates = [
+    "2026-09-24",
+    "2026-09-25",
+    new Date("2026-09-23T20:00:00.000Z"),
+    new Date("2026-09-24T20:00:00.000Z"),
+  ];
+
+  assert.deepEqual(
+    normalizedActivityDates(activityDates, "2026-09-25", "Asia/Kolkata"),
+    ["2026-09-24", "2026-09-25"],
+  );
+  assert.equal(
+    calculateCurrentStreak(activityDates, "2026-09-25", "Asia/Kolkata"),
+    2,
+  );
 });

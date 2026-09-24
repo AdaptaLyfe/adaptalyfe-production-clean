@@ -58,6 +58,7 @@ import type { RewardBadgeView } from "./reward-badges";
 import {
   shouldIncludeLegacyTaskActivity,
   calculateCurrentStreak,
+  completedMealActivityDates,
   normalizedActivityDates,
 } from "./activity-streak";
 import {
@@ -281,8 +282,16 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
   updateUserStreak(userId: number, streakDays: number): Promise<User | undefined>;
-  recordUserActivity(userId: number, today?: string): Promise<number>;
-  refreshUserActivityStreak(userId: number, today?: string): Promise<number>;
+  recordUserActivity(
+    userId: number,
+    today?: string,
+    timeZone?: string | number,
+  ): Promise<number>;
+  refreshUserActivityStreak(
+    userId: number,
+    today?: string,
+    timeZone?: string | number,
+  ): Promise<number>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
   authenticateUser(username: string, password: string): Promise<User | null>;
   invalidatePasswordResetTokens(userId: number): Promise<void>;
@@ -770,13 +779,15 @@ export class DatabaseStorage implements IStorage {
   async recordUserActivity(
     userId: number,
     today = getServerCalendarDate(),
+    timeZone?: string | number,
   ): Promise<number> {
-    return this.refreshUserActivityStreak(userId, today);
+    return this.refreshUserActivityStreak(userId, today, timeZone);
   }
 
   async refreshUserActivityStreak(
     userId: number,
     today = getServerCalendarDate(),
+    timeZone?: string | number,
   ): Promise<number> {
     const capabilities = await getDailyTaskSchemaCapabilities();
     const completionDates: unknown[] = [];
@@ -794,7 +805,7 @@ export class DatabaseStorage implements IStorage {
       completionDates.push(...completionRows.map((row) => row.completionDate));
     }
 
-    const [taskRows, shoppingRows] = await Promise.all([
+    const [taskRows, mealRows, shoppingRows] = await Promise.all([
       db
         .select({
           id: dailyTasks.id,
@@ -804,6 +815,13 @@ export class DatabaseStorage implements IStorage {
         })
         .from(dailyTasks)
         .where(eq(dailyTasks.userId, userId)),
+      db
+        .select({
+          isCompleted: mealPlans.isCompleted,
+          plannedDate: mealPlans.plannedDate,
+        })
+        .from(mealPlans)
+        .where(eq(mealPlans.userId, userId)),
       db
         .select({
           isPurchased: shoppingLists.isPurchased,
@@ -826,12 +844,17 @@ export class DatabaseStorage implements IStorage {
             ),
         )
         .map((task) => task.completedAt),
+      ...completedMealActivityDates(mealRows),
       ...shoppingRows
         .filter((item) => item.isPurchased && item.purchasedDate)
         .map((item) => item.purchasedDate),
     );
 
-    const validCompletionDates = normalizedActivityDates(completionDates, today);
+    const validCompletionDates = normalizedActivityDates(
+      completionDates,
+      today,
+      timeZone,
+    );
     const streakDays = calculateCurrentStreak(validCompletionDates, today);
     const latestActivityDate = validCompletionDates.at(-1) || null;
 

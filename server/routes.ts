@@ -109,6 +109,28 @@ function getCurrentCalendarDate(req: any): string {
   return now.toISOString().slice(0, 10);
 }
 
+function getActivityDateTimeZone(req: any): string | number | undefined {
+  const timeZone = req.get?.("X-User-Timezone");
+  if (typeof timeZone === "string" && timeZone.trim() !== "") {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
+      return timeZone;
+    } catch {
+      // Fall through to the numeric offset when the timezone is malformed.
+    }
+  }
+
+  const offsetHeader = req.get?.("X-User-Timezone-Offset-Minutes");
+  if (typeof offsetHeader === "string" && offsetHeader.trim() !== "") {
+    const offset = Number(offsetHeader);
+    if (Number.isInteger(offset) && Math.abs(offset) <= 14 * 60) {
+      return offset;
+    }
+  }
+
+  return undefined;
+}
+
 function getRequestCalendarDate(req: any): string {
   const requestedDate = req.query?.date;
   if (isValidCalendarDate(requestedDate)) return requestedDate;
@@ -853,6 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.refreshUserActivityStreak(
               user.id,
               getCurrentCalendarDate(req),
+              getActivityDateTimeZone(req),
             );
             const refreshedUser = await storage.getUserById(user.id);
             if (refreshedUser) {
@@ -880,6 +903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.refreshUserActivityStreak(
           freshUser.id,
           getCurrentCalendarDate(req),
+          getActivityDateTimeZone(req),
         );
         const refreshedUser = await storage.getUserById(freshUser.id);
         if (refreshedUser) {
@@ -1148,6 +1172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const taskId = parseInt(req.params.id);
       const { isCompleted } = req.body;
       const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
       const completionDate = req.body?.date || today;
       if (typeof isCompleted !== "boolean" || !isValidCalendarDate(completionDate)) {
         return res.status(400).json({ message: "A valid completion date and boolean status are required" });
@@ -1174,9 +1199,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       try {
         if (isCompleted && !wasCompleted) {
-          await storage.recordUserActivity(user.id, today);
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
         } else if (!isCompleted && wasCompleted) {
-          await storage.refreshUserActivityStreak(user.id, today);
+          await storage.refreshUserActivityStreak(
+            user.id,
+            today,
+            activityTimeZone,
+          );
         }
       } catch (streakError) {
         console.error("Error updating activity streak after task completion:", streakError);
@@ -2445,17 +2474,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!mealPlan) {
         return res.status(404).json({ message: "Meal plan not found" });
       }
+      const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
       try {
         if (isCompleted) {
-          await storage.recordUserActivity(
-            user.id,
-            getCurrentCalendarDate(req),
-          );
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
         } else {
-          await storage.refreshUserActivityStreak(
-            user.id,
-            getCurrentCalendarDate(req),
-          );
+          await storage.refreshUserActivityStreak(user.id, today, activityTimeZone);
         }
       } catch (streakError) {
         console.error("Error updating activity streak after meal completion:", streakError);
@@ -2565,17 +2590,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!item) {
         return res.status(404).json({ message: "Shopping item not found" });
       }
+      const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
       try {
         if (isPurchased) {
-          await storage.recordUserActivity(
-            user.id,
-            getCurrentCalendarDate(req),
-          );
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
         } else {
-          await storage.refreshUserActivityStreak(
-            user.id,
-            getCurrentCalendarDate(req),
-          );
+          await storage.refreshUserActivityStreak(user.id, today, activityTimeZone);
         }
       } catch (streakError) {
         console.error("Error updating activity streak after shopping completion:", streakError);
@@ -2968,7 +2989,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       if (result.action.action === "complete_task") {
         try {
-          await storage.refreshUserActivityStreak(authenticatedUserId, today);
+          await storage.refreshUserActivityStreak(
+            authenticatedUserId,
+            today,
+            getActivityDateTimeZone(req),
+          );
         } catch (streakError) {
           console.error("Error updating activity streak after AI task completion:", streakError);
         }
