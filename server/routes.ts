@@ -3083,7 +3083,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const invitations = await storage.getCaregiverInvitationsByCaregiver(caregiverId);
+      const invitations = req.query?.pendingOnly === "true"
+        ? await storage.getPendingCaregiverInvitationsByCaregiver(caregiverId)
+        : await storage.getCaregiverInvitationsByCaregiver(caregiverId);
       res.json(invitations);
     } catch (error) {
       console.error("Error fetching caregiver invitations:", error);

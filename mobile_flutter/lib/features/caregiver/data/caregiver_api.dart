@@ -8,7 +8,7 @@ class CaregiverApi {
 
   Future<List<CaregiverInvitationModel>> getInvitations(int userId) =>
       _getList(
-        '/api/caregiver-invitations/$userId',
+        '/api/caregiver-invitations/$userId?pendingOnly=true',
         CaregiverInvitationModel.fromJson,
       );
 

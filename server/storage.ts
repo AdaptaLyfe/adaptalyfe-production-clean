@@ -46,7 +46,7 @@ import {
   familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, desc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import {
   countCompletedMilestones,
@@ -61,6 +61,7 @@ import {
   COUNTED_REWARD_REDEMPTION_STATUSES,
   hasReachedRewardRedemptionLimit,
 } from "./reward-redemption-rules";
+import { careRelationshipFromAcceptedInvitation } from "./caregiver-invitation-relationships";
 
 function getServerCalendarDate(date = new Date()): string {
   return date.toISOString().slice(0, 10);
@@ -533,6 +534,7 @@ export interface IStorage {
   getCaregiverInvitation(invitationCode: string): Promise<CaregiverInvitation | undefined>;
   getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined>;
   getCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]>;
+  getPendingCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]>;
   deleteCaregiverInvitation(id: number): Promise<void>;
   acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined>;
   expireCaregiverInvitation(invitationCode: string): Promise<boolean>;
@@ -2917,6 +2919,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(caregiverInvitations.createdAt));
   }
 
+  async getPendingCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]> {
+    return await db
+      .select()
+      .from(caregiverInvitations)
+      .where(
+        and(
+          eq(caregiverInvitations.caregiverId, caregiverId),
+          sql`lower(${caregiverInvitations.status}) = 'pending'`,
+          gt(caregiverInvitations.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(caregiverInvitations.createdAt));
+  }
+
   async getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined> {
     const [invitation] = await db
       .select()
@@ -2940,15 +2956,16 @@ export class DatabaseStorage implements IStorage {
         .for("update");
       if (!invitation) return undefined;
 
+      const invitationStatus = invitation.status.toLowerCase();
       const isAlreadyAccepted =
-        invitation.status === "accepted" && invitation.acceptedBy === acceptedBy;
+        invitationStatus === "accepted" && invitation.acceptedBy === acceptedBy;
       if (
         !isAlreadyAccepted &&
-        (invitation.status !== "pending" ||
+        (invitationStatus !== "pending" ||
           new Date() > new Date(invitation.expiresAt))
       ) {
         if (
-          invitation.status === "pending" &&
+          invitationStatus === "pending" &&
           new Date() > new Date(invitation.expiresAt)
         ) {
           await tx
@@ -2971,7 +2988,7 @@ export class DatabaseStorage implements IStorage {
           .where(
             and(
               eq(caregiverInvitations.id, invitation.id),
-              eq(caregiverInvitations.status, "pending"),
+              eq(caregiverInvitations.status, invitation.status),
             ),
           )
           .returning();
@@ -3002,15 +3019,15 @@ export class DatabaseStorage implements IStorage {
             })
             .where(eq(careRelationships.id, existingRelationship.id));
         }
-      } else if (!isAlreadyAccepted) {
-        await tx.insert(careRelationships).values({
-          caregiverId: acceptedBy,
-          userId: acceptedInvitation.caregiverId,
-          relationship: acceptedInvitation.relationship,
-          isPrimary: false,
-          isActive: true,
-          establishedVia: "invitation",
-        });
+      } else {
+        await tx
+          .insert(careRelationships)
+          .values(
+            careRelationshipFromAcceptedInvitation(
+              acceptedInvitation,
+              acceptedBy,
+            ),
+          );
       }
 
       return acceptedInvitation;
@@ -3043,6 +3060,51 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCareRelationshipsByUser(userId: number): Promise<CareRelationship[]> {
+    // Accepted invitations from older app versions may have their status updated
+    // without a corresponding care_relationships row. Repair only missing rows;
+    // an existing inactive relationship represents an intentional removal.
+    await db.transaction(async (tx) => {
+      const acceptedInvitations = await tx
+        .select()
+        .from(caregiverInvitations)
+        .where(
+          and(
+            eq(caregiverInvitations.caregiverId, userId),
+            sql`lower(${caregiverInvitations.status}) = 'accepted'`,
+            isNotNull(caregiverInvitations.acceptedBy),
+          ),
+        )
+        .orderBy(asc(caregiverInvitations.id))
+        .for("update");
+
+      if (acceptedInvitations.length === 0) return;
+
+      const existingRelationships = await tx
+        .select({ caregiverId: careRelationships.caregiverId })
+        .from(careRelationships)
+        .where(eq(careRelationships.userId, userId));
+      const existingCaregiverIds = new Set(
+        existingRelationships.map((relationship) => relationship.caregiverId),
+      );
+
+      for (const invitation of acceptedInvitations) {
+        const acceptedBy = invitation.acceptedBy;
+        if (acceptedBy === null || existingCaregiverIds.has(acceptedBy)) {
+          continue;
+        }
+
+        await tx
+          .insert(careRelationships)
+          .values(
+            careRelationshipFromAcceptedInvitation(
+              invitation,
+              acceptedBy,
+            ),
+          );
+        existingCaregiverIds.add(acceptedBy);
+      }
+    });
+
     return await db
       .select()
       .from(careRelationships)

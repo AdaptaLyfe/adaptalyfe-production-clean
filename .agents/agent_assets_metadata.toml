@@ -2339,3 +2339,17 @@ mtime_ms = 1790229821803
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8b6228c5-4b92-44e8-b516-38c5dde4648e/f139d0f6-71d8-4ab9-9d80-7922c202ce06"
 storage_version_token = "1790230049630579"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PycVXs60P3VIP_MyLTlSw"
+uri = "file://artifacts/caregiver-invitation-flow-20260924.zip"
+type = "unspecified"
+title = "Caregiver invitation flow ZIP"
+description = "Six caregiver-specific changed or added source files, including the Flutter refresh/filter changes, server query and safe relationship repair, plus a focused mapping test."
+logical_id = "c079a1df-de84-414a-a4c9-5f318d70e589"
+content_hash = "sha256:099f2fef840414f45a2e8de90d077a7c161e47a96985679a2ffe2a7bad6275a7"
+size = 84007
+mtime_ms = 1790231381924
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c079a1df-de84-414a-a4c9-5f318d70e589/f51a63e8-f988-4976-b596-7f254d952120"
+storage_version_token = "1790231396008739"
+content_type = "application/octet-stream"

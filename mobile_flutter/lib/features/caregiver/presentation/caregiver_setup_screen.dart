@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -36,15 +38,65 @@ class CaregiverSetupScreen extends StatefulWidget {
   State<CaregiverSetupScreen> createState() => _CaregiverSetupScreenState();
 }
 
-class _CaregiverSetupScreenState extends State<CaregiverSetupScreen> {
+class _CaregiverSetupScreenState extends State<CaregiverSetupScreen>
+    with WidgetsBindingObserver {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _ageController = TextEditingController();
   String? _relationship;
   final _permissions = <String>{};
+  Timer? _refreshTimer;
+  bool _appIsResumed = true;
+  bool? _wasRouteCurrent;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _refreshCaregiverData(),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
+    if (isCurrentRoute && _wasRouteCurrent == false) {
+      _refreshCaregiverData(force: true);
+    }
+    _wasRouteCurrent = isCurrentRoute;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appIsResumed = state == AppLifecycleState.resumed;
+    if (_appIsResumed) {
+      _refreshCaregiverData(force: true);
+    }
+  }
+
+  void _refreshCaregiverData({bool force = false}) {
+    if (!mounted || !_appIsResumed || _wasRouteCurrent == false) return;
+
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! Authenticated) return;
+
+    final bloc = context.read<CaregiverBloc>();
+    if (bloc.state.status == CaregiverStatus.loading ||
+        bloc.state.busyKey != null) {
+      return;
+    }
+    if (!force && bloc.state.invitations.isEmpty) return;
+
+    bloc.add(RefreshCaregiver(authState.user.id));
+  }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _emailController.dispose();
     _ageController.dispose();
