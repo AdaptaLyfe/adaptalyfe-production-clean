@@ -8,11 +8,14 @@ import '../../../core/network/api_client.dart';
 import '../data/purchase_service.dart';
 import '../data/stripe_payment_service.dart';
 import '../data/subscription_repository.dart';
+import '../models/subscription_purchase_contract.dart';
 import '../models/subscription_models.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
+  static const _restoreEventTimeout = Duration(seconds: 12);
+
   SubscriptionBloc(
     this.repository,
     this.purchaseService,
@@ -45,6 +48,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   List<ProductDetails> _products = [];
   bool _started = false;
   bool _loadInFlight = false;
+  Completer<void>? _restoreEventCompleter;
+  final Set<String> _processingPurchaseEventKeys = {};
+  final Set<String> _handledPurchaseEventKeys = {};
 
   void _loadPlans(
     LoadPlans event,
@@ -274,6 +280,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
     final plan = _planFor(event.planId);
     if (plan == null) return;
+    _handledPurchaseEventKeys.clear();
     debugPrint(
       '[Subscription IAP] Purchase requested: plan=${plan.id}, '
       'product ID=${plan.productId}',
@@ -353,6 +360,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       ));
       return;
     }
+    final restoreEvent = Completer<void>();
+    _restoreEventCompleter = restoreEvent;
+    _handledPurchaseEventKeys.clear();
     emit(
       state.copyWith(
         status: SubscriptionStatus.restoring,
@@ -362,16 +372,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     );
     try {
       await purchaseService.restore();
-      // The store emits restored purchases through purchaseStream, but it
-      // emits nothing when the store account has no matching purchase. Do not
-      // leave the screen indefinitely in the restoring state in that case.
-      if (state.status == SubscriptionStatus.restoring) {
-        emit(
-          state.copyWith(
-            status: SubscriptionStatus.ready,
-            actionMessage: 'No previous subscription was found on this store account.',
-          ),
-        );
+      try {
+        // restorePurchases() can return before the store publishes its
+        // restored transactions on purchaseStream.
+        await restoreEvent.future.timeout(_restoreEventTimeout);
+      } on TimeoutException {
+        if (state.status == SubscriptionStatus.restoring) {
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.ready,
+              actionMessage:
+                  'No previous subscription was found on this store account.',
+            ),
+          );
+        }
       }
     } catch (error) {
       emit(
@@ -380,6 +394,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: _messageFor(error),
         ),
       );
+    } finally {
+      if (identical(_restoreEventCompleter, restoreEvent)) {
+        _restoreEventCompleter = null;
+      }
     }
   }
 
@@ -416,8 +434,22 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PurchaseUpdatesReceived event,
     Emitter<SubscriptionState> emit,
   ) async {
-    for (final item in event.purchases) {
-      if (item is! PurchaseDetails) continue;
+    final purchases = event.purchases.whereType<PurchaseDetails>().toList();
+    final restorePurchases = purchases
+        .where(
+          (item) =>
+              item.status == PurchaseStatus.restored ||
+              (_restoreEventCompleter != null &&
+                  item.status == PurchaseStatus.purchased),
+        )
+        .toList();
+    final restoreKeys = restorePurchases.map(_purchaseEventKey).toSet();
+    if (restorePurchases.isNotEmpty) {
+      await _handleRestoredPurchases(restorePurchases, emit);
+    }
+
+    for (final item in purchases) {
+      if (restoreKeys.contains(_purchaseEventKey(item))) continue;
       if (item.status == PurchaseStatus.pending) {
         emit(state.copyWith(
           status: SubscriptionStatus.purchasing,
@@ -426,83 +458,317 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         continue;
       }
       if (item.status == PurchaseStatus.error) {
-        await purchaseService.complete(item);
+        final key = _claimPurchaseEvent(item);
+        if (key == null) continue;
         final errorCode = item.error?.code.toLowerCase() ?? '';
         final errorMessage = item.error?.message.toLowerCase() ?? '';
         final cancelled =
             errorCode.contains('cancel') || errorMessage.contains('cancel');
-        emit(
-          state.copyWith(
-            status: cancelled
-                ? SubscriptionStatus.cancelled
-                : SubscriptionStatus.failure,
-            busyPlanId: null,
-            errorMessage: cancelled
-                ? null
-                : item.error?.message ??
-                    'Payment failed. Please try again.',
-            actionMessage: cancelled ? 'Payment was cancelled.' : null,
-          ),
-        );
+        try {
+          await purchaseService.complete(item);
+          emit(
+            state.copyWith(
+              status: cancelled
+                  ? SubscriptionStatus.cancelled
+                  : SubscriptionStatus.failure,
+              busyPlanId: null,
+              errorMessage: cancelled
+                  ? null
+                  : item.error?.message ??
+                      'Payment failed. Please try again.',
+              actionMessage: cancelled ? 'Payment was cancelled.' : null,
+            ),
+          );
+          _signalRestoreEvent();
+        } catch (error) {
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.failure,
+              busyPlanId: null,
+              errorMessage: _messageFor(error),
+            ),
+          );
+          _signalRestoreEvent();
+        } finally {
+          _finishPurchaseEvent(key);
+        }
         continue;
       }
-      if (item.status != PurchaseStatus.purchased &&
-          item.status != PurchaseStatus.restored) {
+      if (item.status != PurchaseStatus.purchased) {
         await purchaseService.complete(item);
         continue;
       }
 
-      try {
-        final plan = _planFor(item.productID);
-        if (plan == null) {
-          throw const FormatException('The store returned an unknown plan.');
-        }
-        final verification = await _verify(item, plan, emit);
-        await purchaseService.complete(item);
-        if (!verification.success) {
-          throw ApiException(
-            type: ApiErrorType.unknown,
-            message: item.status == PurchaseStatus.restored
-                ? "No Subscription Found: We couldn't find an active subscription to restore."
-                : verification.message ?? 'The purchase could not be verified.',
-          );
-        }
-        final subscription = await repository.getSubscription();
+      _signalRestoreEvent();
+      await _handlePurchasedItem(item, emit);
+    }
+  }
+
+  Future<void> _handleRestoredPurchases(
+    List<PurchaseDetails> purchases,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    _signalRestoreEvent();
+    final claimedPurchases = <PurchaseDetails>[];
+    final claimedKeys = <String>[];
+    for (final purchase in purchases) {
+      final key = _claimPurchaseEvent(purchase);
+      if (key == null) continue;
+      claimedPurchases.add(purchase);
+      claimedKeys.add(key);
+    }
+    if (claimedPurchases.isEmpty) return;
+
+    final verifiablePurchases = claimedPurchases.where((purchase) {
+      return _planFor(purchase.productID) != null &&
+          purchase.verificationData.serverVerificationData.trim().isNotEmpty;
+    }).toList();
+    emit(
+      state.copyWith(
+        status: SubscriptionStatus.purchasing,
+        busyPlanId: null,
+        errorMessage: null,
+        actionMessage: 'Verifying your restored subscription securely…',
+      ),
+    );
+    try {
+      if (verifiablePurchases.isEmpty) {
+        throw const FormatException(
+          'The store did not return verifiable subscription data.',
+        );
+      }
+      final firstPlatform = subscriptionStorePlatformFromSource(
+        verifiablePurchases.first.verificationData.source,
+      );
+      if (firstPlatform == null ||
+          verifiablePurchases.any(
+            (purchase) =>
+                subscriptionStorePlatformFromSource(
+                  purchase.verificationData.source,
+                ) !=
+                firstPlatform,
+          )) {
+        throw const FormatException(
+          'The store returned an unsupported subscription source.',
+        );
+      }
+
+      final verification = firstPlatform == SubscriptionStorePlatform.appStore
+          ? await _verifyAppleRestoredPurchases(verifiablePurchases)
+          : await repository.restoreGooglePurchases(
+              verifiablePurchases
+                  .map(
+                    (purchase) => googlePlayRestorePurchasePayload(
+                      purchaseToken:
+                          purchase.verificationData.serverVerificationData,
+                      productId: purchase.productID,
+                      orderId: purchase.purchaseID,
+                    ),
+                  )
+                  .toList(),
+            );
+
+      if (!verification.success) {
+        await _completePurchases(verifiablePurchases);
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
-            subscription: subscription,
             busyPlanId: null,
-            selectedPlanId: null,
-            errorMessage: null,
-            actionMessage: item.status == PurchaseStatus.restored
-                ? 'Your previous subscription was restored.'
-                : 'Your subscription is now active.',
+            errorMessage: verification.message ??
+                "No Subscription Found: We couldn't find an active subscription to restore.",
+            actionMessage: null,
           ),
         );
-      } on ApiException catch (error) {
-        await purchaseService.complete(item);
-        emit(
-          state.copyWith(
-            status: error.type == ApiErrorType.unauthorized
-                ? SubscriptionStatus.failure
-                : SubscriptionStatus.ready,
-            busyPlanId: null,
-            errorMessage: error.message,
-            sessionInvalid: error.type == ApiErrorType.unauthorized,
-          ),
-        );
-      } catch (error) {
-        await purchaseService.complete(item);
-        emit(
-          state.copyWith(
-            status: SubscriptionStatus.failure,
-            busyPlanId: null,
-            errorMessage: _messageFor(error),
-          ),
-        );
+        return;
+      }
+
+      await _completePurchases(verifiablePurchases);
+      final subscription = await repository.getSubscription();
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: subscription,
+          busyPlanId: null,
+          selectedPlanId: null,
+          errorMessage: null,
+          actionMessage: 'Your previous subscription was restored.',
+        ),
+      );
+    } on ApiException catch (error) {
+      // Restore requests can contain multiple transactions. Without a clear
+      // server response, leave them pending so a later restore can retry.
+      emit(
+        state.copyWith(
+          status: error.type == ApiErrorType.unauthorized
+              ? SubscriptionStatus.failure
+              : SubscriptionStatus.ready,
+          busyPlanId: null,
+          errorMessage: error.message,
+          actionMessage: null,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.failure,
+          busyPlanId: null,
+          errorMessage: _messageFor(error),
+          actionMessage: null,
+        ),
+      );
+    } finally {
+      for (final key in claimedKeys) {
+        // A failed network request remains unacknowledged. A new explicit
+        // restore clears this in-memory dedupe marker and can retry it.
+        _finishPurchaseEvent(key);
       }
     }
+  }
+
+  Future<PurchaseVerification> _verifyAppleRestoredPurchases(
+    List<PurchaseDetails> purchases,
+  ) async {
+    PurchaseVerification? successfulVerification;
+    String? lastMessage;
+    for (final purchase in purchases) {
+      final plan = _planFor(purchase.productID);
+      if (plan == null) continue;
+      try {
+        final verification = await repository.verifyApplePurchase(
+          receiptData:
+              purchase.verificationData.serverVerificationData,
+          productId: plan.productId,
+          transactionId: purchase.purchaseID,
+        );
+        if (verification.success) {
+          successfulVerification ??= verification;
+        } else {
+          lastMessage = verification.message ?? lastMessage;
+        }
+      } on ApiException catch (error) {
+        if (!_shouldCompleteRejectedPurchase(error.type)) rethrow;
+        lastMessage = error.message;
+      }
+    }
+    if (successfulVerification != null) return successfulVerification;
+    return PurchaseVerification(
+      success: false,
+      message: lastMessage,
+    );
+  }
+
+  Future<void> _handlePurchasedItem(
+    PurchaseDetails item,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    final key = _claimPurchaseEvent(item);
+    if (key == null) return;
+    try {
+      final plan = _planFor(item.productID);
+      if (plan == null) {
+        throw const FormatException('The store returned an unknown plan.');
+      }
+      final verification = await _verify(item, plan, emit);
+      if (!verification.success) {
+        await purchaseService.complete(item);
+        throw ApiException(
+          type: ApiErrorType.unknown,
+          message: verification.message ?? 'The purchase could not be verified.',
+        );
+      }
+      await purchaseService.complete(item);
+      final subscription = await repository.getSubscription();
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: subscription,
+          busyPlanId: null,
+          selectedPlanId: null,
+          errorMessage: null,
+          actionMessage: 'Your subscription is now active.',
+        ),
+      );
+    } on ApiException catch (error) {
+      if (_shouldCompleteRejectedPurchase(error.type)) {
+        try {
+          await purchaseService.complete(item);
+        } catch (completionError) {
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.failure,
+              busyPlanId: null,
+              errorMessage: _messageFor(completionError),
+            ),
+          );
+          return;
+        }
+      }
+      emit(
+        state.copyWith(
+          status: error.type == ApiErrorType.unauthorized
+              ? SubscriptionStatus.failure
+              : SubscriptionStatus.ready,
+          busyPlanId: null,
+          errorMessage: error.message,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+        ),
+      );
+    } catch (error) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.failure,
+          busyPlanId: null,
+          errorMessage: _messageFor(error),
+        ),
+      );
+    } finally {
+      _finishPurchaseEvent(key);
+    }
+  }
+
+  Future<void> _completePurchases(List<PurchaseDetails> purchases) async {
+    for (final purchase in purchases) {
+      await purchaseService.complete(purchase);
+    }
+  }
+
+  String? _claimPurchaseEvent(PurchaseDetails purchase) {
+    final key = _purchaseEventKey(purchase);
+    if (_handledPurchaseEventKeys.contains(key) ||
+        !_processingPurchaseEventKeys.add(key)) {
+      return null;
+    }
+    return key;
+  }
+
+  void _finishPurchaseEvent(String key) {
+    _processingPurchaseEventKeys.remove(key);
+    _handledPurchaseEventKeys.add(key);
+  }
+
+  String _purchaseEventKey(PurchaseDetails purchase) {
+    return subscriptionPurchaseEventKey(
+      source: purchase.verificationData.source,
+      productId: purchase.productID,
+      status: purchase.status.name,
+      purchaseId: purchase.purchaseID,
+      verificationData: purchase.verificationData.serverVerificationData,
+      errorCode: purchase.error?.code,
+    );
+  }
+
+  void _signalRestoreEvent() {
+    final completer = _restoreEventCompleter;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  }
+
+  bool _shouldCompleteRejectedPurchase(ApiErrorType type) {
+    return type == ApiErrorType.badRequest ||
+        type == ApiErrorType.forbidden ||
+        type == ApiErrorType.notFound;
   }
 
   Future<PurchaseVerification> _verify(
@@ -522,19 +788,22 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     // The plugin exposes the platform-native server verification value:
     // base64 receipt data on iOS and the purchase token on Android.
     final source = purchase.verificationData.source.toLowerCase();
-    final isApple = source.contains('app_store') || source.contains('ios');
-    if (isApple) {
+    final storePlatform = subscriptionStorePlatformFromSource(source);
+    if (storePlatform == SubscriptionStorePlatform.appStore) {
       return repository.verifyApplePurchase(
         receiptData: serverData,
         productId: plan.productId,
         transactionId: purchase.purchaseID,
       );
     }
-    return repository.verifyGooglePurchase(
-      purchaseToken: serverData,
-      productId: plan.productId,
-      orderId: purchase.purchaseID,
-    );
+    if (storePlatform == SubscriptionStorePlatform.googlePlay) {
+      return repository.verifyGooglePurchase(
+        purchaseToken: serverData,
+        productId: plan.productId,
+        orderId: purchase.purchaseID,
+      );
+    }
+    throw const FormatException('The store returned an unsupported source.');
   }
 
   SubscriptionPlan? _planFor(String productOrPlanId) {

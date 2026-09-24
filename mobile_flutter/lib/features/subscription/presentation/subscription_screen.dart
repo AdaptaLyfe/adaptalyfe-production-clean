@@ -160,7 +160,7 @@ class _SubscriptionBody extends StatelessWidget {
                 if (state.subscription?.isActive == true)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
                 else
-                  const _TrialCard(),
+                  _TrialCard(subscription: state.subscription),
                 const SizedBox(height: 20),
                 if (state.status == SubscriptionStatus.purchasing ||
                     state.status == SubscriptionStatus.restoring)
@@ -295,20 +295,37 @@ class _ActiveSubscriptionCard extends StatelessWidget {
 }
 
 class _TrialCard extends StatelessWidget {
-  const _TrialCard();
+  const _TrialCard({required this.subscription});
+
+  final SubscriptionModel? subscription;
 
   @override
   Widget build(BuildContext context) {
+    final daysLeft = subscription?.trialDaysLeft;
+    final String message;
+    if (subscription?.isTrialing == true) {
+      if (daysLeft != null && daysLeft > 0) {
+        message = 'Your free trial has $daysLeft '
+            '${daysLeft == 1 ? 'day' : 'days'} remaining. Choose a plan to continue.';
+      } else {
+        message = 'Your free trial is ending. Choose a plan to continue.';
+      }
+    } else if (subscription?.isExpired == true) {
+      message = 'Your previous subscription has ended. Choose a plan to restart.';
+    } else {
+      message =
+          'Plans renew monthly. Choose the option that fits your support needs.';
+    }
     return _Panel(
       color: Colors.white,
       child: Row(
         children: [
           const Icon(Icons.access_time_rounded, color: Color(0xFF2563EB), size: 28),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Plans renew monthly. Choose the option that fits your support needs.',
-              style: TextStyle(color: Color(0xFF374151), fontSize: 14),
+              message,
+              style: const TextStyle(color: Color(0xFF374151), fontSize: 14),
             ),
           ),
         ],
@@ -340,11 +357,15 @@ class _PlanCard extends StatelessWidget {
     final stripeAvailable = state.canUseStripe;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
-    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
-        ? 'Subscribe via Google Play'
-        : defaultTargetPlatform == TargetPlatform.iOS
-            ? 'Subscribe via App Store'
-            : 'Subscribe through store';
+    final trialAvailable = state.subscription?.isTrialing == true &&
+        (state.subscription?.trialDaysLeft ?? 0) > 0;
+    final storeButtonLabel = trialAvailable
+        ? 'Start Free Trial'
+        : defaultTargetPlatform == TargetPlatform.android
+            ? 'Subscribe via Google Play'
+            : defaultTargetPlatform == TargetPlatform.iOS
+                ? 'Subscribe via App Store'
+                : 'Subscribe through store';
     return Semantics(
       selected: selected,
       child: GestureDetector(
@@ -437,7 +458,9 @@ class _PlanCard extends StatelessWidget {
                      ? () => _chooseStripePayment(context)
                      : null,
                 icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: const Text('Pay by card or wallet'),
+                label: Text(
+                  trialAvailable ? 'Start Free Trial' : 'Pay by card or wallet',
+                ),
               ),
             ),
           if (stripeAvailable && storeAvailable) const SizedBox(height: 8),
