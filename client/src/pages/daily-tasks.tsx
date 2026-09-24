@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Circle, Star, Plus, Clock, Trash2, X } from "lucide-react";
 import { FieldLabel } from "@/components/ui/field-label";
+import { optimisticallyUpdateDailyTaskCompletion } from "@/lib/daily-task-completion";
 
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
@@ -162,24 +163,24 @@ export default function DailyTasks() {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: async ({ taskId, isCompleted, task }: { taskId: number; isCompleted: boolean; task?: any }) => {
+    mutationFn: async ({ taskId, isCompleted, date, task }: { taskId: number; isCompleted: boolean; date: string; task?: any }) => {
       return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
         isCompleted,
-        date: getLocalCalendarDate(),
+        date,
       });
     },
-    onMutate: async ({ taskId, isCompleted }) => {
+    onMutate: async ({ taskId, isCompleted, date }) => {
       await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
 
       const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
       queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
         currentTasks.map(task =>
           task.id === taskId
-            ? {
-                ...task,
+            ? optimisticallyUpdateDailyTaskCompletion(
+                task as DailyTask & { completionDates?: string[] },
+                date,
                 isCompleted,
-                completedAt: isCompleted ? new Date().toISOString() : null,
-              }
+              )
             : task,
         ),
       );
@@ -430,6 +431,7 @@ export default function DailyTasks() {
                       onClick={() => toggleTaskMutation.mutate({ 
                         taskId: task.id, 
                         isCompleted: !task.isCompleted,
+                        date: getLocalCalendarDate(),
                         task: task
                       })}
                       disabled={toggleTaskMutation.isPending}

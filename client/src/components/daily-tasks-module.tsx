@@ -8,6 +8,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeAgo } from "@/lib/utils";
 import { formatCategoryLabel } from "@/lib/display-labels";
+import { optimisticallyUpdateDailyTaskCompletion } from "@/lib/daily-task-completion";
 import type { DailyTask } from "@shared/schema";
 
 function getLocalCalendarDate(date = new Date()): string {
@@ -26,24 +27,24 @@ export default function DailyTasksModule() {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: async ({ taskId, isCompleted }: { taskId: number; isCompleted: boolean }) => {
+    mutationFn: async ({ taskId, isCompleted, date }: { taskId: number; isCompleted: boolean; date: string }) => {
       return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
         isCompleted,
-        date: getLocalCalendarDate(),
+        date,
       });
     },
-    onMutate: async ({ taskId, isCompleted }) => {
+    onMutate: async ({ taskId, isCompleted, date }) => {
       await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
 
       const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
       queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
         currentTasks.map(task =>
           task.id === taskId
-            ? {
-                ...task,
+            ? optimisticallyUpdateDailyTaskCompletion(
+                task as DailyTask & { completionDates?: string[] },
+                date,
                 isCompleted,
-                completedAt: isCompleted ? new Date().toISOString() : null,
-              }
+              )
             : task,
         ),
       );
@@ -74,6 +75,7 @@ export default function DailyTasksModule() {
     toggleTaskMutation.mutate({
       taskId: task.id,
       isCompleted: !task.isCompleted,
+      date: getLocalCalendarDate(),
     });
   };
 

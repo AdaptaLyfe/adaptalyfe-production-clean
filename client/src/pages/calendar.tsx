@@ -30,6 +30,7 @@ import {
 import { getCalendarEventDisplayFields } from "@/lib/calendar-event-display";
 import { buildCalendarEventPayload } from "@/lib/calendar-event-payload";
 import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
+import { isDailyTaskCompletedForDate } from "@/lib/daily-task-completion";
 import { formatCategoryLabel } from "@/lib/display-labels";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
@@ -170,9 +171,7 @@ export default function Calendar() {
     // Add daily task occurrences only on dates where the task is scheduled.
     tasks.forEach(task => {
       if (isDailyTaskScheduledForDate(task, dateStr) && (task.frequency === 'daily' || !task.frequency)) {
-        const completedForDate = task.frequency === 'daily'
-          ? task.completionDates?.includes(dateStr) ?? false
-          : task.isCompleted;
+        const completedForDate = isDailyTaskCompletedForDate(task, dateStr);
         events.push({
           id: `task-${task.id}`,
           type: 'task',
