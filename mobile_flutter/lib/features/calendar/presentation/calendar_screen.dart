@@ -1234,6 +1234,8 @@ class _CalendarItem {
     required this.location,
     this.eventId,
     this.allDay = false,
+    this.isRecurring = false,
+    this.recurrenceRule,
     this.time,
   });
 
@@ -1245,13 +1247,22 @@ class _CalendarItem {
   final String? location;
   final int? eventId;
   final bool allDay;
+  final bool isRecurring;
+  final String? recurrenceRule;
   final String? time;
 
   bool get isAppointment => type == _CalendarItemType.appointment;
 
   String? get timeLabel {
     if (time != null && time!.isNotEmpty) return time;
-    if (allDay) return 'Whole Day';
+    if (allDay) {
+      if (!isRecurring) return 'Whole Day';
+      final rule = recurrenceRule?.trim();
+      if (rule == null || rule.isEmpty) return 'Repeats';
+      final label =
+          '${rule[0].toUpperCase()}${rule.substring(1).toLowerCase()}';
+      return 'Repeats $label';
+    }
     if (type == _CalendarItemType.task && start.hour == 0) {
       return null;
     }
@@ -1362,6 +1373,8 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
           location: event.location,
           eventId: event.id,
           allDay: event.allDay,
+          isRecurring: event.isRecurring,
+          recurrenceRule: event.recurrenceRule,
         ),
       );
     }
@@ -1439,15 +1452,45 @@ bool _calendarEventOccursOnDate(
   CalendarEventModel event,
   DateTime date,
 ) {
-  if (!event.allDay) return DateUtils.isSameDay(event.startDate, date);
-
   final day = calendarDateOnly(date);
   final start = calendarDateOnly(event.startDate);
+  final recurrenceMatch = _calendarEventRecursOnDate(event, start, day);
+  if (recurrenceMatch != null) return recurrenceMatch;
+
+  if (!event.allDay) return DateUtils.isSameDay(event.startDate, date);
+
   final storedEnd = event.endDate == null
       ? start
       : calendarDateOnly(event.endDate!);
   final end = storedEnd.isBefore(start) ? start : storedEnd;
   return !day.isBefore(start) && !day.isAfter(end);
+}
+
+bool? _calendarEventRecursOnDate(
+  CalendarEventModel event,
+  DateTime start,
+  DateTime day,
+) {
+  if (!event.isRecurring) return null;
+  final rule = event.recurrenceRule?.trim().toLowerCase();
+  if (rule == null || rule.isEmpty) return null;
+  if (day.isBefore(start)) return false;
+
+  final startUtc = DateTime.utc(start.year, start.month, start.day);
+  final dayUtc = DateTime.utc(day.year, day.month, day.day);
+  final daysSinceStart = dayUtc.difference(startUtc).inDays;
+  switch (rule) {
+    case 'daily':
+      return true;
+    case 'weekly':
+      return daysSinceStart % 7 == 0;
+    case 'monthly':
+      return day.day == start.day;
+    case 'yearly':
+      return day.month == start.month && day.day == start.day;
+    default:
+      return null;
+  }
 }
 
 String _headerLabel(CalendarState state) {

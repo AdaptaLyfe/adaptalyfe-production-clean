@@ -2255,3 +2255,17 @@ mtime_ms = 1790225910425
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3852d936-fa7e-4019-89f2-b03a7fce4f40/49507b8c-d0e6-400a-ad4d-1cabaf85449a"
 storage_version_token = "1790225915054674"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "UD-yBAJ03PfAYSvpkuCe8"
+uri = "file://attached_assets/calendar-all-day-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar all-day fix — changed files"
+description = "ZIP containing only the two updated Flutter Calendar source files."
+logical_id = "be889c05-085b-4c77-90b1-54bcb2210f59"
+content_hash = "sha256:49eb94c328d5b78554c519e26b6574e255db5af5e9ecaaff3c320d1cb08bf832"
+size = 13217
+mtime_ms = 1790227186416
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be889c05-085b-4c77-90b1-54bcb2210f59/257af242-27bc-415b-8887-d65f7b199ae5"
+storage_version_token = "1790227201279244"
+content_type = "application/octet-stream"

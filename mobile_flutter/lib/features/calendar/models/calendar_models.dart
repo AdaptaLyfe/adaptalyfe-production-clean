@@ -104,6 +104,8 @@ class CalendarEventModel extends Equatable {
     required this.location,
     required this.isCompleted,
     required this.reminderMinutes,
+    this.isRecurring = false,
+    this.recurrenceRule,
   });
 
   factory CalendarEventModel.fromJson(Map<String, dynamic> json) {
@@ -126,6 +128,8 @@ class CalendarEventModel extends Equatable {
       location: _asNullableString(json['location']),
       isCompleted: json['isCompleted'] == true,
       reminderMinutes: _asNullableInt(json['reminderMinutes']),
+      isRecurring: json['isRecurring'] == true,
+      recurrenceRule: _asNullableString(json['recurrenceRule']),
     );
   }
 
@@ -140,6 +144,8 @@ class CalendarEventModel extends Equatable {
   final String? location;
   final bool isCompleted;
   final int? reminderMinutes;
+  final bool isRecurring;
+  final String? recurrenceRule;
 
   @override
   List<Object?> get props => [
@@ -154,6 +160,8 @@ class CalendarEventModel extends Equatable {
         location,
         isCompleted,
         reminderMinutes,
+        isRecurring,
+        recurrenceRule,
       ];
 }
 
