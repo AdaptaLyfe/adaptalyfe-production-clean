@@ -1,0 +1,148 @@
+Fix the Flutter bug in **Your Dashboard → Customize**.
+
+### Bug
+
+When the user customizes the Dashboard:
+
+* A disabled skill module is enabled.
+* An enabled skill module is disabled.
+* The user is redirected back to **"Your Dashboard"**.
+
+The Dashboard does **not consistently reflect the latest customization**. Sometimes the old module state is shown. This bug has reopened multiple times, so do a proper root-cause fix instead of adding a temporary UI refresh.
+
+### Required behavior
+
+After the user enables/disables any skill module:
+
+1. Save the updated customization state successfully.
+2. When navigating back to **Your Dashboard**, the Dashboard must immediately show the latest enabled/disabled modules.
+3. Disabled modules must not appear on the Dashboard.
+4. Enabled modules must appear on the Dashboard.
+5. The state must remain correct after:
+
+   * navigating away and returning,
+   * leaving and reopening the Dashboard,
+   * app restart,
+   * logout/login if customization is stored per user.
+6. Do not require the user to manually refresh the Dashboard.
+
+### Investigate the ROOT CAUSE
+
+Before changing code, trace the complete data flow:
+
+**Customize Screen → Customization State → BLoC/State Management → Repository/Data Source → Persistent Storage/API/Firebase → Dashboard → Dashboard State**
+
+Check specifically for:
+
+* Dashboard using stale cached data.
+* Customize screen updating local state but not persistent storage.
+* Dashboard loading customization only once in `initState`.
+* BLoC state not being refreshed after navigation.
+* Multiple sources of truth for skill-module visibility.
+* Incorrect `copyWith`, equality, or state comparison causing updates to be ignored.
+* Async save operation not being awaited before navigation.
+* Dashboard using an old model/list reference.
+* Firestore/API/local database returning outdated customization data.
+* Race conditions between save and dashboard load.
+* Provider/BLoC being recreated or retaining stale state.
+* `AutomaticKeepAliveClientMixin`, cached routes, tabs, or navigation preventing Dashboard from rebuilding.
+* Any hardcoded/default skill-module list overriding the saved customization.
+* User-specific customization accidentally being shared or loaded incorrectly.
+
+### Implementation requirements
+
+Use the existing project architecture and state-management pattern. **Do not introduce a new architecture or state-management library.**
+
+Implement the fix properly:
+
+1. Find the existing customization model/state.
+2. Find where enabled/disabled skill modules are saved.
+3. Make sure the save/update operation completes before navigating back.
+4. Make Dashboard obtain the latest customization state from the existing source of truth.
+5. If the Dashboard is already using BLoC, update/reload the existing BLoC correctly instead of creating duplicate state management.
+6. If navigation returns to an existing Dashboard instance, make sure it reacts to the updated state instead of displaying stale state.
+7. Remove any duplicate or conflicting logic that determines module visibility.
+8. Ensure the same visibility logic is used by both Customize and Dashboard.
+9. Handle loading/error states properly so an old list is not shown as if it were the latest data.
+10. Do not use arbitrary delays such as `Future.delayed()` as the fix.
+11. Do not use forced full-app rebuilds or unnecessary `setState()` calls as a workaround.
+12. Do not change unrelated Dashboard functionality.
+
+### Important persistence test
+
+Test this exact sequence:
+
+**Test 1**
+
+* Open Your Dashboard.
+* Open Customize.
+* Disable an enabled skill.
+* Save.
+* Return to Dashboard.
+* Confirm the skill disappears.
+
+**Test 2**
+
+* Open Customize.
+* Enable a disabled skill.
+* Save.
+* Return to Dashboard.
+* Confirm the skill appears immediately.
+
+**Test 3**
+
+* Disable Skill A.
+* Enable Skill B.
+* Save.
+* Return to Dashboard.
+* Confirm Skill A is hidden and Skill B is visible.
+
+**Test 4**
+
+* Change customization.
+* Navigate to another screen.
+* Return to Dashboard.
+* Confirm the latest state is still displayed.
+
+**Test 5**
+
+* Change customization.
+* Completely close/restart the app.
+* Login again if required.
+* Open Dashboard.
+* Confirm the saved customization is still correct.
+
+**Test 6**
+
+* Rapidly enable/disable multiple modules and save.
+* Confirm the final saved state is exactly what the user selected.
+
+### Prevent regression
+
+After fixing, search the entire Flutter project for all code related to:
+
+* skill modules
+* dashboard customization
+* enabled/disabled modules
+* dashboard module visibility
+* customization repository
+* customization BLoC/Cubit
+* dashboard BLoC/Cubit
+* local storage/Firebase/API customization data
+
+Identify and remove any conflicting implementation that can overwrite the user's saved customization with default/stale data.
+
+Add or update tests for the customization state and Dashboard visibility if the project has an existing test structure.
+
+### Final response required
+
+After making the fix, tell me:
+
+1. Root cause of the bug.
+2. Files changed.
+3. Exact fix implemented.
+4. How state now flows from Customize → persistence → Dashboard.
+5. Tests performed.
+6. Confirm that the solution does not depend on `Future.delayed()`, manual refresh, or forced app rebuilds.
+
+**Do not just hide the symptom. Find and fix the actual state/persistence/navigation synchronization problem so this bug does not reopen again.**
