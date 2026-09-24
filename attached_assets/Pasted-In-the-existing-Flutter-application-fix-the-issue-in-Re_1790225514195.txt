@@ -1,0 +1,104 @@
+In the existing Flutter application, fix the issue in:
+
+**Resources → Emergency → Add Emergency Resource**
+
+### Current Issue
+
+When the user tries to add an emergency resource, the app shows:
+
+**"Failed to add emergency resource"**
+
+The emergency resource is not being added successfully.
+
+### Required Fix
+
+1. First inspect the complete existing flow:
+
+   * Emergency Resource UI/form
+   * Text controllers and form validation
+   * Emergency Resource BLoC/Cubit
+   * Events and states
+   * Repository
+   * Data source/API/Firebase/local database
+   * Emergency Resource model
+   * JSON/request payload mapping
+   * Navigation and success/error handling
+
+2. Find the **actual root cause** of the failure. Do not simply hide, replace, or bypass the error message.
+
+3. Verify that all required fields are:
+
+   * Correctly validated.
+   * Correctly mapped to the model.
+   * Correctly included in the request/database payload.
+   * Using the correct data types.
+   * Handling null/empty values safely.
+
+4. Check whether the issue is caused by:
+
+   * Incorrect field names.
+   * Incorrect model serialization/deserialization.
+   * Missing required fields.
+   * Wrong API/Firebase path.
+   * Incorrect repository implementation.
+   * BLoC state/event handling.
+   * Async/await handling.
+   * Authentication/user ID issues.
+   * Date/time or data-type conversion.
+   * Incorrect error handling.
+
+5. If the backend/API/Firebase structure expects a specific format, use the **existing project structure and existing working resources as the reference**. Do not create a new backend structure unless absolutely necessary.
+
+6. Keep the existing UI and design unchanged unless a UI change is required for the fix.
+
+7. On successful creation:
+
+   * Save the emergency resource correctly.
+   * Update the list immediately.
+   * Show the existing success behavior/message.
+   * Close the add screen/dialog only after successful creation.
+
+8. On failure:
+
+   * Do not show a generic error if the actual error can be identified.
+   * Log the real exception/error during development so the root cause can be diagnosed.
+   * Show a user-friendly error message.
+
+### Important Bug-Prevention Requirements
+
+* Do not use hardcoded fake success responses.
+* Do not comment out validation.
+* Do not bypass the repository/BLoC architecture.
+* Do not duplicate API/database calls.
+* Prevent multiple submissions while the request is loading.
+* Make sure loading/error/success states are handled correctly.
+* Check for `mounted` before using `BuildContext` after async operations where required.
+* Make sure controllers/listeners are not used after disposal.
+* Make sure the emergency resource is not accidentally created twice.
+* Preserve existing functionality for other Resource types.
+
+### Verification
+
+After fixing the issue, test the complete flow:
+
+1. Open **Resources → Emergency**.
+2. Tap **Add Emergency Resource**.
+3. Enter valid emergency resource data.
+4. Submit.
+5. Confirm there is no **"Failed to add emergency resource"** error.
+6. Confirm the resource is actually saved.
+7. Confirm it appears in the Emergency Resource list.
+8. Reopen the screen and confirm the saved resource is still present.
+9. Test invalid/empty input and confirm validation still works.
+10. Tap Submit multiple times quickly and confirm only one resource is created.
+11. Test the flow again after restarting the app.
+
+Before finishing, explain:
+
+* Root cause of the bug.
+* Files changed.
+* Exact fix applied.
+* How duplicate submission was prevented.
+* What tests were performed.
+
+Do not make unrelated changes to the project.
