@@ -1,0 +1,140 @@
+Fix the **Life Skills → Skill Milestone → Edit** priority persistence bug in the existing **React Native + Wrapper** application.
+
+### Current Bug
+
+In **Life Skills**, when a user:
+
+1. Opens Life Skills.
+2. Adds a new Skill Milestone.
+3. Selects a priority other than **Medium** (for example: Low or High).
+4. Saves the milestone.
+5. Opens the same milestone in **Edit** mode.
+
+The selected priority is not preserved. The edit screen always shows **Medium**, even though the user previously selected another priority.
+
+This bug has reopened multiple times, so **do not apply only a UI-level fix**. Find and fix the complete data flow.
+
+### Required Root-Cause Investigation
+
+Trace the priority value through the complete flow:
+
+**Priority Selector → Form State → Validation → Create/Save API → Backend/Database → Fetch/Get API → Model/Response Mapping → Edit Screen → Priority Selector**
+
+Check all of the following:
+
+* How priority is stored in the form state.
+* How the selected priority is passed when creating/updating a milestone.
+* The exact API request payload.
+* Backend/database field name and stored value.
+* API response when fetching the milestone.
+* Type/value conversion between frontend and backend.
+* Model/interface/type definitions.
+* Mapping/parsing of the priority field.
+* Edit-screen initialization.
+* Default priority logic.
+* Any Wrapper-specific state synchronization.
+* Any code that unintentionally falls back to `"Medium"`.
+
+### Important Requirement
+
+`"Medium"` must be used **only as the default for a NEW milestone when the user has not selected a priority**.
+
+When editing an existing milestone:
+
+* Never overwrite the saved priority with `"Medium"`.
+* Initialize the priority selector from the milestone's actual saved priority.
+* If the saved priority is `"High"`, show `"High"`.
+* If the saved priority is `"Low"`, show `"Low"`.
+* If the saved priority is `"Medium"`, show `"Medium"`.
+
+### Create Flow
+
+Verify that selecting:
+
+* Low → saves Low
+* Medium → saves Medium
+* High → saves High
+
+The value sent to the backend must match the value expected by the existing backend/API.
+
+### Edit Flow
+
+When opening an existing milestone:
+
+1. Fetch the existing milestone data.
+2. Read its saved priority.
+3. Convert/map it correctly if necessary.
+4. Set the edit form's priority state to that saved value.
+5. Display the saved value in the priority selector.
+6. Do NOT initialize the edit form with `"Medium"` after the existing data has loaded.
+
+Also check for race conditions where:
+
+* The form initially sets `"Medium"`.
+* Existing milestone data loads afterward.
+* Another effect/state update resets the priority back to `"Medium"`.
+
+Fix the state initialization/order so the fetched value always wins for an existing milestone.
+
+### Update Flow
+
+If the user changes the priority while editing:
+
+* High → Low must save Low.
+* Low → High must save High.
+* Medium → High must save High.
+* The updated value must persist after closing and reopening Edit mode.
+
+### Do Not
+
+* Do not hardcode `"Medium"` for edit mode.
+* Do not create a second priority state unnecessarily.
+* Do not fix only the displayed label while leaving the stored value incorrect.
+* Do not modify unrelated Life Skills functionality.
+* Do not change existing UI design or styling unless required.
+* Do not remove existing validation.
+* Do not break Create, Edit, View, Delete, or other Skill Milestone functionality.
+* Do not create duplicate API calls as a workaround.
+
+### Regression Testing
+
+After fixing the issue, test the complete CRUD flow:
+
+#### Test 1
+
+Create milestone → select **High** → Save → Edit → verify **High**.
+
+#### Test 2
+
+Create milestone → select **Low** → Save → Edit → verify **Low**.
+
+#### Test 3
+
+Create milestone → select **Medium** → Save → Edit → verify **Medium**.
+
+#### Test 4
+
+Edit High → change to Low → Save → reopen → verify **Low**.
+
+#### Test 5
+
+Edit Low → change to High → Save → reopen → verify **High**.
+
+#### Test 6
+
+Refresh/reload the application → open the same milestone → verify the saved priority is still correct.
+
+### Final Verification
+
+Before finishing:
+
+1. Identify the actual root cause.
+2. Fix the root cause at the appropriate layer(s).
+3. Search the entire codebase for other places where milestone priority is defaulted to `"Medium"`.
+4. Make sure the default is applied only for new milestones.
+5. Verify API request and response values.
+6. Verify React Native state and Wrapper synchronization.
+7. Run/build the affected screens and check for errors.
+8. Confirm there is no code path that resets an existing milestone's priority to `"Medium"`.
+
+Do not just tell me that the bug is fixed. **Inspect the existing implementation, make the required code changes, and verify the complete data flow so this issue does not reopen.**
