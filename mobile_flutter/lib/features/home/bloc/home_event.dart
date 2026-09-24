@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 
 import '../../settings/models/settings_models.dart';
@@ -64,16 +66,19 @@ final class MoveHomeModule extends HomeCustomizationEvent {
 }
 
 final class SaveHomeModuleConfig extends HomeCustomizationEvent {
-  const SaveHomeModuleConfig(this.modules);
+  const SaveHomeModuleConfig(this.modules, {this.completion});
 
   final List<DashboardModuleModel> modules;
+  final Completer<bool>? completion;
 
   @override
   List<Object?> get props => [modules];
 }
 
 final class ResetHomeModules extends HomeCustomizationEvent {
-  const ResetHomeModules();
+  const ResetHomeModules({this.completion});
+
+  final Completer<bool>? completion;
 }
 
 final class ToggleHomeQuickAction extends HomeCustomizationEvent {

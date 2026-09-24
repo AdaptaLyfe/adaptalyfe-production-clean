@@ -2353,3 +2353,17 @@ mtime_ms = 1790231381924
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c079a1df-de84-414a-a4c9-5f318d70e589/f51a63e8-f988-4976-b596-7f254d952120"
 storage_version_token = "1790231396008739"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Ttc8e1Z63mX0xE1_fEsNT"
+uri = "file://dashboard-customization-fix.zip"
+type = "unspecified"
+title = "Dashboard customization fix ZIP"
+description = "Contains only the three Flutter source files changed for this dashboard persistence fix."
+logical_id = "105cda85-1b62-4343-842a-396ffc73ce6f"
+content_hash = "sha256:de16a48ef3eac74a4ee47dd6bcac43f195a1fd5cd75edb170ce00d5d3ee371bf"
+size = 31462
+mtime_ms = 1790232342503
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/105cda85-1b62-4343-842a-396ffc73ce6f/c77ee6e7-428e-4539-a734-ee704a285ec7"
+storage_version_token = "1790232349211482"
+content_type = "application/octet-stream"

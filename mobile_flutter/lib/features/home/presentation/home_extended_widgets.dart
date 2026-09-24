@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -1875,6 +1877,7 @@ class HomeDashboardModules extends StatelessWidget {
     await _runHomeOverlay<void>(
       () => showDialog<void>(
         context: context,
+        barrierDismissible: false,
         builder: (_) => _DashboardModuleEditor(modules: modules),
       ),
     );
@@ -1892,6 +1895,11 @@ class _DashboardModuleEditor extends StatefulWidget {
 
 class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
   late List<DashboardModuleModel> items = [...widget.modules];
+  int _pendingSaves = 0;
+  int _saveGeneration = 0;
+  String? _saveError;
+
+  bool get _isSaving => _pendingSaves > 0;
 
   List<DashboardModuleModel> get _activeModules => items
       .where((module) => module.enabled)
@@ -1916,10 +1924,46 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     ];
   }
 
-  void _save(List<DashboardModuleModel> next) {
+  Future<void> _save(
+    List<DashboardModuleModel> next, {
+    bool resetToDefaults = false,
+  }) async {
     final normalized = _normalizedItems(next);
-    setState(() => items = normalized);
-    context.read<HomeBloc>().add(SaveHomeModuleConfig(normalized));
+    final generation = ++_saveGeneration;
+    final completion = Completer<bool>();
+    final bloc = context.read<HomeBloc>();
+    setState(() {
+      items = normalized;
+      _pendingSaves++;
+      _saveError = null;
+    });
+    if (resetToDefaults) {
+      bloc.add(ResetHomeModules(completion: completion));
+    } else {
+      bloc.add(SaveHomeModuleConfig(normalized, completion: completion));
+    }
+
+    var saved = false;
+    try {
+      saved = await completion.future;
+    } catch (_) {
+      saved = false;
+    }
+    if (!mounted) return;
+    setState(() {
+      if (_pendingSaves > 0) _pendingSaves--;
+      if (generation == _saveGeneration) {
+        if (saved) {
+          _saveError = null;
+        } else {
+          final current = bloc.state;
+          _saveError = current is HomeLoaded &&
+                  current.customizationError?.isNotEmpty == true
+              ? current.customizationError
+              : 'Could not save your dashboard changes. Retry or close to discard them.';
+        }
+      }
+    });
   }
 
   void _toggleModule(String moduleId) {
@@ -1952,10 +1996,10 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     _save(next);
   }
 
-  void _reset() {
-    setState(() => items = _normalizedItems(defaultDashboardModules));
-    context.read<HomeBloc>().add(const ResetHomeModules());
-  }
+  void _reset() => _save(
+        defaultDashboardModules,
+        resetToDefaults: true,
+      );
 
   void _addEnhancedFeatures() {
     const enhanced = [
@@ -2102,7 +2146,7 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     final premium = _premiumModules;
     final hidden = _regularHiddenModules;
     final hasPremium = premium.isNotEmpty;
-    return AlertDialog(
+    final dialog = AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Row(
         children: [
@@ -2115,7 +2159,7 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
             ),
           ),
           OutlinedButton.icon(
-            onPressed: _reset,
+            onPressed: _isSaving ? null : _reset,
             icon: const Icon(Icons.restart_alt_rounded, size: 16),
             label: const Text('Reset'),
             style: OutlinedButton.styleFrom(
@@ -2125,7 +2169,7 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
           ),
           IconButton(
             tooltip: 'Close',
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close_rounded),
           ),
         ],
@@ -2139,7 +2183,55 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
               'Customize which skill modules appear on your dashboard and change their order. Use the arrow buttons to move modules up or down, or toggle them on/off.',
               style: TextStyle(color: Color(0xFF4B5563), fontSize: 13),
             ),
-                const SizedBox(height: 20),
+            if (_isSaving) ...[
+              const SizedBox(height: 12),
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 10),
+                  Text('Saving dashboard changes...'),
+                ],
+              ),
+            ],
+            if (_saveError != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      color: Color(0xFFB91C1C),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _saveError!,
+                        style: const TextStyle(
+                          color: Color(0xFF991B1B),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _isSaving ? null : () => _save([...items]),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
             Row(
               children: [
                 const Icon(Icons.visibility_outlined, size: 18),
@@ -2305,6 +2397,10 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
           ],
         ),
       ),
+    );
+    return PopScope<void>(
+      canPop: !_isSaving,
+      child: dialog,
     );
   }
 }

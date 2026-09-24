@@ -56,6 +56,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     HomeEvent event,
     Emitter<HomeState> emit,
   ) async {
+    await _customizationSaveQueue;
     emit(const HomeLoading());
 
     try {
@@ -251,16 +252,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             ? module.copyWith(enabled: !module.enabled)
             : module)
         .toList();
-    await _saveCustomization(
+    await _saveDashboardModules(
       emit,
-      current.copyWith(
-        dashboardModules: updated,
-        customizationStatus: HomeCustomizationStatus.saving,
-        customizationMessage: null,
-        customizationError: null,
-      ),
-      () => repository.saveDashboardModules(updated),
-      'Dashboard updated.',
+      updated,
+      save: () => repository.saveDashboardModules(updated),
+      successMessage: 'Dashboard updated.',
     );
   }
 
@@ -286,16 +282,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     modules[firstIndex] = modules[secondIndex].copyWith(order: first.order);
     modules[secondIndex] = first.copyWith(order: modules[secondIndex].order);
     final updated = _normalizeModules(modules);
-    await _saveCustomization(
+    await _saveDashboardModules(
       emit,
-      current.copyWith(
-        dashboardModules: updated,
-        customizationStatus: HomeCustomizationStatus.saving,
-        customizationMessage: null,
-        customizationError: null,
-      ),
-      () => repository.saveDashboardModules(updated),
-      'Dashboard order saved.',
+      updated,
+      save: () => repository.saveDashboardModules(updated),
+      successMessage: 'Dashboard order saved.',
     );
   }
 
@@ -303,40 +294,42 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     SaveHomeModuleConfig event,
     Emitter<HomeState> emit,
   ) async {
-    final current = state;
-    if (current is! HomeLoaded) return;
     final updated = _normalizeModules(event.modules);
-    await _saveCustomization(
-      emit,
-      current.copyWith(
-        dashboardModules: updated,
-        customizationStatus: HomeCustomizationStatus.saving,
-        customizationMessage: null,
-        customizationError: null,
-      ),
-      () => repository.saveDashboardModules(updated),
-      'Dashboard customization saved.',
-    );
+    var saved = false;
+    try {
+      saved = await _saveDashboardModules(
+        emit,
+        updated,
+        save: () => repository.saveDashboardModules(updated),
+        successMessage: 'Dashboard customization saved.',
+      );
+    } finally {
+      final completion = event.completion;
+      if (completion != null && !completion.isCompleted) {
+        completion.complete(saved);
+      }
+    }
   }
 
   Future<void> _resetModules(
     ResetHomeModules event,
     Emitter<HomeState> emit,
   ) async {
-    final current = state;
-    if (current is! HomeLoaded) return;
     final defaults = _normalizeModules(defaultDashboardModules);
-    await _saveCustomization(
-      emit,
-      current.copyWith(
-        dashboardModules: defaults,
-        customizationStatus: HomeCustomizationStatus.saving,
-        customizationMessage: null,
-        customizationError: null,
-      ),
-      repository.resetDashboardModules,
-      'Dashboard reset to default.',
-    );
+    var saved = false;
+    try {
+      saved = await _saveDashboardModules(
+        emit,
+        defaults,
+        save: repository.resetDashboardModules,
+        successMessage: 'Dashboard reset to default.',
+      );
+    } finally {
+      final completion = event.completion;
+      if (completion != null && !completion.isCompleted) {
+        completion.complete(saved);
+      }
+    }
   }
 
   Future<void> _toggleQuickAction(
@@ -463,31 +456,55 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     );
   }
 
-  Future<void> _saveCustomization(
+  Future<bool> _saveDashboardModules(
+    Emitter<HomeState> emit,
+    List<DashboardModuleModel> modules, {
+    required Future<void> Function() save,
+    required String successMessage,
+  }) async {
+    final current = state;
+    if (current is! HomeLoaded) return false;
+    final normalized = _normalizeModules(modules);
+    return _saveCustomization(
+      emit,
+      current.copyWith(
+        customizationStatus: HomeCustomizationStatus.saving,
+        customizationMessage: null,
+        customizationError: null,
+      ),
+      save,
+      successMessage,
+      onSaved: (latest) => latest.copyWith(dashboardModules: normalized),
+    );
+  }
+
+  Future<bool> _saveCustomization(
     Emitter<HomeState> emit,
     HomeLoaded optimistic,
     Future<void> Function() save,
-    String successMessage,
-  ) async {
+    String successMessage, {
+    HomeLoaded Function(HomeLoaded latest)? onSaved,
+  }) async {
     emit(optimistic);
     final operationId = ++_customizationOperation;
     final saveOperation = _customizationSaveQueue.then((_) => save());
     _customizationSaveQueue = saveOperation.catchError((_) {});
     try {
       await saveOperation;
-      if (operationId != _customizationOperation) return;
+      if (operationId != _customizationOperation) return false;
       final latest = state;
       if (latest is HomeLoaded) {
         emit(
-          latest.copyWith(
+          (onSaved?.call(latest) ?? latest).copyWith(
             customizationStatus: HomeCustomizationStatus.success,
             customizationMessage: successMessage,
             customizationError: null,
           ),
         );
       }
+      return true;
     } catch (error) {
-      if (operationId != _customizationOperation) return;
+      if (operationId != _customizationOperation) return false;
       final latest = state;
       if (latest is HomeLoaded) {
         emit(
@@ -498,6 +515,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           ),
         );
       }
+      return false;
     }
   }
 
