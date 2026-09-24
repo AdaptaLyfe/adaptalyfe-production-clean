@@ -1,0 +1,135 @@
+Fix the **Current Streak** functionality in the existing **React Native + Wrapper application**.
+
+### Issue
+
+On the **Dashboard**, the **Current Streak** value is always displayed as **0 days**.
+
+This is incorrect because the user can perform/complete activities such as:
+
+* Quick Actions
+* Daily Tasks
+* Meals & Shopping
+
+Even after completing these activities, the Dashboard **Current Streak** remains `0 days`.
+
+### Reproduced On
+
+The issue occurs on:
+
+* React Native + Wrapper application
+* Android application
+
+Do not treat this as an Android-only UI issue. Investigate the shared business logic/data flow first.
+
+### Required Fix
+
+Thoroughly investigate and fix the root cause of the Current Streak calculation and update flow.
+
+Please inspect:
+
+1. How **Current Streak** is calculated.
+2. What activities are considered when calculating a streak.
+3. How completion of Quick Actions is stored.
+4. How Daily Task completion is stored.
+5. How Meals & Shopping completion/activity is stored.
+6. Whether activity completion timestamps/dates are saved correctly.
+7. Whether the Dashboard reads the latest activity data.
+8. Whether the streak calculation uses the correct user's data.
+9. Whether date/time/timezone handling is causing the activity date to be incorrect.
+10. Whether cached/stale Dashboard state is preventing the streak from refreshing.
+11. Whether the Wrapper and Android use different data/state logic.
+12. Whether API/database responses contain the correct completion information.
+
+### Expected Behavior
+
+When a user completes a qualifying activity:
+
+* The activity must be saved successfully.
+* The activity should contribute to the user's streak according to the existing streak rules/business logic.
+* The Dashboard should recalculate or refresh the **Current Streak**.
+* The updated value should be displayed without requiring an app reinstall.
+* If the user navigates away from the Dashboard and comes back, the value must remain correct.
+* If the app is closed and reopened, the value must remain correct.
+* The same behavior must work on Android and the React Native + Wrapper version.
+
+Example:
+
+If the user completes a qualifying activity today and the existing streak rules consider today active, the Dashboard should no longer incorrectly show `0 days`.
+
+### Important
+
+Do NOT simply hardcode or increment the streak when a button is pressed.
+
+The streak must be calculated from the actual persisted activity/completion data so that it remains correct after:
+
+* App restart
+* Logout/login
+* Navigation
+* Refresh
+* Android app restart
+* Wrapper reload
+* Multiple activities on the same day
+
+Also avoid counting multiple activities on the same day as multiple streak days. A streak should be based on **active/qualifying dates**, according to the application's existing business rules.
+
+### Regression Prevention
+
+Before making changes:
+
+1. Find the existing Current Streak implementation.
+2. Find the source of truth for completed activities.
+3. Trace the complete flow:
+   `Activity Completion → Persistence/API/Database → State Management → Dashboard → Current Streak`
+4. Identify the actual root cause.
+5. Fix the root cause instead of adding a workaround.
+6. Reuse the existing architecture/state-management/data layer where possible.
+7. Do not duplicate streak logic in multiple screens.
+8. Create/use one reliable streak calculation method/service.
+
+### Test These Cases
+
+Verify all of the following:
+
+* No qualifying activity → correct `0 days`.
+* Complete one qualifying activity today → correct streak.
+* Complete multiple qualifying activities today → count the day only once.
+* Complete activities on consecutive days → streak increases correctly.
+* Miss a qualifying day → streak resets according to existing business rules.
+* Complete an activity and immediately return to Dashboard → value updates.
+* Navigate away and return → value remains correct.
+* Refresh/reload app → value remains correct.
+* Kill and reopen Android app → value remains correct.
+* Logout/login with the same user → correct streak is loaded.
+* Different users → one user's streak must never appear for another user.
+* Verify timezone/date-boundary behavior.
+* Verify React Native + Wrapper and Android use the same correct logic.
+
+### Do Not Break Existing Features
+
+Do NOT change unrelated:
+
+* Dashboard UI/design
+* Quick Actions functionality
+* Daily Tasks CRUD
+* Meals & Shopping functionality
+* Navigation
+* Authentication
+* API contracts
+* Existing database structure unless absolutely required
+
+If a database/API change is required, make it backward-compatible and explain exactly what was changed.
+
+### Final Verification
+
+After fixing the issue:
+
+* Run the project/build.
+* Check for TypeScript/React Native errors.
+* Test the Dashboard on Android.
+* Test the React Native + Wrapper flow.
+* Verify the actual persisted data.
+* Verify that Current Streak updates from real completion data.
+* Confirm there is no duplicate/stale streak calculation.
+* Check related Dashboard statistics for regressions.
+
+Most importantly: **do not stop after making the number change visually. Trace the complete data flow and permanently fix the root cause so this bug does not reopen again.**
