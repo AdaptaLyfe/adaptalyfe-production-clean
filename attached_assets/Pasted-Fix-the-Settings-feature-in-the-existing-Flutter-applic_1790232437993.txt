@@ -1,0 +1,122 @@
+Fix the **Settings feature** in the existing Flutter application.
+
+### Problem
+
+The Settings feature is not working properly. The issue has been fixed multiple times before, but the bug keeps coming back/reopening after other changes.
+
+I do NOT want a temporary UI fix. Find and fix the **root cause** properly so the issue does not return.
+
+### Requirements
+
+1. **Analyze the complete Settings flow**
+
+   * Settings screen
+   * Settings widgets
+   * Settings BLoC/Cubit
+   * Events and states
+   * Repository
+   * API/service/data source
+   * Local storage/database if used
+   * Navigation/routes
+   * Authentication/user state
+   * Any shared providers/dependencies
+
+2. **Find the actual root cause**
+
+   * Do not simply add another `setState()`, delay, refresh, or hardcoded value.
+   * Check for incorrect state management.
+   * Check for missing/incorrect BLoC or Provider scope.
+   * Check for disposed controllers.
+   * Check for async race conditions.
+   * Check for stale state.
+   * Check for incorrect API response handling.
+   * Check for incorrect initialization/disposal.
+   * Check for navigation lifecycle issues.
+   * Check whether Settings data is being overwritten by another screen or service.
+   * Check whether the problem happens after logout/login, app restart, or navigation back to Settings.
+
+3. **Preserve existing functionality**
+
+   * Do not remove existing Settings features.
+   * Do not change the existing UI/design unnecessarily.
+   * Do not break authentication, profile, notifications, subscription, or other existing features.
+   * Follow the existing project architecture and BLoC pattern.
+
+4. **Make the fix production-safe**
+
+   * Use proper state management.
+   * Handle loading, success, empty, and error states correctly.
+   * Handle API/network failures safely.
+   * Prevent duplicate API calls where applicable.
+   * Prevent multiple simultaneous updates.
+   * Make sure state is updated consistently after saving/updating a setting.
+   * Make sure the UI always reflects the actual saved value.
+
+5. **Check for regression**
+   After fixing the root cause, test the Settings flow through these scenarios:
+
+   * Open Settings normally.
+   * Change each available setting.
+   * Save/update the setting.
+   * Leave Settings and come back.
+   * Navigate between multiple screens and return to Settings.
+   * Logout and login again.
+   * Restart the app.
+   * Test with slow/no network if the feature uses an API.
+   * Test API failure.
+   * Test repeated taps on Save/Update.
+   * Test loading state.
+   * Test error state.
+   * Test empty/null data.
+   * Test Android and iOS behavior if applicable.
+
+6. **Important**
+   Search the entire codebase for all code related to Settings before making changes.
+
+   Identify:
+
+   * Every Settings screen/widget
+   * Every Settings BLoC/Cubit
+   * Every Settings event/state
+   * Every API/service/repository used by Settings
+   * Every route/navigation entry
+   * Every place that modifies Settings data
+
+   If there are multiple implementations of the same Settings logic, consolidate or correct them instead of creating another duplicate implementation.
+
+7. **Do not hide the bug**
+   Do not:
+
+   * Add arbitrary delays
+   * Add unnecessary retries
+   * Hardcode successful responses
+   * Ignore exceptions
+   * Suppress Flutter errors
+   * Comment out broken code
+   * Rebuild the entire screen unnecessarily
+   * Create duplicate BLoCs/providers just to make the error disappear
+
+### Final verification
+
+Before finishing:
+
+* Run `flutter analyze`
+* Run relevant tests
+* Build/run the application
+* Test the complete Settings flow
+* Check Flutter debug logs for exceptions
+* Confirm there are no controller disposal errors, Provider/BLoC errors, navigation errors, or async state errors.
+
+### Final response
+
+After fixing, tell me:
+
+1. What the actual root cause was.
+2. Which files were changed.
+3. What was changed in each file.
+4. Why the previous fixes kept failing/reopening.
+5. How this fix prevents the bug from returning.
+6. What tests you performed.
+7. Any remaining issue that genuinely needs my attention.
+
+**Do not stop after making the first fix. Investigate the entire Settings flow and verify the fix end-to-end.**
