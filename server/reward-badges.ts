@@ -4,6 +4,15 @@ export type RewardBadgeStats = {
   completedMilestones: number;
 };
 
+export function resolveLifetimeEarned(
+  balanceLifetimeEarned: unknown,
+  transactionLifetimeEarned: unknown,
+): number {
+  const balanceTotal = nonNegativeInteger(balanceLifetimeEarned);
+  const transactionTotal = nonNegativeInteger(transactionLifetimeEarned);
+  return Math.max(balanceTotal, transactionTotal);
+}
+
 export type RewardBadgeDefinition = {
   type: string;
   title: string;
@@ -109,10 +118,53 @@ export function evaluateRewardBadges(
   });
 }
 
+export function newlyEarnedRewardBadges(
+  evaluations: readonly RewardBadgeEvaluation[],
+  storedBadgeTypes: ReadonlySet<string>,
+): RewardBadgeEvaluation[] {
+  const seenTypes = new Set(storedBadgeTypes);
+  return evaluations.filter((badge) => {
+    if (!badge.isEarned || seenTypes.has(badge.type)) return false;
+    seenTypes.add(badge.type);
+    return true;
+  });
+}
+
 export function countCompletedMilestones(value: unknown): number {
   if (!Array.isArray(value)) return 0;
   return value.filter((milestone) => {
     if (!milestone || typeof milestone !== "object") return false;
     return (milestone as { isCompleted?: unknown }).isCompleted === true;
   }).length;
+}
+
+export function countCompletedSkillMilestones(skills: readonly unknown[]): number {
+  return skills.reduce((total, value) => {
+    if (!value || typeof value !== "object") return total;
+
+    const skill = value as {
+      milestones?: unknown;
+      currentLevel?: unknown;
+      targetLevel?: unknown;
+    };
+    const currentLevel = finiteNumber(skill.currentLevel);
+    const targetLevel = finiteNumber(skill.targetLevel);
+    const completedSkill = targetLevel > 0 && currentLevel >= targetLevel ? 1 : 0;
+    const completedMilestones = countCompletedMilestones(skill.milestones);
+
+    // Older skill records track completion through currentLevel/targetLevel;
+    // newer records may also carry individual completed milestone entries.
+    return total + Math.max(completedSkill, completedMilestones);
+  }, 0);
+}
+
+function nonNegativeInteger(value: unknown): number {
+  const amount = finiteNumber(value);
+  return Math.max(0, Math.trunc(amount));
+}
+
+function finiteNumber(value: unknown): number {
+  if (typeof value === "string" && value.trim() === "") return 0;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : 0;
 }

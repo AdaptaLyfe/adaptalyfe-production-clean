@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../app/app_route_observer.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../../core/layout/responsive.dart';
@@ -9,8 +10,41 @@ import '../bloc/rewards_event.dart';
 import '../bloc/rewards_state.dart';
 import '../models/reward_models.dart';
 
-class RewardsScreen extends StatelessWidget {
+class RewardsScreen extends StatefulWidget {
   const RewardsScreen({super.key});
+
+  @override
+  State<RewardsScreen> createState() => _RewardsScreenState();
+}
+
+class _RewardsScreenState extends State<RewardsScreen> with RouteAware {
+  ModalRoute<void>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route != _route) {
+      if (_route != null) {
+        appRouteObserver.unsubscribe(this);
+      }
+      _route = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    if (mounted) {
+      context.read<RewardsBloc>().add(const RefreshRewards());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -488,26 +522,65 @@ class _BadgesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.status == RewardsStatus.failure &&
-        state.achievements.isEmpty &&
-        state.errorMessage != null) {
-      return _RewardsError(
-        message: state.errorMessage!,
-        onRetry: () =>
-            context.read<RewardsBloc>().add(const RefreshRewards()),
+        state.achievements.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: _BadgeErrorNotice(
+            message: state.errorMessage ?? 'Unable to load your badges.',
+            onRetry: () =>
+                context.read<RewardsBloc>().add(const RefreshRewards()),
+          ),
+        ),
       );
     }
 
-    final earnedCount =
-        state.achievements.where((achievement) => achievement.isEarned).length;
+    final earned = state.achievements
+        .where(
+          (achievement) =>
+              achievement.badgeStatus == AchievementBadgeStatus.earned,
+        )
+        .toList(growable: false);
+    final inProgress = state.achievements
+        .where(
+          (achievement) =>
+              achievement.badgeStatus == AchievementBadgeStatus.inProgress,
+        )
+        .toList(growable: false);
+    final locked = state.achievements
+        .where(
+          (achievement) =>
+              achievement.badgeStatus == AchievementBadgeStatus.locked,
+        )
+        .toList(growable: false);
 
     return RefreshIndicator(
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-         padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
+        padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
         children: [
-          if (state.isLoading) const LinearProgressIndicator(),
-          if (state.isLoading) const SizedBox(height: 12),
+          if (state.isLoading && state.achievements.isEmpty) ...[
+            const LinearProgressIndicator(),
+            const SizedBox(height: 8),
+            const Text(
+              'Loading badges...',
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+          ] else if (state.isLoading) ...[
+            const LinearProgressIndicator(),
+            const SizedBox(height: 12),
+          ],
+          if (state.status == RewardsStatus.failure) ...[
+            _BadgeErrorNotice(
+              message: state.errorMessage ?? 'Unable to refresh your badges.',
+              onRetry: () =>
+                  context.read<RewardsBloc>().add(const RefreshRewards()),
+              compact: true,
+            ),
+            const SizedBox(height: 12),
+          ],
           const Text(
             'Badges & Achievements',
             style: TextStyle(
@@ -524,16 +597,19 @@ class _BadgesTab extends StatelessWidget {
           const SizedBox(height: 14),
           const _BadgeInstructions(),
           const SizedBox(height: 12),
-          if (earnedCount == 0) ...[
-            const _NoEarnedBadgesCard(),
-            const SizedBox(height: 12),
-          ],
-          ...state.achievements.map(
-            (achievement) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _AchievementCard(achievement: achievement),
+          if (state.achievements.isEmpty &&
+              state.status == RewardsStatus.loaded)
+            const _EmptyCard(
+              icon: Icons.emoji_events_outlined,
+              title: 'No badges available',
+              message: 'No badges are currently available.',
             ),
-          ),
+          if (earned.isNotEmpty)
+            _BadgeSection(title: 'Earned Badges', badges: earned),
+          if (inProgress.isNotEmpty)
+            _BadgeSection(title: 'In Progress', badges: inProgress),
+          if (locked.isNotEmpty)
+            _BadgeSection(title: 'Locked', badges: locked),
         ],
       ),
     );
@@ -549,6 +625,98 @@ class _BadgesTab extends StatelessWidget {
     );
     bloc.add(const RefreshRewards());
     await completion;
+  }
+}
+
+class _BadgeSection extends StatelessWidget {
+  const _BadgeSection({required this.title, required this.badges});
+
+  final String title;
+  final List<AchievementBadgeModel> badges;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              title,
+              style: const TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          ...badges.map(
+            (achievement) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _AchievementCard(achievement: achievement),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BadgeErrorNotice extends StatelessWidget {
+  const _BadgeErrorNotice({
+    required this.message,
+    required this.onRetry,
+    this.compact = false,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: const Color(0xFFFFF7ED),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!compact) ...[
+              const Text(
+                'Badges could not be loaded',
+                style: TextStyle(
+                  color: Color(0xFF7C2D12),
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ] else
+              const Text(
+                'Could not refresh badges. Showing the last loaded results.',
+                style: TextStyle(
+                  color: Color(0xFF7C2D12),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            Text(
+              message,
+              style: const TextStyle(color: Color(0xFF7C2D12)),
+            ),
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -594,19 +762,6 @@ class _BadgeInstructions extends StatelessWidget {
   }
 }
 
-class _NoEarnedBadgesCard extends StatelessWidget {
-  const _NoEarnedBadgesCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _EmptyCard(
-      icon: Icons.emoji_events_outlined,
-      title: 'No badges yet',
-      message: 'Start earning badges by completing the requirements below.',
-    );
-  }
-}
-
 class _AchievementCard extends StatelessWidget {
   const _AchievementCard({required this.achievement});
 
@@ -614,13 +769,21 @@ class _AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isEarned = achievement.isEarned;
-    final statusColor =
-        isEarned ? const Color(0xFFF59E0B) : const Color(0xFF64748B);
+    final badgeStatus = achievement.badgeStatus;
+    final isEarned = badgeStatus == AchievementBadgeStatus.earned;
+    final isInProgress = badgeStatus == AchievementBadgeStatus.inProgress;
+    final statusColor = isEarned
+        ? const Color(0xFFF59E0B)
+        : isInProgress
+            ? const Color(0xFF2563EB)
+            : const Color(0xFF64748B);
+    final statusLabel = isEarned
+        ? 'Earned'
+        : isInProgress
+            ? 'In Progress'
+            : 'Locked';
     final progress = achievement.target > 0
-        ? achievement.progress > achievement.target
-            ? achievement.target
-            : achievement.progress
+        ? achievement.progress.clamp(0, achievement.target).toInt()
         : achievement.progress;
 
     return Card(
@@ -675,13 +838,17 @@ class _AchievementCard extends StatelessWidget {
                           textColor: const Color(0xFF92400E),
                         ),
                       _RewardTag(
-                        text: isEarned ? 'Earned' : 'Locked',
+                        text: statusLabel,
                         color: isEarned
                             ? const Color(0xFFFEF3C7)
-                            : const Color(0xFFF3F4F6),
+                            : isInProgress
+                                ? const Color(0xFFDBEAFE)
+                                : const Color(0xFFF3F4F6),
                         textColor: isEarned
                             ? const Color(0xFF92400E)
-                            : const Color(0xFF4B5563),
+                            : isInProgress
+                                ? const Color(0xFF1D4ED8)
+                                : const Color(0xFF4B5563),
                       ),
                     ],
                   ),
@@ -745,7 +912,7 @@ class _AchievementCard extends StatelessWidget {
                         ),
                       if (achievement.earnedAt != null)
                         _RewardTag(
-                          text: _formatDate(achievement.earnedAt!),
+                          text: 'Earned on ${_formatDate(achievement.earnedAt!)}',
                           color: Colors.white,
                           textColor: const Color(0xFF92400E),
                         ),
@@ -1215,7 +1382,16 @@ class _RewardsLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 12),
+          Text('Loading rewards and badges...'),
+        ],
+      ),
+    );
   }
 }
 

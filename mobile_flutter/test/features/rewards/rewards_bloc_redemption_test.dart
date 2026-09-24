@@ -4,6 +4,7 @@ import 'package:adaptalyfe_mobile/features/rewards/data/rewards_api.dart';
 import 'package:adaptalyfe_mobile/features/rewards/bloc/rewards_bloc.dart';
 import 'package:adaptalyfe_mobile/features/rewards/bloc/rewards_event.dart';
 import 'package:adaptalyfe_mobile/features/rewards/data/rewards_repository.dart';
+import 'package:adaptalyfe_mobile/features/rewards/bloc/rewards_state.dart';
 import 'package:adaptalyfe_mobile/features/rewards/models/reward_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -90,6 +91,54 @@ void main() {
       expect(state.pointsBalance?.availablePoints, 90);
       await bloc.close();
     });
+
+    test('loads the newly earned badges after a successful redemption',
+        () async {
+      final reward = _reward(maximum: 3, current: 0);
+      final earnedBadge = _badge(
+        type: 'first_reward',
+        title: 'First Reward',
+        isEarned: true,
+        progress: 1,
+        target: 1,
+      );
+      final repository = _FakeRewardsRepository(
+        rewards: [reward],
+        balance: _balance(),
+        achievements: [earnedBadge],
+      );
+      final bloc = RewardsBloc(repository);
+      final refreshed = bloc.stream.firstWhere(
+        (state) =>
+            state.achievements.contains(earnedBadge) && state.busyKey == null,
+      );
+
+      bloc.add(RedeemReward(reward));
+      final state = await refreshed;
+
+      expect(state.achievements.single.badgeStatus, AchievementBadgeStatus.earned);
+      expect(repository.achievementFetchCalls, 1);
+      await bloc.close();
+    });
+
+    test('surfaces a badge response parsing failure', () async {
+      final repository = _FakeRewardsRepository(
+        rewards: [_reward(maximum: 3, current: 0)],
+        balance: _balance(),
+        badgeError: const FormatException('Invalid reward badge entry'),
+      );
+      final bloc = RewardsBloc(repository);
+      final failed = bloc.stream.firstWhere(
+        (state) => state.status == RewardsStatus.failure,
+      );
+
+      bloc.add(const RewardsStarted());
+      final state = await failed;
+
+      expect(state.errorMessage, 'Invalid reward badge entry');
+      expect(state.achievements, isEmpty);
+      await bloc.close();
+    });
   });
 }
 
@@ -97,16 +146,21 @@ class _FakeRewardsRepository implements RewardsRepository {
   _FakeRewardsRepository({
     required this.rewards,
     required this.balance,
+    this.achievements = const [],
     this.redemptionGate,
     this.rejectAtLimit = false,
+    this.badgeError,
   });
 
   final List<RewardModel> rewards;
   PointsBalanceModel balance;
+  final List<AchievementBadgeModel> achievements;
   final Completer<void>? redemptionGate;
   final bool rejectAtLimit;
+  final Object? badgeError;
   final Completer<void> redemptionStarted = Completer<void>();
   int redemptionCalls = 0;
+  int achievementFetchCalls = 0;
 
   @override
   RewardsApi get api => throw UnimplementedError();
@@ -122,7 +176,11 @@ class _FakeRewardsRepository implements RewardsRepository {
   Future<List<PointsTransactionModel>> getPointsTransactions() async => [];
 
   @override
-  Future<List<AchievementBadgeModel>> getAchievements() async => [];
+  Future<List<AchievementBadgeModel>> getAchievements() async {
+    achievementFetchCalls++;
+    if (badgeError != null) throw badgeError!;
+    return achievements;
+  }
 
   @override
   Future<RewardModel> createReward(RewardInput input) =>
@@ -193,4 +251,28 @@ PointsBalanceModel _balance() => const PointsBalanceModel(
       lifetimeEarned: 100,
       lifetimeSpent: 0,
       updatedAt: null,
+    );
+
+AchievementBadgeModel _badge({
+  required String type,
+  required String title,
+  required bool isEarned,
+  required int progress,
+  required int target,
+}) =>
+    AchievementBadgeModel(
+      id: -1,
+      userId: 7,
+      type: type,
+      title: title,
+      description: 'Badge description.',
+      iconName: 'trophy',
+      category: 'rewards',
+      points: 0,
+      level: 1,
+      earnedAt: null,
+      isEarned: isEarned,
+      progress: progress,
+      target: target,
+      requirement: 'Complete the requirement.',
     );

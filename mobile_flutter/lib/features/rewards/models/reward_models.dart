@@ -279,7 +279,13 @@ class PointsTransactionModel extends Equatable {
       ];
 }
 
-/// The existing /api/achievements response is the legacy badge source.
+enum AchievementBadgeStatus {
+  earned,
+  inProgress,
+  locked,
+}
+
+/// A badge returned by the canonical /api/rewards/badges endpoint.
 class AchievementBadgeModel extends Equatable {
   const AchievementBadgeModel({
     required this.id,
@@ -334,6 +340,12 @@ class AchievementBadgeModel extends Equatable {
   final int progress;
   final int target;
   final String requirement;
+
+  AchievementBadgeStatus get badgeStatus {
+    if (isEarned) return AchievementBadgeStatus.earned;
+    if (progress > 0) return AchievementBadgeStatus.inProgress;
+    return AchievementBadgeStatus.locked;
+  }
 
   @override
   List<Object?> get props => [

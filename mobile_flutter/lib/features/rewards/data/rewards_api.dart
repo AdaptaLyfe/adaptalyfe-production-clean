@@ -17,8 +17,10 @@ class RewardsApi {
   Future<List<PointsTransactionModel>> getPointsTransactions() =>
       _getList('/api/points/transactions', PointsTransactionModel.fromJson);
 
-  Future<List<AchievementBadgeModel>> getAchievements() =>
-      _getList('/api/rewards/badges', AchievementBadgeModel.fromJson);
+  Future<List<AchievementBadgeModel>> getAchievements() async {
+    final response = await client.get<dynamic>('/api/rewards/badges');
+    return parseRewardBadgesResponse(response.data);
+  }
 
   Future<RewardModel> createReward(RewardInput input) =>
       _post('/api/rewards', input.toJson(), RewardModel.fromJson);
@@ -78,4 +80,25 @@ class RewardsApi {
     }
     return fromJson(Map<String, dynamic>.from(data));
   }
+}
+
+List<AchievementBadgeModel> parseRewardBadgesResponse(Object? data) {
+  if (data is! List) {
+    throw const FormatException('Invalid rewards badges response');
+  }
+
+  final badges = <AchievementBadgeModel>[];
+  for (final item in data) {
+    if (item is! Map) {
+      throw const FormatException('Invalid reward badge entry');
+    }
+    final badge = AchievementBadgeModel.fromJson(
+      Map<String, dynamic>.from(item),
+    );
+    if (badge.type.isEmpty || badge.title.isEmpty) {
+      throw const FormatException('Reward badge is missing its identity');
+    }
+    badges.add(badge);
+  }
+  return badges;
 }
