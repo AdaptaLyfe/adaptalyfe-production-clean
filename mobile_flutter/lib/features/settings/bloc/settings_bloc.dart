@@ -46,6 +46,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   final SettingsRepository repository;
+  int? _loadedUserId;
 
   Future<void> _load(
     SettingsEvent event,
@@ -54,6 +55,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     final userId = event is SettingsStarted
         ? event.userId
         : (event as RefreshSettings).userId;
+    _loadedUserId = userId;
     emit(
       state.copyWith(
         status: SettingsStatus.loading,
@@ -67,7 +69,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       final results = await Future.wait<Object?>([
         repository.getCurrentUser(),
         repository.getPreferences(),
-        repository.loadDashboardLayout(),
+        repository.loadDashboardLayout(userId),
         repository.getLockedSettings(userId),
         repository.getCareRecipients(),
         repository.getOrganizationMembership(),
@@ -210,7 +212,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         .toList());
     await _persistDashboardLayout(
       modules,
-      repository.saveDashboardLayout,
+      () => repository.saveDashboardLayout(_requireLoadedUserId(), modules),
       emit,
     );
   }
@@ -228,7 +230,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     final ordered = _normalizeDashboardModules(modules);
     await _persistDashboardLayout(
       ordered,
-      repository.saveDashboardLayout,
+      () => repository.saveDashboardLayout(_requireLoadedUserId(), ordered),
       emit,
     );
   }
@@ -239,7 +241,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     await _persistDashboardLayout(
       _normalizeDashboardModules(defaultDashboardModules),
-      repository.resetDashboardLayout,
+      () => repository.resetDashboardLayout(_requireLoadedUserId()),
       emit,
       successMessage: 'Dashboard restored to defaults.',
     );
@@ -286,6 +288,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
     }
+  }
+
+  int _requireLoadedUserId() {
+    final userId = _loadedUserId;
+    if (userId == null) {
+      throw StateError('Dashboard layout has not been loaded for a user.');
+    }
+    return userId;
   }
 
   List<DashboardModuleModel> _normalizeDashboardModules(

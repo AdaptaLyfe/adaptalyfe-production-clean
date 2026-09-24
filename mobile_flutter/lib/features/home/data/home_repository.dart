@@ -85,13 +85,17 @@ class HomeRepository {
     return Map<String, dynamic>.from(response.data as Map);
   }
 
-  Future<List<DashboardModuleModel>> loadDashboardModules() =>
-      dashboardLayoutStore.load();
+  Future<List<DashboardModuleModel>> loadDashboardModules(int userId) =>
+      dashboardLayoutStore.load(userId);
 
-  Future<void> saveDashboardModules(List<DashboardModuleModel> modules) =>
-      dashboardLayoutStore.save(modules);
+  Future<void> saveDashboardModules(
+    int userId,
+    List<DashboardModuleModel> modules,
+  ) =>
+      dashboardLayoutStore.save(userId, modules);
 
-  Future<void> resetDashboardModules() => dashboardLayoutStore.reset();
+  Future<void> resetDashboardModules(int userId) =>
+      dashboardLayoutStore.reset(userId);
 
   Future<List<HomeQuickAction>> loadQuickActions() =>
       quickActionsStore.load();

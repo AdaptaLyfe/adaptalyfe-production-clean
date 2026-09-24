@@ -61,7 +61,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     try {
       final user = await repository.getCurrentUser();
-      final modules = await repository.loadDashboardModules();
+      final modules = await repository.loadDashboardModules(user.id);
       final quickActions = await repository.loadQuickActions();
       emit(
         HomeLoaded(
@@ -255,7 +255,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _saveDashboardModules(
       emit,
       updated,
-      save: () => repository.saveDashboardModules(updated),
+      save: (userId) => repository.saveDashboardModules(userId, updated),
       successMessage: 'Dashboard updated.',
     );
   }
@@ -285,7 +285,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _saveDashboardModules(
       emit,
       updated,
-      save: () => repository.saveDashboardModules(updated),
+      save: (userId) => repository.saveDashboardModules(userId, updated),
       successMessage: 'Dashboard order saved.',
     );
   }
@@ -300,7 +300,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       saved = await _saveDashboardModules(
         emit,
         updated,
-        save: () => repository.saveDashboardModules(updated),
+        save: (userId) => repository.saveDashboardModules(userId, updated),
         successMessage: 'Dashboard customization saved.',
       );
     } finally {
@@ -459,7 +459,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<bool> _saveDashboardModules(
     Emitter<HomeState> emit,
     List<DashboardModuleModel> modules, {
-    required Future<void> Function() save,
+    required Future<void> Function(int userId) save,
     required String successMessage,
   }) async {
     final current = state;
@@ -472,7 +472,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         customizationMessage: null,
         customizationError: null,
       ),
-      save,
+      () => save(current.user.id),
       successMessage,
       onSaved: (latest) => latest.copyWith(dashboardModules: normalized),
     );
