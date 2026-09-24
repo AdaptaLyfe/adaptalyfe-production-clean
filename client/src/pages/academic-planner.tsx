@@ -760,7 +760,13 @@ export default function AcademicPlanner() {
                   open={isAddAssignmentOpen}
                   onOpenChange={(open) => {
                     setIsAddAssignmentOpen(open);
-                    if (!open) setAssignmentHoursError(null);
+                    setAssignmentHoursError(null);
+                    if (open) {
+                      setNewAssignment((current) => ({
+                        ...current,
+                        estimatedHours: "",
+                      }));
+                    }
                   }}
                 >
                   <DialogTrigger asChild>
@@ -823,7 +829,7 @@ export default function AcademicPlanner() {
                     </Select>
                     <Input
                       type="number"
-                      placeholder="Estimated hours"
+                      placeholder="Enter estimated hours"
                       value={newAssignment.estimatedHours}
                       onChange={(e) => {
                         setAssignmentHoursError(null);

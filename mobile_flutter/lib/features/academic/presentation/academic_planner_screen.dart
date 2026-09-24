@@ -2616,8 +2616,10 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  decoration:
-                      const InputDecoration(labelText: 'Estimated hours'),
+                  decoration: const InputDecoration(
+                    labelText: 'Estimated hours',
+                    hintText: 'Enter estimated hours',
+                  ),
                   validator: AssignmentHours.validationMessage,
                 ),
                 ],
