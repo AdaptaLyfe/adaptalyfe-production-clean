@@ -1,0 +1,149 @@
+In the existing **React Native + Wrapper** application, fix the following bug completely:
+
+### Bug
+
+Path:
+**Resources → Local Emergency Resources**
+
+Issue:
+When the user clicks **"+ Add Resource"**, enters the required emergency resource details, and submits/saves the form, the resource is not being added successfully.
+
+This bug has been fixed before but keeps coming back. **Do not apply a temporary UI-only fix. Find and fix the actual root cause so the bug does not reopen.**
+
+### Requirements
+
+1. First inspect the complete existing implementation for:
+
+   * Local Emergency Resources screen
+   * "+ Add Resource" button
+   * Add Resource form/modal/screen
+   * Form validation
+   * State management
+   * API/service/repository functions
+   * Request payload
+   * Authentication/user ID handling
+   * Backend response/error handling
+   * Local state/cache update after successful creation
+   * Wrapper-specific API/data handling
+
+2. Trace the complete flow:
+
+   `+ Add Resource`
+   → Open form
+   → Enter details
+   → Validate fields
+   → Submit
+   → API/service call
+   → Backend creates resource
+   → Receive response
+   → Update local state
+   → Refresh/display resource in Local Emergency Resources
+
+3. Identify the **actual root cause** of why the resource is not being created.
+
+4. Check for common causes such as:
+
+   * Incorrect API endpoint
+   * Wrong HTTP method
+   * Incorrect request body/payload field names
+   * Missing required fields
+   * Wrong resource type/category value
+   * Incorrect user/caregiver ID
+   * Authentication/token issue
+   * Incorrect response parsing
+   * Async/await issue
+   * State not updating after successful API response
+   * Form values being cleared before the request completes
+   * Modal closing before successful save
+   * Incorrect error handling
+   * Wrapper/native bridge issue
+   * Different API implementation between React Native and Wrapper
+   * Existing CRUD implementation being inconsistent with other Resources
+   * Race condition or stale state
+   * Backend validation failure being hidden from the user
+
+5. Compare this Add Resource implementation with other **working CRUD features** in the same application and follow the existing project pattern instead of introducing a completely different architecture.
+
+6. Make the implementation reliable:
+
+   * Prevent duplicate submissions while saving.
+   * Show a loading state during submission.
+   * Disable the Save/Add button while the request is in progress.
+   * Handle API success correctly.
+   * Handle API failure correctly.
+   * Show a clear user-friendly error when the server rejects the request.
+   * Keep the form data if saving fails so the user does not lose entered information.
+   * Close the form only after successful creation.
+   * Refresh/update the Local Emergency Resources list after successful creation.
+   * Ensure the newly created resource appears immediately without requiring an app restart.
+
+7. Do NOT:
+
+   * Remove existing validation.
+   * Hardcode fake/local data as a workaround.
+   * Bypass the API/backend.
+   * Comment out the failing code.
+   * Hide the error.
+   * Create duplicate API implementations unnecessarily.
+   * Change unrelated Resources functionality.
+   * Break existing Edit/Delete/View functionality.
+
+### Important: Prevent Regression
+
+After fixing the issue, test the complete CRUD flow:
+
+**Create → Read → Edit → Delete**
+
+Specifically verify:
+
+* Add Resource opens correctly.
+* Required fields validate correctly.
+* Valid data can be submitted.
+* API request contains the correct payload.
+* Backend successfully creates the resource.
+* Success response is handled correctly.
+* New resource appears in the list.
+* Resource remains visible after leaving and reopening the screen.
+* Resource remains after app refresh/reload.
+* Edit still works.
+* Delete still works.
+* Multiple resources can be added.
+* User cannot accidentally create duplicate resources by tapping Save multiple times.
+* Failed API requests do not create broken/partial resources.
+* Existing resources are not affected.
+
+### Debugging Requirement
+
+Do not assume the cause.
+
+Trace the actual request and response and inspect:
+
+* API URL
+* HTTP method
+* Request payload
+* Headers/authentication
+* Status code
+* Response body
+* State update
+* List refresh logic
+
+If the backend/API itself is the cause, identify exactly what is wrong and fix the integration according to the existing backend contract.
+
+### Final Requirement
+
+Before finishing, test the implementation from the user's perspective:
+
+**Resources → Local Emergency Resources → + Add Resource → enter valid details → Save → verify the resource appears in the list.**
+
+Then test the same flow multiple times with different resources to make sure the issue does not reopen.
+
+After fixing, provide:
+
+1. Root cause
+2. Files changed
+3. What was changed
+4. API/payload changes, if any
+5. How the fix prevents the bug from returning
+6. Testing performed and results
+
+**Important: Preserve the existing React Native + Wrapper architecture, UI design, navigation, and working functionality. Fix the root cause, not just the visible symptom.**
