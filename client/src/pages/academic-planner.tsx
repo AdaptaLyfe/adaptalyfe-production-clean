@@ -619,7 +619,7 @@ export default function AcademicPlanner() {
                       <DialogHeader>
                         <DialogTitle>Add New Class</DialogTitle>
                       </DialogHeader>
-                      <div className="academic-planner-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                      <div className="academic-planner-form space-y-4 pr-2">
                         <Input
                           placeholder="Class name"
                           value={newClass.className}
@@ -771,7 +771,7 @@ export default function AcademicPlanner() {
                     <DialogHeader>
                       <DialogTitle>Add New Assignment</DialogTitle>
                     </DialogHeader>
-                    <div className="academic-planner-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <div className="academic-planner-form space-y-4 pr-2">
                     <Input
                       placeholder="Assignment title"
                       value={newAssignment.title}
@@ -946,7 +946,7 @@ export default function AcademicPlanner() {
                       <DialogHeader>
                         <DialogTitle>Start Study Session</DialogTitle>
                       </DialogHeader>
-                      <div className="academic-planner-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                      <div className="academic-planner-form space-y-4 pr-2">
                         <Input
                           placeholder="Subject (required)"
                           value={newStudySession.subject}

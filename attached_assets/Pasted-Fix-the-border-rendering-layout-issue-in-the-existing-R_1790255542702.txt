@@ -1,0 +1,72 @@
+Fix the border rendering/layout issue in the existing **React Native + Wrapper** application.
+
+### Issue
+
+Go to:
+
+**Academic Planner → Schedule → Add Class**
+
+When the **"Add New Class"** popup opens:
+
+1. The **top border of the first text box/input field** is hidden, clipped, or not rendered correctly.
+2. The **left border of the other text boxes/input fields** is also hidden, clipped, or partially missing.
+3. The borders should be completely visible on all sides.
+4. The issue appears to be related to the popup/modal layout, input container sizing, clipping, overflow, padding, or border rendering.
+
+The **same issue is also present in:**
+
+* Academic Planner → Assignment → Add Assignment popup
+* Academic Planner → Study Sessions → Add Study Session popup
+
+### Required Fix
+
+Fix the **root cause**, not just the visual symptom.
+
+Please:
+
+* Inspect the existing popup/modal component and input field/container implementation.
+* Check `borderWidth`, individual border properties, `borderColor`, `borderRadius`, `overflow`, padding, margins, width/height, and parent container constraints.
+* Check whether any parent `View`, `ScrollView`, modal container, or wrapper is clipping the input borders.
+* Check whether `overflow: 'hidden'` or border radius is causing the borders to be clipped.
+* Check for overlapping Views/backgrounds that may be covering the borders.
+* Check the layout on both iOS and Android.
+* Preserve the existing UI design, spacing, colors, typography, validation, form behavior, and functionality.
+* Do NOT remove borders as a workaround.
+* Do NOT replace the existing popup with a completely different component unless absolutely necessary.
+* Reuse the existing shared input/component styles where possible so the fix is consistent.
+
+### Important
+
+Do not only fix the **Add New Class** popup.
+
+Apply the proper reusable fix to:
+
+1. **Add New Class**
+2. **Add Assignment**
+3. **Add Study Session**
+
+If these screens use different components, identify why the same rendering problem occurs and fix each implementation correctly.
+
+### Regression Prevention
+
+After making the changes:
+
+1. Open **Academic Planner → Schedule → Add Class**.
+2. Verify every input has a fully visible border.
+3. Verify the first input's top border is visible.
+4. Verify all other inputs' left borders are visible.
+5. Open **Add Assignment** and verify all borders.
+6. Open **Add Study Session** and verify all borders.
+7. Test scrolling inside the popup if scrolling exists.
+8. Test keyboard opening/closing and ensure borders remain visible.
+9. Test different screen sizes.
+10. Test Android and iOS layouts if both platforms are configured.
+11. Make sure there are no new overflow, clipping, or layout warnings/errors.
+
+### Very Important
+
+This bug has reopened multiple times before. **Do not provide a temporary visual workaround. Find and fix the actual layout/border rendering cause.**
+
+Before finishing, inspect the related shared components/styles and make sure the same border-clipping problem cannot reappear in these three Academic Planner popups.
+
+Do not change unrelated features or functionality.
