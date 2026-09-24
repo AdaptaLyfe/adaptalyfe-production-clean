@@ -2727,18 +2727,14 @@ Future<void> _showEmergencyEditor(
   BuildContext context, {
   EmergencyResourceModel? resource,
 }) async {
-  final result = await showDialog<EmergencyResourceInput>(
+  final bloc = context.read<ResourcesBloc>();
+  await showDialog<void>(
     context: context,
-    builder: (_) => _EmergencyResourceDialog(resource: resource),
+    builder: (_) => _EmergencyResourceDialog(
+      bloc: bloc,
+      resource: resource,
+    ),
   );
-  if (!context.mounted || result == null) return;
-  if (resource == null) {
-    context.read<ResourcesBloc>().add(CreateEmergencyResource(result));
-  } else {
-    context
-        .read<ResourcesBloc>()
-        .add(UpdateEmergencyResource(resource.id, result));
-  }
 }
 
 Future<void> _showPersonalDetails(
@@ -3215,8 +3211,12 @@ class _PersonalResourceDialogState extends State<_PersonalResourceDialog> {
 }
 
 class _EmergencyResourceDialog extends StatefulWidget {
-  const _EmergencyResourceDialog({this.resource});
+  const _EmergencyResourceDialog({
+    required this.bloc,
+    this.resource,
+  });
 
+  final ResourcesBloc bloc;
   final EmergencyResourceModel? resource;
 
   @override
@@ -3235,6 +3235,8 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
   late String _resourceType;
   late bool _isEmergencyOnly;
   late bool _isAvailable24_7;
+  bool _isSubmitting = false;
+  String? _submitError;
 
   static const _resourceTypes = [
     'crisis',
@@ -3277,7 +3279,9 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.resource != null;
-    return AlertDialog(
+    return PopScope<void>(
+      canPop: !_isSubmitting,
+      child: AlertDialog(
       insetPadding: EdgeInsets.symmetric(
         horizontal: AppResponsive.isCompact(context) ? 12 : 24,
         vertical: 24,
@@ -3297,6 +3301,14 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
               child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (_submitError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    _submitError!,
+                    style: const TextStyle(color: Color(0xFFB91C1C)),
+                  ),
+                ),
               _formField(
                 controller: _nameController,
                 label: 'Name',
@@ -3372,14 +3384,21 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: _save,
-          child: Text(isEditing ? 'Save changes' : 'Add resource'),
+          onPressed: _isSubmitting ? null : _save,
+          child: Text(
+            _isSubmitting
+                ? 'Saving...'
+                : isEditing
+                    ? 'Save changes'
+                    : 'Add resource',
+          ),
         ),
       ],
+      ),
     );
   }
 
@@ -3409,21 +3428,55 @@ class _EmergencyResourceDialogState extends State<_EmergencyResourceDialog> {
     );
   }
 
-  void _save() {
+  Future<void> _save() async {
+    if (_isSubmitting || widget.bloc.state.busyKey != null) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.pop(
-      context,
-      EmergencyResourceInput(
-        name: _nameController.text,
-        resourceType: _resourceType,
-        phoneNumber: _phoneController.text,
-        address: _addressController.text,
-        website: _websiteController.text,
-        availabilityHours: _availabilityController.text,
-        description: _descriptionController.text,
-        isEmergencyOnly: _isEmergencyOnly,
-        isAvailable24_7: _isAvailable24_7,
-      ),
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
+    final input = EmergencyResourceInput(
+      name: _nameController.text,
+      resourceType: _resourceType,
+      phoneNumber: _phoneController.text,
+      address: _addressController.text,
+      website: _websiteController.text,
+      availabilityHours: _availabilityController.text,
+      description: _descriptionController.text,
+      isEmergencyOnly: _isEmergencyOnly,
+      isAvailable24_7: _isAvailable24_7,
     );
+    final resource = widget.resource;
+    final actionBusyKey =
+        resource == null ? 'emergency-create' : 'emergency-${resource.id}';
+    final successMessage = resource == null
+        ? 'Emergency resource added.'
+        : 'Emergency resource updated.';
+    var requestStarted = false;
+    final completion = widget.bloc.stream.firstWhere((state) {
+      if (state.busyKey == actionBusyKey) {
+        requestStarted = true;
+        return false;
+      }
+      return requestStarted && state.busyKey == null;
+    });
+    if (resource == null) {
+      widget.bloc.add(CreateEmergencyResource(input));
+    } else {
+      widget.bloc.add(UpdateEmergencyResource(resource.id, input));
+    }
+    final completedState = await completion;
+    if (!mounted) return;
+    if (completedState.actionMessage == successMessage) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _isSubmitting = false;
+        _submitError = completedState.errorMessage ??
+            (resource == null
+                ? 'Unable to add that emergency resource.'
+                : 'Unable to update that emergency resource.');
+      });
+    }
   }
 }

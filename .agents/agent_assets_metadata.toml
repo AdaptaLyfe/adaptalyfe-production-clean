@@ -2241,3 +2241,17 @@ mtime_ms = 1790160761150
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f8b1b9be-ef46-4a5a-894b-be46db31a3f2/3da84db3-572d-4178-8562-cd3f141c465c"
 storage_version_token = "1790160765180382"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BEahlEpm-1EXv2DZ4Oz9y"
+uri = "file://deliverables/emergency-resource-flutter-changes.zip"
+type = "unspecified"
+title = "Emergency Resource Flutter changes"
+description = "ZIP containing the single changed Flutter source file for the Emergency Resource form flow."
+logical_id = "3852d936-fa7e-4019-89f2-b03a7fce4f40"
+content_hash = "sha256:6b7a4b458617fed57f76c7cea1357c3f1e65329058c64738946bdbcf9886bc6d"
+size = 20032
+mtime_ms = 1790225910425
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3852d936-fa7e-4019-89f2-b03a7fce4f40/49507b8c-d0e6-400a-ad4d-1cabaf85449a"
+storage_version_token = "1790225915054674"
+content_type = "application/octet-stream"
