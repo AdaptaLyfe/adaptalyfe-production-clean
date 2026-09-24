@@ -552,6 +552,11 @@ export interface IStorage {
   createAcademicClass(classData: InsertAcademicClass): Promise<AcademicClass>;
   getAssignmentsByUser(userId: number): Promise<Assignment[]>;
   createAssignment(assignmentData: InsertAssignment): Promise<Assignment>;
+  updateAssignment(
+    assignmentId: number,
+    userId: number,
+    assignmentData: Partial<InsertAssignment>,
+  ): Promise<Assignment | undefined>;
   deleteAssignment(assignmentId: number, userId: number): Promise<boolean>;
   getStudySessionsByUser(userId: number): Promise<StudySession[]>;
   createStudySession(sessionData: InsertStudySession): Promise<StudySession>;
@@ -3169,6 +3174,24 @@ export class DatabaseStorage implements IStorage {
 
   async createAssignment(assignmentData: InsertAssignment): Promise<Assignment> {
     const [assignment] = await db.insert(assignments).values(assignmentData).returning();
+    return assignment;
+  }
+
+  async updateAssignment(
+    assignmentId: number,
+    userId: number,
+    assignmentData: Partial<InsertAssignment>,
+  ): Promise<Assignment | undefined> {
+    const [assignment] = await db
+      .update(assignments)
+      .set(assignmentData)
+      .where(
+        and(
+          eq(assignments.id, assignmentId),
+          eq(assignments.userId, userId),
+        ),
+      )
+      .returning();
     return assignment;
   }
 

@@ -35,6 +35,16 @@ final class AddAssignment extends AcademicEvent {
   List<Object?> get props => [input];
 }
 
+final class UpdateAssignment extends AcademicEvent {
+  const UpdateAssignment(this.assignmentId, this.input);
+
+  final int assignmentId;
+  final AssignmentInput input;
+
+  @override
+  List<Object?> get props => [assignmentId, input];
+}
+
 final class DeleteAssignment extends AcademicEvent {
   const DeleteAssignment(this.assignmentId);
 

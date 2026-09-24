@@ -2367,3 +2367,17 @@ mtime_ms = 1790232342503
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/105cda85-1b62-4343-842a-396ffc73ce6f/c77ee6e7-428e-4539-a734-ee704a285ec7"
 storage_version_token = "1790232349211482"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ex7Yq9zqZJKF7VsOBJDfJ"
+uri = "file://deliverables/academic-planner-decimal-hours-fix.zip"
+type = "unspecified"
+title = "Academic Planner Decimal-Hours Fix"
+description = "ZIP containing only the 13 changed source, test, and migration files."
+logical_id = "99cc5282-9c40-443c-936d-c19ed8d4e462"
+content_hash = "sha256:7ef21035f50a77a3435eae463a61a1673a129d0f8a02023cad88cee566ce0174"
+size = 105515
+mtime_ms = 1790233877437
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/99cc5282-9c40-443c-936d-c19ed8d4e462/9ddde3d7-6152-4209-9809-7726ba166bed"
+storage_version_token = "1790233885575910"
+content_type = "application/octet-stream"

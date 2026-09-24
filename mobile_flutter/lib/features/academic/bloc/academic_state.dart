@@ -14,6 +14,7 @@ enum AcademicAction {
   none,
   addingClass,
   addingAssignment,
+  updatingAssignment,
   deletingAssignment,
   addingStudySession,
   completingStudySession,

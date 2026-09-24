@@ -30,6 +30,7 @@
     "test:finance": "tsx --test server/finance.test.ts",
     "test:proactive-guidance": "tsx --test server/proactive-guidance.test.ts",
     "test:caregiver-context": "tsx --test server/caregiver-context.test.ts",
+    "test:assignment-input": "tsx --test server/assignment-input.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

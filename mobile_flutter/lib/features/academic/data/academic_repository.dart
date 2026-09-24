@@ -16,6 +16,9 @@ class AcademicRepository {
   Future<AssignmentModel> createAssignment(AssignmentInput input) =>
       api.createAssignment(input);
 
+  Future<AssignmentModel> updateAssignment(int id, AssignmentInput input) =>
+      api.updateAssignment(id, input);
+
   Future<void> deleteAssignment(int id) => api.deleteAssignment(id);
 
   Future<List<StudySessionModel>> getStudySessions() =>

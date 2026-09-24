@@ -504,7 +504,7 @@ class _AssignmentsTab extends StatelessWidget {
           const SizedBox(height: 8),
           const _ApiCapabilityNotice(
             text:
-                'Assignment status and deadlines are shown from the existing API. Editing and status updates are not available yet.',
+                'Assignments can be edited here. Status updates are not available yet.',
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -1162,6 +1162,22 @@ class _AssignmentCard extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
+                IconButton(
+                  tooltip: 'Edit assignment',
+                  onPressed: isDeleting
+                      ? null
+                      : () => _showAssignmentDialog(
+                            context,
+                            assignment: item,
+                          ),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
                 TextButton(
                   onPressed: isDeleting ? null : () => _confirmDelete(context),
                   style: TextButton.styleFrom(
@@ -1178,6 +1194,7 @@ class _AssignmentCard extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
+    final bloc = context.read<AcademicBloc>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1199,7 +1216,7 @@ class _AssignmentCard extends StatelessWidget {
       ),
     );
     if (!context.mounted || confirmed != true) return;
-    context.read<AcademicBloc>().add(DeleteAssignment(item.id));
+    bloc.add(DeleteAssignment(item.id));
   }
 }
 
@@ -2410,19 +2427,24 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
   }
 }
 
-Future<void> _showAssignmentDialog(BuildContext context) {
+Future<void> _showAssignmentDialog(
+  BuildContext context, {
+  AssignmentModel? assignment,
+}) {
   final bloc = context.read<AcademicBloc>();
   return showDialog<void>(
     context: context,
     builder: (_) => BlocProvider.value(
       value: bloc,
-      child: const _AssignmentDialog(),
+      child: _AssignmentDialog(assignment: assignment),
     ),
   );
 }
 
 class _AssignmentDialog extends StatefulWidget {
-  const _AssignmentDialog();
+  const _AssignmentDialog({this.assignment});
+
+  final AssignmentModel? assignment;
 
   @override
   State<_AssignmentDialog> createState() => _AssignmentDialogState();
@@ -2442,9 +2464,17 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _hoursController = TextEditingController();
+    final assignment = widget.assignment;
+    _titleController = TextEditingController(text: assignment?.title ?? '');
+    _descriptionController =
+        TextEditingController(text: assignment?.description ?? '');
+    _hoursController = TextEditingController(
+      text: assignment?.estimatedHours?.toString() ?? '',
+    );
+    _type = assignment?.type ?? _type;
+    _priority = assignment?.priority ?? _priority;
+    _dueDate = assignment?.dueDate;
+    _classId = assignment?.classId;
   }
 
   @override
@@ -2458,8 +2488,11 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<AcademicBloc>();
+    final isEditing = widget.assignment != null;
     final isSubmitting = context.select<AcademicBloc, bool>(
-      (bloc) => bloc.state.action == AcademicAction.addingAssignment,
+      (bloc) =>
+          bloc.state.action == AcademicAction.addingAssignment ||
+          bloc.state.action == AcademicAction.updatingAssignment,
     );
     final classes = bloc.state.classes;
 
@@ -2470,7 +2503,10 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
           previous.errorMessage != current.errorMessage,
       listener: (context, state) {
         if (state.action == AcademicAction.none &&
-            state.actionMessage != null &&
+            state.actionMessage ==
+                (isEditing
+                    ? 'Assignment updated successfully.'
+                    : 'Assignment added successfully.') &&
             state.errorMessage == null &&
             mounted) {
           Navigator.of(context).pop();
@@ -2481,7 +2517,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
           horizontal: AppResponsive.isCompact(context) ? 12 : 24,
           vertical: 24,
         ),
-        title: const Text('Add New Assignment'),
+        title: Text(isEditing ? 'Edit Assignment' : 'Add New Assignment'),
         content: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: AppResponsive.dialogWidth(context),
@@ -2535,7 +2571,9 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                 const SizedBox(height: 10),
                 if (classes.isNotEmpty)
                   DropdownButtonFormField<int?>(
-                    value: _classId,
+                    value: classes.any((item) => item.id == _classId)
+                        ? _classId
+                        : null,
                     decoration:
                         const InputDecoration(labelText: 'Class (optional)'),
                     items: [
@@ -2580,20 +2618,7 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
                   ),
                   decoration:
                       const InputDecoration(labelText: 'Estimated hours'),
-                  validator: (value) {
-                    final text = value?.trim() ?? '';
-                    if (text.isEmpty) {
-                      return 'Estimated hours is required';
-                    }
-                    final parsed = double.tryParse(text);
-                    if (parsed == null || !parsed.isFinite) {
-                      return 'Enter a valid number of hours';
-                    }
-                    if (parsed <= 0 || parsed > 100) {
-                      return 'Enter more than 0 and at most 100 hours';
-                    }
-                    return null;
-                  },
+                  validator: AssignmentHours.validationMessage,
                 ),
                 ],
               ),
@@ -2607,7 +2632,11 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
           ),
           FilledButton(
             onPressed: isSubmitting ? null : _submit,
-            child: Text(isSubmitting ? 'Adding...' : 'Add Assignment'),
+            child: Text(
+              isSubmitting
+                  ? (isEditing ? 'Saving...' : 'Adding...')
+                  : (isEditing ? 'Save Changes' : 'Add Assignment'),
+            ),
           ),
         ],
       ),
@@ -2615,13 +2644,22 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
   }
 
   Future<void> _pickDueDate() async {
-    final initialDate =
-        _dueDate ?? DateTime.now().add(const Duration(days: 1));
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDueDate = _dueDate ?? today.add(const Duration(days: 1));
+    final selectedDueDateOnly = DateTime(
+      selectedDueDate.year,
+      selectedDueDate.month,
+      selectedDueDate.day,
+    );
+    final initialDate = selectedDueDateOnly.isBefore(today)
+        ? today
+        : selectedDueDateOnly;
     final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(DateTime.now().year + 5),
+      firstDate: today,
+      lastDate: DateTime(today.year + 5),
     );
     if (!mounted || picked == null) return;
     setState(
@@ -2630,8 +2668,8 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
           picked.year,
           picked.month,
           picked.day,
-          initialDate.hour,
-          initialDate.minute,
+          selectedDueDate.hour,
+          selectedDueDate.minute,
         );
         _dueDateError = null;
       },
@@ -2647,27 +2685,28 @@ class _AssignmentDialogState extends State<_AssignmentDialog> {
       return;
     }
 
-    final estimatedHours = double.tryParse(_hoursController.text.trim());
-    if (estimatedHours == null ||
-        !estimatedHours.isFinite ||
-        estimatedHours <= 0 ||
-        estimatedHours > 100) {
-      return;
-    }
+    final estimatedHours = AssignmentHours.parse(_hoursController.text);
+    if (estimatedHours == null) return;
 
-    context.read<AcademicBloc>().add(
-          AddAssignment(
-            AssignmentInput(
-              title: _titleController.text,
-              description: _descriptionController.text,
-              type: _type,
-              dueDate: _dueDate!,
-              priority: _priority,
-              classId: _classId,
-              estimatedHours: estimatedHours,
-            ),
-          ),
-        );
+    final bloc = context.read<AcademicBloc>();
+    final classId = bloc.state.classes.any((item) => item.id == _classId)
+        ? _classId
+        : null;
+    final input = AssignmentInput(
+      title: _titleController.text,
+      description: _descriptionController.text,
+      type: _type,
+      dueDate: _dueDate!,
+      priority: _priority,
+      classId: classId,
+      estimatedHours: estimatedHours,
+    );
+    final assignment = widget.assignment;
+    if (assignment == null) {
+      bloc.add(AddAssignment(input));
+    } else {
+      bloc.add(UpdateAssignment(assignment.id, input));
+    }
   }
 }
 

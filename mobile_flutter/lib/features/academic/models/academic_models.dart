@@ -220,7 +220,7 @@ class AssignmentInput extends Equatable {
         'type': type,
         'dueDate': dueDate.toUtc().toIso8601String(),
         'priority': priority,
-        'estimatedHours': _validatedEstimatedHours(estimatedHours),
+        'estimatedHours': AssignmentHours.validate(estimatedHours),
       };
 
   @override
@@ -233,6 +233,41 @@ class AssignmentInput extends Equatable {
         priority,
         estimatedHours,
       ];
+}
+
+abstract final class AssignmentHours {
+  static const double maximum = 100;
+
+  static String? validationMessage(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Estimated hours is required';
+    }
+    final parsed = double.tryParse(text);
+    if (parsed == null || !parsed.isFinite) {
+      return 'Enter a valid number of hours';
+    }
+    if (parsed <= 0 || parsed > maximum) {
+      return 'Enter more than 0 and at most 100 hours';
+    }
+    return null;
+  }
+
+  static double? parse(String? value) {
+    if (validationMessage(value) != null) return null;
+    return double.parse(value!.trim());
+  }
+
+  static double validate(double value) {
+    if (!value.isFinite || value <= 0 || value > maximum) {
+      throw ArgumentError.value(
+        value,
+        'estimatedHours',
+        'Estimated hours must be greater than 0 and at most 100.',
+      );
+    }
+    return value;
+  }
 }
 
 class StudySessionModel extends Equatable {
@@ -625,16 +660,6 @@ double? _asNullableDouble(Object? value) {
   return parsed?.isFinite == true ? parsed : null;
 }
 
-double _validatedEstimatedHours(double value) {
-  if (!value.isFinite || value <= 0 || value > 100) {
-    throw ArgumentError.value(
-      value,
-      'estimatedHours',
-      'Estimated hours must be greater than 0 and at most 100.',
-    );
-  }
-  return value;
-}
 
 String _asString(Object? value, {String fallback = ''}) =>
     value is String ? value : fallback;

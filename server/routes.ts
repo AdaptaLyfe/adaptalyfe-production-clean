@@ -2,6 +2,10 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage, RewardRedemptionError } from "./storage";
+import {
+  AssignmentInputError,
+  parseAssignmentWriteInput,
+} from "./assignment-input";
 import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
 import {
   generateAdaptAIChatTurn,
@@ -1910,46 +1914,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/assignments", async (req: any, res) => {
-    try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const user = req.session.user;
-      
-      // Convert dueDate string to proper timestamp
-      const dueDate = new Date(req.body.dueDate);
-      if (isNaN(dueDate.getTime())) {
-        throw new Error("Invalid due date provided");
-      }
+    if (!req.session.userId || !req.session.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
-      const rawEstimatedHours = req.body.estimatedHours;
-      const estimatedHours =
-        rawEstimatedHours === undefined || rawEstimatedHours === null
-          ? null
-          : Number(rawEstimatedHours);
-      if (
-        estimatedHours !== null &&
-        (!Number.isFinite(estimatedHours) ||
-          estimatedHours <= 0 ||
-          estimatedHours > 100)
-      ) {
-        throw new Error("Estimated hours must be greater than 0 and at most 100");
+    let assignmentData;
+    try {
+      assignmentData = parseAssignmentWriteInput(req.body);
+    } catch (error) {
+      if (!(error instanceof AssignmentInputError)) {
+        console.error("Failed to validate assignment input:", error);
+        return res.status(500).json({ message: "Failed to create assignment" });
       }
-      
-      const assignmentData = { 
-        ...req.body, 
-        userId: user.id,
-        dueDate,
-        estimatedHours,
-      };
-      
-      const assignment = await storage.createAssignment(assignmentData);
-      
-      res.json(assignment);
+      return res.status(400).json({
+        message: "Invalid assignment data",
+        error: error.message,
+      });
+    }
+
+    try {
+      const assignment = await storage.createAssignment({
+        ...assignmentData,
+        userId: req.session.user.id,
+      });
+      return res.json(assignment);
     } catch (error) {
       console.error("Failed to create assignment:", error);
-      res.status(400).json({ message: "Invalid assignment data", error: error instanceof Error ? error.message : "Unknown error" });
+      return res.status(500).json({ message: "Failed to create assignment" });
+    }
+  });
+
+  app.patch("/api/assignments/:id", async (req: any, res) => {
+    if (!req.session.userId || !req.session.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const assignmentId = Number(req.params.id);
+    if (!Number.isSafeInteger(assignmentId) || assignmentId <= 0) {
+      return res.status(400).json({ message: "Invalid assignment id" });
+    }
+
+    let assignmentData;
+    try {
+      assignmentData = parseAssignmentWriteInput(req.body);
+    } catch (error) {
+      if (!(error instanceof AssignmentInputError)) {
+        console.error("Failed to validate assignment input:", error);
+        return res.status(500).json({ message: "Failed to update assignment" });
+      }
+      return res.status(400).json({
+        message: "Invalid assignment data",
+        error: error.message,
+      });
+    }
+
+    try {
+      const assignment = await storage.updateAssignment(
+        assignmentId,
+        req.session.user.id,
+        assignmentData,
+      );
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      return res.json(assignment);
+    } catch (error) {
+      console.error("Failed to update assignment:", error);
+      return res.status(500).json({ message: "Failed to update assignment" });
     }
   });
 

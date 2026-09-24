@@ -12,6 +12,7 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
     on<RefreshAcademic>(_load);
     on<AddAcademicClass>(_addClass);
     on<AddAssignment>(_addAssignment);
+    on<UpdateAssignment>(_updateAssignment);
     on<DeleteAssignment>(_deleteAssignment);
     on<AddStudySession>(_addStudySession);
     on<CompleteStudySession>(_completeStudySession);
@@ -153,6 +154,47 @@ class AcademicBloc extends Bloc<AcademicEvent, AcademicState> {
         emit,
         error,
         'Failed to add assignment. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _updateAssignment(
+    UpdateAssignment event,
+    Emitter<AcademicState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        action: AcademicAction.updatingAssignment,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      final updatedAssignment = await repository.updateAssignment(
+        event.assignmentId,
+        event.input,
+      );
+      final assignments = [
+        updatedAssignment,
+        ...state.assignments.where(
+          (item) => item.id != updatedAssignment.id,
+        ),
+      ];
+      emit(
+        state.copyWith(
+          status: AcademicStatus.loaded,
+          assignments: assignments,
+          action: AcademicAction.none,
+          errorMessage: null,
+          actionMessage: 'Assignment updated successfully.',
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to update assignment. Please try again.',
       );
     }
   }
