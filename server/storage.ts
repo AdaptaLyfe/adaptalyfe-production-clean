@@ -57,6 +57,10 @@ import {
   calculateCurrentStreak,
   normalizedActivityDates,
 } from "./activity-streak";
+import {
+  COUNTED_REWARD_REDEMPTION_STATUSES,
+  hasReachedRewardRedemptionLimit,
+} from "./reward-redemption-rules";
 
 function getServerCalendarDate(date = new Date()): string {
   return date.toISOString().slice(0, 10);
@@ -3451,10 +3455,9 @@ export class DatabaseStorage implements IStorage {
             rewardRedemptions.rewardId,
             userRewards.map((reward) => reward.id),
           ),
-          or(
-            eq(rewardRedemptions.status, "pending"),
-            eq(rewardRedemptions.status, "approved"),
-            eq(rewardRedemptions.status, "completed"),
+          inArray(
+            rewardRedemptions.status,
+            COUNTED_REWARD_REDEMPTION_STATUSES,
           ),
         ),
       )
@@ -3491,10 +3494,9 @@ export class DatabaseStorage implements IStorage {
             rewardRedemptions.rewardId,
             activeRewards.map((reward) => reward.id),
           ),
-          or(
-            eq(rewardRedemptions.status, "pending"),
-            eq(rewardRedemptions.status, "approved"),
-            eq(rewardRedemptions.status, "completed"),
+          inArray(
+            rewardRedemptions.status,
+            COUNTED_REWARD_REDEMPTION_STATUSES,
           ),
         ),
       )
@@ -3648,18 +3650,19 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(rewardRedemptions.userId, userId),
             eq(rewardRedemptions.rewardId, rewardId),
-            or(
-              eq(rewardRedemptions.status, "pending"),
-              eq(rewardRedemptions.status, "approved"),
-              eq(rewardRedemptions.status, "completed"),
+            inArray(
+              rewardRedemptions.status,
+              COUNTED_REWARD_REDEMPTION_STATUSES,
             ),
           ),
         );
       const currentRedemptions = Number(redemptionCount?.count ?? 0);
 
       if (
-        reward.maxRedemptions !== null &&
-        currentRedemptions >= reward.maxRedemptions
+        hasReachedRewardRedemptionLimit(
+          reward.maxRedemptions,
+          currentRedemptions,
+        )
       ) {
         throw new RewardRedemptionError(
           "REWARD_LIMIT_REACHED",

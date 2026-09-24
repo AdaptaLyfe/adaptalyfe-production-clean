@@ -2311,3 +2311,17 @@ mtime_ms = 1790228781451
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2d800c68-f4d1-4b92-b463-101982160ed0/0281d2ea-0de5-44a9-826a-554ef5abf179"
 storage_version_token = "1790228785852983"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "214_sF9qHQRiO_NuDioRN"
+uri = "file://attached_assets/reward-redemption-limit-fix.zip"
+type = "unspecified"
+title = "Reward redemption limit fix"
+description = "ZIP contains the updated storage enforcement, shared redemption-limit rules, and focused regression tests. Extract at the repository root."
+logical_id = "190814a5-ca8d-472b-9cfd-96596a1a66db"
+content_hash = "sha256:d0796492f5ada02bb38f1f1d6eddb65d0ab8493de1b7382b40ee717ea11969ad"
+size = 29020
+mtime_ms = 1790229675444
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/190814a5-ca8d-472b-9cfd-96596a1a66db/eb633352-9112-484c-8394-6be4657afc49"
+storage_version_token = "1790229683884997"
+content_type = "application/octet-stream"
