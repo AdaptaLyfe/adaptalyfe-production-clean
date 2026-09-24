@@ -1,0 +1,239 @@
+Fix the Caregiver Setup caregiver invitation flow in the existing Flutter application.
+
+### Bug
+
+When a user invites a caregiver:
+
+1. The caregiver receives the invitation.
+2. The caregiver accepts the invitation successfully.
+3. The invitation status changes to `ACCEPTED`.
+4. However, the caregiver's name does NOT appear in the **"Active caregivers"** list.
+5. The same caregiver still appears in the **"Invitations"** section with `ACCEPTED` status.
+
+This bug has been fixed/reopened multiple times, so do NOT apply a temporary UI-only fix. Find and fix the actual root cause across the complete data flow.
+
+### Required behavior
+
+After a caregiver accepts an invitation:
+
+* The caregiver must immediately/automatically appear in **Active caregivers**.
+* The accepted invitation must NOT continue to appear in the active/pending **Invitations** list.
+* If the Invitations section intentionally displays invitation history, an `ACCEPTED` record may remain there only as history, but it must not be treated as a pending invitation.
+* Active caregiver data must come from the correct source of truth.
+* The relationship between the inviter/care recipient and accepted caregiver must be stored correctly.
+* Refreshing the page/app must still show the caregiver under Active caregivers.
+* Logging out and logging back in must still show the caregiver correctly.
+* The fix must work for every caregiver, not only the caregiver used during testing.
+
+### IMPORTANT: Investigate the root cause first
+
+Before changing code, trace the complete flow:
+
+1. Caregiver invitation creation.
+2. Invitation document/model creation.
+3. Invitation ID and caregiver/user ID.
+4. Invitation acceptance.
+5. Backend/Firebase/Firestore update after acceptance.
+6. Creation/update of the caregiver relationship.
+7. Active caregivers query.
+8. Invitations query.
+9. Flutter repository/data-source layer.
+10. BLoC events and states.
+11. UI listeners/builders.
+12. Refresh/reload behavior.
+
+Check whether the problem is caused by:
+
+* Wrong Firestore collection/document.
+* Wrong user ID/caregiver ID.
+* Wrong parent/care-recipient ID.
+* Accepted invitation not creating the caregiver relationship.
+* Field-name mismatch.
+* Different enum/status values such as `accepted`, `ACCEPTED`, or `Accepted`.
+* Active caregiver query filtering incorrectly.
+* Invitations query incorrectly including accepted invitations as pending.
+* BLoC state not being refreshed after acceptance.
+* Cached/stale data.
+* Stream/query not listening to the correct document.
+* Duplicate models or different data sources being used for Active caregivers and Invitations.
+* Race condition between accepting the invitation and loading Active caregivers.
+* Missing Firestore update.
+* Security rules preventing the required document from being read/written.
+* Null/missing caregiver profile information.
+
+### Architecture requirement
+
+Follow the existing Flutter project's architecture and patterns.
+
+Do NOT rewrite the entire caregiver feature.
+
+Use the existing:
+
+* BLoC/Cubit
+* Events
+* States
+* Repository
+* Data source/service
+* Models
+* Firebase/Firestore implementation
+* Existing UI
+
+unless there is a clear root-cause reason to modify them.
+
+Keep the implementation clean and maintainable.
+
+### Data consistency requirement
+
+There should be one clear source of truth for an accepted caregiver relationship.
+
+When invitation acceptance succeeds, make sure the required relationship/data is persisted correctly.
+
+Conceptually the flow should be:
+
+Invite caregiver
+→ Invitation created
+→ Caregiver accepts
+→ Invitation status becomes ACCEPTED
+→ Caregiver relationship becomes ACTIVE
+→ Active caregivers query returns caregiver
+→ UI updates
+→ Invitations no longer treats it as pending
+
+Do not rely only on local Flutter state to make the caregiver appear.
+
+### BLoC/state requirement
+
+After successful acceptance:
+
+* Update the backend first.
+* Refresh/reload the caregiver relationship data.
+* Refresh the invitation data if required.
+* Emit the correct BLoC state.
+* Make sure the UI rebuilds from the updated state.
+* Avoid forcing the UI to manually insert a fake caregiver into the list.
+
+If the app uses streams, verify that the stream actually listens to the correct Firestore documents/query.
+
+### Invitations section
+
+Check the existing logic carefully.
+
+If the Invitations section is supposed to show only pending invitations, its query/filter must exclude:
+
+* `ACCEPTED`
+* `DECLINED`
+* `EXPIRED`
+* other completed statuses
+
+Do not simply hide `ACCEPTED` from the UI if the backend/query logic is incorrect. Fix the data/query logic at the appropriate layer.
+
+### Active caregivers section
+
+Verify that Active caregivers uses the accepted caregiver relationship and correct IDs.
+
+Make sure it does not depend on:
+
+* Invitation status alone
+* Temporary local state
+* Previously loaded user data
+* A stale cached list
+
+The caregiver must remain visible after:
+
+* Page refresh
+* App restart
+* Logout/login
+* Navigation away and back
+* Opening Caregiver Setup again
+
+### Existing data / backward compatibility
+
+There may already be existing accepted invitations/caregivers in the database.
+
+Do NOT break existing data.
+
+If old accepted invitations do not have the required caregiver relationship record, identify this case and handle it safely.
+
+If a migration/backfill is genuinely required, explain exactly what is needed before implementing it.
+
+Do not delete existing caregiver or invitation data.
+
+### Error handling
+
+Also verify:
+
+* Failed acceptance does not create a false Active caregiver.
+* Failed relationship creation is handled properly.
+* Firestore errors are shown correctly.
+* Loading states are handled correctly.
+* Duplicate acceptance does not create duplicate caregiver records.
+* Accepting the same invitation multiple times is idempotent/safe.
+
+### Testing
+
+After fixing the root cause, test this complete scenario:
+
+#### Test 1 — New caregiver
+
+1. User A invites User B.
+2. User B receives invitation.
+3. User B accepts.
+4. Verify invitation status becomes `ACCEPTED`.
+5. Verify User B appears in User A's **Active caregivers**.
+6. Verify User B does not appear as a pending invitation.
+7. Refresh.
+8. Verify User B is still Active.
+9. Restart the app.
+10. Verify User B is still Active.
+11. Logout/login.
+12. Verify User B is still Active.
+
+#### Test 2 — Multiple caregivers
+
+Invite at least 2–3 caregivers.
+
+Accept them separately.
+
+Verify:
+
+* All accepted caregivers appear in Active caregivers.
+* Pending caregivers remain only in Invitations.
+* Accepted caregivers are not incorrectly treated as pending.
+* One caregiver's acceptance does not remove another caregiver.
+
+#### Test 3 — Repeated acceptance
+
+Try accepting an already accepted invitation.
+
+Verify that:
+
+* No duplicate caregiver relationship is created.
+* No duplicate Active caregiver appears.
+* The app does not crash.
+* Data remains consistent.
+
+### Important debugging rule
+
+Do NOT tell me only that the UI was fixed.
+
+Before completing the task, identify:
+
+1. Root cause.
+2. Exact file(s) changed.
+3. Backend/data-model change, if any.
+4. BLoC/state change, if any.
+5. Query/filter change, if any.
+6. Why the bug could previously reopen.
+7. Why the new implementation prevents it from reopening.
+
+Search the entire Flutter codebase for all caregiver invitation and Active caregiver logic before making the final changes.
+
+Do not create duplicate caregiver logic in another file.
+
+Do not hardcode caregiver names, IDs, statuses, or test data.
+
+Do not remove existing functionality.
+
+Finally, run/analyze the affected Flutter code and fix any compile errors, runtime errors, null-safety issues, or incorrect Firestore field references introduced by the fix.
+
+The final result must be a proper end-to-end data-consistency fix, not a temporary UI workaround.
