@@ -54,6 +54,7 @@ import {
 } from "./reward-badges";
 import type { RewardBadgeView } from "./reward-badges";
 import {
+  shouldIncludeLegacyTaskActivity,
   calculateCurrentStreak,
   normalizedActivityDates,
 } from "./activity-streak";
@@ -278,8 +279,8 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
   updateUserStreak(userId: number, streakDays: number): Promise<User | undefined>;
-  recordUserActivity(userId: number, activityDate?: Date): Promise<number>;
-  refreshUserActivityStreak(userId: number): Promise<number>;
+  recordUserActivity(userId: number, today?: string): Promise<number>;
+  refreshUserActivityStreak(userId: number, today?: string): Promise<number>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
   authenticateUser(username: string, password: string): Promise<User | null>;
   invalidatePasswordResetTokens(userId: number): Promise<void>;
@@ -302,8 +303,17 @@ export interface IStorage {
   getTaskById(taskId: number): Promise<DailyTask | undefined>;
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
-  updateTaskCompletion(taskId: number, isCompleted: boolean, completionDate?: string): Promise<DailyTask | undefined>;
-  completeDailyTaskIfIncomplete(taskId: number, userId: number): Promise<DailyTask | undefined>;
+  updateTaskCompletion(
+    taskId: number,
+    isCompleted: boolean,
+    completionDate?: string,
+    today?: string,
+  ): Promise<DailyTask | undefined>;
+  completeDailyTaskIfIncomplete(
+    taskId: number,
+    userId: number,
+    today?: string,
+  ): Promise<DailyTask | undefined>;
   deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
   // Bills
@@ -755,27 +765,38 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async recordUserActivity(userId: number, activityDate = new Date()): Promise<number> {
-    void activityDate;
-    return this.refreshUserActivityStreak(userId);
+  async recordUserActivity(
+    userId: number,
+    today = getServerCalendarDate(),
+  ): Promise<number> {
+    return this.refreshUserActivityStreak(userId, today);
   }
 
-  async refreshUserActivityStreak(userId: number): Promise<number> {
-    const today = getServerCalendarDate();
+  async refreshUserActivityStreak(
+    userId: number,
+    today = getServerCalendarDate(),
+  ): Promise<number> {
     const capabilities = await getDailyTaskSchemaCapabilities();
     const completionDates: unknown[] = [];
+    const completionTaskIds = new Set<number>();
 
     if (capabilities.hasCompletions) {
       const completionRows = await db
-        .select({ completionDate: dailyTaskCompletions.completionDate })
+        .select({
+          taskId: dailyTaskCompletions.taskId,
+          completionDate: dailyTaskCompletions.completionDate,
+        })
         .from(dailyTaskCompletions)
         .where(eq(dailyTaskCompletions.userId, userId));
+      completionRows.forEach((row) => completionTaskIds.add(row.taskId));
       completionDates.push(...completionRows.map((row) => row.completionDate));
     }
 
     const [taskRows, shoppingRows] = await Promise.all([
       db
         .select({
+          id: dailyTasks.id,
+          frequency: dailyTasks.frequency,
           isCompleted: dailyTasks.isCompleted,
           completedAt: dailyTasks.completedAt,
         })
@@ -792,7 +813,16 @@ export class DatabaseStorage implements IStorage {
 
     completionDates.push(
       ...taskRows
-        .filter((task) => task.isCompleted && task.completedAt)
+        .filter(
+          (task) =>
+            task.isCompleted &&
+            task.completedAt &&
+            shouldIncludeLegacyTaskActivity(
+              capabilities.hasCompletions,
+              task.frequency,
+              completionTaskIds.has(task.id),
+            ),
+        )
         .map((task) => task.completedAt),
       ...shoppingRows
         .filter((item) => item.isPurchased && item.purchasedDate)
@@ -1155,6 +1185,7 @@ export class DatabaseStorage implements IStorage {
     taskId: number,
     isCompleted: boolean,
     completionDate = getServerCalendarDate(),
+    today = getServerCalendarDate(),
   ): Promise<DailyTask | undefined> {
     const existingTask = await this.getTaskById(taskId);
     if (!existingTask) return undefined;
@@ -1200,7 +1231,7 @@ export class DatabaseStorage implements IStorage {
 
       // Keep the legacy fields current for existing consumers, but the
       // completion table is the source of truth for recurring task dates.
-      if (!completionRecordAvailable || completionDate === getServerCalendarDate()) {
+      if (!completionRecordAvailable || completionDate === today) {
         const legacyCompletedAt = completionRecordAvailable
           ? new Date()
           : new Date(`${completionDate}T12:00:00.000Z`);
@@ -1234,10 +1265,11 @@ export class DatabaseStorage implements IStorage {
   async completeDailyTaskIfIncomplete(
     taskId: number,
     userId: number,
+    today = getServerCalendarDate(),
   ): Promise<DailyTask | undefined> {
     const task = await this.getTaskById(taskId);
     if (!task || task.userId !== userId || task.isCompleted) return undefined;
-    return this.updateTaskCompletion(taskId, true);
+    return this.updateTaskCompletion(taskId, true, today, today);
   }
 
   async deleteDailyTask(taskId: number, userId: number): Promise<boolean> {

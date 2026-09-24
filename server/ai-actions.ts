@@ -205,7 +205,7 @@ export async function executeAdaptAIAction(
     | "completeDailyTaskIfIncomplete"
     | "updateUserPoints"
   >,
-  options: { confirmed: boolean },
+  options: { confirmed: boolean; today?: string },
 ): Promise<AdaptAIActionSuccess> {
   if (!Number.isInteger(authenticatedUserId) || authenticatedUserId < 1) {
     throw new AdaptAIActionError(
@@ -273,6 +273,7 @@ export async function executeAdaptAIAction(
   const task = await storage.completeDailyTaskIfIncomplete(
     existingTask.id,
     authenticatedUserId,
+    options.today,
   );
   if (!task) {
     throw new AdaptAIActionError(

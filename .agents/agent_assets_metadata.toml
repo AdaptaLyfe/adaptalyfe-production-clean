@@ -2423,3 +2423,17 @@ mtime_ms = 1790240753775
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/782bcee6-a5d3-49ff-80aa-70ee08c50d65/548688d1-04b6-4c37-b92c-72ff8e7d79e7"
 storage_version_token = "1790240783763138"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q7pruEwyPCVV2SL9wcjOC"
+uri = "file://artifacts/current-streak-fix.zip"
+type = "unspecified"
+title = "Current Streak fix source ZIP"
+description = "Contains only the seven source and test files changed for this fix."
+logical_id = "560b7e1b-c410-41a3-a3e2-e09a5d090d60"
+content_hash = "sha256:7f42127f417e53d59e1582d12bac989b847d2f1497eabf8ebd7d5b89b139e4c4"
+size = 87500
+mtime_ms = 1790241922776
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/560b7e1b-c410-41a3-a3e2-e09a5d090d60/4f0ffe0c-e48e-43db-977f-a1dafa23e7f5"
+storage_version_token = "1790241929348442"
+content_type = "application/octet-stream"

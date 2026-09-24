@@ -42,8 +42,15 @@ function storageFor(existingTask = task()) {
       calls.push({ method: "getTaskById", args: [taskId] });
       return existingTask.id === taskId ? existingTask : undefined;
     },
-    completeDailyTaskIfIncomplete: async (taskId: number, userId: number) => {
-      calls.push({ method: "completeDailyTaskIfIncomplete", args: [taskId, userId] });
+    completeDailyTaskIfIncomplete: async (
+      taskId: number,
+      userId: number,
+      today?: string,
+    ) => {
+      calls.push({
+        method: "completeDailyTaskIfIncomplete",
+        args: today ? [taskId, userId, today] : [taskId, userId],
+      });
       return task({ ...existingTask, isCompleted: true, completedAt: new Date() });
     },
     updateUserPoints: async (...args: unknown[]) => {
@@ -223,6 +230,23 @@ test("does not award points when a concurrent completion loses the atomic update
   assert.equal(
     storage.calls.filter((call) => call.method === "updateUserPoints").length,
     1,
+  );
+});
+
+test("passes the user's current calendar date to daily task completion", async () => {
+  const storage = storageFor(task({ isCompleted: false }));
+
+  await executeAdaptAIAction(
+    { action: "complete_task", parameters: { taskId: 12 } },
+    7,
+    storage,
+    { confirmed: true, today: "2026-09-25" },
+  );
+
+  assert.deepEqual(
+    storage.calls.find((call) => call.method === "completeDailyTaskIfIncomplete")
+      ?.args,
+    [12, 7, "2026-09-25"],
   );
 });
 

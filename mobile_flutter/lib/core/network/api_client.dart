@@ -243,6 +243,9 @@ class ApiClient {
       // The existing backend uses this marker to return native bearer
       // sessions from login and registration.
       'X-Adaptalyfe-Client': 'native',
+      // Streak and date-scoped task calculations use the device's calendar day.
+      'X-User-Timezone-Offset-Minutes':
+          DateTime.now().timeZoneOffset.inMinutes.toString(),
     };
 
     if (token != null && token.trim().isNotEmpty) {
