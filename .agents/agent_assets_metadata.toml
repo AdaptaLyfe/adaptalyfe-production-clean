@@ -2283,3 +2283,17 @@ mtime_ms = 1790227839334
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0ea4af9b-29b9-49d0-9ee7-3fda481ba262/cab78d31-93bc-41b9-a25a-60f68294661d"
 storage_version_token = "1790227845010448"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8uAye3kwk7GNJYPnCJp0I"
+uri = "file://attached_assets/calendar-pretty-display-label-fix.zip"
+type = "unspecified"
+title = "Calendar prettyDisplayLabel fix"
+description = "One-file ZIP. Extract at the Flutter project root to replace lib/features/calendar/presentation/calendar_screen.dart."
+logical_id = "550f0f5d-b9dd-4155-ab62-d5a78ed4c873"
+content_hash = "sha256:574c7a21c4bd0c32fa9e143f4e321a19170bf31e7681914f252de14aca787169"
+size = 11654
+mtime_ms = 1790228350135
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/550f0f5d-b9dd-4155-ab62-d5a78ed4c873/d34456c3-a95f-4641-b386-c857db35123b"
+storage_version_token = "1790228354699197"
+content_type = "application/octet-stream"
