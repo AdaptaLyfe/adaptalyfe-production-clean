@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
 import '../models/subscription_models.dart';
 
@@ -73,8 +74,25 @@ class PurchaseService {
   Future<bool> buy(ProductDetails product) {
     // Subscriptions are non-consumable from the Flutter plugin's purchase
     // API. StoreKit/Play still own renewal and cancellation.
+    final PurchaseParam purchaseParam;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (product is! GooglePlayProductDetails ||
+          product.offerToken == null ||
+          product.offerToken!.isEmpty) {
+        throw const FormatException(
+          'Google Play did not return a subscription offer. '
+          'Check the Play product and offer setup, then try again.',
+        );
+      }
+      purchaseParam = GooglePlayPurchaseParam(
+        productDetails: product,
+        offerToken: product.offerToken,
+      );
+    } else {
+      purchaseParam = PurchaseParam(productDetails: product);
+    }
     return _store.buyNonConsumable(
-      purchaseParam: PurchaseParam(productDetails: product),
+      purchaseParam: purchaseParam,
     );
   }
 

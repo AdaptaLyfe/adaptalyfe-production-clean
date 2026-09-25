@@ -81,6 +81,13 @@ class SubscriptionApi {
         {'subscriptionId': subscriptionId},
       );
 
+  Future<void> recoverStripeSubscription() async {
+    final response = await client.post<dynamic>('/api/recover-subscription');
+    if (response.data is! Map) {
+      throw const FormatException('Invalid subscription recovery response');
+    }
+  }
+
   Future<PurchaseVerification> _verify(
     String path,
     Map<String, dynamic> body,

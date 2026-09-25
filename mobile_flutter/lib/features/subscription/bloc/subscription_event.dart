@@ -53,8 +53,16 @@ final class RestorePurchasesRequested extends SubscriptionEvent {
   const RestorePurchasesRequested();
 }
 
+final class RecoverSubscriptionRequested extends SubscriptionEvent {
+  const RecoverSubscriptionRequested();
+}
+
 final class ManageSubscriptionRequested extends SubscriptionEvent {
   const ManageSubscriptionRequested();
+}
+
+final class SubscriptionNavigationHandled extends SubscriptionEvent {
+  const SubscriptionNavigationHandled();
 }
 
 final class ManagementUrlHandled extends SubscriptionEvent {

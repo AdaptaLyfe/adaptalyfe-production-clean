@@ -9,6 +9,7 @@ import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
 import '../data/stripe_payment_service.dart';
+import '../data/subscription_platform_policy.dart';
 import '../models/subscription_models.dart';
 
 class SubscriptionScreen extends StatefulWidget {
@@ -48,7 +49,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           previous.sessionInvalid != current.sessionInvalid ||
           previous.errorMessage != current.errorMessage ||
           previous.actionMessage != current.actionMessage ||
-          previous.subscription != current.subscription,
+          previous.subscription != current.subscription ||
+          (!previous.shouldNavigateToDashboard &&
+              current.shouldNavigateToDashboard),
       listener: (context, state) async {
         if (state.sessionInvalid) {
           if (context.mounted) context.go('/login');
@@ -71,6 +74,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(SnackBar(content: Text(message)));
+        }
+
+        if (state.shouldNavigateToDashboard) {
+          Future<void>.delayed(const Duration(milliseconds: 1500), () {
+            if (!context.mounted) return;
+            final bloc = context.read<SubscriptionBloc>();
+            if (!bloc.state.shouldNavigateToDashboard) return;
+            bloc.add(const SubscriptionNavigationHandled());
+            context.go('/dashboard');
+          });
         }
 
         final subscription = state.subscription;
@@ -156,6 +169,17 @@ class _SubscriptionBody extends StatelessWidget {
                ),
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
+                if (!state.hasActiveSubscription) ...[
+                  const SizedBox(height: 14),
+                  _StripeRecoveryCard(
+                    enabled: !state.isBusy,
+                    onPressed: () {
+                      context
+                          .read<SubscriptionBloc>()
+                          .add(const RecoverSubscriptionRequested());
+                    },
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (state.subscription?.isActive == true)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
@@ -163,12 +187,13 @@ class _SubscriptionBody extends StatelessWidget {
                   _TrialCard(subscription: state.subscription),
                 const SizedBox(height: 20),
                 if (state.status == SubscriptionStatus.purchasing ||
-                    state.status == SubscriptionStatus.restoring)
+                    state.status == SubscriptionStatus.restoring ||
+                    state.status == SubscriptionStatus.recovering)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
                   ),
-                if (state.subscription?.isActive == true)
+                if (state.hasActiveSubscription)
                   _ManageCard(state: state)
                 else
                   ...state.plans.map(
@@ -189,17 +214,19 @@ class _SubscriptionBody extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(height: 4),
-                _RestoreCard(
-                  enabled: !state.isBusy,
-                  onPressed: () {
-                    FirebaseAnalyticsService.instance
-                        .logSubscriptionEvent('restore', 'store');
-                    context
-                        .read<SubscriptionBloc>()
-                        .add(const RestorePurchasesRequested());
-                  },
-                ),
-                const SizedBox(height: 20),
+                if (usesNativeStoreBilling) ...[
+                  _RestoreCard(
+                    enabled: !state.isBusy,
+                    onPressed: () {
+                      FirebaseAnalyticsService.instance
+                          .logSubscriptionEvent('restore', 'store');
+                      context
+                          .read<SubscriptionBloc>()
+                          .add(const RestorePurchasesRequested());
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 const _TermsCard(),
               ],
             ),
@@ -228,7 +255,7 @@ class _SubscriptionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = subscription?.isActive == true;
+    final active = subscription?.grantsAccess == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -306,9 +333,11 @@ class _TrialCard extends StatelessWidget {
     if (subscription?.isTrialing == true) {
       if (daysLeft != null && daysLeft > 0) {
         message = 'Your free trial has $daysLeft '
-            '${daysLeft == 1 ? 'day' : 'days'} remaining. Choose a plan to continue.';
+            '${daysLeft == 1 ? 'day' : 'days'} remaining. Manage or cancel '
+            'your subscription below.';
       } else {
-        message = 'Your free trial is ending. Choose a plan to continue.';
+        message =
+            'Your free trial is ending. Manage or cancel your subscription below.';
       }
     } else if (subscription?.isExpired == true) {
       message = 'Your previous subscription has ended. Choose a plan to restart.';
@@ -353,8 +382,10 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storeAvailable = product != null && state.canPurchase;
-    final stripeAvailable = state.canUseStripe;
+    final storeAvailable =
+        usesNativeStoreBilling && product != null && state.canPurchase;
+    final stripeAvailable =
+        !usesNativeStoreBilling && state.canUseStripe;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
     final trialAvailable = state.subscription?.isTrialing == true &&
@@ -431,7 +462,7 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          ...plan.features.take(5).map(
+          ...plan.features.map(
                 (feature) => Padding(
                   padding: const EdgeInsets.only(bottom: 5),
                   child: Row(
@@ -607,6 +638,42 @@ class _ManageCard extends StatelessWidget {
               icon: const Icon(Icons.open_in_new_rounded),
               label: const Text('Open subscription settings'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StripeRecoveryCard extends StatelessWidget {
+  const _StripeRecoveryCard({
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Panel(
+      color: const Color(0xFFFFF7ED),
+      borderColor: const Color(0xFFFDBA74),
+      child: Row(
+        children: [
+          const Icon(Icons.receipt_long_rounded, color: Color(0xFFB45309)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Already paid on the Adaptalyfe website? Check your Stripe '
+              'subscription and restore access.',
+              style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: enabled ? onPressed : null,
+            child: const Text('Restore access'),
           ),
         ],
       ),

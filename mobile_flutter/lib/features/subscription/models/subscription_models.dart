@@ -107,6 +107,7 @@ class SubscriptionModel extends Equatable {
   bool get isActive => status == 'active';
   bool get isTrialing => status == 'trialing';
   bool get isExpired => status == 'expired';
+  bool get grantsAccess => isActive || isTrialing;
 
   String get platformLabel {
     switch (subscriptionPlatform) {

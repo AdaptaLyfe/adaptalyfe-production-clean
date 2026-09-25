@@ -8,6 +8,7 @@ enum SubscriptionStatus {
   ready,
   purchasing,
   restoring,
+  recovering,
   cancelled,
   notAvailable,
   configurationError,
@@ -30,6 +31,7 @@ class SubscriptionState extends Equatable {
     this.managementUrl,
     this.stripeAvailable = false,
     this.walletAvailable = false,
+    this.shouldNavigateToDashboard = false,
   });
 
   final SubscriptionStatus status;
@@ -46,13 +48,15 @@ class SubscriptionState extends Equatable {
   final String? managementUrl;
   final bool stripeAvailable;
   final bool walletAvailable;
+  final bool shouldNavigateToDashboard;
 
   bool get isLoading =>
       status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
   bool get isBusy =>
       status == SubscriptionStatus.purchasing ||
-      status == SubscriptionStatus.restoring;
-  bool get hasActiveSubscription => subscription?.isActive == true;
+      status == SubscriptionStatus.restoring ||
+      status == SubscriptionStatus.recovering;
+  bool get hasActiveSubscription => subscription?.grantsAccess == true;
   bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
   bool get canUseStripe =>
       stripeAvailable && !hasActiveSubscription && !isBusy;
@@ -72,6 +76,7 @@ class SubscriptionState extends Equatable {
     Object? managementUrl = _notSet,
     bool? stripeAvailable,
     bool? walletAvailable,
+    bool? shouldNavigateToDashboard,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
@@ -102,6 +107,8 @@ class SubscriptionState extends Equatable {
           : managementUrl as String?,
       stripeAvailable: stripeAvailable ?? this.stripeAvailable,
       walletAvailable: walletAvailable ?? this.walletAvailable,
+      shouldNavigateToDashboard:
+          shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
     );
   }
 
@@ -121,6 +128,7 @@ class SubscriptionState extends Equatable {
         managementUrl,
         stripeAvailable,
         walletAvailable,
+        shouldNavigateToDashboard,
       ];
 }
 

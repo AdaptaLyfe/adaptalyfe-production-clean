@@ -51,4 +51,7 @@ class SubscriptionRepository {
     String subscriptionId,
   ) =>
       api.confirmStripeSubscription(subscriptionId);
+
+  Future<void> recoverStripeSubscription() =>
+      api.recoverStripeSubscription();
 }

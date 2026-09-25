@@ -8,6 +8,7 @@ import '../../../core/network/api_client.dart';
 import '../data/purchase_service.dart';
 import '../data/stripe_payment_service.dart';
 import '../data/subscription_repository.dart';
+import '../data/subscription_platform_policy.dart';
 import '../models/subscription_purchase_contract.dart';
 import '../models/subscription_models.dart';
 import 'subscription_event.dart';
@@ -29,7 +30,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<PlanPurchaseRequested>(_purchase);
     on<StripePaymentRequested>(_payWithStripe);
     on<RestorePurchasesRequested>(_restore);
+    on<RecoverSubscriptionRequested>(_recover);
     on<ManageSubscriptionRequested>(_manage);
+    on<SubscriptionNavigationHandled>(_clearDashboardNavigation);
     on<ManagementUrlHandled>(_clearManagementUrl);
     on<PurchaseUpdatesReceived>(_handlePurchases);
     _purchaseSubscription = purchaseService.purchaseStream.listen(
@@ -71,6 +74,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       'product ID: ${plan.productId}',
     );
     final storeProductAvailable = _productFor(plan.productId) != null;
+    final stripeAvailableOnPlatform =
+        !usesNativeStoreBilling && state.canUseStripe;
     final unavailableMessage = state.availabilityMessage ??
         'The selected subscription was not returned by the current store. '
             'Check the store configuration and tester account.';
@@ -80,7 +85,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         errorMessage: null,
         actionMessage: _started &&
                 !storeProductAvailable &&
-                !state.canUseStripe
+                !stripeAvailableOnPlatform
             ? unavailableMessage
             : null,
       ),
@@ -112,7 +117,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         state.copyWith(
           status: SubscriptionStatus.ready,
           subscription: subscription,
-          selectedPlanId: subscription.isActive ? null : state.selectedPlanId,
+          selectedPlanId:
+              subscription.grantsAccess ? null : state.selectedPlanId,
           products: {
             for (final product in _products) product.id: product,
           },
@@ -128,7 +134,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
-          errorMessage: error.message,
+          errorMessage: error.type == ApiErrorType.unauthorized
+              ? null
+              : _messageFor(error),
           sessionInvalid: error.type == ApiErrorType.unauthorized,
         ),
       );
@@ -154,6 +162,17 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         state.hasActiveSubscription) {
       return;
     }
+    if (usesNativeStoreBilling) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          errorMessage: null,
+          actionMessage:
+              'Subscriptions on this device are billed through the App Store or Google Play.',
+        ),
+      );
+      return;
+    }
     if (!state.stripeAvailable) {
       emit(
         state.copyWith(
@@ -173,6 +192,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         busyPlanId: plan.id,
         errorMessage: null,
         actionMessage: 'Preparing secure payment…',
+        shouldNavigateToDashboard: false,
       ),
     );
 
@@ -215,6 +235,12 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
 
       final subscription = await repository.getSubscription();
+      if (!subscription.grantsAccess) {
+        throw const FormatException(
+          'Payment was received, but the subscription status could not be refreshed. '
+          'Please refresh and try again.',
+        );
+      }
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
@@ -223,6 +249,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Payment successful! Your subscription is active.',
+          shouldNavigateToDashboard: true,
         ),
       );
     } on StripeException catch (error) {
@@ -237,6 +264,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? null
               : 'Payment could not be completed. Please try again.',
           actionMessage: cancelled ? 'Payment was cancelled.' : null,
+          shouldNavigateToDashboard: false,
         ),
       );
     } on StripePaymentException catch (error) {
@@ -246,7 +274,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.configurationError
               : SubscriptionStatus.failure,
           busyPlanId: null,
-          errorMessage: error.message,
+          errorMessage: error.configuration
+              ? 'Card and wallet payments are not configured.'
+              : 'Payment could not be completed. Please try again.',
         ),
       );
     } on ApiException catch (error) {
@@ -256,8 +286,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
           busyPlanId: null,
-          errorMessage: error.message,
+          errorMessage: error.type == ApiErrorType.unauthorized
+              ? null
+              : _messageFor(error),
           sessionInvalid: error.type == ApiErrorType.unauthorized,
+          shouldNavigateToDashboard: false,
         ),
       );
     } catch (error) {
@@ -324,6 +357,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         busyPlanId: plan.id,
         errorMessage: null,
         actionMessage: 'Complete your purchase in the store.',
+        shouldNavigateToDashboard: false,
       ),
     );
     try {
@@ -368,6 +402,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         status: SubscriptionStatus.restoring,
         errorMessage: null,
         actionMessage: 'Checking the store for previous purchases…',
+        shouldNavigateToDashboard: false,
       ),
     );
     try {
@@ -401,6 +436,83 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
   }
 
+  Future<void> _recover(
+    RecoverSubscriptionRequested event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    if (!_started ||
+        _loadInFlight ||
+        state.isBusy ||
+        state.hasActiveSubscription) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        status: SubscriptionStatus.recovering,
+        errorMessage: null,
+        actionMessage: 'Checking your website payment…',
+        shouldNavigateToDashboard: false,
+      ),
+    );
+    try {
+      await repository.recoverStripeSubscription();
+      final subscription = await repository.getSubscription();
+      if (!subscription.grantsAccess) {
+        emit(
+          state.copyWith(
+            status: SubscriptionStatus.ready,
+            subscription: subscription,
+            errorMessage:
+                'We found a payment, but could not refresh your subscription. '
+                'Please refresh and try again.',
+            actionMessage: null,
+          ),
+        );
+        return;
+      }
+
+      final planName = _planFor(subscription.planType)?.name ?? 'subscription';
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: subscription,
+          busyPlanId: null,
+          selectedPlanId: null,
+          errorMessage: null,
+          actionMessage: 'Your $planName has been restored.',
+          shouldNavigateToDashboard: true,
+        ),
+      );
+    } on ApiException catch (error) {
+      final unauthorized = error.type == ApiErrorType.unauthorized;
+      final noSubscription = _isNoSubscriptionError(error.data);
+      emit(
+        state.copyWith(
+          status: unauthorized
+              ? SubscriptionStatus.failure
+              : SubscriptionStatus.ready,
+          errorMessage: unauthorized
+              ? null
+              : noSubscription
+                  ? 'No active Stripe subscription was found for this account.'
+                  : 'Could not check your payment. Please try again.',
+          actionMessage: null,
+          sessionInvalid: unauthorized,
+          shouldNavigateToDashboard: false,
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: SubscriptionStatus.ready,
+          errorMessage: 'Could not check your payment. Please try again.',
+          actionMessage: null,
+          shouldNavigateToDashboard: false,
+        ),
+      );
+    }
+  }
+
   Future<void> _manage(
     ManageSubscriptionRequested event,
     Emitter<SubscriptionState> emit,
@@ -428,6 +540,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) {
     if (state.managementUrl == null) return;
     emit(state.copyWith(managementUrl: null));
+  }
+
+  void _clearDashboardNavigation(
+    SubscriptionNavigationHandled event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (!state.shouldNavigateToDashboard) return;
+    emit(state.copyWith(shouldNavigateToDashboard: false));
   }
 
   Future<void> _handlePurchases(
@@ -474,9 +594,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               busyPlanId: null,
               errorMessage: cancelled
                   ? null
-                  : item.error?.message ??
-                      'Payment failed. Please try again.',
+                  : 'The store could not complete your purchase. '
+                      'Check your store account and try again.',
               actionMessage: cancelled ? 'Payment was cancelled.' : null,
+              shouldNavigateToDashboard: false,
             ),
           );
           _signalRestoreEvent();
@@ -574,8 +695,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           state.copyWith(
             status: SubscriptionStatus.ready,
             busyPlanId: null,
-            errorMessage: verification.message ??
-                "No Subscription Found: We couldn't find an active subscription to restore.",
+            errorMessage:
+                "No active store subscription was found to restore.",
             actionMessage: null,
           ),
         );
@@ -584,6 +705,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       await _completePurchases(verifiablePurchases);
       final subscription = await repository.getSubscription();
+      if (!subscription.grantsAccess) {
+        emit(
+          state.copyWith(
+            status: SubscriptionStatus.ready,
+            subscription: subscription,
+            busyPlanId: null,
+            errorMessage:
+                'Your previous subscription was found, but its status could '
+                'not be refreshed. Please refresh and try again.',
+            actionMessage: null,
+          ),
+        );
+        return;
+      }
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
@@ -603,7 +738,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
           busyPlanId: null,
-          errorMessage: error.message,
+          errorMessage: error.type == ApiErrorType.unauthorized
+              ? null
+              : _messageFor(error),
           actionMessage: null,
           sessionInvalid: error.type == ApiErrorType.unauthorized,
         ),
@@ -679,6 +816,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
       await purchaseService.complete(item);
       final subscription = await repository.getSubscription();
+      if (!subscription.grantsAccess) {
+        emit(
+          state.copyWith(
+            status: SubscriptionStatus.ready,
+            subscription: subscription,
+            busyPlanId: null,
+            errorMessage:
+                'Your purchase was verified, but the subscription status could '
+                'not be refreshed. Please refresh and try again.',
+            actionMessage: null,
+          ),
+        );
+        return;
+      }
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
@@ -687,6 +838,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Your subscription is now active.',
+          shouldNavigateToDashboard: true,
         ),
       );
     } on ApiException catch (error) {
@@ -710,7 +862,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
           busyPlanId: null,
-          errorMessage: error.message,
+          errorMessage: error.type == ApiErrorType.unauthorized
+              ? null
+              : _messageFor(error),
           sessionInvalid: error.type == ApiErrorType.unauthorized,
         ),
       );
@@ -823,11 +977,25 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   }
 
   String _messageFor(Object error) {
-    if (error is ApiException) return error.message;
+    if (error is ApiException) {
+      return switch (error.type) {
+        ApiErrorType.network => 'Check your connection and try again.',
+        ApiErrorType.timeout => 'The request took too long. Please try again.',
+        ApiErrorType.unauthorized => 'Please sign in again to continue.',
+        _ => 'Unable to complete this subscription action. Please try again.',
+      };
+    }
     if (error is FormatException) return error.message;
-    if (error is StripePaymentException) return error.message;
+    if (error is StripePaymentException) {
+      return error.configuration
+          ? 'Card and wallet payments are not configured.'
+          : 'Payment could not be completed. Please try again.';
+    }
     return 'Unable to complete this subscription action. Please try again.';
   }
+
+  bool _isNoSubscriptionError(Object? data) =>
+      data is Map && data['code'] == 'NO_SUBSCRIPTION';
 
   @override
   Future<void> close() async {
