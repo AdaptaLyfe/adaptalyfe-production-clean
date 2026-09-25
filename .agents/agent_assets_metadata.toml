@@ -2619,3 +2619,17 @@ mtime_ms = 1790329437800
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2395ca6b-0b42-4b83-bac3-32eae66ead39/77a12096-a105-4f71-89fe-3b99af9659eb"
 storage_version_token = "1790329484787145"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "7BNmZD00o35SnAEBGRowK"
+uri = "file://flutter-subscription-error-fix.zip"
+type = "unspecified"
+title = "Flutter subscription analyzer fix"
+description = "ZIP with the two compile fixes plus the subscription BLoC and helper contract needed for the unresolved symbols."
+logical_id = "6b4abaf6-ddc1-4283-b81e-5c0ce8365630"
+content_hash = "sha256:f447b0449dfece07503bf0d99440b3f252cbf8b1e5fe2d657d8e0bdd591cdd6d"
+size = 13465
+mtime_ms = 1790330052682
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6b4abaf6-ddc1-4283-b81e-5c0ce8365630/67cb9fff-f245-4be1-b4be-79ed5a15bde2"
+storage_version_token = "1790330062645910"
+content_type = "application/octet-stream"
