@@ -410,17 +410,23 @@ export default function RewardsPage() {
               </DialogTrigger>
               <DialogContent
                 overlayClassName="z-[110]"
-                className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
+                style={{
+                  maxHeight: "calc(100dvh - max(2rem, var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem))",
+                }}
                 aria-describedby="create-reward-description"
               >
-                <DialogHeader>
+                <DialogHeader className="shrink-0">
                   <DialogTitle>Create New Reward</DialogTitle>
                   <p id="create-reward-description" className="text-sm text-gray-600">
                     Set up a new reward for users to earn with their points
                   </p>
                 </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="reward-create-form space-y-4 pr-2">
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="reward-create-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2"
+                  >
                   <FormField
                     control={form.control}
                     name="title"
@@ -549,8 +555,8 @@ export default function RewardsPage() {
                       {createRewardMutation.isPending ? "Creating..." : "Create Reward"}
                     </Button>
                   </div>
-                </form>
-              </Form>
+                  </form>
+                </Form>
             </DialogContent>
           </Dialog>
 
