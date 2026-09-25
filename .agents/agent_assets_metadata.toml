@@ -2479,3 +2479,17 @@ mtime_ms = 1790315328649
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bffc8fee-81cf-45a9-8929-d5b201d00a56/99a76618-2e6a-4e79-ab7a-fc25e88f532a"
 storage_version_token = "1790315334844570"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tHoUQjPBLNJdnqcNo73OS"
+uri = "file://mobile_flutter_settings_homebloc_fixed_20260925.zip"
+type = "unspecified"
+title = "Flutter HomeBloc error fix"
+description = "Complete Settings change ZIP with HomeBloc loading, save, and reset calls aligned to the user-scoped repository API."
+logical_id = "ab650519-cbcc-4b87-9ad5-397272335646"
+content_hash = "sha256:2e238723b3ae49aa1df18a602c48863438cd6b7bcfff283e6da0bb74c5aa43dc"
+size = 51133
+mtime_ms = 1790315749816
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ab650519-cbcc-4b87-9ad5-397272335646/7bd072a2-83b5-40db-ade3-2d907cfe3cb9"
+storage_version_token = "1790315753880408"
+content_type = "application/octet-stream"

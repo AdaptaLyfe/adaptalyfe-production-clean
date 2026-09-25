@@ -61,7 +61,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     try {
       final user = await repository.getCurrentUser();
-      final modules = await repository.loadDashboardModules(user.id);
+      final modules =
+          await repository.loadDashboardModules(userId: user.id);
       final quickActions = await repository.loadQuickActions();
       emit(
         HomeLoaded(
@@ -255,7 +256,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _saveDashboardModules(
       emit,
       updated,
-      save: (userId) => repository.saveDashboardModules(userId, updated),
+      save: (userId) => repository.saveDashboardModules(
+        userId: userId,
+        modules: updated,
+      ),
       successMessage: 'Dashboard updated.',
     );
   }
@@ -285,7 +289,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _saveDashboardModules(
       emit,
       updated,
-      save: (userId) => repository.saveDashboardModules(userId, updated),
+      save: (userId) => repository.saveDashboardModules(
+        userId: userId,
+        modules: updated,
+      ),
       successMessage: 'Dashboard order saved.',
     );
   }
@@ -300,7 +307,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       saved = await _saveDashboardModules(
         emit,
         updated,
-        save: (userId) => repository.saveDashboardModules(userId, updated),
+        save: (userId) => repository.saveDashboardModules(
+          userId: userId,
+          modules: updated,
+        ),
         successMessage: 'Dashboard customization saved.',
       );
     } finally {
@@ -321,7 +331,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       saved = await _saveDashboardModules(
         emit,
         defaults,
-        save: repository.resetDashboardModules,
+        save: (userId) =>
+            repository.resetDashboardModules(userId: userId),
         successMessage: 'Dashboard reset to default.',
       );
     } finally {
