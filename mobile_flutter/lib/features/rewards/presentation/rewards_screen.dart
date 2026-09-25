@@ -599,10 +599,19 @@ class _BadgesTab extends StatelessWidget {
           const SizedBox(height: 12),
           if (state.achievements.isEmpty &&
               state.status == RewardsStatus.loaded)
+            _BadgeErrorNotice(
+              message: 'Unable to load badges. Please try again.',
+              onRetry: () =>
+                  context.read<RewardsBloc>().add(const RefreshRewards()),
+            )
+          else if (earned.isEmpty &&
+              state.achievements.isNotEmpty &&
+              state.status == RewardsStatus.loaded)
             const _EmptyCard(
               icon: Icons.emoji_events_outlined,
-              title: 'No badges available',
-              message: 'No badges are currently available.',
+              title: 'No badges earned yet',
+              message:
+                  'Start earning badges by completing milestones, earning points, and redeeming rewards.',
             ),
           if (earned.isNotEmpty)
             _BadgeSection(title: 'Earned Badges', badges: earned),

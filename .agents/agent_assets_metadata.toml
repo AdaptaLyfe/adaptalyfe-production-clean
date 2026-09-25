@@ -2521,3 +2521,17 @@ mtime_ms = 1790317954132
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/113b29db-d0e2-4f78-8112-01975bb83da1/0c8e940b-006a-48b5-98f3-b474473a6d24"
 storage_version_token = "1790317965999570"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "enyCAvllJqy5TVfmrIpI1"
+uri = "file://deliverables/rewards-badges-fix.zip"
+type = "unspecified"
+title = "Rewards badges fix ZIP"
+description = "One-file Flutter patch for the Rewards → Badges empty-catalog and no-earned-badges states."
+logical_id = "732ea964-7cdd-4bc0-8bca-2dc55bbdf111"
+content_hash = "sha256:08403028f3bcc8e75420a9aa0a455255c8774034c7250f14b77f6438887dd841"
+size = 10327
+mtime_ms = 1790318491810
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/732ea964-7cdd-4bc0-8bca-2dc55bbdf111/04ca35de-8359-4175-a753-606050964fd1"
+storage_version_token = "1790318495959134"
+content_type = "application/octet-stream"
