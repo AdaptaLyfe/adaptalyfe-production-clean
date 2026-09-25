@@ -1,0 +1,254 @@
+In the existing project, implement the subscription/payment flow in Flutter by matching the behavior of the existing React Native + Wrapper application.
+
+IMPORTANT: Do NOT start coding immediately.
+
+### Step 1 — Review Existing React Native + Wrapper
+
+First thoroughly inspect the existing React Native + Wrapper implementation.
+
+Find and understand:
+
+* Subscription screen
+* Subscription plans/products
+* Android subscription implementation
+* iOS subscription implementation
+* Google Play Billing integration
+* Apple App Store / StoreKit integration
+* Product IDs
+* Free trial configuration
+* Purchase flow
+* Restore purchase flow
+* Subscription status checking
+* Active subscription handling
+* Expired/cancelled subscription handling
+* Backend/API calls related to subscriptions
+* Success/failure handling
+* Loading states
+* Error messages
+* Navigation after successful subscription
+* Any existing webhook/server-side validation
+* Any existing entitlement/access logic
+
+Understand the complete existing flow before making Flutter changes.
+
+### Step 2 — Platform Requirement
+
+Implement the same functionality in Flutter:
+
+#### Android
+
+Use **Google Play Billing / Google Play subscriptions**.
+
+#### iOS
+
+Use **Apple App Store / StoreKit subscriptions**.
+
+The platform must automatically use the correct billing system:
+
+* Android → Google Play
+* iOS → Apple App Store
+
+Do NOT use Stripe for mobile store subscriptions unless the existing React Native + Wrapper implementation specifically requires Stripe for a separate purpose.
+
+### Step 3 — Match Existing React Native Behavior
+
+The Flutter implementation must behave the same as the existing React Native + Wrapper version.
+
+Keep the same:
+
+* Subscription plans
+* Product IDs
+* Pricing displayed to users
+* Trial period
+* Subscription duration
+* UI flow
+* Purchase flow
+* Restore purchase behavior
+* Success behavior
+* Failure behavior
+* Subscription status logic
+* Backend/API integration
+* User entitlement/access logic
+
+Do not create a different subscription architecture if the existing implementation already has one.
+
+### Step 4 — Flutter Architecture
+
+Implement this cleanly in Flutter using the project's existing architecture and BLoC pattern.
+
+Prefer:
+
+UI
+↓
+SubscriptionBloc
+↓
+SubscriptionRepository
+↓
+Platform Billing Service
+↓
+Google Play Billing / Apple StoreKit
+
+Keep platform-specific billing code isolated from the UI.
+
+Use an appropriate maintained Flutter in-app purchase/subscription package compatible with the project's current Flutter version.
+
+Before adding/upgrading packages:
+
+* Check the current Flutter/Dart version.
+* Check existing dependencies.
+* Avoid unnecessary package upgrades.
+* Avoid breaking existing functionality.
+
+### Step 5 — Product Configuration
+
+Do NOT invent product IDs.
+
+Find the exact Android and iOS product IDs from the existing React Native + Wrapper implementation and use the same IDs/configuration where applicable.
+
+If a required product ID or App Store/Google Play configuration cannot be found in the codebase, clearly identify what is missing instead of guessing.
+
+### Step 6 — Purchase Flow
+
+Implement:
+
+1. Open Subscription screen.
+2. Load available products.
+3. Display the same plans as the existing app.
+4. User selects a plan.
+5. Start the correct platform purchase.
+6. Show loading state.
+7. Handle successful purchase.
+8. Verify/process the purchase according to the existing implementation.
+9. Update the user's subscription status.
+10. Grant the same access/entitlement as the React Native version.
+11. Navigate/update UI exactly as the existing app does.
+
+### Step 7 — Restore Subscription
+
+Implement the same "Restore Subscription" functionality from the React Native + Wrapper version.
+
+It must work correctly on:
+
+* Android
+* iOS
+
+Handle:
+
+* Restored active subscription
+* No previous subscription
+* Expired subscription
+* Cancelled subscription
+* Restore failure
+* Loading state
+
+Use the existing backend/status-checking logic if present.
+
+### Step 8 — Error Handling
+
+Do not show raw platform/API errors to users.
+
+Handle common cases such as:
+
+* Product not found
+* Billing unavailable
+* Purchase cancelled
+* Purchase failed
+* Network error
+* Already subscribed
+* Restore failed
+* Invalid product configuration
+* Store unavailable
+
+Use user-friendly messages consistent with the existing React Native + Wrapper app.
+
+### Step 9 — Existing Flutter Code
+
+Before creating new files, inspect the existing Flutter project.
+
+Reuse existing:
+
+* BLoC
+* Repository
+* Services
+* Models
+* API clients
+* Authentication/user data
+* Subscription UI
+* Navigation
+* Theme/components
+
+Do not duplicate existing functionality.
+
+If subscription code already exists in Flutter, fix/complete it instead of creating a second implementation.
+
+### Step 10 — Testing
+
+Test the implementation separately for:
+
+#### Android
+
+* Product loading
+* Subscription purchase
+* Trial if configured
+* Successful purchase
+* Cancelled purchase
+* Failed purchase
+* Restore purchase
+* Existing active subscription
+* Subscription status after app restart
+
+#### iOS
+
+* Product loading
+* Subscription purchase
+* Trial if configured
+* Successful purchase
+* Cancelled purchase
+* Failed purchase
+* Restore purchase
+* Existing active subscription
+* Subscription status after app restart
+
+Do not claim a real purchase works unless the required Google Play / App Store configuration is available for testing.
+
+### Step 11 — Reopen and Review Again
+
+After implementation:
+
+1. Reopen the relevant Flutter files.
+2. Review the complete subscription flow again.
+3. Compare it against the React Native + Wrapper implementation.
+4. Check Android and iOS platform handling.
+5. Check product IDs.
+6. Check purchase completion.
+7. Check restore purchase.
+8. Check subscription status.
+9. Check loading/error states.
+10. Check BLoC state management.
+11. Check for duplicate code.
+12. Check for lifecycle/disposal issues.
+13. Check for UI overflow/responsive issues.
+14. Fix every issue found.
+
+Then reopen the modified files **again** and perform a final review.
+
+### Important Rules
+
+* First REVIEW → then IMPLEMENT → then TEST → then REOPEN → REVIEW AGAIN → FIX → FINAL REVIEW.
+* Do not blindly replace working code.
+* Do not break existing React Native functionality.
+* Do not change unrelated Flutter features.
+* Do not invent product IDs or backend APIs.
+* Do not use Stripe for Android/iOS store subscriptions unless the existing architecture explicitly requires it.
+* Keep the implementation production-ready and maintainable.
+* Make Android use Google Play subscriptions and iOS use Apple App Store subscriptions.
+* Match the existing React Native + Wrapper behavior as closely as possible.
+* At the end, provide a short summary of:
+
+  1. What was found in React Native + Wrapper
+  2. What was implemented in Flutter
+  3. Files changed
+  4. Packages added/changed
+  5. Android configuration required
+  6. iOS configuration required
+  7. Any remaining issue that requires Google Play Console/App Store Connect configuration
