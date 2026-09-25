@@ -2647,3 +2647,17 @@ mtime_ms = 1790333836004
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c3f065e-a5a6-4ef0-a44d-14711eb1623c/4eb2111f-2380-45a0-afed-5875e94bab82"
 storage_version_token = "1790333847468694"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "2_sEoiEPAyy4Irm3wMMze"
+uri = "file://flutter-dart-3-5-3-iap-fix.zip"
+type = "unspecified"
+title = "Dart 3.5.3 dependency fix"
+description = "ZIP containing the Flutter pubspec pin and compatible purchase-service implementation."
+logical_id = "8e57c6fa-215b-4482-ab3e-28f129f0293e"
+content_hash = "sha256:ed4d10eefa4d6c23f1a95392faa8ca6891ee379905fadeedce341025f3903ed3"
+size = 2241
+mtime_ms = 1790334060361
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e57c6fa-215b-4482-ab3e-28f129f0293e/cf7bc372-2392-402a-839c-fde3fc10d086"
+storage_version_token = "1790334069313660"
+content_type = "application/octet-stream"
