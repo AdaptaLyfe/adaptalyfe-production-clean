@@ -2465,3 +2465,17 @@ mtime_ms = 1790314722644
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8cff3ff1-e05a-49c5-ba80-a4978ce23c88/03d65a2a-0937-48f0-90d1-43cea59e0058"
 storage_version_token = "1790314726605033"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d4w2eYE8SPOuFW4Fqy61l"
+uri = "file://mobile_flutter_settings_final_20260925.zip"
+type = "unspecified"
+title = "Flutter Settings analyzer fix"
+description = "ZIP with the complete Settings changes plus explicit user-scoped dashboard-store APIs and updated callers/tests."
+logical_id = "bffc8fee-81cf-45a9-8929-d5b201d00a56"
+content_hash = "sha256:a3c842e53441a52f77d9e9f561cb613e90036938affb49e4fdd41e99c268e439"
+size = 47694
+mtime_ms = 1790315328649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bffc8fee-81cf-45a9-8929-d5b201d00a56/99a76618-2e6a-4e79-ab7a-fc25e88f532a"
+storage_version_token = "1790315334844570"
+content_type = "application/octet-stream"

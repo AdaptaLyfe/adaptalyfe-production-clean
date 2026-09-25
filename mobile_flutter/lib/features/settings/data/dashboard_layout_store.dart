@@ -12,7 +12,9 @@ class DashboardLayoutStore {
   static const _keyPrefix = 'dashboard-layout:user:';
   static Future<void> _operationQueue = Future<void>.value();
 
-  Future<List<DashboardModuleModel>> load(int userId) {
+  Future<List<DashboardModuleModel>> loadForUser({
+    required int userId,
+  }) {
     return _serialize(() async {
       final preferences = await SharedPreferences.getInstance();
       final key = _keyFor(userId);
@@ -25,7 +27,10 @@ class DashboardLayoutStore {
     });
   }
 
-  Future<void> save(int userId, List<DashboardModuleModel> modules) {
+  Future<void> saveForUser({
+    required int userId,
+    required List<DashboardModuleModel> modules,
+  }) {
     final key = _keyFor(userId);
     final encodedLayout =
         jsonEncode(modules.map((module) => module.toJson()).toList());
@@ -39,7 +44,7 @@ class DashboardLayoutStore {
     });
   }
 
-  Future<void> reset(int userId) {
+  Future<void> resetForUser({required int userId}) {
     final key = _keyFor(userId);
     return _serialize(() async {
       final preferences = await SharedPreferences.getInstance();

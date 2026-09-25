@@ -26,10 +26,15 @@ void main() {
 
   test('layout persists per user across store instances without account bleed',
       () async {
-    await const DashboardLayoutStore().save(101, changedFirstModule);
+    await const DashboardLayoutStore().saveForUser(
+      userId: 101,
+      modules: changedFirstModule,
+    );
 
-    final reloadedForFirstUser = await const DashboardLayoutStore().load(101);
-    final secondUserLayout = await const DashboardLayoutStore().load(202);
+    final reloadedForFirstUser =
+        await const DashboardLayoutStore().loadForUser(userId: 101);
+    final secondUserLayout =
+        await const DashboardLayoutStore().loadForUser(userId: 202);
 
     expect(
       reloadedForFirstUser
@@ -53,8 +58,10 @@ void main() {
       ),
     });
 
-    final firstUserLayout = await const DashboardLayoutStore().load(101);
-    final secondUserLayout = await const DashboardLayoutStore().load(202);
+    final firstUserLayout =
+        await const DashboardLayoutStore().loadForUser(userId: 101);
+    final secondUserLayout =
+        await const DashboardLayoutStore().loadForUser(userId: 202);
     final preferences = await SharedPreferences.getInstance();
 
     expect(
@@ -80,11 +87,18 @@ void main() {
     ];
 
     await Future.wait([
-      const DashboardLayoutStore().save(101, changedFirstModule),
-      const DashboardLayoutStore().save(101, finalSnapshot),
+      const DashboardLayoutStore().saveForUser(
+        userId: 101,
+        modules: changedFirstModule,
+      ),
+      const DashboardLayoutStore().saveForUser(
+        userId: 101,
+        modules: finalSnapshot,
+      ),
     ]);
 
-    final saved = await const DashboardLayoutStore().load(101);
+    final saved =
+        await const DashboardLayoutStore().loadForUser(userId: 101);
     expect(
       saved.map((module) => module.enabled).toList(),
       finalSnapshot.map((module) => module.enabled).toList(),
@@ -92,13 +106,21 @@ void main() {
   });
 
   test('reset only clears the selected user layout', () async {
-    await const DashboardLayoutStore().save(101, changedFirstModule);
-    await const DashboardLayoutStore().save(202, changedFirstModule);
+    await const DashboardLayoutStore().saveForUser(
+      userId: 101,
+      modules: changedFirstModule,
+    );
+    await const DashboardLayoutStore().saveForUser(
+      userId: 202,
+      modules: changedFirstModule,
+    );
 
-    await const DashboardLayoutStore().reset(101);
+    await const DashboardLayoutStore().resetForUser(userId: 101);
 
-    final firstUserLayout = await const DashboardLayoutStore().load(101);
-    final secondUserLayout = await const DashboardLayoutStore().load(202);
+    final firstUserLayout =
+        await const DashboardLayoutStore().loadForUser(userId: 101);
+    final secondUserLayout =
+        await const DashboardLayoutStore().loadForUser(userId: 202);
     expect(
       firstUserLayout
           .firstWhere((module) => module.id == firstModule.id)

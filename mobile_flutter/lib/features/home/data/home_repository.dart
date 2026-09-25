@@ -86,16 +86,16 @@ class HomeRepository {
   }
 
   Future<List<DashboardModuleModel>> loadDashboardModules(int userId) =>
-      dashboardLayoutStore.load(userId);
+      dashboardLayoutStore.loadForUser(userId: userId);
 
   Future<void> saveDashboardModules(
     int userId,
     List<DashboardModuleModel> modules,
   ) =>
-      dashboardLayoutStore.save(userId, modules);
+      dashboardLayoutStore.saveForUser(userId: userId, modules: modules);
 
   Future<void> resetDashboardModules(int userId) =>
-      dashboardLayoutStore.reset(userId);
+      dashboardLayoutStore.resetForUser(userId: userId);
 
   Future<List<HomeQuickAction>> loadQuickActions() =>
       quickActionsStore.load();

@@ -58,14 +58,14 @@ class SettingsRepository {
       api.redeemOrganizationCode(code);
   Future<void> deleteAccount() => api.deleteAccount();
   Future<List<DashboardModuleModel>> loadDashboardLayout(int userId) =>
-      dashboardLayoutStore.load(userId);
+      dashboardLayoutStore.loadForUser(userId: userId);
   Future<void> saveDashboardLayout(
     int userId,
     List<DashboardModuleModel> modules,
   ) =>
-      dashboardLayoutStore.save(userId, modules);
+      dashboardLayoutStore.saveForUser(userId: userId, modules: modules);
   Future<void> resetDashboardLayout(int userId) =>
-      dashboardLayoutStore.reset(userId);
+      dashboardLayoutStore.resetForUser(userId: userId);
   Future<LocalUserSettings> loadLocalSettings(int userId) =>
       localSettingsStore.load(userId);
   Future<void> saveLocalSettings(int userId, LocalUserSettings settings) =>
