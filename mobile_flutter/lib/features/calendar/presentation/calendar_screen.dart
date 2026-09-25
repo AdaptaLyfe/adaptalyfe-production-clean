@@ -10,6 +10,7 @@ import '../../daily_tasks/utils/daily_task_schedule.dart';
 import '../bloc/calendar_bloc.dart';
 import '../bloc/calendar_event.dart';
 import '../bloc/calendar_state.dart';
+import '../models/calendar_event_occurrence.dart';
 import '../models/calendar_models.dart';
 
 class CalendarScreen extends StatelessWidget {
@@ -1256,17 +1257,25 @@ class _CalendarItem {
   String? get timeLabel {
     if (time != null && time!.isNotEmpty) return time;
     if (allDay) {
-      if (!isRecurring) return 'Whole Day';
-      final rule = recurrenceRule?.trim();
-      if (rule == null || rule.isEmpty) return 'Repeats';
-      final label =
-          '${rule[0].toUpperCase()}${rule.substring(1).toLowerCase()}';
-      return 'Repeats $label';
+      return _repeatLabel('All Day');
+    }
+    if (type == _CalendarItemType.event &&
+        start.hour == 0 &&
+        start.minute == 0) {
+      return _repeatLabel('Whole Day');
     }
     if (type == _CalendarItemType.task && start.hour == 0) {
       return null;
     }
     return _formatTimeStatic(start);
+  }
+
+  String _repeatLabel(String label) {
+    if (!isRecurring) return label;
+    final rule = recurrenceRule?.trim();
+    if (rule == null || rule.isEmpty) return '$label · Repeats';
+    final repeat = '${rule[0].toUpperCase()}${rule.substring(1).toLowerCase()}';
+    return '$label · Repeats $repeat';
   }
 
   IconData get icon {
@@ -1362,7 +1371,7 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
     }
   }
   for (final event in state.calendarEvents) {
-    if (_calendarEventOccursOnDate(event, date)) {
+    if (calendarEventOccursOnDate(event, date)) {
       items.add(
         _CalendarItem(
           title: event.title,
@@ -1446,51 +1455,6 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
   }
   items.sort((a, b) => a.start.compareTo(b.start));
   return items;
-}
-
-bool _calendarEventOccursOnDate(
-  CalendarEventModel event,
-  DateTime date,
-) {
-  final day = calendarDateOnly(date);
-  final start = calendarDateOnly(event.startDate);
-  final recurrenceMatch = _calendarEventRecursOnDate(event, start, day);
-  if (recurrenceMatch != null) return recurrenceMatch;
-
-  if (!event.allDay) return DateUtils.isSameDay(event.startDate, date);
-
-  final storedEnd = event.endDate == null
-      ? start
-      : calendarDateOnly(event.endDate!);
-  final end = storedEnd.isBefore(start) ? start : storedEnd;
-  return !day.isBefore(start) && !day.isAfter(end);
-}
-
-bool? _calendarEventRecursOnDate(
-  CalendarEventModel event,
-  DateTime start,
-  DateTime day,
-) {
-  if (!event.isRecurring) return null;
-  final rule = event.recurrenceRule?.trim().toLowerCase();
-  if (rule == null || rule.isEmpty) return null;
-  if (day.isBefore(start)) return false;
-
-  final startUtc = DateTime.utc(start.year, start.month, start.day);
-  final dayUtc = DateTime.utc(day.year, day.month, day.day);
-  final daysSinceStart = dayUtc.difference(startUtc).inDays;
-  switch (rule) {
-    case 'daily':
-      return true;
-    case 'weekly':
-      return daysSinceStart % 7 == 0;
-    case 'monthly':
-      return day.day == start.day;
-    case 'yearly':
-      return day.month == start.month && day.day == start.day;
-    default:
-      return null;
-  }
 }
 
 String _headerLabel(CalendarState state) {
@@ -1823,6 +1787,15 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
   DateTime? _endDate;
   String _category = 'personal';
   bool _allDay = false;
+  bool _isRecurring = false;
+  String _recurrenceRule = 'daily';
+
+  static const _recurrenceLabels = <String, String>{
+    'daily': 'Daily',
+    'weekly': 'Weekly',
+    'monthly': 'Monthly',
+    'yearly': 'Yearly',
+  };
 
   @override
   void initState() {
@@ -1837,6 +1810,14 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
     _endDate = existing?.endDate;
     _category = existing?.category ?? 'personal';
     _allDay = existing?.allDay ?? false;
+    _isRecurring = existing?.isRecurring ?? false;
+    final existingRule = existing?.recurrenceRule?.trim();
+    if (existingRule != null && existingRule.isNotEmpty) {
+      final normalizedRule = existingRule.toLowerCase();
+      _recurrenceRule = _recurrenceLabels.containsKey(normalizedRule)
+          ? normalizedRule
+          : existingRule;
+    }
   }
 
   @override
@@ -1889,6 +1870,37 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
                   value: _allDay,
                   onChanged: (value) => setState(() => _allDay = value),
                 ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Repeat event'),
+                  value: _isRecurring,
+                  onChanged: (value) =>
+                      setState(() => _isRecurring = value),
+                ),
+                if (_isRecurring)
+                  DropdownButtonFormField<String>(
+                    value: _recurrenceRule,
+                    decoration: const InputDecoration(labelText: 'Repeat'),
+                    items: [
+                      ..._recurrenceLabels.entries.map(
+                        (entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ),
+                      ),
+                      if (!_recurrenceLabels
+                          .containsKey(_recurrenceRule.toLowerCase()))
+                        DropdownMenuItem(
+                          value: _recurrenceRule,
+                          child: Text('Existing: $_recurrenceRule'),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _recurrenceRule = value);
+                      }
+                    },
+                  ),
                 if (_allDay)
                   _DateTimeField(
                     label: 'End date (optional)',
@@ -2006,6 +2018,8 @@ class _CalendarEventFormDialogState extends State<_CalendarEventFormDialog> {
         allDay: _allDay,
         category: _category,
         location: _locationController.text,
+        isRecurring: _isRecurring,
+        recurrenceRule: _isRecurring ? _recurrenceRule : null,
       ),
     );
   }

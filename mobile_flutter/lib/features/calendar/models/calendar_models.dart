@@ -176,6 +176,8 @@ class CalendarEventInput extends Equatable {
     this.color = '#3b82f6',
     this.location,
     this.reminderMinutes = 15,
+    this.isRecurring = false,
+    this.recurrenceRule,
   });
 
   final String title;
@@ -187,6 +189,8 @@ class CalendarEventInput extends Equatable {
   final String color;
   final String? location;
   final int? reminderMinutes;
+  final bool isRecurring;
+  final String? recurrenceRule;
 
   Map<String, dynamic> toJson() => {
         'title': title.trim(),
@@ -204,6 +208,8 @@ class CalendarEventInput extends Equatable {
         'color': color,
         if (_hasText(location)) 'location': location!.trim(),
         if (reminderMinutes != null) 'reminderMinutes': reminderMinutes,
+        'isRecurring': isRecurring,
+        'recurrenceRule': isRecurring ? recurrenceRule : null,
       };
 
   @override
@@ -217,6 +223,8 @@ class CalendarEventInput extends Equatable {
         color,
         location,
         reminderMinutes,
+        isRecurring,
+        recurrenceRule,
       ];
 }
 
