@@ -2535,3 +2535,17 @@ mtime_ms = 1790318491810
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/732ea964-7cdd-4bc0-8bca-2dc55bbdf111/04ca35de-8359-4175-a753-606050964fd1"
 storage_version_token = "1790318495959134"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MnBWlJXIHHJUWhq0_E7rB"
+uri = "file://deliverables/rewards-badge-analyzer-fix.zip"
+type = "unspecified"
+title = "Flutter badge analyzer fix ZIP"
+description = "Matching Rewards screen and reward model files; the model defines AchievementBadgeStatus and the badgeStatus getter referenced by the screen."
+logical_id = "4c53fc42-9c01-4e72-b3c8-0b0ade105eea"
+content_hash = "sha256:a0c5711bbc8f8c4153cc751ecd04584cb4c8524159d6433dd5f68a2ff19a0b15"
+size = 13471
+mtime_ms = 1790318673158
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c53fc42-9c01-4e72-b3c8-0b0ade105eea/b6213362-d4ff-447e-9d6e-438e5576d033"
+storage_version_token = "1790318678305676"
+content_type = "application/octet-stream"
