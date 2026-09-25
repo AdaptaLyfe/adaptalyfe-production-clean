@@ -39,6 +39,13 @@ Replit-managed production schema changes are applied through the Publish schema-
 
 **How to apply:** Update the shared Drizzle schema and migration source, verify development, then publish and accept the non-destructive table/column creation prompt.
 
+## Railway staging schema migrations
+Railway staging uses an external database and is not managed by Replit's Publish schema-diff flow. Apply narrow SQL migrations explicitly in the Railway service environment using its app `DATABASE_URL`; do not run DDL automatically on every deploy or startup.
+
+**Why:** Railway's build/start configuration does not apply repository SQL migrations, and the Replit development database can already be migrated while staging remains stale.
+
+**How to apply:** Check the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
+
 ## Development schema drift
 The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.
 

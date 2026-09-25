@@ -33,7 +33,8 @@
     "test:proactive-guidance": "tsx --test server/proactive-guidance.test.ts",
     "test:caregiver-context": "tsx --test server/caregiver-context.test.ts",
     "test:assignment-input": "tsx --test server/assignment-input.test.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:migrate:assignment-hours": "node scripts/migrate-assignment-hours.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",

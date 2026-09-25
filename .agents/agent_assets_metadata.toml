@@ -2549,3 +2549,17 @@ mtime_ms = 1790318673158
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c53fc42-9c01-4e72-b3c8-0b0ade105eea/b6213362-d4ff-447e-9d6e-438e5576d033"
 storage_version_token = "1790318678305676"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GIWmWwdKQFDiomd0weO9v"
+uri = "file://deliverables/assignment-decimal-hours-fix.zip"
+type = "unspecified"
+title = "Assignment decimal-hours fix ZIP"
+description = "Contains the guarded Railway migration command, its package script, and the integer-to-real SQL migration."
+logical_id = "192c7faf-8f72-45c9-9360-5dd550f9ef82"
+content_hash = "sha256:fd80d4e1528f864535cbaed41f0b881c6688636628eb7fe327372a5eb0c2cb08"
+size = 3840
+mtime_ms = 1790319405834
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/192c7faf-8f72-45c9-9360-5dd550f9ef82/a817254d-7c60-40b0-9e57-420d669b34de"
+storage_version_token = "1790319443719541"
+content_type = "application/octet-stream"
