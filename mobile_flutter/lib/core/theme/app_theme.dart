@@ -301,7 +301,10 @@ abstract final class AppTheme {
       ),
       cardTheme: base.cardTheme.copyWith(
         color: surface,
-        side: const BorderSide(color: outline),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: outline),
+        ),
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
         fillColor: surface,
