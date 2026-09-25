@@ -2633,3 +2633,17 @@ mtime_ms = 1790330052682
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6b4abaf6-ddc1-4283-b81e-5c0ce8365630/67cb9fff-f245-4be1-b4be-79ed5a15bde2"
 storage_version_token = "1790330062645910"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k8WBognlCIgB7tHZnIN-u"
+uri = "file://subscription-offer-token-fix.zip"
+type = "unspecified"
+title = "Google Play purchase compile fix"
+description = "ZIP containing the fixed Flutter purchase service. It keeps the offer-token validation and lets the plugin read the token from GooglePlayProductDetails, without the unsupported constructor parameter."
+logical_id = "2c3f065e-a5a6-4ef0-a44d-14711eb1623c"
+content_hash = "sha256:b4ae3e3049e3accbd6adbbafe7758f7811b0ac7b95cecd82d42f99fde4944fdc"
+size = 1614
+mtime_ms = 1790333836004
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c3f065e-a5a6-4ef0-a44d-14711eb1623c/4eb2111f-2380-45a0-afed-5875e94bab82"
+storage_version_token = "1790333847468694"
+content_type = "application/octet-stream"
