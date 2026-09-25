@@ -1,0 +1,300 @@
+In the existing Flutter application, fix the **Rewards → Badges** feature completely.
+
+### Current Problems
+
+1. On **Rewards → Badges**, the app shows:
+   **"No badges yet"**
+   even when the user has:
+
+   * Redeemed rewards multiple times
+   * Earned many points
+   * Achieved multiple milestones
+
+2. Because of this, it is unclear whether the Badges feature is actually working.
+
+3. There is no clear/exact flow explaining:
+
+   * What badges are available
+   * How a user earns each badge
+   * What requirement must be completed
+   * When a badge should be awarded
+   * Why a badge has or has not been earned
+
+4. The feature must work consistently after:
+
+   * App restart
+   * Logout/login
+   * Refresh
+   * Navigation away and back
+   * Data changes such as earning points, redeeming rewards, and completing milestones
+
+### IMPORTANT — Investigate Before Changing Code
+
+Do NOT immediately create a new badge system.
+
+First inspect the existing Flutter project and understand:
+
+* Rewards screens
+* Badges screen
+* Rewards BLoC/Cubit/state management
+* Rewards repository
+* Firebase/Firestore structure
+* Existing points logic
+* Reward redemption logic
+* Milestone logic
+* Existing user profile/progress data
+* Any existing badge models/services
+* Existing Firestore collections/documents
+* Existing API/repository calls
+* Existing navigation and refresh logic
+
+Find the actual reason why the Badges screen incorrectly shows "No badges yet".
+
+Check for:
+
+* Wrong Firestore collection/path
+* Wrong user ID
+* Incorrect query/filter
+* Badge data not being created
+* Badge data being created but not loaded
+* Incorrect earned-status calculation
+* State not refreshing
+* BLoC event/state issue
+* Async loading issue
+* Data mapping/model issue
+* Empty fallback being shown before data finishes loading
+* Badge requirements not connected to points/milestones/rewards
+
+Do not hide the problem by simply removing "No badges yet".
+
+### Required Badge System
+
+Implement a clear and reliable badge flow using the existing architecture.
+
+There should be a defined list of badges with:
+
+* Badge name
+* Description
+* Requirement
+* Progress
+* Earned/Locked status
+* Earned date if available
+
+Example badge rules can be based on the existing Rewards data:
+
+* First Steps → Complete the first milestone
+* Point Collector → Earn a defined number of points
+* Reward Redeemer → Redeem the first reward
+* Milestone Master → Complete a defined number of milestones
+* Consistent Achiever → Complete multiple milestones
+* Higher-level badges → Based on progressively higher achievements
+
+IMPORTANT:
+Before adding new rules, check whether the existing project already has milestone/reward/points rules. Reuse the existing business logic wherever possible instead of creating conflicting rules.
+
+### Badges Screen UI
+
+Replace the misleading empty-state behavior with a useful UI.
+
+If the user has earned badges:
+
+Show:
+
+* Earned badges
+* Badge icon
+* Badge name
+* Short description
+* Earned date
+* Achievement/requirement completed
+
+Also show locked/upcoming badges so users understand how to earn them.
+
+For example:
+
+Earned:
+🏆 First Steps
+"Completed your first milestone"
+
+Locked:
+🔒 Point Collector
+"Earn 500 points"
+Progress: 320 / 500
+
+If the user has no badges yet, DO NOT show only:
+
+"No badges yet"
+
+Instead show something like:
+
+"No badges earned yet"
+
+"Start earning badges by completing milestones, earning points, and redeeming rewards."
+
+Then show the available badges and their requirements/progress.
+
+### Badge Earning Flow
+
+Create a single reliable badge evaluation flow.
+
+Whenever relevant user data changes:
+
+1. User earns points
+2. User redeems a reward
+3. User completes a milestone
+4. User performs another existing achievement that should affect badges
+
+→ Recalculate/check badge eligibility.
+
+If a badge requirement is satisfied:
+
+* Mark the badge as earned
+* Persist the earned status
+* Store earned date if the existing architecture supports it
+* Update the Rewards/Badges state
+* Show the newly earned badge without requiring the user to reinstall/restart the app
+
+Do not award the same badge repeatedly.
+
+### Persistence
+
+Use the project's existing Firebase/Firestore structure if possible.
+
+Do NOT create duplicate collections or duplicate data unnecessarily.
+
+If badge definitions are static, keep the definitions centralized.
+
+Store only user-specific badge progress/earned information where appropriate.
+
+Make sure the correct authenticated user's data is used.
+
+After logout/login, the correct badges must load for the logged-in user.
+
+### Flutter/BLoC Requirements
+
+Follow the existing project's architecture and state management.
+
+If the project uses BLoC:
+
+* Use the existing Rewards BLoC where appropriate.
+* Add proper events/states only when required.
+* Keep business logic out of the UI.
+* Do not add unnecessary new BLoCs.
+* Handle loading, success, empty, and error states correctly.
+
+The UI must NOT assume that an empty list means the user has no badges until the data-loading operation has completed.
+
+Correct state flow should be similar to:
+
+Loading
+→ Load rewards/points/milestones/badges
+→ Calculate badge progress
+→ Determine earned/locked badges
+→ Emit loaded state
+→ Display badges
+
+### Refresh/Reopen Testing
+
+This is very important.
+
+After implementing the fix, test the complete flow multiple times:
+
+1. Open Rewards → Badges.
+2. Confirm badges load correctly.
+3. Earn points.
+4. Return to Badges.
+5. Confirm progress updates.
+6. Complete a milestone.
+7. Return to Badges.
+8. Confirm the appropriate badge becomes earned.
+9. Redeem a reward.
+10. Return to Badges.
+11. Confirm the relevant badge updates.
+12. Leave the Badges screen.
+13. Open it again.
+14. Restart the app.
+15. Login again.
+16. Open Rewards → Badges.
+17. Confirm the earned badges are still present.
+18. Refresh/reload the screen.
+19. Confirm badges do not disappear.
+20. Confirm badges are not duplicated.
+
+### Important Error Handling
+
+Do not show:
+
+"No badges yet"
+
+when:
+
+* Data is still loading
+* Firebase request failed
+* Badge calculation failed
+* User data failed to load
+
+Use separate states/messages for:
+
+Loading:
+"Loading badges..."
+
+No earned badges:
+"No badges earned yet"
+
+Error:
+"Unable to load badges. Please try again."
+
+### UI/UX
+
+Keep the existing app design, theme, spacing, fonts, navigation, and responsive behavior.
+
+Do not redesign unrelated Rewards features.
+
+Make the Badges screen understandable to a new user.
+
+The user should immediately understand:
+
+1. Which badges exist
+2. Which badges they already earned
+3. Which badges are locked
+4. What they need to do to earn each badge
+5. Their current progress toward locked badges
+
+### Final Verification
+
+After making the changes:
+
+* Run `flutter analyze`
+* Fix all errors/warnings introduced by this change.
+* Run the relevant tests if they exist.
+* Verify Firebase/Firestore reads and writes.
+* Verify BLoC state transitions.
+* Verify navigation back/reopen behavior.
+* Verify app restart behavior.
+* Verify logout/login behavior.
+* Verify earned badges persist.
+* Verify badge progress updates after earning points/milestones/rewards.
+* Verify no duplicate badges are created.
+* Verify the incorrect "No badges yet" message no longer appears when the user actually qualifies for badges.
+
+IMPORTANT:
+Do not repeatedly patch symptoms. Trace the complete data flow from:
+
+User achievement
+→ Points/Milestone/Reward data
+→ Badge eligibility calculation
+→ Badge persistence
+→ Repository
+→ BLoC
+→ Badges UI
+
+Fix the root cause and make the feature work reliably after reopening the screen and restarting the application.
+
+At the end, provide:
+
+1. Root cause of the issue
+2. Files changed
+3. What was changed in each file
+4. Badge earning rules implemented
+5. Firestore/data changes, if any
+6. Testing performed
+7. Any remaining issue, if one cannot be fixed without backend/data changes
