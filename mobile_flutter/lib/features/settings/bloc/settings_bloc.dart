@@ -20,7 +20,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc(this.repository) : super(const SettingsState()) {
     on<SettingsStarted>(_load);
     on<RefreshSettings>(_load);
-    on<UpdatePreference>(_updatePreference);
+    on<UpdatePreference>(
+      _updatePreference,
+      transformer: _sequential(),
+    );
     on<UpdateLocalSetting>(_updateLocalSetting);
     on<ToggleDashboardModule>(
       _toggleDashboardModule,
@@ -47,36 +50,79 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   final SettingsRepository repository;
   int? _loadedUserId;
+  int _loadGeneration = 0;
+  Future<void> _preferenceWriteQueue = Future<void>.value();
+
+  Future<UserPreferences> _persistPreferences(
+    Map<String, dynamic> payload,
+  ) {
+    final result = _preferenceWriteQueue.then(
+      (_) => repository.updatePreferences(payload),
+    );
+    _preferenceWriteQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {},
+    );
+    return result;
+  }
 
   Future<void> _load(
     SettingsEvent event,
     Emitter<SettingsState> emit,
   ) async {
+    final loadGeneration = ++_loadGeneration;
     final userId = event is SettingsStarted
         ? event.userId
         : (event as RefreshSettings).userId;
+    final userChanged = _loadedUserId != null && _loadedUserId != userId;
     _loadedUserId = userId;
-    emit(
-      state.copyWith(
-        status: SettingsStatus.loading,
-        errorMessage: null,
-        actionMessage: null,
-        sessionInvalid: false,
-      ),
+    var loadingState = state.copyWith(
+      status: SettingsStatus.loading,
+      busyKey: null,
+      errorMessage: null,
+      actionMessage: null,
+      sessionInvalid: false,
     );
+    if (userChanged) {
+      loadingState = loadingState.copyWith(
+        user: null,
+        preferences: const UserPreferences(),
+        localSettings: const LocalUserSettings(),
+        dashboardModules: defaultDashboardModules,
+        lockedSettings: const [],
+        careRecipients: const [],
+        selectedRecipientId: null,
+        managedLockedSettings: const [],
+        permissions: const [],
+        organizationMembership: null,
+      );
+    }
+    emit(loadingState);
 
     try {
-      final results = await Future.wait<Object?>([
+      final coreSettings = await Future.wait<Object>([
         repository.getCurrentUser(),
         repository.getPreferences(),
+      ]);
+      if (loadGeneration != _loadGeneration) return;
+      emit(
+        state.copyWith(
+          user: coreSettings[0] as UserModel,
+          preferences: coreSettings[1] as UserPreferences,
+        ),
+      );
+
+      final results = await Future.wait<Object?>([
         repository.loadDashboardLayout(userId),
         repository.getLockedSettings(userId),
         repository.getCareRecipients(),
         repository.getOrganizationMembership(),
-        repository.loadLocalSettings(),
+        repository.loadLocalSettings(userId),
       ]);
-      final recipients = results[4] as List<Map<String, dynamic>>;
-      var selectedRecipientId = state.selectedRecipientId;
+      if (loadGeneration != _loadGeneration) return;
+      final recipients = results[2] as List<Map<String, dynamic>>;
+      var selectedRecipientId =
+          userChanged ? null : state.selectedRecipientId;
       if (selectedRecipientId == null && recipients.isNotEmpty) {
         selectedRecipientId =
             int.tryParse('${recipients.first['userId'] ?? 0}');
@@ -92,25 +138,25 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         managedLocks = caregiverData[0] as List<LockedSettingModel>;
         permissions = caregiverData[1] as List<CaregiverPermissionModel>;
       }
+      if (loadGeneration != _loadGeneration) return;
 
       emit(
         state.copyWith(
           status: SettingsStatus.loaded,
-          user: results[0] as UserModel,
-          preferences: results[1] as UserPreferences,
-          dashboardModules: results[2] as List<DashboardModuleModel>,
-          lockedSettings: results[3] as List<LockedSettingModel>,
+          dashboardModules: results[0] as List<DashboardModuleModel>,
+          lockedSettings: results[1] as List<LockedSettingModel>,
           careRecipients: recipients,
           selectedRecipientId: selectedRecipientId,
           managedLockedSettings: managedLocks,
           permissions: permissions,
-          organizationMembership: results[5],
-          localSettings: results[6] as LocalUserSettings,
+          organizationMembership: results[3],
+          localSettings: results[4] as LocalUserSettings,
           busyKey: null,
           errorMessage: null,
         ),
       );
     } on ApiException catch (error) {
+      if (loadGeneration != _loadGeneration) return;
       emit(
         state.copyWith(
           status: SettingsStatus.failure,
@@ -119,6 +165,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         ),
       );
     } catch (error) {
+      if (loadGeneration != _loadGeneration) return;
       emit(
         state.copyWith(
           status: SettingsStatus.failure,
@@ -132,44 +179,64 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     UpdatePreference event,
     Emitter<SettingsState> emit,
   ) async {
+    final previousPreferences = state.preferences;
     final updatedCategory = {
       ...state.preferences.category(event.category),
       event.key: event.value,
     };
-    final apiCategory =
-        event.category == 'adaptiveFeatures' ? 'behaviorPatterns' : event.category;
+    final updatedPreferences =
+        state.preferences.withCategory(event.category, updatedCategory);
+    final apiCategory = event.category == 'adaptiveFeatures'
+        ? 'behaviorPatterns'
+        : event.category;
     final apiValues = event.category == 'adaptiveFeatures'
         ? {
             ...state.behavior,
             'adaptiveFeatures': updatedCategory,
           }
         : updatedCategory;
+    final shouldAutoSave = state.localSettings.autoSave;
     emit(
       state.copyWith(
-        status: SettingsStatus.saving,
-        busyKey: '${event.category}.${event.key}',
+        preferences: updatedPreferences,
+        status: shouldAutoSave ? SettingsStatus.saving : SettingsStatus.loaded,
+        busyKey: shouldAutoSave ? '${event.category}.${event.key}' : null,
         errorMessage: null,
+        actionMessage: shouldAutoSave
+            ? null
+            : 'Changes will be saved when you tap Save Settings.',
       ),
     );
+    if (!shouldAutoSave) return;
+
     try {
-      final preferences = await repository.updatePreferences({
+      final savedPreferences = await _persistPreferences({
         apiCategory: apiValues,
       });
       emit(
         state.copyWith(
           status: SettingsStatus.loaded,
-          preferences: preferences,
+          preferences: savedPreferences,
           busyKey: null,
           actionMessage: 'Settings saved.',
           errorMessage: null,
         ),
       );
     } on ApiException catch (error) {
-      _emitActionError(emit, error, '${event.category}.${event.key}');
+      emit(
+        state.copyWith(
+          status: SettingsStatus.loaded,
+          preferences: previousPreferences,
+          busyKey: null,
+          errorMessage: error.message,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+        ),
+      );
     } catch (error) {
       emit(
         state.copyWith(
           status: SettingsStatus.loaded,
+          preferences: previousPreferences,
           busyKey: null,
           errorMessage: _messageFor(error),
         ),
@@ -195,7 +262,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         current.copyWith(automaticCheckIns: event.value),
       _ => current,
     };
-    await repository.saveLocalSettings(updated);
+    await repository.saveLocalSettings(_requireLoadedUserId(), updated);
     emit(state.copyWith(localSettings: updated, actionMessage: 'Settings saved.'));
   }
 
@@ -496,6 +563,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         'colorScheme': 'default',
         'fontSize': 16,
         'highContrast': false,
+        'reducedMotion': false,
+        'compactMode': false,
+        'quickActionsEnabled': true,
       },
       accessibilitySettings: {
         'voiceGuidance': true,
@@ -507,7 +577,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         'reminderStyle': 'standard',
         'motivationLevel': 'moderate',
         'supportLevel': 'standard',
+        'adaptiveFeatures': <String, dynamic>{},
       },
+      adaptiveFeatures: {},
     );
 
     emit(
@@ -520,10 +592,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     try {
-      final preferences = await repository.updatePreferences(
+      final preferences = await _persistPreferences(
         _preferencesPayload(defaults),
       );
-      await repository.saveLocalSettings(const LocalUserSettings());
+      await repository.saveLocalSettings(
+        _requireLoadedUserId(),
+        const LocalUserSettings(),
+      );
       emit(
         state.copyWith(
           status: SettingsStatus.loaded,
@@ -554,10 +629,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     );
 
     try {
-      final preferences = await repository.updatePreferences(
+      final preferences = await _persistPreferences(
         _preferencesPayload(state.preferences),
       );
-      await repository.saveLocalSettings(state.localSettings);
+      await repository.saveLocalSettings(
+        _requireLoadedUserId(),
+        state.localSettings,
+      );
       emit(
         state.copyWith(
           status: SettingsStatus.loaded,
@@ -593,7 +671,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       'reminderTiming': preferences.reminderTiming,
       'themeSettings': preferences.themeSettings,
       'accessibilitySettings': preferences.accessibilitySettings,
-      'behaviorPatterns': preferences.behaviorPatterns,
+      'behaviorPatterns': {
+        ...preferences.behaviorPatterns,
+        if (preferences.adaptiveFeatures.isNotEmpty)
+          'adaptiveFeatures': preferences.adaptiveFeatures,
+      },
     };
   }
 

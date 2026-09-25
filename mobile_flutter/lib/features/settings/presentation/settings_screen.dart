@@ -329,6 +329,8 @@ class _ReactAppearanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = state.theme;
+    final savedTheme = '${theme['theme'] ?? ''}'.toLowerCase();
+    final selectedTheme = savedTheme == 'auto' ? 'system' : savedTheme;
     return _Panel(
       title: 'Appearance',
       subtitle: 'Customize the look and feel of your dashboard',
@@ -338,10 +340,10 @@ class _ReactAppearanceCard extends StatelessWidget {
           _SelectRow(
             label: 'Theme',
             value: _oneOf(
-              '${theme['theme'] ?? theme['colorScheme'] ?? 'light'}',
-              const ['light', 'dark', 'auto'],
+              selectedTheme,
+              const ['light', 'dark', 'system'],
             ),
-            options: const ['light', 'dark', 'auto'],
+            options: const ['light', 'dark', 'system'],
             onChanged: (value) =>
                 _update(context, 'themeSettings', 'theme', value),
           ),

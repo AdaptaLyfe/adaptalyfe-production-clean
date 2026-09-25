@@ -57,12 +57,22 @@ class NativeNotificationService {
   FirebaseMessaging? _messaging;
   NativeNotificationPermission _permission =
       NativeNotificationPermission.unknown;
+  bool _enabled = true;
 
   Stream<NativeNotificationAction> get actions => _actions.stream;
   NativeNotificationPermission get permission => _permission;
 
   Future<void> initialize() {
     return _initialization ??= _initialize();
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    if (_enabled == enabled) return;
+    await initialize();
+    _enabled = enabled;
+    if (!enabled) {
+      await _localNotifications.cancelAll();
+    }
   }
 
   Future<void> _initialize() async {
@@ -203,7 +213,7 @@ class NativeNotificationService {
     String? route,
   }) async {
     await initialize();
-    if (!scheduledTime.isAfter(DateTime.now())) return;
+    if (!_enabled || !scheduledTime.isAfter(DateTime.now())) return;
 
     await _localNotifications.zonedSchedule(
       _notificationId(tag ?? '$title-${scheduledTime.millisecondsSinceEpoch}'),
@@ -271,6 +281,7 @@ class NativeNotificationService {
   }
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
+    if (!_enabled) return;
     final title = message.notification?.title ??
         message.data['title']?.toString() ??
         'Adaptalyfe';

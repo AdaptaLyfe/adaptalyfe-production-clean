@@ -2437,3 +2437,17 @@ mtime_ms = 1790241922776
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/560b7e1b-c410-41a3-a3e2-e09a5d090d60/4f0ffe0c-e48e-43db-977f-a1dafa23e7f5"
 storage_version_token = "1790241929348442"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xJtYU4RLAZAlaLBr0xN4q"
+uri = "file://mobile_flutter_settings_changes_20260925.zip"
+type = "unspecified"
+title = "Flutter Settings changed files"
+description = "ZIP archive with the 9 updated Flutter source files and 3 new regression tests."
+logical_id = "d57c1fca-fff7-4ecb-8e9a-1e0f758adac4"
+content_hash = "sha256:7081b9ca676935eb368b88c78b42d7a709c28a27b7a56b646c0175f466fb3b6d"
+size = 43928
+mtime_ms = 1790314429200
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d57c1fca-fff7-4ecb-8e9a-1e0f758adac4/82001592-155a-4259-b565-83269a2e3710"
+storage_version_token = "1790314440719693"
+content_type = "application/octet-stream"

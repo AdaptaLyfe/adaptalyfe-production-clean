@@ -66,7 +66,8 @@ class SettingsRepository {
       dashboardLayoutStore.save(userId, modules);
   Future<void> resetDashboardLayout(int userId) =>
       dashboardLayoutStore.reset(userId);
-  Future<LocalUserSettings> loadLocalSettings() => localSettingsStore.load();
-  Future<void> saveLocalSettings(LocalUserSettings settings) =>
-      localSettingsStore.save(settings);
+  Future<LocalUserSettings> loadLocalSettings(int userId) =>
+      localSettingsStore.load(userId);
+  Future<void> saveLocalSettings(int userId, LocalUserSettings settings) =>
+      localSettingsStore.save(userId, settings);
 }

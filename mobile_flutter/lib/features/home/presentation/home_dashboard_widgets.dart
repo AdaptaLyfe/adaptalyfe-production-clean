@@ -16,6 +16,8 @@ import '../../mood/bloc/mood_bloc.dart';
 import '../../mood/bloc/mood_event.dart';
 import '../../mood/models/mood_entry_model.dart';
 import '../../mood/bloc/mood_state.dart';
+import '../../settings/bloc/settings_bloc.dart';
+import '../../settings/bloc/settings_state.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_state.dart';
 import '../bloc/home_state.dart';
@@ -78,8 +80,19 @@ class HomeDashboardBody extends StatelessWidget {
                 ),
               ),
             if (user != null) ...[
-              const HomeConfigurableQuickActions(),
-              const SizedBox(height: 20),
+              BlocSelector<SettingsBloc, SettingsState, bool>(
+                selector: (state) =>
+                    state.user?.id != user.id ||
+                    state.theme['quickActionsEnabled'] != false,
+                builder: (context, enabled) => enabled
+                    ? const Column(
+                        children: [
+                          HomeConfigurableQuickActions(),
+                          SizedBox(height: 20),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
               HomeTodayFlowRich(user: user),
               const SizedBox(height: 20),
               const HomeLiveDailyGuide(),

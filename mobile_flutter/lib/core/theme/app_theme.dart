@@ -4,6 +4,25 @@ import 'app_colors.dart';
 import 'app_text_styles.dart';
 
 abstract final class AppTheme {
+  static ThemeMode modeForPreference(Object? value) {
+    switch ('$value'.toLowerCase()) {
+      case 'dark':
+        return ThemeMode.dark;
+      case 'auto':
+      case 'system':
+        return ThemeMode.system;
+      default:
+        return ThemeMode.light;
+    }
+  }
+
+  static double textScaleForPreference(Object? value) {
+    final fontSize = value is num
+        ? value.toDouble()
+        : double.tryParse('$value') ?? 16;
+    return fontSize.clamp(12, 24) / 16;
+  }
+
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: AppColors.primary,
@@ -239,6 +258,121 @@ abstract final class AppTheme {
         color: AppColors.outlineSoft,
         thickness: 1,
         space: 1,
+      ),
+    );
+  }
+
+  static ThemeData get dark {
+    const background = Color(0xFF10141C);
+    const surface = Color(0xFF1A202B);
+    const outline = Color(0xFF465064);
+    const onSurface = Color(0xFFF2F4F8);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: AppColors.primary,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: const Color(0xFFB8C9FF),
+      onPrimary: const Color(0xFF172A52),
+      secondary: const Color(0xFFAEC4EB),
+      onSecondary: const Color(0xFF172A52),
+      surface: surface,
+      onSurface: onSurface,
+      error: const Color(0xFFFFB4AB),
+      outline: outline,
+    );
+    final base = light;
+
+    return base.copyWith(
+      brightness: Brightness.dark,
+      colorScheme: scheme,
+      scaffoldBackgroundColor: background,
+      canvasColor: background,
+      textTheme: base.textTheme.apply(
+        bodyColor: onSurface,
+        displayColor: onSurface,
+      ),
+      appBarTheme: base.appBarTheme.copyWith(
+        backgroundColor: surface,
+        foregroundColor: onSurface,
+        titleTextStyle: base.appBarTheme.titleTextStyle?.copyWith(
+          color: onSurface,
+        ),
+        iconTheme: const IconThemeData(color: onSurface),
+      ),
+      cardTheme: base.cardTheme.copyWith(
+        color: surface,
+        side: const BorderSide(color: outline),
+      ),
+      inputDecorationTheme: base.inputDecorationTheme.copyWith(
+        fillColor: surface,
+        labelStyle: const TextStyle(color: Color(0xFFCFD5E0)),
+        hintStyle: const TextStyle(color: Color(0xFFCFD5E0)),
+      ),
+      dialogTheme: base.dialogTheme.copyWith(
+        backgroundColor: surface,
+        titleTextStyle: base.dialogTheme.titleTextStyle?.copyWith(
+          color: onSurface,
+        ),
+        contentTextStyle: base.dialogTheme.contentTextStyle?.copyWith(
+          color: onSurface,
+        ),
+      ),
+      bottomNavigationBarTheme: base.bottomNavigationBarTheme.copyWith(
+        backgroundColor: surface,
+        unselectedItemColor: const Color(0xFFCFD5E0),
+      ),
+      navigationBarTheme: base.navigationBarTheme.copyWith(
+        backgroundColor: surface,
+        indicatorColor: const Color(0xFF344465),
+      ),
+      drawerTheme: base.drawerTheme.copyWith(backgroundColor: surface),
+      snackBarTheme: base.snackBarTheme.copyWith(
+        backgroundColor: const Color(0xFF303846),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF343C49),
+        thickness: 1,
+        space: 1,
+      ),
+    );
+  }
+
+  static ThemeData get highContrastLight {
+    final base = light;
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: AppColors.primaryDark,
+        onSurface: Colors.black,
+        outline: Colors.black,
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Colors.black,
+        displayColor: Colors.black,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Colors.black,
+        thickness: 2,
+        space: 2,
+      ),
+    );
+  }
+
+  static ThemeData get highContrastDark {
+    final base = dark;
+    return base.copyWith(
+      colorScheme: base.colorScheme.copyWith(
+        primary: Colors.white,
+        onSurface: Colors.white,
+        outline: Colors.white,
+      ),
+      textTheme: base.textTheme.apply(
+        bodyColor: Colors.white,
+        displayColor: Colors.white,
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Colors.white,
+        thickness: 2,
+        space: 2,
       ),
     );
   }

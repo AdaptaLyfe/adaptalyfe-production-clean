@@ -75,8 +75,6 @@ import '../features/rewards/bloc/rewards_event.dart';
 import '../features/rewards/data/rewards_api.dart';
 import '../features/rewards/data/rewards_repository.dart';
 import '../features/rewards/presentation/rewards_screen.dart';
-import '../features/settings/bloc/settings_bloc.dart';
-import '../features/settings/bloc/settings_event.dart';
 import '../features/settings/data/dashboard_layout_store.dart';
 import '../features/settings/data/local_settings_store.dart';
 import '../features/settings/data/settings_api.dart';
@@ -396,11 +394,7 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             builder: (context, state) {
               final authState = authBloc.state;
               final userId = authState is Authenticated ? authState.user.id : 0;
-              return BlocProvider(
-                create: (_) => SettingsBloc(_createSettingsRepository())
-                  ..add(SettingsStarted(userId)),
-                child: SettingsScreen(userId: userId),
-              );
+              return SettingsScreen(userId: userId);
             },
           ),
           GoRoute(
@@ -629,7 +623,7 @@ PersonalDocumentsRepository _createPersonalDocumentsRepository() {
   );
 }
 
-SettingsRepository _createSettingsRepository() {
+SettingsRepository createSettingsRepository() {
   final localStorage = LocalStorage();
   final client = ApiClient(localStorage: localStorage);
   return SettingsRepository(
