@@ -3156,7 +3156,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(caregiverInvitations.caregiverId, caregiverId),
-          sql`lower(${caregiverInvitations.status}) = 'pending'`,
+          sql`lower(trim(${caregiverInvitations.status})) = 'pending'`,
           gt(caregiverInvitations.expiresAt, new Date()),
         ),
       )
@@ -3300,7 +3300,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(caregiverInvitations.caregiverId, userId),
-            sql`lower(${caregiverInvitations.status}) = 'accepted'`,
+            sql`lower(trim(${caregiverInvitations.status})) = 'accepted'`,
             isNotNull(caregiverInvitations.acceptedBy),
           ),
         )

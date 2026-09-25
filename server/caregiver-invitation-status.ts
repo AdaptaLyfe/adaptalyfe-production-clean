@@ -1,3 +1,3 @@
 export function normalizeCaregiverInvitationStatus(status: string): string {
-  return status.toLowerCase();
+  return status.trim().toLowerCase();
 }

@@ -21,12 +21,16 @@ class CaregiverBloc extends Bloc<CaregiverEvent, CaregiverState> {
 
   final CaregiverRepository repository;
   int? _loadedUserId;
+  int _setupLoadGeneration = 0;
 
   Future<void> _loadSetup(
     CaregiverEvent event,
     Emitter<CaregiverState> emit,
   ) async {
-    final userId = event is CaregiverStarted ? event.userId : (event as RefreshCaregiver).userId;
+    final loadGeneration = ++_setupLoadGeneration;
+    final userId = event is CaregiverStarted
+        ? event.userId
+        : (event as RefreshCaregiver).userId;
     _loadedUserId = userId;
     emit(
       state.copyWith(
@@ -42,6 +46,7 @@ class CaregiverBloc extends Bloc<CaregiverEvent, CaregiverState> {
         repository.getInvitations(userId),
         repository.getRelationshipsForUser(userId),
       ]);
+      if (loadGeneration != _setupLoadGeneration) return;
       emit(
         state.copyWith(
           status: CaregiverStatus.loaded,
@@ -52,8 +57,10 @@ class CaregiverBloc extends Bloc<CaregiverEvent, CaregiverState> {
         ),
       );
     } on ApiException catch (error) {
+      if (loadGeneration != _setupLoadGeneration) return;
       _emitFailure(emit, error);
     } catch (_) {
+      if (loadGeneration != _setupLoadGeneration) return;
       _emitFailure(
         emit,
         null,

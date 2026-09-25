@@ -21,9 +21,10 @@ test("accepted invitation maps the inviter to the care recipient and accepter to
   );
 });
 
-test("invitation status normalization handles mixed-case stored values", () => {
+test("invitation status normalization handles case and surrounding spaces", () => {
   assert.equal(normalizeCaregiverInvitationStatus("PENDING"), "pending");
   assert.equal(normalizeCaregiverInvitationStatus("PeNdInG"), "pending");
   assert.equal(normalizeCaregiverInvitationStatus("ACCEPTED"), "accepted");
+  assert.equal(normalizeCaregiverInvitationStatus("  ACCEPTED  "), "accepted");
   assert.notEqual(normalizeCaregiverInvitationStatus("ACCEPTED"), "pending");
 });
