@@ -5,7 +5,6 @@ import '../../../app/app_route_observer.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
-import '../../auth/bloc/auth_state.dart';
 import '../../calendar/bloc/calendar_bloc.dart';
 import '../../calendar/bloc/calendar_event.dart';
 import '../../daily_tasks/bloc/daily_tasks_bloc.dart';

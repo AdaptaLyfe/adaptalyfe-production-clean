@@ -731,13 +731,14 @@ class HomeTodayFlowRich extends StatelessWidget {
                   .first;
           final next = timeline.length > 1 ? timeline[1] : null;
           final primary = timeline.isEmpty ? null : timeline.first;
+          final trimmedName = user.name?.trim();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _TodayHeaderCard(
-                userName: user.name?.trim().isNotEmpty == true
-                    ? user.name!.trim()
+                userName: trimmedName != null && trimmedName.isNotEmpty
+                    ? trimmedName
                     : user.username,
                 now: now,
                 primary: primary,

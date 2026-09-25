@@ -2591,3 +2591,17 @@ mtime_ms = 1790325151378
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/69dd8f8b-9090-4b07-a9b1-675c9fba767f/53fcb5ae-7f84-46ea-bb18-23ae8003e282"
 storage_version_token = "1790325172750789"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Kq6R6pFwkueiy6_eOCcxr"
+uri = "file://deliverables/dart-analysis-fix.zip"
+type = "unspecified"
+title = "Dart analysis fix files"
+description = "Four targeted Flutter files: the current SleepState/screen pair plus the two home files updated for the reported analyzer warnings."
+logical_id = "ee461cc8-e3f1-42da-a1ff-4917a14f6e00"
+content_hash = "sha256:1d4627e518c2494a83ff3c9565a74818030376ce2ecb02733315e67242e891cf"
+size = 40308
+mtime_ms = 1790326088182
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ee461cc8-e3f1-42da-a1ff-4917a14f6e00/5ed74540-b5af-49f9-93ee-832c1be1bbab"
+storage_version_token = "1790326097428227"
+content_type = "application/octet-stream"
