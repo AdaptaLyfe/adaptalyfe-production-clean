@@ -2507,3 +2507,17 @@ mtime_ms = 1790316980505
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/270d0222-4949-4c84-9ce1-8ad34bcd6f11/c825203b-5204-4496-8295-f3ff2073c1f9"
 storage_version_token = "1790316985225616"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "VfwbI_PqeM_qMUFDjPu1V"
+uri = "file://deliverables/flutter-current-streak-fix.zip"
+type = "unspecified"
+title = "Flutter Current Streak fix ZIP"
+description = "Contains the changed Home screen file. Home now refreshes its authoritative user/streak data when the app returns to the foreground."
+logical_id = "113b29db-d0e2-4f78-8112-01975bb83da1"
+content_hash = "sha256:bb0fc52914915729a8e626ed5ce3175b9b9751c94f008bcdc656c531bb88cb04"
+size = 2418
+mtime_ms = 1790317954132
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/113b29db-d0e2-4f78-8112-01975bb83da1/0c8e940b-006a-48b5-98f3-b474473a6d24"
+storage_version_token = "1790317965999570"
+content_type = "application/octet-stream"

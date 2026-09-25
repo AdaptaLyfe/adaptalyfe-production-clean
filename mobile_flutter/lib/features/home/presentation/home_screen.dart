@@ -36,8 +36,16 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with RouteAware {
+class _HomeScreenState extends State<HomeScreen>
+    with RouteAware, WidgetsBindingObserver {
   ModalRoute<void>? _route;
+  bool _appWasBackgrounded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -55,7 +63,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void dispose() {
     appRouteObserver.unsubscribe(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _appWasBackgrounded = true;
+      return;
+    }
+
+    if (state != AppLifecycleState.resumed || !_appWasBackgrounded) return;
+    _appWasBackgrounded = false;
+
+    if (mounted && _route?.isCurrent == true) {
+      context.read<HomeBloc>().add(const RefreshHome());
+    }
   }
 
   @override
