@@ -2493,3 +2493,17 @@ mtime_ms = 1790315749816
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ab650519-cbcc-4b87-9ad5-397272335646/7bd072a2-83b5-40db-ade3-2d907cfe3cb9"
 storage_version_token = "1790315753880408"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rsfzGXIpp369K0m34W8nz"
+uri = "file://deliverables/academic-assignment-decimal-flow.zip"
+type = "unspecified"
+title = "Academic assignment decimal-flow source ZIP"
+description = "The assignment form, decimal-aware model and server parser, persistence schema/storage, and related regression tests. The current workspace already supports fractional hours; no source code was changed in this turn."
+logical_id = "270d0222-4949-4c84-9ce1-8ad34bcd6f11"
+content_hash = "sha256:f8b1cf68b50033ede7a2684c7e438e9f8b6ca996c687741d365f08ef3c41e8c1"
+size = 117817
+mtime_ms = 1790316980505
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/270d0222-4949-4c84-9ce1-8ad34bcd6f11/c825203b-5204-4496-8295-f3ff2073c1f9"
+storage_version_token = "1790316985225616"
+content_type = "application/octet-stream"
