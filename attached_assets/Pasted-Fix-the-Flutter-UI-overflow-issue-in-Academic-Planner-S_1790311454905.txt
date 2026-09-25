@@ -1,0 +1,71 @@
+Fix the Flutter UI overflow issue in:
+
+**Academic Planner / Student Planner → Schedule → Add New Class**
+
+### Current Issue
+
+When the user taps **"+ Add Class"**, the **"Add New Class"** popup/dialog opens and shows:
+
+**"OVERFLOWED BY 14 PIXELS"**
+
+The dialog has a vertical layout overflow.
+
+### Required Fix
+
+Fix the layout properly so there is **no overflow on any screen size**.
+
+Important:
+
+* Do NOT simply reduce random padding or font sizes just to hide the error.
+* Find the actual widget causing the overflow.
+* Make the dialog content responsive.
+* The dialog must work correctly on small phones, large phones, tablets, and different orientations.
+* If the content can become taller than the available screen height, make the dialog body scrollable.
+* Use `SingleChildScrollView` or another appropriate responsive layout solution where required.
+* Make sure the keyboard appearing does not cause another overflow.
+* Keep the existing UI design, fields, validation, colors, buttons, and functionality unchanged as much as possible.
+* Do not remove any existing fields or functionality.
+
+### Important
+
+The **Add New Class** dialog may be opened repeatedly. Make sure the fix is stable when:
+
+1. Open Add New Class.
+2. Close it.
+3. Open it again.
+4. Repeat several times.
+5. Enter data and open/close the keyboard.
+6. Rotate or resize the screen if supported.
+
+There must be:
+
+* No "OVERFLOWED BY XX PIXELS" message.
+* No `RenderFlex overflow` error.
+* No widget lifecycle/dispose errors.
+* No duplicate dialogs.
+* No broken form state.
+
+### Before changing code
+
+First inspect the existing implementation of:
+
+* Schedule screen
+* `+ Add Class` button
+* Add New Class dialog/bottom sheet
+* Form fields inside the dialog
+* Any `Column`, `Row`, `Expanded`, `Flexible`, `ListView`, `SingleChildScrollView`, `AlertDialog`, or `showDialog` used there.
+
+Identify the exact cause of the 14-pixel overflow.
+
+### After fixing
+
+Run/analyze the affected Flutter code and verify the complete Add New Class flow.
+
+Do not modify unrelated Academic Planner features.
+
+At the end, tell me:
+
+1. Which widget caused the overflow.
+2. What you changed.
+3. Which files were modified.
+4. How you verified that reopening the dialog repeatedly no longer causes the overflow.

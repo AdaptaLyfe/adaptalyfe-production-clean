@@ -2249,6 +2249,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
         builder: (context, state) {
           final isSubmitting = state.action == AcademicAction.addingClass;
           return AlertDialog(
+            scrollable: true,
             insetPadding: EdgeInsets.symmetric(
               horizontal: AppResponsive.isCompact(context) ? 12 : 24,
               vertical: 24,
@@ -2257,19 +2258,12 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
             content: ConstrainedBox(
               constraints: BoxConstraints(
                 maxWidth: AppResponsive.dialogWidth(context),
-                maxHeight: AppResponsive.dialogMaxHeight(
-                  context,
-                  fraction: .68,
-                ),
               ),
               child: Form(
                 key: _formKey,
-                child: SingleChildScrollView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     TextFormField(
                       controller: _nameController,
                       enabled: !isSubmitting,
@@ -2401,8 +2395,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                         labelText: 'Notes (optional)',
                       ),
                     ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
