@@ -1657,6 +1657,9 @@ class _RewardDialogState extends State<_RewardDialog> {
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+              ),
               child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

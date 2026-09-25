@@ -67,7 +67,11 @@ class MealShoppingScreen extends StatelessWidget {
           length: 2,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Meal Planning & Shopping'),
+              title: const Text(
+                'Meal Planning & Shopping',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               actions: [
                 IconButton(
                   tooltip: 'Refresh meal and shopping data',
@@ -1402,6 +1406,9 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
               child: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1590,6 +1597,9 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
               child: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

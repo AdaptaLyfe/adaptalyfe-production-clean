@@ -79,7 +79,11 @@ class AcademicPlannerScreen extends StatelessWidget {
               children: [
                 if (state.isLoading) const LinearProgressIndicator(minHeight: 2),
                 const _AcademicHeader(),
-                const TabBar(
+                TabBar(
+                  // Five labels and icons cannot fit side by side on compact
+                  // phones; allow the tab strip to be reached horizontally.
+                  isScrollable: MediaQuery.sizeOf(context).width <
+                      AppResponsive.mediumBreakpoint,
                   tabs: [
                     Tab(
                       icon: Icon(Icons.today_outlined),

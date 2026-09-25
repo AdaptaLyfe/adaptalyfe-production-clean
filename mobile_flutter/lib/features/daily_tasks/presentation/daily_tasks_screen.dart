@@ -1042,6 +1042,9 @@ class _TaskFormDialogState extends State<_TaskFormDialog> {
           width: AppResponsive.dialogWidth(context),
           height: AppResponsive.dialogMaxHeight(context, fraction: .78),
           child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+            ),
             child: Form(
               key: _formKey,
               child: Column(

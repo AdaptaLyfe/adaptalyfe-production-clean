@@ -1295,9 +1295,12 @@ class _BillDialogState extends State<_BillDialog> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Bill name'),
@@ -1342,8 +1345,8 @@ class _BillDialogState extends State<_BillDialog> {
                 value: _isRecurring,
                 onChanged: (value) => setState(() => _isRecurring = value),
               ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1417,9 +1420,12 @@ class _BudgetDialogState extends State<_BudgetDialog> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               DropdownButtonFormField<String>(
                 value: _type,
                 decoration: const InputDecoration(labelText: 'Entry type'),
@@ -1461,8 +1467,8 @@ class _BudgetDialogState extends State<_BudgetDialog> {
                 decoration:
                     const InputDecoration(labelText: 'Description (optional)'),
               ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),

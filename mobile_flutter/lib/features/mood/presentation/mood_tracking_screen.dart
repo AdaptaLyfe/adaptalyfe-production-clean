@@ -221,37 +221,51 @@ class _MoodSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _MoodSummaryCard(
-            label: "Today's mood",
-            value: state.todayMood == null
-                ? '❓'
-                : _moodOption(state.todayMood!.mood).emoji,
-            color: const Color(0xFF9333EA),
-            icon: Icons.favorite_rounded,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _MoodSummaryCard(
-            label: 'Average mood',
-            value: '${state.averageMood.toStringAsFixed(1)}/5',
-            color: const Color(0xFFF59E0B),
-            icon: Icons.trending_up_rounded,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _MoodSummaryCard(
-            label: 'Check-ins',
-            value: '${state.entries.length}',
-            color: const Color(0xFF16A34A),
-            icon: Icons.calendar_month_rounded,
-          ),
-        ),
-      ],
+    final cards = <Widget>[
+      _MoodSummaryCard(
+        label: "Today's mood",
+        value: state.todayMood == null
+            ? '❓'
+            : _moodOption(state.todayMood!.mood).emoji,
+        color: const Color(0xFF9333EA),
+        icon: Icons.favorite_rounded,
+      ),
+      _MoodSummaryCard(
+        label: 'Average mood',
+        value: '${state.averageMood.toStringAsFixed(1)}/5',
+        color: const Color(0xFFF59E0B),
+        icon: Icons.trending_up_rounded,
+      ),
+      _MoodSummaryCard(
+        label: 'Check-ins',
+        value: '${state.entries.length}',
+        color: const Color(0xFF16A34A),
+        icon: Icons.calendar_month_rounded,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 390) {
+          final cardWidth = (constraints.maxWidth - 10) / 2;
+          return Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final card in cards)
+                SizedBox(width: cardWidth, child: card),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (var index = 0; index < cards.length; index++) ...[
+              Expanded(child: cards[index]),
+              if (index < cards.length - 1) const SizedBox(width: 10),
+            ],
+          ],
+        );
+      },
     );
   }
 }
@@ -272,7 +286,7 @@ class _MoodSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 108,
+      constraints: const BoxConstraints(minHeight: 108),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -294,7 +308,7 @@ class _MoodSummaryCard extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF6B7280),

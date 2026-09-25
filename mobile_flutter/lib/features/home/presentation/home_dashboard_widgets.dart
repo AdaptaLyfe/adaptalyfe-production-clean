@@ -1053,6 +1053,7 @@ class HomeTasksModule extends StatelessWidget {
                   child: Column(
                     children: [
                       const TabBar(
+                        isScrollable: true,
                         labelColor: Color(0xFF0F766E),
                         unselectedLabelColor: Color(0xFF64748B),
                         indicatorColor: Color(0xFF14B8A6),
@@ -1125,7 +1126,9 @@ class _TaskCategoryPanel extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.only(top: 10),
-      physics: const NeverScrollableScrollPhysics(),
+      // Keep the module bounded for the surrounding dashboard, while allowing
+      // larger text scales to reach every task row.
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
         if (pending.isNotEmpty)
           ...pending.map(

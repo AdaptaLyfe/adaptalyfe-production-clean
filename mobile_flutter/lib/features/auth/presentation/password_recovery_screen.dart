@@ -459,8 +459,7 @@ class _AuthHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
@@ -472,34 +471,46 @@ class _AuthHeader extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(9),
-            child: Image.asset(
-              'assets/adaptalyfe-icon.png',
-              width: 38,
-              height: 38,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'Adaptalyfe',
-              style: TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 360;
+          return Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(9),
+                child: Image.asset(
+                  'assets/adaptalyfe-icon.png',
+                  width: 38,
+                  height: 38,
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back, size: 18),
-            label: Text(backLabel),
-          ),
-        ],
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Adaptalyfe',
+                  style: TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (compact)
+                IconButton(
+                  onPressed: onBack,
+                  tooltip: backLabel,
+                  icon: const Icon(Icons.arrow_back),
+                )
+              else
+                TextButton.icon(
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back, size: 18),
+                  label: Text(backLabel),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

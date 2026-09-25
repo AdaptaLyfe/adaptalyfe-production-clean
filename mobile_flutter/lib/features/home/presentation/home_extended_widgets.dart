@@ -2148,17 +2148,16 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     final hasPremium = premium.isNotEmpty;
     final dialog = AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: Row(
-        children: [
-          const Icon(Icons.settings_outlined, color: Color(0xFF2563EB)),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Text(
-              'Customize Your Dashboard',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-          ),
-          OutlinedButton.icon(
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 520;
+          final title = Text(
+            'Customize Your Dashboard',
+            maxLines: compact ? 2 : 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          );
+          final resetButton = OutlinedButton.icon(
             onPressed: _isSaving ? null : _reset,
             icon: const Icon(Icons.restart_alt_rounded, size: 16),
             label: const Text('Reset'),
@@ -2166,13 +2165,45 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               visualDensity: VisualDensity.compact,
             ),
-          ),
-          IconButton(
+          );
+          final closeButton = IconButton(
             tooltip: 'Close',
             onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close_rounded),
-          ),
-        ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.settings_outlined,
+                      color: Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: title),
+                    closeButton,
+                  ],
+                ),
+                const SizedBox(height: 4),
+                resetButton,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              const Icon(Icons.settings_outlined, color: Color(0xFF2563EB)),
+              const SizedBox(width: 8),
+              Expanded(child: title),
+              resetButton,
+              closeButton,
+            ],
+          );
+        },
       ),
       content: SizedBox(
         width: AppResponsive.dialogWidth(context, maxWidth: 600),

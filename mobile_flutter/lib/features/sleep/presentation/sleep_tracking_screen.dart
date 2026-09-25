@@ -722,7 +722,10 @@ class _SleepLogTabState extends State<_SleepLogTab> {
         widget.state.dailySession != null;
     return ListView(
        padding: AppResponsive.pagePadding(context).add(
-         const EdgeInsets.only(top: 18, bottom: 32),
+         EdgeInsets.only(
+           top: 18,
+           bottom: MediaQuery.viewInsetsOf(context).bottom + 32,
+         ),
        ),
       children: [
         Card(

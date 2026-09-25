@@ -428,27 +428,50 @@ class _InvitationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPending = invitation.isPending;
+    final statusChip = Chip(
+      label: Text(invitation.status.toUpperCase()),
+      visualDensity: VisualDensity.compact,
+    );
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Row(
-              children: [
-                const Icon(Icons.mail_rounded, color: Color(0xFF7C3AED)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    invitation.userName,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                Chip(
-                  label: Text(invitation.status.toUpperCase()),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 380;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.mail_rounded,
+                          color: Color(0xFF7C3AED),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            invitation.userName,
+                            softWrap: true,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        if (!compact) statusChip,
+                      ],
+                    ),
+                    if (compact)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32, top: 6),
+                        child: statusChip,
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             SelectableText(
@@ -498,30 +521,53 @@ class _RelationshipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: Color(0xFFD1FAE5),
-          child: Icon(Icons.volunteer_activism_rounded, color: Color(0xFF047857)),
-        ),
-        title: Text(
-          relationship.caregiverName ?? 'Caregiver',
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        subtitle: Text(
-          '${_relationshipLabel(relationship.relationship)} • Relationship #${relationship.id}'
-          '${relationship.isPrimary ? ' • Primary' : ''}'
-          '${relationship.establishedAt == null ? '' : ' • ${_date(relationship.establishedAt!)}'}',
-        ),
-        trailing: IconButton(
-          tooltip: 'Remove access',
-          onPressed: isBusy ? null : onRemove,
-          icon: isBusy
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.remove_circle_outline_rounded),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: CircleAvatar(
+                backgroundColor: Color(0xFFD1FAE5),
+                child: Icon(
+                  Icons.volunteer_activism_rounded,
+                  color: Color(0xFF047857),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    relationship.caregiverName ?? 'Caregiver',
+                    softWrap: true,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_relationshipLabel(relationship.relationship)} • Relationship #${relationship.id}'
+                    '${relationship.isPrimary ? ' • Primary' : ''}'
+                    '${relationship.establishedAt == null ? '' : ' • ${_date(relationship.establishedAt!)}'}',
+                    softWrap: true,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Remove access',
+              onPressed: isBusy ? null : onRemove,
+              icon: isBusy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.remove_circle_outline_rounded),
+            ),
+          ],
         ),
       ),
     );

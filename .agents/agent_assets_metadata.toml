@@ -2577,3 +2577,17 @@ mtime_ms = 1790319571414
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9c76fba5-d9b4-4990-80d5-e4494b195a52/1f67fa1f-3bf7-499d-9849-2c899c7cf4e2"
 storage_version_token = "1790319576991170"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tMlrNrX3x_ErgTzgkAa7s"
+uri = "file://deliverables/flutter-responsive-fixes.zip"
+type = "unspecified"
+title = "Flutter responsive fixes"
+description = "ZIP containing the 12 changed Flutter presentation files for the responsive-layout fixes."
+logical_id = "69dd8f8b-9090-4b07-a9b1-675c9fba767f"
+content_hash = "sha256:6529c73551a6a0a94a69a00c6b2416b8b67f5b9f6bc6c83f2254049ab5623f48"
+size = 120227
+mtime_ms = 1790325151378
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/69dd8f8b-9090-4b07-a9b1-675c9fba767f/53fcb5ae-7f84-46ea-bb18-23ae8003e282"
+storage_version_token = "1790325172750789"
+content_type = "application/octet-stream"

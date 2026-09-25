@@ -232,22 +232,54 @@ class _DocumentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.description_outlined, color: Color(0xFF2563EB)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    document.title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-                if (document.isImportant)
-                  const Chip(
-                    label: Text('Important'),
-                    visualDensity: VisualDensity.compact,
-                  ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 420;
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.description_outlined,
+                      color: Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: compact
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  document.title,
+                                  softWrap: true,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                if (document.isImportant) ...[
+                                  const SizedBox(height: 6),
+                                  const Chip(
+                                    label: Text('Important'),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ],
+                            )
+                          : Text(
+                              document.title,
+                              softWrap: true,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                    ),
+                    if (!compact && document.isImportant)
+                      const Chip(
+                        label: Text('Important'),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 8),
             Text(
