@@ -1,0 +1,148 @@
+Fix the **Settings feature** in the existing Flutter application properly. Do not create a new Settings system. Inspect the existing implementation and fix the root cause.
+
+### Current Problem
+
+The Settings screen appears to save/change settings, but the changes are **not actually reflected in the UI**.
+
+Examples:
+
+* Theme change does not properly update the app UI.
+* Font size change does not reflect across the application.
+* Other existing Settings options may also appear to work but do not actually affect the UI.
+* After closing/reopening the app, settings may reset or become inconsistent.
+* Some screens may use their own hardcoded theme/text styles instead of the selected Settings values.
+
+### Required Fix
+
+1. **Inspect the complete existing Settings implementation**
+
+   * Settings screen
+   * Settings model/state
+   * BLoC/Provider/state management currently used
+   * Storage/persistence logic
+   * `MaterialApp` / `ThemeData`
+   * `MediaQuery` / text scaling
+   * Any global app configuration
+   * Navigation and app startup logic
+
+2. **Fix Theme**
+
+   * When the user selects Light/Dark/System theme, the change must immediately reflect throughout the entire Flutter app.
+   * Do not require manually closing/reopening the screen.
+   * Make sure the selected theme is actually connected to `MaterialApp` or the application's root theme state.
+   * Persist the selected theme.
+   * After completely closing and reopening the app, the selected theme must still be active.
+
+3. **Fix Font Size**
+
+   * When the user changes the font size in Settings, the change must immediately reflect throughout the application.
+   * Use a proper global text-scaling approach instead of changing only the Settings screen.
+   * Make sure existing screens respect the selected font size.
+   * Persist the selected font size.
+   * After closing and reopening the app, the selected font size must still be applied.
+
+4. **Fix all other existing Settings options**
+
+   * Inspect every option already present in the Settings screen.
+   * If an option changes a value, make sure that value actually affects the relevant application behavior/UI.
+   * Do not remove existing Settings features.
+   * Do not replace working functionality unnecessarily.
+
+5. **Persistence**
+
+   * Use the project's existing local-storage solution if one already exists.
+   * If persistence is missing, implement a suitable persistent solution such as SharedPreferences.
+   * Settings must survive:
+
+     * Screen navigation
+     * App restart
+     * App completely closing and reopening
+
+6. **State Management**
+
+   * Follow the existing project architecture and state-management pattern.
+   * If the project uses BLoC, use the existing BLoC approach.
+   * Avoid creating duplicate state-management systems.
+   * Make sure the Settings state is available globally where required.
+
+7. **App Startup**
+
+   * Load saved Settings values before or during app initialization.
+   * Prevent the app from briefly using default settings and then incorrectly overwriting the saved settings.
+   * Make sure saved settings are not reset when the Settings screen is rebuilt.
+
+8. **UI Synchronization**
+
+   * Settings UI must always display the current saved values.
+   * If the user changes a setting and navigates away, returning to Settings should show the updated value.
+   * If the user changes a setting, all affected screens should update without requiring a manual refresh.
+
+### Important
+
+Do NOT just modify the Settings UI.
+
+Find and fix the **root cause** of why the settings are not being applied globally and persisted.
+
+Check for:
+
+* Hardcoded ThemeData
+* Hardcoded font sizes
+* Local state overriding global state
+* BLoC/provider not being available at the required level
+* Settings state being recreated
+* SharedPreferences values not being loaded
+* Saved values being overwritten by defaults
+* `MaterialApp` not listening to settings state
+* Incorrect `MediaQuery`/text scaling implementation
+* Multiple sources of truth for Settings
+
+### Testing Requirements
+
+After implementing the fix, test the complete flow:
+
+**Theme**
+
+1. Open Settings.
+2. Change Light → Dark.
+3. Verify the entire app changes immediately.
+4. Navigate to multiple screens.
+5. Verify Dark theme remains active.
+6. Close the app completely.
+7. Reopen the app.
+8. Verify Dark theme is still active.
+
+**Font Size**
+
+1. Open Settings.
+2. Change font size.
+3. Verify text size changes immediately.
+4. Navigate through multiple screens.
+5. Verify the selected font size remains active.
+6. Close the app completely.
+7. Reopen the app.
+8. Verify the selected font size is still active.
+
+**Other Settings**
+
+* Test every existing Settings option.
+* Verify each option actually changes the expected application behavior/UI.
+* Verify persistence after restart where appropriate.
+
+### Code Quality
+
+* Keep the existing project architecture.
+* Do not rewrite unrelated features.
+* Do not remove existing functionality.
+* Avoid unnecessary changes.
+* Fix the root cause instead of adding temporary workarounds.
+* Make the implementation production-ready.
+* Ensure there are no Flutter analyzer errors or runtime errors caused by this change.
+
+Finally, provide a short summary of:
+
+1. Root cause found.
+2. Files changed.
+3. How Settings state is now managed.
+4. How theme and font size are applied globally.
+5. How persistence works.
+6. What was tested.
