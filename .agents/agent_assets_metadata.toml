@@ -2563,3 +2563,17 @@ mtime_ms = 1790319405834
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/192c7faf-8f72-45c9-9360-5dd550f9ef82/a817254d-7c60-40b0-9e57-420d669b34de"
 storage_version_token = "1790319443719541"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PNJSMcHHWzIZ2KujuCMha"
+uri = "file://deliverables/flutter-assignment-hours-source.zip"
+type = "unspecified"
+title = "Flutter assignment-hours files ZIP"
+description = "Current Flutter assignment model, planner screen, and decimal-hours test. No Flutter source files were modified in the database migration fix."
+logical_id = "9c76fba5-d9b4-4990-80d5-e4494b195a52"
+content_hash = "sha256:0e342db6cb801d9b1fb2cca48a444b4d13b65c57b9e8bdb13ffbcf54c1105ef3"
+size = 19379
+mtime_ms = 1790319571414
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9c76fba5-d9b4-4990-80d5-e4494b195a52/1f67fa1f-3bf7-499d-9849-2c899c7cf4e2"
+storage_version_token = "1790319576991170"
+content_type = "application/octet-stream"
