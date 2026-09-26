@@ -884,19 +884,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               });
             });
-            const { password, ...userResponse } = user;
-            await storage.refreshUserActivityStreak(
+            const streakDays = await storage.refreshUserActivityStreak(
               user.id,
               getCurrentCalendarDate(req),
               getActivityDateTimeZone(req),
             );
             const refreshedUser = await storage.getUserById(user.id);
-            if (refreshedUser) {
-              req.session.user = refreshedUser;
-              const { password: _, ...refreshedResponse } = refreshedUser;
-              return res.json(refreshedResponse);
-            }
-            return res.json(userResponse);
+            const responseUser = { ...(refreshedUser ?? user), streakDays };
+            req.session.user = responseUser;
+            const { password: _, ...refreshedResponse } = responseUser;
+            return res.json(refreshedResponse);
           }
         } catch (error) {
           console.error("Error rebuilding session:", error);
@@ -913,23 +910,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const freshUser = await storage.getUserById(sessionUser.id);
       if (freshUser) {
-        await storage.refreshUserActivityStreak(
+        const streakDays = await storage.refreshUserActivityStreak(
           freshUser.id,
           getCurrentCalendarDate(req),
           getActivityDateTimeZone(req),
         );
         const refreshedUser = await storage.getUserById(freshUser.id);
-        if (refreshedUser) {
-          req.session.user = refreshedUser;
-          const { password, ...userResponse } = refreshedUser;
-          return res.json(userResponse);
-        }
-        req.session.user = freshUser;
-        const { password, ...userResponse } = freshUser;
+        const responseUser = { ...(refreshedUser ?? freshUser), streakDays };
+        req.session.user = responseUser;
+        const { password, ...userResponse } = responseUser;
         return res.json(userResponse);
       }
     } catch (error) {
-      console.error("Error fetching fresh user data:", error);
+      console.error("Error refreshing current user data and activity streak:", error);
+      return res.status(503).json({
+        message: "Unable to refresh current user data. Please try again.",
+      });
     }
     
     // Fallback to session data

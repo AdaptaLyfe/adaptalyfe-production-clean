@@ -2801,3 +2801,17 @@ mtime_ms = 1790412448341
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30db6013-4509-4db4-82b4-73bd77fff7b6/a71911f5-4024-42c1-ae16-c6307c38a59c"
 storage_version_token = "1790412990328646"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9WOd_DCaWybNcHB0ur8pR"
+uri = "file://deliverables/current-streak-changed-files.zip"
+type = "unspecified"
+title = "Current streak fix — changed files"
+description = "ZIP contains the changed file server/routes.ts."
+logical_id = "d4b6eb6b-14ef-481a-9333-d2147a269928"
+content_hash = "sha256:c1e0e49bc7990719c623f1f6e403886f5bd0ce69c051a6484495a2589acb46c1"
+size = 49306
+mtime_ms = 1790414138976
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d4b6eb6b-14ef-481a-9333-d2147a269928/a4d38377-2db0-48a9-9144-70d49b019c63"
+storage_version_token = "1790414170627494"
+content_type = "application/octet-stream"
