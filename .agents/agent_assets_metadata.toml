@@ -2661,3 +2661,17 @@ mtime_ms = 1790334060361
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e57c6fa-215b-4482-ab3e-28f129f0293e/cf7bc372-2392-402a-839c-fde3fc10d086"
 storage_version_token = "1790334069313660"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9jJ-jD10LbCralVcF6AgR"
+uri = "file://emergency-resource-migration-kit.zip"
+type = "unspecified"
+title = "Emergency Resource migration kit"
+description = "The existing idempotent schema migration plus apply and verification instructions for the Railway staging database."
+logical_id = "2735103a-f1fc-428d-80f3-02dc351d9750"
+content_hash = "sha256:2cc70e1ac3b094e5d187e3d32c60c6cad282d9b0a79d2273c8971ba1786e70b6"
+size = 1387
+mtime_ms = 1790398427237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2735103a-f1fc-428d-80f3-02dc351d9750/5ab37907-97a3-444a-8e14-de93cf3b0264"
+storage_version_token = "1790398439298337"
+content_type = "application/octet-stream"
