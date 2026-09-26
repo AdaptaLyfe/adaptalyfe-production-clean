@@ -1,0 +1,152 @@
+Fix the assignment creation error in the existing Flutter application.
+
+### Issue
+
+Flow:
+
+**Academic Planner → Assignment → Add Assignment**
+
+When the user enters:
+
+* Estimated Hours: **2.5**
+
+and clicks **Add Assignment**, the app shows:
+
+**"Failed to create assignment"**
+
+The assignment should be created successfully when the user enters decimal values such as `2.5`.
+
+### Required Fix
+
+Investigate the complete assignment creation flow and fix the root cause.
+
+Check:
+
+* Add Assignment UI
+* Estimated Hours `TextEditingController`
+* Form validation
+* Assignment model
+* JSON/request payload
+* BLoC/Event/State
+* Repository
+* API/Firebase/database layer
+* Data parsing and type conversion
+* Backend/API field type if applicable
+
+Make sure the `estimatedHours` value supports decimal numbers.
+
+For example:
+
+```text
+1
+1.5
+2
+2.5
+3.75
+```
+
+The value **2.5 must not cause "Failed to create assignment"**.
+
+### Important
+
+Do not simply hide or remove the error message.
+
+Find and fix the actual reason why assignment creation fails.
+
+If the backend/database expects a numeric value, make sure Flutter sends `2.5` as a proper numeric value rather than an incorrectly formatted string.
+
+For example, handle conversion safely:
+
+```dart
+final estimatedHours = double.tryParse(controller.text.trim());
+```
+
+Do not blindly use:
+
+```dart
+int.parse(...)
+```
+
+if decimal values are supported.
+
+Also check whether any validation, model serialization, Firestore/API mapping, or database schema is incorrectly expecting an integer.
+
+### Validation
+
+Estimated Hours should:
+
+* Accept whole numbers: `2`
+* Accept decimal numbers: `2.5`
+* Accept values such as `1.5` and `3.75`
+* Reject invalid text
+* Show a proper validation message for invalid values
+* Not crash the app
+
+### Preserve Existing Behavior
+
+Do NOT:
+
+* Change the existing Academic Planner UI design.
+* Change unrelated assignment functionality.
+* Remove existing validation.
+* Change assignment fields unnecessarily.
+* Create a new architecture.
+* Replace the existing BLoC/state-management approach.
+* Add temporary hacks or delays.
+
+Use the existing project architecture and make the **smallest safe fix**.
+
+### Error Investigation
+
+Before changing code, trace the complete flow:
+
+```text
+Add Assignment Screen
+        ↓
+Form Validation
+        ↓
+Assignment BLoC/Event
+        ↓
+Repository
+        ↓
+Model / JSON serialization
+        ↓
+API / Firebase / Database
+        ↓
+Assignment Created
+        ↓
+Success State
+```
+
+Find exactly where `2.5` is being rejected or incorrectly converted.
+
+Also check the actual exception/error response instead of only displaying the generic:
+
+**"Failed to create assignment"**
+
+### Test These Cases
+
+After fixing, test:
+
+1. Estimated Hours = `2`
+2. Estimated Hours = `2.5`
+3. Estimated Hours = `1.5`
+4. Estimated Hours = `3.75`
+5. Empty Estimated Hours
+6. Invalid text
+7. Assignment with all other required fields
+8. Assignment creation after navigating away and returning
+
+Expected result:
+
+**Estimated Hours = 2.5 → Assignment is created successfully and appears in the Assignment list.**
+
+Finally, tell me:
+
+* Root cause of the failure.
+* Files changed.
+* Exact fix made.
+* Whether the value is stored as `double`/numeric correctly.
+* Test results for `2`, `2.5`, `1.5`, and `3.75`.
+
+Do not modify unrelated features.
