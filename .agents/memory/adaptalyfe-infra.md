@@ -44,7 +44,7 @@ Railway staging uses an external database and is not managed by Replit's Publish
 
 **Why:** Railway's build/start configuration does not apply repository SQL migrations, and the Replit development database can already be migrated while staging remains stale.
 
-**How to apply:** Check the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
+**How to apply:** Check the live staging schema (a dated backup is evidence, not proof of current state), verify the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
 
 ## Development schema drift
 The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.
