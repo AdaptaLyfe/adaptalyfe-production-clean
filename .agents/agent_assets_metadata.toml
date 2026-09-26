@@ -2773,3 +2773,17 @@ mtime_ms = 1790411217425
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2028d846-31dc-4e12-b28c-e92ce7a609e9/8127360f-ec34-41c9-9bdc-39854a81b02f"
 storage_version_token = "1790411238066805"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "voDVIMlcgW8B1Vz1N7F2f"
+uri = "file://outputs/assignment-estimated-hours-migration-package.zip"
+type = "unspecified"
+title = "Assignment estimated-hours migration package"
+description = "Contains the existing migration and guarded runner to make the database column decimal-capable."
+logical_id = "32735a4d-0260-4260-9c45-0a773ac3050d"
+content_hash = "sha256:41b6e2a6f626eeca08c271c54215b57d54045f02c1b261c8322fd650e035646c"
+size = 1573
+mtime_ms = 1790412176961
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/32735a4d-0260-4260-9c45-0a773ac3050d/16798752-5345-4343-b500-5c13bdd3b492"
+storage_version_token = "1790412180908201"
+content_type = "application/octet-stream"
