@@ -18,6 +18,7 @@ class RewardsState extends Equatable {
     this.transactions = const [],
     this.busyKey,
     this.errorMessage,
+    this.badgeErrorMessage,
     this.actionMessage,
     this.sessionInvalid = false,
   });
@@ -29,6 +30,7 @@ class RewardsState extends Equatable {
   final List<PointsTransactionModel> transactions;
   final String? busyKey;
   final String? errorMessage;
+  final String? badgeErrorMessage;
   final String? actionMessage;
   final bool sessionInvalid;
 
@@ -53,6 +55,7 @@ class RewardsState extends Equatable {
     List<PointsTransactionModel>? transactions,
     Object? busyKey = _notSet,
     Object? errorMessage = _notSet,
+    Object? badgeErrorMessage = _notSet,
     Object? actionMessage = _notSet,
     bool? sessionInvalid,
   }) {
@@ -68,6 +71,9 @@ class RewardsState extends Equatable {
       errorMessage: identical(errorMessage, _notSet)
           ? this.errorMessage
           : errorMessage as String?,
+      badgeErrorMessage: identical(badgeErrorMessage, _notSet)
+          ? this.badgeErrorMessage
+          : badgeErrorMessage as String?,
       actionMessage: identical(actionMessage, _notSet)
           ? this.actionMessage
           : actionMessage as String?,
@@ -84,6 +90,7 @@ class RewardsState extends Equatable {
         transactions,
         busyKey,
         errorMessage,
+        badgeErrorMessage,
         actionMessage,
         sessionInvalid,
       ];

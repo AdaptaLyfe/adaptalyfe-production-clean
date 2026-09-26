@@ -118,6 +118,7 @@ class _RewardsBody extends StatelessWidget {
         message: state.errorMessage ?? 'Unable to load your rewards.',
         onRetry: () =>
             context.read<RewardsBloc>().add(const RefreshRewards()),
+        sessionInvalid: state.sessionInvalid,
       );
     }
 
@@ -521,13 +522,17 @@ class _BadgesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.status == RewardsStatus.failure &&
+    final badgeErrorMessage = state.badgeErrorMessage ??
+        (state.status == RewardsStatus.failure ? state.errorMessage : null);
+
+    if (badgeErrorMessage != null &&
         state.achievements.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: _BadgeErrorNotice(
-            message: state.errorMessage ?? 'Unable to load your badges.',
+            title: state.sessionInvalid ? 'Session expired' : null,
+            message: badgeErrorMessage,
             onRetry: () =>
                 context.read<RewardsBloc>().add(const RefreshRewards()),
           ),
@@ -572,12 +577,13 @@ class _BadgesTab extends StatelessWidget {
             const LinearProgressIndicator(),
             const SizedBox(height: 12),
           ],
-          if (state.status == RewardsStatus.failure) ...[
+          if (badgeErrorMessage != null) ...[
             _BadgeErrorNotice(
-              message: state.errorMessage ?? 'Unable to refresh your badges.',
+              title: state.sessionInvalid ? 'Session expired' : null,
+              message: badgeErrorMessage,
               onRetry: () =>
                   context.read<RewardsBloc>().add(const RefreshRewards()),
-              compact: true,
+              compact: state.achievements.isNotEmpty,
             ),
             const SizedBox(height: 12),
           ],
@@ -598,11 +604,13 @@ class _BadgesTab extends StatelessWidget {
           const _BadgeInstructions(),
           const SizedBox(height: 12),
           if (state.achievements.isEmpty &&
-              state.status == RewardsStatus.loaded)
-            _BadgeErrorNotice(
-              message: 'Unable to load badges. Please try again.',
-              onRetry: () =>
-                  context.read<RewardsBloc>().add(const RefreshRewards()),
+              state.status == RewardsStatus.loaded &&
+              state.badgeErrorMessage == null)
+            const _EmptyCard(
+              icon: Icons.emoji_events_outlined,
+              title: 'No badges available yet',
+              message:
+                  'There are no badges to show right now. Check back as your progress is updated.',
             )
           else if (earned.isEmpty &&
               state.achievements.isNotEmpty &&
@@ -677,11 +685,13 @@ class _BadgeErrorNotice extends StatelessWidget {
   const _BadgeErrorNotice({
     required this.message,
     required this.onRetry,
+    this.title,
     this.compact = false,
   });
 
   final String message;
   final VoidCallback onRetry;
+  final String? title;
   final bool compact;
 
   @override
@@ -694,24 +704,18 @@ class _BadgeErrorNotice extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!compact) ...[
-              const Text(
-                'Badges could not be loaded',
-                style: TextStyle(
-                  color: Color(0xFF7C2D12),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
+            Text(
+              title ??
+                  (compact
+                      ? 'Could not refresh badges. Showing the last loaded results.'
+                      : 'Badges could not be loaded'),
+              style: TextStyle(
+                color: const Color(0xFF7C2D12),
+                fontSize: compact ? 14 : 17,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 6),
-            ] else
-              const Text(
-                'Could not refresh badges. Showing the last loaded results.',
-                style: TextStyle(
-                  color: Color(0xFF7C2D12),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            ),
+            if (!compact) const SizedBox(height: 6),
             Text(
               message,
               style: const TextStyle(color: Color(0xFF7C2D12)),
@@ -1405,10 +1409,15 @@ class _RewardsLoading extends StatelessWidget {
 }
 
 class _RewardsError extends StatelessWidget {
-  const _RewardsError({required this.message, required this.onRetry});
+  const _RewardsError({
+    required this.message,
+    required this.onRetry,
+    this.sessionInvalid = false,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final bool sessionInvalid;
 
   @override
   Widget build(BuildContext context) {
@@ -1424,9 +1433,9 @@ class _RewardsError extends StatelessWidget {
               color: Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Rewards are unavailable',
-              style: TextStyle(
+            Text(
+              sessionInvalid ? 'Sign in to continue' : 'Could not load rewards',
+              style: const TextStyle(
                 color: Color(0xFF111827),
                 fontSize: 18,
                 fontWeight: FontWeight.w700,

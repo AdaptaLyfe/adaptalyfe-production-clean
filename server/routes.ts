@@ -6770,11 +6770,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/rewards/badges", async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
+      const userId = req.session?.userId;
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const badges = await storage.getRewardBadges(req.session.user.id);
+      let user = req.session.user;
+      if (!user || String(user.id) !== String(userId)) {
+        user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        req.session.user = user;
+      }
+
+      const badges = await storage.getRewardBadges(user.id);
       res.json(badges);
     } catch (error) {
       console.error("Error fetching reward badges:", error);

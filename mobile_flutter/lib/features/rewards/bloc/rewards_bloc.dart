@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
@@ -27,6 +28,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
       state.copyWith(
         status: RewardsStatus.loading,
         errorMessage: null,
+        badgeErrorMessage: null,
         actionMessage: null,
         sessionInvalid: false,
       ),
@@ -37,15 +39,28 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         repository.getRewards(),
         repository.getPointsBalance(),
         repository.getPointsTransactions(),
-        repository.getAchievements(),
+        _fetchBadgesSafely(),
       ]);
+      final badgeResult = results[3];
+      if (badgeResult is ApiException &&
+          badgeResult.type == ApiErrorType.unauthorized) {
+        _emitLoadFailure(emit, badgeResult);
+        return;
+      }
+      final achievements = badgeResult is List<AchievementBadgeModel>
+          ? badgeResult
+          : state.achievements;
+
       emit(
         state.copyWith(
           status: RewardsStatus.loaded,
           rewards: results[0] as List<RewardModel>,
           pointsBalance: results[1] as PointsBalanceModel,
           transactions: results[2] as List<PointsTransactionModel>,
-          achievements: results[3] as List<AchievementBadgeModel>,
+          achievements: achievements,
+          badgeErrorMessage: badgeResult is List<AchievementBadgeModel>
+              ? null
+              : _badgeFailureMessage(badgeResult),
           busyKey: null,
           errorMessage: null,
           actionMessage: null,
@@ -60,6 +75,51 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         fallback: 'Unable to load your rewards. Please try again.',
       );
     }
+  }
+
+  Future<Object> _fetchBadgesSafely() async {
+    try {
+      return await repository.getAchievements();
+    } catch (error) {
+      if (error is FormatException) {
+        debugPrint(
+          '[RewardsBloc] Reward badge response parsing failed: ${error.message}',
+        );
+      } else if (error is ApiException) {
+        debugPrint(
+          '[RewardsBloc] Reward badge request failed: '
+          '${error.type.name} (${error.statusCode ?? 'no status'})',
+        );
+      } else {
+        debugPrint(
+          '[RewardsBloc] Reward badge request failed (${error.runtimeType}).',
+        );
+      }
+      return error;
+    }
+  }
+
+  String _badgeFailureMessage(Object error) {
+    if (error is ApiException) {
+      if (error.type == ApiErrorType.unauthorized) {
+        return 'Your session has expired. Please sign in again to view badges.';
+      }
+      if (error.type == ApiErrorType.network ||
+          error.type == ApiErrorType.timeout) {
+        return 'Check your connection and try again.';
+      }
+      if (error.type == ApiErrorType.server) {
+        return 'The badge service is temporarily unavailable. Try again shortly.';
+      }
+      if (error.type == ApiErrorType.forbidden) {
+        return 'You do not have permission to view these badges.';
+      }
+      if (error.message.trim().isNotEmpty) return error.message;
+    }
+    if (error is FormatException) {
+      return 'The badge response could not be read. Please try again.';
+    }
+    return 'Unable to load badges. Please try again.';
   }
 
   Future<void> _createReward(
@@ -338,15 +398,28 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
       repository.getRewards(),
       repository.getPointsBalance(),
       repository.getPointsTransactions(),
-      repository.getAchievements(),
+      _fetchBadgesSafely(),
     ]);
+    final badgeResult = results[3];
+    if (badgeResult is ApiException &&
+        badgeResult.type == ApiErrorType.unauthorized) {
+      _emitLoadFailure(emit, badgeResult);
+      return;
+    }
+
     emit(
       state.copyWith(
         status: RewardsStatus.loaded,
         rewards: results[0] as List<RewardModel>,
         pointsBalance: results[1] as PointsBalanceModel,
         transactions: results[2] as List<PointsTransactionModel>,
-        achievements: results[3] as List<AchievementBadgeModel>,
+        achievements: badgeResult is List<AchievementBadgeModel>
+            ? badgeResult
+            : state.achievements,
+        badgeErrorMessage: badgeResult is List<AchievementBadgeModel>
+            ? null
+            : _badgeFailureMessage(badgeResult),
+        sessionInvalid: false,
       ),
     );
   }
@@ -361,8 +434,10 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
       state.copyWith(
         status: RewardsStatus.failure,
         busyKey: null,
-        errorMessage: apiError?.message ??
-            (error is FormatException ? error.message : fallback),
+        errorMessage: apiError?.type == ApiErrorType.unauthorized
+            ? 'Your session has expired. Please sign in again.'
+            : apiError?.message ??
+                (error is FormatException ? error.message : fallback),
         sessionInvalid: apiError?.type == ApiErrorType.unauthorized,
       ),
     );

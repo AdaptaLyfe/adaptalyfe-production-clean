@@ -2745,3 +2745,17 @@ mtime_ms = 1790404033237
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/85dbb39e-5996-4265-83ca-3b02384caeaf/1c8de09c-e97d-45fc-a870-1f601d5452c8"
 storage_version_token = "1790404041581365"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PILXSKmRLryj4LfAozq8T"
+uri = "file://outputs/rewards-badges-fix.zip"
+type = "unspecified"
+title = "Rewards badges fix — changed files"
+description = "ZIP containing only the five changed server, Flutter, and test files for the Rewards badges fix."
+logical_id = "e86a7206-0d9e-4af4-bac2-856176fbce7d"
+content_hash = "sha256:7c29da655a3a97bbc2c4007c87bbb59c655c7a41b35c759a9c52619a0a7f3f47"
+size = 66215
+mtime_ms = 1790410506865
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e86a7206-0d9e-4af4-bac2-856176fbce7d/50c0f11c-6b46-4a8e-9b1b-4ccb9b6e1f41"
+storage_version_token = "1790410510668721"
+content_type = "application/octet-stream"

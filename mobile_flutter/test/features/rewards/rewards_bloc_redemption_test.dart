@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:adaptalyfe_mobile/core/network/api_client.dart';
 import 'package:adaptalyfe_mobile/features/rewards/data/rewards_api.dart';
 import 'package:adaptalyfe_mobile/features/rewards/bloc/rewards_bloc.dart';
 import 'package:adaptalyfe_mobile/features/rewards/bloc/rewards_event.dart';
@@ -121,22 +122,104 @@ void main() {
       await bloc.close();
     });
 
-    test('surfaces a badge response parsing failure', () async {
+    test('keeps rewards available when the badge response is invalid', () async {
       final repository = _FakeRewardsRepository(
         rewards: [_reward(maximum: 3, current: 0)],
         balance: _balance(),
         badgeError: const FormatException('Invalid reward badge entry'),
       );
       final bloc = RewardsBloc(repository);
-      final failed = bloc.stream.firstWhere(
-        (state) => state.status == RewardsStatus.failure,
+      final loadedWithBadgeError = bloc.stream.firstWhere(
+        (state) =>
+            state.status == RewardsStatus.loaded &&
+            state.badgeErrorMessage != null,
       );
 
       bloc.add(const RewardsStarted());
-      final state = await failed;
+      final state = await loadedWithBadgeError;
 
-      expect(state.errorMessage, 'Invalid reward badge entry');
+      expect(state.errorMessage, isNull);
+      expect(
+        state.badgeErrorMessage,
+        'The badge response could not be read. Please try again.',
+      );
+      expect(state.rewards, hasLength(1));
       expect(state.achievements, isEmpty);
+      expect(repository.achievementFetchCalls, 1);
+      await bloc.close();
+    });
+
+    test('shows a retryable message when the badge request has no network',
+        () async {
+      final repository = _FakeRewardsRepository(
+        rewards: [_reward(maximum: 3, current: 0)],
+        balance: _balance(),
+        badgeError: const ApiException(
+          type: ApiErrorType.network,
+          message: 'Connection failed',
+        ),
+      );
+      final bloc = RewardsBloc(repository);
+      final loadedWithBadgeError = bloc.stream.firstWhere(
+        (state) =>
+            state.status == RewardsStatus.loaded &&
+            state.badgeErrorMessage != null,
+      );
+
+      bloc.add(const RewardsStarted());
+      final state = await loadedWithBadgeError;
+
+      expect(state.badgeErrorMessage, 'Check your connection and try again.');
+      expect(state.rewards, hasLength(1));
+      expect(repository.achievementFetchCalls, 1);
+      await bloc.close();
+    });
+
+    test('marks an unauthorized badge request as a session failure', () async {
+      final repository = _FakeRewardsRepository(
+        rewards: [_reward(maximum: 3, current: 0)],
+        balance: _balance(),
+        badgeError: const ApiException(
+          type: ApiErrorType.unauthorized,
+          message: 'Authentication required',
+          statusCode: 401,
+        ),
+      );
+      final bloc = RewardsBloc(repository);
+      final sessionFailure = bloc.stream.firstWhere(
+        (state) =>
+            state.status == RewardsStatus.failure && state.sessionInvalid,
+      );
+
+      bloc.add(const RewardsStarted());
+      final state = await sessionFailure;
+
+      expect(
+        state.errorMessage,
+        'Your session has expired. Please sign in again.',
+      );
+      expect(state.sessionInvalid, isTrue);
+      expect(repository.achievementFetchCalls, 1);
+      await bloc.close();
+    });
+
+    test('accepts an empty badge list as a successful response', () async {
+      final repository = _FakeRewardsRepository(
+        rewards: [_reward(maximum: 3, current: 0)],
+        balance: _balance(),
+      );
+      final bloc = RewardsBloc(repository);
+      final loaded = bloc.stream.firstWhere(
+        (state) => state.status == RewardsStatus.loaded,
+      );
+
+      bloc.add(const RewardsStarted());
+      final state = await loaded;
+
+      expect(state.achievements, isEmpty);
+      expect(state.badgeErrorMessage, isNull);
+      expect(state.errorMessage, isNull);
+      expect(repository.achievementFetchCalls, 1);
       await bloc.close();
     });
   });
