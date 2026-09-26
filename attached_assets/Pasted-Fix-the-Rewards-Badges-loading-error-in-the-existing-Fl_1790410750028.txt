@@ -1,0 +1,128 @@
+Fix the **Rewards → Badges** loading error in the existing Flutter application.
+
+### Current Issue
+
+When the user opens:
+
+**Rewards → Badges**
+
+the app shows an error:
+
+> "Badges could not be loaded"
+
+and:
+
+> "This badge service is temporarily unavailable. Try again shortly."
+
+The Badges screen is not loading the user's badge data correctly.
+
+### Required Fix
+
+Investigate and fix the root cause instead of only hiding the error message.
+
+First inspect the existing implementation for:
+
+* Rewards screen
+* Badges screen
+* Badge model
+* Badge BLoC/state management
+* Badge repository/service
+* API/Firebase/backend calls
+* Authentication/user ID handling
+* Response parsing
+* Error handling
+* Loading and success states
+
+### Check These Possible Causes
+
+Verify whether the issue is caused by:
+
+1. Incorrect API/service endpoint.
+2. Incorrect request parameters.
+3. Missing or incorrect authenticated user ID.
+4. Firebase/API permission issue.
+5. Incorrect response model/parsing.
+6. Null or missing badge fields.
+7. Incorrect Firestore/API collection or document path.
+8. BLoC not triggering the badge loading event.
+9. BLoC state not being emitted correctly.
+10. Repository/service returning an error incorrectly.
+11. Network request failing but being converted into the generic error.
+12. Stale or disposed state/controller.
+13. Incorrect environment/configuration.
+14. Backend returning an unexpected response format.
+
+### Important
+
+Do not simply replace the error with fake/default badges.
+
+The Badges screen must load the **real badge data from the existing backend/data source**.
+
+Do not create a new backend or change the existing API contract unless absolutely necessary.
+
+Use the existing project architecture and state-management pattern.
+
+If the app uses BLoC:
+
+* Verify the badge loading event is dispatched.
+* Verify the BLoC calls the repository.
+* Verify the repository calls the correct service/API.
+* Verify the response is parsed correctly.
+* Verify loading → success/error states are emitted correctly.
+* Make sure the UI listens to the correct BLoC instance.
+
+### Error Handling
+
+Keep proper error handling.
+
+If the backend/service is genuinely unavailable, show the existing user-friendly error message.
+
+But if the backend is working, fix the underlying issue so the Badges screen displays the actual badges instead of showing the service-unavailable message.
+
+Also log enough information during development to identify whether the failure is from:
+
+**UI → BLoC → Repository → Service/API → Backend**
+
+Do not expose sensitive information such as tokens or passwords in logs.
+
+### UI Requirements
+
+Do not change the existing Rewards/Badges UI design.
+
+Keep:
+
+* Existing badge cards
+* Existing icons/images
+* Existing colors
+* Existing layout
+* Existing navigation
+* Existing loading UI
+* Existing empty-state UI
+
+Only fix the data loading problem.
+
+### Test These Cases
+
+After fixing, test:
+
+1. Open **Rewards → Badges**.
+2. Verify badges load successfully.
+3. Pull/reload the screen if refresh functionality exists.
+4. Navigate away and return to Badges.
+5. Open Badges multiple times.
+6. Test with a logged-in user who has badges.
+7. Test with a user who has no badges.
+8. Test network/API failure and verify the proper error state.
+9. Make sure no Flutter exceptions or BLoC/provider errors occur.
+
+### Final Response
+
+After fixing the issue, tell me:
+
+* Root cause of the badge loading error.
+* Files changed.
+* What was changed in the BLoC/repository/service/UI.
+* Whether the real backend data is now loading.
+* How you tested Rewards → Badges.
+
+Make the **smallest safe fix possible** and do not modify unrelated Rewards functionality.
