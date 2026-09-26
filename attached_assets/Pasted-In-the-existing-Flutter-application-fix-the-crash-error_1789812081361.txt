@@ -1,0 +1,81 @@
+In the existing Flutter application, fix the crash/error in:
+
+**Health Record → Trusted Contact → Add Contact → Save Contact**
+
+### Current issue
+
+When the user fills in the Trusted Contact form and clicks **Save Contact**, the following Flutter errors occur:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Required task
+
+Analyze the existing Trusted Contact Add Contact implementation and fix the root cause of these errors.
+
+Focus specifically on:
+
+1. **TextEditingController lifecycle**
+
+   * Find all `TextEditingController` instances used by the Add Contact screen.
+   * Make sure controllers are created and disposed correctly.
+   * Do not dispose a controller while it is still being used by a `TextField`, `TextFormField`, dialog, bottom sheet, or another widget.
+   * Do not reuse a controller after it has been disposed.
+   * If controllers are passed to another widget/dialog, ensure their lifecycle is handled safely.
+
+2. **Widget lifecycle / build scope**
+
+   * Investigate why the widget is being rebuilt in the wrong build scope after clicking Save Contact.
+   * Check for `setState()` calls after the widget has been disposed.
+   * Check for asynchronous operations that complete after the screen/dialog has been closed.
+   * Use `mounted` checks where required before calling `setState()`, showing dialogs/snackbars, navigating, or updating UI after `await`.
+   * Check whether a dialog, bottom sheet, provider/bloc listener, or navigation operation is causing the widget to rebuild after disposal.
+
+3. **Save Contact flow**
+
+   * Keep the existing Trusted Contact functionality and UI unchanged.
+   * Do not remove validation.
+   * Do not remove API/Firebase/backend calls.
+   * Do not change the existing data model unless required for the fix.
+   * After successfully saving the contact, navigate/close the screen using the existing application flow.
+   * Make sure the form controllers are not accessed after the screen has been disposed.
+
+4. **State management**
+
+   * Inspect the existing state-management implementation (BLoC/Provider/etc.) and fix the issue according to the current architecture.
+   * Do not introduce a completely new architecture.
+   * Cancel or safely handle any listeners/subscriptions if they are created by the Add Contact screen.
+
+### Important
+
+Do NOT just suppress the Flutter assertion or add a workaround.
+
+Find and fix the actual lifecycle problem causing:
+
+* `Tried to build dirty widget in the wrong build scope`
+* `_dependents.isEmpty`
+* `A TextEditingController was used after being disposed`
+
+### Verification
+
+After the fix, test this exact flow:
+
+**Health Record → Trusted Contact → Add Contact → Enter contact details → Save Contact**
+
+Verify that:
+
+* No Flutter assertion occurs.
+* No `TextEditingController was used after being disposed` error occurs.
+* No duplicate save operation occurs.
+* Contact is saved successfully.
+* Existing validation still works.
+* Existing UI/design remains unchanged.
+* Navigating back and opening **Add Contact** again works correctly.
+* Saving multiple contacts does not reproduce the crash.
+
+First inspect the existing code and identify the exact root cause. Then make the minimum required code changes and explain which files were changed and why.

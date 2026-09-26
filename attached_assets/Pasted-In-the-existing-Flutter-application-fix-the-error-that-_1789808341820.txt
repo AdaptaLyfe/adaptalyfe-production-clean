@@ -1,0 +1,54 @@
+In the existing Flutter application, fix the error that occurs when a user adds a meal from the **Meal & Shopping** section.
+
+### Current issue
+
+When the user:
+
+1. Opens **Meal & Shopping**
+2. Clicks **Add Meal**
+3. Enters/selects the required meal information
+4. Tries to save/add the meal
+
+The application throws this Flutter error:
+
+`Tried to build dirty widget in the wrong build scope.`
+
+### Requirements
+
+1. Find the root cause of the **"Tried to build dirty widget in the wrong build scope"** error.
+2. Fix the issue properly without using temporary workarounds such as unnecessary `setState()`, `Future.delayed()`, or forced rebuilds.
+3. Check the Meal & Shopping screen, Add Meal screen/dialog/bottom sheet, and the state-management logic involved in adding a meal.
+4. Check for:
+
+   * `setState()` being called after widget disposal.
+   * `setState()` or state updates being triggered during the widget build phase.
+   * `BuildContext` being used after the widget is disposed.
+   * Provider/BLoC/state updates happening at the wrong time.
+   * Dialog/bottom-sheet state updates causing an invalid rebuild.
+   * Async API/database operations triggering UI updates incorrectly.
+   * Controllers, listeners, or callbacks that are not properly disposed.
+5. Keep the existing Meal & Shopping UI and functionality unchanged.
+6. Do not remove existing validation or meal-saving functionality.
+7. Make sure the meal is successfully added after clicking **Add Meal**.
+8. After saving:
+
+   * Close the Add Meal UI correctly.
+   * Refresh/update the meal list safely.
+   * Do not trigger unnecessary widget rebuilds.
+   * Show the existing success message if one already exists.
+9. Handle loading, success, and error states correctly.
+10. Make sure the fix works on Android and iOS and does not introduce regressions in other Meal & Shopping functionality.
+
+### Important
+
+Do not rewrite the entire Meal & Shopping module.
+
+First inspect the existing code and identify the exact widget/state-management flow causing the build-scope error. Then make the **smallest clean fix possible**.
+
+After making the changes:
+
+* Explain the root cause.
+* List the files changed.
+* Explain exactly what was changed in each file.
+* Verify that **Add Meal → Save → Meal appears in the list** works correctly.
+* Ensure there are no new Flutter analyzer errors or warnings related to this fix.

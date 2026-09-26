@@ -1,0 +1,117 @@
+Fix the issue in the existing Flutter application:
+
+### Screen Flow
+
+**Home → Your Dashboard → Customize**
+
+### Current Issue
+
+When the user clicks the **"Customize"** button:
+
+* The screen becomes dull/dimmed.
+* No Customize popup/dialog/bottom sheet is visible.
+* The UI appears stuck or blocked.
+* The user cannot interact normally with the screen.
+
+### Required Fix
+
+Investigate and fix the root cause so that when the user taps **Customize**:
+
+1. The Customize popup/modal should open immediately.
+2. The background may become dimmed as expected, but the popup must be visible above it.
+3. The popup must be interactive.
+4. User should be able to enable/disable skill modules.
+5. User should be able to close the popup normally.
+6. After closing, the Home → Your Dashboard screen should remain fully interactive.
+7. Do not require app restart or navigating away and coming back.
+
+### Important Investigation
+
+First inspect the existing implementation of:
+
+* Home screen
+* Your Dashboard section
+* Customize button
+* Customize popup/dialog/bottom sheet
+* Skill customization widget
+* BLoC/Provider/Riverpod state management
+* Any `showDialog`, `showModalBottomSheet`, `Overlay`, `Stack`, or custom modal implementation
+* Any loading state shown when Customize is clicked
+
+Find the actual reason why the screen becomes dimmed but the Customize UI is not rendered.
+
+Check especially for:
+
+* Dialog/bottom-sheet content returning `null` or an empty widget.
+* Incorrect `BuildContext`.
+* Dialog being opened behind another overlay.
+* Loading/overlay widget remaining active.
+* `Stack`/`Positioned` rendering issue.
+* Incorrect `barrierColor` or modal configuration.
+* BLoC/provider error preventing the Customize content from building.
+* Widget being disposed before the popup is displayed.
+* Async operation preventing the popup from opening.
+* Navigation/route issue.
+* Any exception occurring immediately after clicking Customize.
+
+### Do Not Use a Hack
+
+Do NOT simply remove the dim background or disable the modal barrier.
+
+The goal is to make the **actual Customize popup open correctly**.
+
+Do not add arbitrary delays such as:
+
+```dart
+Future.delayed(...)
+```
+
+Do not use random `setState()` calls or `UniqueKey()` just to force the UI to appear.
+
+Fix the underlying issue.
+
+### Preserve Existing Functionality
+
+Do not change:
+
+* Dashboard UI design
+* Customize UI design
+* Skill module names
+* Existing enable/disable logic
+* API/Firebase behavior
+* Existing BLoC architecture
+* Other Dashboard functionality
+
+Only modify the code necessary to fix the Customize popup.
+
+### Testing
+
+After fixing, test this exact flow:
+
+**Home → Your Dashboard → Customize**
+
+Verify:
+
+* Customize popup opens.
+* Background is dimmed correctly.
+* Popup content is visible.
+* Popup is interactive.
+* Enable/disable controls work.
+* Close button/back action works.
+* Dashboard is interactive after closing.
+* Open Customize multiple times and confirm it works every time.
+* No Flutter exceptions appear in the console.
+
+Also check the Flutter console for the exact error that occurs when the Customize button is clicked.
+
+### Final Response
+
+After completing the fix, tell me:
+
+1. Root cause of the issue.
+2. Files changed.
+3. What was changed.
+4. How the Customize popup now opens.
+5. Testing performed.
+
+Make the **smallest safe fix** and do not rewrite unrelated code.

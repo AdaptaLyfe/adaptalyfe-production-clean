@@ -1,0 +1,143 @@
+Fix the existing **Calendar event creation and display logic** in my Flutter application.
+
+### Current Issue
+
+When creating a calendar event:
+
+* User selects a date.
+* User enables the **"All day event"** toggle.
+* The event is saved successfully, but it is **not displayed correctly in the All Day section** of the selected date.
+* The event should appear as an all-day event starting from the selected date.
+
+There is also confusion between:
+
+* **Whole Day**
+* **All Day**
+* **Repeated All Day events**
+
+### Required Behavior
+
+First inspect the existing Calendar implementation, event model, create-event screen, date/time handling, recurrence logic, and calendar display widgets. **Do not create a new calendar system. Fix the existing implementation.**
+
+#### 1. Normal full-day event — "Whole Day"
+
+If the user creates an event that is intended for one complete day but **does NOT enable the "All day event" toggle**:
+
+* Keep it as a normal event.
+* Display its label/status as **"Whole Day"** where the existing UI supports this.
+* It should belong only to the selected date.
+* Do not make it repeat automatically.
+
+#### 2. "All day event" toggle enabled
+
+If the user enables **"All day event"**:
+
+* Treat the event as an actual all-day calendar event.
+* Save the selected date correctly.
+* Display the event inside the **All Day section** of the calendar.
+* It must appear on the **selected date**.
+* Do not accidentally assign a time such as `00:00`, `23:59`, or the current time that causes it to disappear from the All Day section.
+* Make sure timezone/date conversion does not move the event to the previous or next day.
+
+#### 3. If the All Day event has a recurrence
+
+If the user selects a recurrence/repeat option together with **All day event**:
+
+* Start the recurrence from the **selected start date**.
+* Repeat according to the selected recurrence rule.
+* Every generated occurrence must remain an **all-day event**.
+* Example:
+
+  * Start date: September 25
+  * All day: ON
+  * Repeat: Daily
+  * Result: All Day event should appear on September 25, 26, 27, 28, etc.
+* Do not create duplicate occurrences.
+* Do not shift occurrences by one day because of UTC/local timezone conversion.
+
+### Important Date/Time Rules
+
+Review and fix the complete date handling:
+
+* Selected date
+* Start date
+* End date
+* Start time
+* End time
+* `isAllDay`
+* Recurrence/repeat
+* Timezone conversion
+* Event serialization/deserialization
+* Firebase/API/local database data if applicable
+* Calendar rendering/filtering
+
+For an all-day event, make sure the stored date represents the correct **local calendar date**, not a UTC-shifted date.
+
+Do not blindly convert all-day dates to UTC timestamps if that causes the date to shift.
+
+### UI Requirements
+
+When reopening/editing an existing event:
+
+* The **All day event** toggle must show the correct saved state.
+* The selected date must remain correct.
+* Recurrence settings must remain correct.
+* Editing and saving the event must not create duplicate events.
+* Turning All Day ON/OFF should correctly update the event.
+* The event should continue displaying correctly after reopening the calendar or restarting the app.
+
+### Important: Find the Root Cause
+
+Do NOT just modify the calendar UI to force the event to appear.
+
+Trace the complete flow:
+
+`Create Event UI`
+→ `Event Model`
+→ `Validation`
+→ `BLoC/State Management`
+→ `Repository`
+→ `API/Firebase/Local Storage`
+→ `Event Parsing`
+→ `Calendar Filtering`
+→ `Calendar UI`
+
+Find why the all-day event is currently not being recognized/displayed as an all-day event.
+
+### Prevent Regression
+
+Before making changes:
+
+1. Inspect the existing calendar/event implementation.
+2. Identify the exact root cause.
+3. Reuse the existing architecture and state management.
+4. Make the smallest safe changes required.
+5. Do not rewrite unrelated calendar functionality.
+
+After fixing, test these cases:
+
+1. Normal event for one day.
+2. Whole Day event with All Day OFF.
+3. All Day event with All Day ON.
+4. All Day + Daily recurrence.
+5. All Day + Weekly recurrence.
+6. All Day + Monthly recurrence.
+7. Edit an existing All Day event.
+8. Turn All Day OFF on an existing event.
+9. Close and reopen the calendar.
+10. Restart the app and verify the event is still on the correct date.
+11. Verify no duplicate events are created.
+12. Verify events do not move one day backward/forward because of timezone conversion.
+
+### Final Requirement
+
+After implementing the fix, explain:
+
+* Root cause of the bug.
+* Files changed.
+* What was changed in the event/date logic.
+* How All Day and Whole Day are now differentiated.
+* How recurrence works for All Day events.
+* What test cases were verified.
+
+Do not change unrelated features or UI.

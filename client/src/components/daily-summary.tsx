@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, DollarSign, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 import type { DailyTask, Bill, MoodEntry } from "@shared/schema";
+import { formatCategoryLabel } from "@/lib/display-labels";
 
 export default function DailySummary() {
   const { data: tasksData } = useQuery<DailyTask[]>({
@@ -52,7 +53,9 @@ export default function DailySummary() {
   });
 
   const totalDailyTasks = tasks.filter(task => task.frequency === 'daily' || !task.frequency).length;
-  const dailyProgress = totalDailyTasks > 0 ? Math.round((completedToday.length / totalDailyTasks) * 100) : 0;
+  const dailyProgress = totalDailyTasks > 0
+    ? Math.min(100, Math.round((completedToday.length / totalDailyTasks) * 100))
+    : 0;
 
   const formatDaysUntil = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -79,30 +82,30 @@ export default function DailySummary() {
           })}
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="min-w-0 space-y-4">
         {/* Daily Progress */}
-        <div className="bg-white/70 p-4 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+        <div className="w-full min-w-0 overflow-hidden rounded-lg bg-white/70 p-4">
+          <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
+            <h3 className="flex min-w-0 items-center gap-2 font-semibold text-gray-800">
               <TrendingUp className="w-4 h-4 text-green-600" />
               Daily Progress
             </h3>
             <Badge 
               variant="secondary" 
-              className={`${dailyProgress >= 80 ? 'bg-green-100 text-green-700' : 
+              className={`shrink-0 ${dailyProgress >= 80 ? 'bg-green-100 text-green-700' :
                          dailyProgress >= 50 ? 'bg-yellow-100 text-yellow-700' : 
                          'bg-gray-100 text-gray-700'}`}
             >
               {dailyProgress}%
             </Badge>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+          <div className="mb-2 h-2 w-full max-w-full overflow-hidden rounded-full bg-gray-200">
             <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+              className="h-2 max-w-full rounded-full bg-blue-600 transition-all duration-300"
               style={{ width: `${dailyProgress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-600">
+          <p className="break-words text-sm text-gray-600">
             {completedToday.length} of {totalDailyTasks} daily tasks completed
           </p>
         </div>
@@ -120,7 +123,7 @@ export default function DailySummary() {
                   <span className="text-gray-700">{task.title}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {task.category}
+                      {formatCategoryLabel(task.category)}
                     </Badge>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Clock className="w-3 h-3" />

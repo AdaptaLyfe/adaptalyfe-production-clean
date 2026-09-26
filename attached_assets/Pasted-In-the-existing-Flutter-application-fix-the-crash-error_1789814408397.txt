@@ -1,0 +1,101 @@
+In the existing Flutter application, fix the crash/error in:
+
+**Health Record → Healthcare Contact → Edit → Update Contact**
+
+### Current Issue
+
+When the user edits an existing Healthcare Contact and clicks **"Update Contact"**, the following errors occur:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Task
+
+Investigate the existing Healthcare Contact edit/update flow and identify the root cause of these errors.
+
+The most important issue to investigate is the **TextEditingController lifecycle**. Check whether any `TextEditingController` is being:
+
+* Disposed while the widget is still using it.
+* Reused after `dispose()`.
+* Created inside a widget/build method and incorrectly disposed.
+* Shared between multiple widgets/screens and disposed by one of them.
+* Passed to a child widget that continues using it after the parent has been disposed.
+* Disposed when navigating back or after the update operation while the widget is still rebuilding.
+
+Also investigate the **widget/build lifecycle** causing:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+```
+
+Check for:
+
+* `setState()` being called after widget disposal.
+* `setState()` or state updates during the widget's build phase.
+* Async update operations completing after the widget has been disposed.
+* Navigation happening while the widget is rebuilding.
+* Provider/BLoC/state listeners triggering updates after the screen has been removed.
+* Controllers or listeners being disposed too early.
+* `addListener()` callbacks remaining active after disposal.
+* Any `BuildContext` being used after an async operation without checking widget lifecycle.
+
+### Requirements
+
+1. **Do not rewrite the entire Healthcare Contact feature.**
+2. Keep the existing UI and design exactly the same.
+3. Keep the existing fields, validation, API calls, repository logic, BLoC/state management, and navigation behavior unchanged unless required to fix the crash.
+4. Properly manage all `TextEditingController` instances using the correct Flutter lifecycle.
+5. Make sure controllers are initialized and disposed exactly once.
+6. Do not dispose a controller that is owned by another widget.
+7. If controllers are owned by the StatefulWidget, initialize them in `initState()` and dispose them in `dispose()`.
+8. If a controller is passed from a parent, do not dispose it in the child.
+9. Properly handle asynchronous `Update Contact` operations.
+10. Before calling `setState()` after an async operation, make sure the widget is still mounted.
+11. Cancel/remove listeners when the widget is disposed.
+12. Avoid calling `setState()`, navigation, or other UI updates during the build phase.
+13. Make sure the update operation cannot trigger a rebuild using a widget that has already been disposed.
+14. Check whether the Edit Healthcare Contact screen is being unnecessarily rebuilt/recreated during the update.
+15. Preserve the current successful update behavior.
+
+### Important
+
+Do not simply suppress the error or add random `mounted` checks everywhere.
+
+Find the **actual lifecycle/ownership problem** causing:
+
+```text
+A TextEditingController was used after being disposed.
+```
+
+and:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+```
+
+Then fix the root cause cleanly according to Flutter best practices.
+
+### Testing
+
+After making the fix, test this exact flow:
+
+1. Open **Health Record**.
+2. Open **Healthcare Contact**.
+3. Select an existing contact.
+4. Tap **Edit**.
+5. Change one or more fields.
+6. Tap **Update Contact**.
+7. Confirm the contact updates successfully.
+8. Confirm there is no crash.
+9. Confirm there is no `TextEditingController was used after being disposed` error.
+10. Confirm there is no `dirty widget in the wrong build scope` error.
+11. Navigate away and return to Healthcare Contact.
+12. Edit and update the same or another contact again.
+13. Repeat the update flow multiple times to ensure the controller lifecycle remains stable.
+
+Before modifying files, inspect the existing Healthcare Contact Edit screen, its parent/child widgets, controllers, BLoC/provider/state listeners, update method, and navigation flow so the fix is applied at the correct location.

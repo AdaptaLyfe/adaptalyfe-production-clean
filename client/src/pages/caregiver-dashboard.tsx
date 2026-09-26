@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Share2,
+  MessageSquare,
   Phone,
   Activity,
   Shield,
@@ -25,7 +26,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format, subDays, isAfter } from "date-fns";
+import { jsPDF } from "jspdf";
+import { savePdfDocument } from "@/lib/report-download";
+import { formatTimeAgo } from "@/lib/utils";
 import CaregiverControlPanel from "@/components/caregiver-control-panel";
+import { GuideInsight } from "@/components/ai-ready";
+import type { Message } from "@shared/schema";
+
+const AIChatbot = lazy(() => import("@/components/ai-chatbot"));
 
 interface UserProgress {
   userId: number;
@@ -37,6 +45,44 @@ interface UserProgress {
   alertsCount: number;
 }
 
+function addPdfText(
+  doc: jsPDF,
+  text: string,
+  y: number,
+  options: { fontSize?: number; bold?: boolean } = {},
+) {
+  const fontSize = options.fontSize || 10;
+  const lineHeight = fontSize <= 10 ? 5 : 7;
+  const lines = doc.splitTextToSize(text, 180) as string[];
+
+  if (y + lines.length * lineHeight > 280) {
+    doc.addPage();
+    y = 20;
+  }
+
+  doc.setFont("helvetica", options.bold ? "bold" : "normal");
+  doc.setFontSize(fontSize);
+  doc.text(lines, 15, y);
+  return y + lines.length * lineHeight;
+}
+
+function addPdfSection(doc: jsPDF, title: string, rows: string[], y: number) {
+  let nextY = addPdfText(doc, title, y, { fontSize: 12, bold: true }) + 2;
+  const safeRows = rows.length > 0 ? rows : ["No data available for this report period."];
+
+  safeRows.forEach((row) => {
+    nextY = addPdfText(doc, `• ${row}`, nextY) + 1;
+  });
+
+  return nextY + 4;
+}
+
+function formatReportDate(value: unknown) {
+  if (!value) return "Date unavailable";
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? "Date unavailable" : format(date, "MMM dd, yyyy h:mm a");
+}
+
 export default function CaregiverDashboard() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [reportType, setReportType] = useState<'medical' | 'progress' | 'comprehensive'>('medical');
@@ -44,11 +90,11 @@ export default function CaregiverDashboard() {
   const { toast } = useToast();
 
   // Check if current user is authorized to access caregiver dashboard
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/user"],
   });
 
-  const { data: caregiverAccess } = useQuery({
+  const { data: caregiverAccess } = useQuery<{ isCaregiver: boolean } | null>({
     queryKey: ["/api/caregiver-access"],
     enabled: !!currentUser,
   });
@@ -73,86 +119,182 @@ export default function CaregiverDashboard() {
   const selectedUser = userList.find(u => u.userId === selectedUserId) || userList[0];
 
   // Fetch detailed user data when a user is selected
-  const { data: userData } = useQuery<any>({
+  const { data: userData, isLoading: isLoadingUserData, isError: isUserDataError } = useQuery<any>({
     queryKey: ["/api/user", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
-  const { data: dailyTasks } = useQuery({
+  const { data: dailyTasks, isLoading: isLoadingDailyTasks, isError: isDailyTasksError } = useQuery({
     queryKey: ["/api/daily-tasks", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
-  const { data: moodEntries } = useQuery({
+  const { data: moodEntries, isLoading: isLoadingMoodEntries, isError: isMoodEntriesError } = useQuery({
     queryKey: ["/api/mood-entries", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
-  const { data: appointments } = useQuery({
+  const { data: appointments, isLoading: isLoadingAppointments, isError: isAppointmentsError } = useQuery({
     queryKey: ["/api/appointments", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
-  const { data: medications } = useQuery({
+  const { data: medications, isLoading: isLoadingMedications, isError: isMedicationsError } = useQuery({
     queryKey: ["/api/medications", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
-  const { data: emergencyContacts } = useQuery({
+  const { data: emergencyContacts, isLoading: isLoadingEmergencyContacts, isError: isEmergencyContactsError } = useQuery({
     queryKey: ["/api/emergency-contacts", selectedUser?.userId],
     enabled: !!selectedUser?.userId && isAuthorized === true,
   });
 
+  const {
+    data: caregiverMessages = [],
+    isLoading: isLoadingCaregiverMessages,
+    isError: isCaregiverMessagesError,
+    refetch: refetchCaregiverMessages,
+  } = useQuery<Message[]>({
+    queryKey: ["/api/caregiver/messages", selectedUser?.userId],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/caregiver/messages?userId=${selectedUser?.userId}`,
+      );
+      return response.json();
+    },
+    enabled: !!selectedUser?.userId && isAuthorized === true,
+  });
+
+  const dailyTaskList = Array.isArray(dailyTasks) ? dailyTasks : [];
+  const moodEntryList = Array.isArray(moodEntries) ? moodEntries : [];
+  const appointmentList = Array.isArray(appointments) ? appointments : [];
+  const medicationList = Array.isArray(medications) ? medications : [];
+  const emergencyContactList = Array.isArray(emergencyContacts) ? emergencyContacts : [];
+  const isReportDataLoading = isLoadingUserData || isLoadingDailyTasks || isLoadingMoodEntries ||
+    isLoadingAppointments || isLoadingMedications || isLoadingEmergencyContacts;
+  const hasReportDataError = isUserDataError || isDailyTasksError || isMoodEntriesError ||
+    isAppointmentsError || isMedicationsError || isEmergencyContactsError;
+
   // Calculate analytics
-  const weeklyTaskCompletion = dailyTasks?.filter((task: any) => 
+  const weeklyTaskCompletion = dailyTaskList.filter((task: any) =>
     task.isCompleted && isAfter(new Date(task.lastCompletedAt || task.createdAt), subDays(new Date(), 7))
   ).length || 0;
 
-  const recentMoods = moodEntries?.slice(-7) || [];
+  const recentMoods = moodEntryList.slice(-7);
   const averageMood = recentMoods.length > 0 
     ? (recentMoods.reduce((sum: number, entry: any) => sum + entry.mood, 0) / recentMoods.length).toFixed(1)
     : 0;
 
-  const upcomingAppointments = appointments?.filter((appt: any) => 
+  const upcomingAppointments = appointmentList.filter((appt: any) =>
     isAfter(new Date(appt.appointmentDate), new Date())
   ).slice(0, 3) || [];
 
-  const activeMedications = medications?.filter((med: any) => !med.isDiscontinued) || [];
-  const medicationsNeedingRefill = medications?.filter((med: any) => 
+  const activeMedications = medicationList.filter((med: any) => !med.isDiscontinued);
+  const medicationsNeedingRefill = medicationList.filter((med: any) =>
     med.pillsRemaining < 7 && !med.isDiscontinued
-  ) || [];
+  );
 
   // Generate medical report for doctors
   const generateMedicalReport = useMutation({
     mutationFn: async () => {
+      if (!selectedUser) {
+        throw new Error("Select a care recipient before downloading a report.");
+      }
+      if (isReportDataLoading) {
+        throw new Error("Report data is still loading. Please try again in a moment.");
+      }
+      if (hasReportDataError) {
+        throw new Error("Some report data could not be loaded. Please try again.");
+      }
+
       const reportData = {
-        patient: selectedUser?.userName,
+        patient: selectedUser.userName,
         dateRange: `${format(subDays(new Date(), 30), 'MMM dd, yyyy')} - ${format(new Date(), 'MMM dd, yyyy')}`,
         moodSummary: {
           averageMood: averageMood,
           entries: recentMoods.length,
-          trend: selectedUser?.moodTrend
+          trend: selectedUser.moodTrend
         },
         taskCompletion: {
           weeklyRate: weeklyTaskCompletion,
-          totalTasks: dailyTasks?.length || 0,
-          completedTasks: dailyTasks?.filter((t: any) => t.isCompleted).length || 0
+          totalTasks: dailyTaskList.length,
+          completedTasks: dailyTaskList.filter((t: any) => t.isCompleted).length
         },
         medications: activeMedications,
         upcomingAppointments: upcomingAppointments,
-        alerts: selectedUser?.alertsCount || 0,
-        emergencyContacts: emergencyContacts
+        alerts: selectedUser.alertsCount || 0,
+        emergencyContacts: emergencyContactList
       };
 
-      // Generate PDF report
-      return new Promise(resolve => setTimeout(() => resolve(reportData), 1000));
+      const doc = new jsPDF();
+      let y = 20;
+      const generatedDate = format(new Date(), "MMM dd, yyyy h:mm a");
+
+      doc.setTextColor(30, 41, 59);
+      y = addPdfText(doc, "Adaptalyfe Medical Report", y, { fontSize: 18, bold: true }) + 2;
+      y = addPdfText(doc, `Patient: ${reportData.patient}`, y, { bold: true });
+      y = addPdfText(doc, `Report period: ${reportData.dateRange}`, y);
+      y = addPdfText(doc, `Generated: ${generatedDate}`, y) + 6;
+
+      y = addPdfSection(doc, "Mood Summary", [
+        `Average mood (last 7 entries): ${reportData.moodSummary.averageMood}/5`,
+        `Entries included: ${reportData.moodSummary.entries}`,
+        `Trend: ${reportData.moodSummary.trend || "Not available"}`,
+      ], y);
+
+      y = addPdfSection(doc, "Task Completion", [
+        `Completed tasks: ${reportData.taskCompletion.completedTasks} of ${reportData.taskCompletion.totalTasks}`,
+        `Completed in the last 7 days: ${reportData.taskCompletion.weeklyRate}`,
+      ], y);
+
+      y = addPdfSection(doc, "Active Medications", reportData.medications.map((med: any) => {
+        const details = [med.dosage, med.frequency].filter(Boolean).join(" • ");
+        const remaining = med.pillsRemaining !== undefined ? ` • ${med.pillsRemaining} pills remaining` : "";
+        return `${med.name || "Unnamed medication"}${details ? ` — ${details}` : ""}${remaining}`;
+      }), y);
+
+      y = addPdfSection(doc, "Upcoming Appointments", reportData.upcomingAppointments.map((appt: any) => {
+        const details = [appt.provider, appt.location].filter(Boolean).join(" • ");
+        return `${formatReportDate(appt.appointmentDate)} — ${appt.title || "Appointment"}${details ? ` (${details})` : ""}`;
+      }), y);
+
+      y = addPdfSection(doc, "Alerts", [`Active alerts: ${reportData.alerts}`], y);
+
+      addPdfSection(doc, "Emergency Contacts", reportData.emergencyContacts.map((contact: any) => {
+        const details = [contact.relationship, contact.phoneNumber, contact.email].filter(Boolean).join(" • ");
+        return `${contact.name || "Unnamed contact"}${details ? ` — ${details}` : ""}`;
+      }), y);
+
+      const safePatientName = reportData.patient.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "patient";
+      const dateStamp = new Date().toISOString().split("T")[0];
+      const downloadResult = await savePdfDocument(
+        doc,
+        `medical-report-${safePatientName}-${dateStamp}.pdf`,
+      );
+
+      return {
+        hasReportableData: recentMoods.length > 0 || dailyTaskList.length > 0 ||
+          reportData.medications.length > 0 || reportData.upcomingAppointments.length > 0 ||
+          reportData.emergencyContacts.length > 0,
+        downloadResult,
+      };
     },
-    onSuccess: () => {
+    onSuccess: ({ hasReportableData, downloadResult }) => {
       toast({
         title: "Medical Report Generated",
-        description: `Comprehensive medical report for ${selectedUser?.userName} has been created and downloaded.`,
+        description: hasReportableData
+          ? `Comprehensive medical report for ${selectedUser?.userName} was saved to ${downloadResult.location}.`
+          : `No activity data was available; an empty report was saved to ${downloadResult.location}.`,
       });
-    }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Report Download Failed",
+        description: error.message || "The report could not be downloaded. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const shareMedicalSummary = async () => {
@@ -200,7 +342,7 @@ This summary was generated by Adaptalyfe for medical provider review.
   };
 
   useEffect(() => {
-    if (caregiverAccess !== undefined) {
+    if (caregiverAccess) {
       setIsAuthorized(caregiverAccess.isCaregiver);
     }
   }, [caregiverAccess]);
@@ -393,6 +535,19 @@ This summary was generated by Adaptalyfe for medical provider review.
         </Card>
       </div>
 
+      <div className="mb-6">
+        <GuideInsight
+          sourceLabel="Caregiver insight preview"
+          state="contextual"
+          message={
+            selectedUser.completionRate > 0
+              ? `${selectedUser.userName} is completing ${selectedUser.completionRate}% of tracked activities. This presentation is ready for richer Guide insights when real intelligence is connected.`
+              : `${selectedUser.userName}'s progress will appear here as routines, completed tasks, and successful transitions build over time.`
+          }
+          context="Presentation only. Existing caregiver permissions and data access remain unchanged."
+        />
+      </div>
+
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <Button 
@@ -404,13 +559,13 @@ This summary was generated by Adaptalyfe for medical provider review.
         </Button>
         <Button 
           onClick={() => generateMedicalReport.mutate()}
-          disabled={generateMedicalReport.isPending}
+          disabled={generateMedicalReport.isPending || isReportDataLoading || !selectedUser}
           variant="outline"
           className="text-sm px-3 py-2 min-h-[44px]"
         >
           <Download className="w-4 h-4 mr-2" />
           <span className="truncate">
-            {generateMedicalReport.isPending ? 'Generating...' : 'Download Report'}
+            {generateMedicalReport.isPending || isReportDataLoading ? 'Generating...' : 'Download Report'}
           </span>
         </Button>
         <Button 
@@ -424,10 +579,14 @@ This summary was generated by Adaptalyfe for medical provider review.
 
       {/* Dashboard Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             Overview & Reports
+          </TabsTrigger>
+          <TabsTrigger value="messages" className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4" />
+            Messages
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
@@ -450,7 +609,7 @@ This summary was generated by Adaptalyfe for medical provider review.
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Tasks completed today</span>
                     <Badge variant="secondary">
-                      {dailyTasks?.filter((t: any) => {
+                      {dailyTaskList.filter((t: any) => {
                         try {
                           return t.isCompleted && 
                             format(new Date(t.lastCompletedAt || t.createdAt), 'yyyy-MM-dd') === 
@@ -463,14 +622,14 @@ This summary was generated by Adaptalyfe for medical provider review.
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Mood logged today</span>
-                    <Badge variant={moodEntries?.some((m: any) => {
+                    <Badge variant={moodEntryList.some((m: any) => {
                       try {
                         return format(new Date(m.entryDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
                       } catch {
                         return false;
                       }
                     }) ? "default" : "destructive"}>
-                      {moodEntries?.some((m: any) => {
+                      {moodEntryList.some((m: any) => {
                         try {
                           return format(new Date(m.entryDate), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
                         } catch {
@@ -519,6 +678,62 @@ This summary was generated by Adaptalyfe for medical provider review.
           </div>
         </TabsContent>
 
+        <TabsContent value="messages" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                Messages from {selectedUser.userName}
+              </CardTitle>
+              <CardDescription>
+                Messages sent from this care recipient’s account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCaregiverMessages ? (
+                <div className="space-y-3" aria-label="Loading messages">
+                  {[0, 1, 2].map((item) => (
+                    <div key={item} className="h-20 animate-pulse rounded-lg bg-gray-100" />
+                  ))}
+                </div>
+              ) : isCaregiverMessagesError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <p>Messages could not be loaded.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => void refetchCaregiverMessages()}
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : caregiverMessages.length === 0 ? (
+                <div className="py-10 text-center">
+                  <MessageSquare className="mx-auto mb-3 h-10 w-10 text-gray-400" />
+                  <p className="text-gray-600">No messages from this care recipient yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {caregiverMessages.map((message) => (
+                    <div key={message.id} className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-gray-900">
+                          From {selectedUser.userName}
+                        </span>
+                        <span className="shrink-0 text-xs text-gray-500">
+                          {formatTimeAgo(new Date(message.sentAt))}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-line text-gray-700">{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="security" className="space-y-4">
           {/* Security Controls */}
           <Card>
@@ -540,6 +755,10 @@ This summary was generated by Adaptalyfe for medical provider review.
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Suspense fallback={null}>
+        <AIChatbot careRecipientId={selectedUser?.userId} />
+      </Suspense>
     </div>
   );
 }

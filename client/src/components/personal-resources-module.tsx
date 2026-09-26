@@ -6,15 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertPersonalResourceSchema } from "@shared/schema";
-import type { PersonalResource, InsertPersonalResource } from "@shared/schema";
+import type { PersonalResource } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, ExternalLink, Trash2, Star, StarOff, Music, Video, Globe, Book, Heart, Smile } from "lucide-react";
+import { z } from "zod";
 
 const categoryIcons = {
   music: Music,
@@ -36,14 +37,20 @@ const categoryColors = {
   other: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
 };
 
+const personalResourceFormSchema = insertPersonalResourceSchema.omit({
+  userId: true,
+});
+
+type PersonalResourceFormValues = z.infer<typeof personalResourceFormSchema>;
+
 export default function PersonalResourcesModule() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm<InsertPersonalResource>({
-    resolver: zodResolver(insertPersonalResourceSchema),
+  const form = useForm<PersonalResourceFormValues>({
+    resolver: zodResolver(personalResourceFormSchema),
     defaultValues: {
       title: "",
       url: "",
@@ -54,20 +61,21 @@ export default function PersonalResourcesModule() {
     },
   });
 
-  const { data: allResources = [], isLoading } = useQuery<PersonalResource[]>({
+  const { data: rawResources, isLoading } = useQuery<PersonalResource[] | null>({
     queryKey: ["/api/personal-resources"],
   });
+  const allResources = Array.isArray(rawResources) ? rawResources : [];
 
   const resources = selectedCategory === "all"
     ? allResources
     : allResources.filter((r) => r.category === selectedCategory);
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertPersonalResource) => {
+    mutationFn: async (data: PersonalResourceFormValues) => {
       return await apiRequest("POST", "/api/personal-resources", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/personal-resources"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/personal-resources"] });
       setShowAddDialog(false);
       form.reset();
       toast({
@@ -123,7 +131,7 @@ export default function PersonalResourcesModule() {
     },
   });
 
-  const onSubmit = (data: InsertPersonalResource) => {
+  const onSubmit = (data: PersonalResourceFormValues) => {
     createMutation.mutate(data);
   };
 
@@ -176,7 +184,10 @@ export default function PersonalResourcesModule() {
               Add Resource
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            overlayClassName="z-[110]"
+            className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+          >
             <DialogHeader>
               <DialogTitle>Add Personal Resource</DialogTitle>
             </DialogHeader>
@@ -187,10 +198,11 @@ export default function PersonalResourcesModule() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <FormLabel required>Title</FormLabel>
                       <FormControl>
                         <Input placeholder="Resource name" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -199,10 +211,11 @@ export default function PersonalResourcesModule() {
                   name="url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL</FormLabel>
+                      <FormLabel required>URL</FormLabel>
                       <FormControl>
                         <Input placeholder="https://" {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -211,7 +224,7 @@ export default function PersonalResourcesModule() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -228,6 +241,7 @@ export default function PersonalResourcesModule() {
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -240,6 +254,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Textarea placeholder="What makes this resource helpful?" {...field} value={field.value || ""} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -252,6 +267,7 @@ export default function PersonalResourcesModule() {
                       <FormControl>
                         <Input placeholder="calming, motivation, focus (comma-separated)" {...field} value={field.value || ""} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

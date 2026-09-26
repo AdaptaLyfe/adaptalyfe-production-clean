@@ -1,0 +1,94 @@
+# Implement Meal & Shopping Section in Flutter
+
+I have an existing React Native + Wrapper application and I am migrating it to Flutter.
+
+Implement the complete **Meal & Shopping section** in my existing Flutter project, matching the React Native + Wrapper app.
+
+## Important Requirements
+
+### 1. Inspect Existing React Native + Wrapper
+
+Before writing code:
+
+* Inspect the existing React Native + Wrapper Meal & Shopping screens.
+* Understand all features, UI, API calls, navigation routes, and user flows.
+* Check how data is loaded, added, edited, updated, and deleted.
+* Check all buttons, forms, popups, validation, and error messages.
+* Follow the existing React Native + Wrapper behavior exactly.
+
+### 2. Flutter Implementation
+
+Implement the same Meal & Shopping section in Flutter.
+
+Maintain:
+
+* Same UI design and layout.
+* Same screens and features.
+* Same navigation flow.
+* Same API/backend integration.
+* Same validation and error handling.
+* Same loading, empty, and error states.
+* Same add, edit, update, and delete functionality.
+
+### 3. Navigation Flow
+
+Maintain proper navigation from the existing Flutter app.
+
+Verify:
+
+* Home → Meal & Shopping.
+* Meal & Shopping → All existing sub-screens.
+* Back navigation works correctly.
+* Drawer navigation works correctly.
+* Bottom navigation works correctly.
+* Existing routes and navigation are not broken.
+* After saving, editing, or deleting, the user returns to the correct screen.
+* Deep links or route handling are maintained if already supported.
+
+Use the existing Flutter navigation system and route names. Do not create duplicate navigation systems.
+
+### 4. Architecture
+
+Follow the existing Flutter project architecture and BLoC pattern.
+
+* Reuse existing widgets, services, models, repositories, and API clients where possible.
+* Use simple BLoC if BLoC is already used.
+* Keep code clean and maintainable.
+* Do not rewrite unrelated features.
+* Do not create duplicate screens or duplicate business logic.
+
+### 5. Responsive Design
+
+Ensure the Meal & Shopping section works correctly on:
+
+* Android
+* iOS
+* Web
+* Desktop
+
+Maintain the existing app's responsive design.
+
+### 6. Testing
+
+After implementation:
+
+* Test the complete Meal & Shopping navigation flow.
+* Test all existing features.
+* Test add/edit/delete operations.
+* Test validation and error messages.
+* Test back button and route navigation.
+* Fix any Flutter compilation errors.
+* Ensure existing app features continue working.
+
+## Final Output
+
+Provide:
+
+1. List of React Native + Wrapper screens/features inspected.
+2. Flutter files created or modified.
+3. Navigation routes added or updated.
+4. API/backend integration details.
+5. Testing completed.
+6. Any missing React Native features that still need implementation.
+
+**Do not skip existing features. Do not change unrelated sections. The goal is feature parity with the React Native + Wrapper app.**

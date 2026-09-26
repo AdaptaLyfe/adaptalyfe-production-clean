@@ -29,6 +29,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { format, isToday, isTomorrow, addDays, startOfWeek, endOfWeek } from "date-fns";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
+import { useToast } from "@/hooks/use-toast";
 import type { 
   AcademicClass, 
   Assignment, 
@@ -39,8 +40,14 @@ import type {
   TransitionSkill
 } from "@shared/schema";
 
+const headerSafeDialogStyle = {
+  top: "calc(50% + 2rem)",
+  maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+};
+
 export default function AcademicPlanner() {
   const { hasFeature } = useSubscriptionEnforcement();
+  const { toast } = useToast();
   
   // Check if user has access to academic planner features
   if (!hasFeature('advancedAnalytics')) {
@@ -71,8 +78,9 @@ export default function AcademicPlanner() {
     type: "homework",
     dueDate: "",
     priority: "medium",
-    estimatedHours: 2
+    estimatedHours: ""
   });
+  const [assignmentHoursError, setAssignmentHoursError] = useState<string | null>(null);
 
   const [newClass, setNewClass] = useState({
     className: "",
@@ -81,7 +89,7 @@ export default function AcademicPlanner() {
     room: "",
     startTime: "",
     endTime: "",
-    dayOfWeek: 1,
+    dayOfWeek: new Date().getDay(),
     credits: 3,
     semester: "Fall 2025"
   });
@@ -173,7 +181,7 @@ export default function AcademicPlanner() {
     cacheTime: 0,
   });
 
-  const { data: studyGroups = [], isLoading: groupsLoading } = useQuery({
+  const { data: studyGroups = [], isLoading: groupsLoading, refetch: refetchStudyGroups } = useQuery({
     queryKey: ["/api/study-groups"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/study-groups");
@@ -194,20 +202,28 @@ export default function AcademicPlanner() {
       queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       refetchAssignments(); // Force refetch
       setIsAddAssignmentOpen(false);
-      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: 2 });
+      setAssignmentHoursError(null);
+      setNewAssignment({ title: "", description: "", type: "homework", dueDate: "", priority: "medium", estimatedHours: "" });
     },
   });
 
   // Class creation mutation
   const createClassMutation = useMutation({
     mutationFn: async (classData: any) => {
-      return apiRequest("POST", "/api/academic-classes", classData);
+      const response = await apiRequest("POST", "/api/academic-classes", classData);
+      return response.json() as Promise<AcademicClass>;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/academic-classes"] });
-      refetchClasses(); // Force refetch
+    onSuccess: async (createdClass) => {
+      queryClient.setQueryData<AcademicClass[]>(
+        ["/api/academic-classes"],
+        (currentClasses = []) => [
+          createdClass,
+          ...currentClasses.filter((item) => item.id !== createdClass.id),
+        ],
+      );
+      await refetchClasses();
       setIsAddClassOpen(false);
-      setNewClass({ className: "", instructor: "", building: "", room: "", startTime: "", endTime: "", dayOfWeek: 1, credits: 3, semester: "Fall 2025" });
+      setNewClass({ className: "", instructor: "", building: "", room: "", startTime: "", endTime: "", dayOfWeek: new Date().getDay(), credits: 3, semester: "Fall 2025" });
     },
   });
 
@@ -252,10 +268,18 @@ export default function AcademicPlanner() {
     mutationFn: async (groupData: any) => {
       return apiRequest("POST", "/api/study-groups", groupData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["/api/study-groups"] });
+      await refetchStudyGroups();
       setIsAddStudyGroupOpen(false);
       setNewStudyGroup({ groupName: "", subject: "", description: "", meetingDay: "", meetingTime: "", maxMembers: 6 });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Unable to create study group",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -289,8 +313,26 @@ export default function AcademicPlanner() {
     if (!newAssignment.title.trim() || !newAssignment.dueDate) {
       return;
     }
+
+    const hoursText = newAssignment.estimatedHours.trim();
+    if (!hoursText) {
+      setAssignmentHoursError("Estimated hours is required");
+      return;
+    }
+    const estimatedHours = Number(hoursText);
+    if (!Number.isFinite(estimatedHours)) {
+      setAssignmentHoursError("Enter a valid number of hours");
+      return;
+    }
+    if (estimatedHours <= 0 || estimatedHours > 100) {
+      setAssignmentHoursError("Enter more than 0 and at most 100 hours");
+      return;
+    }
+    setAssignmentHoursError(null);
+
     createAssignmentMutation.mutate({
       ...newAssignment,
+      estimatedHours,
       dueDate: new Date(newAssignment.dueDate).toISOString()
     });
   };
@@ -578,11 +620,14 @@ export default function AcademicPlanner() {
                         Add Class
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>Add New Class</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                      <div className="academic-planner-form space-y-4 pr-2">
                         <Input
                           placeholder="Class name"
                           value={newClass.className}
@@ -624,11 +669,13 @@ export default function AcademicPlanner() {
                             <SelectValue placeholder="Day of week" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
                             <SelectItem value="1">Monday</SelectItem>
                             <SelectItem value="2">Tuesday</SelectItem>
                             <SelectItem value="3">Wednesday</SelectItem>
                             <SelectItem value="4">Thursday</SelectItem>
                             <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
                           </SelectContent>
                         </Select>
                         <Input
@@ -714,94 +761,117 @@ export default function AcademicPlanner() {
                 <div className="text-center py-8">
                   <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">No assignments yet</p>
-                  <Dialog open={isAddAssignmentOpen} onOpenChange={setIsAddAssignmentOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="mt-4" size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Assignment
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Add New Assignment</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                        <Input
-                          placeholder="Assignment title"
-                          value={newAssignment.title}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
-                          required
-                        />
-                        <Textarea
-                          placeholder="Description (optional)"
-                          value={newAssignment.description}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
-                        />
-                        <Select 
-                          value={newAssignment.type} 
-                          onValueChange={(value) => setNewAssignment({ ...newAssignment, type: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Assignment type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="homework">Homework</SelectItem>
-                            <SelectItem value="project">Project</SelectItem>
-                            <SelectItem value="exam">Exam</SelectItem>
-                            <SelectItem value="quiz">Quiz</SelectItem>
-                            <SelectItem value="paper">Paper</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="date"
-                          placeholder="Due date"
-                          value={newAssignment.dueDate}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
-                          required
-                        />
-                        <Select 
-                          value={newAssignment.priority} 
-                          onValueChange={(value) => setNewAssignment({ ...newAssignment, priority: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="low">Low</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="urgent">Urgent</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          placeholder="Estimated hours"
-                          value={newAssignment.estimatedHours}
-                          onChange={(e) => setNewAssignment({ ...newAssignment, estimatedHours: parseInt(e.target.value) || 2 })}
-                          min="1"
-                          max="100"
-                        />
-                        <div className="flex space-x-2">
-                          <Button 
-                            onClick={handleCreateAssignment} 
-                            disabled={createAssignmentMutation.isPending}
-                            className="flex-1"
-                          >
-                            {createAssignmentMutation.isPending ? "Creating..." : "Create Assignment"}
-                          </Button>
-                          <Button 
-                            onClick={() => setIsAddAssignmentOpen(false)} 
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </div>
               )}
+              <div className="flex justify-center">
+                <Dialog
+                  open={isAddAssignmentOpen}
+                  onOpenChange={(open) => {
+                    setIsAddAssignmentOpen(open);
+                    setAssignmentHoursError(null);
+                    if (open) {
+                      setNewAssignment((current) => ({
+                        ...current,
+                        estimatedHours: "",
+                      }));
+                    }
+                  }}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="mt-4" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Assignment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] sm:max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                  >
+                    <DialogHeader>
+                      <DialogTitle>Add New Assignment</DialogTitle>
+                    </DialogHeader>
+                    <div className="academic-planner-form space-y-4 pr-2">
+                    <Input
+                      placeholder="Assignment title"
+                      value={newAssignment.title}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+                      required
+                    />
+                    <Textarea
+                      placeholder="Description (optional)"
+                      value={newAssignment.description}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+                    />
+                    <Select
+                      value={newAssignment.type}
+                      onValueChange={(value) => setNewAssignment({ ...newAssignment, type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Assignment type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="homework">Homework</SelectItem>
+                        <SelectItem value="project">Project</SelectItem>
+                        <SelectItem value="exam">Exam</SelectItem>
+                        <SelectItem value="quiz">Quiz</SelectItem>
+                        <SelectItem value="paper">Paper</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      placeholder="Due date"
+                      value={newAssignment.dueDate}
+                      onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
+                      required
+                    />
+                    <Select
+                      value={newAssignment.priority}
+                      onValueChange={(value) => setNewAssignment({ ...newAssignment, priority: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder="Enter estimated hours"
+                      value={newAssignment.estimatedHours}
+                      onChange={(e) => {
+                        setAssignmentHoursError(null);
+                        setNewAssignment({ ...newAssignment, estimatedHours: e.target.value });
+                      }}
+                      min="0.01"
+                      max="100"
+                    />
+                    {assignmentHoursError && (
+                      <p className="text-sm text-red-600">{assignmentHoursError}</p>
+                    )}
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleCreateAssignment}
+                        disabled={createAssignmentMutation.isPending}
+                        className="flex-1"
+                      >
+                        {createAssignmentMutation.isPending ? "Creating..." : "Create Assignment"}
+                      </Button>
+                      <Button
+                        onClick={() => setIsAddAssignmentOpen(false)}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -891,11 +961,15 @@ export default function AcademicPlanner() {
               )}
               
               <Dialog open={isAddStudySessionOpen} onOpenChange={setIsAddStudySessionOpen}>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] overflow-y-auto overscroll-contain"
+                      style={headerSafeDialogStyle}
+                    >
                       <DialogHeader>
                         <DialogTitle>Start Study Session</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                      <div className="academic-planner-form space-y-4 pr-2">
                         <Input
                           placeholder="Subject (required)"
                           value={newStudySession.subject}
@@ -1024,7 +1098,11 @@ export default function AcademicPlanner() {
                       Add Location
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] overflow-y-auto overscroll-contain"
+                    style={headerSafeDialogStyle}
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Campus Location</DialogTitle>
                       <DialogDescription>
@@ -1135,7 +1213,11 @@ export default function AcademicPlanner() {
                       Add Route
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] overflow-y-auto overscroll-contain"
+                    style={headerSafeDialogStyle}
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Transportation Route</DialogTitle>
                       <DialogDescription>
@@ -1248,7 +1330,11 @@ export default function AcademicPlanner() {
                     Create Study Group
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] overflow-y-auto overscroll-contain"
+                  style={headerSafeDialogStyle}
+                >
                   <DialogHeader>
                     <DialogTitle>Create Study Group</DialogTitle>
                     <DialogDescription>

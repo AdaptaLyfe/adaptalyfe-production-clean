@@ -1,0 +1,159 @@
+Fix the Flutter crash in the existing project.
+
+### Bug Location
+
+**Medication List → Pharmacy Notes → Link Pharmacy**
+
+### Steps to reproduce
+
+1. Open **Medication List**.
+2. Open **Pharmacy Notes**.
+3. Tap **"Link Pharmacy"**.
+4. Enter all required pharmacy details.
+5. Tap **"Add Pharmacy"**.
+6. The app crashes/shows this error:
+
+```text
+package:flutter/src/widgets/framework.dart:
+Failed assertion: line 6065 pos 14:
+'_dependents.isEmpty': is not true.
+
+See also:
+https://docs.flutter.dev/testing/errors
+```
+
+### Important
+
+Do NOT just catch, suppress, or hide the error.
+
+Find and fix the **root cause** of the widget lifecycle/state-management problem so this bug does not come back.
+
+### What to investigate
+
+1. Find the complete implementation of:
+
+   * Medication List
+   * Pharmacy Notes
+   * Link Pharmacy screen/dialog/bottom sheet
+   * Add Pharmacy button
+   * Pharmacy BLoC/Cubit/Provider/state management
+   * Pharmacy repository/API calls
+
+2. Search for incorrect widget lifecycle behavior around the Add Pharmacy flow, especially:
+
+   * `BuildContext` being used after a widget is disposed.
+   * Calling `setState()` after `dispose()`.
+   * Calling navigation or showing dialogs/bottom sheets during an unsafe build phase.
+   * A `Provider`, `BlocProvider`, `InheritedWidget`, or dependency being inserted/removed while its dependents are still rebuilding.
+   * Reusing the same `BuildContext` after closing a dialog/bottom sheet.
+   * Nested `BlocProvider`/`Provider` being incorrectly created or disposed.
+   * Calling `Navigator.pop()` and then immediately using the popped context.
+   * Async pharmacy save operations continuing after the screen/dialog has been disposed.
+   * Controllers, listeners, streams, or subscriptions not being disposed correctly.
+   * `BlocListener`, `BlocBuilder`, `Consumer`, `Provider.of`, `context.read`, or `context.watch` being used incorrectly.
+   * Pharmacy dialog/bottom-sheet widgets being rebuilt or removed while their dependencies are changing.
+
+3. Pay special attention to the sequence:
+
+```text
+Link Pharmacy
+→ enter pharmacy details
+→ Add Pharmacy
+→ save pharmacy
+→ update pharmacy state
+→ close dialog/bottom sheet
+→ refresh Medication List
+```
+
+Make this lifecycle safe.
+
+### Required implementation behavior
+
+When the user taps **Add Pharmacy**:
+
+1. Validate the form.
+2. Show loading state.
+3. Save the pharmacy through the existing architecture.
+4. Wait for the save operation to complete.
+5. Update the pharmacy state/list correctly.
+6. Safely close the Link Pharmacy UI.
+7. Refresh/update Medication List without rebuilding an invalid widget tree.
+8. Do not use a disposed `BuildContext`.
+9. Do not call `setState()` after disposal.
+10. Properly dispose all `TextEditingController`, `FocusNode`, listeners, streams, and subscriptions.
+11. Prevent duplicate Add Pharmacy submissions while the request is loading.
+
+### Do NOT change
+
+* Existing UI design.
+* Existing navigation structure.
+* Existing API contract.
+* Existing database structure.
+* Existing pharmacy functionality.
+* Existing Medication List functionality.
+* Other medication features.
+
+Only make the changes required to correctly fix this lifecycle/state-management bug.
+
+### Error handling
+
+If the save fails:
+
+* Keep the Link Pharmacy UI open.
+* Stop loading.
+* Show the existing error UI/message.
+* Do not navigate or dispose the form unexpectedly.
+
+If the save succeeds:
+
+* Close the Link Pharmacy UI safely.
+* Show the existing success behavior.
+* Medication List should display the newly linked pharmacy.
+
+### Verification
+
+After implementing the fix, test this exact flow multiple times:
+
+```text
+Medication List
+→ Pharmacy Notes
+→ Link Pharmacy
+→ Enter details
+→ Add Pharmacy
+```
+
+Test:
+
+* First pharmacy addition.
+* Add another pharmacy.
+* Open and close Link Pharmacy without saving.
+* Submit invalid/empty form.
+* Rapidly tap Add Pharmacy multiple times.
+* Save while the request is loading.
+* Navigate away before an async request finishes.
+* Open Link Pharmacy again after successfully adding a pharmacy.
+* Edit/delete existing pharmacy if those features exist.
+
+Also search the project for the same lifecycle pattern elsewhere and fix the underlying reusable issue if the same unsafe pattern is used in other pharmacy/medication screens.
+
+### Final requirement
+
+Do not tell me only that the error is fixed.
+
+After making the changes, provide:
+
+1. Root cause of `_dependents.isEmpty` assertion.
+2. Files changed.
+3. What lifecycle/state-management issue was corrected.
+4. Why the fix prevents the bug from returning.
+5. Any related unsafe pattern you found and fixed.
+
+Run:
+
+```bash
+flutter analyze
+```
+
+and, if possible, run the relevant tests/build to make sure there are no new errors.
+
+Do not rewrite unrelated parts of the application.

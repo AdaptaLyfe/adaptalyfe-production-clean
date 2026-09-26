@@ -1,0 +1,39 @@
+In the existing Flutter project, fix the Subscription screen issue where users are not able to select a subscription plan.
+
+### Current Issue
+
+* On the Subscription screen, subscription plans are displayed.
+* When the user taps/selects a plan, the plan is not getting selected.
+* The selected plan UI/state does not update correctly.
+* Because of this, the user cannot continue with the selected subscription plan.
+
+### Required Fix
+
+1. Check the existing Subscription screen implementation.
+2. Identify why the plan selection is not working.
+3. Make each subscription plan properly selectable when tapped.
+4. When a plan is selected:
+
+   * Update the selected plan state.
+   * Clearly show the selected plan in the UI.
+   * Remove the selected state from the previously selected plan.
+5. Make sure only **one plan can be selected at a time**.
+6. Preserve the existing subscription plans, prices, trial information, and UI design.
+7. If the project uses BLoC/Cubit/Provider or another state-management solution, follow the existing architecture instead of introducing a new state-management pattern.
+8. Verify that the selected plan is correctly passed to the existing payment/subscription flow.
+9. Do not break Stripe/payment integration or existing subscription functionality.
+10. Handle loading/error states properly if plan selection or subscription data comes from an API.
+11. Make the fix responsive for Android, iOS, Web, and Desktop if the Subscription screen supports these platforms.
+
+### Important
+
+* Do not rewrite the entire Subscription screen unnecessarily.
+* Reuse the existing code and components.
+* Find the root cause instead of applying a temporary UI-only fix.
+* Check for issues with `onTap`, `onPressed`, `selectedPlan`, state updates, BLoC/Cubit events, `setState`, disabled widgets, or overlays preventing taps.
+* Make sure there is no invisible widget/AbsorbPointer/IgnorePointer preventing the plan cards from receiving taps.
+* After fixing, test the complete flow:
+
+**Subscription Screen → Select Plan → Selected UI Updates → Continue/Subscribe → Correct Selected Plan Used**
+
+Also check the code for any related issue that could cause the selection to stop working again and fix it properly.

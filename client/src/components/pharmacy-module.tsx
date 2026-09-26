@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FieldLabel } from "@/components/ui/field-label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -296,11 +296,11 @@ export default function PharmacyModule() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="medications" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-10">
-            <TabsTrigger value="medications" className="text-sm px-3">Medication List</TabsTrigger>
-            <TabsTrigger value="refills" className="text-sm px-3">Refill Reminders</TabsTrigger>
-            <TabsTrigger value="orders" className="text-sm px-3">Reminder History</TabsTrigger>
-            <TabsTrigger value="pharmacies" className="text-sm px-3">Pharmacy Notes</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 gap-1 h-auto p-1 sm:grid-cols-4">
+            <TabsTrigger value="medications" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Medication List</TabsTrigger>
+            <TabsTrigger value="refills" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Refill Reminders</TabsTrigger>
+            <TabsTrigger value="orders" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Reminder History</TabsTrigger>
+            <TabsTrigger value="pharmacies" className="min-h-10 px-2 py-2 text-center text-xs leading-tight whitespace-normal sm:text-sm">Pharmacy Notes</TabsTrigger>
           </TabsList>
 
           <TabsContent value="medications" className="space-y-4">
@@ -313,7 +313,10 @@ export default function PharmacyModule() {
                     Add Medication
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                >
                   <DialogHeader>
                     <DialogTitle>Add New Medication</DialogTitle>
                     <DialogDescription>
@@ -322,33 +325,33 @@ export default function PharmacyModule() {
                   </DialogHeader>
                   <form onSubmit={handleAddMedication} className="space-y-4">
                     <div>
-                      <Label htmlFor="medicationName">Medication Name</Label>
+                      <FieldLabel htmlFor="medicationName" required>Medication Name</FieldLabel>
                       <Input name="medicationName" required />
                     </div>
                     <div>
-                      <Label htmlFor="dosage">Dosage</Label>
+                      <FieldLabel htmlFor="dosage" optional>Dosage</FieldLabel>
                       <Input name="dosage" placeholder="e.g., 10mg" />
                     </div>
                     <div>
-                      <Label htmlFor="prescriptionNumber">Prescription Number</Label>
+                      <FieldLabel htmlFor="prescriptionNumber" optional>Prescription Number</FieldLabel>
                       <Input name="prescriptionNumber" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <Label htmlFor="quantity">Quantity</Label>
+                        <FieldLabel htmlFor="quantity" optional>Quantity</FieldLabel>
                         <Input name="quantity" type="number" placeholder="30" />
                       </div>
                       <div>
-                        <Label htmlFor="refillsRemaining">Refills Left</Label>
+                        <FieldLabel htmlFor="refillsRemaining" optional>Refills Left</FieldLabel>
                         <Input name="refillsRemaining" type="number" placeholder="3" />
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="prescribedBy">Notes (Optional)</Label>
+                      <FieldLabel htmlFor="prescribedBy" optional>Notes</FieldLabel>
                       <Input name="prescribedBy" placeholder="e.g., Take with food, for headaches" />
                     </div>
                     <div>
-                      <Label htmlFor="pharmacyId">Pharmacy</Label>
+                      <FieldLabel htmlFor="pharmacyId" optional>Pharmacy</FieldLabel>
                       <Select name="pharmacyId">
                         <SelectTrigger>
                           <SelectValue placeholder="Select pharmacy" />
@@ -363,11 +366,11 @@ export default function PharmacyModule() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="nextRefillDate">Next Refill Date</Label>
+                      <FieldLabel htmlFor="nextRefillDate" optional>Next Refill Date</FieldLabel>
                       <Input name="nextRefillDate" type="date" />
                     </div>
                     <div>
-                      <Label htmlFor="instructions">Instructions</Label>
+                      <FieldLabel htmlFor="instructions" optional>Instructions</FieldLabel>
                       <Input name="instructions" placeholder="Take with food" />
                     </div>
                     
@@ -378,11 +381,11 @@ export default function PharmacyModule() {
                       
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <Label htmlFor="pillColor">Color</Label>
+                          <FieldLabel htmlFor="pillColor" optional>Color</FieldLabel>
                           <Input name="pillColor" placeholder="e.g., White, Blue" />
                         </div>
                         <div>
-                          <Label htmlFor="pillShape">Shape</Label>
+                          <FieldLabel htmlFor="pillShape" optional>Shape</FieldLabel>
                           <Select name="pillShape">
                             <SelectTrigger>
                               <SelectValue placeholder="Select shape" />
@@ -402,7 +405,7 @@ export default function PharmacyModule() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="pillSize">Size</Label>
+                        <FieldLabel htmlFor="pillSize" optional>Size</FieldLabel>
                         <Select name="pillSize">
                           <SelectTrigger>
                             <SelectValue placeholder="Select size" />
@@ -417,12 +420,12 @@ export default function PharmacyModule() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="pillMarkings">Markings/Imprint</Label>
+                        <FieldLabel htmlFor="pillMarkings" optional>Markings/Imprint</FieldLabel>
                         <Input name="pillMarkings" placeholder="e.g., 'TYLENOL 500', 'L484'" />
                       </div>
                       
                       <div>
-                        <Label htmlFor="pillDescription">Additional Description</Label>
+                        <FieldLabel htmlFor="pillDescription" optional>Additional Description</FieldLabel>
                         <Input name="pillDescription" placeholder="e.g., Scored tablet, film-coated" />
                       </div>
                     </div>
@@ -611,7 +614,10 @@ export default function PharmacyModule() {
                       Create Custom
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Custom Pharmacy</DialogTitle>
                       <DialogDescription>
@@ -620,27 +626,27 @@ export default function PharmacyModule() {
                     </DialogHeader>
                     <form onSubmit={handleCreatePharmacy} className="space-y-4">
                       <div>
-                        <Label htmlFor="name">Pharmacy Name</Label>
+                        <FieldLabel htmlFor="name" required>Pharmacy Name</FieldLabel>
                         <Input name="name" required placeholder="e.g., Local Community Pharmacy" />
                       </div>
                       <div>
-                        <Label htmlFor="address">Address</Label>
+                        <FieldLabel htmlFor="address" optional>Address</FieldLabel>
                         <Input name="address" placeholder="Street address" />
                       </div>
                       <div>
-                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <FieldLabel htmlFor="phoneNumber" optional>Phone Number</FieldLabel>
                         <Input name="phoneNumber" placeholder="(555) 123-4567" />
                       </div>
                       <div>
-                        <Label htmlFor="website">Website</Label>
+                        <FieldLabel htmlFor="website" optional>Website</FieldLabel>
                         <Input name="website" placeholder="https://pharmacy-website.com" />
                       </div>
                       <div>
-                        <Label htmlFor="refillUrl">Online Refill URL</Label>
+                        <FieldLabel htmlFor="refillUrl" optional>Online Refill URL</FieldLabel>
                         <Input name="refillUrl" placeholder="Direct link to online refill page" />
                       </div>
                       <div>
-                        <Label htmlFor="hours">Hours</Label>
+                        <FieldLabel htmlFor="hours" optional>Hours</FieldLabel>
                         <Input name="hours" placeholder="e.g., Mon-Fri 9AM-8PM, Sat 9AM-6PM" />
                       </div>
                       <Button type="submit" className="w-full" disabled={createPharmacyMutation.isPending}>
@@ -656,7 +662,10 @@ export default function PharmacyModule() {
                       Link Pharmacy
                     </Button>
                   </DialogTrigger>
-                <DialogContent>
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                >
                   <DialogHeader>
                     <DialogTitle>Add Pharmacy to Your Account</DialogTitle>
                     <DialogDescription>
@@ -665,7 +674,7 @@ export default function PharmacyModule() {
                   </DialogHeader>
                   <form onSubmit={handleAddPharmacy} className="space-y-4">
                     <div>
-                      <Label htmlFor="pharmacyId">Select Pharmacy</Label>
+                      <FieldLabel htmlFor="pharmacyId" optional>Select Pharmacy</FieldLabel>
                       <Select name="pharmacyId" required>
                         <SelectTrigger>
                           <SelectValue placeholder="Choose a pharmacy" />
@@ -683,24 +692,24 @@ export default function PharmacyModule() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="accountNumber">Account Number</Label>
+                      <FieldLabel htmlFor="accountNumber" optional>Account Number</FieldLabel>
                       <Input name="accountNumber" placeholder="Your pharmacy account number" />
                     </div>
                     <div>
-                      <Label htmlFor="membershipId">Membership/Insurance ID</Label>
+                      <FieldLabel htmlFor="membershipId" optional>Membership/Insurance ID</FieldLabel>
                       <Input name="membershipId" placeholder="Insurance or member ID" />
                     </div>
                     <div>
-                      <Label htmlFor="insuranceProvider">Insurance Provider</Label>
+                      <FieldLabel htmlFor="insuranceProvider" optional>Insurance Provider</FieldLabel>
                       <Input name="insuranceProvider" placeholder="e.g., Blue Cross, Medicare" />
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="isPrimary" id="isPrimary" />
-                      <Label htmlFor="isPrimary">Set as primary pharmacy</Label>
+                      <FieldLabel htmlFor="isPrimary" optional>Set as primary pharmacy</FieldLabel>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" name="autoRefillEnabled" id="autoRefillEnabled" />
-                      <Label htmlFor="autoRefillEnabled">Enable automatic refills</Label>
+                      <FieldLabel htmlFor="autoRefillEnabled" optional>Enable automatic refills</FieldLabel>
                     </div>
                     <Button type="submit" className="w-full" disabled={addPharmacyMutation.isPending}>
                       {addPharmacyMutation.isPending ? "Adding..." : "Add Pharmacy"}

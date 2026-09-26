@@ -55,7 +55,7 @@ export default function SubscriptionBanner() {
                   {isTrialExpired ? 'Free Trial Expired' : 'Trial Ending Soon'}
                 </h3>
                 <Badge variant={isTrialExpired ? 'destructive' : 'secondary'}>
-                  {isTrialExpired ? 'Action Required' : `${trialDaysLeft} days left`}
+                  {isTrialExpired ? 'Action Required' : `${trialDaysLeft} ${trialDaysLeft === 1 ? 'day' : 'days'} left`}
                 </Badge>
               </div>
               

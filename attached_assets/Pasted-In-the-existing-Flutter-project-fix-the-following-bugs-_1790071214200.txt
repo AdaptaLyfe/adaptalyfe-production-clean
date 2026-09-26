@@ -1,0 +1,162 @@
+In the existing Flutter project, fix the following bugs in:
+
+**Academic Planner / Student Planner → Schedule → Add New Assignment**
+
+Do NOT redesign the UI or change unrelated functionality.
+
+### Bug 1 — "Choose a due date" validation appears behind the popup
+
+Current behavior:
+
+* User opens **Add New Assignment**.
+* User does NOT select a due date.
+* User tries to save/create the assignment.
+* The **"Choose a due date"** toast/snackbar validation is displayed behind the **Add New Assignment** popup/modal.
+* Sometimes the message is not visible to the user.
+
+Required behavior:
+
+* When the user taps **Save/Create Assignment** without selecting a due date, validation must happen before submitting.
+* Show the validation message clearly **above/in front of the Add New Assignment popup**, so the user can see it.
+* The message should be:
+  **"Choose a due date"**
+* Do NOT close the popup just to show the validation.
+* Do NOT create/save the assignment when the due date is missing.
+* Make sure the validation message is displayed only once.
+* If the project uses `SnackBar`, `Toast`, `Overlay`, or another notification system, make sure it uses the correct context/scaffold/overlay so it is visible above the modal/dialog/bottom sheet.
+* Prefer fixing the notification/validation architecture rather than using arbitrary delays or hardcoded positioning.
+
+### Bug 2 — Estimated hours does not accept decimal values
+
+Current behavior:
+
+* In **Estimated Hours**, user enters a decimal value such as:
+
+  * `2.5`
+  * `1.5`
+  * `0.5`
+  * `10.75`
+* The app shows:
+  **"Enter 1 to 100 hours"**
+* Decimal values should be valid.
+
+Required behavior:
+
+* Estimated Hours must accept numeric values from **1 to 100**, including decimal values.
+* Valid examples:
+
+  * `1`
+  * `1.5`
+  * `2.5`
+  * `10.25`
+  * `50.5`
+  * `100`
+* Invalid examples:
+
+  * `0`
+  * `0.5`
+  * `100.1`
+  * `101`
+  * negative numbers
+  * empty value
+  * non-numeric text
+
+Use proper numeric parsing, for example `double.tryParse()`, instead of integer parsing such as `int.tryParse()`.
+
+Validation should follow:
+
+```text
+hours != null
+AND
+hours >= 1
+AND
+hours <= 100
+```
+
+Do not round or convert valid decimal values into integers.
+
+### Important — Prevent the bugs from coming back
+
+Before making changes:
+
+1. Find the complete **Add New Assignment** flow.
+2. Identify:
+
+   * Assignment form widget
+   * Estimated Hours field
+   * Due Date field
+   * Save/Create button
+   * Form validation
+   * BLoC/Cubit/controller/state management
+   * Snackbar/toast/overlay implementation
+   * Assignment repository/API/database logic
+3. Trace the actual validation flow and fix the root cause.
+4. Do not create a second validation system if one already exists.
+5. Keep validation in the appropriate existing layer.
+6. Make sure validation happens BEFORE the BLoC/API/database create event is triggered.
+7. Make sure invalid assignments are never submitted.
+8. Make sure the popup/dialog/bottom sheet lifecycle does not dispose the context/controller while validation is being displayed.
+9. Do not use `Future.delayed()` as a workaround.
+10. Do not use `GlobalKey` or arbitrary overlay positioning just to hide the symptom unless it is already part of the project's architecture.
+11. Reuse the project's existing design system and error-message component.
+
+### Edge cases to test
+
+Test all of these:
+
+**Due Date**
+
+* No due date → show "Choose a due date"
+* Due date selected → no due-date error
+* No due date + invalid estimated hours → show the appropriate validation errors without duplicate messages
+* Valid due date + valid estimated hours → assignment is created successfully
+
+**Estimated Hours**
+
+* Empty → validation error
+* `0` → validation error
+* `0.5` → validation error
+* `1` → valid
+* `1.5` → valid
+* `2.5` → valid
+* `10.25` → valid
+* `99.99` → valid
+* `100` → valid
+* `100.1` → validation error
+* `101` → validation error
+* `-1` → validation error
+* text such as `abc` → validation error
+
+### Regression protection
+
+After fixing the bugs:
+
+* Run `flutter analyze`.
+* Run the relevant tests if the project already has tests.
+* If there are existing assignment validation tests, update them.
+* Add focused tests for:
+
+  * missing due date
+  * decimal estimated hours
+  * minimum `1`
+  * maximum `100`
+  * values below `1`
+  * values above `100`
+* Verify that the assignment creation API/repository is not called when validation fails.
+* Verify that the error message is visible when the Add New Assignment popup is open.
+* Verify that the validation message is not duplicated.
+
+### Final requirement
+
+Do not make unrelated changes.
+
+After fixing, give me:
+
+1. Root cause of Bug 1
+2. Root cause of Bug 2
+3. Files changed
+4. What was changed in each file
+5. How the fix prevents the bugs from returning
+6. Test results
+
+Keep the existing Flutter architecture, BLoC/state management, UI design, and functionality intact.

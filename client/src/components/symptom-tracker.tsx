@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,12 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Clock, MapPin, AlertTriangle, Calendar, Trash2, Edit } from "lucide-react";
+import { EditButton } from "@/components/ui/edit-button";
+import { Plus, Clock, MapPin, AlertTriangle, Calendar, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSymptomEntrySchema, type SymptomEntry, type InsertSymptomEntry } from "@shared/schema";
 import { format, formatDistanceToNow } from "date-fns";
 import { z } from "zod";
+import { useHealthRecordsModalViewport } from "@/hooks/use-health-records-modal-viewport";
 
 // Extended schema with better validation messages
 const symptomFormSchema = insertSymptomEntrySchema.extend({
@@ -42,9 +45,21 @@ const severityLabels = {
   6: "Moderate-Severe", 7: "Severe", 8: "Severe", 9: "Very Severe", 10: "Extreme"
 };
 
+const blankSymptomFormValues: Partial<InsertSymptomEntry> = {
+  symptomName: "",
+  severity: undefined,
+  startTime: undefined,
+  endTime: null,
+  triggers: "",
+  location: "",
+  description: "",
+  notes: "",
+};
+
 export function SymptomTracker() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<SymptomEntry | null>(null);
+  const modalViewportStyle = useHealthRecordsModalViewport();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -67,7 +82,15 @@ export function SymptomTracker() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<InsertSymptomEntry> }) =>
       apiRequest("PATCH", `/api/symptom-entries/${id}`, data),
-    onSuccess: () => {
+    onSuccess: async (response) => {
+      const updatedEntry = await response.json() as SymptomEntry;
+      queryClient.setQueryData<SymptomEntry[]>(
+        ["/api/symptom-entries"],
+        (currentEntries = []) =>
+          currentEntries.map((entry) =>
+            entry.id === updatedEntry.id ? updatedEntry : entry
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/symptom-entries"] });
       setEditingEntry(null);
       toast({ title: "Success", description: "Symptom entry updated successfully" });
@@ -90,16 +113,7 @@ export function SymptomTracker() {
 
   const form = useForm<InsertSymptomEntry>({
     resolver: zodResolver(symptomFormSchema),
-    defaultValues: {
-      symptomName: "",
-      severity: 1,
-      startTime: new Date(),
-      endTime: null,
-      triggers: "",
-      location: "",
-      description: "",
-      notes: "",
-    },
+    defaultValues: blankSymptomFormValues,
   });
 
   const editForm = useForm<InsertSymptomEntry>({
@@ -140,6 +154,11 @@ export function SymptomTracker() {
     });
   };
 
+  const openAddDialog = () => {
+    form.reset(blankSymptomFormValues);
+    setIsAddDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-8"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   }
@@ -151,16 +170,18 @@ export function SymptomTracker() {
           <h3 className="text-lg font-semibold">Symptom Tracker</h3>
           <p className="text-gray-600">Track your symptoms to identify patterns and triggers</p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow" data-testid="button-log-symptom">
+        <Button onClick={openAddDialog} className="flex items-center gap-2 border-2 border-blue-300 shadow-md hover:shadow-lg transition-shadow" data-testid="button-log-symptom">
           <Plus className="w-4 h-4" />
           Log Symptom
         </Button>
       </div>
 
       {/* Add Symptom Dialog */}
-      {isAddDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      {typeof document !== "undefined" && createPortal(
+        <>
+          {isAddDialogOpen && (
+            <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setIsAddDialogOpen(false)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>
@@ -183,7 +204,7 @@ export function SymptomTracker() {
                   name="symptomName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Symptom Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name" />
                       </FormControl>
@@ -197,7 +218,7 @@ export function SymptomTracker() {
                   name="severity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Severity (1-10) <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Severity (1-10)</FormLabel>
                       <FormControl>
                         <select
                           {...field}
@@ -224,7 +245,7 @@ export function SymptomTracker() {
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time <span className="text-red-500">*</span></FormLabel>
+                      <FormLabel required>Start Time</FormLabel>
                       <FormControl>
                         <Input
                           type="datetime-local"
@@ -321,7 +342,10 @@ export function SymptomTracker() {
               </Form>
             </div>
           </div>
-        </div>
+            </div>
+          )}
+        </>,
+        document.body,
       )}
 
       {!symptomEntries || symptomEntries.length === 0 ? (
@@ -330,7 +354,7 @@ export function SymptomTracker() {
             <AlertTriangle className="w-12 h-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Symptoms Logged</h3>
             <p className="text-gray-600 mb-4">Start tracking symptoms to identify patterns and triggers</p>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
+            <Button onClick={openAddDialog} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               Log Your First Symptom
             </Button>
@@ -349,9 +373,10 @@ export function SymptomTracker() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => startEdit(entry)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <EditButton
+                      onClick={() => startEdit(entry)}
+                      aria-label={`Edit ${entry.symptomName}`}
+                    />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -407,10 +432,12 @@ export function SymptomTracker() {
         </div>
       )}
 
-      {/* Edit Symptom Dialog */}
-      {editingEntry && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setEditingEntry(null)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          {/* Edit Symptom Dialog */}
+      {typeof document !== "undefined" && createPortal(
+        <>
+          {editingEntry && (
+          <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingEntry(null)}>
+          <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div>
@@ -433,7 +460,7 @@ export function SymptomTracker() {
                 name="symptomName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Symptom Name <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel required>Symptom Name</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Headache, Nausea, Pain" {...field} data-testid="input-symptom-name-edit" />
                     </FormControl>
@@ -447,7 +474,7 @@ export function SymptomTracker() {
                 name="severity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Severity (1-10)</FormLabel>
+                    <FormLabel required>Severity (1-10)</FormLabel>
                     <FormControl>
                       <select
                         {...field}
@@ -474,7 +501,7 @@ export function SymptomTracker() {
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                    <FormLabel required>Start Time</FormLabel>
                     <FormControl>
                       <Input
                         type="datetime-local"
@@ -486,6 +513,24 @@ export function SymptomTracker() {
                   </FormItem>
                 )}
               />
+
+               <FormField
+                 control={editForm.control}
+                 name="endTime"
+                 render={({ field }) => (
+                   <FormItem>
+                     <FormLabel>End Time (Optional)</FormLabel>
+                     <FormControl>
+                       <Input
+                         type="datetime-local"
+                         value={field.value ? format(new Date(field.value), "yyyy-MM-dd'T'HH:mm") : ""}
+                         onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                       />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>
+                 )}
+               />
 
               <FormField
                 control={editForm.control}
@@ -521,6 +566,26 @@ export function SymptomTracker() {
                 )}
               />
 
+               <FormField
+                 control={editForm.control}
+                 name="description"
+                 render={({ field }) => (
+                   <FormItem>
+                     <FormLabel>Description (Optional)</FormLabel>
+                     <FormControl>
+                       <Textarea
+                         placeholder="Describe the symptom in detail"
+                         name={field.name}
+                         value={field.value || ""}
+                         onChange={field.onChange}
+                         onBlur={field.onBlur}
+                       />
+                     </FormControl>
+                     <FormMessage />
+                   </FormItem>
+                 )}
+               />
+
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" disabled={updateMutation.isPending} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
                       {updateMutation.isPending ? "Updating..." : "Update Entry"}
@@ -533,7 +598,10 @@ export function SymptomTracker() {
               </Form>
             </div>
           </div>
-        </div>
+            </div>
+          )}
+        </>,
+        document.body,
       )}
     </div>
   );

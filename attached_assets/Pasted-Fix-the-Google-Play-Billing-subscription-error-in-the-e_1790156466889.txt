@@ -1,0 +1,110 @@
+Fix the Google Play Billing subscription error in the existing Flutter project.
+
+Current error:
+"This version of the application is not configured for billing through Google Play. Check the Help Center for more information."
+
+Context:
+
+* This error happens when the user tries to purchase a subscription.
+* This is a Flutter Android application using Google Play Billing / in-app subscriptions.
+* Do NOT simply catch, hide, or replace the error message.
+* Find and fix the real configuration or implementation problem so the issue does not come back.
+
+### First: Inspect the existing project
+
+Before changing code:
+
+1. Identify which package is being used for Google Play Billing/subscriptions.
+2. Check the current subscription implementation and purchase flow.
+3. Check Android package/application ID.
+4. Check `android/app/build.gradle` or `build.gradle.kts`.
+5. Check the app versionCode/versionName.
+6. Check all subscription/product IDs used in the Flutter code.
+7. Check whether the app is using the correct Google Play Billing-compatible package/version.
+8. Check whether the Android release configuration is correct.
+9. Do not replace the existing subscription architecture unless it is actually required.
+
+### Verify Google Play Console configuration
+
+The implementation must match Google Play Console exactly.
+
+Check and clearly identify:
+
+* Application/package ID must match the Play Console application.
+* Subscription product IDs in the Flutter code must exactly match the IDs configured in Google Play Console.
+* Subscription must be active and available for testing.
+* Required subscription base plan must exist and be active.
+* Correct country/region availability must be configured.
+* The tester Google account must be added to the appropriate testing configuration.
+* The installed application must come from a Google Play testing track when required. Do not assume a locally installed APK can test Play Billing.
+* Verify that the uploaded build's package name and signing configuration match the Play Console app.
+* Verify that the installed build/versionCode is actually the version uploaded to the testing track.
+* Check whether the app is still in a state where Google Play Billing purchases are allowed.
+
+### Fix the Flutter implementation
+
+Make the subscription implementation production-safe:
+
+1. Initialize the billing/subscription service correctly.
+2. Query product details using the exact Google Play product/subscription IDs.
+3. Handle unavailable products properly.
+4. Handle purchase updates correctly.
+5. Handle:
+
+   * pending
+   * purchased
+   * restored
+   * canceled
+   * error
+   * unavailable product
+6. Complete/acknowledge purchases correctly when required by the billing library.
+7. Prevent duplicate purchase requests.
+8. Restore existing purchases correctly.
+9. Do not hardcode fake subscription success.
+10. Do not bypass Google Play Billing validation.
+11. Keep the existing BLoC/state-management architecture if the project uses BLoC.
+12. Make sure loading/error/success states are handled correctly.
+13. Make sure the UI does not show "subscription successful" unless Google Play confirms the purchase.
+
+### Important
+
+Do NOT solve this by:
+
+* hiding the Google Play error
+* showing a fake success message
+* bypassing billing
+* changing only the error text
+* removing subscription validation
+* creating a second unrelated billing implementation
+
+If the problem is caused by Google Play Console configuration rather than Flutter code, do not make unnecessary code changes. Clearly explain the exact Play Console configuration that must be corrected.
+
+### Testing
+
+After making the changes:
+
+1. Run:
+   `flutter clean`
+2. Run:
+   `flutter pub get`
+3. Build the Android release/app bundle.
+4. Verify there are no Dart, Gradle, or Android build errors.
+5. Verify the exact application ID.
+6. Verify the exact subscription/product IDs.
+7. Verify the purchase flow from product loading → purchase → purchase update → verification → success.
+8. Verify restore purchases.
+9. Verify cancellation/error handling.
+10. Check Android logs for BillingClient errors.
+
+### Final response
+
+After fixing, provide:
+
+1. Root cause of the problem.
+2. Files changed.
+3. Exact code changes made.
+4. Exact Google Play Console settings that must be checked.
+5. Exact steps to test the subscription using a Google Play internal/closed testing track.
+6. Any action that cannot be completed from the codebase and must be done manually in Google Play Console.
+
+Do not claim the issue is fixed unless the implementation and configuration have been properly verified.

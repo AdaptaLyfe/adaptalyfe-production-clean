@@ -1,0 +1,94 @@
+In the existing Flutter application, fix the issues in:
+
+**Academic Planner → Study → Start Session**
+
+### 1. Fix "TextEditingController was used after being disposed"
+
+Current error when the user taps **Start Session**:
+
+```text
+A TextEditingController was used after being disposed.
+```
+
+Investigate the Study/Start Session flow and find the controller that is being disposed while it is still being used.
+
+Requirements:
+
+* Properly manage the lifecycle of all `TextEditingController` instances.
+* Do not use a controller after calling `dispose()`.
+* Do not dispose a controller that is still needed by another widget, dialog, bottom sheet, or screen.
+* If a controller is created inside a widget, dispose it only in the correct `State.dispose()` lifecycle.
+* If the controller is passed to another widget, make sure ownership/lifecycle is handled correctly.
+* Check dialogs, bottom sheets, navigation, async operations, and `setState()` calls because the error may happen after the screen/widget is disposed.
+* Cancel or safely handle any asynchronous operation that tries to update the UI after the widget is disposed.
+* Do not hide the error with `try/catch`; fix the actual lifecycle problem.
+
+### 2. Fix Flutter framework assertion
+
+The following error also occurs:
+
+```text
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+```
+
+Investigate the widget lifecycle and dependency handling causing this assertion.
+
+Check for:
+
+* Incorrect use of `InheritedWidget`, `Provider`, `BlocProvider`, `BuildContext`, or similar dependencies.
+* A provider/BLoC being disposed while a dependent widget is still using it.
+* Incorrect widget tree changes during navigation.
+* Calling navigation, `setState`, or dependency-related operations after disposal.
+* Dialog/bottom-sheet lifecycle issues.
+* Duplicate providers or incorrectly scoped providers.
+
+Fix the root cause without changing the existing application architecture unnecessarily.
+
+### 3. Add Delete Button
+
+Inside:
+
+**Academic Planner → Study**
+
+Add a **Delete** button for study/session items.
+
+Requirements:
+
+* Add a clearly visible Delete action for each applicable study item/session.
+* Before deleting, show a confirmation dialog:
+
+  * Title: `Delete Study Session?`
+  * Message: `Are you sure you want to delete this study session?`
+  * Buttons: `Cancel` and `Delete`
+* If the user taps Cancel, do nothing.
+* If the user confirms Delete, remove the selected study session from the UI and persist the deletion using the existing data/storage/API/BLoC/repository logic.
+* Do not create a new storage system if the project already has one.
+* Show an appropriate success/error message using the existing app pattern.
+
+### Important
+
+* First inspect the existing Academic Planner → Study → Start Session implementation.
+* Do not rewrite the entire feature.
+* Reuse the existing BLoC/state management, repository, models, API, and UI components.
+* Keep the existing UI design and functionality unchanged except for the requested fixes.
+* Make the implementation responsive for existing supported screen sizes.
+* Check all related navigation and async code for lifecycle problems.
+* Run/analyze the project after making the changes and fix any compilation errors.
+* Verify this complete flow:
+
+`Academic Planner → Study → Start Session → Start Session button`
+
+It must work without:
+
+```text
+A TextEditingController was used after being disposed.
+```
+
+or:
+
+```text
+'_dependents.isEmpty': is not true
+```
+
+Also verify that the Delete button works correctly and does not introduce any lifecycle or state-management errors.

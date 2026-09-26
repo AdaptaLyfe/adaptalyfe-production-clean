@@ -3,6 +3,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { UserCheck, AlertTriangle, Clock, Shield, Heart, Users } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +17,7 @@ export default function MobileAcceptInvitation() {
   const [invitation, setInvitation] = useState<CaregiverInvitation | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [invitationCode, setInvitationCode] = useState("");
 
   console.log("MobileAcceptInvitation: Component loaded");
 
@@ -32,7 +35,9 @@ export default function MobileAcceptInvitation() {
       const codeFromUrl = params.get("code");
       console.log("MobileAcceptInvitation: Code from URL:", codeFromUrl);
       if (codeFromUrl) {
-        validateInvitation(codeFromUrl);
+        const normalizedCode = codeFromUrl.trim().toUpperCase();
+        setInvitationCode(normalizedCode);
+        validateInvitation(normalizedCode);
       }
     } catch (error) {
       console.error("MobileAcceptInvitation: Error parsing URL:", error);
@@ -40,14 +45,16 @@ export default function MobileAcceptInvitation() {
   }, []);
 
   const validateInvitation = async (code: string) => {
-    if (!code || code.length < 6) return;
+    const normalizedCode = code.trim().toUpperCase();
+    if (!normalizedCode || normalizedCode.length < 6) return;
     
-    console.log("MobileAcceptInvitation: Validating invitation code:", code);
+    console.log("MobileAcceptInvitation: Validating invitation code:", normalizedCode);
     setIsValidating(true);
     setValidationError(null);
+    setInvitation(null);
     
     try {
-      const response = await apiRequest("GET", `/api/invitation/${code}`);
+      const response = await apiRequest("GET", `/api/invitation/${encodeURIComponent(normalizedCode)}`);
       const invitationData = await response.json();
       console.log("MobileAcceptInvitation: Invitation data received:", invitationData);
       setInvitation(invitationData);
@@ -63,6 +70,13 @@ export default function MobileAcceptInvitation() {
     } finally {
       setIsValidating(false);
     }
+  };
+
+  const handleCodeChange = (code: string) => {
+    const normalizedCode = code.toUpperCase();
+    setInvitationCode(normalizedCode);
+    setInvitation(null);
+    setValidationError(null);
   };
 
   const acceptInvitationMutation = useMutation({
@@ -159,6 +173,40 @@ export default function MobileAcceptInvitation() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                validateInvitation(invitationCode);
+              }}
+              className="space-y-3"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="mobile-invitation-code">Invitation Code</Label>
+                <Input
+                  id="mobile-invitation-code"
+                  name="invitationCode"
+                  type="text"
+                  value={invitationCode}
+                  onChange={(event) => handleCodeChange(event.target.value)}
+                  placeholder="Enter 6-character code"
+                  className="text-center text-lg font-mono tracking-wider"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  maxLength={8}
+                  autoComplete="off"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={isValidating || invitationCode.trim().length < 6}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {isValidating ? "Verifying..." : "Verify Invitation Code"}
+              </Button>
+            </form>
+
             {isValidating && (
               <div className="flex items-center justify-center space-x-2 text-blue-600">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -263,7 +311,7 @@ export default function MobileAcceptInvitation() {
 
             {!invitation && !isValidating && !validationError && (
               <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">Loading invitation details...</p>
+                <p className="text-gray-500 text-sm">Enter your invitation code to continue.</p>
               </div>
             )}
           </CardContent>

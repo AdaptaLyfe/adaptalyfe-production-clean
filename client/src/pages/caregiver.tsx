@@ -17,11 +17,12 @@ import { formatTimeAgo } from "@/lib/utils";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { Caregiver, Message, User, DailyTask } from "@shared/schema";
+import { useLocation } from "wouter";
 
 const caregiverSchema = z.object({
   name: z.string().min(1, "Name is required"),
   relationship: z.string().min(1, "Relationship is required"),
-  email: z.string().email("Valid email is required").optional().or(z.literal("")),
+  email: z.string().trim().email("Enter the caregiver's app account email"),
 });
 
 const messageSchema = z.object({
@@ -32,6 +33,7 @@ const messageSchema = z.object({
 export default function Caregiver() {
   const { isPremiumUser } = useSubscriptionEnforcement();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [showCaregiverDialog, setCaregiverDialog] = useState(false);
   
   // Block access if trial expired and no active subscription
@@ -84,6 +86,10 @@ export default function Caregiver() {
     },
   });
 
+  const completedTasks = tasks.filter(task => task.isCompleted).length;
+  const totalTasks = tasks.length;
+  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
   const createCaregiverMutation = useMutation({
     mutationFn: async (data: z.infer<typeof caregiverSchema>) => {
       return apiRequest("POST", "/api/caregivers", {
@@ -98,6 +104,13 @@ export default function Caregiver() {
       toast({
         title: "Caregiver added!",
         description: "Your support person has been added to your network.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to add caregiver",
+        description: error.message || "This caregiver could not be added. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -118,24 +131,52 @@ export default function Caregiver() {
         description: "Your message has been sent to your caregiver.",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to send message",
+        description: error.message || "Your message could not be sent. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const shareProgressMutation = useMutation({
     mutationFn: async () => {
-      // Simulate sharing progress - in a real app this would send progress data
-      return new Promise((resolve) => setTimeout(resolve, 1000));
+      if (caregivers.length === 0) {
+        throw new Error("Add a caregiver before sharing your progress.");
+      }
+
+      const progressReport = [
+        "Progress Report",
+        `Daily tasks: ${completedTasks}/${totalTasks} complete (${progressPercentage}%)`,
+        `Current streak: ${user?.streakDays || 0} days`,
+      ].join("\n");
+
+      await Promise.all(
+        caregivers.map((caregiver) =>
+          apiRequest("POST", "/api/messages", {
+            caregiverId: caregiver.id,
+            content: progressReport,
+            fromUser: true,
+          }),
+        ),
+      );
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
       toast({
         title: "Progress shared!",
         description: "Your progress has been shared with your caregivers.",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Unable to share progress",
+        description: error.message || "Your progress could not be shared. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
-
-  const completedTasks = tasks.filter(task => task.isCompleted).length;
-  const totalTasks = tasks.length;
-  const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const messagesByCaregiver = messages.reduce((acc, message) => {
     if (!acc[message.caregiverId]) {
@@ -145,7 +186,7 @@ export default function Caregiver() {
     return acc;
   }, {} as Record<number, Message[]>);
 
-  const recentMessages = messages
+  const recentMessages = [...messages]
     .sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
     .slice(0, 5);
 
@@ -183,7 +224,7 @@ export default function Caregiver() {
             <Button
               className="bg-calm-teal hover:bg-calm-teal text-white"
               onClick={() => shareProgressMutation.mutate()}
-              disabled={shareProgressMutation.isPending}
+              disabled={shareProgressMutation.isPending || caregivers.length === 0}
             >
               <Share size={16} className="mr-2" />
               Share Progress
@@ -210,7 +251,7 @@ export default function Caregiver() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Caregivers List */}
-        <Card className="border-t-4 border-vibrant-green">
+        <Card className="border-t-4 border-vibrant-green h-[32rem] flex flex-col overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -235,7 +276,7 @@ export default function Caregiver() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Name</FormLabel>
+                            <FormLabel required>Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Mom, Dr. Smith" {...field} />
                             </FormControl>
@@ -248,7 +289,7 @@ export default function Caregiver() {
                         name="relationship"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Relationship</FormLabel>
+                            <FormLabel required>Relationship</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -273,9 +314,13 @@ export default function Caregiver() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
+                            <FormLabel required>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="caregiver@example.com" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="caregiver@example.com"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -290,7 +335,7 @@ export default function Caregiver() {
               </Dialog>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-h-0 flex-1 overflow-y-auto">
             <div className="space-y-4">
               {caregivers.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">
@@ -362,7 +407,7 @@ export default function Caregiver() {
                         name="caregiverId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Send to</FormLabel>
+                            <FormLabel required>Send to</FormLabel>
                             <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
                               <FormControl>
                                 <SelectTrigger>
@@ -386,7 +431,7 @@ export default function Caregiver() {
                         name="content"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Message</FormLabel>
+                            <FormLabel required>Message</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Type your message here..."
@@ -416,6 +461,7 @@ export default function Caregiver() {
               ) : (
                 recentMessages.map((message) => {
                   const caregiver = caregivers.find(c => c.id === message.caregiverId);
+                  const recipientLabel = caregiver?.name || "Support";
                   return (
                     <div 
                       key={message.id} 
@@ -427,7 +473,7 @@ export default function Caregiver() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900 text-sm">
-                          {message.fromUser ? "You" : caregiver?.name}
+                          {message.fromUser ? `Sent to ${recipientLabel}` : caregiver?.name}
                         </span>
                         <span className="text-xs text-gray-500">
                           {formatTimeAgo(new Date(message.sentAt))}
@@ -442,7 +488,11 @@ export default function Caregiver() {
             
             {messages.length > 5 && (
               <div className="text-center mt-6">
-                <Button variant="outline" className="border-bright-blue text-bright-blue hover:bg-blue-50">
+                <Button
+                  variant="outline"
+                  className="border-bright-blue text-bright-blue hover:bg-blue-50"
+                  onClick={() => setLocation("/caregiver/messages")}
+                >
                   View All Messages
                 </Button>
               </div>

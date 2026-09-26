@@ -1,0 +1,138 @@
+Fix the following Calendar bugs in the existing Flutter application. Do not rewrite the Calendar feature or break any existing functionality.
+
+### BUG 1 — Editing an Event Reloads the Whole App
+
+Current issue:
+
+* User opens Calendar.
+* User selects an existing event and taps Edit.
+* User modifies the event and saves it.
+* After saving, the whole Flutter app reloads/reinitializes.
+* User is redirected to the Home page instead of returning to the Calendar page/parent page where the edit was started.
+
+Required behavior:
+
+1. When editing an event, preserve the current navigation context.
+2. After successfully saving the edited event:
+
+   * Do NOT restart/reload the entire application.
+   * Do NOT navigate to Home.
+   * Return to the exact parent Calendar screen/page from where the edit was started.
+3. Refresh only the required Calendar/event data.
+4. Preserve the current Calendar state where possible:
+
+   * selected date
+   * selected view (day/week/month)
+   * scroll position if applicable
+   * filters if applicable
+5. Use the existing BLoC/state-management and repository flow.
+6. Do not use `runApp()`, app-level navigation reset, forced route replacement, or any workaround that recreates the entire application.
+7. Check for incorrect `Navigator.pushReplacement`, `pushAndRemoveUntil`, `go()`, `context.go()`, app restart logic, or state initialization that may be causing the Home redirect.
+8. Make sure the fix works for both creating and editing events.
+
+### BUG 2 — "All Day Event" Is Not Displayed Correctly
+
+Current issue:
+
+* While creating/editing a Calendar event, the user can enable the **"All day event"** toggle.
+* After saving, the event is not displayed correctly as an all-day event on the selected date.
+
+Required behavior:
+
+#### Case A — All Day Event = ON
+
+If the user enables **"All day event"**:
+
+* Treat the event as an all-day calendar event.
+* The event must appear in the **All Day** section/header of the selected date.
+* It must not appear as a normal time-based event.
+* Do not require a start/end time for display.
+* Store/use the correct date-only/all-day information so the event remains an all-day event after reload.
+* If the event spans multiple dates, display it as an all-day event across the appropriate dates according to the selected start/end dates.
+
+#### Case B — All Day Event = OFF
+
+If the event is not an all-day event:
+
+* Treat it as a normal timed event.
+* Display its start and end time in the normal Calendar time area.
+* Do not incorrectly place it in the All Day section.
+
+### IMPORTANT LABELING RULE
+
+Clarify and implement the intended behavior consistently:
+
+* If the event is configured as a full-day event for a selected date, display it in the Calendar as **"Whole Day"** where the UI uses a full-day label.
+* If the user explicitly enables **"All day event"**, it must use the Calendar's all-day event behavior and appear in the All Day section.
+* Do not confuse a normal timed event with an all-day event.
+* Do not duplicate the event in both the All Day section and the timed section.
+
+### DATA + STATE REQUIREMENTS
+
+Trace the complete flow:
+
+UI → Calendar Event Form → BLoC/Event → Repository → Data Source/API/Local Storage → Calendar State → Calendar UI
+
+Verify:
+
+* `isAllDay` or equivalent field is correctly passed when creating/updating an event.
+* The value is correctly persisted.
+* The value is correctly loaded when reopening the event.
+* Date/time conversion does not accidentally change an all-day event into a timed event.
+* Timezone conversion does not move the event to the previous/next day.
+* Editing an existing all-day event keeps it as an all-day event unless the user changes the toggle.
+* Creating a new all-day event correctly uses the selected date.
+
+### BLoC / NAVIGATION REQUIREMENTS
+
+Use the existing project architecture and BLoC pattern.
+
+Do not create a second Calendar state-management system.
+
+When save succeeds:
+
+* Emit the appropriate success/update state.
+* Let the parent Calendar screen refresh its data.
+* Pop/return to the previous Calendar route instead of navigating to Home.
+* Handle loading, success, and error states correctly.
+* Prevent multiple save actions from triggering duplicate navigation.
+* Do not trigger navigation from a BLoC if the existing architecture expects navigation to be handled by the UI listener; follow the project's existing pattern consistently.
+
+### EDGE CASES TO TEST
+
+Test all of these:
+
+1. Create normal timed event → save → remains on Calendar.
+2. Create all-day event → save → appears in All Day section.
+3. Edit normal timed event → save → returns to Calendar, not Home.
+4. Edit all-day event → save → remains all-day.
+5. Change all-day event from ON → OFF → save → becomes a timed event.
+6. Change timed event from OFF → ON → save → becomes an all-day event.
+7. Cancel editing → return to the original Calendar page.
+8. Save with validation error → stay on the form and show the correct error.
+9. Save successfully → no app-wide reload.
+10. Navigate away and return to Calendar → event still has the correct all-day/timed state.
+11. Verify events near midnight do not move to the wrong date because of timezone conversion.
+12. Verify the event is not displayed twice.
+
+### BUG-PREVENTION REQUIREMENT
+
+Do not apply only a UI-level patch.
+
+Find the root cause of:
+
+* the app-wide reload/Home redirect
+* incorrect all-day event persistence
+* incorrect all-day Calendar rendering
+
+Fix the complete data, state, navigation, and UI flow so the bugs do not return in another Calendar screen.
+
+Before finishing:
+
+* Inspect the existing Calendar implementation and identify the exact root cause.
+* Make the smallest safe changes necessary.
+* Reuse existing models, BLoCs, repositories, services, and navigation.
+* Do not remove existing Calendar functionality.
+* Run/analyze the relevant Flutter code and fix any compile/analyzer errors caused by the changes.
+* Verify create, edit, save, cancel, all-day, and timed-event flows.
+* Provide a short summary of the root cause and files changed after completing the fix.

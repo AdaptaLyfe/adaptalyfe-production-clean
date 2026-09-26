@@ -577,7 +577,7 @@ export default function SafetyTransportationModule() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Trip Name</FormLabel>
+                            <FormLabel required>Trip Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Home to Library" {...field} />
                             </FormControl>
@@ -590,7 +590,7 @@ export default function SafetyTransportationModule() {
                         name="fromAddress"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>From</FormLabel>
+                            <FormLabel required>From</FormLabel>
                             <FormControl>
                               <Input placeholder="Starting location" {...field} />
                             </FormControl>
@@ -603,7 +603,7 @@ export default function SafetyTransportationModule() {
                         name="toAddress"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>To</FormLabel>
+                            <FormLabel required>To</FormLabel>
                             <FormControl>
                               <Input placeholder="Destination" {...field} />
                             </FormControl>
@@ -616,7 +616,7 @@ export default function SafetyTransportationModule() {
                         name="transportType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Transportation Type</FormLabel>
+                            <FormLabel required>Transportation Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -739,7 +739,7 @@ export default function SafetyTransportationModule() {
                         name="routeName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Route Name</FormLabel>
+                            <FormLabel required>Route Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Downtown Express" {...field} />
                             </FormControl>
@@ -752,7 +752,7 @@ export default function SafetyTransportationModule() {
                         name="routeNumber"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Route Number</FormLabel>
+                            <FormLabel optional>Route Number</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., 42, A1" {...field} />
                             </FormControl>
@@ -765,7 +765,7 @@ export default function SafetyTransportationModule() {
                         name="stopName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Stop Name</FormLabel>
+                            <FormLabel required>Stop Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Main St & Oak Ave" {...field} />
                             </FormControl>
@@ -778,7 +778,7 @@ export default function SafetyTransportationModule() {
                         name="departureTime"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Departure Time</FormLabel>
+                            <FormLabel required>Departure Time</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., 08:30, 2:15 PM" {...field} />
                             </FormControl>
@@ -791,7 +791,7 @@ export default function SafetyTransportationModule() {
                         name="daysOfWeek"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Days of Week</FormLabel>
+                            <FormLabel required>Days of Week</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Monday,Tuesday,Wednesday" {...field} />
                             </FormControl>
@@ -811,7 +811,7 @@ export default function SafetyTransportationModule() {
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel>Frequent Route</FormLabel>
+                              <FormLabel optional>Frequent Route</FormLabel>
                               <div className="text-sm text-gray-600">Mark as a frequently used route</div>
                             </div>
                           </FormItem>
@@ -886,7 +886,7 @@ export default function SafetyTransportationModule() {
                         name="planName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Plan Name</FormLabel>
+                            <FormLabel required>Plan Name</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., Anxiety Attack Response Plan" {...field} />
                             </FormControl>
@@ -899,7 +899,7 @@ export default function SafetyTransportationModule() {
                         name="conditionType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Condition Type</FormLabel>
+                            <FormLabel required>Condition Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -924,7 +924,7 @@ export default function SafetyTransportationModule() {
                         name="symptoms"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Warning Signs & Symptoms</FormLabel>
+                            <FormLabel required>Warning Signs & Symptoms</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Describe what to watch for that indicates this emergency is happening..."
@@ -940,7 +940,7 @@ export default function SafetyTransportationModule() {
                         name="immediateActions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Immediate Actions</FormLabel>
+                            <FormLabel required>Immediate Actions</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Step-by-step instructions for immediate response..."
@@ -956,7 +956,7 @@ export default function SafetyTransportationModule() {
                         name="medications"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Emergency Medications</FormLabel>
+                            <FormLabel optional>Emergency Medications</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="List any emergency medications and dosages..."
@@ -972,7 +972,7 @@ export default function SafetyTransportationModule() {
                         name="emergencyContacts"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Emergency Contacts</FormLabel>
+                            <FormLabel optional>Emergency Contacts</FormLabel>
                             <FormControl>
                               <Textarea 
                                 placeholder="Specific contacts to call for this emergency..."

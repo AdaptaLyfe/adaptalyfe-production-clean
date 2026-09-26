@@ -1,0 +1,50 @@
+In the existing Flutter project, fix the errors related to the **"Mark as purchased"** popup.
+
+### Issues
+
+1. **Cancel button error**
+
+   * Open the **"Mark as purchased"** popup.
+   * Enter a valid **Actual Cost**.
+   * Tap **"Cancel"**.
+   * Currently, an error is shown.
+   * Fix this so tapping **Cancel** simply closes the popup and returns to the previous screen.
+   * No error, validation, API call, or database update should happen when Cancel is tapped.
+
+2. **Skip button error**
+
+   * Open the **"Mark as purchased"** popup.
+   * Tap **"Skip"**.
+   * Currently, an error is shown.
+   * Fix this so **Skip** works normally without showing an error.
+   * Skip should follow the existing intended application flow.
+
+3. **Mark as purchased button error**
+
+   * Open the **"Mark as purchased"** popup.
+   * Enter a valid **Actual Cost** if required.
+   * Tap **"Mark as purchased"**.
+   * Currently, an error is shown.
+   * Fix the underlying issue so the purchase is successfully marked as purchased.
+   * Make sure the entered Actual Cost is saved correctly when applicable.
+   * Keep the existing API/database/business logic unless a change is required to fix the bug.
+
+### Important requirements
+
+* First inspect the existing Flutter code to find the popup, buttons, validation, API/repository calls, and error handling.
+* Identify the **root cause** instead of hiding or suppressing the error.
+* Do not remove existing validation that is actually required.
+* Do not change unrelated screens or functionality.
+* Do not redesign the popup UI.
+* Preserve the existing BLoC/state-management architecture.
+* Handle Cancel, Skip, and Mark as purchased as separate actions with the correct state transitions.
+* Make sure loading/error states are reset correctly when the popup is opened again.
+* Check for null values, incorrect state handling, invalid API parameters, duplicate API calls, and incorrect callback/event handling.
+* After making the changes, run/analyze the project and fix any compilation errors.
+
+### Expected result
+
+* **Cancel** → closes popup with no error.
+* **Skip** → completes the skip action with no error.
+* **Mark as purchased** → successfully marks the item as purchased and saves Actual Cost when provided.
+* No unexpected error message should appear for any of these three buttons.

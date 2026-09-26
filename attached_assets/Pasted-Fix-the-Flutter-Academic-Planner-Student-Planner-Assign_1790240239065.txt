@@ -1,0 +1,202 @@
+Fix the Flutter **Academic Planner / Student Planner → Assignment → Add Assignment** bug properly.
+
+### BUG
+
+When the user opens **Add Assignment** and enters a decimal value in the **Estimated Hours** field, for example:
+
+`2.5`
+
+the assignment creation fails and shows:
+
+**"Invalid assignment data"**
+
+The bug has reopened multiple times, so do NOT apply a temporary UI-only fix. Find and fix the actual root cause across the complete data flow.
+
+### IMPORTANT
+
+The field **Estimated Hours must support decimal values** such as:
+
+* `1`
+* `1.5`
+* `2`
+* `2.5`
+* `3.75`
+* `10.5`
+
+Do not restrict the field to integers.
+
+### INVESTIGATE THE COMPLETE FLOW
+
+Trace the value from:
+
+`Estimated Hours TextField`
+→ input/controller
+→ validation
+→ Assignment model
+→ Assignment BLoC/Event
+→ Repository
+→ Data Source/API/Firebase/Firestore/local database
+→ serialization (`toJson`)
+→ deserialization (`fromJson`)
+→ assignment creation
+→ UI response
+
+Find exactly where `2.5` is being rejected or incorrectly converted.
+
+### ROOT-CAUSE FIX
+
+Check for problems such as:
+
+* `int.parse()` being used for Estimated Hours
+* model field incorrectly declared as `int`
+* `double` being converted to `int`
+* JSON serialization expecting an integer
+* `fromJson()` casting the value incorrectly
+* Firestore/API response returning `int` for whole numbers and `double` for decimal numbers
+* validation allowing only whole numbers
+* `TextInputFormatter` preventing decimal values
+* locale/decimal parsing problems
+* BLoC event/state converting the value incorrectly
+* repository/data-source validation rejecting decimal values
+* backend/database schema expecting an integer
+* `num`/`int`/`double` type mismatch
+
+### EXPECTED IMPLEMENTATION
+
+Use a numeric type that safely supports both whole and decimal values.
+
+For example, if the project architecture allows it, `Estimated Hours` should be represented as:
+
+`double`
+
+or another type that correctly supports both integer and decimal values.
+
+Make the JSON/database conversion robust so all of these work:
+
+`2` → `2.0`
+
+`2.5` → `2.5`
+
+`10` → `10.0`
+
+Also make `fromJson()` handle values safely when the backend returns either an integer or decimal number.
+
+Do NOT simply convert everything to a string to hide the problem.
+
+### VALIDATION
+
+Update validation so:
+
+Valid:
+
+* `0.5`
+* `1`
+* `1.5`
+* `2.5`
+* `10.75`
+
+Invalid:
+
+* empty value
+* negative values
+* non-numeric values
+* invalid decimal formats
+
+If the existing product has a minimum/maximum Estimated Hours rule, preserve that rule.
+
+### UI
+
+The Estimated Hours field should:
+
+* Accept decimal numbers.
+* Show the numeric keyboard where appropriate.
+* Allow values such as `2.5`.
+* Keep the existing UI/design.
+* Keep the existing error styling.
+* Not show `"Invalid assignment data"` for a valid value like `2.5`.
+
+### ERROR HANDLING
+
+Do not replace the real error with a generic success/fallback.
+
+If assignment creation fails, identify the actual layer causing the failure and fix it.
+
+If `"Invalid assignment data"` is generated from model validation, repository validation, API response handling, or exception handling, correct that underlying logic.
+
+### REGRESSION PREVENTION
+
+After fixing the issue, add or update tests for the complete assignment data flow.
+
+At minimum test:
+
+1. Add assignment with `2`
+2. Add assignment with `2.5`
+3. Add assignment with `0.5`
+4. Add assignment with `10.75`
+5. Edit an assignment from `2` → `2.5`
+6. Read an assignment containing `2.5`
+7. Serialize an assignment containing `2.5`
+8. Deserialize an assignment containing `2.5`
+9. Handle backend value `2`
+10. Handle backend value `2.5`
+11. Reject empty Estimated Hours
+12. Reject negative Estimated Hours
+13. Reject invalid text
+
+### IMPORTANT — DO NOT BREAK EXISTING FUNCTIONALITY
+
+Before changing code:
+
+1. Inspect the existing Assignment model.
+2. Inspect Assignment BLoC/events/states.
+3. Inspect the Add Assignment screen.
+4. Inspect repository/data source.
+5. Inspect API/Firebase/local database serialization.
+6. Find every place where `estimatedHours` is used.
+7. Identify the exact root cause.
+8. Make the smallest proper architectural fix.
+9. Update all affected layers consistently.
+10. Run analyzer/tests/build checks.
+
+Do NOT create duplicate models, duplicate fields, duplicate validation, or parallel implementations.
+
+### FINAL VERIFICATION
+
+After implementing the fix, verify manually and/or with tests:
+
+* Open Academic Planner.
+* Open Assignment.
+* Tap Add Assignment.
+* Enter all required fields.
+* Enter Estimated Hours = `2.5`.
+* Save the assignment.
+* Assignment must be created successfully.
+* No `"Invalid assignment data"` error should appear.
+* Reopen the assignment and verify Estimated Hours still displays correctly as `2.5`.
+* Edit it and save again.
+* Verify the value remains `2.5`.
+
+Also verify that existing whole-number values such as `2` continue working.
+
+### VERY IMPORTANT
+
+This bug has been fixed/reopened multiple times before.
+
+Do NOT just modify the error message or add a special condition such as:
+
+`if (value == 2.5)`
+
+Do NOT bypass validation.
+
+Fix the underlying **type conversion / validation / serialization / deserialization issue** so decimal Estimated Hours are supported permanently.
+
+After the fix, explain:
+
+1. Root cause
+2. Files changed
+3. Exact changes made
+4. Why `2.5` previously failed
+5. Why the new implementation supports both integers and decimals
+6. Tests performed
+7. Any database/API migration required
+8. Confirmation that existing assignment functionality was not broken

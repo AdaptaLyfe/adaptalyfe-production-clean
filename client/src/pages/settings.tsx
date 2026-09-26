@@ -13,8 +13,29 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ApiError, apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
+import { FieldLabel } from "@/components/ui/field-label";
+import { getSubscriptionManagementMessage } from "@/lib/subscription-management";
+
+const INVALID_INVITATION_CODE_MESSAGE =
+  "Invalid invitation code. Please check and try again.";
+const GENERIC_INVITATION_CODE_ERROR =
+  "Unable to redeem invitation code. Please try again.";
+
+function getInvitationCodeErrorMessage(error: unknown): string {
+  const apiError = error instanceof ApiError ? error : undefined;
+  const rawMessage = error instanceof Error ? error.message : "";
+
+  if (
+    apiError?.status === 404 ||
+    rawMessage.toLowerCase().includes("invalid organization code")
+  ) {
+    return INVALID_INVITATION_CODE_MESSAGE;
+  }
+
+  return GENERIC_INVITATION_CODE_ERROR;
+}
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -44,7 +65,13 @@ export default function SettingsPage() {
 
   // Get current user for locked settings checks
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
+  const { data: subscription } = useQuery<{ subscriptionPlatform?: string | null }>({
+    queryKey: ["/api/subscription"],
+  });
   const { data: orgMembership } = useQuery<any>({ queryKey: ["/api/org-codes/my"] });
+  const subscriptionManagementMessage = getSubscriptionManagementMessage(
+    subscription?.subscriptionPlatform ?? user?.subscriptionPlatform
+  );
 
   const redeemOrgCodeMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -57,8 +84,12 @@ export default function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/org-codes/my"] });
       queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
     },
-    onError: (error: any) => {
-      toast({ title: "Invalid Code", description: error.message, variant: "destructive" });
+    onError: (error: unknown) => {
+      toast({
+        title: "Invalid Code",
+        description: getInvitationCodeErrorMessage(error),
+        variant: "destructive",
+      });
     },
   });
   
@@ -254,7 +285,7 @@ export default function SettingsPage() {
           <CheckCircle className="w-6 h-6 flex-shrink-0" />
           <div>
             <p className="font-semibold capitalize">{user.subscriptionTier} Plan — Active</p>
-            <p className="text-sm text-white/80">Your subscription is active. Manage it in your Apple ID settings.</p>
+            <p className="text-sm text-white/80">{subscriptionManagementMessage}</p>
           </div>
         </div>
       )}
@@ -768,9 +799,9 @@ export default function SettingsPage() {
                         <li>Remove all caregiver connections</li>
                       </ul>
                       <div className="pt-3">
-                        <Label htmlFor="confirm-delete" className="text-sm font-medium">
+                        <FieldLabel htmlFor="confirm-delete" required className="text-sm font-medium">
                           Type "delete my account" to confirm:
-                        </Label>
+                        </FieldLabel>
                         <Input
                           id="confirm-delete"
                           value={deleteConfirmText}

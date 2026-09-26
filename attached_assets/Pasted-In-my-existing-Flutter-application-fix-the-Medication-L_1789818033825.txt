@@ -1,0 +1,149 @@
+In my existing Flutter application, fix the **Medication List** section and do not change unrelated features or UI.
+
+### Current Flow
+
+Medication List → Add Medication → Save Medication
+
+### Current Problems
+
+When adding a medication, the app sometimes crashes with these errors:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Required Fix
+
+#### 1. Fix `TextEditingController` lifecycle
+
+* Find all `TextEditingController` objects used in the Medication List/Add Medication/Edit Medication flow.
+* Make sure controllers are created and disposed only in the correct StatefulWidget lifecycle.
+* Do NOT dispose a controller while it is still being used by a TextField/TextFormField.
+* Do not reuse a disposed controller.
+* If controllers are passed between screens/widgets, make sure their ownership and disposal are handled correctly.
+* After closing, saving, editing, or deleting a medication, verify that no disposed controller is accessed.
+
+#### 2. Fix "dirty widget in the wrong build scope"
+
+* Find the cause of the widget tree/build lifecycle issue.
+* Avoid calling `setState()` after the widget has been disposed.
+* Avoid calling `setState()` from an invalid build phase.
+* Check all async operations in Add/Edit Medication.
+* After every `await`, verify that the widget is still mounted before calling `setState()`, showing UI, or updating widget state.
+* Avoid modifying inherited/provider/BLoC state directly during the widget build phase.
+* Make sure dialogs, bottom sheets, navigation, and state updates happen at the correct time.
+* Do not use `BuildContext` after the widget has been disposed.
+
+#### 3. Add Medication
+
+Keep the existing Add Medication UI and functionality.
+
+When the user adds a medication:
+
+* Validate the existing fields.
+* Save the medication correctly.
+* Close the Add Medication screen/dialog/bottom sheet.
+* Refresh the Medication List.
+* The newly added medication should appear immediately.
+* No crash should occur.
+* No duplicate medication should be created because of multiple state updates or callbacks.
+
+#### 4. Add Edit option
+
+For every medication in the Medication List:
+
+* Add an **Edit** option.
+* Tapping Edit should open the existing medication data in the Add/Edit Medication form.
+* Allow the user to modify the medication.
+* Save the updated medication.
+* Refresh the list immediately.
+* Do not create a new medication when editing.
+* Preserve the existing medication ID/document ID if the project uses one.
+
+#### 5. Add Delete option
+
+For every medication:
+
+* Add a **Delete** option.
+* Show a confirmation dialog before deleting.
+* If the user confirms, delete the medication from the existing data source/database/API/BLoC.
+* Refresh the Medication List immediately.
+* If the user cancels, make no changes.
+* Do not cause controller or widget lifecycle errors.
+
+#### 6. State Management
+
+First inspect the existing project and identify whether Medication List currently uses:
+
+* BLoC/Cubit
+* Provider
+* Riverpod
+* setState
+* another existing state-management approach
+
+Use the **existing architecture and state-management approach** instead of introducing a new one.
+
+Do not rewrite the entire Medication feature unnecessarily.
+
+#### 7. Async Safety
+
+For all Add/Edit/Delete operations:
+
+* Properly handle loading, success, and error states.
+* Prevent multiple submissions while an operation is already running.
+* Handle exceptions safely.
+* Make sure asynchronous callbacks cannot update a disposed widget.
+* Make sure navigation cannot trigger state updates on an already disposed screen.
+
+### Important Restrictions
+
+* Do NOT change unrelated screens.
+* Do NOT change the existing Medication UI design unless required for Edit/Delete.
+* Do NOT remove existing Medication functionality.
+* Do NOT replace the current architecture with a completely different architecture.
+* Do NOT create duplicate controllers.
+* Do NOT dispose controllers manually from random methods.
+* Keep the existing API/database/Firebase/local-storage implementation if already present.
+
+### Testing Checklist
+
+After making the changes, test this complete flow:
+
+1. Open Medication List.
+2. Tap Add Medication.
+3. Enter medication details.
+4. Save.
+5. Confirm medication appears in the list.
+6. Open Add Medication again and add another medication.
+7. Edit the first medication.
+8. Change its details.
+9. Save and verify the list is updated.
+10. Delete a medication.
+11. Confirm deletion.
+12. Verify it disappears from the list.
+13. Open Add Medication → type data → close without saving → open again.
+14. Verify there is no `TextEditingController was used after being disposed` error.
+15. Repeat Add → Edit → Delete several times.
+16. Verify there is no:
+
+`Tried to build dirty widget in the wrong build scope`
+
+or
+
+`_dependents.isEmpty': is not true`
+
+or
+
+`A TextEditingController was used after being disposed.`
+
+Before finishing, inspect the changed files and explain:
+
+* What caused each error.
+* Which files were changed.
+* How the controller lifecycle was fixed.
+* How Edit/Delete were implemented.
+* How you verified the fix.

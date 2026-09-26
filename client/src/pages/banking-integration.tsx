@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/ui/field-label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -380,7 +380,7 @@ export default function BankingIntegration() {
                 <div className="max-h-[60vh] overflow-y-auto pr-2">
                   <form onSubmit={handleBillPaySubmit} className="space-y-4">
                     <div>
-                    <Label htmlFor="billName">Bill Name *</Label>
+                    <FieldLabel htmlFor="billName" required>Bill Name</FieldLabel>
                     <Input
                       id="billName"
                       placeholder="e.g., Electric Bill, Internet"
@@ -390,7 +390,7 @@ export default function BankingIntegration() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="payeeWebsite">Payee Website</Label>
+                    <FieldLabel htmlFor="payeeWebsite" optional>Payee Website</FieldLabel>
                     <Input
                       id="payeeWebsite"
                       placeholder="e.g., power-company.com"
@@ -399,7 +399,7 @@ export default function BankingIntegration() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="accountNumber">Account Number</Label>
+                    <FieldLabel htmlFor="accountNumber" optional>Account Number</FieldLabel>
                     <Input
                       id="accountNumber"
                       placeholder="Your account number with the company"
@@ -408,7 +408,7 @@ export default function BankingIntegration() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="paymentAmount">Payment Amount ($) *</Label>
+                    <FieldLabel htmlFor="paymentAmount" required>Payment Amount ($)</FieldLabel>
                     <Input
                       id="paymentAmount"
                       type="number"
@@ -420,7 +420,7 @@ export default function BankingIntegration() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="paymentDate">Payment Date (Day of Month) *</Label>
+                    <FieldLabel htmlFor="paymentDate" required>Payment Date (Day of Month)</FieldLabel>
                     <Input
                       id="paymentDate"
                       type="number"
@@ -438,7 +438,7 @@ export default function BankingIntegration() {
                       checked={billFormData.isAutoPay}
                       onCheckedChange={(checked) => setBillFormData({...billFormData, isAutoPay: checked})}
                     />
-                    <Label htmlFor="autoPay">Enable automatic payments</Label>
+                    <FieldLabel htmlFor="autoPay" optional>Enable automatic payments</FieldLabel>
                   </div>
                     <div className="flex gap-2 pt-4">
                       <Button 

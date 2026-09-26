@@ -1,0 +1,191 @@
+Fix the **Emergency Resource → Add Resource** functionality in the existing Flutter application.
+
+### Current issue
+
+Flow:
+
+`Resources → Emergency Resources → Add Resource → Save`
+
+When the user clicks **Add Resource/Save**, the resource is not saved.
+
+The following error appears:
+
+```text
+[ResourcesBloc] create emergency resource failed: ApiException (409):
+The emergency resources database needs an update before these extra details can be saved.
+Please apply the emergency resources migration and try again.
+```
+
+Stack trace:
+
+```text
+I/flutter (28869): #0 ApiClient._request
+(package:adaptalyfe_mobile/core/network/api_client.dart:204:9)
+
+I/flutter (28869): #1 ResourcesApi._post
+(package:adaptalyfe_mobile/features/resources/data/resources_api.dart:117:22)
+
+I/flutter (28869): #2 ResourcesBloc._createEmergencyResource
+(package:adaptalyfe_mobile/features/resources/bloc/resources_bloc.dart:345:23)
+```
+
+### Important
+
+Do **not** simply hide the error, change the error text, or add a fake success response.
+
+The error indicates that the backend/database schema is missing the fields required by the current Emergency Resource implementation.
+
+Find the actual cause and fix the complete flow.
+
+### What you need to investigate
+
+1. Inspect the existing Flutter Emergency Resources implementation:
+
+   * `ResourcesBloc`
+   * `ResourcesApi`
+   * Emergency Resource model/entity
+   * Repository
+   * Add Resource screen/form
+   * Request/DTO mapping
+   * API endpoint used for creating emergency resources.
+
+2. Inspect the backend/API implementation used by this Flutter project.
+
+3. Find the database/schema/migration for **Emergency Resources**.
+
+4. Compare:
+
+   * Flutter request payload
+   * Backend expected payload
+   * Database columns/schema
+   * Existing migration files
+
+5. Identify which database fields are missing or outdated.
+
+### Required fix
+
+Apply the required **Emergency Resources database migration/schema update** so the current Add Resource form can successfully save all supported fields.
+
+Make sure the migration is:
+
+* Safe to run.
+* Idempotent where appropriate.
+* Compatible with existing emergency resource records.
+* Not destructive to existing data.
+* Compatible with the current API.
+* Compatible with the existing Flutter model and request payload.
+
+If the project already contains a migration mechanism, use the existing migration pattern instead of creating a separate incompatible system.
+
+### Flutter side
+
+After fixing the backend/database issue, verify the Flutter implementation.
+
+Check:
+
+```text
+ResourcesBloc._createEmergencyResource
+ResourcesApi._post
+Emergency Resource request model
+Add Resource form
+Repository
+```
+
+Make sure:
+
+* Form values are correctly converted into the API request.
+* Required fields are validated before submitting.
+* Optional fields are handled correctly.
+* The API receives the expected field names/types.
+* HTTP 409 is no longer returned because of the outdated schema.
+* Successful API response updates the Bloc state correctly.
+* The newly created resource appears in the Emergency Resources list without reopening/reloading the app.
+
+### Important existing behavior
+
+The application currently has an issue where the Add Resource operation can fail repeatedly after reopening the screen.
+
+Do a **proper root-cause fix**, not a temporary UI fix.
+
+After fixing:
+
+1. Open Emergency Resources.
+2. Tap Add Resource.
+3. Enter valid resource data.
+4. Save.
+5. Confirm the API request succeeds.
+6. Confirm the resource appears in the list.
+7. Leave the screen.
+8. Reopen Emergency Resources.
+9. Add another resource.
+10. Confirm it still works.
+11. Edit/update the created resource if editing is supported.
+12. Delete it if deletion is supported.
+13. Restart/reopen the app and verify the saved resource is still present.
+
+### Error handling
+
+If the backend still returns an error, show a useful user-friendly message and log the technical error for debugging.
+
+Do not show:
+
+```text
+The emergency resources database needs an update...
+```
+
+to the normal user if the migration has been properly fixed.
+
+### Do not change unnecessarily
+
+Do NOT:
+
+* Rewrite the entire Resources feature.
+* Change the existing UI design.
+* Remove existing fields.
+* Remove existing CRUD functionality.
+* Replace BLoC with another state-management solution.
+* Create mock/local-only data.
+* Hardcode a successful response.
+* Disable API validation.
+* Ignore the 409 response.
+* Fix only the error message.
+
+Keep the existing architecture and coding style.
+
+### Final verification
+
+Before finishing, test the complete flow:
+
+```text
+Emergency Resources
+        ↓
+Add Resource
+        ↓
+Enter data
+        ↓
+Save
+        ↓
+Flutter BLoC
+        ↓
+Repository/API
+        ↓
+Backend
+        ↓
+Database
+        ↓
+Success response
+        ↓
+BLoC success state
+        ↓
+Resource appears in list
+```
+
+Also explain briefly:
+
+1. What caused the 409 error.
+2. Which database/migration was outdated.
+3. What files were changed.
+4. What migration/schema changes were made.
+5. How you verified that Add Resource continues to work after reopening the screen.
+
+**Important: Fix the root database/API migration problem first. Do not just modify the Flutter error handling.**

@@ -31,6 +31,8 @@ import LifeSkillsModule from "@/components/life-skills-module";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import AuthCheck from "@/components/AuthCheck";
 import AdminCheck from "@/components/AdminCheck";
 import SuperAdminCheck from "@/components/SuperAdminCheck";
@@ -40,8 +42,9 @@ import AdminOrgCodes from "@/pages/admin-org-codes";
 import { RuntimeErrorHandler } from "@/components/runtime-error-handler";
 import { ReactErrorBoundary } from "@/components/error-boundary";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
-import { getSessionToken } from "@/lib/queryClient";
+import { clearSessionToken, getAuthenticatedUser, getSessionToken } from "@/lib/queryClient";
 import { useFirebaseAnalytics } from "@/hooks/useFirebaseAnalytics";
+import { App as CapacitorApp } from "@capacitor/app";
 
 // Global error handler for Stripe loading issues
 const originalError = console.error;
@@ -79,6 +82,8 @@ import PersonalDocuments from "@/pages/personal-documents";
 import RewardsPage from "@/pages/rewards";
 import SleepTracking from "@/pages/sleep-tracking";
 import PrivacyPolicy from "@/pages/privacy-policy";
+import CaregiverMessages from "@/pages/caregiver-messages";
+const AIChatbot = React.lazy(() => import("@/components/ai-chatbot"));
 
 // Simple Route Component - no authentication required
 function SimpleRoute({ component: Component }: { component: React.ComponentType }) {
@@ -90,13 +95,43 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = React.useState(true);
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
-  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location);
+    const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location);
+    const isPasswordRecoveryPage = ["/forgot-password", "/reset-password"].includes(location);
   useSubscriptionEnforcement();
   useFirebaseAnalytics();
   
   // IMMEDIATE session check - runs synchronously on every render
   const sessionToken = getSessionToken();
-  const shouldRedirectToDashboard = sessionToken && isAuthPage && location !== "/privacy-policy";
+   const shouldRedirectToDashboard = sessionToken && isAuthPage && !isPasswordRecoveryPage && location !== "/privacy-policy";
+
+  React.useEffect(() => {
+    const openResetLink = (url: string) => {
+      try {
+        const parsed = new URL(url);
+        const token = parsed.searchParams.get("token");
+        if (token) {
+          setLocation(`/reset-password?token=${encodeURIComponent(token)}`);
+        }
+      } catch (error) {
+        console.warn("Unable to parse app link:", error);
+      }
+    };
+
+    let listener: { remove: () => Promise<void> } | undefined;
+    void (async () => {
+      try {
+        listener = await CapacitorApp.addListener("appUrlOpen", ({ url }) => openResetLink(url));
+        const launchUrl = await CapacitorApp.getLaunchUrl();
+        if (launchUrl?.url) openResetLink(launchUrl.url);
+      } catch {
+        // The Capacitor App plugin is unavailable in a regular browser.
+      }
+    })();
+
+    return () => {
+      void listener?.remove();
+    };
+  }, [setLocation]);
   
   // Listen for service worker update signal — reload when new version is deployed
   React.useEffect(() => {
@@ -112,22 +147,45 @@ function App() {
 
   // Session restoration on app startup (critical for mobile apps)
   React.useEffect(() => {
-    // If we have a session token and we're on an auth page, redirect immediately
-    if (shouldRedirectToDashboard) {
-      console.log('🔄 App startup: Session token found, redirecting to dashboard');
-      window.location.replace('/dashboard');
-      return; // Don't set checking to false - we're redirecting
-    }
-    
-    if (sessionToken) {
-      console.log('✅ App startup: Session token found, user authenticated');
-    } else {
-      console.log('🚫 App startup: No session token, user not authenticated');
-    }
-    
-    // Small delay to ensure smooth transition
-    setIsCheckingSession(false);
-  }, [shouldRedirectToDashboard, sessionToken]);
+    let cancelled = false;
+
+    const restoreSession = async () => {
+      if (!isAuthPage || isPasswordRecoveryPage || location === "/privacy-policy") {
+        setIsCheckingSession(false);
+        return;
+      }
+
+      try {
+        const user = await getAuthenticatedUser();
+        if (cancelled) return;
+
+        if (user) {
+          console.log('🔄 App startup: Existing session found, redirecting to dashboard');
+          window.location.replace('/dashboard');
+          return;
+        }
+
+        if (sessionToken) {
+          clearSessionToken();
+        }
+        console.log('🚫 App startup: No authenticated session found');
+      } catch (error) {
+        // A session check failure should not prevent a logged-out user from
+        // reaching the existing login flow.
+        console.warn('Session check unavailable; continuing to auth page', error);
+      }
+
+      if (!cancelled) {
+        setIsCheckingSession(false);
+      }
+    };
+
+    void restoreSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthPage, isPasswordRecoveryPage, location, sessionToken]);
   
   // Show loading screen while checking session OR if we need to redirect
   // This prevents the login page flash
@@ -146,7 +204,7 @@ function App() {
     <ReactErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100">
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <SimpleNavigation />}
+       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <SimpleNavigation />}
       
       <main className="relative z-0 pt-16">
       <Switch>
@@ -159,11 +217,27 @@ function App() {
           return isMobile ? <MobileLogin /> : <Login />;
         }} />
         <Route path="/register" component={Register} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/demo" component={Dashboard} />
         
         <Route path="/dashboard">
           <AuthCheck><Dashboard /></AuthCheck>
         </Route>
+        <Route path="/ai-chat" component={() => (
+          <AuthCheck>
+            <React.Suspense fallback={
+              <div className="container mx-auto p-6">
+                <div className="max-w-3xl mx-auto animate-pulse">
+                  <div className="h-8 bg-gray-300 rounded w-48 mb-6"></div>
+                  <div className="h-96 bg-white rounded-lg border"></div>
+                </div>
+              </div>
+            }>
+              <AIChatbot fullPage />
+            </React.Suspense>
+          </AuthCheck>
+        )} />
         <Route path="/subscription">
           <Subscription />
         </Route>
@@ -269,6 +343,9 @@ function App() {
         <Route path="/caregiver">
           <AuthCheck><Caregiver /></AuthCheck>
         </Route>
+        <Route path="/caregiver/messages">
+          <AuthCheck><CaregiverMessages /></AuthCheck>
+        </Route>
         <Route path="/caregiver-setup">
           <AuthCheck><CaregiverSetup /></AuthCheck>
         </Route>
@@ -327,9 +404,16 @@ function App() {
         <Route path="*" component={NotFound} />
       </Switch>
       </main>
+
+      {/* Keep one AdaptAI instance mounted across Home and Daily Tasks navigation. */}
+      {(location === "/dashboard" || location === "/daily-tasks") && (
+        <React.Suspense fallback={null}>
+          <AIChatbot />
+        </React.Suspense>
+      )}
       
       {/* Mobile bottom navigation - only show on authenticated pages */}
-      {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy"].includes(location) && <MobileBottomNavigation />}
+       {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <MobileBottomNavigation />}
       
       {/* Runtime error handler to prevent Replit modal */}
       <RuntimeErrorHandler />

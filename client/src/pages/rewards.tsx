@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -30,7 +31,6 @@ import {
   ShoppingBag,
   MapPin,
   DollarSign,
-  Edit,
   Trash2
 } from "lucide-react";
 
@@ -91,8 +91,8 @@ interface Reward {
 interface UserPointsBalance {
   userId: number;
   availablePoints: number;
-  totalEarned: number;
-  totalSpent: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
 }
 
 interface PointsTransaction {
@@ -200,9 +200,12 @@ export default function RewardsPage() {
     },
     onError: (error: any) => {
       console.error("=== DELETE ERROR ===", error);
+      const description = error?.code === "REWARD_ALREADY_REDEEMED"
+        ? "This reward cannot be deleted because it has already been redeemed."
+        : error?.message || "Failed to delete reward";
       toast({ 
         title: "Error", 
-        description: error?.message || "Failed to delete reward", 
+        description,
         variant: "destructive" 
       });
     },
@@ -373,7 +376,7 @@ export default function RewardsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header with Points Balance */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="mt-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Trophy className="w-8 h-8 text-yellow-500" />
@@ -405,23 +408,34 @@ export default function RewardsPage() {
                   Create Reward
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" aria-describedby="create-reward-description">
-                <DialogHeader>
+              <DialogContent
+                overlayClassName="z-[110]"
+                className="z-[120] max-w-md max-h-[calc(100dvh-6rem)] flex flex-col overflow-hidden"
+                style={{
+                  top: "calc(50% + 2rem)",
+                  maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+                }}
+                aria-describedby="create-reward-description"
+              >
+                <DialogHeader className="shrink-0">
                   <DialogTitle>Create New Reward</DialogTitle>
                   <p id="create-reward-description" className="text-sm text-gray-600">
                     Set up a new reward for users to earn with their points
                   </p>
                 </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="reward-create-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2"
+                  >
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reward Title</FormLabel>
+                        <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Extra screen time" {...field} />
+                          <Input className="reward-create-control" placeholder="Extra screen time" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -433,9 +447,9 @@ export default function RewardsPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel optional>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
+                          <Textarea className="reward-create-control" placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -448,9 +462,10 @@ export default function RewardsPage() {
                       name="pointsRequired"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Points Required</FormLabel>
+                          <FormLabel required>Points Required</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
+                              className="reward-create-control"
                               type="number" 
                               {...field} 
                               onChange={(e) => {
@@ -469,10 +484,10 @@ export default function RewardsPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="reward-create-control">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
@@ -495,10 +510,10 @@ export default function RewardsPage() {
                     name="rewardType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="reward-create-control">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
@@ -520,9 +535,9 @@ export default function RewardsPage() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value (optional)</FormLabel>
+                        <FormLabel optional>Value</FormLabel>
                         <FormControl>
-                          <Input placeholder="$10 or 30 minutes" {...field} />
+                          <Input className="reward-create-control" placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -541,8 +556,8 @@ export default function RewardsPage() {
                       {createRewardMutation.isPending ? "Creating..." : "Create Reward"}
                     </Button>
                   </div>
-                </form>
-              </Form>
+                  </form>
+                </Form>
             </DialogContent>
           </Dialog>
 
@@ -562,7 +577,7 @@ export default function RewardsPage() {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reward Title</FormLabel>
+                        <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
                           <Input placeholder="Extra screen time" {...field} />
                         </FormControl>
@@ -576,7 +591,7 @@ export default function RewardsPage() {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel optional>Description</FormLabel>
                         <FormControl>
                           <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
@@ -591,7 +606,7 @@ export default function RewardsPage() {
                       name="pointsRequired"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Points Required</FormLabel>
+                          <FormLabel required>Points Required</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -612,7 +627,7 @@ export default function RewardsPage() {
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -638,7 +653,7 @@ export default function RewardsPage() {
                     name="rewardType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -663,7 +678,7 @@ export default function RewardsPage() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Value (optional)</FormLabel>
+                        <FormLabel optional>Value</FormLabel>
                         <FormControl>
                           <Input placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>
@@ -731,15 +746,11 @@ export default function RewardsPage() {
                             </Badge>
                           )}
                           <div className="flex gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <EditButton
                               onClick={() => handleEdit(reward)}
-                              className="h-7 w-7 p-0 hover:bg-blue-100"
+                              aria-label={`Edit ${reward.title}`}
                               data-testid={`button-edit-reward-${reward.id}`}
-                            >
-                              <Edit className="w-4 h-4 text-blue-600" />
-                            </Button>
+                            />
                             <Button
                               size="sm"
                               variant="ghost"
@@ -796,11 +807,11 @@ export default function RewardsPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span>Total Earned:</span>
-                  <span className="font-semibold">{pointsBalance?.totalEarned || 0}</span>
+                  <span className="font-semibold">{pointsBalance?.lifetimeEarned || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Total Spent:</span>
-                  <span className="font-semibold">{pointsBalance?.totalSpent || 0}</span>
+                  <span className="font-semibold">{pointsBalance?.lifetimeSpent || 0}</span>
                 </div>
                 <div className="flex justify-between text-lg">
                   <span>Available:</span>
@@ -821,9 +832,9 @@ export default function RewardsPage() {
                   <p className="text-2xl font-bold">100 Points</p>
                   <p className="text-sm text-gray-600">Special Achievement Badge</p>
                 </div>
-                <Progress value={((pointsBalance?.totalEarned || 0) % 100)} className="w-full" />
+                <Progress value={((pointsBalance?.lifetimeEarned || 0) % 100)} className="w-full" />
                 <p className="text-sm text-center text-gray-500">
-                  {100 - ((pointsBalance?.totalEarned || 0) % 100)} points to go!
+                  {100 - ((pointsBalance?.lifetimeEarned || 0) % 100)} points to go!
                 </p>
               </CardContent>
             </Card>

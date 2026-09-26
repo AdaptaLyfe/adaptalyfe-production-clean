@@ -32,6 +32,82 @@ html, body {
   min-height: 100vh;
 }
 
+/* Keep modal form controls inside the scroll viewport so their borders are not clipped. */
+.academic-planner-form,
+.reward-create-form {
+  padding-top: 1px;
+  padding-left: 1px;
+}
+
+/* Keep the Create New Reward controls' left borders visible while focused/open. */
+.reward-create-form .reward-create-control:focus,
+.reward-create-form .reward-create-control[data-state="open"] {
+  border-left-color: var(--input);
+  border-left-style: solid;
+  border-left-width: 1px;
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Shared sizing for hand-built modal panels, including keyboard and safe-area
+   constrained mobile web views. */
+.responsive-modal-backdrop {
+  padding: max(1rem, var(--safe-area-inset-top))
+    max(1rem, var(--safe-area-inset-right))
+    max(1rem, var(--safe-area-inset-bottom))
+    max(1rem, var(--safe-area-inset-left));
+}
+
+.responsive-modal-panel {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem;
+  min-width: 0;
+  max-height: calc(
+    100dvh - max(
+      2rem,
+      var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem
+    )
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Health Records portals follow the visible viewport when a mobile keyboard opens. */
+.health-records-modal-backdrop {
+  box-sizing: border-box;
+}
+
+.health-records-modal-panel {
+  max-height: calc(
+    var(--health-records-modal-height, 100dvh) - max(
+      2rem,
+      var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem
+    )
+  );
+}
+
+/* Keep Academic Planner popup fields fully bordered inside their scrollable forms. */
+.academic-planner-form input,
+.academic-planner-form textarea,
+.academic-planner-form [role="combobox"] {
+  border-color: var(--input);
+  border-style: solid;
+  border-width: 1px;
+}
+
+.academic-planner-form input:focus,
+.academic-planner-form textarea:focus,
+.academic-planner-form [role="combobox"]:focus,
+.academic-planner-form [role="combobox"][data-state="open"] {
+  border-color: var(--input);
+  box-shadow: none;
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 /* Android-native header styling */
 .android-header {
   padding-top: max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px));

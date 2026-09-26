@@ -1,0 +1,234 @@
+Fix the following two Calendar bugs in the existing Flutter project.
+
+IMPORTANT:
+
+* Do NOT rebuild the Calendar feature from scratch.
+* Do NOT change existing UI/design unnecessarily.
+* Do NOT remove existing Calendar functionality.
+* First inspect the current Calendar screen, navigation flow, BLoC/state management, repository/data source, event model, and save/update logic.
+* Find the ROOT CAUSE of each bug and fix it properly so the bugs do not come back.
+* Follow the existing architecture and coding style of the project.
+* Preserve all existing CRUD, navigation, recurrence, notifications, and event functionality.
+* Do not use hardcoded navigation or forced app reloads as a workaround.
+
+## BUG 1 — Editing Calendar Event Redirects to Home
+
+Current behavior:
+
+1. User opens Calendar.
+2. User opens an existing event.
+3. User taps Edit.
+4. User changes the event.
+5. User taps Save.
+6. The whole Flutter app reloads/rebuilds.
+7. User is redirected to the Home page.
+
+Expected behavior:
+
+1. User opens an event from Calendar.
+2. User edits the event.
+3. User taps Save.
+4. Save/update should happen without restarting or reloading the whole app.
+5. After successful save, the user must return to the SAME parent page/context from where editing started.
+6. If editing was started from the Calendar screen, return to Calendar.
+7. If editing was started from another event/parent screen, return to that same screen.
+8. Do not redirect to Home unless Home was actually the page from which the edit was started.
+
+Investigate and fix:
+
+* Navigator.push/pop behavior.
+* Any `pushReplacement`, `pushAndRemoveUntil`, or navigation reset after saving.
+* `MaterialApp`/router rebuilds.
+* GoRouter/navigation configuration if used.
+* BLoC/Cubit state changes that may rebuild the root widget.
+* Authentication/session state changes.
+* Calendar event update success handling.
+* Any `setState`, provider, BLoC, or repository logic that incorrectly causes the application root to rebuild.
+* Any code that navigates to Home after successful event update.
+* Do not simply add `Navigator.pop()` without understanding the existing navigation flow.
+
+Important:
+The event update should update the existing Calendar state correctly without restarting the application or losing the current navigation stack.
+
+## BUG 2 — "All Day Event" Is Not Displayed Correctly
+
+Current behavior:
+
+* While creating a Calendar event, the user can enable the "All day event" toggle.
+* After saving, the event is not displayed correctly as an all-day event on the selected date.
+* The event may appear as a timed event or may not appear in the expected all-day section.
+
+Expected behavior:
+
+### Case A — All day event = ON
+
+If the user enables the "All day event" toggle:
+
+* Treat the event as an all-day event.
+* Store the event with the correct all-day information in the existing event model/database/API.
+* The event must appear in the Calendar's ALL-DAY section for the selected date.
+* Do not assign a normal time-of-day to the event.
+* The selected date must remain the correct event date.
+* When the event is opened again for editing, the "All day event" toggle must still be ON.
+* Saving/editing the event must preserve its all-day status.
+
+### Case B — All day event = OFF
+
+If the user does NOT enable "All day event":
+
+* Treat the event as a normal timed event.
+* Preserve the selected start date and start time.
+* Preserve the selected end date and end time if the application supports an end date/time.
+* Display it in the normal timed Calendar section.
+
+## IMPORTANT TERMINOLOGY
+
+Check the existing project requirements and event model before changing labels.
+
+The intended behavior is:
+
+* If an event is for the FULL SELECTED DAY, it should be labeled/displayed as "Whole Day" where the UI currently represents this concept.
+* If the "All day event" option means the event should continue/repeat for the whole day starting from the selected date, preserve the existing recurrence/repeat behavior and correctly mark/display it as an all-day event.
+* Do NOT incorrectly convert every timed event into an all-day event.
+* Do NOT change recurrence behavior unless required to fix this bug.
+
+Before implementing, inspect how the current project defines:
+
+* `allDay`
+* `isAllDay`
+* `wholeDay`
+* start date
+* end date
+* start time
+* end time
+* recurrence/repeat
+* Calendar event mapping
+* API/database serialization
+
+Use the existing field/model naming where possible.
+
+## ROOT-CAUSE REQUIREMENT
+
+Do not just patch the visible Calendar UI.
+
+Trace the complete flow:
+
+Create/Edit UI
+→ Form state
+→ Calendar Event Model
+→ BLoC/Cubit
+→ Repository
+→ Data Source/API/Firebase/Local DB
+→ Save/Update
+→ Returned Event Model
+→ Calendar state
+→ Calendar UI
+
+Make sure the all-day value is preserved through the ENTIRE flow.
+
+For example, if the UI sets:
+
+`allDay = true`
+
+but the repository/API/database removes or ignores this value, fix that mapping instead of only changing the Calendar widget.
+
+Also verify date/time conversion and timezone handling so that an all-day event does not move to the previous or next day.
+
+## STATE MANAGEMENT REQUIREMENTS
+
+Use the project's existing state-management approach.
+
+After creating/updating an event:
+
+* Emit/update the correct Calendar state.
+* Refresh only the required Calendar/event data.
+* Do not recreate the entire application.
+* Do not reset authentication state.
+* Do not reset the navigation stack.
+* Do not navigate to Home automatically.
+* Avoid unnecessary API calls or duplicate event loading.
+
+If BLoC is used:
+
+* Inspect the relevant Events, States, Bloc/Cubit handlers.
+* Ensure update success does not emit a state that causes the root application/router to rebuild.
+* Ensure Calendar state is refreshed correctly after update.
+
+## NAVIGATION REQUIREMENTS
+
+Preserve the original navigation stack.
+
+Example:
+
+Calendar
+→ Event Details
+→ Edit Event
+→ Save
+
+Expected:
+
+Calendar
+← Event Details/Edit completed
+
+NOT:
+
+Calendar
+→ Event Details
+→ Edit
+→ Save
+→ Home
+
+Do not use:
+
+* `pushAndRemoveUntil`
+* `pushReplacement` to Home
+* root navigation reset
+* application restart
+
+unless the existing architecture specifically requires it.
+
+If the edit screen can be opened from multiple parent screens, return using the existing navigation stack instead of hardcoding Calendar or Home.
+
+## TEST ALL SCENARIOS
+
+After implementing the fix, test at minimum:
+
+1. Create normal timed event.
+2. Create all-day event.
+3. Edit normal timed event.
+4. Edit all-day event.
+5. Change timed event → all-day event.
+6. Change all-day event → timed event.
+7. Save event and verify it stays on the correct parent screen.
+8. Open Calendar again and verify the event is still correct.
+9. Close and reopen the app and verify the event is still correct.
+10. Verify selected date does not shift because of timezone conversion.
+11. Verify recurrence/repeat still works.
+12. Verify existing event delete functionality still works.
+13. Verify event details still open correctly.
+14. Verify no duplicate events are created after editing.
+15. Verify no Home redirect occurs after saving.
+16. Verify all-day events appear in the correct all-day/whole-day area.
+
+## CODE QUALITY
+
+After fixing:
+
+* Remove any temporary debugging code.
+* Remove unnecessary reload logic.
+* Remove duplicate navigation logic if found.
+* Keep existing architecture.
+* Avoid large unrelated refactoring.
+* Add comments only where the behavior is non-obvious.
+* Make the implementation production-ready.
+
+Finally, provide:
+
+1. Root cause of Bug 1.
+2. Root cause of Bug 2.
+3. Files changed.
+4. What was changed in each file.
+5. How navigation is now preserved.
+6. How all-day/whole-day events are now stored and displayed.
+7. Tests performed and their results.
+8. Any remaining risk or edge case.

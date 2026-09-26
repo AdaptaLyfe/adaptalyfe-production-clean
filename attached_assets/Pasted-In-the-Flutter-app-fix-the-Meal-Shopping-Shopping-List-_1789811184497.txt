@@ -1,0 +1,98 @@
+In the Flutter app, fix the **Meal & Shopping → Shopping List → Manage Grocery Stores** flow.
+
+### Current Issue
+
+1. Go to **Meal & Shopping**.
+2. Open **Shopping List**.
+3. Click the **Manage** button.
+4. A **Manage Grocery Stores** dialog opens.
+5. Click **Add New Store**.
+6. The Add Store screen/dialog opens.
+7. Enter a grocery store name.
+8. Click the **Add Store** button.
+9. Currently, the **Add Store button does not work** and the store is not being added.
+
+### Required Fix
+
+Please inspect the existing Flutter code and fix the complete store-add flow.
+
+#### 1. Add Store Button
+
+* Make the **Add Store** button clickable and functional.
+* Validate that the store name is not empty.
+* If the store name is empty, show the existing validation/error style.
+* When the user enters a valid store name and taps **Add Store**, successfully create the store.
+
+#### 2. Store Saving
+
+Check how grocery stores are currently stored in the project:
+
+* If using Firebase/Firestore, verify the correct collection/document/path and write operation.
+* If using local storage/database/state management, verify that the store is correctly saved.
+* Reuse the existing repository/service/data-source architecture instead of creating a duplicate implementation.
+* Do not change the backend structure unless required to fix the issue.
+
+#### 3. State Management
+
+Check the existing BLoC/provider/state-management implementation.
+Make sure:
+
+* Add Store event/action is triggered.
+* Loading state works correctly.
+* Success state updates the grocery store list.
+* Error state is handled properly.
+* The UI rebuilds after successfully adding the store.
+
+If BLoC is already used, follow the existing BLoC pattern. Do not introduce another state-management solution.
+
+#### 4. Manage Grocery Stores Dialog
+
+After successfully adding a store:
+
+* Close the Add Store dialog/screen.
+* Return to **Manage Grocery Stores**.
+* Immediately display the newly added store in the list.
+* Do not require the user to restart the app or refresh manually.
+
+#### 5. Check Existing Store Functionality
+
+While fixing this issue, also verify:
+
+* Existing grocery stores are loaded correctly.
+* Existing stores are displayed correctly.
+* Add New Store works.
+* Add Store button works.
+* Newly added store persists after reopening Manage Grocery Stores.
+* Existing stores are not deleted or duplicated.
+* Store selection continues to work in the Shopping List.
+
+### Important
+
+Before making changes:
+
+1. Inspect the existing Meal & Shopping / Shopping List code.
+2. Find the exact code responsible for:
+
+   * Manage button
+   * Manage Grocery Stores dialog
+   * Add New Store
+   * Add Store button
+   * Store model
+   * Store repository/service
+   * BLoC/state management
+3. Identify why the Add Store button currently does nothing.
+4. Fix the root cause rather than creating a workaround.
+
+### UI Requirement
+
+Keep the existing UI, styling, spacing, colors, typography, and navigation unchanged unless a change is required for functionality.
+
+### Final Verification
+
+Test this complete flow:
+
+**Meal & Shopping → Shopping List → Manage → Manage Grocery Stores → Add New Store → Enter "Test Grocery Store" → Add Store → Store appears in Manage Grocery Stores**
+
+Also verify that reopening the Manage Grocery Stores dialog still shows the newly added store.
+
+Do not modify unrelated Meal & Shopping features.

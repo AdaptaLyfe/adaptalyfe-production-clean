@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Circle, Star, Plus, Clock, Edit3, Trash2, X } from "lucide-react";
+import { CheckCircle, Circle, Star, Plus, Clock, Trash2, X } from "lucide-react";
+import { FieldLabel } from "@/components/ui/field-label";
+import { optimisticallyUpdateDailyTaskCompletion } from "@/lib/daily-task-completion";
 
 const selectCls = "h-11 rounded-lg border border-input bg-background px-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 appearance-none text-center";
 
 function to24h(hour: string, minute: string, ampm: string) {
+  if (!hour || !minute) return "";
   let h = parseInt(hour, 10);
   if (ampm === "PM" && h !== 12) h += 12;
   if (ampm === "AM" && h === 12) h = 0;
@@ -16,13 +21,21 @@ function to24h(hour: string, minute: string, ampm: string) {
 }
 
 function from24h(val: string): { hour: string; minute: string; ampm: string } {
-  if (!val) return { hour: "12", minute: "00", ampm: "AM" };
+  if (!val) return { hour: "", minute: "", ampm: "AM" };
   const [hStr, mStr] = val.split(":");
   let h = parseInt(hStr, 10);
   const ampm = h >= 12 ? "PM" : "AM";
   if (h > 12) h -= 12;
   if (h === 0) h = 12;
   return { hour: String(h), minute: mStr || "00", ampm };
+}
+
+function getLocalCalendarDate(date = new Date()): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -46,11 +59,13 @@ function TimePicker({ value, onChange }: { value: string; onChange: (v: string) 
       <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
       <select className={selectCls} value={hour}
         onChange={e => { setHour(e.target.value); update(e.target.value, minute, ampm); }}>
+        <option value="" disabled>Hour</option>
         {hours.map(h => <option key={h} value={h}>{h}</option>)}
       </select>
       <span className="text-lg font-semibold text-muted-foreground">:</span>
       <select className={selectCls} value={minute}
         onChange={e => { setMinute(e.target.value); update(hour, e.target.value, ampm); }}>
+        <option value="" disabled>Min</option>
         {minutes.map(m => <option key={m} value={m}>{m}</option>)}
       </select>
       <select className={selectCls} style={{ minWidth: 60 }} value={ampm}
@@ -73,11 +88,13 @@ import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { trackTaskCompletion, trackFeatureUsage } from "@/lib/firebase";
 import type { DailyTask } from "@shared/schema";
+import { TaskJourneySummary } from "@/components/ai-ready";
+import { formatCategoryLabel } from "@/lib/display-labels";
 
 
 export default function DailyTasks() {
   const { isPremiumUser } = useSubscriptionEnforcement();
-  
+
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
     return (
@@ -147,11 +164,33 @@ export default function DailyTasks() {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: async ({ taskId, isCompleted, task }: { taskId: number; isCompleted: boolean; task?: any }) => {
-      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, { isCompleted });
+    mutationFn: async ({ taskId, isCompleted, date, task }: { taskId: number; isCompleted: boolean; date: string; task?: any }) => {
+      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
+        isCompleted,
+        date,
+      });
+    },
+    onMutate: async ({ taskId, isCompleted, date }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
+      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
+        currentTasks.map(task =>
+          task.id === taskId
+            ? optimisticallyUpdateDailyTaskCompletion(
+                task as DailyTask & { completionDates?: string[] },
+                date,
+                isCompleted,
+              )
+            : task,
+        ),
+      );
+
+      return { previousTasks };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/balance"] });
       
       const { isCompleted, task } = variables;
@@ -167,6 +206,16 @@ export default function DailyTasks() {
       toast({
         title: isCompleted ? "Task completed!" : "Task updated!",
         description,
+      });
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-tasks"], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -239,6 +288,7 @@ export default function DailyTasks() {
     }
     createTaskMutation.mutate({
       ...newTask,
+      scheduledTime: newTask.scheduledTime || null,
       pointValue: parseInt(newTask.pointValue as string) || 0,
       estimatedMinutes: parseInt(newTask.estimatedMinutes as string) || 15
     });
@@ -272,6 +322,7 @@ export default function DailyTasks() {
         taskId: editingTask.id,
         updates: {
           ...editTask,
+          scheduledTime: editTask.scheduledTime || null,
           pointValue: parseInt(editTask.pointValue as string) || 0,
           estimatedMinutes: parseInt(editTask.estimatedMinutes as string) || 15
         }
@@ -282,6 +333,10 @@ export default function DailyTasks() {
   const completedTasks = (tasks || []).filter(task => task.isCompleted).length;
   const totalTasks = (tasks || []).length;
   const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const nextTask = (tasks || []).find(task => !task.isCompleted);
+  const remainingMinutes = (tasks || [])
+    .filter(task => !task.isCompleted)
+    .reduce((total, task) => total + (task.estimatedMinutes || 0), 0);
 
   const tasksByCategory = (tasks || []).reduce((acc, task) => {
     if (!acc[task.category]) {
@@ -318,6 +373,14 @@ export default function DailyTasks() {
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Daily Tasks</h1>
+        <div className="mb-4">
+          <TaskJourneySummary
+            completedTasks={completedTasks}
+            totalTasks={totalTasks}
+            nextTaskTitle={nextTask?.title}
+            remainingMinutes={remainingMinutes}
+          />
+        </div>
         <Card className="border-t-4 border-vibrant-green">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3">
@@ -349,7 +412,7 @@ export default function DailyTasks() {
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <div className={`w-6 h-6 sm:w-8 sm:h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-lg flex-shrink-0`}></div>
-                <span className="capitalize text-base sm:text-lg">{category} Tasks</span>
+                <span className="text-base sm:text-lg">{formatCategoryLabel(category)} Tasks</span>
                 <span className="text-xs sm:text-sm font-normal text-gray-600">
                   ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length})
                 </span>
@@ -370,6 +433,7 @@ export default function DailyTasks() {
                       onClick={() => toggleTaskMutation.mutate({ 
                         taskId: task.id, 
                         isCompleted: !task.isCompleted,
+                        date: getLocalCalendarDate(),
                         task: task
                       })}
                       disabled={toggleTaskMutation.isPending}
@@ -412,15 +476,11 @@ export default function DailyTasks() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-blue-100 rounded-lg"
+                      <EditButton
                         onClick={() => handleEditTask(task)}
+                        aria-label={`Edit ${task.title}`}
                         data-testid={`button-edit-task-${task.id}`}
-                      >
-                        <Edit3 className="text-blue-600" size={18} />
-                      </Button>
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
@@ -463,9 +523,17 @@ export default function DailyTasks() {
       </div>
 
       {/* Add Task Dialog */}
-      {isAddDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      {isAddDialogOpen && typeof document !== "undefined" && createPortal(
+        <div
+          className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50"
+          style={{ paddingTop: "calc(5rem + var(--safe-area-inset-top))" }}
+          onClick={() => setIsAddDialogOpen(false)}
+        >
+          <div
+            className="responsive-modal-panel rounded-lg bg-white shadow-xl"
+            style={{ maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Daily Task</h2>
@@ -491,7 +559,7 @@ export default function DailyTasks() {
                 onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
               />
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Category</FieldLabel>
                 <select
                   value={newTask.category}
                   onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
@@ -508,7 +576,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Frequency</FieldLabel>
                 <select
                   value={newTask.frequency}
                   onChange={(e) => setNewTask({ ...newTask, frequency: e.target.value })}
@@ -522,7 +590,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Scheduled Time</FieldLabel>
                 <TimePicker
                   value={newTask.scheduledTime}
                   onChange={(v) => setNewTask({ ...newTask, scheduledTime: v })}
@@ -530,7 +598,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estimated Time (minutes)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Estimated Time (minutes)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -546,7 +614,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">How long will this task take? (1-480 minutes)</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -581,13 +649,14 @@ export default function DailyTasks() {
             </div>
           </div>
         </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Task Dialog */}
       {isEditDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4" onClick={() => setIsEditDialogOpen(false)}>
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Task</h2>
@@ -613,7 +682,7 @@ export default function DailyTasks() {
                 onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
               />
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Category</FieldLabel>
                 <select
                   value={editTask.category}
                   onChange={(e) => setEditTask({ ...editTask, category: e.target.value })}
@@ -630,7 +699,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Frequency</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Frequency</FieldLabel>
                 <select
                   value={editTask.frequency}
                   onChange={(e) => setEditTask({ ...editTask, frequency: e.target.value })}
@@ -644,7 +713,7 @@ export default function DailyTasks() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Scheduled Time (optional)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Scheduled Time</FieldLabel>
                 <TimePicker
                   value={editTask.scheduledTime}
                   onChange={(v) => setEditTask({ ...editTask, scheduledTime: v })}
@@ -652,7 +721,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">Leave blank for no specific time</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Estimated Time (minutes)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Estimated Time (minutes)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -668,7 +737,7 @@ export default function DailyTasks() {
                 <p className="text-xs text-gray-500">How long will this task take? (1-480 minutes)</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</label>
+                <FieldLabel optional className="text-sm font-medium text-gray-700">Point Value (awarded when completed)</FieldLabel>
                 <Input
                   type="text"
                   inputMode="numeric"

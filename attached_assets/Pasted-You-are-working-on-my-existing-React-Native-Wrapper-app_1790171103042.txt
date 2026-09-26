@@ -1,0 +1,191 @@
+You are working on my existing **React Native + Wrapper** application.
+
+Fix the following 2 bugs properly. Do NOT create a temporary workaround. First inspect the existing implementation, data flow, validation, API/service calls, wrapper communication, and state management. Preserve all existing functionality and UI.
+
+## BUG 1 — Resources > Local Emergency Resources
+
+### Problem
+
+Go to:
+
+**Resources → Local Emergency Resources**
+
+When the user clicks **"+ Add Resource"**, enters the required emergency resource details, and submits/saves the form, the resource is not successfully added.
+
+### Required fix
+
+1. Trace the complete flow:
+
+   * "+ Add Resource" button
+   * Add Resource form
+   * Form state
+   * Validation
+   * Submit/save handler
+   * API/service/repository call
+   * Wrapper communication, if applicable
+   * Backend response
+   * State/store update
+   * Local Emergency Resources list refresh
+
+2. Identify the actual root cause of why the resource is not being created.
+
+3. Fix the root cause rather than hiding the error or forcing the UI to show the resource as created.
+
+4. Verify that:
+
+   * User can open "+ Add Resource".
+   * User can enter all required details.
+   * Valid data is accepted.
+   * The save/create request is actually completed successfully.
+   * The newly created resource appears in **Local Emergency Resources** immediately after saving.
+   * The resource remains visible after leaving and reopening the screen.
+   * Existing resources are not affected.
+   * Duplicate resources are not accidentally created by multiple taps.
+   * Loading state is handled correctly.
+   * Save button cannot trigger multiple simultaneous requests.
+   * API/backend errors show the existing application's proper error handling.
+   * Form validation remains unchanged unless the current validation itself is causing the bug.
+
+5. If the React Native app communicates with a wrapper/native layer, verify the request/response contract and make sure the React Native side and wrapper side use the same:
+
+   * Field names
+   * Data types
+   * Required fields
+   * IDs
+   * Response structure
+
+6. Do not replace the existing architecture with a new architecture.
+
+7. Do not hardcode fake/local data just to make the resource appear in the list.
+
+---
+
+## BUG 2 — Daily Task: Time Cannot Be Blank
+
+### Problem
+
+In the **Daily Task** create/edit flow, the user cannot leave the task time blank.
+
+A Daily Task should be allowed to have **no specific time**.
+
+Example:
+
+Task:
+"Take medicine"
+
+Time:
+Blank / No specific time
+
+This should be valid.
+
+### Required behavior
+
+Update the Daily Task form so that:
+
+* Time is OPTIONAL.
+* User can select a specific time.
+* User can also leave the time completely blank.
+* Saving a task with no time must succeed.
+* Editing an existing task must allow the user to remove its previously selected time.
+* If the user clears/removes the time, the saved task should contain a proper `null`/empty value according to the existing backend data model.
+* Do NOT automatically assign a default time such as `12:00 AM`, `12:00 PM`, or the current time.
+* Do NOT convert a blank time into an invalid date/time.
+* Do NOT make the user select a time just to save the task.
+
+### Important
+
+Trace the complete Daily Task time flow:
+
+UI → form state → validation → request payload → API/service → backend → response → state/store → display.
+
+Check for:
+
+* Required validation
+* `time` field validation
+* Date/time parsing
+* Default time assignment
+* Form initialization
+* Edit-task behavior
+* API payload transformation
+* Backend schema requirements
+* Serialization/deserialization
+* Wrapper/native communication, if applicable
+
+If the frontend allows blank time but some lower layer rejects it, fix the actual data flow so `null`/empty time is handled consistently.
+
+For example, do not blindly send an invalid string such as:
+
+`""`
+
+if the API expects:
+
+`null`
+
+Use whatever format is already expected by the existing backend/API.
+
+---
+
+## Regression Protection
+
+After fixing both bugs, test these scenarios.
+
+### Local Emergency Resources
+
+1. Open Resources.
+2. Open Local Emergency Resources.
+3. Click "+ Add Resource".
+4. Enter valid data.
+5. Save.
+6. Confirm the resource appears in the list.
+7. Close/reopen the screen.
+8. Confirm it still exists.
+9. Edit the resource.
+10. Save again.
+11. Confirm the updated data appears correctly.
+12. Test invalid/incomplete data and confirm existing validation still works.
+
+### Daily Tasks
+
+Test all of these:
+
+1. Create task with a specific time → should save.
+2. Create task with no time → should save.
+3. Edit task with a time → change the time → should save.
+4. Edit task with a time → remove the time → should save.
+5. Edit task with no time → add a time → should save.
+6. Reopen the task → correct time/no-time state should remain.
+7. Existing Daily Tasks with times must continue working.
+8. Existing Daily Tasks without times must continue working.
+
+---
+
+## Important Development Rules
+
+* First inspect the existing code and identify the root cause.
+* Do not rewrite unrelated screens.
+* Do not change existing UI/design unless required.
+* Do not remove existing validation except where it incorrectly requires Daily Task time.
+* Do not change API contracts unless the current contract is actually incorrect.
+* Keep the existing React Native + Wrapper architecture.
+* Reuse existing services, hooks, stores, components, and utilities where appropriate.
+* Handle loading, success, and error states correctly.
+* Prevent duplicate submissions.
+* Check both create and edit flows.
+* Check persistence, not only UI state.
+* Check Android/iOS behavior if the affected functionality uses native/wrapper functionality.
+* Do not mark the bug as fixed until the complete create/save/reload flow works.
+
+## Final Response
+
+After making the changes, provide:
+
+1. Root cause of Bug 1.
+2. Root cause of Bug 2.
+3. Files changed.
+4. What was changed in each file.
+5. How the Local Emergency Resource save flow now works.
+6. How blank Daily Task time is now handled.
+7. Tests performed.
+8. Any remaining issue or limitation.
+
+Make the smallest safe changes necessary and ensure the fixes do not reopen after a reload, edit, or app restart.

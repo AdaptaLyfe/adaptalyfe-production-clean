@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Star, Zap, Crown } from "lucide-react";
 import { Link } from "wouter";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 interface PremiumFeaturePromptProps {
   title: string;
@@ -62,7 +63,7 @@ export default function PremiumFeaturePrompt({
             </Button>
           </Link>
           <p className="text-xs text-gray-500">
-            Start with a 7-day free trial
+            Start with a {FREE_TRIAL_DAYS}-day free trial
           </p>
         </div>
       </CardContent>

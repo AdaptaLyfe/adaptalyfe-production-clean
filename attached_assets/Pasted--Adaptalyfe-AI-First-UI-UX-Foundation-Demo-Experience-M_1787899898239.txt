@@ -1,0 +1,1195 @@
+# Adaptalyfe — AI-First UI/UX Foundation + Demo Experience
+
+## 🚨 MASTER RULE: ZERO REGRESSION + FUTURE AI FOUNDATION
+
+Build a **high-fidelity, demo-ready, production-quality UI/UX foundation** for Adaptalyfe's next-generation AI-first Task, Event, Routine and Independence experience.
+
+This UI will be used for:
+
+1. The upcoming product demo
+2. Future real AI feature development
+3. Future AI Guide intelligence
+4. Future contextual recommendations
+5. Future task/event automation
+6. Future personalization and independence workflows
+
+Therefore, **DO NOT build this as a temporary throwaway prototype.**
+
+Build the UI as a **reusable product foundation** that can initially run with existing data and isolated demo/mock states, but can later connect to real AI services without requiring a complete UI redesign.
+
+---
+
+# 🚨 PRIORITY 1 — DO NOT BREAK EXISTING FUNCTIONALITY
+
+The current Adaptalyfe application has already been developed and tested.
+
+Existing pages and workflows are working correctly.
+
+Treat the current application as a **stable production-like baseline**.
+
+### ABSOLUTELY DO NOT BREAK:
+
+* Existing Home functionality
+* Existing Task functionality
+* Existing Event/Calendar functionality
+* Existing navigation
+* Existing mobile navigation
+* Existing desktop navigation
+* Existing authentication
+* Existing caregiver functionality
+* Existing permissions
+* Existing API contracts
+* Existing database schema
+* Existing Task data model
+* Existing Event data model
+* Existing business logic
+* Existing settings
+* Existing payment/subscription functionality
+* Existing notifications
+* Existing React Query behavior
+* Existing Capacitor behavior
+* Existing Android functionality
+* Existing iOS functionality
+
+Do not refactor working functionality simply for code cleanliness.
+
+Do not rewrite working modules.
+
+Do not replace working flows with mock implementations.
+
+If an existing component already works, **preserve its functionality and enhance its presentation carefully**.
+
+### Implementation philosophy:
+
+**EXTEND → COMPOSE → REUSE → ISOLATE**
+
+Do NOT:
+
+**DELETE → REWRITE → REPLACE**
+
+---
+
+# 2. CURRENT AI STATE — DO NOT CHANGE
+
+The current Home page has **one active read-only AI module**:
+
+## Adaptalyfe Guide / Daily Guide
+
+It currently:
+
+* Generates a daily summary
+* Reads tasks
+* Reads appointments
+* Reads calendar events
+* Reads user preferences
+* Does not create user data
+* Does not edit user data
+* Does not delete user data
+
+There is also **one interactive AI feature**:
+
+## AdaptAI Chatbot
+
+It currently:
+
+* Accepts user messages
+* Returns AI responses
+* Is interactive
+* Is separate from the read-only Daily Guide
+
+### NOT CURRENTLY ACTIVE
+
+**Smart Dashboard Insights**
+
+There is code for this feature, but it is currently commented out and not rendered on Home.
+
+### DO NOT ACTIVATE IT.
+
+Also:
+
+**Daily Summary**
+
+is a normal data summary.
+
+### DO NOT represent it as a separate AI feature.
+
+---
+
+# 3. DO NOT IMPLEMENT NEW AI BACKEND IN THIS TASK
+
+This task is primarily frontend/UI/UX.
+
+Do NOT:
+
+* Create new AI agents
+* Create new AI APIs
+* Create new AI backend services
+* Change existing AI architecture
+* Change existing AI prompts
+* Change existing AI behavior
+* Activate Smart Dashboard Insights
+* Convert Daily Summary into AI
+* Modify the existing AdaptAI backend
+* Modify the existing Adaptalyfe Guide backend
+
+The current AI functionality must continue working exactly as it does today.
+
+---
+
+# 4. BUT THE NEW UI MUST BE READY FOR FUTURE AI
+
+This is extremely important.
+
+Although we are not implementing the future AI intelligence now, the UI architecture must be designed so that future AI functionality can plug into it naturally.
+
+For example, today's UI may display:
+
+**Demo Guidance**
+
+But later the exact same component should be able to receive:
+
+**Real AI Guidance**
+
+without redesigning the component.
+
+Similarly:
+
+Today:
+
+`mockGuideSuggestion`
+
+Future:
+
+`AI-generated GuideSuggestion`
+
+The visual component should remain the same.
+
+Design components around **meaningful states and actions**, not around hardcoded demo text.
+
+---
+
+# 5. FUTURE AI-READY UI ARCHITECTURE
+
+The UI should be capable of eventually supporting this conceptual flow:
+
+**USER CONTEXT**
+
+* Current time
+* Current activity
+* Tasks
+* Events
+* Routines
+* Preferences
+* Goals
+* History
+* Progress
+* Transitions
+
+↓
+
+**AI INTELLIGENCE LAYER**
+
+↓
+
+**UNDERSTAND**
+↓
+
+**PREDICT**
+↓
+
+**RECOMMEND**
+↓
+
+**GUIDE**
+↓
+
+**USER ACTION**
+
+↓
+
+**OUTCOME**
+
+↓
+
+**PROGRESS / LEARNING**
+
+Do not implement this backend now.
+
+But the UI should be designed around this future model.
+
+---
+
+# 6. PRODUCT VISION
+
+Adaptalyfe should not visually feel like:
+
+**Tasks + Calendar + Reminders + AI Chatbot**
+
+The future product should communicate:
+
+> Adaptalyfe understands what is happening in a person's day, helps them prepare for what comes next, supports them through tasks and transitions, and helps them gradually build independence.
+
+Design around:
+
+**LIFE CONTEXT**
+↓
+**AI UNDERSTANDS**
+↓
+**AI GUIDES**
+↓
+**USER ACTS**
+↓
+**PROGRESS**
+
+---
+
+# 7. PRIMARY DEMO STORY
+
+The most important goal is one coherent end-to-end experience.
+
+The presenter should be able to demonstrate:
+
+**HOME**
+↓
+See today's context
+↓
+Upcoming Event
+↓
+Event preparation
+↓
+Related Tasks
+↓
+Guide contextual guidance
+↓
+Start Task
+↓
+Task assistance
+↓
+Complete Task
+↓
+Event preparation progress
+↓
+Transition to next activity
+↓
+Encouragement
+↓
+Progress
+↓
+Caregiver visibility
+
+This should feel like ONE product experience.
+
+Not a collection of unrelated screens.
+
+---
+
+# 8. HOME / TODAY
+
+Enhance the existing Home page without breaking it.
+
+Use existing Task/Event data where available.
+
+The primary information hierarchy should be:
+
+### NOW
+
+What matters right now?
+
+### NEXT
+
+What is coming next?
+
+### LATER
+
+What is coming afterward?
+
+The Home experience should include:
+
+* Personalized greeting
+* Date/time context
+* Existing Adaptalyfe Guide output
+* Current activity
+* Upcoming Event
+* Related Tasks
+* Important reminders
+* Routine progress
+* Preparation status
+* Encouragement
+* Future AI contextual guidance UI
+* Primary next action
+
+Example:
+
+**Good morning, Ethan 👋**
+
+"Today has a few things coming up.
+Let's take it one step at a time."
+
+### NOW
+
+Morning Preparation
+
+3 steps remaining
+
+### NEXT
+
+🏫 School
+8:30 AM
+
+Before you leave:
+
+✓ Get dressed
+✓ Brush teeth
+○ Pack lunch
+○ Check school bag
+
+### LATER
+
+🏃 Soccer Practice
+4:30 PM
+
+### GUIDE
+
+"You have about 25 minutes before school.
+Want to start your morning preparation?"
+
+**Start Preparation**
+
+Use this only as an example.
+
+Do not hardcode the experience if existing data can drive it.
+
+---
+
+# 9. GUIDE EXPERIENCE
+
+The **Adaptalyfe Guide** should become the visual foundation for future AI-first experiences.
+
+Do not turn it into a generic chatbot.
+
+Create reusable components such as:
+
+* GuideCard
+* GuideMessage
+* ContextualSuggestion
+* GuideAction
+* TransitionPrompt
+* EncouragementCard
+* GuideInsight
+
+These components must support future real AI data.
+
+Possible future states:
+
+### MORNING
+
+"Good morning. Here's what matters today."
+
+### EVENT PREPARATION
+
+"School starts soon. You still have two preparation tasks."
+
+### TASK
+
+"That looks like a big task. Want to break it into smaller steps?"
+
+### TRANSITION
+
+"Your current activity is almost finished. Soccer is next."
+
+### MISSED TASK
+
+"You haven't completed this yet. Would you like to do it now or later?"
+
+### ENCOURAGEMENT
+
+"Nice work. Your morning routine is complete."
+
+### END OF DAY
+
+"You made good progress today."
+
+For now, these can be demo/mock UI states.
+
+Later, real AI should be able to populate the same components.
+
+---
+
+# 10. GUIDE VS ADAPTAI
+
+Keep these concepts separate.
+
+## Adaptalyfe Guide
+
+Purpose:
+
+**Proactive / contextual**
+
+It should eventually answer:
+
+> "What should I know or do right now?"
+
+## AdaptAI Chatbot
+
+Purpose:
+
+**Interactive / conversational**
+
+It answers:
+
+> "I have a question or need help."
+
+Do not merge the two backend systems.
+
+Do not rewrite the existing AdaptAI Chatbot.
+
+Do not change its current behavior.
+
+The new UI should make their roles visually understandable.
+
+---
+
+# 11. TASK UI
+
+Enhance the existing Task UI without changing Task functionality.
+
+Include:
+
+* Task title
+* Description
+* Due time
+* Priority
+* Status
+* Progress
+* Recurrence
+* Subtasks where supported
+* Related Event
+* Routine/category
+* Start
+* Complete
+* Guide contextual assistance
+
+Visual states:
+
+* Not Started
+* In Progress
+* Completed
+* Partially Completed
+* Overdue
+* AI Assisted
+
+Future AI should eventually be able to influence the contextual guidance around the task, but not through hardcoded UI architecture.
+
+---
+
+# 12. EVENT UI
+
+Enhance Event presentation without changing the existing Event/Calendar model.
+
+An Event should become a contextual container.
+
+Example:
+
+### 🏫 SCHOOL
+
+8:30 AM
+
+### PREPARATION
+
+✓ Get dressed
+✓ Morning routine
+○ Pack lunch
+○ Check school bag
+
+### GUIDE
+
+"You have 25 minutes before school.
+Two preparation steps remain."
+
+Primary action:
+
+**Continue Preparation**
+
+Future AI should eventually be able to dynamically determine preparation guidance.
+
+The UI must already support that future capability.
+
+---
+
+# 13. EVENT → TASK → GUIDE
+
+This is the most important relationship.
+
+Design the UI around:
+
+**EVENT**
+↓
+**PREPARATION**
+↓
+**TASKS**
+↓
+**GUIDE**
+↓
+**ACTION**
+↓
+**COMPLETION**
+↓
+**PROGRESS**
+
+Example:
+
+### SOCCER PRACTICE
+
+4:30 PM
+
+Preparation:
+
+○ Pack sports bag
+○ Fill water bottle
+○ Change clothes
+
+Guide:
+
+"Soccer starts in one hour.
+Let's get your things ready."
+
+After completion:
+
+✓ Sports bag ready
+✓ Water bottle ready
+✓ Clothes ready
+
+Guide:
+
+"You're ready for soccer."
+
+The UI architecture should later allow AI to determine these recommendations dynamically.
+
+---
+
+# 14. ROUTINE EXPERIENCE
+
+Create a future-ready Routine UI.
+
+Examples:
+
+* Morning Routine
+* School Preparation
+* After-School Routine
+* Evening Routine
+* Bedtime Routine
+
+Show:
+
+* Current step
+* Completed steps
+* Remaining steps
+* Progress
+* Estimated remaining time
+* Guide assistance
+* Encouragement
+
+The component architecture should eventually allow AI to:
+
+* Recommend the next step
+* Adjust guidance
+* Recognize difficulty
+* Suggest breaking down a task
+* Support transitions
+* Gradually reduce assistance
+
+Do not implement those AI decisions now.
+
+---
+
+# 15. INDEPENDENCE / PROGRESS
+
+Create a future-facing Progress experience.
+
+Do NOT activate Smart Dashboard Insights.
+
+Do NOT modify the existing commented-out feature.
+
+Create separate UI components if needed.
+
+Show concepts such as:
+
+* Routine consistency
+* Task completion
+* Successful transitions
+* Independence progress
+* Assistance required
+* Reduced assistance
+* Positive improvements
+* Recent achievements
+
+Focus on:
+
+**Growth**
+**Confidence**
+**Independence**
+
+not clinical scoring.
+
+Future AI should eventually be able to provide meaningful insights through these components.
+
+---
+
+# 16. CAREGIVER EXPERIENCE
+
+Preserve the existing caregiver dashboard.
+
+Do not replace it.
+
+Where safe, introduce future-ready insight components.
+
+Example:
+
+### ETHAN'S PROGRESS
+
+Morning preparation
+
+4 / 5 complete
+
+### GUIDE INSIGHT
+
+"Ethan completed today's preparation with less assistance."
+
+This can initially be demo data.
+
+Later, the same component should accept real AI-generated insights.
+
+Do not modify caregiver permissions or backend logic.
+
+---
+
+# 17. PROACTIVE GUIDANCE UI
+
+Create UI states for future proactive guidance:
+
+* Upcoming Event
+* Event preparation
+* Routine starting
+* Missed Task
+* Transition
+* Encouragement
+* Caregiver insight
+
+These should be reusable components rather than one-off mock screens.
+
+Do NOT implement actual notification infrastructure.
+
+---
+
+# 18. MOBILE — ANDROID + iOS
+
+This is critical.
+
+Adaptalyfe has:
+
+**Android app**
+
+and
+
+**iOS app**
+
+The existing architecture uses Capacitor with the shared React frontend.
+
+Therefore:
+
+**DO NOT create separate React UI implementations for Android and iOS.**
+
+Create a shared, mobile-first React UI that works correctly inside both Capacitor applications.
+
+Consider:
+
+### Android
+
+* Status bar
+* Touch targets
+* Bottom navigation
+* Back navigation
+* Keyboard
+* Sheets
+* Dialogs
+* Scrolling
+* Portrait layout
+
+### iOS
+
+* Safe areas
+* Notch/Dynamic Island
+* Home indicator
+* Bottom navigation
+* Touch targets
+* Keyboard
+* Sheets
+* Dialogs
+* Scrolling
+* Portrait layout
+
+The experience should feel intentionally designed for mobile.
+
+Do not simply shrink the desktop UI.
+
+---
+
+# 19. MOBILE NAVIGATION
+
+Preserve the existing navigation behavior.
+
+Do not replace navigation unnecessarily.
+
+The important user areas should remain easy to access:
+
+* Home / Today
+* Tasks
+* Events / Calendar
+* Progress
+* Guide
+
+If existing navigation already provides these or similar destinations, reuse it.
+
+---
+
+# 20. DESKTOP WEB
+
+Create a polished responsive desktop experience.
+
+Do not stretch mobile UI across desktop.
+
+Desktop can provide:
+
+* Today context
+* Timeline
+* Events
+* Related Tasks
+* Guide
+* Progress
+* Caregiver insights
+
+Maintain the same underlying product story.
+
+---
+
+# 21. RESPONSIVE DESIGN
+
+The UI must work across:
+
+* iPhone
+* Android phones
+* Tablets
+* Desktop Web
+
+Use the existing Tailwind responsive system.
+
+Support:
+
+* Small mobile widths
+* Common iPhone widths
+* Common Android widths
+* Tablet
+* Desktop
+
+Ensure:
+
+* Touch targets
+* Long text
+* Long task names
+* Long event names
+* Scrolling
+* Bottom navigation
+* Safe areas
+* Sticky actions
+* Dialogs
+* Sheets
+* Keyboard
+
+work correctly.
+
+---
+
+# 22. ACCESSIBILITY
+
+Accessibility is a core product requirement.
+
+Use:
+
+* Clear typography
+* Predictable hierarchy
+* Comfortable spacing
+* Large touch targets
+* Strong contrast
+* Color-independent status
+* Readable text
+* Consistent navigation
+* Minimal unnecessary animation
+
+Do not make the design childish.
+
+Do not make it overly clinical.
+
+---
+
+# 23. VISUAL DESIGN
+
+The design should feel:
+
+* Calm
+* Supportive
+* Modern
+* Premium
+* Predictable
+* Human
+* Accessible
+* Non-clinical
+* Non-childish
+* Emotionally encouraging
+
+Avoid:
+
+* Generic SaaS dashboards
+* Generic ChatGPT design
+* Excessive cards
+* Excessive gradients
+* Excessive colors
+* Excessive animations
+* Gamification overload
+* Dense dashboards
+* Information overload
+* Childish illustrations
+
+The user should immediately understand:
+
+**What is happening?**
+
+**What happens next?**
+
+**What can I do now?**
+
+---
+
+# 24. DEMO DATA
+
+If future functionality requires mock data, create an isolated frontend demo-data layer.
+
+Use one consistent fictional user:
+
+**Ethan**
+
+Example day:
+
+* Morning routine
+* School — 8:30 AM
+* Pack lunch
+* School preparation
+* Homework
+* Soccer — 4:30 PM
+* Evening routine
+
+The same data should appear consistently across:
+
+* Home
+* Tasks
+* Events
+* Guide
+* Routines
+* Progress
+* Caregiver
+
+Do not create random disconnected sample data.
+
+---
+
+# 25. DEMO STATE ARCHITECTURE
+
+Create a clean way to represent demo states.
+
+For example, conceptually:
+
+* idle
+* contextual
+* suggested
+* in-progress
+* completed
+* transition
+* encouragement
+
+Do not hardcode UI logic directly into individual screens.
+
+The future AI layer should eventually be able to produce equivalent states.
+
+The goal is:
+
+**Demo State → UI**
+
+Later:
+
+**Real AI State → Same UI**
+
+---
+
+# 26. FUTURE AI INTEGRATION PRINCIPLE
+
+Design every future-facing AI component so it has three layers:
+
+### 1. DATA
+
+What information does the component receive?
+
+Example:
+
+* Message
+* Context
+* Related Event
+* Related Task
+* Priority
+* Suggested action
+
+### 2. PRESENTATION
+
+How does the UI communicate it?
+
+Example:
+
+GuideCard
+
+### 3. ACTION
+
+What can the user do?
+
+Example:
+
+* Start
+* Complete
+* Continue
+* Snooze
+* Ask Guide
+* View Event
+
+This separation is important because the future AI backend should be able to provide the DATA without requiring a new UI.
+
+---
+
+# 27. EXISTING API / DATA SAFETY
+
+Use existing API patterns.
+
+Do not create duplicate API logic.
+
+If existing Task/Event data is already available, reuse it.
+
+Follow existing TanStack Query conventions.
+
+Do not introduce raw API calls where existing application infrastructure already exists.
+
+Do not change existing API contracts.
+
+---
+
+# 28. NO UNNECESSARY PACKAGES
+
+Use the existing technology stack:
+
+* React
+* TypeScript
+* Tailwind
+* shadcn/Radix
+* Lucide
+* TanStack Query
+* Existing project architecture
+* Capacitor
+
+Do not introduce another UI framework.
+
+Do not install unnecessary dependencies for animations or visual effects.
+
+---
+
+# 29. DO NOT TOUCH UNRELATED CODE
+
+Before implementation, inspect:
+
+* Home/Dashboard
+* Task pages
+* Calendar/Event pages
+* Navigation
+* Mobile navigation
+* Adaptalyfe Guide
+* AdaptAI Chatbot
+* Existing UI components
+* Responsive styling
+* Capacitor integration
+
+Then make the smallest safe changes.
+
+Do not modify unrelated areas.
+
+---
+
+# 30. VALIDATION
+
+Before completing the task, verify:
+
+## Existing functionality
+
+* Login
+* Home
+* Tasks
+* Events
+* Calendar
+* Navigation
+* Caregiver pages
+* Adaptalyfe Guide
+* AdaptAI Chatbot
+
+## New UI
+
+* Home demo
+* Event → Task flow
+* Guide contextual UI
+* Task states
+* Event preparation
+* Routine
+* Progress
+* Caregiver insight
+* Mobile layout
+* Android-compatible layout
+* iOS-compatible layout
+* Desktop responsive layout
+
+If a new UI change risks breaking existing functionality:
+
+**STOP and choose a safer implementation.**
+
+---
+
+# 31. PRIORITY ORDER
+
+When making implementation decisions:
+
+### PRIORITY 1
+
+**Do not break existing functionality.**
+
+### PRIORITY 2
+
+**Do not change existing AI behavior.**
+
+### PRIORITY 3
+
+**Preserve existing Task/Event data and flows.**
+
+### PRIORITY 4
+
+**Create a polished demo experience.**
+
+### PRIORITY 5
+
+**Create reusable components for future real AI.**
+
+### PRIORITY 6
+
+**Keep future AI integration clean and isolated.**
+
+Never sacrifice a higher priority for a lower one.
+
+---
+
+# 32. WHAT THIS UI MUST BECOME LATER
+
+This UI is expected to become the foundation for future Adaptalyfe AI development.
+
+Eventually, real AI may be able to:
+
+* Understand daily context
+* Identify the next important activity
+* Prepare users for transitions
+* Recommend tasks
+* Break complex tasks into steps
+* Adjust communication
+* Provide encouragement
+* Detect when assistance may be needed
+* Reduce assistance over time
+* Surface meaningful caregiver insights
+* Learn from outcomes
+* Personalize guidance
+
+The current task does NOT implement those capabilities.
+
+But the UI must already have the correct places and interaction patterns for them.
+
+Therefore, **do not build fake AI logic simply to make the demo work.**
+
+Build the correct UI foundation.
+
+---
+
+# 33. FINAL DEMO STORY
+
+When someone watches the demo, they should understand:
+
+> "Adaptalyfe doesn't just show someone a list of tasks and calendar events.
+>
+> It brings their day together, helps them understand what comes next, supports preparation for important transitions, helps them complete what matters, and creates a path toward greater independence."
+
+The UI should communicate this story without requiring a long explanation.
+
+---
+
+# 34. FINAL IMPLEMENTATION SUMMARY
+
+At the end, provide a concise report containing:
+
+1. Screens created
+2. Screens enhanced
+3. Existing components reused
+4. New reusable components created
+5. Existing components modified
+6. Demo/mock states introduced
+7. Existing AI functionality left unchanged
+8. Future AI-ready components created
+9. Android/iOS considerations
+10. Desktop responsive behavior
+11. Existing functionality verified
+12. Areas intentionally left for future AI/backend implementation
+
+---
+
+# 🚨 FINAL NON-NEGOTIABLE RULE
+
+**This is NOT a rewrite of Adaptalyfe.**
+
+**This is NOT a new backend implementation.**
+
+**This is NOT a database change.**
+
+**This is NOT an AI-agent implementation.**
+
+**This is NOT activation of Smart Dashboard Insights.**
+
+**This is NOT replacement of AdaptAI.**
+
+**This is NOT replacement of the existing Adaptalyfe Guide.**
+
+It is a:
+
+**PRODUCTION-QUALITY, AI-READY UI/UX FOUNDATION**
+
+that:
+
+**1. Preserves everything currently working.**
+
+**2. Uses existing Task/Event/Guide functionality wherever available.**
+
+**3. Provides isolated demo states for future capabilities.**
+
+**4. Works across Web, Android and iOS.**
+
+**5. Can later connect to real AI intelligence without requiring a UI redesign.**
+
+The existing application is the foundation.
+
+The new UI is an evolution of that foundation.
+
+**Protect the existing product first. Build the future AI experience on top of it.**

@@ -1,9 +1,79 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import path from "path";
-import { storage } from "./storage";
-import { buildDailyGuideContext } from "./ai-context";
-import { generateDailyGuide } from "./ai-service";
+import {
+  storage,
+  RewardRedemptionError,
+  TransitionSkillPriorityUnavailableError,
+  EmergencyResourceSchemaUnavailableError,
+} from "./storage";
+import {
+  parseNewTransitionSkillPriority,
+  transitionSkillPrioritySchema,
+} from "@shared/skill-priority";
+import { calendarDateWithOffset } from "./activity-streak";
+import {
+  AssignmentInputError,
+  parseAssignmentWriteInput,
+} from "./assignment-input";
+import {
+  CalendarEventWriteError,
+  normalizeCalendarEventWriteInput,
+} from "./calendar-event-input";
+import { buildAdaptAIContext, buildDailyGuideContext } from "./ai-context";
+import {
+  generateAdaptAIChatTurn,
+  generateDailyGuide,
+} from "./ai-service";
+import {
+  AdaptAIActionError,
+  buildActionContext,
+  executeAdaptAIAction,
+  isPotentialTaskActionRequest,
+} from "./ai-actions";
+import { buildTodayBriefing, isTodayBriefingRequest } from "./today-briefing";
+import {
+  buildMoodSleepResponse,
+  isMoodSleepRequest,
+  shouldIncludeMoodSleepContext,
+} from "./mood-sleep";
+import {
+  calculateSleepMetrics,
+  DEFAULT_SLEEP_GOAL_MINUTES,
+} from "@shared/sleep-calculations";
+import { getSleepDateValidationError } from "@shared/sleep-date-validation";
+import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
+import { buildNextAction, isNextActionRequest } from "./next-action";
+import {
+  buildTasksRoutinesResponse,
+  isTasksRoutinesRequest,
+} from "./tasks-routines";
+import {
+  buildAppointmentTransitionResponse,
+  isAppointmentTransitionRequest,
+} from "./appointment-transitions";
+import {
+  buildMedicationHealthResponse,
+  isExplicitMedicalInformationRequest,
+  isMedicationHealthRequest,
+} from "./medication-health";
+import {
+  buildGoalsProgressRewardsResponse,
+  isGoalsProgressRewardsRequest,
+} from "./goals-progress-rewards";
+import {
+  buildMealsGroceryResponse,
+  isMealsGroceryRequest,
+  shouldIncludeMealsGroceryContext,
+} from "./meals-grocery";
+import {
+  buildFinanceResponse,
+  isFinanceRequest,
+  shouldIncludeFinanceContext,
+} from "./finance";
+import { buildCaregiverContextResponse } from "./caregiver-context";
+import { normalizeCaregiverInvitationStatus } from "./caregiver-invitation-status";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import bankingRoutes from "./banking-routes";
@@ -13,6 +83,72 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import pg from "pg";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "./email-service";
+
+function isValidCalendarDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().startsWith(`${value}T`);
+}
+
+function getCurrentCalendarDate(req: any): string {
+  const now = new Date();
+  const timeZone = req.get?.("X-User-Timezone");
+  if (typeof timeZone === "string" && timeZone.trim() !== "") {
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(now);
+      const values = Object.fromEntries(
+        parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
+      );
+      const localDate = `${values.year}-${values.month}-${values.day}`;
+      if (isValidCalendarDate(localDate)) return localDate;
+    } catch {
+      // Fall through to the server calendar date for malformed timezone headers.
+    }
+  }
+
+  const offsetHeader = req.get?.("X-User-Timezone-Offset-Minutes");
+  if (typeof offsetHeader === "string" && offsetHeader.trim() !== "") {
+    const localDate = calendarDateWithOffset(now, Number(offsetHeader));
+    if (localDate && isValidCalendarDate(localDate)) return localDate;
+  }
+
+  return now.toISOString().slice(0, 10);
+}
+
+function getActivityDateTimeZone(req: any): string | number | undefined {
+  const timeZone = req.get?.("X-User-Timezone");
+  if (typeof timeZone === "string" && timeZone.trim() !== "") {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
+      return timeZone;
+    } catch {
+      // Fall through to the numeric offset when the timezone is malformed.
+    }
+  }
+
+  const offsetHeader = req.get?.("X-User-Timezone-Offset-Minutes");
+  if (typeof offsetHeader === "string" && offsetHeader.trim() !== "") {
+    const offset = Number(offsetHeader);
+    if (Number.isInteger(offset) && Math.abs(offset) <= 14 * 60) {
+      return offset;
+    }
+  }
+
+  return undefined;
+}
+
+function getRequestCalendarDate(req: any): string {
+  const requestedDate = req.query?.date;
+  if (isValidCalendarDate(requestedDate)) return requestedDate;
+  return getCurrentCalendarDate(req);
+}
 
 // Extend the session data interface
 declare module "express-session" {
@@ -37,23 +173,84 @@ function getStripeInstance() {
   });
 }
 
+function getStripePeriodEndSeconds(subscription: any): number {
+  // Newer Stripe API versions may expose the billing period on the
+  // subscription item instead of the top-level subscription.
+  const candidates = [
+    subscription?.current_period_end,
+    subscription?.items?.data?.[0]?.current_period_end,
+  ];
+  const periodEnd = candidates
+    .map((value) => typeof value === "number" ? value : Number(value))
+    .find((value) => Number.isFinite(value) && value > 0);
+
+  if (periodEnd === undefined) {
+    throw new Error(
+      `Stripe subscription ${subscription?.id || "unknown"} has no valid current_period_end`
+    );
+  }
+
+  return periodEnd;
+}
+
+function publicUser(user: any): any {
+  if (!user) return user;
+  const { password: _password, ...safeUser } = user;
+  return safeUser;
+}
+
+async function verifyAndUpgradePassword(user: any, password: string): Promise<boolean> {
+  const isHash = /^\$2[aby]?\$\d{2}\$/.test(user.password);
+  const valid = isHash
+    ? await bcrypt.compare(password, user.password)
+    : user.password === password;
+
+  if (valid && !isHash) {
+    await storage.updateUser(user.id, { password: await bcrypt.hash(password, 12) });
+  }
+
+  return valid;
+}
+
 // Stripe instance is created dynamically when needed
 import { 
   insertDailyTaskSchema, insertBillSchema, insertBankAccountSchema, insertMoodEntrySchema, 
-  insertAchievementSchema, insertCaregiverSchema, insertMessageSchema,
+  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
-  insertShoppingListSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
+  insertShoppingListSchema, updateShoppingItemPurchasedSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
   insertMedicationSchema, insertRefillOrderSchema, insertPersonalResourceSchema,
   insertBusScheduleSchema, insertEmergencyTreatmentPlanSchema,
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
   insertStreakTrackingSchema, insertVoiceInteractionSchema, insertQuickResponseSchema,
-  insertMessageReactionSchema, insertActivityPatternSchema
+  insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema,
+  insertTransitionSkillSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { initializeComprehensiveDemo } from "./demo-data";
 import { shouldAllowAutoLogin, shouldInitializeDemoData, PRODUCTION_CONFIG } from "./production-config";
 import { configureForProduction } from "./production-environment";
+
+const transitionSkillUpdateSchema = z
+  .object({
+    skillCategory: z.string().min(1).optional(),
+    skillName: z.string().min(1).optional(),
+    description: z.string().nullable().optional(),
+    currentLevel: z.number().int().min(1).max(10).optional(),
+    targetLevel: z.number().int().min(1).max(10).optional(),
+    priority: transitionSkillPrioritySchema.optional(),
+    practiceActivities: z.array(z.string()).optional(),
+  })
+  .refine(
+    (value) =>
+      value.currentLevel === undefined ||
+      value.targetLevel === undefined ||
+      value.currentLevel <= value.targetLevel,
+    {
+      message: "Current level cannot be greater than target level.",
+      path: ["targetLevel"],
+    },
+  );
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -210,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         {
           cookie: { ...cookie },
           userId: user.id,
-          user,
+          user: publicUser(user),
         } as any,
         (error: any) => {
           if (error) {
@@ -336,6 +533,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(401).json({ message: "Authentication required" });
   };
 
+  const genericResetResponse = {
+    message: "If an account with that email exists, we sent password reset instructions.",
+  };
+
+  app.post("/api/forgot-password", async (req, res) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+
+    try {
+      if (email) {
+        const user = await storage.getUserByEmail(email);
+        if (user?.email) {
+          const rawToken = crypto.randomBytes(32).toString("base64url");
+          const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+          await storage.invalidatePasswordResetTokens(user.id);
+          await storage.createPasswordResetToken({
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+          });
+
+          try {
+            const origin = `${req.protocol}://${req.get("host")}`;
+            await sendPasswordResetEmail({
+              to: user.email,
+              name: user.name,
+              token: rawToken,
+              origin,
+            });
+          } catch {
+            console.error("Password reset email delivery failed.");
+          }
+        }
+      }
+    } catch {
+      // Always return the same response, including when lookup or delivery fails.
+      console.error("Password reset request failed.");
+    }
+
+    return res.status(200).json(genericResetResponse);
+  });
+
+  app.get("/api/password-reset/validate", async (req, res) => {
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    if (!token) return res.status(400).json({ valid: false });
+
+    try {
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+      const valid = await storage.hasValidPasswordResetToken(tokenHash);
+      return res.json({ valid });
+    } catch {
+      console.error("Password reset token validation failed.");
+      return res.json({ valid: false });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    const token = typeof req.body?.token === "string" ? req.body.token : "";
+    const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+    if (!token || password.length < 8 || password.length > 128) {
+      return res.status(400).json({ message: "The reset link is invalid or the password does not meet the requirements." });
+    }
+
+    try {
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+      const validToken = await storage.hasValidPasswordResetToken(tokenHash);
+      if (!validToken) {
+        return res.status(400).json({ message: "This reset link is invalid, expired, or has already been used." });
+      }
+      const passwordHash = await bcrypt.hash(password, 12);
+      const didReset = await storage.resetPasswordWithToken(tokenHash, passwordHash);
+      if (!didReset) {
+        return res.status(400).json({ message: "This reset link is invalid, expired, or has already been used." });
+      }
+
+      return res.json({ message: "Password reset successfully. You can now sign in." });
+    } catch (error) {
+      console.error("Password reset failed:", error);
+      return res.status(500).json({ message: "Unable to reset your password right now. Please request a new link." });
+    }
+  });
+
   // User registration endpoint
   app.post("/api/register", async (req, res) => {
     try {
@@ -356,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create new user
       const user = await storage.createUser({
         username,
-        password, // In production, this would be hashed
+        password: await bcrypt.hash(password, 12),
         name,
         email: email || null
       });
@@ -364,7 +643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!nativeClient) {
         // Browser sessions remain cookie-based.
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) reject(err);
@@ -407,7 +686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUserByUsername(username);
       console.log("👤 User lookup result:", user ? `Found: ${user.username}` : "Not found");
       
-      if (!user || user.password !== password) {
+      if (!user || !(await verifyAndUpgradePassword(user, password))) {
         console.log("❌ Invalid credentials for:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -415,7 +694,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!nativeClient) {
         // Browser sessions remain cookie-based.
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) {
@@ -468,14 +747,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Simple password check for demo (in production, use proper hashing)
-      if (user.password !== password) {
+      if (!(await verifyAndUpgradePassword(user, password))) {
         console.log("Password mismatch for user:", username);
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
       if (!nativeClient) {
         req.session.userId = user.id;
-        req.session.user = user;
+        req.session.user = publicUser(user);
         await new Promise<void>((resolve, reject) => {
           req.session.save((error: any) => {
             if (error) {
@@ -606,6 +885,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               });
             });
             const { password, ...userResponse } = user;
+            await storage.refreshUserActivityStreak(
+              user.id,
+              getCurrentCalendarDate(req),
+              getActivityDateTimeZone(req),
+            );
+            const refreshedUser = await storage.getUserById(user.id);
+            if (refreshedUser) {
+              req.session.user = refreshedUser;
+              const { password: _, ...refreshedResponse } = refreshedUser;
+              return res.json(refreshedResponse);
+            }
             return res.json(userResponse);
           }
         } catch (error) {
@@ -623,6 +913,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const freshUser = await storage.getUserById(sessionUser.id);
       if (freshUser) {
+        await storage.refreshUserActivityStreak(
+          freshUser.id,
+          getCurrentCalendarDate(req),
+          getActivityDateTimeZone(req),
+        );
+        const refreshedUser = await storage.getUserById(freshUser.id);
+        if (refreshedUser) {
+          req.session.user = refreshedUser;
+          const { password, ...userResponse } = refreshedUser;
+          return res.json(userResponse);
+        }
         req.session.user = freshUser;
         const { password, ...userResponse } = freshUser;
         return res.json(userResponse);
@@ -688,9 +989,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = req.session.user;
-      const tasks = await storage.getDailyTasksByUser(user.id);
+      const tasks = await storage.getDailyTasksByUser(user.id, getRequestCalendarDate(req));
       res.json(tasks);
     } catch (error) {
+      console.error("Failed to fetch daily tasks:", error);
       res.status(500).json({ message: "Failed to fetch tasks" });
     }
   });
@@ -882,20 +1184,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = req.session.user;
       const taskId = parseInt(req.params.id);
       const { isCompleted } = req.body;
+      const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
+      const completionDate = req.body?.date || today;
+      if (typeof isCompleted !== "boolean" || !isValidCalendarDate(completionDate)) {
+        return res.status(400).json({ message: "A valid completion date and boolean status are required" });
+      }
       
       // Get the task to check ownership and point value
       const existingTask = await storage.getTaskById(taskId);
       if (!existingTask || existingTask.userId !== user.id) {
         return res.status(404).json({ message: "Task not found" });
       }
+      const taskForDate = (await storage.getDailyTasksByUser(user.id, completionDate))
+        .find(candidate => candidate.id === taskId);
+      const wasCompleted = Boolean(taskForDate?.isCompleted);
 
-      const task = await storage.updateTaskCompletion(taskId, isCompleted);
+      const task = await storage.updateTaskCompletion(
+        taskId,
+        isCompleted,
+        completionDate,
+        today,
+      );
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
 
+      try {
+        if (isCompleted && !wasCompleted) {
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
+        } else if (!isCompleted && wasCompleted) {
+          await storage.refreshUserActivityStreak(
+            user.id,
+            today,
+            activityTimeZone,
+          );
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after task completion:", streakError);
+      }
+
       // Award points when task is completed (not when uncompleted)
-      if (isCompleted && existingTask.pointValue && existingTask.pointValue > 0) {
+      if (isCompleted && !wasCompleted && existingTask.pointValue && existingTask.pointValue > 0) {
         try {
           await storage.updateUserPoints(
             user.id, 
@@ -913,7 +1243,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(task);
     } catch (error) {
-      console.error("Error updating task completion:", error);
+      console.error("Error updating task completion:", {
+        taskId: req.params.id,
+        userId: req.session.userId,
+        completionDate: req.body?.date,
+        error,
+      });
       res.status(500).json({ message: "Failed to update task" });
     }
   });
@@ -1134,14 +1469,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Achievements routes
-  app.get("/api/achievements", async (req, res) => {
-    const achievements = await storage.getAchievementsByUser(1);
-    res.json(achievements);
+  app.get("/api/achievements", requireAuth, async (req: any, res) => {
+    try {
+      const achievements = await storage.getAchievementsByUser(req.session.user.id);
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
   });
 
-  app.post("/api/achievements", async (req, res) => {
+  app.post("/api/achievements", requireAuth, async (req: any, res) => {
     try {
-      const data = insertAchievementSchema.parse({ ...req.body, userId: 1 });
+      const data = insertAchievementSchema.parse({
+        ...req.body,
+        userId: req.session.user.id,
+      });
       const achievement = await storage.createAchievement(data);
       res.json(achievement);
     } catch (error) {
@@ -1150,34 +1493,185 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Caregivers routes
-  app.get("/api/caregivers", async (req, res) => {
-    const caregivers = await storage.getCaregiversByUser(1);
-    res.json(caregivers);
+  app.get("/api/caregivers", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const relationships = await storage.getCareRelationshipsByUser(userId);
+      const linkedCaregivers = await Promise.all(
+        relationships.map(async (relationship) => {
+          const caregiver = await storage.getUser(relationship.caregiverId);
+          if (!caregiver) return null;
+
+          return {
+            id: caregiver.id,
+            userId,
+            name: caregiver.name || caregiver.username,
+            relationship: relationship.relationship,
+            email: caregiver.email,
+            isActive: relationship.isActive,
+          };
+        }),
+      );
+
+      if (linkedCaregivers.some(Boolean)) {
+        return res.json(linkedCaregivers.filter(Boolean));
+      }
+
+      // Keep legacy contacts visible for accounts that have not migrated to
+      // invitation-based caregiver relationships yet.
+      const legacyCaregivers = await storage.getCaregiversByUser(userId);
+      res.json(legacyCaregivers);
+    } catch (error) {
+      console.error("Error fetching caregivers:", error);
+      res.status(500).json({ message: "Failed to fetch caregivers" });
+    }
   });
 
-  app.post("/api/caregivers", async (req, res) => {
+  app.post("/api/caregivers", requireAuth, async (req: any, res) => {
     try {
-      const data = insertCaregiverSchema.parse({ ...req.body, userId: 1 });
-      const caregiver = await storage.createCaregiver(data);
-      res.json(caregiver);
+      const email = typeof req.body.email === "string"
+        ? req.body.email.trim()
+        : "";
+
+      if (!email) {
+        return res.status(400).json({
+          error: "A caregiver email is required to verify their app account.",
+        });
+      }
+
+      const caregiverAccount = await storage.getUserByEmail(email);
+      if (!caregiverAccount) {
+        return res.status(404).json({
+          error: "This caregiver does not have an account in the app.",
+        });
+      }
+
+      if (caregiverAccount.id === req.user.id) {
+        return res.status(400).json({
+          error: "You cannot add your own account as a caregiver.",
+        });
+      }
+
+      const existingRelationships = await storage.getCareRelationshipsByUser(req.user.id);
+      if (existingRelationships.some(
+        (relationship) =>
+          relationship.caregiverId === caregiverAccount.id && relationship.isActive,
+      )) {
+        return res.status(409).json({
+          error: "This caregiver is already in your support team.",
+        });
+      }
+
+      const data = insertCaregiverSchema.parse({
+        ...req.body,
+        userId: req.user.id,
+        name: caregiverAccount.name || caregiverAccount.username,
+        email: caregiverAccount.email || email,
+      });
+
+      await storage.createCareRelationship({
+        caregiverId: caregiverAccount.id,
+        userId: req.user.id,
+        relationship: data.relationship,
+        isPrimary: false,
+        isActive: true,
+        establishedVia: "manual",
+      });
+
+      res.json({
+        id: caregiverAccount.id,
+        userId: req.user.id,
+        name: caregiverAccount.name || caregiverAccount.username,
+        relationship: data.relationship,
+        email: caregiverAccount.email || email,
+        isActive: true,
+      });
     } catch (error) {
+      console.error("Error adding caregiver:", error);
       res.status(400).json({ message: "Invalid caregiver data" });
     }
   });
 
   // Messages routes
-  app.get("/api/messages", async (req, res) => {
-    const messages = await storage.getMessagesByUser(1);
-    res.json(messages);
+  app.get("/api/messages", requireAuth, async (req: any, res) => {
+    try {
+      const messages = await storage.getMessagesByUser(req.user.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
   });
 
-  app.post("/api/messages", async (req, res) => {
+  app.post("/api/messages", requireAuth, async (req: any, res) => {
     try {
-      const data = insertMessageSchema.parse({ ...req.body, userId: 1 });
+      const userId = req.user.id;
+      const caregiverId = Number(req.body.caregiverId);
+      if (!Number.isInteger(caregiverId) || caregiverId < 1) {
+        return res.status(400).json({ message: "A valid caregiver is required" });
+      }
+
+      const relationships = await storage.getCareRelationshipsByUser(userId);
+      const connectedCaregiver = relationships.find(
+        (relationship) =>
+          relationship.caregiverId === caregiverId && relationship.isActive,
+      );
+
+      if (!connectedCaregiver) {
+        return res.status(403).json({
+          message: "This caregiver is not connected to your account. Ask them to accept a caregiver invitation first.",
+        });
+      }
+
+      const data = insertMessageSchema.parse({
+        ...req.body,
+        userId,
+        caregiverId,
+        fromUser: true,
+      });
       const message = await storage.createMessage(data);
       res.json(message);
     } catch (error) {
+      console.error("Error creating message:", error);
       res.status(400).json({ message: "Invalid message data" });
+    }
+  });
+
+  // Messages received by the authenticated caregiver. The optional userId
+  // keeps the existing caregiver dashboard's selected-recipient view scoped.
+  app.get("/api/caregiver/messages", requireAuth, async (req: any, res) => {
+    try {
+      const caregiverId = req.user.id;
+      const requestedUserId = req.query.userId
+        ? Number(req.query.userId)
+        : undefined;
+
+      if (
+        requestedUserId !== undefined &&
+        (!Number.isInteger(requestedUserId) || requestedUserId < 1)
+      ) {
+        return res.status(400).json({ message: "Invalid care recipient" });
+      }
+
+      const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
+      if (
+        requestedUserId !== undefined &&
+        !relationships.some(
+          (relationship) =>
+            relationship.userId === requestedUserId && relationship.isActive,
+        )
+      ) {
+        return res.status(403).json({ message: "You are not connected to this care recipient" });
+      }
+
+      const messages = await storage.getMessagesByCaregiver(
+        caregiverId,
+        requestedUserId,
+      );
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching caregiver messages:", error);
+      res.status(500).json({ message: "Failed to fetch caregiver messages" });
     }
   });
 
@@ -1486,31 +1980,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/assignments", async (req: any, res) => {
+    if (!req.session.userId || !req.session.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    let assignmentData;
+    try {
+      assignmentData = parseAssignmentWriteInput(req.body);
+    } catch (error) {
+      if (!(error instanceof AssignmentInputError)) {
+        console.error("Failed to validate assignment input:", error);
+        return res.status(500).json({ message: "Failed to create assignment" });
+      }
+      return res.status(400).json({
+        message: "Invalid assignment data",
+        error: error.message,
+      });
+    }
+
+    try {
+      const assignment = await storage.createAssignment({
+        ...assignmentData,
+        userId: req.session.user.id,
+      });
+      return res.json(assignment);
+    } catch (error) {
+      console.error("Failed to create assignment:", error);
+      return res.status(500).json({ message: "Failed to create assignment" });
+    }
+  });
+
+  app.patch("/api/assignments/:id", async (req: any, res) => {
+    if (!req.session.userId || !req.session.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    const assignmentId = Number(req.params.id);
+    if (!Number.isSafeInteger(assignmentId) || assignmentId <= 0) {
+      return res.status(400).json({ message: "Invalid assignment id" });
+    }
+
+    let assignmentData;
+    try {
+      assignmentData = parseAssignmentWriteInput(req.body);
+    } catch (error) {
+      if (!(error instanceof AssignmentInputError)) {
+        console.error("Failed to validate assignment input:", error);
+        return res.status(500).json({ message: "Failed to update assignment" });
+      }
+      return res.status(400).json({
+        message: "Invalid assignment data",
+        error: error.message,
+      });
+    }
+
+    try {
+      const assignment = await storage.updateAssignment(
+        assignmentId,
+        req.session.user.id,
+        assignmentData,
+      );
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      return res.json(assignment);
+    } catch (error) {
+      console.error("Failed to update assignment:", error);
+      return res.status(500).json({ message: "Failed to update assignment" });
+    }
+  });
+
+  app.delete("/api/assignments/:id", async (req: any, res) => {
     try {
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      
-      const user = req.session.user;
-      
-      // Convert dueDate string to proper timestamp
-      const dueDate = new Date(req.body.dueDate);
-      if (isNaN(dueDate.getTime())) {
-        throw new Error("Invalid due date provided");
+      const assignmentId = Number.parseInt(req.params.id, 10);
+      if (!Number.isInteger(assignmentId)) {
+        return res.status(400).json({ message: "Invalid assignment id" });
       }
-      
-      const assignmentData = { 
-        ...req.body, 
-        userId: user.id,
-        dueDate: dueDate
-      };
-      
-      const assignment = await storage.createAssignment(assignmentData);
-      
-      res.json(assignment);
+      const deleted = await storage.deleteAssignment(
+        assignmentId,
+        req.session.user.id,
+      );
+      if (!deleted) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.status(204).send();
     } catch (error) {
-      console.error("Failed to create assignment:", error);
-      res.status(400).json({ message: "Invalid assignment data", error: error instanceof Error ? error.message : "Unknown error" });
+      console.error("Error deleting assignment:", error);
+      res.status(500).json({ message: "Failed to delete assignment" });
     }
   });
 
@@ -1588,6 +2147,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating study session:", error);
       res.status(500).json({ message: "Failed to update study session" });
+    }
+  });
+
+  app.delete("/api/study-sessions/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const sessionId = Number.parseInt(req.params.id, 10);
+      if (!Number.isInteger(sessionId)) {
+        return res.status(400).json({ message: "Invalid study session id" });
+      }
+      const deleted = await storage.deleteStudySession(sessionId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Study session not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting study session:", error);
+      res.status(500).json({ message: "Failed to delete study session" });
     }
   });
 
@@ -1701,14 +2281,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/transition-skills", async (req: any, res) => {
+  app.get("/api/transition-skills", requireAuth, async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
-      const user = req.session.user;
-      const skills = await storage.getTransitionSkillsByUser(user.id);
+      const skills = await storage.getTransitionSkillsByUser(req.user.id);
       res.json(skills);
     } catch (error) {
       console.error("Failed to fetch transition skills:", error);
@@ -1716,54 +2291,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/transition-skills", async (req: any, res) => {
+  app.post("/api/transition-skills", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const skillData = {
         ...req.body,
-        userId: user.id
+        userId: req.user.id
       };
-      
-      const skill = await storage.createTransitionSkill(skillData);
+
+      const validatedSkillData = insertTransitionSkillSchema.parse(skillData);
+      const skill = await storage.createTransitionSkill({
+        ...validatedSkillData,
+        priority: parseNewTransitionSkillPriority(validatedSkillData.priority),
+      });
       res.json(skill);
     } catch (error) {
       console.error("Failed to create transition skill:", error);
-      res.status(500).json({ message: "Failed to create transition skill" });
+      const isValidationError = error instanceof z.ZodError;
+      const isPrioritySchemaError =
+        error instanceof TransitionSkillPriorityUnavailableError;
+      res.status(isValidationError ? 400 : isPrioritySchemaError ? 503 : 500).json({
+        message: isValidationError
+          ? error.issues[0]?.message || "Invalid transition skill data"
+          : isPrioritySchemaError
+            ? error.message
+          : "Unable to save this skill right now. Please try again.",
+      });
     }
   });
 
-  app.patch("/api/transition-skills/:id", async (req: any, res) => {
+  app.patch("/api/transition-skills/:id", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      
       const skillId = parseInt(req.params.id);
-      const updateData = req.body;
+      if (!Number.isInteger(skillId) || skillId <= 0) {
+        return res.status(400).json({ message: "Invalid transition skill id" });
+      }
+
+      const updateData = transitionSkillUpdateSchema.parse(req.body);
       
-      const skill = await storage.updateTransitionSkill(skillId, updateData);
+      const skill = await storage.updateTransitionSkill(
+        skillId,
+        req.user.id,
+        updateData,
+      );
+      if (!skill) {
+        return res.status(404).json({ message: "Transition skill not found" });
+      }
       res.json(skill);
     } catch (error) {
       console.error("Failed to update transition skill:", error);
-      res.status(500).json({ message: "Failed to update transition skill" });
+      const isValidationError = error instanceof z.ZodError;
+      const isPrioritySchemaError =
+        error instanceof TransitionSkillPriorityUnavailableError;
+      res.status(isValidationError ? 400 : isPrioritySchemaError ? 503 : 500).json({
+        message: error instanceof z.ZodError
+          ? error.issues[0]?.message || "Invalid transition skill data"
+          : isPrioritySchemaError
+            ? error.message
+            : "Failed to update transition skill",
+      });
     }
   });
 
-  app.delete("/api/transition-skills/:id", async (req: any, res) => {
+  app.delete("/api/transition-skills/:id", requireAuth, async (req: any, res) => {
     try {
-      const user = req.session?.user || req.user;
-      if (!user) {
-        return res.status(401).json({ message: "Authentication required" });
+      const skillId = parseInt(req.params.id);
+      if (!Number.isInteger(skillId) || skillId <= 0) {
+        return res.status(400).json({ message: "Invalid transition skill id" });
       }
       
-      const skillId = parseInt(req.params.id);
-      
-      await storage.deleteTransitionSkill(skillId);
+      const deleted = await storage.deleteTransitionSkill(skillId, req.user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Transition skill not found" });
+      }
       res.json({ message: "Transition skill deleted successfully" });
     } catch (error) {
       console.error("Failed to delete transition skill:", error);
@@ -1791,17 +2390,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      // Convert date strings to Date objects
       const eventData = {
-        ...req.body,
+        ...normalizeCalendarEventWriteInput(req.body),
         userId: req.session.userId,
-        startDate: new Date(req.body.startDate),
-        endDate: req.body.endDate ? new Date(req.body.endDate) : null
       };
       
       const event = await storage.createCalendarEvent(eventData);
       res.json(event);
     } catch (error) {
+      if (error instanceof CalendarEventWriteError) {
+        return res.status(400).json({ message: error.message });
+      }
       console.error("Failed to create calendar event:", error);
       res.status(500).json({ message: "Failed to create calendar event" });
     }
@@ -1809,26 +2408,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/calendar-events/:id", async (req, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user || req.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
       const eventId = parseInt(req.params.id);
       
-      // Convert date strings to Date objects if they exist
-      const updateData = {
-        ...req.body
-      };
-      if (req.body.startDate) {
-        updateData.startDate = new Date(req.body.startDate);
-      }
-      if (req.body.endDate) {
-        updateData.endDate = new Date(req.body.endDate);
-      }
+      const updateData = normalizeCalendarEventWriteInput(req.body, true);
       
       const event = await storage.updateCalendarEvent(eventId, updateData);
       res.json(event);
     } catch (error) {
+      if (error instanceof CalendarEventWriteError) {
+        return res.status(400).json({ message: error.message });
+      }
       console.error("Failed to update calendar event:", error);
       res.status(500).json({ message: "Failed to update calendar event" });
     }
@@ -1836,7 +2429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/calendar-events/:id", async (req, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user || req.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -1885,15 +2478,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/meal-plans/:id/completion", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       const mealPlanId = parseInt(req.params.id);
       const { isCompleted } = req.body;
+      const mealPlans = await storage.getMealPlansByUser(user.id);
+      const existingMealPlan = mealPlans.find((mealPlan) => mealPlan.id === mealPlanId);
+      if (!existingMealPlan) {
+        return res.status(404).json({ message: "Meal plan not found" });
+      }
       const mealPlan = await storage.updateMealPlanCompletion(mealPlanId, isCompleted);
       if (!mealPlan) {
         return res.status(404).json({ message: "Meal plan not found" });
       }
+      const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
+      try {
+        if (isCompleted) {
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
+        } else {
+          await storage.refreshUserActivityStreak(user.id, today, activityTimeZone);
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after meal completion:", streakError);
+      }
       res.json(mealPlan);
     } catch (error) {
       res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.delete("/api/meal-plans/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const mealPlanId = Number.parseInt(req.params.id, 10);
+      if (Number.isNaN(mealPlanId)) {
+        return res.status(400).json({ message: "Invalid meal plan ID" });
+      }
+
+      const deleted = await storage.deleteMealPlan(mealPlanId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Meal plan not found" });
+      }
+
+      res.json({ message: "Meal plan deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting meal plan:", error);
+      res.status(400).json({ message: "Invalid meal plan request" });
     }
   });
 
@@ -1957,15 +2594,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/shopping-lists/:id/purchased", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       const itemId = parseInt(req.params.id);
-      const { isPurchased, actualCost } = req.body;
+      const { isPurchased, actualCost } = updateShoppingItemPurchasedSchema.parse(req.body);
+      const shoppingItems = await storage.getShoppingListsByUser(user.id);
+      const existingItem = shoppingItems.find((item) => item.id === itemId);
+      if (!existingItem) {
+        return res.status(404).json({ message: "Shopping item not found" });
+      }
       const item = await storage.updateShoppingItemPurchased(itemId, isPurchased, actualCost);
       if (!item) {
         return res.status(404).json({ message: "Shopping item not found" });
       }
+      const today = getCurrentCalendarDate(req);
+      const activityTimeZone = getActivityDateTimeZone(req);
+      try {
+        if (isPurchased) {
+          await storage.recordUserActivity(user.id, today, activityTimeZone);
+        } else {
+          await storage.refreshUserActivityStreak(user.id, today, activityTimeZone);
+        }
+      } catch (streakError) {
+        console.error("Error updating activity streak after shopping completion:", streakError);
+      }
       res.json(item);
     } catch (error) {
       res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.delete("/api/shopping-lists/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const itemId = Number.parseInt(req.params.id, 10);
+      if (Number.isNaN(itemId)) {
+        return res.status(400).json({ message: "Invalid shopping item ID" });
+      }
+      const deleted = await storage.deleteShoppingListItem(itemId, user.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Shopping item not found" });
+      }
+      res.json({ message: "Shopping item deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting shopping item:", error);
+      res.status(400).json({ message: "Invalid shopping item request" });
     }
   });
 
@@ -1983,7 +2661,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/grocery-stores", async (req: any, res) => {
     try {
       const userId = req.session?.user?.id || 1;
-      const data = { ...req.body, userId };
+      const data = insertGroceryStoreSchema.parse({ ...req.body, userId });
       const store = await storage.createGroceryStore(data);
       res.json(store);
     } catch (error) {
@@ -1995,7 +2673,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session?.user?.id || 1;
       const storeId = parseInt(req.params.id);
-      const store = await storage.updateGroceryStore(storeId, req.body);
+      const data = insertGroceryStoreSchema.omit({ userId: true }).partial().parse(req.body);
+      const store = await storage.updateGroceryStore(storeId, data);
       if (!store) {
         return res.status(404).json({ message: "Grocery store not found" });
       }
@@ -2020,9 +2699,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency resources routes
-  app.get("/api/emergency-resources", async (req: any, res) => {
+  app.get("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.user?.id || 1;
+      const userId = req.user.id;
       const resources = await storage.getEmergencyResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
@@ -2031,22 +2710,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/emergency-resources", async (req: any, res) => {
+  app.post("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = req.session?.user?.id || 1;
-      const resourceData = { ...req.body, userId };
+      const userId = req.user.id;
+      const resourceData = insertEmergencyResourceSchema.parse({ ...req.body, userId });
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
       console.error("Error creating emergency resource:", error);
+      if (error instanceof EmergencyResourceSchemaUnavailableError) {
+        return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Please provide a resource name and type.",
+          errors: error.flatten().fieldErrors,
+        });
+      }
       res.status(500).json({ message: "Failed to create emergency resource" });
     }
   });
 
-  app.put("/api/emergency-resources/:id", async (req: any, res) => {
+  app.put("/api/emergency-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const updates = req.body;
+      const resources = await storage.getEmergencyResourcesByUser(
+        req.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Emergency resource not found" });
+      }
+
+      const updates = { ...req.body };
+      delete updates.userId;
       const resource = await storage.updateEmergencyResource(resourceId, updates);
       
       if (!resource) {
@@ -2056,13 +2752,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(resource);
     } catch (error) {
       console.error("Error updating emergency resource:", error);
+      if (error instanceof EmergencyResourceSchemaUnavailableError) {
+        return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
       res.status(500).json({ message: "Failed to update emergency resource" });
     }
   });
 
-  app.delete("/api/emergency-resources/:id", async (req: any, res) => {
+  app.delete("/api/emergency-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getEmergencyResourcesByUser(
+        req.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Emergency resource not found" });
+      }
+
       const success = await storage.deleteEmergencyResource(resourceId);
       
       if (!success) {
@@ -2148,87 +2854,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI Chatbot API endpoints
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", requireAuth, async (req: any, res) => {
     try {
-      const { message, userId } = req.body;
+      const { message } = req.body ?? {};
       
-      if (!message || !userId) {
-        return res.status(400).json({ error: "Message and userId are required" });
+      if (typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      if (message.trim().length > 4000) {
+        return res.status(400).json({ error: "Message is too long" });
       }
 
-      // Get user data for context
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
+      // The authenticated session is always the viewer identity. A caregiver
+      // may request a care recipient only through the permission-checked
+      // careRecipientId path; arbitrary userId values remain ignored.
+      const viewerUserId: number = req.session.userId;
+      const requestedCareRecipientId = req.body?.careRecipientId;
+      const userId =
+        requestedCareRecipientId === undefined
+          ? viewerUserId
+          : Number(requestedCareRecipientId);
+      if (!Number.isInteger(userId) || userId < 1) {
+        return res.status(400).json({ error: "careRecipientId must be a valid user ID" });
       }
+      const todayBriefingRequested = isTodayBriefingRequest(message);
+      const appointmentRequested = isAppointmentTransitionRequest(message);
+      const medicationRequested = isMedicationHealthRequest(message);
+      const nextActionRequested = isNextActionRequest(message);
+      const clientTime = {
+        localDate: typeof req.body?.localDate === "string" ? req.body.localDate : undefined,
+        localTime: typeof req.body?.localTime === "string" ? req.body.localTime : undefined,
+        timezone: typeof req.body?.timezone === "string" ? req.body.timezone : undefined,
+      };
+      const context = await buildAdaptAIContext(
+        userId,
+        { name: typeof req.session.user?.name === "string" ? req.session.user.name : "" },
+        clientTime,
+        storage,
+        {
+          includeMedicalInfo: isExplicitMedicalInformationRequest(message),
+          includeAppointments:
+            todayBriefingRequested || appointmentRequested || nextActionRequested,
+          includeMedicationInfo: medicationRequested,
+          includeMedicationReminders: todayBriefingRequested || nextActionRequested,
+          includeMoodSleep:
+            shouldIncludeMoodSleepContext(message) || todayBriefingRequested,
+          includeMealsGrocery:
+            shouldIncludeMealsGroceryContext(message) || todayBriefingRequested,
+          includeFinance: shouldIncludeFinanceContext(message) || todayBriefingRequested,
+          viewerUserId,
+        }
+      );
+      const actionContext =
+        userId === viewerUserId
+          ? buildActionContext(await storage.getDailyTasksByUser(viewerUserId))
+          : undefined;
+      const caregiverResponse = buildCaregiverContextResponse(message, context);
+      let response: string;
+      let action;
+      let responseType = "text";
+      let notice: string | undefined;
 
-      // Create enhanced system prompt with user context
-      const systemPrompt = `You are AdaptAI, a supportive AI assistant for AdaptaLyfe, an app designed to help individuals with developmental disabilities build independence and confidence.
-
-User context:
-- Name: ${user.name || user.username}
-- Subscription: ${user.subscriptionTier || 'basic'}
-
-Core Guidelines:
-- Use simple, clear language that's easy to understand
-- Be encouraging, patient, and genuinely supportive
-- Focus on building independence, confidence, and life skills
-- Break complex tasks into simple, manageable steps
-- Celebrate small wins and progress
-- Be warm and friendly, like a helpful friend
-
-Response Style:
-- Keep responses helpful but concise (2-4 sentences when possible)
-- Use bullet points for step-by-step instructions
-- Offer specific, actionable advice
-- Ask follow-up questions to be more helpful
-- Use positive, encouraging language
-
-Special Situations:
-- If the user seems distressed, provide emotional support and suggest contacting their caregiver
-- For medical questions, remind them to consult healthcare professionals
-- For app-specific questions, guide them to the relevant features
-- If they share accomplishments, celebrate with them enthusiastically
-
-App Features to Reference:
-- Daily Tasks for planning and tracking activities
-- Financial section for budgeting and bill management
-- Mood Tracking for emotional wellness
-- Medical/Pharmacy for health management
-- Caregiver features for staying connected
-- Meal Planning for nutrition and cooking
-- Calendar for appointments and scheduling
-
-User message: "${message}"
-
-Provide a helpful, encouraging response:`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
-        ],
-        max_tokens: 400,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.3,
-        presence_penalty: 0.3,
-      });
-
-      const response = completion.choices[0]?.message?.content || "I'm here to help! Could you ask me again?";
+      if (todayBriefingRequested) {
+        response = buildTodayBriefing(context);
+      } else if (caregiverResponse) {
+        response = caregiverResponse;
+      } else if (isMealsGroceryRequest(message)) {
+        response = buildMealsGroceryResponse(message, context);
+      } else if (isFinanceRequest(message)) {
+        response = buildFinanceResponse(message, context);
+      } else if (
+        isAppointmentTransitionRequest(message) &&
+        (message.trim().toLowerCase() !== "what's next?" ||
+          Boolean(context.appointments?.today?.length || context.appointments?.upcoming))
+      ) {
+        response = buildAppointmentTransitionResponse(message, context);
+      } else if (medicationRequested) {
+        response = buildMedicationHealthResponse(message, context);
+      } else if (isMoodSleepRequest(message)) {
+        response = buildMoodSleepResponse(message, context);
+      } else if (
+        isGoalsProgressRewardsRequest(message) &&
+        !message.trim().toLowerCase().includes("how am i doing today")
+      ) {
+        response = buildGoalsProgressRewardsResponse(message, context);
+      } else if (isNextActionRequest(message)) {
+        response = buildNextAction(context);
+      } else if (
+        isTasksRoutinesRequest(message) &&
+        !isPotentialTaskActionRequest(message)
+      ) {
+        response = buildTasksRoutinesResponse(message, context);
+      } else {
+        const chatTurn = await generateAdaptAIChatTurn(
+          message,
+          context,
+          actionContext,
+        );
+        response = chatTurn.message;
+        action = chatTurn.action;
+        if (chatTurn.fallback) {
+          responseType = "fallback";
+          notice = "AdaptAI is temporarily unavailable. Showing safe guidance instead.";
+        }
+      }
       
       res.json({ 
         message: response,
-        type: "text"
+        type: responseType,
+        ...(notice ? { notice } : {}),
+        ...(action
+          ? {
+              action,
+              actionRequiresConfirmation: true,
+            }
+          : {}),
       });
     } catch (error: any) {
       console.error("Error in chat endpoint:", error);
       
       // Handle OpenAI quota exceeded or rate limiting
+      if (error?.message === "AdaptAI caregiver access denied") {
+        return res.status(403).json({
+          error: "AdaptAI is not authorized to access that care recipient.",
+          type: "permission_denied",
+        });
+      }
       if (error.status === 429 || error.code === 'insufficient_quota') {
         // Provide helpful fallback responses based on common queries
-        const fallbackResponse = getFallbackResponse(req.body.message);
+        const fallbackResponse = getFallbackResponse(req.body.message).replace(/\*\*/g, "");
         res.json({ 
           message: fallbackResponse,
           type: "fallback",
@@ -2240,6 +2994,48 @@ Provide a helpful, encouraging response:`;
           type: "general_error"
         });
       }
+    }
+  });
+
+  // Controlled AdaptAI action execution. This endpoint never accepts a table,
+  // SQL statement, storage method, or target user from the client.
+  app.post("/api/ai/actions/execute", requireAuth, async (req: any, res) => {
+    try {
+      const authenticatedUserId: number = req.session.userId;
+      const today = getCurrentCalendarDate(req);
+      const result = await executeAdaptAIAction(
+        {
+          action: req.body?.action,
+          parameters: req.body?.parameters,
+        },
+        authenticatedUserId,
+        storage,
+        { confirmed: req.body?.confirmed === true, today },
+      );
+      if (result.action.action === "complete_task") {
+        try {
+          await storage.refreshUserActivityStreak(
+            authenticatedUserId,
+            today,
+            getActivityDateTimeZone(req),
+          );
+        } catch (streakError) {
+          console.error("Error updating activity streak after AI task completion:", streakError);
+        }
+      }
+      return res.json(result);
+    } catch (error: any) {
+      if (error instanceof AdaptAIActionError) {
+        return res.status(error.statusCode).json({
+          error: error.message,
+          code: error.code,
+        });
+      }
+      console.error("Error executing AdaptAI action:", error);
+      return res.status(500).json({
+        error: "I couldn't complete that task action right now.",
+        code: "action_execution_failed",
+      });
     }
   });
 
@@ -2412,7 +3208,9 @@ Provide a helpful, encouraging response:`;
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const invitations = await storage.getCaregiverInvitationsByCaregiver(caregiverId);
+      const invitations = req.query?.pendingOnly === "true"
+        ? await storage.getPendingCaregiverInvitationsByCaregiver(caregiverId)
+        : await storage.getCaregiverInvitationsByCaregiver(caregiverId);
       res.json(invitations);
     } catch (error) {
       console.error("Error fetching caregiver invitations:", error);
@@ -2435,7 +3233,7 @@ Provide a helpful, encouraging response:`;
         return res.status(410).json({ message: "Invitation has expired" });
       }
 
-      if (invitation.status !== 'pending') {
+      if (normalizeCaregiverInvitationStatus(invitation.status) !== 'pending') {
         return res.status(400).json({ message: "Invitation is no longer valid" });
       }
 
@@ -2478,10 +3276,18 @@ Provide a helpful, encouraging response:`;
 
   app.post("/api/accept-invitation", async (req, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const { invitationCode, userId } = req.body;
       
       if (!invitationCode || !userId) {
         return res.status(400).json({ message: "Invitation code and user ID are required" });
+      }
+      if (user.id !== userId) {
+        return res.status(403).json({ message: "The invitation must be accepted by the signed-in user" });
       }
 
       const acceptedInvitation = await storage.acceptCaregiverInvitation(invitationCode, userId);
@@ -2501,20 +3307,47 @@ Provide a helpful, encouraging response:`;
   });
 
   // Care Relationship Routes
-  app.get("/api/care-relationships/user/:userId", async (req, res) => {
+  app.get("/api/care-relationships/user/:userId", async (req: any, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const userId = parseInt(req.params.userId);
+      if (user.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       const relationships = await storage.getCareRelationshipsByUser(userId);
-      res.json(relationships);
+      const relationshipsWithNames = await Promise.all(
+        relationships.map(async (relationship) => {
+          const caregiver = await storage.getUser(relationship.caregiverId);
+          return {
+            ...relationship,
+            caregiverName: caregiver?.name || caregiver?.username || "Caregiver",
+          };
+        }),
+      );
+      res.json(relationshipsWithNames);
     } catch (error) {
       console.error("Error fetching care relationships:", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
     }
   });
 
-  app.get("/api/care-relationships/caregiver/:caregiverId", async (req, res) => {
+  app.get("/api/care-relationships/caregiver/:caregiverId", async (req: any, res) => {
     try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const caregiverId = parseInt(req.params.caregiverId);
+      if (user.id !== caregiverId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
       const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
       res.json(relationships);
     } catch (error) {
@@ -2526,17 +3359,16 @@ Provide a helpful, encouraging response:`;
   // Remove (deactivate) a care relationship — only the care recipient can do this
   app.delete("/api/care-relationships/:id", async (req: any, res) => {
     try {
-      const user = req.session?.user;
+      const user = req.session?.user || req.user;
       if (!user) return res.status(401).json({ message: "Authentication required" });
 
       const id = parseInt(req.params.id);
-      const relationships = await storage.getCareRelationshipsByUser(user.id);
-      const owned = relationships.find(r => r.id === id);
-      if (!owned) {
+      const relationship = await storage.getCareRelationshipById(id);
+      if (!relationship || relationship.userId !== user.id) {
         return res.status(403).json({ message: "You can only remove caregivers linked to your own account" });
       }
 
-      const success = await storage.removeCareRelationship(id);
+      const success = await storage.removeCareRelationship(id, user.id);
       if (!success) return res.status(404).json({ message: "Relationship not found" });
 
       res.json({ message: "Caregiver access removed successfully" });
@@ -2761,6 +3593,59 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  app.put("/api/medications/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const medicationData = {
+        ...req.body,
+        nextRefillDate: req.body.nextRefillDate
+          ? new Date(req.body.nextRefillDate)
+          : null,
+      };
+      const updateSchema = insertMedicationSchema
+        .partial()
+        .omit({ userId: true });
+      const validatedData = updateSchema.parse(medicationData);
+      const medication = await storage.updateMedication(
+        Number(req.params.id),
+        user.id,
+        validatedData,
+      );
+      if (!medication) {
+        return res.status(404).json({ message: "Medication not found" });
+      }
+      res.json(medication);
+    } catch (error) {
+      console.error("Error updating medication:", error);
+      res.status(500).json({ message: "Failed to update medication" });
+    }
+  });
+
+  app.delete("/api/medications/:id", async (req: any, res) => {
+    try {
+      const user = req.session?.user || req.user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const deleted = await storage.deleteMedication(
+        Number(req.params.id),
+        user.id,
+      );
+      if (!deleted) {
+        return res.status(404).json({ message: "Medication not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+      res.status(500).json({ message: "Failed to delete medication" });
+    }
+  });
+
   app.get("/api/medications/due-for-refill", async (req: any, res) => {
     try {
       const user = req.session?.user || req.user;
@@ -2778,8 +3663,11 @@ Provide a helpful, encouraging response:`;
   // Refill Order Routes
   app.get("/api/refill-orders", async (req, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
-      const refillOrders = await storage.getRefillOrdersByUser(userId);
+      const user = (req as any).session?.user || (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const refillOrders = await storage.getRefillOrdersByUser(user.id);
       res.json(refillOrders);
     } catch (error) {
       console.error("Error fetching refill orders:", error);
@@ -2789,7 +3677,14 @@ Provide a helpful, encouraging response:`;
 
   app.post("/api/refill-orders", async (req, res) => {
     try {
-      const validatedData = insertRefillOrderSchema.parse(req.body);
+      const user = (req as any).session?.user || (req as any).user;
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const validatedData = insertRefillOrderSchema.parse({
+        ...req.body,
+        userId: user.id,
+      });
       const refillOrder = await storage.createRefillOrder(validatedData);
       res.status(201).json(refillOrder);
     } catch (error) {
@@ -2900,7 +3795,14 @@ Provide a helpful, encouraging response:`;
   app.put("/api/medical-conditions/:id", async (req, res) => {
     try {
       const conditionId = parseInt(req.params.id);
-      const condition = await storage.updateMedicalCondition(conditionId, req.body);
+      const conditionData = { ...req.body };
+      if (conditionData.diagnosedDate) {
+        conditionData.diagnosedDate = new Date(conditionData.diagnosedDate);
+      }
+      const condition = await storage.updateMedicalCondition(conditionId, conditionData);
+      if (!condition) {
+        return res.status(404).json({ message: "Medical condition not found" });
+      }
       res.json(condition);
     } catch (error) {
       console.error("Error updating medical condition:", error);
@@ -2961,7 +3863,11 @@ Provide a helpful, encouraging response:`;
   app.put("/api/adverse-medications/:id", async (req, res) => {
     try {
       const adverseMedId = parseInt(req.params.id);
-      const adverseMed = await storage.updateAdverseMedication(adverseMedId, req.body);
+      const adverseMedData = { ...req.body };
+      if (adverseMedData.reactionDate) {
+        adverseMedData.reactionDate = new Date(adverseMedData.reactionDate);
+      }
+      const adverseMed = await storage.updateAdverseMedication(adverseMedId, adverseMedData);
       res.json(adverseMed);
     } catch (error) {
       console.error("Error updating adverse medication:", error);
@@ -2984,6 +3890,38 @@ Provide a helpful, encouraging response:`;
   });
 
   // Sleep Tracking Routes
+  const validateSleepSessionFields = (data: any, timeZone?: string): string | null => {
+    const requiredFields = [
+      ["sleepDate", "Sleep date"],
+      ["bedtime", "Bedtime"],
+      ["sleepTime", "Time fell asleep"],
+      ["wakeTime", "Wake time"],
+      ["quality", "Sleep quality"],
+    ] as const;
+
+    const missingField = requiredFields.find(([field]) => {
+      const value = data?.[field];
+      return value === undefined || value === null || String(value).trim() === "";
+    });
+
+    if (missingField) return `${missingField[1]} is required`;
+
+    const dateError = getSleepDateValidationError(data.sleepDate, new Date(), timeZone);
+    if (dateError) return dateError;
+
+    return getSleepRoutineTimeValidationError(data.bedtime, data.sleepTime, data.wakeTime);
+  };
+
+  const withSleepMetrics = (session: any) => {
+    const metrics = calculateSleepMetrics(session, DEFAULT_SLEEP_GOAL_MINUTES);
+    return {
+      ...session,
+      totalSleepDuration: metrics.totalSleepDuration ?? session.totalSleepDuration ?? null,
+      sleepEfficiency: metrics.sleepEfficiency ?? session.sleepEfficiency ?? null,
+      sleepScore: metrics.sleepScore ?? session.sleepScore ?? null,
+    };
+  };
+
   app.get("/api/sleep-sessions", async (req: any, res) => {
     try {
       if (!req.session?.userId || !req.session?.user) {
@@ -2991,7 +3929,7 @@ Provide a helpful, encouraging response:`;
       }
       
       const sessions = await storage.getSleepSessionsByUser(req.session.user.id);
-      res.json(sessions);
+      res.json(sessions.map(withSleepMetrics));
     } catch (error) {
       console.error("Error fetching sleep sessions:", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
@@ -3005,6 +3943,21 @@ Provide a helpful, encouraging response:`;
       }
       
       const sessionData = { ...req.body, userId: req.session.user.id };
+      const timeZone = req.get("X-User-Timezone") || undefined;
+      const validationError = validateSleepSessionFields(sessionData, timeZone);
+      if (validationError) {
+        return res.status(400).json({ error: validationError, message: validationError });
+      }
+
+      const existingSession = await storage.getSleepSessionByDate(
+        req.session.user.id,
+        sessionData.sleepDate,
+      );
+      if (existingSession) {
+        return res.status(409).json({
+          message: "A sleep session already exists for this date",
+        });
+      }
       
       // Convert ISO strings to Date objects for TIMESTAMP columns
       if (sessionData.bedtime) {
@@ -3016,9 +3969,14 @@ Provide a helpful, encouraging response:`;
       if (sessionData.wakeTime) {
         sessionData.wakeTime = new Date(sessionData.wakeTime);
       }
+
+      const metrics = calculateSleepMetrics(sessionData, DEFAULT_SLEEP_GOAL_MINUTES);
+      sessionData.totalSleepDuration = metrics.totalSleepDuration;
+      sessionData.sleepEfficiency = metrics.sleepEfficiency?.toFixed(2);
+      sessionData.sleepScore = metrics.sleepScore;
       
       const session = await storage.createSleepSession(sessionData);
-      res.status(201).json(session);
+      res.status(201).json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error creating sleep session:", error);
       res.status(500).json({ message: "Failed to create sleep session" });
@@ -3033,6 +3991,11 @@ Provide a helpful, encouraging response:`;
       
       const sessionId = parseInt(req.params.id);
       const updates = { ...req.body };
+      const timeZone = req.get("X-User-Timezone") || undefined;
+      const validationError = validateSleepSessionFields(updates, timeZone);
+      if (validationError) {
+        return res.status(400).json({ error: validationError, message: validationError });
+      }
       
       // Convert ISO strings to Date objects for TIMESTAMP columns
       if (updates.bedtime) {
@@ -3044,12 +4007,17 @@ Provide a helpful, encouraging response:`;
       if (updates.wakeTime) {
         updates.wakeTime = new Date(updates.wakeTime);
       }
+
+      const metrics = calculateSleepMetrics(updates, DEFAULT_SLEEP_GOAL_MINUTES);
+      updates.totalSleepDuration = metrics.totalSleepDuration;
+      updates.sleepEfficiency = metrics.sleepEfficiency?.toFixed(2);
+      updates.sleepScore = metrics.sleepScore;
       
       const session = await storage.updateSleepSession(sessionId, updates);
       if (!session) {
         return res.status(404).json({ message: "Sleep session not found" });
       }
-      res.json(session);
+      res.json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error updating sleep session:", error);
       res.status(500).json({ message: "Failed to update sleep session" });
@@ -3084,7 +4052,7 @@ Provide a helpful, encouraging response:`;
       if (!session) {
         return res.status(404).json({ message: "No sleep session found for this date" });
       }
-      res.json(session);
+      res.json(withSleepMetrics(session));
     } catch (error) {
       console.error("Error fetching sleep session by date:", error);
       res.status(500).json({ message: "Failed to fetch sleep session" });
@@ -3148,11 +4116,14 @@ Provide a helpful, encouraging response:`;
   app.post("/api/emergency-contacts", async (req, res) => {
     try {
       const userId = 1; // Hardcoded for demo
-      const contactData = { ...req.body, userId };
+      const contactData = insertEmergencyContactSchema.parse({ ...req.body, userId });
       const contact = await storage.createEmergencyContact(contactData);
       res.status(201).json(contact);
     } catch (error) {
       console.error("Error creating emergency contact:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
+      }
       res.status(500).json({ message: "Failed to create emergency contact" });
     }
   });
@@ -3160,10 +4131,14 @@ Provide a helpful, encouraging response:`;
   app.put("/api/emergency-contacts/:id", async (req, res) => {
     try {
       const contactId = parseInt(req.params.id);
-      const contact = await storage.updateEmergencyContact(contactId, req.body);
+      const updates = updateEmergencyContactSchema.parse(req.body);
+      const contact = await storage.updateEmergencyContact(contactId, updates);
       res.json(contact);
     } catch (error) {
       console.error("Error updating emergency contact:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
+      }
       res.status(500).json({ message: "Failed to update emergency contact" });
     }
   });
@@ -3345,9 +4320,9 @@ Provide a helpful, encouraging response:`;
   });
 
   // Personal Resources Routes
-  app.get("/api/personal-resources", async (req, res) => {
+  app.get("/api/personal-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      const userId = req.session.user.id;
       const { category } = req.query;
       
       let resources;
@@ -3364,23 +4339,37 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.post("/api/personal-resources", async (req, res) => {
+  app.post("/api/personal-resources", requireAuth, async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      const userId = req.session.user.id;
       const resourceData = insertPersonalResourceSchema.parse({ ...req.body, userId });
       
       const resource = await storage.createPersonalResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
       console.error("Error creating personal resource:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Please provide a title, valid URL, and category.",
+          errors: error.flatten().fieldErrors,
+        });
+      }
       res.status(500).json({ message: "Failed to create personal resource" });
     }
   });
 
-  app.patch("/api/personal-resources/:id", async (req, res) => {
+  app.patch("/api/personal-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
-      const updates = req.body;
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
+      const updates = { ...req.body };
+      delete updates.userId;
       
       const updated = await storage.updatePersonalResource(resourceId, updates);
       
@@ -3395,9 +4384,16 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.delete("/api/personal-resources/:id", async (req, res) => {
+  app.delete("/api/personal-resources/:id", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
       const deleted = await storage.deletePersonalResource(resourceId);
       
       if (!deleted) {
@@ -3411,9 +4407,16 @@ Provide a helpful, encouraging response:`;
     }
   });
 
-  app.patch("/api/personal-resources/:id/access", async (req, res) => {
+  app.patch("/api/personal-resources/:id/access", requireAuth, async (req: any, res) => {
     try {
       const resourceId = parseInt(req.params.id);
+      const resources = await storage.getPersonalResourcesByUser(
+        req.session.user.id,
+      );
+      if (!resources.some((resource) => resource.id === resourceId)) {
+        return res.status(404).json({ message: "Personal resource not found" });
+      }
+
       const updated = await storage.incrementResourceAccess(resourceId);
       
       if (!updated) {
@@ -4050,6 +5053,7 @@ Provide a helpful, encouraging response:`;
           planType: "admin",
           status: "active",
           billingCycle: "lifetime",
+          subscriptionPlatform: null,
           currentPeriodStart: user.createdAt,
           currentPeriodEnd: null,
           trialDaysLeft: null,
@@ -4072,7 +5076,7 @@ Provide a helpful, encouraging response:`;
       
       // Calculate trial days left for regular users
       const trialEndDate = new Date(user.createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + 7); // 7-day free trial
+      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
       
       // Check subscription status. Trust subscriptionStatus as the single source of truth.
@@ -4087,6 +5091,7 @@ Provide a helpful, encouraging response:`;
         planType: user.subscriptionTier || "free",
         status: isActiveSubscription ? "active" : (trialDaysLeft > 0 ? "trialing" : "expired"),
         billingCycle: "monthly",
+        subscriptionPlatform: user.subscriptionPlatform || null,
         currentPeriodStart: user.createdAt,
         currentPeriodEnd: user.subscriptionExpiresAt || trialEndDate.toISOString(),
         trialDaysLeft: trialDaysLeft > 0 ? trialDaysLeft : null,
@@ -4135,9 +5140,9 @@ Provide a helpful, encouraging response:`;
       const { planType, billingCycle } = req.body;
       const user = req.session.user;
       
-      // Calculate new trial end date (7 days from now)
+      // Calculate the new trial end date from the configured free-trial duration.
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 7);
+      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
       
       // Update user subscription information in session (in production this would update database)
       req.session.user = {
@@ -4154,7 +5159,7 @@ Provide a helpful, encouraging response:`;
         billingCycle,
         currentPeriodStart: new Date().toISOString(),
         currentPeriodEnd: trialEndDate.toISOString(),
-        trialDaysLeft: 7,
+        trialDaysLeft: FREE_TRIAL_DAYS,
         usageStats: {
           tasks: { count: 0, limit: planType === "family" ? null : 1000 },
           caregivers: { count: 0, limit: planType === "family" ? null : 10 },
@@ -4266,6 +5271,7 @@ Provide a helpful, encouraging response:`;
 
       if (!user.stripeCustomerId) {
         return res.status(400).json({
+          code: "NO_SUBSCRIPTION",
           message: "No verified Stripe subscription is linked to this account. Please subscribe below or contact support.",
         });
       }
@@ -4313,6 +5319,7 @@ Provide a helpful, encouraging response:`;
 
       if (!found) {
         return res.status(400).json({ 
+          code: "NO_SUBSCRIPTION",
           message: "No active recurring subscription found on your account. If you believe this is an error, please contact support."
         });
       }
@@ -4357,11 +5364,11 @@ Provide a helpful, encouraging response:`;
       return next(); // Active paid subscription
     }
     
-    // Check if user is in free trial (7 days from account creation)
+    // Check if user is in the free trial from account creation.
     const trialEndDate = new Date(user.createdAt);
-    trialEndDate.setDate(trialEndDate.getDate() + 7);
+    trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
     
-    if (now <= trialEndDate && user.subscriptionTier === 'free') {
+    if (now < trialEndDate && user.subscriptionTier === 'free') {
       return next(); // Still in free trial
     }
     
@@ -4463,7 +5470,7 @@ Provide a helpful, encouraging response:`;
             const tierFromMeta = metadata.planType ? tierMap[metadata.planType] || metadata.planType : undefined;
             await extendSubscription(
               subId,
-              sub.current_period_end,
+               getStripePeriodEndSeconds(sub),
               appStatusForStripeSubscription(sub),
               tierFromMeta,
             );
@@ -4481,9 +5488,10 @@ Provide a helpful, encouraging response:`;
           };
           const user = await storage.getUserByStripeSubscriptionId(sub.id);
           if (user) {
+            const periodEnd = getStripePeriodEndSeconds(sub);
             await storage.updateUserSubscription(user.id, {
               subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
-              subscriptionExpiresAt: new Date(sub.current_period_end * 1000),
+              subscriptionExpiresAt: new Date(periodEnd * 1000),
             });
             console.log(`✅ Stripe webhook: updated user ${user.id} status=${sub.status}`);
           }
@@ -4642,7 +5650,7 @@ Provide a helpful, encouraging response:`;
       const subscription = await currentStripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
-        trial_period_days: 7,
+        trial_period_days: FREE_TRIAL_DAYS,
         payment_behavior: 'default_incomplete',
         payment_settings: {
           save_default_payment_method: 'on_subscription',
@@ -4772,7 +5780,7 @@ Provide a helpful, encouraging response:`;
       if (isReadyToActivate) {
         const metadata = subscription.metadata;
         // Use Stripe's authoritative period end, not a calculated date
-        const expiresAt = new Date(subscription.current_period_end * 1000);
+        const expiresAt = new Date(getStripePeriodEndSeconds(subscription) * 1000);
         
         await storage.updateUserSubscription(user.id, {
           subscriptionTier: metadata.planType || 'premium',
@@ -4905,11 +5913,8 @@ Provide a helpful, encouraging response:`;
           return res.status(500).json({ message: "Purchase verification failed - API error" });
         }
       } else {
-        console.warn("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY not configured - accepting purchase in development mode only");
-        if (process.env.NODE_ENV === 'production') {
-          return res.status(503).json({ message: "Google Play verification not configured" });
-        }
-        verified = true;
+        console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
+        return res.status(503).json({ message: "Google Play verification not configured" });
       }
 
       if (!verified) {
@@ -4917,12 +5922,9 @@ Provide a helpful, encouraging response:`;
       }
 
       if (!expiryTime) {
-        expiryTime = new Date();
-        if (planInfo.billingCycle === 'annual') {
-          expiryTime.setFullYear(expiryTime.getFullYear() + 1);
-        } else {
-          expiryTime.setMonth(expiryTime.getMonth() + 1);
-        }
+        return res.status(502).json({
+          message: "Google Play verification did not return an expiration time",
+        });
       }
 
       await storage.updateUser(user.id, {
@@ -5472,17 +6474,13 @@ Provide a helpful, encouraging response:`;
             console.error("Restore verification error:", verifyError.message);
             continue;
           }
-        } else if (process.env.NODE_ENV === 'production') {
+        } else {
+          console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
           return res.status(503).json({ message: "Google Play verification not configured" });
         }
 
         if (!expiresAt) {
-          expiresAt = new Date();
-          if (planInfo.billingCycle === 'annual') {
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-          } else {
-            expiresAt.setMonth(expiresAt.getMonth() + 1);
-          }
+          continue;
         }
 
         await storage.updateUser(user.id, {
@@ -5770,6 +6768,20 @@ Provide a helpful, encouraging response:`;
     }
   });
 
+  app.get("/api/rewards/badges", async (req: any, res) => {
+    try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const badges = await storage.getRewardBadges(req.session.user.id);
+      res.json(badges);
+    } catch (error) {
+      console.error("Error fetching reward badges:", error);
+      res.status(500).json({ message: "Failed to fetch reward badges" });
+    }
+  });
+
   app.get("/api/rewards/caregiver", async (req: any, res) => {
     try {
       if (!req.session.userId || !req.session.user) {
@@ -5862,6 +6874,16 @@ Provide a helpful, encouraging response:`;
       }
 
       const rewardId = parseInt(req.params.id);
+      const redemptions = await storage.getRewardRedemptions(req.session.user.id);
+      const hasBeenRedeemed = redemptions.some((redemption) => redemption.rewardId === rewardId);
+
+      if (hasBeenRedeemed) {
+        return res.status(409).json({
+          error: "This reward cannot be deleted because it has already been redeemed.",
+          code: "REWARD_ALREADY_REDEEMED",
+        });
+      }
+
       await storage.deleteReward(rewardId);
       console.log("Deleted reward:", rewardId);
       res.json({ success: true, message: "Reward deleted successfully" });
@@ -5940,24 +6962,20 @@ Provide a helpful, encouraging response:`;
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const redemptionData = {
-        ...req.body,
-        userId: user.id
-      };
+      const rewardId = Number(req.body?.rewardId);
+      if (!Number.isInteger(rewardId) || rewardId <= 0) {
+        return res.status(400).json({ message: "A valid reward is required" });
+      }
 
-      const redemption = await storage.createRewardRedemption(redemptionData);
-      
-      // Deduct points from user's balance
-      await storage.updateUserPoints(
-        user.id, 
-        -redemptionData.pointsSpent, 
-        "reward_redemption", 
-        `Redeemed reward: ${redemptionData.rewardId}`, 
-        user.id
-      );
+      const redemption = await storage.redeemReward(user.id, rewardId);
 
       res.json(redemption);
     } catch (error) {
+      if (error instanceof RewardRedemptionError) {
+        const status =
+          error.code === "REWARD_NOT_FOUND" ? 404 : 409;
+        return res.status(status).json({ message: error.message });
+      }
       console.error("Error redeeming reward:", error);
       res.status(500).json({ message: "Failed to redeem reward" });
     }

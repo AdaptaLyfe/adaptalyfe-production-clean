@@ -1,12 +1,12 @@
 import {
-  users, dailyTasks, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
+  users, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
   budgetCategories, savingsGoals, savingsTransactions, userPreferences,
   mealPlans, shoppingLists, groceryStores, emergencyResources, pharmacies, userPharmacies, medications, refillOrders,
   allergies, medicalConditions, adverseMedications, emergencyContacts, primaryCareProviders, symptomEntries,
   personalResources, personalDocuments, busSchedules, emergencyTreatmentPlans, geofences, geofenceEvents,
   notifications, userAchievements, streakTracking, voiceInteractions, quickResponses,
   messageReactions, activityPatterns, caregiverPermissions, lockedUserSettings, userCaregiverConnections,
-  caregiverInvitations, careRelationships, feedback,
+  caregiverInvitations, careRelationships, feedback, passwordResetTokens,
   academicClasses, assignments, studySessions, campusLocations, campusTransport, studyGroups, transitionSkills,
   rewards, userPointsBalance, pointsTransactions, rewardRedemptions, sleepSessions, healthMetrics,
   type User, type InsertUser, type DailyTask, type InsertDailyTask, type Bill, type InsertBill,
@@ -36,6 +36,7 @@ import {
   type CampusTransport, type InsertCampusTransport,
   type StudyGroup, type InsertStudyGroup, type TransitionSkill, type InsertTransitionSkill,
   type CaregiverInvitation, type InsertCaregiverInvitation, type CareRelationship, type InsertCareRelationship,
+  type PasswordResetToken, type InsertPasswordResetToken,
   calendarEvents, type CalendarEvent, type InsertCalendarEvent,
   type Reward, type InsertReward, type UserPointsBalance, type InsertUserPointsBalance,
   type PointsTransaction, type InsertPointsTransaction, type RewardRedemption, type InsertRewardRedemption,
@@ -45,18 +46,354 @@ import {
   familyMembers, type FamilyMember
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, desc, gt, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import {
+  countCompletedSkillMilestones,
+  evaluateRewardBadges,
+  newlyEarnedRewardBadges,
+  resolveLifetimeEarned,
+} from "./reward-badges";
+import type { RewardBadgeView } from "./reward-badges";
+import {
+  shouldIncludeLegacyTaskActivity,
+  calculateCurrentStreak,
+  completedMealActivityDates,
+  normalizedActivityDates,
+} from "./activity-streak";
+import {
+  COUNTED_REWARD_REDEMPTION_STATUSES,
+  hasReachedRewardRedemptionLimit,
+} from "./reward-redemption-rules";
+import { careRelationshipFromAcceptedInvitation } from "./caregiver-invitation-relationships";
+import { normalizeCaregiverInvitationStatus } from "./caregiver-invitation-status";
+
+function getServerCalendarDate(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeCompletionDate(value: string | Date): string {
+  return typeof value === "string" ? value.slice(0, 10) : getServerCalendarDate(value);
+}
+
+type DailyTaskSchemaCapabilities = {
+  hasCreatedAt: boolean;
+  hasCompletions: boolean;
+};
+
+let dailyTaskSchemaCapabilitiesPromise: Promise<DailyTaskSchemaCapabilities> | undefined;
+
+const legacyDailyTaskColumns = {
+  id: dailyTasks.id,
+  userId: dailyTasks.userId,
+  title: dailyTasks.title,
+  description: dailyTasks.description,
+  category: dailyTasks.category,
+  frequency: dailyTasks.frequency,
+  estimatedMinutes: dailyTasks.estimatedMinutes,
+  pointValue: dailyTasks.pointValue,
+  scheduledTime: dailyTasks.scheduledTime,
+  isCompleted: dailyTasks.isCompleted,
+  completedAt: dailyTasks.completedAt,
+  dueDate: dailyTasks.dueDate,
+  lastCompleted: dailyTasks.lastCompleted,
+  lastReminderSent: dailyTasks.lastReminderSent,
+  lastOverdueReminder: dailyTasks.lastOverdueReminder,
+};
+
+type TransitionSkillSchemaCapabilities = {
+  hasTable: boolean;
+  hasPriority: boolean;
+};
+
+export class TransitionSkillPriorityUnavailableError extends Error {
+  constructor() {
+    super(
+      "Skill priority cannot be saved because the transition skill priority column is missing. Sync the database schema and retry.",
+    );
+    this.name = "TransitionSkillPriorityUnavailableError";
+  }
+}
+
+function schemaCapabilityIsTrue(value: unknown): boolean {
+  if (value === true || value === 1) return true;
+  return typeof value === "string" &&
+    ["true", "t", "1"].includes(value.trim().toLowerCase());
+}
+
+type EmergencyResourceColumns = {
+  website: boolean;
+  availabilityHours: boolean;
+  isEmergencyOnly: boolean;
+};
+
+export class EmergencyResourceSchemaUnavailableError extends Error {
+  constructor() {
+    super("The emergency resources database needs an update before these extra details can be saved. Please apply the emergency resources migration and try again.");
+    this.name = "EmergencyResourceSchemaUnavailableError";
+  }
+}
+
+const emergencyResourceBaseColumns = {
+  id: emergencyResources.id,
+  userId: emergencyResources.userId,
+  name: emergencyResources.name,
+  resourceType: emergencyResources.resourceType,
+  phoneNumber: emergencyResources.phoneNumber,
+  address: emergencyResources.address,
+  description: emergencyResources.description,
+  isAvailable24_7: emergencyResources.isAvailable24_7,
+  createdAt: emergencyResources.createdAt,
+  updatedAt: emergencyResources.updatedAt,
+};
+
+async function getEmergencyResourceColumns(): Promise<EmergencyResourceColumns> {
+  const result = await db.execute(sql`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'emergency_resources'
+      AND column_name IN ('website', 'availability_hours', 'is_emergency_only')
+  `);
+  const columns = new Set(result.rows.map((row) => String(row.column_name)));
+  return {
+    website: columns.has("website"),
+    availabilityHours: columns.has("availability_hours"),
+    isEmergencyOnly: columns.has("is_emergency_only"),
+  };
+}
+
+function emergencyResourceSelection(columns: EmergencyResourceColumns) {
+  return {
+    ...emergencyResourceBaseColumns,
+    ...(columns.website ? { website: emergencyResources.website } : {}),
+    ...(columns.availabilityHours ? { availabilityHours: emergencyResources.availabilityHours } : {}),
+    ...(columns.isEmergencyOnly ? { isEmergencyOnly: emergencyResources.isEmergencyOnly } : {}),
+  };
+}
+
+function normalizeEmergencyResource(
+  resource: Pick<EmergencyResource, "id" | "userId" | "name" | "resourceType"> & Partial<EmergencyResource>,
+): EmergencyResource {
+  return {
+    ...resource,
+    website: resource.website ?? null,
+    availabilityHours: resource.availabilityHours ?? null,
+    isEmergencyOnly: resource.isEmergencyOnly ?? false,
+  } as EmergencyResource;
+}
+
+function checkEmergencyResourceColumns(
+  resource: Partial<InsertEmergencyResource>,
+  columns: EmergencyResourceColumns,
+): void {
+  if (
+    (!columns.website && resource.website?.trim()) ||
+    (!columns.availabilityHours && resource.availabilityHours?.trim()) ||
+    (!columns.isEmergencyOnly && resource.isEmergencyOnly === true)
+  ) {
+    throw new EmergencyResourceSchemaUnavailableError();
+  }
+}
+
+let transitionSkillSchemaCapabilitiesPromise:
+  | Promise<TransitionSkillSchemaCapabilities>
+  | undefined;
+
+const transitionSkillBaseColumns = {
+  id: transitionSkills.id,
+  userId: transitionSkills.userId,
+  skillCategory: transitionSkills.skillCategory,
+  skillName: transitionSkills.skillName,
+  description: transitionSkills.description,
+  currentLevel: transitionSkills.currentLevel,
+  targetLevel: transitionSkills.targetLevel,
+  practiceActivities: transitionSkills.practiceActivities,
+  milestones: transitionSkills.milestones,
+  lastPracticed: transitionSkills.lastPracticed,
+  createdAt: transitionSkills.createdAt,
+  updatedAt: transitionSkills.updatedAt,
+};
+
+async function getTransitionSkillSchemaCapabilities(): Promise<TransitionSkillSchemaCapabilities> {
+  let capabilitiesPromise = transitionSkillSchemaCapabilitiesPromise;
+  if (!capabilitiesPromise) {
+    capabilitiesPromise = (async () => {
+      try {
+        const result = await db.execute(sql`
+          SELECT
+            EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = 'transition_skills'
+            ) AS has_table,
+            EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'transition_skills'
+                AND column_name = 'priority'
+            ) AS has_priority
+        `);
+        const row = result.rows[0] as {
+          has_table?: boolean;
+          has_priority?: boolean;
+        } | undefined;
+        const capabilities = {
+          hasTable: schemaCapabilityIsTrue(row?.has_table),
+          hasPriority: schemaCapabilityIsTrue(row?.has_priority),
+        };
+
+        if (!capabilities.hasTable || !capabilities.hasPriority) {
+          console.warn(
+            "Transition skill schema is behind the application schema; using compatibility mode.",
+            capabilities,
+          );
+        }
+
+        return capabilities;
+      } catch (error) {
+        console.warn(
+          "Could not inspect transition skill schema; using legacy compatibility mode.",
+          error,
+        );
+        return { hasTable: false, hasPriority: false };
+      }
+    })();
+    transitionSkillSchemaCapabilitiesPromise = capabilitiesPromise;
+  }
+
+  const capabilities = await capabilitiesPromise;
+  if (
+    (!capabilities.hasTable || !capabilities.hasPriority) &&
+    transitionSkillSchemaCapabilitiesPromise === capabilitiesPromise
+  ) {
+    transitionSkillSchemaCapabilitiesPromise = undefined;
+  }
+  return capabilities;
+}
+
+function normalizeTransitionSkill(
+  skill: Omit<TransitionSkill, "priority"> & { priority?: string | null },
+): TransitionSkill {
+  const priority = skill.priority?.trim().toLowerCase() || "";
+  return {
+    ...skill,
+    priority,
+  };
+}
+
+async function getTransitionSkillById(
+  skillId: number,
+  capabilities: TransitionSkillSchemaCapabilities,
+): Promise<TransitionSkill | undefined> {
+  if (!capabilities.hasTable) return undefined;
+
+  const rows = capabilities.hasPriority
+    ? await db
+        .select({
+          ...transitionSkillBaseColumns,
+          priority: transitionSkills.priority,
+        })
+        .from(transitionSkills)
+        .where(eq(transitionSkills.id, skillId))
+        .limit(1)
+    : await db
+        .select(transitionSkillBaseColumns)
+        .from(transitionSkills)
+        .where(eq(transitionSkills.id, skillId))
+        .limit(1);
+
+  const skill = rows[0];
+  return skill ? normalizeTransitionSkill(skill) : undefined;
+}
+
+async function getDailyTaskSchemaCapabilities(): Promise<DailyTaskSchemaCapabilities> {
+  if (!dailyTaskSchemaCapabilitiesPromise) {
+    dailyTaskSchemaCapabilitiesPromise = (async () => {
+      try {
+        const result = await db.execute(sql`
+          SELECT
+            EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'daily_tasks'
+                AND column_name = 'created_at'
+            ) AS has_created_at,
+            EXISTS (
+              SELECT 1
+              FROM information_schema.columns
+              WHERE table_schema = 'public'
+                AND table_name = 'daily_task_completions'
+                AND column_name IN ('task_id', 'user_id', 'completion_date', 'completed_at')
+              GROUP BY table_schema, table_name
+              HAVING COUNT(*) = 4
+            ) AND EXISTS (
+              SELECT 1
+              FROM pg_indexes
+              WHERE schemaname = 'public'
+                AND tablename = 'daily_task_completions'
+                AND indexdef ILIKE '%UNIQUE%'
+                AND indexdef ILIKE '%(task_id, completion_date)%'
+            ) AS has_completions
+        `);
+        const row = result.rows[0] as {
+          has_created_at?: unknown;
+          has_completions?: unknown;
+        } | undefined;
+        const capabilities = {
+          hasCreatedAt: schemaCapabilityIsTrue(row?.has_created_at),
+          hasCompletions: schemaCapabilityIsTrue(row?.has_completions),
+        };
+
+        if (!capabilities.hasCreatedAt || !capabilities.hasCompletions) {
+          console.warn(
+            "Daily task schema is behind the application schema; using legacy compatibility mode.",
+            capabilities,
+          );
+        }
+
+        return capabilities;
+      } catch (error) {
+        console.warn(
+          "Could not inspect daily task schema; using legacy compatibility mode.",
+          error,
+        );
+        return { hasCreatedAt: false, hasCompletions: false };
+      }
+    })();
+  }
+
+  return dailyTaskSchemaCapabilitiesPromise;
+}
 
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
   getUserById(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: number, updates: Partial<User>): Promise<User | undefined>;
   updateUserStreak(userId: number, streakDays: number): Promise<User | undefined>;
+  recordUserActivity(
+    userId: number,
+    today?: string,
+    timeZone?: string | number,
+  ): Promise<number>;
+  refreshUserActivityStreak(
+    userId: number,
+    today?: string,
+    timeZone?: string | number,
+  ): Promise<number>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
   authenticateUser(username: string, password: string): Promise<User | null>;
+  invalidatePasswordResetTokens(userId: number): Promise<void>;
+  createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
+  hasValidPasswordResetToken(tokenHash: string): Promise<boolean>;
+  resetPasswordWithToken(tokenHash: string, passwordHash: string): Promise<boolean>;
   getCurrentUser(): User | null;
   setCurrentUser(user: User | null): void;
   deleteUserAccount(userId: number): Promise<void>;
@@ -69,15 +406,26 @@ export interface IStorage {
   acceptFamilyInvite(inviteCode: string, memberUserId: number): Promise<FamilyMember | undefined>;
 
   // Daily Tasks
-  getDailyTasksByUser(userId: number): Promise<DailyTask[]>;
+  getDailyTasksByUser(userId: number, completionDate?: string): Promise<DailyTask[]>;
   getTaskById(taskId: number): Promise<DailyTask | undefined>;
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
-  updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined>;
+  updateTaskCompletion(
+    taskId: number,
+    isCompleted: boolean,
+    completionDate?: string,
+    today?: string,
+  ): Promise<DailyTask | undefined>;
+  completeDailyTaskIfIncomplete(
+    taskId: number,
+    userId: number,
+    today?: string,
+  ): Promise<DailyTask | undefined>;
   deleteDailyTask(taskId: number, userId: number): Promise<boolean>;
   
   // Bills
   getBillsByUser(userId: number): Promise<Bill[]>;
+  getRelevantBillsByUser(userId: number, dayOfMonth: number, daysAhead?: number): Promise<Bill[]>;
   getBill(billId: number): Promise<Bill | undefined>;
   createBill(bill: InsertBill): Promise<Bill>;
   updateBill(billId: number, updates: Partial<Bill>): Promise<Bill | undefined>;
@@ -85,6 +433,7 @@ export interface IStorage {
   
   // Mood Entries
   getMoodEntriesByUser(userId: number): Promise<MoodEntry[]>;
+  getRecentMoodEntriesByUser(userId: number, limit?: number): Promise<MoodEntry[]>;
   createMoodEntry(entry: InsertMoodEntry): Promise<MoodEntry>;
   getTodayMoodEntry(userId: number): Promise<MoodEntry | undefined>;
   
@@ -98,6 +447,7 @@ export interface IStorage {
   // Notifications
   getNotificationsByUser(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
+  createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined>;
   markNotificationAsRead(notificationId: number, userId: number): Promise<void>;
   
   // User Preferences
@@ -110,6 +460,7 @@ export interface IStorage {
   
   // Messages
   getMessagesByUser(userId: number): Promise<Message[]>;
+  getMessagesByCaregiver(caregiverId: number, userId?: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   
   // Budget Entries
@@ -138,6 +489,8 @@ export interface IStorage {
   
   // Appointments
   getAppointmentsByUser(userId: number): Promise<Appointment[]>;
+  getAppointmentsByDate(userId: number, date: string): Promise<Appointment[]>;
+  getNextAppointment(userId: number, fromDate: string): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointmentCompletion(appointmentId: number, isCompleted: boolean): Promise<Appointment | undefined>;
   getUpcomingAppointments(userId: number): Promise<Appointment[]>;
@@ -146,12 +499,14 @@ export interface IStorage {
   getMealPlansByUser(userId: number): Promise<MealPlan[]>;
   createMealPlan(mealPlan: InsertMealPlan): Promise<MealPlan>;
   updateMealPlanCompletion(mealPlanId: number, isCompleted: boolean): Promise<MealPlan | undefined>;
+   deleteMealPlan(mealPlanId: number, userId: number): Promise<boolean>;
   getMealPlansByDate(userId: number, date: string): Promise<MealPlan[]>;
   
   // Shopping Lists
   getShoppingListsByUser(userId: number): Promise<ShoppingList[]>;
   createShoppingListItem(item: InsertShoppingList): Promise<ShoppingList>;
   updateShoppingItemPurchased(itemId: number, isPurchased: boolean, actualCost?: number): Promise<ShoppingList | undefined>;
+  deleteShoppingListItem(itemId: number, userId: number): Promise<boolean>;
   getActiveShoppingItems(userId: number): Promise<ShoppingList[]>;
   
   // Emergency Resources
@@ -169,7 +524,12 @@ export interface IStorage {
   // Medications
   getMedicationsByUser(userId: number): Promise<Medication[]>;
   createMedication(medication: InsertMedication): Promise<Medication>;
-  updateMedication(medicationId: number, updates: Partial<InsertMedication>): Promise<Medication | undefined>;
+  updateMedication(
+    medicationId: number,
+    userId: number,
+    updates: Partial<InsertMedication>,
+  ): Promise<Medication | undefined>;
+  deleteMedication(medicationId: number, userId: number): Promise<boolean>;
   getMedicationsDueForRefill(userId: number): Promise<Medication[]>;
   
   // Refill Orders
@@ -237,6 +597,7 @@ export interface IStorage {
   getNotificationsByUser(userId: number): Promise<Notification[]>;
   getUnreadNotifications(userId: number): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
+  createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined>;
   markNotificationRead(notificationId: number): Promise<Notification | undefined>;
   scheduleNotification(notification: InsertNotification): Promise<Notification>;
   
@@ -246,7 +607,9 @@ export interface IStorage {
   
   // Enhanced Achievements
   getUserAchievements(userId: number): Promise<UserAchievement[]>;
+  getRecentUserAchievements(userId: number, limit?: number): Promise<UserAchievement[]>;
   createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement>;
+  getRewardBadges(userId: number): Promise<RewardBadgeView[]>;
   
   // Streak Tracking
   getStreaksByUser(userId: number): Promise<StreakTracking[]>;
@@ -289,32 +652,45 @@ export interface IStorage {
   getCaregiverInvitation(invitationCode: string): Promise<CaregiverInvitation | undefined>;
   getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined>;
   getCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]>;
+  getPendingCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]>;
   deleteCaregiverInvitation(id: number): Promise<void>;
   acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined>;
   expireCaregiverInvitation(invitationCode: string): Promise<boolean>;
   
   // Care Relationship Management
   createCareRelationship(relationship: InsertCareRelationship): Promise<CareRelationship>;
+  getCareRelationshipById(id: number): Promise<CareRelationship | undefined>;
   getCareRelationshipsByUser(userId: number): Promise<CareRelationship[]>;
   getCareRelationshipsByCaregiver(caregiverId: number): Promise<CareRelationship[]>;
   updateCareRelationship(id: number, updates: Partial<InsertCareRelationship>): Promise<CareRelationship | undefined>;
-  removeCareRelationship(id: number): Promise<boolean>;
+  removeCareRelationship(id: number, userId: number): Promise<boolean>;
 
   // Academic features
   getAcademicClassesByUser(userId: number): Promise<AcademicClass[]>;
   createAcademicClass(classData: InsertAcademicClass): Promise<AcademicClass>;
   getAssignmentsByUser(userId: number): Promise<Assignment[]>;
   createAssignment(assignmentData: InsertAssignment): Promise<Assignment>;
+  updateAssignment(
+    assignmentId: number,
+    userId: number,
+    assignmentData: Partial<InsertAssignment>,
+  ): Promise<Assignment | undefined>;
+  deleteAssignment(assignmentId: number, userId: number): Promise<boolean>;
   getStudySessionsByUser(userId: number): Promise<StudySession[]>;
   createStudySession(sessionData: InsertStudySession): Promise<StudySession>;
+  deleteStudySession(sessionId: number, userId: number): Promise<boolean>;
   getCampusLocationsByUser(userId: number): Promise<CampusLocation[]>;
   createCampusLocation(locationData: InsertCampusLocation): Promise<CampusLocation>;
   getStudyGroupsByUser(userId: number): Promise<StudyGroup[]>;
   createStudyGroup(groupData: InsertStudyGroup): Promise<StudyGroup>;
   getTransitionSkillsByUser(userId: number): Promise<TransitionSkill[]>;
   createTransitionSkill(skillData: InsertTransitionSkill): Promise<TransitionSkill>;
-  updateTransitionSkill(skillId: number, updateData: Partial<TransitionSkill>): Promise<TransitionSkill>;
-  deleteTransitionSkill(skillId: number): Promise<void>;
+  updateTransitionSkill(
+    skillId: number,
+    userId: number,
+    updateData: Partial<TransitionSkill>,
+  ): Promise<TransitionSkill | undefined>;
+  deleteTransitionSkill(skillId: number, userId: number): Promise<boolean>;
 
   // Calendar Events
   getCalendarEventsByUser(userId: number): Promise<CalendarEvent[]>;
@@ -324,6 +700,7 @@ export interface IStorage {
 
   // Sleep Tracking
   getSleepSessionsByUser(userId: number): Promise<SleepSession[]>;
+  getRecentSleepSessionsByUser(userId: number, limit?: number): Promise<SleepSession[]>;
   getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined>;
   createSleepSession(session: InsertSleepSession): Promise<SleepSession>;
   updateSleepSession(sessionId: number, updates: Partial<InsertSleepSession>): Promise<SleepSession | undefined>;
@@ -332,6 +709,15 @@ export interface IStorage {
   // Health Metrics
   getHealthMetricsByUser(userId: number, metricType?: string, startDate?: string, endDate?: string): Promise<HealthMetric[]>;
   createHealthMetric(metric: InsertHealthMetric): Promise<HealthMetric>;
+
+  // Rewards and points
+  getRewardsByUser(userId: number): Promise<Reward[]>;
+  getActiveRewardsByUser(userId: number, limit?: number): Promise<Reward[]>;
+  getUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined>;
+  getExistingUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined>;
+  getPointsTransactions(userId: number): Promise<PointsTransaction[]>;
+  getRecentPointsTransactionsByUser(userId: number, limit?: number): Promise<PointsTransaction[]>;
+  redeemReward(userId: number, rewardId: number): Promise<RewardRedemption>;
 
   // Organization Codes
   getAllOrgCodes(): Promise<OrganizationCode[]>;
@@ -348,6 +734,19 @@ export interface IStorage {
   revokeOrgMembership(membershipId: number, revokedBy: number): Promise<OrgMembership | undefined>;
   getOrgMembershipByUserAndCode(userId: number, orgCodeId: number): Promise<OrgMembership | undefined>;
   countActiveMembersByCode(orgCodeId: number): Promise<number>;
+}
+
+export class RewardRedemptionError extends Error {
+  constructor(
+    public readonly code:
+      | "REWARD_NOT_FOUND"
+      | "REWARD_LIMIT_REACHED"
+      | "INSUFFICIENT_POINTS",
+    message: string,
+  ) {
+    super(message);
+    this.name = "RewardRedemptionError";
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -439,6 +838,14 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
@@ -463,6 +870,135 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user || undefined;
+  }
+
+  async recordUserActivity(
+    userId: number,
+    today = getServerCalendarDate(),
+    timeZone?: string | number,
+  ): Promise<number> {
+    return this.refreshUserActivityStreak(userId, today, timeZone);
+  }
+
+  async refreshUserActivityStreak(
+    userId: number,
+    today = getServerCalendarDate(),
+    timeZone?: string | number,
+  ): Promise<number> {
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const completionDates: unknown[] = [];
+    const completionTaskIds = new Set<number>();
+
+    if (capabilities.hasCompletions) {
+      const completionRows = await db
+        .select({
+          taskId: dailyTaskCompletions.taskId,
+          completionDate: dailyTaskCompletions.completionDate,
+        })
+        .from(dailyTaskCompletions)
+        .where(eq(dailyTaskCompletions.userId, userId));
+      completionRows.forEach((row) => completionTaskIds.add(row.taskId));
+      completionDates.push(...completionRows.map((row) => row.completionDate));
+    }
+
+    const [taskRows, mealRows, shoppingRows] = await Promise.all([
+      db
+        .select({
+          id: dailyTasks.id,
+          frequency: dailyTasks.frequency,
+          isCompleted: dailyTasks.isCompleted,
+          completedAt: dailyTasks.completedAt,
+        })
+        .from(dailyTasks)
+        .where(eq(dailyTasks.userId, userId)),
+      db
+        .select({
+          isCompleted: mealPlans.isCompleted,
+          plannedDate: mealPlans.plannedDate,
+        })
+        .from(mealPlans)
+        .where(eq(mealPlans.userId, userId)),
+      db
+        .select({
+          isPurchased: shoppingLists.isPurchased,
+          purchasedDate: shoppingLists.purchasedDate,
+        })
+        .from(shoppingLists)
+        .where(eq(shoppingLists.userId, userId)),
+    ]);
+
+    completionDates.push(
+      ...taskRows
+        .filter(
+          (task) =>
+            task.isCompleted &&
+            task.completedAt &&
+            shouldIncludeLegacyTaskActivity(
+              capabilities.hasCompletions,
+              task.frequency,
+              completionTaskIds.has(task.id),
+            ),
+        )
+        .map((task) => task.completedAt),
+      ...completedMealActivityDates(mealRows),
+      ...shoppingRows
+        .filter((item) => item.isPurchased && item.purchasedDate)
+        .map((item) => item.purchasedDate),
+    );
+
+    const validCompletionDates = normalizedActivityDates(
+      completionDates,
+      today,
+      timeZone,
+    );
+    const streakDays = calculateCurrentStreak(validCompletionDates, today);
+    const latestActivityDate = validCompletionDates.at(-1) || null;
+
+    // The dashboard reads users.streakDays. Persist that primary value before
+    // updating the supplemental streak history table so schema drift there
+    // cannot leave the dashboard stuck on an old value (often zero).
+    await this.updateUserStreak(userId, streakDays);
+
+    try {
+      const [existing] = await db
+        .select()
+        .from(streakTracking)
+        .where(and(
+          eq(streakTracking.userId, userId),
+          eq(streakTracking.streakType, "daily_activity"),
+        ))
+        .limit(1);
+
+      if (existing) {
+        await db
+          .update(streakTracking)
+          .set({
+            currentStreak: streakDays,
+            longestStreak: Math.max(existing.longestStreak || 0, streakDays),
+            lastActivityDate: latestActivityDate,
+            isActive: streakDays > 0,
+          })
+          .where(eq(streakTracking.id, existing.id));
+      } else if (latestActivityDate) {
+        await db.insert(streakTracking).values({
+          userId,
+          streakType: "daily_activity",
+          currentStreak: streakDays,
+          longestStreak: streakDays,
+          lastActivityDate: latestActivityDate,
+          isActive: streakDays > 0,
+        });
+      }
+    } catch (error) {
+      // The user-level streak remains usable even if the optional tracking
+      // table is not synchronized in a deployed environment yet.
+      console.error(
+        "Could not synchronize supplemental activity streak tracking:",
+        error,
+      );
+    }
+
+    return streakDays;
   }
 
   async updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined> {
@@ -495,11 +1031,94 @@ export class DatabaseStorage implements IStorage {
   }
 
   async authenticateUser(username: string, password: string): Promise<User | null> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(and(eq(users.username, username), eq(users.password, password)));
-    return user || null;
+    const user = await this.getUserByUsername(username);
+    if (!user) return null;
+
+    const isHash = /^\$2[aby]?\$\d{2}\$/.test(user.password);
+    const valid = isHash
+      ? await bcrypt.compare(password, user.password)
+      : user.password === password;
+
+    if (!valid) return null;
+
+    if (!isHash) {
+      const passwordHash = await bcrypt.hash(password, 12);
+      return (await this.updateUser(user.id, { password: passwordHash })) || user;
+    }
+
+    return user;
+  }
+
+  async invalidatePasswordResetTokens(userId: number): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(and(eq(passwordResetTokens.userId, userId), isNull(passwordResetTokens.usedAt)));
+  }
+
+  async createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken> {
+    await db
+      .delete(passwordResetTokens)
+      .where(or(
+        lt(passwordResetTokens.expiresAt, new Date()),
+        isNotNull(passwordResetTokens.usedAt),
+      ));
+    const [created] = await db.insert(passwordResetTokens).values(token).returning();
+    return created;
+  }
+
+  async hasValidPasswordResetToken(tokenHash: string): Promise<boolean> {
+    const [token] = await db
+      .select({ id: passwordResetTokens.id })
+      .from(passwordResetTokens)
+      .where(and(
+        eq(passwordResetTokens.tokenHash, tokenHash),
+        isNull(passwordResetTokens.usedAt),
+        gt(passwordResetTokens.expiresAt, new Date()),
+      ));
+    return Boolean(token);
+  }
+
+  async resetPasswordWithToken(tokenHash: string, passwordHash: string): Promise<boolean> {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tokenResult = await client.query<{ user_id: number }>(
+        `SELECT "user_id" FROM "password_reset_tokens"
+         WHERE "token_hash" = $1 AND "used_at" IS NULL AND "expires_at" > NOW()
+         FOR UPDATE`,
+        [tokenHash],
+      );
+
+      const token = tokenResult.rows[0];
+      if (!token) {
+        await client.query("ROLLBACK");
+        return false;
+      }
+
+      await client.query(
+        `UPDATE "users" SET "password" = $1 WHERE "id" = $2`,
+        [passwordHash, token.user_id],
+      );
+      const consumed = await client.query(
+        `UPDATE "password_reset_tokens" SET "used_at" = NOW()
+         WHERE "token_hash" = $1 AND "used_at" IS NULL`,
+        [tokenHash],
+      );
+
+      if (consumed.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        return false;
+      }
+
+      await client.query("COMMIT");
+      return true;
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // ── Family Members ───────────────────────────────────────────────────────────
@@ -544,34 +1163,64 @@ export class DatabaseStorage implements IStorage {
 
   // ── Daily Tasks ───────────────────────────────────────────────────────────────
 
-  async getDailyTasksByUser(userId: number): Promise<DailyTask[]> {
-    const tasks = await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId));
+  async getDailyTasksByUser(userId: number, completionDate = getServerCalendarDate()): Promise<DailyTask[]> {
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const tasks = capabilities.hasCreatedAt
+      ? await db.select().from(dailyTasks).where(eq(dailyTasks.userId, userId))
+      : (await db
+          .select(legacyDailyTaskColumns)
+          .from(dailyTasks)
+          .where(eq(dailyTasks.userId, userId)))
+        .map(task => ({ ...task, createdAt: null }));
+    const completionRows = capabilities.hasCompletions
+      ? await db
+          .select({
+            taskId: dailyTaskCompletions.taskId,
+            completionDate: dailyTaskCompletions.completionDate,
+            completedAt: dailyTaskCompletions.completedAt,
+          })
+          .from(dailyTaskCompletions)
+          .where(eq(dailyTaskCompletions.userId, userId))
+      : [];
 
-    // Reset isCompleted for recurring tasks whose completedAt is from a previous period.
-    // We do this at read-time so no cron job is needed and it is always accurate.
+    const completionsByTask = new Map<number, typeof completionRows>();
+    for (const completion of completionRows) {
+      const existing = completionsByTask.get(completion.taskId) || [];
+      existing.push(completion);
+      completionsByTask.set(completion.taskId, existing);
+    }
+
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    return tasks.map(task => {
+    return (tasks as DailyTask[]).map(task => {
+      if (task.frequency === "daily") {
+        const completions = completionsByTask.get(task.id) || [];
+        const legacyCompletionMatchesDate =
+          completions.length === 0 &&
+          task.isCompleted &&
+          task.completedAt &&
+          getServerCalendarDate(task.completedAt) === completionDate;
+        const completion = completions.find(
+          row => normalizeCompletionDate(row.completionDate) === completionDate,
+        );
+
+        return {
+          ...task,
+          isCompleted: Boolean(completion || legacyCompletionMatchesDate),
+          completedAt: completion?.completedAt || (legacyCompletionMatchesDate ? task.completedAt : null),
+          completionDates: completions.map(row => normalizeCompletionDate(row.completionDate)),
+        };
+      }
+
       if (!task.isCompleted || !task.completedAt) return task;
 
       const completedDate = new Date(task.completedAt);
-
-      if (task.frequency === 'daily') {
-        // Reset if completed before today
-        const startOfCompletedDay = new Date(completedDate.getFullYear(), completedDate.getMonth(), completedDate.getDate());
-        if (startOfCompletedDay < startOfToday) {
-          return { ...task, isCompleted: false };
-        }
-      } else if (task.frequency === 'weekly') {
-        // Reset if completed more than 7 days ago
+      if (task.frequency === "weekly") {
         const sevenDaysAgo = new Date(startOfToday);
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        if (completedDate < sevenDaysAgo) {
-          return { ...task, isCompleted: false };
-        }
-      } else if (task.frequency === 'monthly') {
-        // Reset if completed in a previous month
+        if (completedDate < sevenDaysAgo) return { ...task, isCompleted: false };
+      } else if (task.frequency === "monthly") {
         if (
           completedDate.getFullYear() < now.getFullYear() ||
           (completedDate.getFullYear() === now.getFullYear() && completedDate.getMonth() < now.getMonth())
@@ -585,37 +1234,176 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTaskById(taskId: number): Promise<DailyTask | undefined> {
-    const [task] = await db.select().from(dailyTasks).where(eq(dailyTasks.id, taskId));
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const [task] = capabilities.hasCreatedAt
+      ? await db.select().from(dailyTasks).where(eq(dailyTasks.id, taskId))
+      : await db
+          .select(legacyDailyTaskColumns)
+          .from(dailyTasks)
+          .where(eq(dailyTasks.id, taskId));
     return task || undefined;
   }
 
   async createDailyTask(insertTask: InsertDailyTask): Promise<DailyTask> {
-    const [task] = await db
-      .insert(dailyTasks)
-      .values(insertTask)
-      .returning();
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    if (capabilities.hasCreatedAt) {
+      const [task] = await db
+        .insert(dailyTasks)
+        .values(insertTask)
+        .returning();
+      return task;
+    }
+
+    const legacyFields = [
+      ['user_id', insertTask.userId],
+      ['title', insertTask.title],
+      ['description', insertTask.description],
+      ['category', insertTask.category],
+      ['frequency', insertTask.frequency],
+      ['estimated_minutes', insertTask.estimatedMinutes],
+      ['point_value', insertTask.pointValue],
+      ['scheduled_time', insertTask.scheduledTime],
+      ['is_completed', insertTask.isCompleted],
+      ['completed_at', insertTask.completedAt],
+      ['due_date', insertTask.dueDate],
+      ['last_completed', insertTask.lastCompleted],
+      ['last_reminder_sent', insertTask.lastReminderSent],
+      ['last_overdue_reminder', insertTask.lastOverdueReminder],
+    ].filter(([, value]) => value !== undefined) as [string, unknown][];
+    const columns = sql.join(
+      legacyFields.map(([column]) => sql.raw(`"${column}"`)),
+      sql`, `,
+    );
+    const values = sql.join(
+      legacyFields.map(([, value]) => sql`${value}`),
+      sql`, `,
+    );
+    const result = await db.execute(sql`
+      INSERT INTO daily_tasks (${columns})
+      VALUES (${values})
+      RETURNING id
+    `);
+    const insertedId = Number(
+      (result.rows[0] as { id?: number | string } | undefined)?.id,
+    );
+    const task = Number.isInteger(insertedId)
+      ? await this.getTaskById(insertedId)
+      : undefined;
+    if (!task) {
+      throw new Error('The daily task could not be created.');
+    }
     return task;
   }
 
   async updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined> {
-    const [task] = await db
-      .update(dailyTasks)
-      .set(updates)
-      .where(eq(dailyTasks.id, taskId))
-      .returning();
-    return task || undefined;
+    const capabilities = await getDailyTaskSchemaCapabilities();
+    const [task] = capabilities.hasCreatedAt
+      ? await db
+          .update(dailyTasks)
+          .set(updates)
+          .where(eq(dailyTasks.id, taskId))
+          .returning()
+      : await db
+          .update(dailyTasks)
+          .set(updates)
+          .where(eq(dailyTasks.id, taskId))
+          .returning(legacyDailyTaskColumns);
+    return task
+      ? capabilities.hasCreatedAt
+          ? task
+          : { ...task, createdAt: null } as DailyTask
+      : undefined;
   }
 
-  async updateTaskCompletion(taskId: number, isCompleted: boolean): Promise<DailyTask | undefined> {
-    const [task] = await db
+  async updateTaskCompletion(
+    taskId: number,
+    isCompleted: boolean,
+    completionDate = getServerCalendarDate(),
+    today = getServerCalendarDate(),
+  ): Promise<DailyTask | undefined> {
+    const existingTask = await this.getTaskById(taskId);
+    if (!existingTask) return undefined;
+
+    if (existingTask.frequency === "daily") {
+      const capabilities = await getDailyTaskSchemaCapabilities();
+      let completionRecordAvailable = capabilities.hasCompletions;
+      if (capabilities.hasCompletions) {
+        try {
+          if (isCompleted) {
+            await db
+              .insert(dailyTaskCompletions)
+              .values({
+                taskId,
+                userId: existingTask.userId,
+                completionDate,
+              })
+              .onConflictDoUpdate({
+                target: [dailyTaskCompletions.taskId, dailyTaskCompletions.completionDate],
+                set: { completedAt: new Date() },
+              });
+          } else {
+            await db
+              .delete(dailyTaskCompletions)
+              .where(and(
+                eq(dailyTaskCompletions.taskId, taskId),
+                eq(dailyTaskCompletions.userId, existingTask.userId),
+                eq(dailyTaskCompletions.completionDate, completionDate),
+              ));
+          }
+        } catch (completionError) {
+          completionRecordAvailable = false;
+          // A deployment can have the table without the columns/index needed
+          // by the current schema. Do not turn a task checkbox into a 500 in
+          // that case; the legacy fields below remain a safe compatibility
+          // path until the schema is brought up to date.
+          console.warn(
+            "Daily completion record unavailable; using legacy task completion fields.",
+            { taskId, completionDate, error: completionError },
+          );
+        }
+      }
+
+      // Keep the legacy fields current for existing consumers, but the
+      // completion table is the source of truth for recurring task dates.
+      if (!completionRecordAvailable || completionDate === today) {
+        const legacyCompletedAt = completionRecordAvailable
+          ? new Date()
+          : new Date(`${completionDate}T12:00:00.000Z`);
+        await db
+          .update(dailyTasks)
+          .set({
+            isCompleted,
+            completedAt: isCompleted ? legacyCompletedAt : null,
+          })
+          .where(eq(dailyTasks.id, taskId));
+        return await this.getTaskById(taskId);
+      }
+
+      return {
+        ...existingTask,
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+      };
+    }
+
+    await db
       .update(dailyTasks)
       .set({ 
         isCompleted, 
         completedAt: isCompleted ? new Date() : null 
       })
-      .where(eq(dailyTasks.id, taskId))
-      .returning();
-    return task || undefined;
+      .where(eq(dailyTasks.id, taskId));
+    return await this.getTaskById(taskId);
+  }
+
+  async completeDailyTaskIfIncomplete(
+    taskId: number,
+    userId: number,
+    today = getServerCalendarDate(),
+  ): Promise<DailyTask | undefined> {
+    const task = await this.getTaskById(taskId);
+    if (!task || task.userId !== userId || task.isCompleted) return undefined;
+    return this.updateTaskCompletion(taskId, true, today, today);
   }
 
   async deleteDailyTask(taskId: number, userId: number): Promise<boolean> {
@@ -627,6 +1415,27 @@ export class DatabaseStorage implements IStorage {
 
   async getBillsByUser(userId: number): Promise<Bill[]> {
     return await db.select().from(bills).where(eq(bills.userId, userId));
+  }
+
+  async getRelevantBillsByUser(
+    userId: number,
+    dayOfMonth: number,
+    daysAhead = 7
+  ): Promise<Bill[]> {
+    const latestRelevantDay = Math.min(31, Math.max(1, dayOfMonth) + Math.max(0, daysAhead));
+
+    return await db
+      .select()
+      .from(bills)
+      .where(
+        and(
+          eq(bills.userId, userId),
+          or(eq(bills.isPaid, false), isNull(bills.isPaid)),
+          lte(bills.dueDate, latestRelevantDay)
+        )
+      )
+      .orderBy(bills.dueDate)
+      .limit(20);
   }
 
   async getBill(billId: number): Promise<Bill | undefined> {
@@ -729,6 +1538,15 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(moodEntries).where(eq(moodEntries.userId, userId));
   }
 
+  async getRecentMoodEntriesByUser(userId: number, limit = 7): Promise<MoodEntry[]> {
+    return await db
+      .select()
+      .from(moodEntries)
+      .where(eq(moodEntries.userId, userId))
+      .orderBy(desc(moodEntries.entryDate))
+      .limit(Math.max(1, Math.min(limit, 30)));
+  }
+
   async createMoodEntry(insertEntry: InsertMoodEntry): Promise<MoodEntry> {
     // Ensure the entry date is set to the current server time if not provided
     const entryWithDate = {
@@ -799,6 +1617,17 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
+  async createNotificationIfNew(notification: InsertNotification): Promise<Notification | undefined> {
+    const [result] = await db
+      .insert(notifications)
+      .values(notification)
+      .onConflictDoNothing({
+        target: [notifications.userId, notifications.dedupeKey],
+      })
+      .returning();
+    return result;
+  }
+
   async markNotificationAsRead(notificationId: number, userId: number): Promise<void> {
     await db.update(notifications)
       .set({ isRead: true })
@@ -843,7 +1672,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessagesByUser(userId: number): Promise<Message[]> {
-    return await db.select().from(messages).where(eq(messages.userId, userId));
+    return await db.select().from(messages)
+      .where(eq(messages.userId, userId))
+      .orderBy(desc(messages.sentAt));
+  }
+
+  async getMessagesByCaregiver(caregiverId: number, userId?: number): Promise<Message[]> {
+    const relationshipConditions = [
+      eq(careRelationships.caregiverId, caregiverId),
+      eq(careRelationships.isActive, true),
+    ];
+
+    if (userId !== undefined) {
+      relationshipConditions.push(eq(careRelationships.userId, userId));
+    }
+
+    const messageConditions = [
+      eq(messages.caregiverId, caregiverId),
+      ...relationshipConditions,
+    ];
+
+    return await db
+      .select({
+        id: messages.id,
+        userId: messages.userId,
+        caregiverId: messages.caregiverId,
+        content: messages.content,
+        fromUser: messages.fromUser,
+        sentAt: messages.sentAt,
+      })
+      .from(messages)
+      .innerJoin(
+        careRelationships,
+        and(
+          eq(careRelationships.userId, messages.userId),
+          eq(careRelationships.caregiverId, caregiverId),
+          eq(careRelationships.isActive, true),
+        ),
+      )
+      .where(and(...messageConditions))
+      .orderBy(desc(messages.sentAt));
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
@@ -1007,6 +1875,35 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(appointments).where(eq(appointments.userId, userId));
   }
 
+  async getAppointmentsByDate(userId: number, date: string): Promise<Appointment[]> {
+    return await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          sql`${appointments.appointmentDate} LIKE ${`${date}%`}`
+        )
+      )
+      .orderBy(appointments.appointmentDate);
+  }
+
+  async getNextAppointment(userId: number, fromDate: string): Promise<Appointment | undefined> {
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          eq(appointments.isCompleted, false),
+          gte(appointments.appointmentDate, fromDate)
+        )
+      )
+      .orderBy(appointments.appointmentDate)
+      .limit(1);
+    return appointment;
+  }
+
   async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
     const [appointment] = await db
       .insert(appointments)
@@ -1058,6 +1955,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(mealPlans.id, mealPlanId))
       .returning();
     return mealPlan || undefined;
+  }
+
+  async deleteMealPlan(mealPlanId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(mealPlans)
+      .where(
+        and(
+          eq(mealPlans.id, mealPlanId),
+          eq(mealPlans.userId, userId),
+        ),
+      );
+    return result.rowCount > 0;
   }
 
   async getMealPlansByDate(userId: number, date: string): Promise<MealPlan[]> {
@@ -1130,6 +2039,18 @@ export class DatabaseStorage implements IStorage {
     return item || undefined;
   }
 
+  async deleteShoppingListItem(itemId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(shoppingLists)
+      .where(
+        and(
+          eq(shoppingLists.id, itemId),
+          eq(shoppingLists.userId, userId),
+        ),
+      );
+    return result.rowCount > 0;
+  }
+
   async getActiveShoppingItems(userId: number): Promise<ShoppingList[]> {
     return await db
       .select()
@@ -1143,28 +2064,49 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmergencyResourcesByUser(userId: number): Promise<EmergencyResource[]> {
-    return await db
-      .select()
+    const columns = await getEmergencyResourceColumns();
+    const resources = await db
+      .select(emergencyResourceSelection(columns))
       .from(emergencyResources)
       .where(eq(emergencyResources.userId, userId))
       .orderBy(emergencyResources.resourceType, emergencyResources.name);
+    return resources.map(normalizeEmergencyResource);
   }
 
   async createEmergencyResource(insertResource: InsertEmergencyResource): Promise<EmergencyResource> {
+    const columns = await getEmergencyResourceColumns();
+    checkEmergencyResourceColumns(insertResource, columns);
     const [resource] = await db
       .insert(emergencyResources)
-      .values(insertResource)
-      .returning();
-    return resource;
+      .values({
+        userId: insertResource.userId,
+        name: insertResource.name,
+        resourceType: insertResource.resourceType,
+        phoneNumber: insertResource.phoneNumber,
+        address: insertResource.address,
+        description: insertResource.description,
+        isAvailable24_7: insertResource.isAvailable24_7,
+        ...(columns.website ? { website: insertResource.website } : {}),
+        ...(columns.availabilityHours ? { availabilityHours: insertResource.availabilityHours } : {}),
+        ...(columns.isEmergencyOnly ? { isEmergencyOnly: insertResource.isEmergencyOnly } : {}),
+      })
+      .returning(emergencyResourceSelection(columns));
+    return normalizeEmergencyResource(resource);
   }
 
   async updateEmergencyResource(resourceId: number, updates: Partial<InsertEmergencyResource>): Promise<EmergencyResource | undefined> {
+    const columns = await getEmergencyResourceColumns();
+    checkEmergencyResourceColumns(updates, columns);
+    const compatibleUpdates = { ...updates };
+    if (!columns.website) delete compatibleUpdates.website;
+    if (!columns.availabilityHours) delete compatibleUpdates.availabilityHours;
+    if (!columns.isEmergencyOnly) delete compatibleUpdates.isEmergencyOnly;
     const [resource] = await db
       .update(emergencyResources)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({ ...compatibleUpdates, updatedAt: new Date() })
       .where(eq(emergencyResources.id, resourceId))
-      .returning();
-    return resource || undefined;
+      .returning(emergencyResourceSelection(columns));
+    return resource ? normalizeEmergencyResource(resource) : undefined;
   }
 
   async deleteEmergencyResource(resourceId: number): Promise<boolean> {
@@ -1258,13 +2200,37 @@ export class DatabaseStorage implements IStorage {
     return medication;
   }
 
-  async updateMedication(medicationId: number, updates: Partial<InsertMedication>): Promise<Medication | undefined> {
+  async updateMedication(
+    medicationId: number,
+    userId: number,
+    updates: Partial<InsertMedication>,
+  ): Promise<Medication | undefined> {
     const [medication] = await db
       .update(medications)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(medications.id, medicationId))
+      .where(
+        and(
+          eq(medications.id, medicationId),
+          eq(medications.userId, userId),
+          eq(medications.isActive, true),
+        ),
+      )
       .returning();
     return medication || undefined;
+  }
+
+  async deleteMedication(medicationId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .update(medications)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(
+        and(
+          eq(medications.id, medicationId),
+          eq(medications.userId, userId),
+          eq(medications.isActive, true),
+        ),
+      );
+    return result.rowCount > 0;
   }
 
   async getMedicationsDueForRefill(userId: number): Promise<Medication[]> {
@@ -1717,9 +2683,177 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(userAchievements.earnedAt));
   }
 
+  async getRecentUserAchievements(userId: number, limit = 5): Promise<UserAchievement[]> {
+    return await db
+      .select()
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId))
+      .orderBy(desc(userAchievements.earnedAt))
+      .limit(Math.max(1, Math.min(limit, 20)));
+  }
+
   async createUserAchievement(achievement: InsertUserAchievement): Promise<UserAchievement> {
     const [created] = await db.insert(userAchievements).values(achievement).returning();
     return created;
+  }
+
+  async getRewardBadges(userId: number): Promise<RewardBadgeView[]> {
+    const [
+      balance,
+      redemptionCount,
+      transactionEarnings,
+      skillRows,
+      legacyAchievements,
+    ] = await Promise.all([
+      this.getExistingUserPointsBalance(userId),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rewardRedemptions)
+        .where(
+          and(
+            eq(rewardRedemptions.userId, userId),
+            inArray(rewardRedemptions.status, [
+              "pending",
+              "approved",
+              "completed",
+            ]),
+          ),
+        ),
+      db
+        .select({
+          lifetimeEarned: sql<number>`
+            COALESCE(
+              SUM(
+                CASE
+                  WHEN ${pointsTransactions.points} > 0
+                  THEN ${pointsTransactions.points}
+                  ELSE 0
+                END
+              ),
+              0
+            )::int
+          `,
+        })
+        .from(pointsTransactions)
+        .where(eq(pointsTransactions.userId, userId)),
+      db
+        .select({
+          milestones: transitionSkills.milestones,
+          currentLevel: transitionSkills.currentLevel,
+          targetLevel: transitionSkills.targetLevel,
+        })
+        .from(transitionSkills)
+        .where(eq(transitionSkills.userId, userId)),
+      db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.userId, userId))
+        .orderBy(desc(achievements.earnedAt)),
+    ]);
+
+    const stats = {
+      lifetimeEarned: resolveLifetimeEarned(
+        balance?.lifetimeEarned,
+        transactionEarnings[0]?.lifetimeEarned,
+      ),
+      rewardsRedeemed: Math.max(0, Number(redemptionCount[0]?.count ?? 0)),
+      completedMilestones: countCompletedSkillMilestones(skillRows),
+    };
+    const evaluations = evaluateRewardBadges(stats);
+    const storedByType = new Map<string, UserAchievement>();
+    let storedAchievements: UserAchievement[] = [];
+
+    await db.transaction(async (tx) => {
+      // Serialize award checks for this user so overlapping badge requests
+      // cannot both insert the same earned badge.
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(
+          ${userId},
+          hashtext('adaptalyfe_reward_badge_awards')
+        )`,
+      );
+
+      storedAchievements = await tx
+        .select()
+        .from(userAchievements)
+        .where(eq(userAchievements.userId, userId))
+        .orderBy(desc(userAchievements.earnedAt));
+
+      for (const achievement of storedAchievements) {
+        if (!storedByType.has(achievement.achievementType)) {
+          storedByType.set(achievement.achievementType, achievement);
+        }
+      }
+
+      const newlyEarnedBadges = newlyEarnedRewardBadges(
+        evaluations,
+        new Set(storedByType.keys()),
+      );
+      for (const badge of newlyEarnedBadges) {
+        const [created] = await tx
+          .insert(userAchievements)
+          .values({
+            userId,
+            achievementType: badge.type,
+            title: badge.title,
+            description: badge.description,
+            iconName: badge.iconName,
+            category: badge.category,
+            points: badge.points,
+            level: 1,
+          })
+          .returning();
+        if (created) storedByType.set(badge.type, created);
+      }
+    });
+
+    const badges: RewardBadgeView[] = evaluations.map((badge, index) => {
+      const stored = storedByType.get(badge.type);
+      const isEarned = badge.isEarned || stored != null;
+      return {
+        id: stored?.id ?? -(index + 1),
+        userId,
+        achievementType: badge.type,
+        title: badge.title,
+        description: badge.description,
+        iconName: badge.iconName,
+        category: badge.category,
+        points: badge.points,
+        level: 1,
+        earnedAt: stored?.earnedAt ?? null,
+        isEarned,
+        progress: isEarned ? Math.max(badge.progress, badge.target) : badge.progress,
+        target: badge.target,
+        requirement: badge.requirement,
+      };
+    });
+    const knownTypes = new Set(badges.map((badge) => badge.achievementType));
+
+    for (const achievement of [...storedAchievements, ...legacyAchievements]) {
+      const type = "achievementType" in achievement
+        ? achievement.achievementType
+        : achievement.type;
+      if (knownTypes.has(type)) continue;
+      knownTypes.add(type);
+      badges.push({
+        id: achievement.id,
+        userId,
+        achievementType: type,
+        title: achievement.title,
+        description: achievement.description,
+        iconName: "iconName" in achievement ? achievement.iconName : achievement.icon,
+        category: "category" in achievement ? achievement.category : "achievement",
+        points: "points" in achievement ? achievement.points ?? 0 : 0,
+        level: "level" in achievement ? achievement.level ?? 1 : 1,
+        earnedAt: achievement.earnedAt ?? null,
+        isEarned: true,
+        progress: 1,
+        target: 1,
+        requirement: "Completed achievement requirement.",
+      });
+    }
+
+    return badges;
   }
 
   // Streak Tracking Implementation
@@ -2015,6 +3149,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(caregiverInvitations.createdAt));
   }
 
+  async getPendingCaregiverInvitationsByCaregiver(caregiverId: number): Promise<CaregiverInvitation[]> {
+    return await db
+      .select()
+      .from(caregiverInvitations)
+      .where(
+        and(
+          eq(caregiverInvitations.caregiverId, caregiverId),
+          sql`lower(trim(${caregiverInvitations.status})) = 'pending'`,
+          gt(caregiverInvitations.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(caregiverInvitations.createdAt));
+  }
+
   async getCaregiverInvitationById(id: number): Promise<CaregiverInvitation | undefined> {
     const [invitation] = await db
       .select()
@@ -2030,39 +3178,90 @@ export class DatabaseStorage implements IStorage {
   }
 
   async acceptCaregiverInvitation(invitationCode: string, acceptedBy: number): Promise<CaregiverInvitation | undefined> {
-    const invitation = await this.getCaregiverInvitation(invitationCode);
-    if (!invitation || invitation.status !== 'pending' || new Date() > new Date(invitation.expiresAt)) {
-      return undefined;
-    }
+    return await db.transaction(async (tx) => {
+      const [invitation] = await tx
+        .select()
+        .from(caregiverInvitations)
+        .where(eq(caregiverInvitations.invitationCode, invitationCode))
+        .for("update");
+      if (!invitation) return undefined;
 
-    const [updatedInvitation] = await db
-      .update(caregiverInvitations)
-      .set({
-        status: 'accepted',
-        acceptedAt: new Date(),
-        acceptedBy,
-      })
-      .where(eq(caregiverInvitations.invitationCode, invitationCode))
-      .returning();
+      const invitationStatus = normalizeCaregiverInvitationStatus(invitation.status);
+      const isAlreadyAccepted =
+        invitationStatus === "accepted" && invitation.acceptedBy === acceptedBy;
+      if (
+        !isAlreadyAccepted &&
+        (invitationStatus !== "pending" ||
+          new Date() > new Date(invitation.expiresAt))
+      ) {
+        if (
+          invitationStatus === "pending" &&
+          new Date() > new Date(invitation.expiresAt)
+        ) {
+          await tx
+            .update(caregiverInvitations)
+            .set({ status: "expired" })
+            .where(eq(caregiverInvitations.id, invitation.id));
+        }
+        return undefined;
+      }
 
-    // Create care relationship.
-    // In caregiver_invitations, caregiverId holds the CARE RECIPIENT's ID (the person
-    // who created the invite from their own account). The person who accepts is
-    // the actual caregiver. So careRelationships must store them correctly:
-    //   caregiverId = acceptedBy  (the caregiver who accepted)
-    //   userId      = invitation.caregiverId  (the care recipient who sent it)
-    if (updatedInvitation) {
-      await this.createCareRelationship({
-        caregiverId: acceptedBy,                      // person who accepted = actual caregiver
-        userId: updatedInvitation.caregiverId,        // person who created invite = care recipient
-        relationship: updatedInvitation.relationship,
-        isPrimary: false,
-        isActive: true,
-        establishedVia: 'invitation',
-      });
-    }
+      let acceptedInvitation = invitation;
+      if (!isAlreadyAccepted) {
+        const [updatedInvitation] = await tx
+          .update(caregiverInvitations)
+          .set({
+            status: "accepted",
+            acceptedAt: new Date(),
+            acceptedBy,
+          })
+          .where(
+            and(
+              eq(caregiverInvitations.id, invitation.id),
+              eq(caregiverInvitations.status, invitation.status),
+            ),
+          )
+          .returning();
+        if (!updatedInvitation) return undefined;
+        acceptedInvitation = updatedInvitation;
+      }
 
-    return updatedInvitation || undefined;
+      // caregiverId on an invitation is the care recipient who created it.
+      // acceptedBy is the caregiver account that accepted it.
+      const [existingRelationship] = await tx
+        .select()
+        .from(careRelationships)
+        .where(
+          and(
+            eq(careRelationships.userId, acceptedInvitation.caregiverId),
+            eq(careRelationships.caregiverId, acceptedBy),
+          ),
+        )
+        .for("update");
+
+      if (existingRelationship) {
+        if (!existingRelationship.isActive && !isAlreadyAccepted) {
+          await tx
+            .update(careRelationships)
+            .set({
+              relationship: acceptedInvitation.relationship,
+              isActive: true,
+            })
+            .where(eq(careRelationships.id, existingRelationship.id));
+        }
+      } else {
+        await tx
+          .insert(careRelationships)
+          .values(
+            careRelationshipFromAcceptedInvitation(
+              acceptedInvitation,
+              acceptedBy,
+            ),
+          );
+      }
+
+      return acceptedInvitation;
+    });
   }
 
   async expireCaregiverInvitation(invitationCode: string): Promise<boolean> {
@@ -2082,7 +3281,60 @@ export class DatabaseStorage implements IStorage {
     return newRelationship;
   }
 
+  async getCareRelationshipById(id: number): Promise<CareRelationship | undefined> {
+    const [relationship] = await db
+      .select()
+      .from(careRelationships)
+      .where(eq(careRelationships.id, id));
+    return relationship || undefined;
+  }
+
   async getCareRelationshipsByUser(userId: number): Promise<CareRelationship[]> {
+    // Accepted invitations from older app versions may have their status updated
+    // without a corresponding care_relationships row. Repair only missing rows;
+    // an existing inactive relationship represents an intentional removal.
+    await db.transaction(async (tx) => {
+      const acceptedInvitations = await tx
+        .select()
+        .from(caregiverInvitations)
+        .where(
+          and(
+            eq(caregiverInvitations.caregiverId, userId),
+            sql`lower(trim(${caregiverInvitations.status})) = 'accepted'`,
+            isNotNull(caregiverInvitations.acceptedBy),
+          ),
+        )
+        .orderBy(asc(caregiverInvitations.id))
+        .for("update");
+
+      if (acceptedInvitations.length === 0) return;
+
+      const existingRelationships = await tx
+        .select({ caregiverId: careRelationships.caregiverId })
+        .from(careRelationships)
+        .where(eq(careRelationships.userId, userId));
+      const existingCaregiverIds = new Set(
+        existingRelationships.map((relationship) => relationship.caregiverId),
+      );
+
+      for (const invitation of acceptedInvitations) {
+        const acceptedBy = invitation.acceptedBy;
+        if (acceptedBy === null || existingCaregiverIds.has(acceptedBy)) {
+          continue;
+        }
+
+        await tx
+          .insert(careRelationships)
+          .values(
+            careRelationshipFromAcceptedInvitation(
+              invitation,
+              acceptedBy,
+            ),
+          );
+        existingCaregiverIds.add(acceptedBy);
+      }
+    });
+
     return await db
       .select()
       .from(careRelationships)
@@ -2111,12 +3363,24 @@ export class DatabaseStorage implements IStorage {
     return updatedRelationship || undefined;
   }
 
-  async removeCareRelationship(id: number): Promise<boolean> {
+  async removeCareRelationship(id: number, userId: number): Promise<boolean> {
+    const relationship = await this.getCareRelationshipById(id);
+    if (!relationship || relationship.userId !== userId) return false;
+    if (!relationship.isActive) return true;
+
     const result = await db
       .update(careRelationships)
       .set({ isActive: false })
-      .where(eq(careRelationships.id, id));
-    return (result.rowCount || 0) > 0;
+      .where(
+        and(
+          eq(careRelationships.id, id),
+          eq(careRelationships.userId, userId),
+          eq(careRelationships.isActive, true),
+        ),
+      );
+    if ((result.rowCount || 0) > 0) return true;
+    const current = await this.getCareRelationshipById(id);
+    return current?.isActive === false;
   }
 
   // Academic features implementation
@@ -2136,6 +3400,36 @@ export class DatabaseStorage implements IStorage {
   async createAssignment(assignmentData: InsertAssignment): Promise<Assignment> {
     const [assignment] = await db.insert(assignments).values(assignmentData).returning();
     return assignment;
+  }
+
+  async updateAssignment(
+    assignmentId: number,
+    userId: number,
+    assignmentData: Partial<InsertAssignment>,
+  ): Promise<Assignment | undefined> {
+    const [assignment] = await db
+      .update(assignments)
+      .set(assignmentData)
+      .where(
+        and(
+          eq(assignments.id, assignmentId),
+          eq(assignments.userId, userId),
+        ),
+      )
+      .returning();
+    return assignment;
+  }
+
+  async deleteAssignment(assignmentId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(assignments)
+      .where(
+        and(
+          eq(assignments.id, assignmentId),
+          eq(assignments.userId, userId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
   }
 
   async getStudySessionsByUser(userId: number): Promise<StudySession[]> {
@@ -2173,6 +3467,18 @@ export class DatabaseStorage implements IStorage {
     return session;
   }
 
+  async deleteStudySession(sessionId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(studySessions)
+      .where(
+        and(
+          eq(studySessions.id, sessionId),
+          eq(studySessions.userId, userId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
+  }
+
   async getCampusLocationsByUser(userId: number): Promise<CampusLocation[]> {
     return await db.select().from(campusLocations).where(eq(campusLocations.userId, userId));
   }
@@ -2201,24 +3507,91 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransitionSkillsByUser(userId: number): Promise<TransitionSkill[]> {
-    return await db.select().from(transitionSkills).where(eq(transitionSkills.userId, userId));
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      return [];
+    }
+
+    const rows = capabilities.hasPriority
+      ? await db
+          .select({
+            ...transitionSkillBaseColumns,
+            priority: transitionSkills.priority,
+          })
+          .from(transitionSkills)
+          .where(eq(transitionSkills.userId, userId))
+      : await db
+          .select(transitionSkillBaseColumns)
+          .from(transitionSkills)
+          .where(eq(transitionSkills.userId, userId));
+
+    return rows.map(normalizeTransitionSkill);
   }
 
   async createTransitionSkill(skillData: InsertTransitionSkill): Promise<TransitionSkill> {
-    const [skill] = await db.insert(transitionSkills).values(skillData).returning();
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      throw new Error("The transition_skills table is unavailable.");
+    }
+    if (!capabilities.hasPriority) {
+      throw new TransitionSkillPriorityUnavailableError();
+    }
+    const [created] = await db
+      .insert(transitionSkills)
+      .values(skillData)
+      .returning({ id: transitionSkills.id });
+    const skill = created
+      ? await getTransitionSkillById(created.id, capabilities)
+      : undefined;
+    if (!skill) {
+      throw new Error("The transition skill could not be created.");
+    }
     return skill;
   }
 
-  async updateTransitionSkill(skillId: number, updateData: Partial<TransitionSkill>): Promise<TransitionSkill> {
-    const [skill] = await db.update(transitionSkills)
-      .set(updateData)
-      .where(eq(transitionSkills.id, skillId))
-      .returning();
+  async updateTransitionSkill(
+    skillId: number,
+    userId: number,
+    updateData: Partial<TransitionSkill>,
+  ): Promise<TransitionSkill | undefined> {
+    const capabilities = await getTransitionSkillSchemaCapabilities();
+    if (!capabilities.hasTable) {
+      throw new Error("The transition_skills table is unavailable.");
+    }
+    if (!capabilities.hasPriority && updateData.priority !== undefined) {
+      throw new TransitionSkillPriorityUnavailableError();
+    }
+
+    const compatibleUpdateData = {
+      ...updateData,
+      updatedAt: new Date(),
+    } as Partial<TransitionSkill>;
+
+    const [updated] = await db.update(transitionSkills)
+      .set(compatibleUpdateData)
+      .where(
+        and(
+          eq(transitionSkills.id, skillId),
+          eq(transitionSkills.userId, userId),
+        ),
+      )
+      .returning({ id: transitionSkills.id });
+    const skill = updated
+      ? await getTransitionSkillById(updated.id, capabilities)
+      : undefined;
     return skill;
   }
 
-  async deleteTransitionSkill(skillId: number): Promise<void> {
-    await db.delete(transitionSkills).where(eq(transitionSkills.id, skillId));
+  async deleteTransitionSkill(skillId: number, userId: number): Promise<boolean> {
+    const result = await db
+      .delete(transitionSkills)
+      .where(
+        and(
+          eq(transitionSkills.id, skillId),
+          eq(transitionSkills.userId, userId),
+        ),
+      );
+    return (result.rowCount || 0) > 0;
   }
 
   // Calendar Events implementation
@@ -2291,6 +3664,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(sleepSessions.sleepDate));
   }
 
+  async getRecentSleepSessionsByUser(userId: number, limit = 7): Promise<SleepSession[]> {
+    return await db
+      .select()
+      .from(sleepSessions)
+      .where(eq(sleepSessions.userId, userId))
+      .orderBy(desc(sleepSessions.sleepDate))
+      .limit(Math.max(1, Math.min(limit, 30)));
+  }
+
   async getSleepSessionByDate(userId: number, date: string): Promise<SleepSession | undefined> {
     const [session] = await db.select().from(sleepSessions)
       .where(
@@ -2360,7 +3742,80 @@ export class DatabaseStorage implements IStorage {
 
   // Rewards Program Methods
   async getRewardsByUser(userId: number): Promise<Reward[]> {
-    return await db.select().from(rewards).where(eq(rewards.userId, userId));
+    const userRewards = await db
+      .select()
+      .from(rewards)
+      .where(eq(rewards.userId, userId));
+
+    if (userRewards.length === 0) return userRewards;
+
+    const redemptionCounts = await db
+      .select({
+        rewardId: rewardRedemptions.rewardId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(rewardRedemptions)
+      .where(
+        and(
+          eq(rewardRedemptions.userId, userId),
+          inArray(
+            rewardRedemptions.rewardId,
+            userRewards.map((reward) => reward.id),
+          ),
+          inArray(
+            rewardRedemptions.status,
+            COUNTED_REWARD_REDEMPTION_STATUSES,
+          ),
+        ),
+      )
+      .groupBy(rewardRedemptions.rewardId);
+    const countsByRewardId = new Map(
+      redemptionCounts.map((row) => [row.rewardId, Number(row.count)]),
+    );
+
+    return userRewards.map((reward) => ({
+      ...reward,
+      currentRedemptions: countsByRewardId.get(reward.id) ?? 0,
+    }));
+  }
+
+  async getActiveRewardsByUser(userId: number, limit = 5): Promise<Reward[]> {
+    const activeRewards = await db
+      .select()
+      .from(rewards)
+      .where(and(eq(rewards.userId, userId), eq(rewards.isActive, true)))
+      .orderBy(desc(rewards.createdAt))
+      .limit(Math.max(1, Math.min(limit, 20)));
+    if (activeRewards.length === 0) return activeRewards;
+
+    const redemptionCounts = await db
+      .select({
+        rewardId: rewardRedemptions.rewardId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(rewardRedemptions)
+      .where(
+        and(
+          eq(rewardRedemptions.userId, userId),
+          inArray(
+            rewardRedemptions.rewardId,
+            activeRewards.map((reward) => reward.id),
+          ),
+          inArray(
+            rewardRedemptions.status,
+            COUNTED_REWARD_REDEMPTION_STATUSES,
+          ),
+        ),
+      )
+      .groupBy(rewardRedemptions.rewardId);
+    const countsByRewardId = new Map(
+      redemptionCounts.map((row) => [row.rewardId, Number(row.count)]),
+    );
+
+    return activeRewards.map((reward) => ({
+      ...reward,
+      currentRedemptions: countsByRewardId.get(reward.id) ?? 0,
+    }));
   }
 
   async getRewardsByCaregiver(caregiverId: number): Promise<Reward[]> {
@@ -2397,6 +3852,14 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newBalance;
     }
+    return balance;
+  }
+
+  async getExistingUserPointsBalance(userId: number): Promise<UserPointsBalance | undefined> {
+    const [balance] = await db
+      .select()
+      .from(userPointsBalance)
+      .where(eq(userPointsBalance.userId, userId));
     return balance;
   }
 
@@ -2443,6 +3906,15 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(pointsTransactions.createdAt));
   }
 
+  async getRecentPointsTransactionsByUser(userId: number, limit = 10): Promise<PointsTransaction[]> {
+    return await db
+      .select()
+      .from(pointsTransactions)
+      .where(eq(pointsTransactions.userId, userId))
+      .orderBy(desc(pointsTransactions.createdAt))
+      .limit(Math.max(1, Math.min(limit, 30)));
+  }
+
   async getPointsTransactionsByUser(userId: number): Promise<PointsTransaction[]> {
     return await this.getPointsTransactions(userId);
   }
@@ -2459,6 +3931,121 @@ export class DatabaseStorage implements IStorage {
   async createRewardRedemption(redemptionData: InsertRewardRedemption): Promise<RewardRedemption> {
     const [redemption] = await db.insert(rewardRedemptions).values(redemptionData).returning();
     return redemption;
+  }
+
+  async redeemReward(userId: number, rewardId: number): Promise<RewardRedemption> {
+    return await db.transaction(async (tx) => {
+      // Lock the reward row so concurrent requests serialize before checking
+      // the limit and reserving the next redemption.
+      const [reward] = await tx
+        .select()
+        .from(rewards)
+        .where(and(eq(rewards.id, rewardId), eq(rewards.userId, userId)))
+        .for("update");
+
+      if (!reward) {
+        throw new RewardRedemptionError(
+          "REWARD_NOT_FOUND",
+          "This reward is no longer available.",
+        );
+      }
+
+      const [redemptionCount] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rewardRedemptions)
+        .where(
+          and(
+            eq(rewardRedemptions.userId, userId),
+            eq(rewardRedemptions.rewardId, rewardId),
+            inArray(
+              rewardRedemptions.status,
+              COUNTED_REWARD_REDEMPTION_STATUSES,
+            ),
+          ),
+        );
+      const currentRedemptions = Number(redemptionCount?.count ?? 0);
+
+      if (
+        hasReachedRewardRedemptionLimit(
+          reward.maxRedemptions,
+          currentRedemptions,
+        )
+      ) {
+        throw new RewardRedemptionError(
+          "REWARD_LIMIT_REACHED",
+          "This reward has reached its maximum number of redemptions.",
+        );
+      }
+
+      let [balance] = await tx
+        .select()
+        .from(userPointsBalance)
+        .where(eq(userPointsBalance.userId, userId))
+        .for("update");
+      if (!balance) {
+        [balance] = await tx
+          .insert(userPointsBalance)
+          .values({
+            userId,
+            totalPoints: 0,
+            availablePoints: 0,
+            lifetimeEarned: 0,
+            lifetimeSpent: 0,
+          })
+          .returning();
+      }
+
+      if (balance.availablePoints < reward.pointsRequired) {
+        throw new RewardRedemptionError(
+          "INSUFFICIENT_POINTS",
+          `You need ${reward.pointsRequired} points but only have ${balance.availablePoints}.`,
+        );
+      }
+
+      await tx.insert(pointsTransactions).values({
+        userId,
+        points: -reward.pointsRequired,
+        transactionType: "reward_redemption",
+        source: `Redeemed reward: ${rewardId}`,
+        description: `Redeemed reward: ${rewardId}`,
+        awardedBy: userId,
+      });
+
+      const [updatedBalance] = await tx
+        .update(userPointsBalance)
+        .set({
+          totalPoints: balance.totalPoints - reward.pointsRequired,
+          availablePoints: balance.availablePoints - reward.pointsRequired,
+          lifetimeEarned: balance.lifetimeEarned,
+          lifetimeSpent: balance.lifetimeSpent + reward.pointsRequired,
+          updatedAt: new Date(),
+        })
+        .where(eq(userPointsBalance.userId, userId))
+        .returning();
+      if (!updatedBalance) {
+        throw new Error("Could not update user points balance");
+      }
+
+      const [redemption] = await tx
+        .insert(rewardRedemptions)
+        .values({
+          userId,
+          rewardId,
+          pointsSpent: reward.pointsRequired,
+          status: "pending",
+        })
+        .returning();
+
+      await tx
+        .update(rewards)
+        .set({
+          currentRedemptions: currentRedemptions + 1,
+          updatedAt: new Date(),
+        })
+        .where(eq(rewards.id, rewardId));
+
+      return redemption;
+    });
   }
 
   async updateRewardRedemptionStatus(redemptionId: number, status: string): Promise<RewardRedemption | undefined> {

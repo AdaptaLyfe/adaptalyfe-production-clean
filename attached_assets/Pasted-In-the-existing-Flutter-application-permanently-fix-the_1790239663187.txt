@@ -1,0 +1,142 @@
+In the existing Flutter application, permanently fix the **Your Dashboard → Customize** skill module customization issue.
+
+### Current Bug
+
+In **Your Dashboard → Customize**:
+
+* When a user enables a previously disabled skill module, then navigates back to **Your Dashboard**, the newly enabled module is not shown.
+* When a user disables an already enabled skill module, then navigates back to **Your Dashboard**, the disabled module is still shown.
+* The customization appears to change in the Customize screen, but **Your Dashboard does not reflect the latest configuration**.
+* The bug has reopened multiple times, so do not apply only a UI-level workaround. Find and fix the root cause.
+
+### Required Behavior
+
+The selected skill modules in **Customize** must be the single source of truth for what is displayed on **Your Dashboard**.
+
+When the user:
+
+1. Opens **Your Dashboard → Customize**.
+2. Enables or disables one or more skill modules.
+3. Saves/applies the customization.
+4. Returns to **Your Dashboard**.
+
+The dashboard must immediately display the exact latest customization:
+
+* Enabled module → MUST be visible.
+* Disabled module → MUST NOT be visible.
+* Multiple changes → ALL changes must be reflected.
+* No stale/previous module configuration should remain.
+
+### Root Cause Investigation
+
+Before modifying code, trace the complete data flow:
+
+**Customize UI → selected modules → state/BLoC/provider → repository/service → local/backend persistence → Dashboard → dashboard module filtering/rendering**
+
+Check for:
+
+* Separate or duplicated state between Customize and Dashboard.
+* Dashboard using cached/old skill module data.
+* BLoC/state not being refreshed after returning from Customize.
+* Incorrect `Navigator.pop()` result handling.
+* Missing reload after customization.
+* Async save completing after the Dashboard starts rebuilding.
+* Dashboard using default module configuration instead of the saved configuration.
+* Incorrect skill/module IDs or name comparison.
+* Boolean enabled/disabled values being inverted.
+* `setState()` updating Customize but not the actual persisted state.
+* Race conditions between save and dashboard reload.
+* Widget lifecycle issues such as `initState()` loading data only once.
+* `BlocBuilder`, `BlocListener`, `FutureBuilder`, Provider, or repository cache not receiving the updated state.
+* Any other location where the old configuration can overwrite the newly saved configuration.
+
+### Implementation Requirements
+
+Fix the architecture/data flow so that there is one reliable source of truth for dashboard customization.
+
+After a successful customization save:
+
+* Persist the latest configuration correctly.
+* Update the relevant BLoC/state immediately.
+* Return the updated configuration/result when navigating back if required.
+* Refresh/rebuild **Your Dashboard** using the latest saved configuration.
+* Do NOT require the user to restart the app.
+* Do NOT require the user to leave and reopen the dashboard manually.
+* Do NOT use arbitrary delays such as `Future.delayed()` as a workaround.
+* Do NOT hardcode module visibility.
+* Do NOT duplicate customization logic in multiple screens.
+
+### Important Navigation Cases
+
+Verify all of these:
+
+1. Dashboard → Customize → Enable module → Save → Back → Dashboard
+
+   * Module MUST appear.
+
+2. Dashboard → Customize → Disable module → Save → Back → Dashboard
+
+   * Module MUST disappear.
+
+3. Enable A + B and disable C → Save → Dashboard
+
+   * A and B visible.
+   * C hidden.
+
+4. Customize → Save → Dashboard → Customize again
+
+   * Previously saved selections MUST still be correct.
+
+5. Customize → Save → Navigate to another screen → Return to Dashboard
+
+   * Dashboard MUST still use the saved configuration.
+
+6. Logout → Login again
+
+   * Dashboard MUST load the correct persisted customization for the logged-in user.
+
+7. App restart
+
+   * Saved customization MUST remain correct.
+
+8. Rapidly enable/disable multiple modules before saving
+
+   * Final saved state MUST exactly match the user's final selections.
+
+### Do Not Break Existing Functionality
+
+Do not change:
+
+* Existing dashboard UI/design.
+* Existing skill module functionality.
+* Existing navigation.
+* Existing API contracts unless absolutely required.
+* Existing authentication.
+* Existing unrelated BLoCs/features.
+
+Make the smallest clean architectural change necessary.
+
+### Testing / Verification
+
+After implementing the fix:
+
+* Search the entire project for all code related to dashboard customization and skill module visibility.
+* Identify every place where the customization state is read, written, cached, or transformed.
+* Verify there is no second source overriding the saved configuration.
+* Test enable, disable, multiple changes, navigation back, navigation forward, logout/login, and app restart.
+* Run `flutter analyze`.
+* Run relevant tests if available.
+* Confirm there are no exceptions, duplicate state updates, or stale dashboard data.
+
+### Final Requirement
+
+Do not just make the dashboard refresh visually.
+
+Fix the **root data/state synchronization problem** so this bug does not reopen when navigating between **Your Dashboard** and **Customize**.
+
+Before finishing, explain:
+
+1. What caused the stale customization issue.
+2. Which files/classes were changed.
+3. How the new data flow works.
+4. How you verified that enabled and disabled modules remain synchronized with **Your Dashboard**.

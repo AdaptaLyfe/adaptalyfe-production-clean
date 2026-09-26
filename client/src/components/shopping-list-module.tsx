@@ -3,15 +3,32 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ShoppingCart, Plus, DollarSign, Package, CheckCircle2, Trash2, ExternalLink, Store, Settings, Globe, Phone, MapPin } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { insertShoppingListSchema, type ShoppingList, type InsertShoppingList, type GroceryStore } from "@shared/schema";
+import {
+  insertGroceryStoreSchema,
+  insertShoppingListSchema,
+  type ShoppingList,
+  type InsertShoppingList,
+  type GroceryStore,
+} from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +40,7 @@ export default function ShoppingListModule() {
   const [selectedStore, setSelectedStore] = useState<GroceryStore | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingStore, setEditingStore] = useState<GroceryStore | null>(null);
+  const [itemPendingRemoval, setItemPendingRemoval] = useState<ShoppingList | null>(null);
 
   const { data: shoppingItems, isLoading } = useQuery<ShoppingList[]>({
     queryKey: ["/api/shopping-lists"],
@@ -75,6 +93,7 @@ export default function ShoppingListModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists"] });
       queryClient.invalidateQueries({ queryKey: ["/api/shopping-lists/active"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
   });
 
@@ -121,6 +140,16 @@ export default function ShoppingListModule() {
       isPurchased: !item.isPurchased,
       actualCost: actualCost,
     });
+  };
+
+  const requestItemRemoval = (item: ShoppingList) => {
+    setItemPendingRemoval(item);
+  };
+
+  const confirmItemRemoval = () => {
+    if (!itemPendingRemoval) return;
+    togglePurchased(itemPendingRemoval);
+    setItemPendingRemoval(null);
   };
 
   const getCategoryColor = (category: string) => {
@@ -327,7 +356,7 @@ export default function ShoppingListModule() {
                   name="itemName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Item Name</FormLabel>
+                      <FormLabel required>Item Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Bananas" {...field} />
                       </FormControl>
@@ -341,7 +370,7 @@ export default function ShoppingListModule() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <FormControl>
                         <select 
                           {...field}
@@ -366,7 +395,7 @@ export default function ShoppingListModule() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Quantity</FormLabel>
+                      <FormLabel optional>Quantity</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="e.g., 2 lbs, 1 gallon" 
@@ -386,14 +415,36 @@ export default function ShoppingListModule() {
                   name="estimatedCost"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Est. Cost ($)</FormLabel>
+                      <FormLabel optional>Est. Cost ($)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
+                          min={0}
                           step="0.01"
                           placeholder="5.99"
                           value={field.value?.toString() || ""}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "") {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const parsed = Number(value);
+                            if (Number.isFinite(parsed) && parsed >= 0) {
+                              field.onChange(parsed);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "−") {
+                              e.preventDefault();
+                            }
+                          }}
+                          onPaste={(e) => {
+                            const pasted = e.clipboardData.getData("text");
+                            if (pasted.includes("-") || pasted.includes("−")) {
+                              e.preventDefault();
+                            }
+                          }}
                           onBlur={field.onBlur}
                           name={field.name}
                         />
@@ -455,7 +506,13 @@ export default function ShoppingListModule() {
                           <div className="flex items-center space-x-3">
                             <Checkbox
                               checked={item.isPurchased || false}
-                              onCheckedChange={() => togglePurchased(item)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  requestItemRemoval(item);
+                                } else {
+                                  togglePurchased(item);
+                                }
+                              }}
                               disabled={updatePurchasedMutation.isPending}
                             />
                             <div>
@@ -490,6 +547,28 @@ export default function ShoppingListModule() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={itemPendingRemoval !== null}
+        onOpenChange={(open) => {
+          if (!open) setItemPendingRemoval(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove shopping item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this item?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmItemRemoval}>
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Store Management Dialog - Custom Modal */}
       {showStoreDialog && (
@@ -590,14 +669,11 @@ export default function ShoppingListModule() {
                           </div>
                           
                           <div className="flex gap-2 ml-4">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <EditButton
                               onClick={() => setEditingStore(store)}
+                              aria-label={`Edit ${store.name}`}
                               data-testid={`button-edit-store-${store.id}`}
-                            >
-                              Edit
-                            </Button>
+                            />
                             <Button
                               variant="outline"
                               size="sm"
@@ -651,6 +727,7 @@ interface StoreFormDialogProps {
 function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const groceryStoreFormSchema = insertGroceryStoreSchema.omit({ userId: true });
 
   const createStoreMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -681,6 +758,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
   });
 
   const form = useForm({
+    resolver: zodResolver(groceryStoreFormSchema),
     defaultValues: {
       name: store?.name || "",
       address: store?.address || "",
@@ -736,7 +814,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Store Name *</FormLabel>
+                  <FormLabel required>Store Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Kroger, Walmart, Target..." {...field} />
                   </FormControl>
@@ -750,7 +828,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel optional>Address</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Main St, Anytown, USA" {...field} />
                   </FormControl>
@@ -765,7 +843,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel optional>Phone Number</FormLabel>
                     <FormControl>
                       <Input placeholder="(555) 123-4567" {...field} />
                     </FormControl>
@@ -779,7 +857,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
+                    <FormLabel optional>Website</FormLabel>
                     <FormControl>
                       <Input placeholder="https://kroger.com" {...field} />
                     </FormControl>
@@ -794,7 +872,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               name="onlineOrderingUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Online Ordering URL</FormLabel>
+                    <FormLabel optional>Online Ordering URL</FormLabel>
                   <FormControl>
                     <Input placeholder="https://grocery.kroger.com" {...field} />
                   </FormControl>
@@ -816,7 +894,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Delivery Available</FormLabel>
+                      <FormLabel optional>Delivery Available</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -834,7 +912,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Pickup Available</FormLabel>
+                      <FormLabel optional>Pickup Available</FormLabel>
                     </div>
                   </FormItem>
                 )}
@@ -852,7 +930,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Preferred Store</FormLabel>
+                      <FormLabel optional>Preferred Store</FormLabel>
                     </div>
                   </FormItem>
                 )}

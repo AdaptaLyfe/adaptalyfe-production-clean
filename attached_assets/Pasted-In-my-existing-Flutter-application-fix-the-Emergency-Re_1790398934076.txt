@@ -1,0 +1,236 @@
+In my existing Flutter application, fix the Emergency Resource creation issue properly.
+
+### Problem
+
+Flow:
+
+`Resources → Emergency Resources → Add Resource → User clicks Add Resource`
+
+The resource is not being saved.
+
+I get this error:
+
+```text
+[ResourcesBloc] create emergency resource failed: ApiException (500): Failed to create emergency resource
+
+#0 ApiClient._request
+(package:adaptalyfe_mobile/core/network/api_client.dart:204:9)
+
+#1 ResourcesApi._post
+(package:adaptalyfe_mobile/features/resources/data/resources_api.dart:117:22)
+
+#2 ResourcesBloc._createEmergencyResource
+(package:adaptalyfe_mobile/features/resources/bloc/resources_bloc.dart:345:23)
+```
+
+### Important
+
+Do NOT just hide the error, change the error message, or add a retry button.
+
+Find the actual root cause and fix the complete create-resource flow.
+
+### What you must investigate
+
+First inspect the existing code for:
+
+* `ResourcesBloc`
+* `_createEmergencyResource`
+* `ResourcesApi`
+* `_post`
+* `ApiClient._request`
+* Emergency Resource model/request model
+* Add Emergency Resource screen/form
+* Repository layer if present
+* API endpoint and HTTP method
+* Authentication/token handling
+* Request headers
+* JSON/body serialization
+* Required and optional fields
+* Backend response/error handling
+
+Trace the complete flow:
+
+`Add Resource UI → validation → BLoC event → repository/API → HTTP request → backend → response → BLoC state → UI`
+
+### Check the actual API request
+
+Before making changes, determine:
+
+1. Exact endpoint being called.
+2. HTTP method.
+3. Exact JSON payload being sent.
+4. Required backend fields.
+5. Field names expected by the backend.
+6. Data types expected by the backend.
+7. Whether nullable/empty fields are being sent incorrectly.
+8. Whether authentication headers/token are present.
+9. Whether the user ID/profile ID is required.
+10. Whether the API response format matches the Flutter model.
+
+Add temporary safe debug logging if needed so we can see:
+
+```text
+Emergency Resource Request
+- endpoint
+- method
+- request body
+- status code
+- response body
+```
+
+Do NOT print passwords, tokens, authorization headers, or other sensitive information.
+
+### Important backend error investigation
+
+The API returns HTTP 500:
+
+```text
+Failed to create emergency resource
+```
+
+Do not assume the Flutter UI is the problem.
+
+Check whether the backend is rejecting the payload because of:
+
+* incorrect field name
+* missing required field
+* invalid data type
+* invalid enum/status value
+* null value
+* empty string
+* invalid user ID
+* incorrect endpoint
+* incorrect authentication
+* database constraint
+* backend migration/schema issue
+* request model mismatch
+
+If the backend response contains a more detailed error, expose/log that safely during debugging instead of replacing it with the generic `"Failed to create emergency resource"`.
+
+### Fix requirements
+
+After identifying the root cause:
+
+1. Fix the Flutter request/model/API code if the request is wrong.
+2. If the Flutter request is correct but the backend/database is the cause, clearly identify the backend issue instead of creating a fake Flutter workaround.
+3. Keep the existing architecture and coding style.
+4. Do not rewrite unrelated Resources functionality.
+5. Do not remove existing validation.
+6. Do not break Emergency Resource listing, editing, deleting, or viewing.
+7. Make sure the created resource appears in the list after successful creation.
+8. Make sure BLoC states are handled correctly:
+
+   * loading
+   * success
+   * failure
+9. Prevent duplicate API calls when the user taps Add Resource multiple times.
+10. Prevent the screen from repeatedly reopening or triggering the create request again.
+11. After successful creation, close/navigate from the Add Resource screen only once.
+12. Refresh the Emergency Resources list after successful creation.
+
+### Also investigate repeated reopening
+
+The issue is happening repeatedly when I reopen the screen.
+
+Check for:
+
+* BLoC events being dispatched multiple times.
+* API request being triggered from `build()`.
+* API request being triggered from `initState()` more than once.
+* `BlocListener` causing navigation repeatedly.
+* duplicate listeners.
+* duplicate `BlocProvider`.
+* form submission being triggered multiple times.
+* loading state not disabling the Add button.
+* controller/listener lifecycle problems.
+* screen being rebuilt and submitting the form again.
+
+The API call should happen ONLY when the user intentionally presses **Add Resource/Save**.
+
+### Expected behavior
+
+When the user enters valid Emergency Resource information and taps **Add Resource**:
+
+```text
+Validate form
+    ↓
+Dispatch Create Emergency Resource event
+    ↓
+Show loading state
+    ↓
+Send correct API request
+    ↓
+Backend creates resource
+    ↓
+Receive success response
+    ↓
+Update BLoC state
+    ↓
+Refresh resource list
+    ↓
+Close Add Resource screen ONCE
+    ↓
+Show success feedback
+```
+
+If creation fails:
+
+```text
+API failure
+    ↓
+Keep user on Add Resource screen
+    ↓
+Show one clear error message
+    ↓
+Do NOT reopen the screen
+    ↓
+Do NOT automatically retry
+    ↓
+Allow user to correct/retry manually
+```
+
+### Do not do
+
+* Do not use dummy/mock data.
+* Do not hardcode a fake successful response.
+* Do not bypass the API.
+* Do not silently ignore HTTP 500.
+* Do not remove authentication.
+* Do not change unrelated features.
+* Do not repeatedly patch the same line without finding the root cause.
+* Do not tell me the issue is fixed until you verify the complete flow.
+
+### Verification
+
+After making the fix:
+
+1. Run `flutter analyze`.
+2. Run the relevant tests if available.
+3. Build/run the Flutter app.
+4. Test:
+
+   * Open Resources.
+   * Open Emergency Resources.
+   * Tap Add Resource.
+   * Enter valid data.
+   * Tap Add Resource once.
+   * Confirm only one API request is made.
+   * Confirm resource is actually saved.
+   * Confirm it appears in the list.
+   * Reopen Add Resource.
+   * Create another resource.
+   * Confirm it still works.
+   * Test invalid/missing fields.
+   * Test API failure.
+   * Confirm the screen does not repeatedly reopen.
+
+At the end, give me:
+
+1. Root cause.
+2. Files changed.
+3. Exact fix applied.
+4. Why the HTTP 500 was happening.
+5. How you verified the fix.
+6. Any backend/database change that is still required.
+
+Do not make unrelated changes.

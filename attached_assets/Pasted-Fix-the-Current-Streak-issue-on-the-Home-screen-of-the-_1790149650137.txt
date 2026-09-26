@@ -1,0 +1,156 @@
+Fix the **"Current Streak"** issue on the Home screen of the existing Flutter application.
+
+### Problem
+
+On the Home screen, **Current Streak is always displayed as "0 days"**, even when the user has completed activities/tasks on consecutive days.
+
+This looks like the streak calculation or data retrieval is not working correctly.
+
+### Goal
+
+Implement a proper, reliable **Current Streak calculation** using the existing app's real user activity/completion data.
+
+### Important: Investigate Before Changing Code
+
+Do NOT simply hardcode or force the value.
+
+First inspect the existing codebase and identify:
+
+1. Home screen/widget where "Current Streak" is displayed.
+2. Bloc/Cubit/Provider/state responsible for Home data.
+3. Repository/service/data source used to load completed tasks/activities.
+4. Firebase/Firestore/local database/API data structure containing completion information.
+5. Existing date/time handling and timezone logic.
+6. Whether the Home screen is actually receiving the latest completion data.
+
+Then identify the root cause of why the value remains `0`.
+
+### Streak Rules
+
+Implement the streak according to these rules:
+
+* A day counts toward the streak only when the user has at least one valid completed activity/task for that day.
+* **Current Streak** means the number of consecutive qualifying days ending today.
+* If the user completed something today, count today and continue checking previous consecutive days.
+* If the user has not completed anything today but completed something yesterday, handle this according to the existing product behavior; if no existing behavior is defined, use the standard rule that the current streak is `0`.
+* Multiple completed tasks on the same day count as **one day**, not multiple days.
+* Missing any day breaks the streak.
+* Future dates must never increase the streak.
+* Duplicate completion records must not increase the streak.
+* Use the user's actual completion date, not the record creation/update date.
+* Handle timestamps consistently with the app's existing timezone/date handling.
+* Do not accidentally compare full timestamps when the requirement is based on calendar days.
+
+### Example
+
+If completed activity dates are:
+
+* Sep 23 → completed
+* Sep 22 → completed
+* Sep 21 → completed
+* Sep 20 → completed
+* Sep 19 → no completion
+
+Then:
+
+`Current Streak = 4 days`
+
+If:
+
+* Sep 23 → completed
+* Sep 22 → completed
+* Sep 21 → no completion
+* Sep 20 → completed
+
+Then:
+
+`Current Streak = 2 days`
+
+because Sep 21 breaks the streak.
+
+### UI
+
+Keep the existing Home screen design unchanged.
+
+Only make sure the **Current Streak** value is correctly displayed, for example:
+
+`Current Streak`
+`4 days`
+
+Do not change unrelated Home screen components.
+
+### State Management
+
+Follow the existing Flutter architecture and state-management pattern already used in this project.
+
+If the project uses BLoC/Cubit:
+
+* Do not introduce another state-management solution.
+* Load streak data through the existing appropriate Bloc/Cubit.
+* Ensure loading, success, and error states are handled correctly.
+* Make sure the UI rebuilds when the streak data changes.
+
+### Data Refresh
+
+Make sure the streak is recalculated/refreshed when:
+
+* Home screen opens.
+* User completes an activity/task.
+* User returns to Home after completing an activity/task.
+* Relevant completion data changes.
+
+Do not rely only on cached `0` or stale Home state.
+
+### Edge Cases
+
+Properly handle:
+
+* No completion history → `0 days`
+* Only today completed → `1 day`
+* Consecutive completions → correct number of days
+* Missing day → streak resets
+* Multiple completions on one day → count once
+* Duplicate records → count once
+* Future completion dates → ignore
+* Invalid/missing completion dates → safely ignore
+* User with old completion history but nothing today → follow the current-streak rule above
+* App reopened on another day → recalculate instead of keeping yesterday's value
+
+### Bug Prevention
+
+Do not fix this with a UI-only workaround.
+
+The calculation should be implemented at the correct business/data layer so the bug does not return when:
+
+* the app restarts,
+* the user logs in again,
+* new tasks are completed,
+* data is refreshed,
+* the date changes.
+
+Add or update unit tests for the streak calculation covering the edge cases above.
+
+### Final Verification
+
+After implementing the fix:
+
+1. Run `flutter analyze`.
+2. Run the relevant tests.
+3. Verify the Home screen displays the correct streak.
+4. Verify completing today's activity updates the streak.
+5. Verify consecutive previous days are counted correctly.
+6. Verify a missing day resets the current streak.
+7. Verify multiple tasks on the same day count as only one streak day.
+8. Verify the value is not always `0`.
+9. Check for existing architecture/state-management issues that could cause stale data.
+10. Do not modify unrelated functionality.
+
+At the end, explain:
+
+* Root cause of the `0 days` bug.
+* Files changed.
+* How the streak is now calculated.
+* Tests added/updated.
+* How you verified the fix.
+
+Do not stop after making the UI display a different number. Fix the underlying data/calculation problem properly.

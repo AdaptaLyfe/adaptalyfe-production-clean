@@ -1,0 +1,46 @@
+Fix the Flutter error that occurs when the user clicks the **Edit** button for **"Dean Barrett"** emergency content.
+
+### Current issue
+
+When the user clicks **Edit** on the "Dean Barrett" emergency content, the app shows an error similar to:
+
+`Resources: 'Package: flutter/src/material/dropdown.dart'...`
+
+This appears to be related to a Flutter `DropdownButton` / dropdown value configuration.
+
+### Requirements
+
+1. Find the screen/widget responsible for displaying and editing the **Dean Barrett emergency content**.
+2. Trace the Edit button flow and identify the exact cause of the `dropdown.dart` error.
+3. Check all `DropdownButton`, `DropdownButtonFormField`, or custom dropdown widgets used on the Edit screen.
+4. Make sure the dropdown's selected `value`:
+
+   * Exists in the dropdown `items`.
+   * Matches exactly one item.
+   * Is not duplicated.
+   * Is not an invalid/null value when the dropdown does not allow null.
+5. If the existing Dean Barrett data contains a value that is no longer available in the dropdown options, handle it safely instead of causing an assertion/error.
+6. Preserve the existing emergency content data and edit functionality.
+7. Do not hardcode a solution only for "Dean Barrett". Fix the underlying dropdown/value handling so the same issue does not happen with other emergency content records.
+8. Keep the existing UI, styling, navigation, API/backend logic, and other functionality unchanged unless required for the fix.
+9. Add safe handling for missing or outdated dropdown values.
+10. Check both **Add** and **Edit** flows to ensure the dropdown works correctly.
+
+### Important
+
+Do not simply hide or suppress the Flutter error. Find and fix the root cause.
+
+After making the changes:
+
+* Run/analyze the affected Flutter files.
+* Fix any related compile/analyzer errors.
+* Verify that clicking **Edit → Dean Barrett** opens the edit screen without the `dropdown.dart` error.
+* Verify that changing and saving the dropdown value still works correctly.
+* Verify that existing emergency content records are not affected.
+
+Return:
+
+1. Root cause of the error.
+2. Files changed.
+3. Exact fix implemented.
+4. Any additional edge cases handled.

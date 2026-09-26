@@ -9,6 +9,7 @@ import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, Shield, Heart } from "lucide-react";
 import { apiRequest, getSessionToken, isNativeClient, setSessionToken } from "@/lib/queryClient";
 import { trackSignUp } from "@/lib/firebase";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -78,18 +79,8 @@ export default function Register() {
     
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Password Mismatch",
+        title: "Password",
         description: "Passwords do not match",
-        variant: "destructive"
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!formData.agreeToTerms) {
-      toast({
-        title: "Terms Required",
-        description: "Please agree to the terms of service",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -100,6 +91,16 @@ export default function Register() {
       toast({
         title: "Age Verification Required",
         description: "Users under 13 must have a parent or guardian create their account",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast({
+        title: "Terms Required",
+        description: "Please agree to the terms of service",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -357,7 +358,7 @@ export default function Register() {
               <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg">
                 <Shield className="h-5 w-5 text-blue-600" />
                 <p className="text-sm text-blue-800">
-                  7-day free trial • Cancel anytime • Secure payment processing
+                  {FREE_TRIAL_DAYS}-day free trial • Cancel anytime • Secure payment processing
                 </p>
               </div>
             </form>

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { Brain, ArrowLeft, LogIn } from "lucide-react";
-import { apiRequest, setSessionToken, getSessionToken } from "@/lib/queryClient";
+import { apiRequest, ApiError, setSessionToken, getSessionToken } from "@/lib/queryClient";
 
 export default function MobileLogin() {
   const [, setLocation] = useLocation();
@@ -43,6 +43,7 @@ export default function MobileLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const invitationCode = formData.invitationCode.trim().toUpperCase();
     
     try {
       const response = await apiRequest("POST", "/api/login", {
@@ -71,13 +72,13 @@ export default function MobileLogin() {
 
       // Determine redirect path
       let redirectPath = "/dashboard";
-      if (formData.invitationCode) {
-        redirectPath = `/accept-invitation?code=${formData.invitationCode}`;
+      if (invitationCode) {
+        redirectPath = `/accept-invitation?code=${encodeURIComponent(invitationCode)}`;
       } else {
         const pendingInvitation = localStorage.getItem('pendingInvitation');
         if (pendingInvitation) {
           localStorage.removeItem('pendingInvitation');
-          redirectPath = `/accept-invitation?code=${pendingInvitation}`;
+          redirectPath = `/accept-invitation?code=${encodeURIComponent(pendingInvitation.trim().toUpperCase())}`;
         }
       }
 
@@ -87,7 +88,9 @@ export default function MobileLogin() {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid username or password",
+        description: error instanceof ApiError && error.status === 401
+          ? "Invalid email or password. Please try again."
+          : error.message || "Invalid username or password",
         variant: "destructive"
       });
     } finally {
@@ -160,6 +163,11 @@ export default function MobileLogin() {
                   required
                   className="mt-1"
                 />
+                <div className="text-right mt-2">
+                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
 
               {hasInvitationCode && (
@@ -167,12 +175,16 @@ export default function MobileLogin() {
                   <Label htmlFor="invitationCode" className="text-blue-700 font-medium">Caregiver Invitation Code</Label>
                   <Input
                     id="invitationCode"
+                    name="invitationCode"
                     type="text"
                     value={formData.invitationCode}
-                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
+                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value.toUpperCase()})}
                     placeholder="Enter invitation code"
                     className="mt-1 bg-white"
-                    readOnly={true}
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                   <p className="text-xs text-blue-600 mt-1">You'll become a caregiver after logging in</p>
                 </div>
@@ -183,11 +195,16 @@ export default function MobileLogin() {
                   <Label htmlFor="invitationCode">Have a Caregiver Invitation Code? (Optional)</Label>
                   <Input
                     id="invitationCode"
+                    name="invitationCode"
                     type="text"
                     value={formData.invitationCode}
-                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
+                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value.toUpperCase()})}
                     placeholder="Enter invitation code to become a caregiver"
                     className="mt-1"
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                 </div>
               )}

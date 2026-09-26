@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, ApiError } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { StripeWrapper } from '@/components/stripe-wrapper';
 import {
@@ -48,7 +49,7 @@ const planFeatures: PlanFeatures = {
       "Financial tracking & bill reminders",
       "1 caregiver connection",
       "Basic reminders & notifications",
-      "7-day free trial",
+      `${FREE_TRIAL_DAYS}-day free trial`,
       "Email support"
     ]
   },
@@ -85,6 +86,10 @@ const planFeatures: PlanFeatures = {
     ]
   }
 };
+
+function isNoSubscriptionError(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.code === "NO_SUBSCRIPTION";
+}
 
 function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuccess }: {
   planType: string;
@@ -132,7 +137,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
 
       if (result.error) {
         toast({
-          title: intentType === "setup" ? "Could not save payment method" : "Payment Failed",
+          title: intentType === "setup" ? "Could not proceed with payment method" : "Payment Failed",
           description: result.error.message,
           variant: "destructive"
         });
@@ -164,7 +169,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
       trackSubscriptionEvent("upgrade", planType);
       sessionStorage.removeItem("pending_stripe_subscription_id");
       toast({
-        title: intentType === "setup" ? "Payment method saved!" : "Payment Successful!",
+        title: intentType === "setup" ? "Payment details saved!" : "Payment Successful!",
         description: "Your recurring subscription has been activated."
       });
       onSuccess();
@@ -313,7 +318,7 @@ export default function SubscriptionPage() {
         : 'another platform';
 
   // Calculate trial days remaining
-  const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+  const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
 
   const handleGooglePlayPurchase = async (planType: string) => {
     if (hasActiveSubscription) {
@@ -577,7 +582,7 @@ export default function SubscriptionPage() {
             }`}>
               <Clock className="w-4 h-4" />
               {trialDaysLeft > 0 ? (
-                <>Free trial: {trialDaysLeft} days remaining</>
+                <>Free trial: {trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} remaining</>
               ) : (
                 <>Trial expired - Subscribe to continue</>
               )}
@@ -622,8 +627,16 @@ export default function SubscriptionPage() {
                     } else {
                       toast({ title: "No active payment found", description: data.message || "No active Stripe subscription found.", variant: "destructive" });
                     }
-                  } catch {
-                    toast({ title: "Error", description: "Could not check payment. Try again.", variant: "destructive" });
+                   } catch (error) {
+                     if (isNoSubscriptionError(error)) {
+                       toast({
+                         title: "No active payment found",
+                         description: "No active Stripe subscription found.",
+                         variant: "destructive",
+                       });
+                     } else {
+                       toast({ title: "Error", description: "Could not check payment. Try again.", variant: "destructive" });
+                     }
                   }
                 }}
                 className="w-full py-2 px-4 rounded-lg border-2 border-orange-400 bg-orange-50 text-orange-800 text-sm font-semibold hover:bg-orange-100 transition-colors"
@@ -843,8 +856,16 @@ export default function SubscriptionPage() {
                       } else {
                         toast({ title: "No payment found", description: data.message || "No active Stripe subscription found. Please subscribe below.", variant: "destructive" });
                       }
-                    } catch {
-                      toast({ title: "Error", description: "Could not check your payment. Please try again.", variant: "destructive" });
+                   } catch (error) {
+                     if (isNoSubscriptionError(error)) {
+                       toast({
+                         title: "No payment found",
+                         description: "No active Stripe subscription found. Please subscribe below.",
+                         variant: "destructive",
+                       });
+                     } else {
+                       toast({ title: "Error", description: "Could not check your payment. Please try again.", variant: "destructive" });
+                     }
                     }
                   }}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"

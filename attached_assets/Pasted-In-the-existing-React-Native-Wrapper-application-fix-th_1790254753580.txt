@@ -1,0 +1,102 @@
+In the existing **React Native + Wrapper** application, fix the following UI bug permanently.
+
+### Screen
+
+**Achievements → Create New Rewards**
+
+### Bug
+
+When adding a new reward, the **left-side vertical border** of input controls becomes hidden/disappears when the field is selected, focused, highlighted, or active.
+
+This happens with:
+
+* Text boxes / TextInput
+* Text areas / multiline inputs
+* Selection fields
+* Dropdown boxes
+* Any other form control on the **Create New Rewards** screen
+
+The left border should remain visible in all states.
+
+### Expected behavior
+
+For every form field on **Achievements → Create New Rewards**:
+
+* Left border must always be visible.
+* Border must remain visible when the field is:
+
+  * Normal
+  * Focused
+  * Selected
+  * Active
+  * Highlighted
+  * Filled with text
+  * Showing validation/error state
+  * Opening/using a dropdown or selection
+  * Losing focus
+* Focus/active styling can still change the border color if the existing design requires it, but **the left border must never disappear**.
+* Keep the existing UI design, dimensions, spacing, colors, typography, and behavior unchanged unless required to fix this bug.
+
+### Important: Fix the root cause
+
+Do NOT apply a temporary workaround only to one input.
+
+First inspect the existing implementation and identify why the left border disappears. Check for:
+
+* Focused-state styles
+* `borderWidth`, `borderLeftWidth`, `borderColor`, `borderLeftColor`
+* Conditional styles
+* Style arrays and style override order
+* `:focus` / active state handling if used
+* Wrapper component styles
+* TextInput/TextArea shared components
+* Dropdown/select shared components
+* Platform-specific styles
+* React Native Web styles if the Wrapper uses web
+* Any parent/container style covering or clipping the border
+* `overflow: hidden`
+* Border/background layering
+* Conditional rendering
+* Z-index/elevation issues
+* Focus/highlight overlays
+* Dynamic style merging where `borderLeftWidth` or `borderLeftColor` gets overwritten
+
+### Permanent fix
+
+Find the common/shared component or styling logic responsible for this behavior and fix it at the correct source instead of adding separate hacks to individual fields.
+
+Make sure the fix works consistently across all applicable controls on the Create New Rewards screen.
+
+### Regression prevention
+
+After fixing:
+
+1. Test every text input.
+2. Test every text area.
+3. Test every selection field.
+4. Test every dropdown.
+5. Focus and unfocus each field multiple times.
+6. Enter and remove values.
+7. Trigger validation/error states.
+8. Open and close dropdowns/selections.
+9. Test on the relevant React Native and Wrapper platforms.
+10. Confirm the left border never disappears.
+
+Also search the codebase for other components using the same shared input/dropdown styles and make sure the fix does not introduce the same issue elsewhere.
+
+### Important instructions
+
+* Do not redesign the screen.
+* Do not change unrelated functionality.
+* Do not remove existing focus/active styling.
+* Do not create duplicate components just to work around the problem.
+* Do not use a one-off hardcoded overlay unless it is genuinely required by the existing architecture.
+* Fix the underlying style/component issue so the bug does not reopen after future interactions or state changes.
+* Preserve all existing functionality.
+
+After making the changes, explain:
+
+1. What was causing the left border to disappear.
+2. Which files/components were changed.
+3. Why the fix is permanent.
+4. What test cases were performed to verify the bug does not return.

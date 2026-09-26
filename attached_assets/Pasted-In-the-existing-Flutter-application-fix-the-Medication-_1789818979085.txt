@@ -1,0 +1,51 @@
+In the existing Flutter application, fix the **Medication List** functionality.
+
+### Issue
+
+In the **Medication List** section, these actions are currently not working:
+
+1. Edit → Update Medication
+2. Delete Medication
+
+### Required changes
+
+#### 1. Edit → Update Medication
+
+* Open the existing medication edit screen when the user taps **Edit**.
+* Pre-fill the form with the selected medication's existing data.
+* Allow the user to modify the medication details.
+* When the user taps **Update Medication**, save the updated data correctly.
+* Refresh the Medication List immediately after a successful update.
+* Make sure the updated medication appears with the new information.
+* Show the existing success/error feedback pattern used in the app.
+
+#### 2. Delete Medication
+
+* When the user taps **Delete**, delete the selected medication correctly from the data source/backend.
+* Show a confirmation dialog before deleting.
+* After successful deletion, refresh the Medication List immediately.
+* The deleted medication should no longer appear in the list.
+* Show the existing success/error feedback pattern used in the app.
+
+### Important
+
+* First inspect the existing Medication List, medication model, repository/service, API/Firebase/local storage, BLoC/state management, and navigation flow.
+* Reuse the existing architecture and code patterns. **Do not create a new architecture.**
+* If BLoC is already used, properly implement/fix the required events, states, and repository/service calls.
+* Check whether the issue is caused by incorrect medication ID/document ID, missing update/delete API calls, state not refreshing, or incorrect event handling.
+* Make the smallest required changes to fix the functionality.
+* Do not break Add Medication or existing Medication List functionality.
+* Do not change the existing UI design unless required for the fix.
+* Make sure Edit, Update, and Delete work correctly after app restart as well, meaning the changes must be persisted properly.
+
+### Testing
+
+Test these complete flows:
+
+**Edit flow:**
+Medication List → Edit → Change medication details → Update Medication → Medication List → Verify updated data.
+
+**Delete flow:**
+Medication List → Delete → Confirm Delete → Medication List → Verify medication is removed.
+
+Also check for any compile errors, runtime errors, and state-management issues after making the changes.

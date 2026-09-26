@@ -1,0 +1,265 @@
+Fix the Caregiver Setup functionality in the existing Flutter project. Do NOT rewrite the feature from scratch. First inspect the existing caregiver invitation, acceptance, active caregiver, access removal, Firebase/Firestore, repository, BLoC/state management, and UI logic.
+
+There are 2 related bugs that must be fixed properly.
+
+### Bug 1 — Accepted caregiver not appearing in Active Caregivers
+
+Flow:
+
+1. User invites a caregiver.
+2. Caregiver receives the invitation.
+3. Caregiver accepts the invitation.
+4. The invitation status changes to `ACCEPTED`.
+5. However, the caregiver's name does NOT appear in the inviter's **Active Caregivers** list.
+6. The same caregiver still appears in the **Invitations** section with status `ACCEPTED`.
+
+Expected behavior:
+
+* Once a caregiver accepts an invitation, that caregiver must immediately appear in **Active Caregivers**.
+* The accepted invitation should no longer be treated as a pending invitation.
+* If the existing product design intentionally keeps accepted invitations in the Invitations history, it may remain there, but it must NOT be considered an active/pending invitation.
+* Active Caregivers must be based on the actual caregiver access/membership state, not only on invitation status.
+
+### Bug 2 — Removed caregiver comes back after relogin
+
+Flow:
+
+1. User has an active caregiver.
+2. User removes/revokes that caregiver's access.
+3. The caregiver disappears from Active Caregivers.
+4. User logs out.
+5. User logs in again.
+6. Sometimes the removed caregiver appears again in **Active Caregivers**.
+
+Expected behavior:
+
+* Once caregiver access is removed/revoked, that caregiver must NEVER appear in Active Caregivers after logout/login, app restart, refresh, or reopening the screen.
+* Revoked access must be persisted in the backend/database.
+* Active Caregivers must always be calculated from the current persisted access state.
+* Do not rely only on cached BLoC state, local state, previously loaded lists, or invitation records.
+
+### IMPORTANT — Find the Root Cause
+
+Do not simply add a UI condition such as:
+
+`if (status == ACCEPTED)`
+
+Investigate the complete data flow:
+
+UI
+→ Caregiver BLoC/Cubit
+→ Event
+→ Repository
+→ Data Source/Firebase
+→ Firestore data
+→ BLoC state
+→ Active Caregivers UI
+
+Check all existing caregiver-related code and identify:
+
+* How invitations are created.
+* How invitations are accepted.
+* Which Firestore documents/collections are updated when accepting.
+* How caregiver relationships/memberships are stored.
+* How caregiver access is removed.
+* Which field represents active/revoked access.
+* How Active Caregivers are queried.
+* How Invitations are queried.
+* Whether accepted invitations are incorrectly being used as Active Caregivers.
+* Whether removed caregivers remain in an active membership/access document.
+* Whether Firestore updates are happening for both sides of the relationship.
+* Whether the inviter's caregiver list is refreshed after acceptance.
+* Whether the caregiver list is loaded from stale BLoC/local/cache data after relogin.
+* Whether multiple Firestore documents contain conflicting caregiver status.
+* Whether streams/listeners are returning stale data.
+* Whether async operations are racing with state updates.
+* Whether the wrong user ID is being used when querying caregiver relationships.
+* Whether caregiver ID, invitation ID, user ID, or document ID is being confused.
+* Whether the app is using invitation status instead of actual access status.
+
+### Data Consistency Requirements
+
+Create/maintain a single clear source of truth for caregiver access.
+
+Use an explicit access state if the existing architecture supports it, for example:
+
+* `ACTIVE`
+* `REVOKED`
+
+Do NOT introduce duplicate sources of truth unnecessarily.
+
+The important rule is:
+
+`Invitation status != Active caregiver access`
+
+For example:
+
+* `PENDING` invitation → not active
+* `ACCEPTED` invitation + active access → Active Caregiver
+* `ACCEPTED` invitation + revoked access → NOT Active Caregiver
+* `REVOKED` access → never show in Active Caregivers
+
+Use the existing project's data model where possible instead of unnecessarily changing the entire database structure.
+
+### Acceptance Flow
+
+When caregiver accepts an invitation:
+
+1. Validate the invitation.
+2. Update the invitation to `ACCEPTED`.
+3. Create/update the caregiver relationship/access record.
+4. Set the access state to active.
+5. Store the correct caregiver/user IDs.
+6. Ensure the inviter can query this relationship.
+7. Refresh/reload the Active Caregivers data.
+8. Update the BLoC state correctly.
+9. Make sure the UI immediately reflects the new active caregiver.
+
+The operation should be safe if the acceptance request is triggered more than once.
+
+### Remove/Revoke Flow
+
+When the user removes a caregiver:
+
+1. Find the correct caregiver relationship/access record.
+2. Persist the removal/revocation in Firestore.
+3. Mark the access as revoked/inactive OR remove the active membership according to the existing data model.
+4. Do NOT leave a stale active relationship that can be loaded later.
+5. Update the BLoC state immediately.
+6. Refresh Active Caregivers from Firestore.
+7. After logout/login, the revoked caregiver must still NOT appear.
+
+Make the remove operation idempotent and prevent stale records from becoming active again.
+
+### Query Requirements
+
+Review the Active Caregivers query carefully.
+
+It must return ONLY caregivers who currently have valid active access.
+
+Do not populate Active Caregivers from:
+
+* all invitations
+* accepted invitations alone
+* cached users
+* old BLoC state
+* local temporary lists
+
+If Firestore filtering is limited, fetch the relevant records and apply a clear final active-access check before creating the Active Caregivers state.
+
+### BLoC / State Management
+
+Follow the existing Flutter project's BLoC/Cubit architecture.
+
+After:
+
+* invitation accepted
+* caregiver removed
+* caregiver access changed
+* screen reopened
+* logout/login
+
+make sure the caregiver data is loaded from the current backend state.
+
+Avoid:
+
+* duplicate API/Firestore calls
+* unnecessary rebuild loops
+* updating disposed controllers/widgets
+* race conditions
+* stale state overwriting fresh state
+
+### Relogin Verification
+
+Specifically test this sequence:
+
+A. Invite caregiver
+B. Accept invitation
+C. Verify caregiver appears in Active Caregivers
+D. Logout
+E. Login
+F. Verify caregiver still appears in Active Caregivers
+
+Then:
+
+G. Remove caregiver access
+H. Verify caregiver disappears immediately
+I. Logout
+J. Login again
+K. Verify removed caregiver does NOT appear
+L. Refresh/reopen Caregiver Setup
+M. Verify removed caregiver still does NOT appear
+
+Also test:
+
+* Invite multiple caregivers.
+* Accept multiple caregivers.
+* Accept one invitation while another remains pending.
+* Remove one caregiver while another remains active.
+* Logout/login after acceptance.
+* Logout/login after removal.
+* Reopen Caregiver Setup multiple times.
+* App restart after acceptance/removal.
+* Duplicate acceptance.
+* Duplicate removal.
+* Network delay during acceptance/removal.
+
+### Do Not Break Existing Functionality
+
+Do not change:
+
+* existing Caregiver Setup UI design
+* navigation
+* invitation UI unnecessarily
+* unrelated features
+* existing authentication
+* other BLoCs
+* unrelated Firestore data
+
+Reuse existing models, repository, data source, and BLoC where possible.
+
+### Required Implementation
+
+Before changing code:
+
+1. Inspect all caregiver-related files.
+2. Trace the complete acceptance and removal flow.
+3. Identify the actual root cause of both bugs.
+4. Explain the root cause briefly.
+5. Implement the proper backend/data/state fix.
+6. Update only the necessary files.
+7. Check for compile errors.
+8. Check all references to caregiver invitation/access status.
+9. Make sure no old logic can re-add revoked caregivers.
+10. Test the complete acceptance → active → removal → relogin flow.
+
+### Final Requirement
+
+Do NOT give me a temporary UI workaround.
+
+The final implementation must have a consistent source of truth so that:
+
+`ACCEPTED invitation + ACTIVE access = Active Caregiver`
+
+and
+
+`REVOKED/REMOVED access = Never Active Caregiver`
+
+even after:
+
+* refresh
+* screen reopen
+* app restart
+* logout/login
+* BLoC recreation
+* Firestore reload
+
+After implementation, provide:
+
+1. Root cause of Bug 1.
+2. Root cause of Bug 2.
+3. Files changed.
+4. What was changed in each file.
+5. Firestore/data-model changes, if any.
+6. How the final solution prevents the bugs from returning.
+7. Exact test cases performed.

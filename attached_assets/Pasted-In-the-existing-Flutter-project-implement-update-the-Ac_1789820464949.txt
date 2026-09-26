@@ -1,0 +1,125 @@
+In the existing Flutter project, implement/update the **Academic Planner** section so it matches the existing **React Native + Wrapper application** as closely as possible.
+
+### Main Goal
+
+Use the existing React Native + Wrapper Academic Planner as the **source of truth** and reproduce the same functionality, user flow, UI behavior, validation, and data handling in Flutter.
+
+### Requirements
+
+1. **First inspect the existing React Native + Wrapper code**
+
+   * Find all Academic Planner related screens, components, navigation/routes, API calls, models, services, state management, validation, and reusable components.
+   * Understand the complete Academic Planner flow before changing Flutter code.
+   * Do not create a new design based on assumptions.
+
+2. **Flutter UI parity**
+   Recreate the same:
+
+   * Academic Planner screen layout
+   * Header/title
+   * Buttons
+   * Cards
+   * Class list
+   * Add Class UI
+   * Edit Class UI
+   * Delete Class UI
+   * Empty state
+   * Loading state
+   * Error state
+   * Forms
+   * Dialogs/bottom sheets
+   * Navigation
+   * Spacing, padding, typography, icons, and general styling
+
+3. **Functionality parity**
+   Make Flutter support everything currently available in React Native + Wrapper, including:
+
+   * View classes
+   * Add class
+   * Edit/update class
+   * Delete class
+   * Class validation
+   * Class details
+   * Any existing academic planner fields
+   * Existing error/success messages
+   * Existing loading behavior
+   * Existing API/backend integration
+   * Existing refresh/reload behavior
+
+4. **Data and API**
+
+   * Do not create a separate/mock data system if the React Native app already uses an API/backend.
+   * Follow the same API endpoints, request parameters, response structure, authentication, and error handling used by React Native.
+   * Create/update Flutter models only when required.
+   * Preserve existing backend behavior.
+
+5. **State management**
+
+   * Follow the existing Flutter project's architecture and state-management approach.
+   * If the project uses BLoC, use BLoC for Academic Planner instead of introducing another state-management library.
+   * Keep business logic outside widgets.
+   * Properly handle loading, success, empty, and error states.
+
+6. **Add Class**
+
+   * The Flutter **Add Class** flow must behave the same as React Native + Wrapper.
+   * Preserve all existing fields and validation rules.
+   * Ensure the form can be opened, submitted, cancelled, and reopened multiple times without crashes.
+   * Properly manage `TextEditingController` lifecycle.
+   * Do not dispose controllers while they are still being used.
+
+7. **Responsive behavior**
+
+   * Match the React Native + Wrapper behavior on different screen sizes.
+   * Ensure the Flutter implementation works correctly on Android, iOS, Web, and Desktop where the existing Flutter project supports those platforms.
+   * Avoid hardcoded sizes that break the layout.
+
+8. **Navigation**
+
+   * Match the existing React Native + Wrapper Academic Planner navigation flow.
+   * Use the existing Flutter routing/navigation system.
+   * Do not create duplicate routes unnecessarily.
+
+### Important
+
+The React Native + Wrapper implementation is the **reference implementation**.
+
+Do NOT:
+
+* Redesign the Academic Planner.
+* Remove existing functionality.
+* Replace real API calls with dummy data.
+* Change unrelated Flutter sections.
+* Change backend behavior.
+* Add unnecessary packages.
+* Create a completely new architecture if the Flutter project already has one.
+
+### Testing
+
+After implementation, verify:
+
+* Academic Planner opens correctly.
+* Existing classes are displayed.
+* Add Class works.
+* Edit Class works.
+* Delete Class works.
+* Validation matches React Native + Wrapper.
+* API/data synchronization works.
+* Loading and error states work.
+* Empty state matches the existing app.
+* Add Class can be opened and closed multiple times.
+* No `TextEditingController was used after being disposed` error.
+* No `Tried to build dirty widget in the wrong build scope` error.
+* No crashes during navigation or repeated Add/Edit operations.
+
+### Final Response
+
+After completing the work, provide:
+
+1. Files changed.
+2. What was implemented.
+3. React Native features that were matched in Flutter.
+4. Any differences that could not be matched and why.
+5. Any errors that still need attention.
+
+Do not modify unrelated sections of the Flutter application.

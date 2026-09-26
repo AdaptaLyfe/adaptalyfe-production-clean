@@ -19,9 +19,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Trash2 } from 'lucide-react';
+import { Moon, Sun, Clock, TrendingUp, Heart, Brain, Star, Award, Target, BarChart3, Calendar as CalendarIcon, Plus, Pencil, Trash2 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, subDays, isToday } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
+import {
+  getRecentSleepSessions,
+  sortSleepSessionsChronologically,
+} from '@/lib/sleep-trends';
+import {
+  calculateSleepMetrics,
+  calculateSleepStats,
+  type SleepStats,
+} from '@shared/sleep-calculations';
+import {
+  getLocalDateString,
+  getSleepDateValidationError,
+  isValidSleepDate,
+} from '@shared/sleep-date-validation';
+import {
+  combineLocalDateAndTime,
+  getSleepRoutineTimeValidationError,
+} from '@shared/sleep-time-validation';
 import { useToast } from '@/hooks/use-toast';
 
 interface SleepSession {
@@ -44,6 +62,31 @@ interface SleepSession {
   restingHeartRate: number | null;
 }
 
+type SleepLogMode = 'create' | 'edit';
+
+interface SleepFormData {
+  sleepDate: string;
+  bedtime: string;
+  sleepTime: string;
+  wakeDate: string;
+  wakeTime: string;
+  quality: string;
+  notes: string;
+}
+
+function getDefaultSleepFormData(date: Date): SleepFormData {
+  const dateValue = format(date, 'yyyy-MM-dd');
+  return {
+    sleepDate: dateValue,
+    bedtime: '',
+    sleepTime: '',
+    wakeDate: dateValue,
+    wakeTime: '',
+    quality: '',
+    notes: '',
+  };
+}
+
 interface SleepGoal {
   targetSleepDuration: number; // minutes
   targetBedtime: string; // HH:MM format
@@ -53,6 +96,8 @@ interface SleepGoal {
 export default function SleepTracking() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLogging, setIsLogging] = useState(false);
+  const [sleepLogMode, setSleepLogMode] = useState<SleepLogMode>('create');
+  const [editingSleepSession, setEditingSleepSession] = useState<SleepSession | null>(null);
   const [sleepGoals, setSleepGoals] = useState<SleepGoal>({
     targetSleepDuration: 480, // 8 hours
     targetBedtime: '22:00',
@@ -69,21 +114,20 @@ export default function SleepTracking() {
     queryFn: () => apiRequest('GET', '/api/sleep-sessions').then(res => res.json())
   });
 
-  // Fetch sleep session for selected date
-  const { data: dailySession } = useQuery({
-    queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-    queryFn: () => apiRequest('GET', `/api/sleep-sessions/${format(selectedDate, 'yyyy-MM-dd')}`).then(res => res.json()),
-    enabled: !!selectedDate
-  });
-
   // Create/update sleep session mutation
   const createSleepSession = useMutation({
-    mutationFn: (data: Partial<SleepSession>) =>
-      apiRequest('POST', '/api/sleep-sessions', data).then(res => res.json()),
+    mutationFn: ({ data, sessionId }: { data: Partial<SleepSession>; sessionId?: number }) =>
+      apiRequest(
+        sessionId ? 'PUT' : 'POST',
+        sessionId ? `/api/sleep-sessions/${sessionId}` : '/api/sleep-sessions',
+        data,
+      ).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
       toast({ title: 'Sleep session saved successfully!' });
       setIsLogging(false);
+      setSleepLogMode('create');
+      setEditingSleepSession(null);
     },
     onError: () => {
       toast({ title: 'Failed to save sleep session', variant: 'destructive' });
@@ -123,39 +167,19 @@ export default function SleepTracking() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sleep-sessions'] });
-      queryClient.invalidateQueries({
-        queryKey: ['/api/sleep-sessions', format(selectedDate, 'yyyy-MM-dd')],
-      });
     },
   });
 
-  // Calculate sleep statistics
-  const calculateStats = () => {
-    if (!sleepSessions.length) return null;
-    
-    const recentSessions = sleepSessions.slice(-7); // Last 7 days
-    const totalSleep = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.totalSleepDuration || 0), 0);
-    const avgSleepDuration = totalSleep / recentSessions.length;
-    const avgSleepScore = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.sleepScore || 0), 0) / recentSessions.length;
-    const avgEfficiency = recentSessions.reduce((sum: number, session: SleepSession) => 
-      sum + (session.sleepEfficiency || 0), 0) / recentSessions.length;
-
-    return {
-      avgSleepDuration: Math.round(avgSleepDuration),
-      avgSleepScore: Math.round(avgSleepScore),
-      avgEfficiency: Math.round(avgEfficiency),
-      totalSessions: recentSessions.length,
-      goalProgress: Math.round((avgSleepDuration / sleepGoals.targetSleepDuration) * 100)
-    };
-  };
-
-  const stats = calculateStats();
+  const availableSleepSessions: SleepSession[] = Array.isArray(sleepSessions) ? sleepSessions : [];
+  const stats: SleepStats | null = calculateSleepStats(
+    availableSleepSessions,
+    sleepGoals.targetSleepDuration,
+    format(selectedDate, 'yyyy-MM-dd'),
+  );
 
   // Format time helpers
-  const formatDuration = (minutes: number | null) => {
-    if (!minutes) return '--';
+  const formatDuration = (minutes: number | null | undefined) => {
+    if (minutes === null || minutes === undefined || !Number.isFinite(minutes)) return '--';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
@@ -184,6 +208,20 @@ export default function SleepTracking() {
     return 'bg-red-500';
   };
 
+  const openCreateSleepLog = () => {
+    setSleepLogMode('create');
+    setEditingSleepSession(null);
+    setSelectedDate(new Date());
+    setIsLogging(true);
+  };
+
+  const openEditSleepLog = (session: SleepSession) => {
+    setSleepLogMode('edit');
+    setEditingSleepSession(session);
+    setSelectedDate(new Date(`${session.sleepDate}T00:00:00`));
+    setIsLogging(true);
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex items-center gap-4 mb-8">
@@ -196,7 +234,18 @@ export default function SleepTracking() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6" value={isLogging ? "log" : undefined} onValueChange={(value) => { if (value !== "log") setIsLogging(false); }}>
+       <Tabs
+         defaultValue="overview"
+         className="space-y-6"
+         value={isLogging ? "log" : undefined}
+         onValueChange={(value) => {
+           if (value === "log") {
+             openCreateSleepLog();
+           } else {
+             setIsLogging(false);
+           }
+         }}
+       >
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="log">Log Sleep</TabsTrigger>
@@ -215,7 +264,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? formatDuration(stats.avgSleepDuration) : '--'}
+                  {formatDuration(stats?.avgSleepDuration)}
                 </div>
                 <p className="text-xs text-muted-foreground">Last 7 days</p>
               </CardContent>
@@ -228,7 +277,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.avgSleepScore}/100` : '--'}
+                  {stats?.avgSleepScore != null ? `${stats.avgSleepScore}/100` : '--'}
                 </div>
                 <p className="text-xs text-muted-foreground">Average quality</p>
               </CardContent>
@@ -241,7 +290,7 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.avgEfficiency}%` : '--'}
+                  {stats?.avgEfficiency != null ? `${stats.avgEfficiency}%` : '--'}
                 </div>
                 <p className="text-xs text-muted-foreground">Time asleep vs time in bed</p>
               </CardContent>
@@ -254,9 +303,9 @@ export default function SleepTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {stats ? `${stats.goalProgress}%` : '--'}
+                  {stats?.goalProgress != null ? `${stats.goalProgress}%` : '--'}
                 </div>
-                <Progress value={stats?.goalProgress || 0} className="mt-2" />
+                <Progress value={stats?.goalProgress ?? 0} className="mt-2" />
               </CardContent>
             </Card>
           </div>
@@ -268,17 +317,7 @@ export default function SleepTracking() {
                 <CardTitle>Recent Sleep Sessions</CardTitle>
                 <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow">
                   <Button 
-                    onClick={() => {
-                      setIsLogging(true);
-                      // Force tab switch by updating the component
-                      setTimeout(() => {
-                        const logTab = document.querySelector('[data-state="active"][value="log"]');
-                        if (!logTab) {
-                          const logButton = document.querySelector('[value="log"]') as HTMLButtonElement;
-                          if (logButton) logButton.click();
-                        }
-                      }, 100);
-                    }} 
+                     onClick={openCreateSleepLog}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                   >
@@ -290,7 +329,9 @@ export default function SleepTracking() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {sleepSessions.slice(-7).reverse().map((session: SleepSession) => (
+                {getRecentSleepSessions(availableSleepSessions).map((session: SleepSession) => {
+                  const metrics = calculateSleepMetrics(session);
+                  return (
                   <div key={session.id} className="flex flex-wrap items-center justify-between gap-4 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-full">
@@ -310,11 +351,11 @@ export default function SleepTracking() {
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm">
                       <div className="text-center">
-                        <p className="font-medium">{formatDuration(session.totalSleepDuration)}</p>
+                        <p className="font-medium">{formatDuration(metrics.totalSleepDuration)}</p>
                         <p className="text-gray-500">Duration</p>
                       </div>
                       <div className="text-center">
-                        <p className="font-medium">{session.sleepScore || '--'}/100</p>
+                        <p className="font-medium">{metrics.sleepScore != null ? `${metrics.sleepScore}/100` : '--'}</p>
                         <p className="text-gray-500">Score</p>
                       </div>
                       {session.quality && (
@@ -323,6 +364,18 @@ export default function SleepTracking() {
                         </Badge>
                       )}
                       <Button
+                         type="button"
+                         variant="outline"
+                         size="sm"
+                         className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                         onClick={() => openEditSleepLog(session)}
+                         aria-label={`Edit sleep log from ${format(new Date(session.sleepDate), 'MMM dd, yyyy')}`}
+                         title="Edit sleep log"
+                       >
+                         <Pencil className="h-4 w-4 mr-1" />
+                         Edit
+                       </Button>
+                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
@@ -336,13 +389,14 @@ export default function SleepTracking() {
                       </Button>
                     </div>
                   </div>
-                ))}
-                {sleepSessions.length === 0 && (
+                  );
+                })}
+                {availableSleepSessions.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <Moon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No sleep sessions recorded yet</p>
                     <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow mt-4 inline-block">
-                      <Button onClick={() => setIsLogging(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                      <Button onClick={openCreateSleepLog} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
                         Log your first sleep session
                       </Button>
                     </div>
@@ -396,16 +450,17 @@ export default function SleepTracking() {
         {/* Log Sleep Tab */}
         <TabsContent value="log" className="space-y-6">
           <SleepLoggingForm 
-            onSubmit={(data) => createSleepSession.mutate(data)}
+            onSubmit={(data, sessionId) => createSleepSession.mutate({ data, sessionId })}
             isLoading={createSleepSession.isPending}
             selectedDate={selectedDate}
-            dailySession={dailySession}
+            mode={sleepLogMode}
+            existingSession={sleepLogMode === 'edit' ? editingSleepSession : undefined}
           />
         </TabsContent>
 
         {/* Trends Tab */}
         <TabsContent value="trends" className="space-y-6">
-          <SleepTrends sleepSessions={sleepSessions} />
+          <SleepTrends sleepSessions={availableSleepSessions} />
         </TabsContent>
 
         {/* Goals Tab */}
@@ -426,46 +481,110 @@ function SleepLoggingForm({
   onSubmit, 
   isLoading, 
   selectedDate, 
-  dailySession 
+  mode,
+  existingSession,
 }: {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any, sessionId?: number) => void;
   isLoading: boolean;
   selectedDate: Date;
-  dailySession?: SleepSession;
+  mode: SleepLogMode;
+  existingSession?: SleepSession | null;
 }) {
-  const [formData, setFormData] = useState({
-    sleepDate: format(selectedDate, 'yyyy-MM-dd'),
-    bedtime: '',
-    sleepTime: '',
-    wakeTime: '',
-    quality: '',
-    notes: ''
-  });
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [wakeDateError, setWakeDateError] = useState<string | null>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<SleepFormData>(() => getDefaultSleepFormData(selectedDate));
 
   useEffect(() => {
-    if (dailySession) {
+    if (mode === 'edit' && existingSession) {
       setFormData({
-        sleepDate: dailySession.sleepDate,
-        bedtime: dailySession.bedtime ? format(new Date(dailySession.bedtime), 'HH:mm') : '',
-        sleepTime: dailySession.sleepTime ? format(new Date(dailySession.sleepTime), 'HH:mm') : '',
-        wakeTime: dailySession.wakeTime ? format(new Date(dailySession.wakeTime), 'HH:mm') : '',
-        quality: dailySession.quality || '',
-        notes: dailySession.notes || ''
+        sleepDate: existingSession.sleepDate,
+        bedtime: existingSession.bedtime ? format(new Date(existingSession.bedtime), 'HH:mm') : '',
+        sleepTime: existingSession.sleepTime ? format(new Date(existingSession.sleepTime), 'HH:mm') : '',
+        wakeDate: existingSession.wakeTime
+          ? format(new Date(existingSession.wakeTime), 'yyyy-MM-dd')
+          : existingSession.sleepDate,
+        wakeTime: existingSession.wakeTime ? format(new Date(existingSession.wakeTime), 'HH:mm') : '',
+        quality: existingSession.quality || '',
+        notes: existingSession.notes || ''
       });
+      setWakeDateError(null);
+      setTimeError(getFormTimeValidationError({
+        sleepDate: existingSession.sleepDate,
+        bedtime: existingSession.bedtime ? format(new Date(existingSession.bedtime), 'HH:mm') : '',
+        sleepTime: existingSession.sleepTime ? format(new Date(existingSession.sleepTime), 'HH:mm') : '',
+        wakeDate: existingSession.wakeTime
+          ? format(new Date(existingSession.wakeTime), 'yyyy-MM-dd')
+          : existingSession.sleepDate,
+        wakeTime: existingSession.wakeTime ? format(new Date(existingSession.wakeTime), 'HH:mm') : '',
+      }));
+    } else if (mode === 'create') {
+      setFormData(getDefaultSleepFormData(selectedDate));
+      setDateError(null);
+      setWakeDateError(null);
+      setTimeError(null);
     }
-  }, [dailySession]);
+  }, [existingSession, mode, selectedDate]);
+
+  const getFormTimeValidationError = (values: typeof formData): string | null => {
+    if (!values.bedtime || !values.sleepTime || !values.wakeTime) return null;
+
+    const bedtime = combineLocalDateAndTime(values.sleepDate, values.bedtime);
+    const sleepTime = combineLocalDateAndTime(values.sleepDate, values.sleepTime);
+    const wakeTime = combineLocalDateAndTime(values.wakeDate, values.wakeTime);
+    if (!bedtime || !sleepTime || !wakeTime) {
+      return 'Sleep dates and times must be valid';
+    }
+
+    return getSleepRoutineTimeValidationError(bedtime, sleepTime, wakeTime);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const sleepDateError = getSleepDateValidationError(formData.sleepDate);
+    if (sleepDateError) {
+      setDateError(sleepDateError);
+      return;
+    }
+    setDateError(null);
+
+    const wakeDateErrorMessage = !isValidSleepDate(formData.wakeDate)
+      ? 'Wake date must be a valid date'
+      : formData.wakeDate < formData.sleepDate
+        ? 'Wake date must be the same as or later than sleep date'
+        : null;
+    if (wakeDateErrorMessage) {
+      setWakeDateError(wakeDateErrorMessage);
+      return;
+    }
+    setWakeDateError(null);
+
+    const sleepTimeError = getFormTimeValidationError(formData);
+    if (sleepTimeError) {
+      setTimeError(sleepTimeError);
+      return;
+    }
+    setTimeError(null);
     
+    const bedtime = combineLocalDateAndTime(formData.sleepDate, formData.bedtime);
+    const sleepTime = combineLocalDateAndTime(formData.sleepDate, formData.sleepTime);
+    const wakeTime = combineLocalDateAndTime(formData.wakeDate, formData.wakeTime);
+    if (!bedtime || !sleepTime || !wakeTime) {
+      setTimeError('Sleep dates and times must be valid');
+      return;
+    }
+
     const sleepData = {
-      ...formData,
-      bedtime: formData.bedtime ? new Date(`${formData.sleepDate}T${formData.bedtime}:00`).toISOString() : null,
-      sleepTime: formData.sleepTime ? new Date(`${formData.sleepDate}T${formData.sleepTime}:00`).toISOString() : null,
-      wakeTime: formData.wakeTime ? new Date(`${formData.sleepDate}T${formData.wakeTime}:00`).toISOString() : null,
+      sleepDate: formData.sleepDate,
+      bedtime: bedtime.toISOString(),
+      sleepTime: sleepTime.toISOString(),
+      wakeTime: wakeTime.toISOString(),
+      quality: formData.quality,
+      notes: formData.notes,
     };
     
-    onSubmit(sleepData);
+    onSubmit(sleepData, mode === 'edit' ? existingSession?.id : undefined);
   };
 
   return (
@@ -482,9 +601,21 @@ function SleepLoggingForm({
                 id="sleepDate"
                 type="date"
                 value={formData.sleepDate}
-                onChange={(e) => setFormData({ ...formData, sleepDate: e.target.value })}
+                max={getLocalDateString()}
+                onChange={(e) => {
+                  const sleepDate = e.target.value;
+                  setFormData({ ...formData, sleepDate });
+                  setDateError(getSleepDateValidationError(sleepDate));
+                   setTimeError(getFormTimeValidationError({ ...formData, sleepDate }));
+                }}
+                aria-invalid={dateError ? 'true' : undefined}
                 required
               />
+              {dateError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {dateError}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="quality">Sleep Quality</Label>
@@ -493,6 +624,7 @@ function SleepLoggingForm({
                 value={formData.quality}
                 onChange={(e) => setFormData({ ...formData, quality: e.target.value })}
                 className="w-full p-2 border rounded-md"
+                required
               >
                 <option value="">Select quality</option>
                 <option value="excellent">Excellent</option>
@@ -503,14 +635,20 @@ function SleepLoggingForm({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="bedtime">Bedtime</Label>
               <Input
                 id="bedtime"
                 type="time"
                 value={formData.bedtime}
-                onChange={(e) => setFormData({ ...formData, bedtime: e.target.value })}
+                onChange={(e) => {
+                  const bedtime = e.target.value;
+                  setFormData({ ...formData, bedtime });
+                   setTimeError(getFormTimeValidationError({ ...formData, bedtime }));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
+                required
               />
             </div>
             <div>
@@ -519,8 +657,48 @@ function SleepLoggingForm({
                 id="sleepTime"
                 type="time"
                 value={formData.sleepTime}
-                onChange={(e) => setFormData({ ...formData, sleepTime: e.target.value })}
+                onChange={(e) => {
+                  const sleepTime = e.target.value;
+                  setFormData({ ...formData, sleepTime });
+                   setTimeError(getFormTimeValidationError({ ...formData, sleepTime }));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
+                required
               />
+              {timeError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {timeError}
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="wakeDate">Wake Date</Label>
+              <Input
+                id="wakeDate"
+                type="date"
+                value={formData.wakeDate}
+                min={formData.sleepDate}
+                onChange={(e) => {
+                  const wakeDate = e.target.value;
+                  const nextFormData = { ...formData, wakeDate };
+                  setFormData(nextFormData);
+                  setWakeDateError(
+                    !isValidSleepDate(wakeDate)
+                      ? 'Wake date must be a valid date'
+                      : wakeDate < formData.sleepDate
+                        ? 'Wake date must be the same as or later than sleep date'
+                        : null,
+                  );
+                  setTimeError(getFormTimeValidationError(nextFormData));
+                }}
+                aria-invalid={wakeDateError || timeError ? 'true' : undefined}
+                required
+              />
+              {wakeDateError && (
+                <p className="mt-1 text-sm text-red-600" role="alert">
+                  {wakeDateError}
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="wakeTime">Wake Time</Label>
@@ -528,7 +706,13 @@ function SleepLoggingForm({
                 id="wakeTime"
                 type="time"
                 value={formData.wakeTime}
-                onChange={(e) => setFormData({ ...formData, wakeTime: e.target.value })}
+                onChange={(e) => {
+                  const wakeTime = e.target.value;
+                  setFormData({ ...formData, wakeTime });
+                   setTimeError(getFormTimeValidationError({ ...formData, wakeTime }));
+                }}
+                aria-invalid={timeError ? 'true' : undefined}
+                required
               />
             </div>
           </div>
@@ -557,6 +741,8 @@ function SleepLoggingForm({
 
 // Sleep Trends Component
 function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
+  const trendSessions = sortSleepSessionsChronologically(sleepSessions);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -576,7 +762,7 @@ function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
                 <div>
                   <h3 className="font-medium mb-3">Sleep Duration Trend</h3>
                   <div className="space-y-2">
-                    {sleepSessions.slice(-7).reverse().map((session, index) => (
+                    {trendSessions.map((session) => (
                       <div key={session.id} className="flex items-center justify-between">
                         <span className="text-sm">{format(new Date(session.sleepDate), 'MMM dd')}</span>
                         <div className="flex items-center gap-2">
@@ -597,7 +783,7 @@ function SleepTrends({ sleepSessions }: { sleepSessions: SleepSession[] }) {
                 <div>
                   <h3 className="font-medium mb-3">Sleep Quality Trend</h3>
                   <div className="space-y-2">
-                    {sleepSessions.slice(-7).reverse().map((session) => (
+                    {trendSessions.map((session) => (
                       <div key={session.id} className="flex items-center justify-between">
                         <span className="text-sm">{format(new Date(session.sleepDate), 'MMM dd')}</span>
                         <Badge className={`${session.quality ? getQualityColor(session.quality) : 'bg-gray-100 text-gray-800'}`}>
@@ -624,7 +810,7 @@ function SleepGoals({
 }: { 
   goals: SleepGoal; 
   onUpdateGoals: (goals: SleepGoal) => void;
-  stats: any;
+  stats: SleepStats | null;
 }) {
   return (
     <div className="space-y-6">
@@ -675,11 +861,13 @@ function SleepGoals({
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Sleep Duration Goal</span>
-                  <span className="font-medium">{stats.goalProgress}%</span>
+                  <span className="font-medium">
+                    {stats.goalProgress != null ? `${stats.goalProgress}%` : '--'}
+                  </span>
                 </div>
-                <Progress value={stats.goalProgress} />
+                <Progress value={stats.goalProgress ?? 0} />
                 <p className="text-sm text-gray-600">
-                  Average: {formatDuration(stats.avgSleepDuration)} / Target: {formatDuration(goals.targetSleepDuration)}
+                  Average: {formatDuration(stats.weeklyAvgSleepDuration)} / Target: {formatDuration(goals.targetSleepDuration)}
                 </p>
               </div>
             </div>

@@ -40,12 +40,15 @@ import {
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthenticatedUser } from "@/lib/queryClient";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
   const [invitationCode, setInvitationCode] = useState<string>("");
   const [joinCodeInput, setJoinCodeInput] = useState<string>("");
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,6 +84,23 @@ export default function Landing() {
     // Store the code and redirect
     localStorage.setItem("pendingInvitation", joinCodeInput.trim());
     setLocation(`/register?code=${joinCodeInput.trim()}`);
+  };
+
+  const handleLoginClick = async () => {
+    if (isCheckingLogin) return;
+
+    setIsCheckingLogin(true);
+    try {
+      const user = await getAuthenticatedUser();
+      setLocation(user ? "/dashboard" : "/login");
+    } catch (error) {
+      // Preserve the normal login flow if the session check is temporarily
+      // unavailable instead of blocking the user at the landing page.
+      console.warn("Unable to check existing session before login navigation", error);
+      setLocation("/login");
+    } finally {
+      setIsCheckingLogin(false);
+    }
   };
 
   return (
@@ -155,14 +175,15 @@ export default function Landing() {
                 </DialogContent>
               </Dialog>
 
-              <Link href="/login">
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
-                >
-                  Sign In
-                </Button>
-              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleLoginClick}
+                disabled={isCheckingLogin}
+                className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
+              >
+                Sign In
+              </Button>
               <Link href="/register">
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm px-2 sm:px-4">
                   Get Started
@@ -334,7 +355,7 @@ export default function Landing() {
               Choose Your <span className="text-blue-600">Plan</span>
             </h3>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
-              Start with a 7-day free trial. Cancel anytime. All plans include mobile app access.
+              Start with a {FREE_TRIAL_DAYS}-day free trial. Cancel anytime. All plans include mobile app access.
             </p>
           </div>
 
@@ -581,7 +602,7 @@ export default function Landing() {
           <div className="text-center mt-10">
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-md">
               <Shield className="w-5 h-5 text-green-500" />
-              <span className="text-sm text-gray-700 font-medium">7-day free trial on all plans • Cancel anytime • Secure payment</span>
+              <span className="text-sm text-gray-700 font-medium">{FREE_TRIAL_DAYS}-day free trial on all plans • Cancel anytime • Secure payment</span>
             </div>
           </div>
         </div>

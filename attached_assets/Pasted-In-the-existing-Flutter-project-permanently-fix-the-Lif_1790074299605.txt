@@ -1,0 +1,123 @@
+In the existing Flutter project, permanently fix the **Life Skills → Add/Edit** functionality.
+
+### Bug
+
+When the user opens:
+
+**Life Skills → Add**
+or
+**Life Skills → Edit**
+
+the Add/Edit dialog does not open.
+
+### Important
+
+Do NOT apply a temporary workaround. Find and fix the actual root cause so this bug does not return.
+
+### Requirements
+
+1. First inspect the complete Life Skills implementation:
+
+   * Life Skills screen/page
+   * Add button
+   * Edit button
+   * Add/Edit dialog or modal
+   * Life Skills BLoC/Cubit/Provider
+   * Events and states
+   * Repository/service
+   * API calls
+   * Navigation
+   * Any `showDialog`, `showModalBottomSheet`, `StatefulBuilder`, `BuildContext`, `TextEditingController`, or async callbacks related to Life Skills.
+
+2. Identify why the dialog is not opening.
+   Check specifically for:
+
+   * Incorrect or invalid `BuildContext`
+   * Dialog being called after a widget has been disposed
+   * `BuildContext` from the wrong widget/tree
+   * Dialog call happening during `build()`
+   * Incorrect `Navigator` usage
+   * Exceptions occurring before `showDialog()`
+   * BLoC state changes preventing the dialog from opening
+   * `setState()` or state updates interfering with the dialog
+   * Controllers being disposed too early
+   * `StatefulBuilder` lifecycle problems
+   * Async code using an outdated context
+   * Duplicate listeners/builders triggering conflicting actions
+   * Any existing framework errors such as "Tried to build dirty widget in the wrong build scope" or "TextEditingController was used after being disposed".
+
+3. Refactor the Add/Edit flow if necessary so it follows a stable pattern:
+
+   * Button tap → open Add/Edit UI
+   * User enters data
+   * Validate data
+   * Save through the existing BLoC/repository/API flow
+   * Close dialog only after successful save
+   * Refresh/update the Life Skills list
+   * Show the existing success/error feedback
+   * Edit should preload the selected Life Skill correctly.
+
+4. Do NOT duplicate business logic.
+   Reuse the existing BLoC/Cubit/repository/API implementation where possible.
+
+5. Controller lifecycle:
+
+   * Create controllers at the correct lifecycle point.
+   * Dispose them exactly once.
+   * Never use a controller after disposal.
+   * Make sure Add and Edit have independent controller state when required.
+
+6. Context lifecycle:
+
+   * Never use a `BuildContext` after the widget is disposed.
+   * Do not keep a dialog context or screen context in long-lived variables.
+   * Do not trigger dialogs from `build()`.
+   * Use the correct active context for opening and closing the dialog.
+
+7. Prevent duplicate dialogs:
+
+   * A single tap must open only one Add/Edit dialog.
+   * Multiple BLoC state changes must not open the dialog repeatedly.
+   * Do not introduce a global boolean workaround unless it is genuinely required.
+
+8. Preserve the existing UI:
+
+   * Do not redesign the Life Skills screen.
+   * Do not change colors, spacing, fonts, buttons, or other unrelated UI.
+   * Keep the existing Add/Edit design unless a structural change is required to fix the lifecycle issue.
+
+9. Handle both flows:
+
+   * Add Life Skill
+   * Edit Life Skill
+
+10. Test all scenarios:
+
+* Open Add
+* Cancel Add
+* Save Add
+* Open Edit
+* Cancel Edit
+* Save Edit
+* Open Add → close → open Add again
+* Open Edit → close → open Edit again
+* Rapidly tap Add
+* Rapidly tap Edit
+* Save with validation errors
+* API failure
+* Navigate away while saving
+* Return to Life Skills and open Add/Edit again
+
+### Important final requirement
+
+Do not just make the dialog appear once.
+
+Trace the complete lifecycle and fix the underlying cause so the **Life Skills Add/Edit dialog remains reliable after repeated use, navigation, BLoC state changes, validation errors, API failures, and screen rebuilds**.
+
+After making the fix:
+
+1. Explain the exact root cause.
+2. List the files changed.
+3. Explain why the fix prevents the bug from returning.
+4. Confirm that Add and Edit were both tested.
+5. Do not modify unrelated features.

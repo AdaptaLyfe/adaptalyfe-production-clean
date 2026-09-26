@@ -1,6 +1,11 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import {
+  isValidContactEmail,
+  isValidContactPhoneNumber,
+  normalizeContactPhoneNumber,
+} from "./contact-validation.js";
 
 // Import banking schemas
 export * from './banking-schema';
@@ -28,6 +33,15 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Caregiver invitations for setting up care relationships
 export const caregiverInvitations = pgTable("caregiver_invitations", {
   id: serial("id").primaryKey(),
@@ -48,6 +62,7 @@ export const caregiverInvitations = pgTable("caregiver_invitations", {
 export const dailyTasks = pgTable("daily_tasks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(), // "morning", "cooking", "organization", etc.
@@ -62,6 +77,17 @@ export const dailyTasks = pgTable("daily_tasks", {
   lastReminderSent: timestamp("last_reminder_sent"), // When reminder was last sent
   lastOverdueReminder: timestamp("last_overdue_reminder"), // When overdue reminder was last sent
 });
+
+export const dailyTaskCompletions = pgTable("daily_task_completions", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull().references(() => dailyTasks.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  completionDate: date("completion_date").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+}, (table) => ({
+  taskDateUnique: uniqueIndex("daily_task_completions_task_date_idx")
+    .on(table.taskId, table.completionDate),
+}));
 
 export const bills = pgTable("bills", {
   id: serial("id").primaryKey(),
@@ -330,7 +356,10 @@ export const emergencyResources = pgTable("emergency_resources", {
   resourceType: varchar("resource_type").notNull(), // "crisis", "counselor", "hospital", "mental_health", "support_group"
   phoneNumber: varchar("phone_number"),
   address: text("address"),
+  website: text("website"),
   description: text("description"),
+  availabilityHours: varchar("availability_hours"),
+  isEmergencyOnly: boolean("is_emergency_only").default(false),
   isAvailable24_7: boolean("is_available_24_7").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -636,6 +665,14 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+
 
 
 export const loginSchema = z.object({
@@ -683,10 +720,16 @@ export const insertInvitationCodeSchema = createInsertSchema(invitationCodes).om
 
 export const insertDailyTaskSchema = createInsertSchema(dailyTasks).omit({
   id: true,
+  createdAt: true,
   completedAt: true,
   lastCompleted: true,
   lastReminderSent: true,
   lastOverdueReminder: true,
+});
+
+export const insertDailyTaskCompletionSchema = createInsertSchema(dailyTaskCompletions).omit({
+  id: true,
+  completedAt: true,
 });
 
 export const insertBillSchema = createInsertSchema(bills).omit({
@@ -734,9 +777,36 @@ export const insertMealPlanSchema = createInsertSchema(mealPlans).omit({
   plannedDate: z.string().min(1, "Planned date is required"),
 });
 
+const isHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "http:" || url.protocol === "https:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 export const insertGroceryStoreSchema = createInsertSchema(groceryStores).omit({
   id: true,
   createdAt: true,
+}).extend({
+  name: z.string().trim().min(1, "Store Name is required"),
+  phoneNumber: z.string().trim().optional().nullable().refine(
+    (value) => {
+      if (!value) return true;
+      const normalized = value.replace(/[\s().-]/g, "");
+      return /^\+?\d{7,15}$/.test(normalized);
+    },
+    "Please enter a valid phone number",
+  ),
+  website: z.string().trim().optional().nullable().refine(
+    (value) => !value || isHttpUrl(value),
+    "Please enter a valid website URL",
+  ),
+  onlineOrderingUrl: z.string().trim().optional().nullable().refine(
+    (value) => !value || isHttpUrl(value),
+    "Please enter a valid online ordering URL",
+  ),
 });
 
 export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
@@ -746,6 +816,17 @@ export const insertShoppingListSchema = createInsertSchema(shoppingLists).omit({
 }).extend({
   itemName: z.string().min(1, "Item name is required"),
   category: z.string().min(1, "Category is required"),
+  estimatedCost: z.number().finite().min(0, "Estimated cost must be 0 or greater").optional().nullable(),
+  actualCost: z.number().finite().min(0, "Actual cost must be 0 or greater").optional().nullable(),
+  quantity: z.string().optional().nullable().refine(
+    (value) => value == null || value.trim() === "" || !/^\s*[-−]/.test(value),
+    "Quantity must be 0 or greater",
+  ),
+});
+
+export const updateShoppingItemPurchasedSchema = z.object({
+  isPurchased: z.boolean(),
+  actualCost: z.number().finite().min(0, "Actual cost must be 0 or greater").optional().nullable(),
 });
 
 export const insertEmergencyResourceSchema = createInsertSchema(emergencyResources).omit({
@@ -810,7 +891,20 @@ export const insertAdverseMedicationSchema = createInsertSchema(adverseMedicatio
 export const insertEmergencyContactSchema = createInsertSchema(emergencyContacts).omit({
   id: true,
   createdAt: true,
+}).extend({
+  phoneNumber: z.string().trim().transform(normalizeContactPhoneNumber).refine(
+    isValidContactPhoneNumber,
+    "Please enter a valid phone number.",
+  ),
+  email: z.string().trim().optional().nullable().refine(
+    (value) => value == null || (value.length > 0 && isValidContactEmail(value)),
+    "Please enter a valid email address.",
+  ),
 });
+
+export const updateEmergencyContactSchema = insertEmergencyContactSchema
+  .omit({ userId: true })
+  .partial();
 
 export const insertPrimaryCareProviderSchema = createInsertSchema(primaryCareProviders).omit({
   id: true,
@@ -828,6 +922,10 @@ export const insertPersonalResourceSchema = createInsertSchema(personalResources
   accessCount: true,
   createdAt: true,
   lastAccessedAt: true,
+}).extend({
+  title: z.string().trim().min(1, "Title is required"),
+  url: z.string().trim().url("Please enter a valid URL"),
+  category: z.string().trim().min(1, "Category is required"),
 });
 
 export const insertBusScheduleSchema = createInsertSchema(busSchedules).omit({
@@ -865,6 +963,8 @@ export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type DailyTask = typeof dailyTasks.$inferSelect;
 export type InsertDailyTask = z.infer<typeof insertDailyTaskSchema>;
+export type DailyTaskCompletion = typeof dailyTaskCompletions.$inferSelect;
+export type InsertDailyTaskCompletion = z.infer<typeof insertDailyTaskCompletionSchema>;
 export type Bill = typeof bills.$inferSelect;
 export type InsertBill = z.infer<typeof insertBillSchema>;
 
@@ -980,9 +1080,15 @@ export const notifications = pgTable("notifications", {
   scheduledFor: timestamp("scheduled_for"),
   sentAt: timestamp("sent_at"),
   relatedId: integer("related_id"), // Related task/appointment ID
+  dedupeKey: text("dedupe_key"), // Stable key for idempotent proactive guidance
   priority: text("priority").default("normal"), // "low", "normal", "high", "urgent"
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userDedupeKey: uniqueIndex("notifications_user_dedupe_key").on(
+    table.userId,
+    table.dedupeKey,
+  ),
+}));
 
 // User Preferences for Smart Features
 export const userPreferences = pgTable("user_preferences", {
@@ -1145,7 +1251,7 @@ export const assignments = pgTable("assignments", {
   description: text("description"),
   type: text("type").notNull(), // "homework", "project", "exam", "quiz", "paper"
   dueDate: timestamp("due_date").notNull(),
-  estimatedHours: integer("estimated_hours"),
+  estimatedHours: real("estimated_hours"),
   priority: text("priority").default("medium"), // "low", "medium", "high", "urgent"
   status: text("status").default("not_started"), // "not_started", "in_progress", "completed", "submitted"
   grade: text("grade"),
@@ -1219,6 +1325,7 @@ export const transitionSkills = pgTable("transition_skills", {
   description: text("description"),
   currentLevel: integer("current_level").default(1), // 1-5 scale
   targetLevel: integer("target_level").default(5),
+  priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "critical"
   practiceActivities: text("practice_activities").array(),
   milestones: jsonb("milestones").default('[]'), // Array of completed milestones
   lastPracticed: timestamp("last_practiced"),
@@ -1500,7 +1607,13 @@ export const insertTransitionSkillSchema = createInsertSchema(transitionSkills).
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).refine(
+  (values) => (values.currentLevel ?? 1) <= (values.targetLevel ?? 5),
+  {
+    message: "Current level cannot be greater than target level.",
+    path: ["targetLevel"],
+  },
+);
 
 // Types for new tables
 export type Notification = typeof notifications.$inferSelect;

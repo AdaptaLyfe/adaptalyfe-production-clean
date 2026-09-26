@@ -15,6 +15,16 @@ function getApiUrl(path: string): string {
   return baseURL ? `${baseURL}${path}` : path;
 }
 
+function isLifeSkillsRequest(path: string): boolean {
+  return path.startsWith("/api/transition-skills");
+}
+
+function logLifeSkillsRequest(message: string, details?: unknown): void {
+  if (import.meta.env.DEV) {
+    console.debug(`[LifeSkills][ApiClient] ${message}`, details ?? "");
+  }
+}
+
 // Session token management for mobile auth
 const SESSION_TOKEN_KEY = 'adaptalyfe_session_token';
 
@@ -115,6 +125,13 @@ export async function logout(): Promise<void> {
 function getAuthHeaders(): HeadersInit {
   const sessionToken = getSessionToken();
   const headers: HeadersInit = {};
+  const localTimeZone = typeof Intl !== "undefined"
+    ? Intl.DateTimeFormat().resolvedOptions().timeZone
+    : undefined;
+
+  if (localTimeZone) {
+    headers['X-User-Timezone'] = localTimeZone;
+  }
   
   if (isNativeClient()) {
     headers['X-Adaptalyfe-Client'] = 'native';
@@ -127,10 +144,55 @@ function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly type?: string;
+
+  constructor(
+    status: number,
+    message: string,
+    details?: { code?: string; type?: string },
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = details?.code;
+    this.type = details?.type;
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let payload:
+      | {
+          error?: unknown;
+          message?: unknown;
+          code?: unknown;
+          type?: unknown;
+        }
+      | undefined;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      // Preserve the existing text fallback for non-JSON error responses.
+    }
+
+    const message =
+      typeof payload?.message === "string"
+        ? payload.message
+        : typeof payload?.error === "string"
+          ? payload.error
+          : text;
+    throw new ApiError(
+      res.status,
+      message,
+      {
+        code: typeof payload?.code === "string" ? payload.code : undefined,
+        type: typeof payload?.type === "string" ? payload.type : undefined,
+      },
+    );
   }
 }
 
@@ -141,19 +203,58 @@ export async function apiRequest(
 ): Promise<Response> {
   const fullUrl = getApiUrl(url);
   const authHeaders = getAuthHeaders();
-  
-  const res = await fetch(fullUrl, {
-    method,
-    headers: {
-      ...(data ? { "Content-Type": "application/json" } : {}),
-      ...authHeaders, // Include Authorization header if session token exists
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
-  });
+  const lifeSkillsRequest = isLifeSkillsRequest(url);
+  if (lifeSkillsRequest) {
+    logLifeSkillsRequest(
+      `request method=${method} path=${url}`,
+      {
+        payload: data ?? null,
+        hasBearerToken: Boolean(authHeaders.Authorization),
+        nativeClient: isNativeClient(),
+      },
+    );
+  }
 
-  await throwIfResNotOk(res);
-  return res;
+  try {
+    const res = await fetch(fullUrl, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        ...authHeaders, // Include Authorization header if session token exists
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: isNativeClient() ? 'omit' : API_CONFIG.credentials,
+    });
+
+    if (lifeSkillsRequest) {
+      logLifeSkillsRequest(
+        `response method=${method} path=${url} status=${res.status}`,
+      );
+    }
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    if (lifeSkillsRequest) {
+      logLifeSkillsRequest(
+        `failure method=${method} path=${url}`,
+        error,
+      );
+    }
+    throw error;
+  }
+}
+
+export async function getAuthenticatedUser<T = unknown>(): Promise<T | null> {
+  try {
+    const response = await apiRequest("GET", "/api/user");
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return null;
+    }
+
+    throw error;
+  }
 }
 
 export async function demoLogin(username: string, password: string) {
@@ -180,6 +281,16 @@ export const getQueryFn: <T>(options: {
     try {
       const fullUrl = getApiUrl(queryKey[0] as string);
       const authHeaders = getAuthHeaders();
+        const lifeSkillsQuery = isLifeSkillsRequest(queryKey[0] as string);
+        if (lifeSkillsQuery) {
+          logLifeSkillsRequest(
+            "request method=GET path=/api/transition-skills",
+            {
+              hasBearerToken: Boolean(authHeaders.Authorization),
+              nativeClient: isNativeClient(),
+            },
+          );
+        }
       
       const res = await fetch(fullUrl, {
         headers: authHeaders, // Include Authorization header if session token exists
@@ -187,6 +298,11 @@ export const getQueryFn: <T>(options: {
       });
 
       console.log("Query response status:", res.status);
+      if (isLifeSkillsRequest(queryKey[0] as string)) {
+        logLifeSkillsRequest(
+          `response method=GET path=${queryKey[0]} status=${res.status}`,
+        );
+      }
       console.log("Query response headers:", Object.fromEntries(res.headers.entries()));
       
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -222,11 +338,17 @@ export const getQueryFn: <T>(options: {
       } catch (parseError) {
         console.error("JSON parse error. Raw text (first 200 chars):", text.substring(0, 200));
         console.error("Parse error details:", parseError);
+        if (lifeSkillsQuery) {
+          throw new Error("The Life Skills response was not valid JSON.");
+        }
         // Return empty array instead of throwing to prevent crashes
         return [];
       }
     } catch (error) {
       console.error("Query error:", error);
+      if (isLifeSkillsRequest(queryKey[0] as string)) {
+        throw error;
+      }
       // For mobile apps: Return null on network errors instead of crashing
       if (error instanceof TypeError && error.message.includes('fetch')) {
         console.log("Network error detected, returning null for graceful degradation");

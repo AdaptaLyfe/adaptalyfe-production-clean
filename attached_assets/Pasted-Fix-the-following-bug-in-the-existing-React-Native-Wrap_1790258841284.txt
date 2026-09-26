@@ -1,0 +1,258 @@
+Fix the following bug in the existing **React Native + Wrapper** application.
+
+## Bug
+
+**Academic / Student Planner → Today's Schedule**
+
+When a user adds a new class successfully, the class is saved, but it does **not appear in the "Today's Schedule" list**.
+
+This bug has been fixed before but keeps coming back. Do NOT apply a temporary UI-only fix. Find and fix the actual root cause.
+
+## Required Investigation
+
+Trace the complete flow:
+
+1. Add Class form
+2. Class validation
+3. Create/save class API or database operation
+4. Response/data transformation
+5. State management/store/context
+6. Today's Schedule data fetching
+7. Date/day filtering
+8. Today's Schedule rendering
+
+Check both the **React Native layer and Wrapper/backend integration** where applicable.
+
+## Important Checks
+
+### 1. Verify class is actually saved
+
+After adding a class:
+
+* Confirm the create request succeeds.
+* Confirm the saved class exists in the actual data source.
+* Check the returned class object.
+* Check whether the class has the correct:
+
+  * date
+  * start time
+  * end time
+  * day of week
+  * timezone
+  * class ID
+  * user/student ID
+
+Do not assume that a successful API response means the Today's Schedule data is correct.
+
+### 2. Fix state refresh
+
+After successfully creating a class:
+
+* Update/invalidate the relevant class data.
+* Refresh Today's Schedule correctly.
+* Make sure the screen does not continue displaying stale state.
+* If the app uses React Query, Redux, Context, Zustand, custom hooks, or another state solution, follow the existing architecture.
+* Do not introduce a second state-management system just for this fix.
+
+The newly created class should appear **immediately after successful creation**, without requiring the user to restart the app.
+
+### 3. Check date filtering carefully
+
+This is especially important.
+
+Today's Schedule must correctly determine today's date.
+
+Check for:
+
+* UTC vs local time issues
+* timezone conversion
+* date string format differences
+* `YYYY-MM-DD` vs full ISO datetime
+* JavaScript `Date` parsing problems
+* day-of-week calculation
+* classes near midnight
+* incorrect comparison between date objects and strings
+
+Use the application's existing timezone/date conventions if they already exist.
+
+Do NOT use fragile comparisons such as comparing full datetime strings when only the calendar date should be compared.
+
+### 4. Check recurring classes
+
+If classes are stored using:
+
+* day of week
+* recurring schedule
+* start/end time
+
+make sure today's schedule correctly determines whether the class belongs to today.
+
+If classes are stored using a specific date, make sure today's date comparison uses the same format.
+
+Do not break existing recurring class functionality.
+
+### 5. Check response/data mapping
+
+Inspect the mapping between:
+
+**Create Class → API response → stored class → Today's Schedule model → UI**
+
+Look for mismatched property names such as:
+
+* `classDate` vs `date`
+* `startTime` vs `start_time`
+* `dayOfWeek` vs `day_of_week`
+* `studentId` vs `student_id`
+* `courseName` vs `course_name`
+
+Fix the mapping at the correct architectural layer instead of adding random fallback fields in the UI.
+
+### 6. Check user/student filtering
+
+Make sure the newly created class belongs to the currently logged-in student/user and is not accidentally filtered out because of:
+
+* wrong user ID
+* wrong student ID
+* undefined ID
+* stale authentication state
+* incorrect account/profile ID
+
+### 7. Check Today's Schedule lifecycle
+
+Inspect:
+
+* screen mount
+* focus events
+* navigation back from Add Class
+* API fetching
+* loading state
+* refresh logic
+* state updates
+* component re-rendering
+
+When the user:
+
+**Today's Schedule → Add Class → Save → returns to Today's Schedule**
+
+the list must show the newly added class.
+
+Also make sure navigating away and coming back does not make the class disappear.
+
+## Do NOT do these temporary fixes
+
+Do NOT:
+
+* hardcode the newly added class into the UI
+* manually append incomplete data only for display
+* use `setTimeout()` to force a refresh
+* reload the entire application
+* require the user to manually restart the app
+* create duplicate API calls unnecessarily
+* create duplicate state variables
+* bypass existing data architecture
+* hide the problem with fallback/mock data
+
+Fix the underlying data/state/date-filtering issue.
+
+## Regression Prevention
+
+After fixing the bug, test these scenarios:
+
+### Test 1
+
+Add a class for today.
+
+Expected:
+
+* Class is saved successfully.
+* Class immediately appears in Today's Schedule.
+
+### Test 2
+
+Close and reopen the Academic / Student Planner.
+
+Expected:
+
+* Class is still displayed in Today's Schedule.
+
+### Test 3
+
+Navigate to another screen and return.
+
+Expected:
+
+* Class remains visible.
+
+### Test 4
+
+Add another class for today.
+
+Expected:
+
+* Both classes appear.
+
+### Test 5
+
+Add a class for tomorrow.
+
+Expected:
+
+* It should NOT appear in Today's Schedule.
+
+### Test 6
+
+Add a class for another day.
+
+Expected:
+
+* It should only appear on the correct day.
+
+### Test 7
+
+Edit an existing class.
+
+Expected:
+
+* Updated information appears correctly in Today's Schedule.
+
+### Test 8
+
+Delete a class.
+
+Expected:
+
+* Deleted class disappears from Today's Schedule.
+
+### Test 9
+
+Logout/login again.
+
+Expected:
+
+* Previously saved classes are loaded correctly for the correct user.
+
+## Code Quality Requirements
+
+Before making changes:
+
+1. Find the existing Academic / Student Planner implementation.
+2. Identify the actual source of truth for classes.
+3. Trace the Add Class flow.
+4. Trace the Today's Schedule flow.
+5. Identify the root cause.
+6. Fix the root cause using the existing architecture.
+7. Remove any previous workaround that is causing the issue.
+8. Test the complete CRUD + Today's Schedule flow.
+
+Do not rewrite unrelated parts of the application.
+
+After completing the fix, report:
+
+1. **Root cause**
+2. **Files/components changed**
+3. **What was changed**
+4. **Why the bug will not return after navigation/reopening**
+5. **Tests performed**
+6. **Any remaining issue, if one exists**
+
+Most importantly: **do not stop after making the class appear once. Verify that the class remains correctly persisted, fetched, filtered, and rendered after reopening the screen/app.**

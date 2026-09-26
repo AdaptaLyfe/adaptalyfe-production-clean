@@ -1,0 +1,685 @@
+In the existing Flutter application, fix the **Rewards → Badges** feature completely.
+
+### Current Problem
+
+On:
+
+**Rewards → Badges**
+
+the app shows:
+
+> "No badges yet"
+
+even when the user has:
+
+* Redeemed rewards multiple times
+* Earned reward points
+* Achieved multiple milestones
+
+Because of this, it is unclear whether the Badges feature is actually working.
+
+There is also no clear/exact flow explaining:
+
+* What badges are available
+* How a user earns each badge
+* What action/milestone triggers a badge
+* Whether a badge was earned but not displayed
+* What progress is required for the next badge
+
+The previous fixes have reopened this bug multiple times. **Do not apply a temporary UI fix. Investigate and fix the complete badge data flow.**
+
+---
+
+## 1. First Investigate the Existing Code
+
+Before making changes, inspect the complete existing Rewards/Badges implementation.
+
+Find:
+
+* Rewards screen
+* Badges screen/widget
+* Badge model
+* Badge repository/data source
+* API/Firebase/local database calls related to badges
+* Reward redemption logic
+* Points calculation/update logic
+* Milestone/achievement logic
+* User progress data
+* BLoC/Cubit/events/states related to Rewards and Badges
+* Navigation between Rewards → Badges
+* Any existing badge definitions
+* Any existing backend/API/Firestore collections related to badges
+
+Do NOT create a second badge system if one already exists.
+
+First determine:
+
+**Where is badge data created?
+Where is badge progress calculated?
+Where is badge status stored?
+Where is badge data fetched?
+Why does the UI receive an empty badge list?**
+
+Add temporary/debug logging if necessary to identify where the data becomes empty.
+
+---
+
+# 2. Define a Clear Badge System
+
+If the existing project does not have a complete badge rule system, implement one using the project's existing architecture.
+
+Create clear badge definitions.
+
+For example:
+
+### Reward Badges
+
+* First Reward — Redeem your first reward
+* Reward Collector — Redeem 5 rewards
+* Reward Champion — Redeem 10 rewards
+
+### Points Badges
+
+* Point Starter — Earn 100 points
+* Point Builder — Earn 500 points
+* Point Master — Earn 1,000 points
+
+### Milestone Badges
+
+* First Milestone — Complete your first milestone
+* Milestone Explorer — Complete 5 milestones
+* Milestone Champion — Complete 10 milestones
+
+**Important:** Before using these exact numbers, inspect the existing application/business rules. If existing milestone/reward thresholds already exist, reuse them instead of inventing conflicting rules.
+
+Badge rules must be defined in one clear place so they are not duplicated across multiple screens.
+
+---
+
+# 3. Badge Status Must Be Calculated Correctly
+
+Every badge should have a clear status:
+
+* Locked
+* In Progress
+* Earned
+
+Example:
+
+```text
+First Reward
+✓ Earned
+
+Reward Collector
+3 / 5 rewards
+In Progress
+
+Reward Champion
+3 / 10 rewards
+Locked
+```
+
+The badge system must calculate the status from the user's actual data.
+
+For example:
+
+```text
+redeemedRewardCount
+earnedPoints
+completedMilestoneCount
+```
+
+Do NOT simply show badges based on whether a badge API list is empty.
+
+---
+
+# 4. Fix the Existing "No Badges Yet" Logic
+
+The current screen incorrectly assumes:
+
+```text
+badge list is empty
+→ No badges yet
+```
+
+Change this behavior.
+
+If the user has not earned any badge yet, but badges are available, show the available/locked badges with instructions.
+
+For example:
+
+```text
+Badges
+
+🏆 First Reward
+Redeem your first reward
+Progress: 0 / 1
+Locked
+
+⭐ Reward Collector
+Redeem 5 rewards
+Progress: 3 / 5
+In Progress
+
+🎯 Point Starter
+Earn 100 points
+Progress: 75 / 100
+In Progress
+```
+
+Only show:
+
+> "No badges available"
+
+if there are genuinely no badge definitions/configuration available.
+
+Do NOT show "No badges yet" simply because the user's earned badge list is empty.
+
+---
+
+# 5. Show Earned Badges Clearly
+
+If the user has already completed a badge condition, it must appear as:
+
+```text
+✓ Earned
+```
+
+with:
+
+* Badge name
+* Badge icon
+* Description
+* Earned date if available
+* Related achievement/reason
+
+Example:
+
+```text
+🏆 First Reward
+Earned
+
+You redeemed your first reward.
+Earned on Sep 24, 2026
+```
+
+---
+
+# 6. Give Users Clear Instructions
+
+The Badges screen must explain how badges are earned.
+
+Add an information/instruction section near the top.
+
+Example:
+
+### How to earn badges
+
+```text
+Complete activities, earn points, redeem rewards,
+and achieve milestones to unlock badges.
+
+• Earn points to unlock point badges
+• Redeem rewards to unlock reward badges
+• Complete milestones to unlock milestone badges
+• Keep progressing to unlock higher-level badges
+```
+
+Do not hard-code misleading instructions if the actual business rules are different.
+
+The instructions must match the implemented badge rules.
+
+---
+
+# 7. Show Badge Progress
+
+For every locked/in-progress badge, show exactly what the user needs to do.
+
+Example:
+
+```text
+Reward Collector
+
+Redeem 5 rewards to earn this badge.
+
+Your progress
+3 / 5 rewards
+
+[██████░░░░] 60%
+```
+
+Another example:
+
+```text
+Point Builder
+
+Earn 500 points to unlock this badge.
+
+Your progress
+350 / 500 points
+```
+
+This removes confusion about how the badge can be earned.
+
+---
+
+# 8. Badge Evaluation Must Happen After User Actions
+
+Badge status must refresh after relevant actions.
+
+Especially after:
+
+### Reward redemption
+
+After successful reward redemption:
+
+* Update reward redemption count
+* Recalculate badges
+* Unlock newly earned badges
+* Refresh the Badges screen
+
+### Points earned
+
+After points change:
+
+* Update points
+* Recalculate point-based badges
+* Unlock newly earned badges
+
+### Milestone achieved
+
+After milestone completion:
+
+* Update milestone count
+* Recalculate milestone badges
+* Unlock newly earned badges
+
+Do not require the user to restart the app to see the newly earned badge.
+
+---
+
+# 9. Prevent Duplicate Badge Awards
+
+If the same badge condition is triggered multiple times, do not create duplicate badge records.
+
+Example:
+
+```text
+First Reward
+```
+
+must exist only once for the user.
+
+Use a unique badge ID/key.
+
+Before creating an earned badge record, check whether the user already has that badge.
+
+---
+
+# 10. Persist Earned Badges
+
+If the project uses Firebase/Firestore, API, or another backend, use the existing persistence architecture.
+
+Do not store earned badge state only in widget/local state.
+
+After:
+
+* App restart
+* Logout/login
+* Navigation away and back
+* Refresh
+* Device restart
+
+the user's earned badges must still be available.
+
+If the existing application already has a backend badge collection/API, fix and reuse it instead of creating another storage system.
+
+---
+
+# 11. BLoC/Cubit Flow
+
+Follow the project's existing BLoC/Cubit architecture.
+
+The flow should be similar to:
+
+```text
+User Action
+    ↓
+Reward / Points / Milestone Update
+    ↓
+Repository
+    ↓
+Update User Progress
+    ↓
+Badge Evaluation
+    ↓
+Save Newly Earned Badges
+    ↓
+Fetch Updated Badge State
+    ↓
+BLoC/Cubit State
+    ↓
+Badges UI
+```
+
+Make sure the Badges screen is listening to the correct BLoC/Cubit/provider.
+
+Do not create unnecessary duplicate BLoCs.
+
+---
+
+# 12. Handle Loading, Empty, Error and Success States Correctly
+
+Implement separate states for:
+
+### Loading
+
+```text
+Loading badges...
+```
+
+### Successfully loaded
+
+Show:
+
+* Earned badges
+* In-progress badges
+* Locked badges
+
+### Genuine empty configuration
+
+Only if no badge definitions exist:
+
+```text
+No badges are currently available.
+```
+
+### Error
+
+Show a useful error message with retry.
+
+Do NOT silently convert:
+
+* API error
+* Firebase error
+* parsing error
+* authentication issue
+* missing user ID
+* incorrect Firestore path
+
+into:
+
+```text
+No badges yet
+```
+
+This is important because that behavior can hide the real bug.
+
+---
+
+# 13. Validate User Data
+
+Check carefully:
+
+* Correct logged-in user ID
+* Correct Firestore/API path
+* Correct reward redemption count
+* Correct points total
+* Correct milestone count
+* Correct badge IDs
+* Correct badge status
+* Correct date parsing
+* Null values
+* Missing fields
+* Empty API responses
+* Pagination if applicable
+* Authentication state
+
+Do not assume an empty response means the user has no badges.
+
+---
+
+# 14. Existing Data Must Work
+
+This is very important.
+
+Use the existing user's current data.
+
+For a user who already has:
+
+* Reward redemptions
+* Earned points
+* Completed milestones
+
+the badge system should evaluate their historical progress and award all badges they have already qualified for.
+
+Do NOT require the user to perform those actions again.
+
+Example:
+
+If:
+
+```text
+redeemed rewards = 5
+```
+
+and the badge rule is:
+
+```text
+Redeem 5 rewards
+```
+
+then the badge must immediately appear as:
+
+```text
+✓ Earned
+```
+
+even if those 5 rewards were redeemed before this badge feature was fixed.
+
+---
+
+# 15. Backward Compatibility
+
+Do not break existing:
+
+* Rewards
+* Reward redemption
+* Points
+* Milestones
+* User profile
+* Navigation
+* Authentication
+* Other BLoCs
+* Existing APIs
+* Existing Firebase collections
+
+Only change what is required for the Badge feature.
+
+---
+
+# 16. UI Requirements
+
+Keep the existing app design/theme.
+
+Do not redesign the entire Rewards screen.
+
+Improve only the Badges section as required.
+
+The UI should clearly separate:
+
+```text
+Earned Badges
+In Progress
+Locked
+How to Earn Badges
+```
+
+If the existing design uses cards, icons, colors, typography, etc., reuse them.
+
+Make the UI responsive for existing supported platforms.
+
+---
+
+# 17. Testing Requirements
+
+After implementing the fix, test these scenarios:
+
+### Scenario 1
+
+New user with:
+
+```text
+0 rewards
+0 points
+0 milestones
+```
+
+Expected:
+
+* Badge definitions are visible
+* Badges show Locked/0 progress
+* Instructions are visible
+* No misleading "No badges yet" message
+
+### Scenario 2
+
+User with:
+
+```text
+1 redeemed reward
+```
+
+Expected:
+
+* First Reward badge = Earned
+
+### Scenario 3
+
+User with enough rewards for a higher badge
+
+Expected:
+
+* Correct badge = Earned
+* Progress shown correctly for next badge
+
+### Scenario 4
+
+User with enough points
+
+Expected:
+
+* Point badge = Earned
+
+### Scenario 5
+
+User with completed milestones
+
+Expected:
+
+* Milestone badge = Earned
+
+### Scenario 6
+
+User already had qualifying activity before this bug fix
+
+Expected:
+
+* Historical activity is considered
+* Qualified badges appear as Earned
+
+### Scenario 7
+
+Redeem a new reward
+
+Expected:
+
+* Reward succeeds
+* Reward count updates
+* Badge progress updates
+* Newly qualified badge appears without app restart
+
+### Scenario 8
+
+Refresh/reopen app
+
+Expected:
+
+* Earned badges remain
+
+### Scenario 9
+
+Logout/login
+
+Expected:
+
+* Correct badges are shown for the logged-in user
+
+### Scenario 10
+
+Backend/API/Firebase failure
+
+Expected:
+
+* Show an actual error
+* Do NOT show "No badges yet"
+
+---
+
+# 18. Add Tests
+
+Add/update unit tests for:
+
+* Badge rule evaluation
+* Progress calculation
+* Locked status
+* In-progress status
+* Earned status
+* Existing historical progress
+* Duplicate prevention
+* Multiple badge unlocks
+* Zero progress
+* Null/missing data
+
+Also test the BLoC/Cubit states where applicable.
+
+---
+
+# 19. Final Verification
+
+Before finishing:
+
+1. Run `flutter analyze`.
+2. Run the relevant tests.
+3. Fix all errors/warnings introduced by this change.
+4. Verify the complete Rewards → Badges flow manually.
+5. Verify an existing user with reward/points/milestone history.
+6. Verify a new user.
+7. Verify reward redemption updates badge progress.
+8. Verify badges remain after app restart.
+9. Verify backend/API errors are not incorrectly displayed as "No badges yet".
+10. Verify there is only ONE source of truth for badge rules.
+11. Verify there are no duplicate badge records.
+12. Verify no existing Rewards functionality is broken.
+
+### Important
+
+Do NOT just change the text:
+
+```text
+"No badges yet"
+```
+
+This is a **data-flow + badge-evaluation + UI-state issue**, not only a text issue.
+
+Find the root cause and fix the complete feature so this bug does not reopen again.
+
+At the end, provide a short summary of:
+
+* Root cause
+* Files changed
+* Badge rules implemented/reused
+* Data flow
+* How existing user progress is handled
+* Tests performed
+* Any remaining issue that genuinely requires backend configuration

@@ -1,0 +1,150 @@
+Fix the **Your Dashboard → Customize** skill module customization issue in the existing Flutter application.
+
+### Current Issue
+
+In **Your Dashboard → Customize**, users can enable/disable skill modules.
+
+Current behavior:
+
+1. User opens **Your Dashboard → Customize**.
+2. User enables a previously disabled skill module OR disables an enabled skill module.
+3. User saves the customization.
+4. User is redirected to **Your Dashboard**.
+5. The Dashboard does **not immediately reflect the updated customization**.
+6. Sometimes the old skill modules are still displayed.
+7. When the user reopens Customize, closes it, or navigates back and forth, the correct configuration may eventually appear.
+
+### Required Fix
+
+Make the customization state update **immediately and consistently**.
+
+When the user enables/disables a skill module and saves:
+
+* The updated enabled/disabled state must be persisted correctly.
+* Navigate back to **Your Dashboard**.
+* Dashboard must immediately show the latest customization.
+* Enabled modules must be visible.
+* Disabled modules must not be visible.
+* Do not require the user to reopen Customize multiple times.
+* Do not require app restart.
+* Do not require navigating away and coming back.
+* The state must remain correct after leaving and reopening the Dashboard.
+
+### Important Flutter Requirements
+
+First inspect the existing implementation and identify:
+
+* Customize screen
+* Dashboard screen
+* Skill module model/state
+* Repository/service used to save customization
+* API/Firebase/local storage used for persistence
+* BLoC/Provider/Riverpod/state management currently used
+* Navigation flow between Customize and Dashboard
+
+Do **not** create a completely new architecture.
+
+Use the existing architecture and state-management pattern.
+
+### State Management
+
+Make sure the Dashboard receives the **latest saved customization state** after returning from Customize.
+
+Avoid using stale/cached skill module data.
+
+If the app uses BLoC:
+
+* Emit a new state after customization is successfully saved.
+* Refresh/reload the Dashboard skill modules when returning from Customize.
+* Make sure the Dashboard rebuilds when the customization state changes.
+* Do not create unnecessary duplicate BLoCs.
+* Make sure the correct BLoC instance/provider is available to both screens.
+
+If the app uses another state-management solution, follow the existing implementation instead.
+
+### Navigation
+
+When returning from Customize to Dashboard:
+
+1. Save customization successfully.
+2. Return to Dashboard.
+3. Dashboard should refresh/rebuild using the latest saved configuration.
+4. Display only currently enabled modules.
+
+If the existing navigation returns a result from Customize, use that result where appropriate instead of unnecessarily reloading the entire app.
+
+### Persistence
+
+Verify that the saved customization is actually persisted.
+
+Test both cases:
+
+**Enable**
+
+* Disable a skill module.
+* Open Customize.
+* Enable it.
+* Save.
+* Return to Dashboard.
+* The skill module should immediately appear.
+
+**Disable**
+
+* Enable a skill module.
+* Open Customize.
+* Disable it.
+* Save.
+* Return to Dashboard.
+* The skill module should immediately disappear.
+
+### Reopening Test
+
+Also verify:
+
+* Open Customize.
+* Change multiple modules.
+* Save.
+* Return to Dashboard.
+* Open Customize again.
+* The selected states must match the Dashboard.
+* Close Customize.
+* Return to Dashboard.
+* The same configuration must remain.
+* Restart the app.
+* The saved configuration must still be correct if persistence is expected by the existing app.
+
+### Avoid
+
+Do NOT:
+
+* Change unrelated Dashboard functionality.
+* Change the existing UI design.
+* Change skill module names.
+* Change API contracts unless absolutely necessary.
+* Duplicate state-management logic.
+* Add arbitrary delays such as `Future.delayed`.
+* Use forced rebuild hacks such as random `UniqueKey()` just to hide the issue.
+* Reload the entire application unnecessarily.
+* Introduce a second source of truth.
+
+### Final Verification
+
+After implementing the fix:
+
+1. Run the Flutter app.
+2. Test enabling one skill.
+3. Test disabling one skill.
+4. Test enabling/disabling multiple skills.
+5. Navigate Dashboard → Customize → Dashboard repeatedly.
+6. Verify Dashboard always reflects the latest saved configuration.
+7. Check for BLoC/provider lifecycle issues, stale state, duplicate listeners, or disposed controllers.
+8. Make sure there are no new Flutter errors or exceptions.
+
+Finally, explain:
+
+* What caused the stale Dashboard customization.
+* Which files were changed.
+* How the state now flows from Customize → persistence → Dashboard.
+* How you verified the fix.
+
+Make the **smallest safe change** necessary and preserve all existing functionality.

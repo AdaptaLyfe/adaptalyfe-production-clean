@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { Brain, Shield, Users, BarChart3, Clock, Star, Heart, Zap } from "lucide-react";
 
 interface PremiumValueProps {
@@ -253,7 +254,7 @@ export default function PremiumValueProposition({ userPlan }: PremiumValueProps)
           </p>
           <div className="flex justify-center gap-4">
             <Badge className="bg-purple-600 text-white px-4 py-2">
-              14-Day Free Trial
+              {FREE_TRIAL_DAYS}-Day Free Trial
             </Badge>
             <Badge variant="outline" className="border-purple-300 text-purple-700 px-4 py-2">
               Cancel Anytime

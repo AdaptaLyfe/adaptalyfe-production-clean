@@ -1,0 +1,260 @@
+In the existing Flutter project, fix the **Sleep Routine → Overview → Log Sleep** flow completely.
+
+### Current Bug
+
+When the user is on:
+
+**Sleep Routine → Overview**
+
+and clicks **"Log Sleep"**, the app redirects to the **"Log Sleep"** tab, but it automatically opens the most recently/last logged sleep record in **Edit Mode**.
+
+Because of this, the user cannot easily create a new sleep log.
+
+The same issue happens when opening the **Log Sleep** tab directly: the latest sleep log is automatically loaded into edit mode.
+
+### Required Behavior
+
+Implement the following clear create/edit behavior:
+
+#### 1. Clicking "Log Sleep" from Overview
+
+When the user clicks **"Log Sleep"**:
+
+* Navigate to the **Log Sleep** tab.
+* Open the Log Sleep form in **Create/New mode**.
+* Do NOT automatically load the latest/recent sleep record.
+* Do NOT automatically open the previous sleep record in edit mode.
+* The form should use the appropriate default date (normally today).
+* The user should be able to enter and save a new sleep log.
+
+#### 2. Selecting a Date With NO Existing Sleep Log
+
+When the user selects a date:
+
+* Check whether a sleep log already exists for that date.
+* If NO sleep log exists:
+
+  * Open the form in **Create Mode**.
+  * Keep the form fields empty/default as appropriate.
+  * Allow the user to create and save a new sleep log.
+
+Example:
+
+`22 Sep → No sleep log → Create Mode`
+
+#### 3. Selecting a Date With an Existing Sleep Log
+
+When the user selects a date:
+
+* Check whether a sleep log already exists for that date.
+* If a sleep log exists:
+
+  * Load that sleep log.
+  * Open it in **Edit Mode**.
+  * Allow the user to update and save the existing record.
+
+Example:
+
+`21 Sep → Sleep log exists → Edit Mode`
+
+#### 4. Do NOT Automatically Open the Latest Record
+
+Important:
+
+Opening the **Log Sleep** tab must NOT automatically select or load the most recent sleep record.
+
+Do not use logic such as:
+
+* latest sleep log
+* last logged sleep
+* most recent record
+* first record from sleep history
+
+to automatically initialize the edit form.
+
+The selected date should determine whether the form is in Create or Edit mode.
+
+### Multiple Entries Requirement
+
+For this implementation, use the following business rule:
+
+**Allow only ONE sleep log per calendar date.**
+
+Do NOT allow multiple sleep records for the same date unless the existing backend/business requirements explicitly require multiple entries.
+
+Therefore:
+
+* Date has no record → Create new record.
+* Date has one record → Edit existing record.
+* Date already has a record → Do not create another duplicate record.
+
+If the user tries to create another sleep log for a date that already has one, prevent duplicate creation and load/show the existing record in edit mode.
+
+### Important Date Handling
+
+Make sure the comparison is based on the **calendar date**, not the complete timestamp.
+
+For example:
+
+`2026-09-22 01:00`
+
+and
+
+`2026-09-22 22:00`
+
+belong to the same calendar date if the app's sleep-log business rule treats them as the same sleep-log date.
+
+Use the existing project's timezone/date handling conventions. Do not introduce a different timezone system unnecessarily.
+
+### State Management
+
+Review the existing Flutter state management implementation (BLoC/Cubit/Provider/etc.) and fix the root cause instead of adding a UI-only workaround.
+
+The state should clearly distinguish between:
+
+* Create Mode
+* Edit Mode
+* Loading
+* Existing record found
+* No record found
+* Saving
+* Error
+
+When the user changes the selected date:
+
+1. Clear/reset the previous edit state.
+2. Check for a sleep log for the newly selected date.
+3. If found → populate the form and enter Edit Mode.
+4. If not found → clear the form and enter Create Mode.
+
+Do not allow data from the previously selected date to remain in the form.
+
+### Save Behavior
+
+When saving:
+
+**Create Mode**
+
+* Create a new sleep log only if no record exists for the selected date.
+* After successful creation, update the UI/history/state correctly.
+
+**Edit Mode**
+
+* Update the existing sleep log.
+* Do not create a second record.
+* Keep the selected date unchanged.
+
+### Navigation Behavior
+
+Check all navigation paths that open the Log Sleep screen/tab, including:
+
+* Sleep Routine → Overview → Log Sleep
+* Sleep Routine → Log Sleep tab directly
+* Any "Add Sleep" button
+* Any edit button from sleep history/list
+* Any other existing navigation route
+
+Make sure each navigation path intentionally specifies whether it should open:
+
+* Create Mode, or
+* Edit Mode.
+
+Do not rely on an old/previously selected sleep record.
+
+### Back/Tab Navigation
+
+Also check whether the previous selected sleep record is being retained when:
+
+* Switching between Sleep Routine tabs.
+* Leaving the Sleep Routine screen.
+* Returning to the Log Sleep tab.
+* Navigating from Overview to Log Sleep.
+
+Prevent stale edit state from automatically reopening the previous record when the user intended to create a new log.
+
+### UI Requirements
+
+Do NOT redesign the existing UI.
+
+Keep:
+
+* Existing UI
+* Existing styling
+* Existing fields
+* Existing validation
+* Existing API/repository structure
+* Existing BLoC/state-management architecture
+* Existing navigation structure
+
+Only change the logic necessary to correctly implement Create/Edit behavior.
+
+### Edge Cases
+
+Handle these cases:
+
+1. Today has no sleep log → Create Mode.
+2. Today already has a sleep log → Edit Mode only when today is explicitly selected/loaded as an existing record.
+3. User selects another date with no log → Create Mode.
+4. User selects another date with an existing log → Edit Mode.
+5. User switches from a date with an existing log to a date without a log → previous data must be cleared.
+6. User creates a log → it must not create duplicates.
+7. User edits a log → it must update the existing record.
+8. User repeatedly opens Log Sleep from Overview → it should not unexpectedly reopen the last record in edit mode.
+9. Existing sleep history records must continue working.
+10. Existing API/backend data must remain compatible.
+
+### Root Cause Investigation
+
+Before modifying code, inspect the existing implementation and identify why the latest sleep record is automatically loaded.
+
+Look specifically for:
+
+* Initialization logic in `initState()`.
+* BLoC/Cubit initialization events.
+* Selected sleep ID stored in state.
+* Latest/most-recent sleep query.
+* Tab-change callbacks.
+* Navigation arguments.
+* Cached selected date.
+* Controllers being populated from the latest record.
+* `first`/`last` record selection logic.
+* Automatic edit-mode flags.
+* State not being reset when entering the Log Sleep tab.
+
+Fix the underlying cause.
+
+### Acceptance Criteria
+
+The implementation is complete only when all of these work:
+
+* Clicking **Log Sleep** from Overview opens a fresh Create/New form.
+* The latest sleep log is NOT automatically opened in edit mode.
+* Selecting a date with no sleep log opens Create Mode.
+* Selecting a date with an existing sleep log opens Edit Mode.
+* Only one sleep log can exist for a calendar date.
+* Duplicate sleep logs cannot be created for the same date.
+* Existing sleep logs can still be edited.
+* Changing dates correctly resets/populates the form.
+* No stale data from another date remains in the form.
+* Existing Sleep Routine functionality is not broken.
+* No unnecessary UI redesign is introduced.
+
+### Final Step
+
+After implementing the fix:
+
+1. Review all modified files.
+2. Check for related code paths that could recreate this bug later.
+3. Remove obsolete latest-record/edit initialization logic if it conflicts with the new behavior.
+4. Run `flutter analyze`.
+5. Run relevant tests if available.
+6. Fix any errors introduced by the changes.
+7. Give a short summary of:
+
+   * Root cause
+   * Files changed
+   * Logic implemented
+   * How duplicate same-date entries are prevented
+   * Test/verification result
+
+Do not stop after making a superficial UI change. Trace the complete navigation → state → date selection → repository/API → save/update flow and fix the root cause so this bug does not reopen.

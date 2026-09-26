@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Check, Star, Users, Shield } from "lucide-react";
 import PremiumValueProposition from "@/components/premium-value-proposition";
+import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -297,7 +298,7 @@ export default function Pricing() {
                 Is there a free trial for premium plans?
               </h3>
               <p className="text-gray-600">
-                Yes! All premium plans come with a 14-day free trial. No credit card required to start your trial.
+                Yes! All premium plans come with a {FREE_TRIAL_DAYS}-day free trial. No credit card required to start your trial.
               </p>
             </div>
             

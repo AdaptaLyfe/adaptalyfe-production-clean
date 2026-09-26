@@ -1,0 +1,108 @@
+In the existing Flutter project, fix the bug in:
+
+**Resources → Emergency**
+
+### Current issue
+
+When the user tries to add a new Emergency Resource, the app shows:
+
+**"Failed to add emergency resource"**
+
+The emergency resource is not being saved successfully.
+
+### Requirements
+
+1. Find the complete flow for adding an Emergency Resource:
+
+   * Emergency Resource UI/Form
+   * Form validation
+   * BLoC/Cubit/Provider state management
+   * Event/action used to save
+   * Repository
+   * Data source/API/Firebase/local database
+   * Model/JSON conversion
+   * Success and error handling
+
+2. Identify the **actual root cause** of the error. Do not hide the error or simply change the error message.
+
+3. Fix the root cause so that a valid Emergency Resource can be successfully added.
+
+4. Check the Emergency Resource model carefully:
+
+   * Required fields
+   * Nullable fields
+   * Field names
+   * JSON/map conversion
+   * Firestore/API field names
+   * Date/time conversion if used
+   * ID generation
+   * User ID/owner ID handling
+
+5. Check the save operation:
+
+   * Make sure the correct repository method is called.
+   * Make sure the correct data source/API method is called.
+   * Make sure authentication/user information is available.
+   * Make sure the database/API receives the expected data.
+   * Handle async operations correctly.
+   * Do not dispose controllers before the save operation finishes.
+
+6. Check error handling:
+
+   * Log the **actual underlying exception** during development.
+   * Do not replace the real exception with only `"Failed to add emergency resource"`.
+   * Show a user-friendly message to the user.
+   * Make sure loading state is reset after both success and failure.
+
+7. Check whether the issue is caused by:
+
+   * Incorrect Firestore/API path
+   * Missing permissions
+   * Incorrect collection/document structure
+   * Invalid/null field
+   * Model serialization/deserialization
+   * Authentication/user ID
+   * Repository implementation
+   * BLoC event/state handling
+   * Form/controller lifecycle
+
+8. Preserve all existing Emergency Resource functionality:
+
+   * Add
+   * View/list
+   * Edit/update
+   * Delete
+   * Search/filter if already implemented
+
+9. Do **not** rewrite the entire Resources module. Make the smallest safe change required to fix the root cause.
+
+10. After fixing:
+
+* Run `flutter analyze`.
+* Run the relevant tests if available.
+* Test adding a valid Emergency Resource.
+* Test validation with missing/invalid fields.
+* Test adding multiple emergency resources.
+* Verify the newly added resource appears immediately in the Resources → Emergency list.
+* Verify the resource remains after leaving and reopening the screen.
+* Verify edit/delete still work.
+
+### Important
+
+Do not just catch the exception and ignore it.
+
+Do not use a fake success response.
+
+Do not hardcode data.
+
+Do not disable validation or database security rules just to make the error disappear.
+
+The goal is to find and fix the **root cause**, so the `"Failed to add emergency resource"` bug does not come back later.
+
+Before finishing, explain:
+
+1. Root cause
+2. Files changed
+3. What was fixed
+4. How the fix was verified
+5. Any remaining issue or configuration required

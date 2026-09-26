@@ -1,0 +1,178 @@
+Fix the **Calendar Daily Task completion status bug** in the existing **React Native + Wrapper** application.
+
+### Bug
+
+When a user completes a Daily Task:
+
+* The **Task List** correctly shows the task as **Completed**.
+* But in the **Calendar**, the same task is still shown as **Not Completed / Incomplete**.
+* The bug has been fixed before but keeps coming back, so do NOT apply only a UI-level workaround.
+
+### Goal
+
+Make the Daily Task completion status **consistent everywhere in the application**, especially between:
+
+1. Daily Task List
+2. Calendar
+3. Task Details, if applicable
+4. Any other screen that displays the task's completion status
+
+### Important: Find the ROOT CAUSE
+
+Before changing code:
+
+1. Trace the complete Daily Task data flow:
+
+   * Task creation
+   * Task fetching
+   * Task list state
+   * Task completion/update API or database operation
+   * Local state/store/cache
+   * Calendar data source
+   * Calendar completion rendering
+
+2. Identify why the Task List receives the updated `completed` status but Calendar does not.
+
+3. Check whether Calendar is:
+
+   * Using a different API/query
+   * Using stale state
+   * Using cached task data
+   * Using a different completion field
+   * Comparing the wrong date
+   * Comparing timestamps incorrectly
+   * Using different task IDs
+   * Maintaining its own outdated completion state
+
+### Completion Status
+
+Find the actual source of truth for task completion.
+
+Do NOT maintain separate independent completion states for Task List and Calendar.
+
+If the backend/database contains something like:
+
+```text
+completed
+isCompleted
+status
+completedAt
+```
+
+determine which field is the actual source of truth and make Calendar use the same source.
+
+### Date Handling
+
+Carefully verify date matching.
+
+A completed task must remain completed for the correct calendar date.
+
+Check for:
+
+* UTC vs local time
+* Timezone conversion
+* `Date` vs timestamp/string comparison
+* Different date formats
+* Time included in one value but not another
+* Start/end-of-day calculations
+* Off-by-one-day issues
+
+Do not fix this by simply changing the displayed date.
+
+### State Management
+
+After a user completes a task:
+
+1. Update the actual task completion state.
+2. Update/invalidate the relevant cache if caching is used.
+3. Refresh or synchronize Calendar data.
+4. Ensure navigation between Task List and Calendar does not restore stale data.
+5. Ensure reopening the Calendar shows the correct completion state.
+6. Ensure app refresh/reload still shows the correct status.
+
+If React Query, Redux, Context, Zustand, MobX, AsyncStorage, or another state/cache system is being used, inspect the existing implementation and update the correct cache/state instead of creating another state variable.
+
+### Do NOT
+
+* Do not create a fake Calendar-only `completed` flag.
+* Do not hardcode completed tasks.
+* Do not manually mark Calendar tasks completed only after clicking Calendar.
+* Do not duplicate the task completion logic.
+* Do not change the existing UI unnecessarily.
+* Do not change unrelated Daily Task functionality.
+* Do not remove existing API/database functionality.
+* Do not introduce a second source of truth.
+* Do not stop after making the UI look correct.
+
+### Regression Prevention
+
+After fixing the root cause, test this complete flow:
+
+#### Test 1
+
+1. Open Daily Tasks.
+2. Find an incomplete task.
+3. Mark it completed.
+4. Open Calendar.
+5. Verify the task is completed.
+
+#### Test 2
+
+1. Complete a task.
+2. Leave the Calendar screen.
+3. Open Calendar again.
+4. Verify it is still completed.
+
+#### Test 3
+
+1. Complete a task.
+2. Reload/restart the app.
+3. Open Calendar.
+4. Verify the task is still completed.
+
+#### Test 4
+
+1. Complete a task for today's date.
+2. Check another date.
+3. Return to today's date.
+4. Verify the completion state is correct.
+
+#### Test 5
+
+1. Complete multiple Daily Tasks.
+2. Open Calendar.
+3. Verify every completed task has the correct status.
+
+#### Test 6
+
+1. Mark a completed task as incomplete, if the app supports undo/uncomplete.
+2. Check Task List.
+3. Check Calendar.
+4. Both must show the same status.
+
+### Code Quality
+
+Use the existing project architecture and patterns.
+
+Prefer fixing the shared data/state/repository/API logic so both Task List and Calendar automatically receive the same updated task information.
+
+Before finishing:
+
+* Search the entire project for Daily Task completion logic.
+* Search for all Calendar task mapping/filtering logic.
+* Search for all uses of `completed`, `isCompleted`, `status`, and `completedAt`.
+* Check for duplicate implementations.
+* Remove or correct any stale/incorrect completion mapping causing the inconsistency.
+* Verify there is only one reliable source of truth.
+
+### Final Response
+
+After making the fix, explain:
+
+1. Root cause of the bug.
+2. Files/components changed.
+3. What was changed.
+4. Why the bug should not reopen.
+5. Tests performed and their results.
+
+Do not just say "fixed". I need the actual root cause and permanent fix.

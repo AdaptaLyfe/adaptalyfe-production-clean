@@ -7,7 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatTimeAgo } from "@/lib/utils";
+import { formatCategoryLabel } from "@/lib/display-labels";
+import { optimisticallyUpdateDailyTaskCompletion } from "@/lib/daily-task-completion";
 import type { DailyTask } from "@shared/schema";
+
+function getLocalCalendarDate(date = new Date()): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
 
 export default function DailyTasksModule() {
   const { toast } = useToast();
@@ -17,14 +27,46 @@ export default function DailyTasksModule() {
   });
 
   const toggleTaskMutation = useMutation({
-    mutationFn: async ({ taskId, isCompleted }: { taskId: number; isCompleted: boolean }) => {
-      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, { isCompleted });
+    mutationFn: async ({ taskId, isCompleted, date }: { taskId: number; isCompleted: boolean; date: string }) => {
+      return apiRequest("PATCH", `/api/daily-tasks/${taskId}/complete`, {
+        isCompleted,
+        date,
+      });
+    },
+    onMutate: async ({ taskId, isCompleted, date }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/daily-tasks"] });
+
+      const previousTasks = queryClient.getQueryData<DailyTask[]>(["/api/daily-tasks"]);
+      queryClient.setQueryData<DailyTask[]>(["/api/daily-tasks"], (currentTasks = []) =>
+        currentTasks.map(task =>
+          task.id === taskId
+            ? optimisticallyUpdateDailyTaskCompletion(
+                task as DailyTask & { completionDates?: string[] },
+                date,
+                isCompleted,
+              )
+            : task,
+        ),
+      );
+
+      return { previousTasks };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/daily-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Task updated",
         description: "Task completion status has been updated.",
+      });
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["/api/daily-tasks"], context.previousTasks);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
       });
     },
   });
@@ -33,6 +75,7 @@ export default function DailyTasksModule() {
     toggleTaskMutation.mutate({
       taskId: task.id,
       isCompleted: !task.isCompleted,
+      date: getLocalCalendarDate(),
     });
   };
 
@@ -102,7 +145,7 @@ export default function DailyTasksModule() {
                             {task.frequency || 'daily'}
                           </Badge>
                           <span className="text-xs px-2 py-0 bg-gray-100 text-gray-600 rounded">
-                            {task.category}
+                            {formatCategoryLabel(task.category)}
                           </span>
                           <span className="text-xs text-gray-500 flex items-center gap-1">
                             <Clock className="w-3 h-3" />

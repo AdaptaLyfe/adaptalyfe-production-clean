@@ -1,0 +1,135 @@
+Fix the Flutter Home screen **"Current Streak"** bug completely.
+
+### Current Bug
+
+On the Home screen, **Current Streak always shows "0 days"**, even when the user has completed daily tasks/activities on consecutive days.
+
+This bug has been fixed before but keeps coming back. **Do not apply a temporary UI fix. Find and fix the actual root cause so the bug does not reopen.**
+
+### Requirements
+
+1. **Trace the complete Current Streak flow**
+
+   * Find where the Home screen gets the Current Streak value.
+   * Trace the data from:
+     `Home UI → BLoC/State → Repository → Data Source/Database/API`
+   * Identify why the value is always `0`.
+
+2. **Use the existing project architecture**
+
+   * Do NOT create a separate streak system if one already exists.
+   * Follow the existing BLoC/repository/data-source architecture.
+   * Reuse the existing daily task/activity completion data.
+
+3. **Calculate the streak correctly**
+   Current Streak should represent the number of consecutive days where the user completed the required daily activity/task.
+
+   Example:
+
+   * Completed today → streak = 1
+   * Completed today + yesterday → streak = 2
+   * Completed today + previous 2 days → streak = 3
+   * Missing yesterday → current consecutive streak should break according to the app's existing streak rules.
+   * No completed activity → streak = 0.
+
+   **Important:** Check the existing business logic/data model before deciding exactly what counts as a completed day. Do not invent a different rule if the project already defines one.
+
+4. **Fix date handling**
+
+   * Compare dates by calendar day, not full timestamps.
+   * Handle timestamps/time zones correctly.
+   * Normalize dates before calculating the streak.
+   * Avoid bugs caused by `DateTime.now()` time differences.
+   * Make sure yesterday/today calculations work correctly around midnight.
+
+5. **Fix data loading**
+
+   * Make sure the Home screen requests the latest streak data when it loads.
+   * Make sure the streak is recalculated/refreshed after a task/activity is completed.
+   * If the user returns to the Home screen, the displayed value must reflect the latest data.
+   * Do not use a hardcoded `0`.
+   * Do not use stale cached state unless that is intentionally part of the existing architecture.
+
+6. **Fix BLoC/state handling**
+
+   * Check the relevant BLoC events, states, repository methods, and models.
+   * Make sure the calculated streak is actually passed through the state.
+   * Make sure the Home UI listens to the correct state.
+   * Check for incorrect initial/default state values that overwrite the real streak with `0`.
+   * Check for async race conditions where an older response can overwrite the correct value.
+
+7. **Check all existing code paths**
+   Search the entire Flutter project for:
+
+   * `Current Streak`
+   * `currentStreak`
+   * `streak`
+   * `0 days`
+   * daily task completion logic
+   * activity completion logic
+   * Home dashboard data
+
+   Find duplicate or conflicting streak implementations and make sure there is **one reliable source of truth**.
+
+8. **Handle edge cases**
+   Test:
+
+   * New user
+   * No completed tasks
+   * One completed day
+   * Multiple consecutive completed days
+   * Missing day
+   * Completing today's task
+   * Completing a task after reopening the app
+   * App restart
+   * Logout/login
+   * Different users
+   * Midnight/date boundary
+   * Offline/online behavior if the app supports offline data
+
+9. **Do not break existing features**
+
+   * Do not change the Home UI design.
+   * Do not change unrelated BLoCs.
+   * Do not remove existing functionality.
+   * Keep existing API/database structure unless a necessary root-cause fix requires a change.
+   * Keep the existing Flutter architecture and coding style.
+
+10. **Prevent regression**
+    Add unit/widget tests for the streak calculation and important edge cases.
+
+At minimum test:
+
+* `0` when there is no completion.
+* `1` for one valid completed day.
+* Correct value for consecutive days.
+* Streak breaks when a required day is missing.
+* Correct behavior after today's completion.
+* Correct date/time handling.
+
+### Important debugging rule
+
+**Do not stop after making the Home screen display a non-zero number.**
+
+First identify the root cause, then fix the data flow and state management so the value remains correct after:
+
+* app restart
+* navigation
+* refresh
+* task completion
+* logout/login
+* API/database refresh
+
+### Before finishing
+
+1. Explain the exact root cause.
+2. List the files you changed.
+3. Explain how the streak is now calculated.
+4. Explain where the source of truth is.
+5. Explain how you prevented the value from being overwritten by `0`.
+6. Add/verify tests for the streak logic.
+7. Run the relevant tests and fix any failures.
+8. Run `flutter analyze` and fix errors related to this change.
+9. Verify the Home screen displays the real Current Streak.
+
+**Do not tell me the bug is fixed until you have traced and verified the complete data flow from stored completion data → calculation → BLoC/state → Home UI.**

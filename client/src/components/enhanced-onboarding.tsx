@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FieldLabel } from '@/components/ui/field-label';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/lib/notifications';
 import { 
@@ -285,7 +286,7 @@ export default function EnhancedOnboarding() {
           
           <div className="space-y-3">
             <div>
-              <Label htmlFor="contact-name">Contact Name</Label>
+              <FieldLabel htmlFor="contact-name" required>Contact Name</FieldLabel>
               <Input
                 id="contact-name"
                 value={preferences.emergencyContact.name}
@@ -300,7 +301,7 @@ export default function EnhancedOnboarding() {
             </div>
             
             <div>
-              <Label htmlFor="contact-phone">Phone Number</Label>
+              <FieldLabel htmlFor="contact-phone" required>Phone Number</FieldLabel>
               <Input
                 id="contact-phone"
                 type="tel"
@@ -316,7 +317,7 @@ export default function EnhancedOnboarding() {
             </div>
             
             <div>
-              <Label htmlFor="contact-relationship">Relationship</Label>
+              <FieldLabel htmlFor="contact-relationship" required>Relationship</FieldLabel>
               <Input
                 id="contact-relationship"
                 value={preferences.emergencyContact.relationship}

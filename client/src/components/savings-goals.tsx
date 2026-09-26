@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { EditButton } from '@/components/ui/edit-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -101,7 +102,7 @@ export default function SavingsGoals() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Goal Name</FormLabel>
+                      <FormLabel required>Goal Name</FormLabel>
                       <FormControl>
                         <Input placeholder="New Car, Vacation, etc." {...field} />
                       </FormControl>
@@ -115,7 +116,7 @@ export default function SavingsGoals() {
                   name="targetAmount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Target Amount</FormLabel>
+                      <FormLabel required>Target Amount</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -135,7 +136,7 @@ export default function SavingsGoals() {
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -161,7 +162,7 @@ export default function SavingsGoals() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -294,9 +295,7 @@ export default function SavingsGoals() {
                       <Button variant="outline" size="sm" className="flex-1">
                         Add Money
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
+                      <EditButton />
                     </div>
                   )}
                 </div>

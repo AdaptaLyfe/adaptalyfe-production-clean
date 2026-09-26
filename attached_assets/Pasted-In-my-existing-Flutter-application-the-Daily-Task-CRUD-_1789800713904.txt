@@ -1,0 +1,96 @@
+In my existing Flutter application, the **Daily Task CRUD operations are not working properly**. Please investigate and fix the issue without breaking any existing functionality.
+
+### Check all Daily Task CRUD operations
+
+1. **Create / Add Task**
+
+   * Check the Add Task form.
+   * Verify validation.
+   * Verify the task is correctly saved to the backend/database.
+   * Verify the newly created task immediately appears in the Daily Task list.
+
+2. **Read / Load Tasks**
+
+   * Check how Daily Tasks are fetched.
+   * Verify the correct user/account data is loaded.
+   * Check API/Firebase/database calls.
+   * Verify loading, empty, and error states.
+   * Make sure tasks appear correctly after opening or refreshing the screen.
+
+3. **Update / Edit Task**
+
+   * Check the Edit Task flow.
+   * Verify the correct task ID is passed.
+   * Verify edited data is correctly saved.
+   * Verify the updated task immediately appears in the list without requiring an app restart.
+
+4. **Delete Task**
+
+   * Check the Delete operation.
+   * Verify the correct task ID is used.
+   * Verify the task is actually deleted from the backend/database.
+   * Remove the deleted task from the UI immediately.
+
+5. **Task Status**
+
+   * Check if completing/uncompleting a task works correctly.
+   * Verify the status is persisted correctly.
+   * Make sure the UI reflects the latest status.
+
+### Check the complete Flutter flow
+
+Trace the complete flow:
+
+**UI → Event/Action → BLoC/State Management → Repository → Data Source/API/Firebase → Response → State Update → UI**
+
+Check for:
+
+* Incorrect task IDs
+* Incorrect user IDs
+* Wrong API/Firebase collection/document paths
+* Missing BLoC events
+* Incorrect BLoC states
+* Repository methods not being called
+* Async/await issues
+* State not being emitted after CRUD operations
+* UI using stale task data
+* Incorrect error handling
+* Navigation returning stale data
+* Missing `setState`/state update where applicable
+* Race conditions or duplicate API calls
+
+### Important requirements
+
+* First inspect the existing Daily Task implementation and identify the **root cause**.
+* Do **not** rewrite the entire Daily Task module unnecessarily.
+* Preserve the existing UI/design and navigation.
+* Preserve the existing API/backend/database structure unless a bug is found in the implementation.
+* Follow the existing architecture and coding style.
+* If BLoC is already used, continue using BLoC.
+* Do not create duplicate models, repositories, services, or BLoCs.
+* Check all related files before making changes.
+* Fix the actual root cause rather than adding temporary workarounds.
+* Add useful debug logs only where needed to trace the CRUD flow.
+* Make sure there are no compile errors or analyzer errors after the fix.
+
+### Final verification
+
+Test these scenarios:
+
+* Add a new task → task appears in list
+* Close/reopen screen → task is still present
+* Edit task → updated information appears
+* Complete task → status updates
+* Uncomplete task → status updates back
+* Delete task → task disappears
+* Refresh/reload → correct data remains
+* Logout/login → only the correct user's tasks are shown
+* Handle API/database failure → user-friendly error is displayed
+
+After fixing, explain:
+
+1. What was causing the CRUD operations to fail.
+2. Which files were changed.
+3. What was fixed in each file.
+4. How each CRUD operation now works.
+5. Any additional issue you found that could cause future Daily Task problems.

@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
@@ -122,6 +123,18 @@ export default function Financial() {
     },
   });
 
+  const openAddBillDialog = () => {
+    setEditingBill(null);
+    billForm.reset({
+      name: "",
+      amount: 0,
+      dueDate: 1,
+      category: "",
+      isRecurring: true,
+    });
+    setShowBillDialog(true);
+  };
+
   const budgetForm = useForm<{category: string; amount: number; type: "income" | "expense"; description: string}>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
@@ -131,6 +144,16 @@ export default function Financial() {
       description: "",
     },
   });
+
+  const openBudgetDialog = (type: "income" | "expense") => {
+    budgetForm.reset({
+      type,
+      category: "",
+      amount: 0,
+      description: "",
+    });
+    setShowBudgetDialog(true);
+  };
 
   const savingsForm = useForm({
     resolver: zodResolver(savingsGoalSchema),
@@ -481,12 +504,15 @@ export default function Financial() {
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
                         <DialogTrigger asChild>
-                          <Button className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap">
+                          <Button
+                            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap"
+                            onClick={() => openBudgetDialog("expense")}
+                          >
                             <Plus size={16} className="mr-1 sm:mr-2" />
                             Add Expense
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent overlayClassName="z-[110]" className="z-[120]">
                           <DialogHeader>
                             <DialogTitle>Add Budget Entry</DialogTitle>
                           </DialogHeader>
@@ -497,7 +523,7 @@ export default function Financial() {
                                 name="type"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Entry Type</FormLabel>
+                                    <FormLabel required>Entry Type</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
@@ -518,7 +544,7 @@ export default function Financial() {
                                 name="category"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Category</FormLabel>
+                                    <FormLabel required>Category</FormLabel>
                                     <FormControl>
                                       <Input placeholder="e.g., Groceries, Gas, Shopping" {...field} />
                                     </FormControl>
@@ -531,7 +557,7 @@ export default function Financial() {
                                 name="amount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Amount</FormLabel>
+                                    <FormLabel required>Amount</FormLabel>
                                     <FormControl>
                                       <div className="flex items-center gap-2">
                                         <Input
@@ -585,10 +611,7 @@ export default function Financial() {
                       </Dialog>
                       <Button 
                         className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base whitespace-nowrap"
-                        onClick={() => {
-                          budgetForm.reset({ type: 'income' as const, category: '', amount: 0, description: '' });
-                          setShowBudgetDialog(true);
-                        }}
+                        onClick={() => openBudgetDialog("income")}
                       >
                         <Plus size={16} className="mr-1 sm:mr-2" />
                         Add Income
@@ -730,12 +753,15 @@ export default function Financial() {
                     }
                   }}>
                     <DialogTrigger asChild>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={openAddBillDialog}
+                      >
                         <Plus size={16} className="mr-2" />
                         Add Bill
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent overlayClassName="z-[110]" className="z-[120]">
                       <DialogHeader>
                         <DialogTitle>
                           {editingBill ? "Edit Bill" : "Add New Bill"}
@@ -748,7 +774,7 @@ export default function Financial() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bill Name</FormLabel>
+                                <FormLabel required>Bill Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Electric Bill, Rent" {...field} />
                                 </FormControl>
@@ -761,7 +787,7 @@ export default function Financial() {
                             name="amount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Amount</FormLabel>
+                                <FormLabel required>Amount</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -780,7 +806,7 @@ export default function Financial() {
                             name="dueDate"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Due Date (Day of Month)</FormLabel>
+                                <FormLabel required>Due Date (Day of Month)</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -800,7 +826,7 @@ export default function Financial() {
                             name="category"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category</FormLabel>
+                                <FormLabel required>Category</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Utilities, Housing" {...field} />
                                 </FormControl>
@@ -827,7 +853,7 @@ export default function Financial() {
                       <p className="text-sm text-gray-500 mb-4">Add your recurring bills to track due dates</p>
                       <Button 
                         className="bg-sunny-orange hover:bg-sunny-orange"
-                        onClick={() => setShowBillDialog(true)}
+                        onClick={openAddBillDialog}
                       >
                         <Plus size={16} className="mr-2" />
                         Add Your First Bill
@@ -866,9 +892,7 @@ export default function Financial() {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
+                                <EditButton
                                   onClick={() => {
                                     setEditingBill(bill);
                                     billForm.reset({
@@ -880,9 +904,8 @@ export default function Financial() {
                                     });
                                     setShowBillDialog(true);
                                   }}
-                                >
-                                  Edit
-                                </Button>
+                                  aria-label={`Edit ${bill.name}`}
+                                />
                                 <Button 
                                   size="sm" 
                                   className="bg-bright-blue hover:bg-blue-600"
@@ -923,7 +946,10 @@ export default function Financial() {
                         Add Goal
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>
                           {editingSavingsGoal ? "Edit Savings Goal" : "Create Savings Goal"}
@@ -936,7 +962,7 @@ export default function Financial() {
                             name="title"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Goal Title</FormLabel>
+                                <FormLabel required>Goal Title</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Emergency Fund, Vacation" {...field} />
                                 </FormControl>
@@ -963,7 +989,7 @@ export default function Financial() {
                               name="targetAmount"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Target Amount</FormLabel>
+                                  <FormLabel required>Target Amount</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -982,7 +1008,7 @@ export default function Financial() {
                               name="currentAmount"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Current Amount</FormLabel>
+                                  <FormLabel required>Current Amount</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -1002,7 +1028,7 @@ export default function Financial() {
                             name="targetDate"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Target Date</FormLabel>
+                                <FormLabel required>Target Date</FormLabel>
                                 <FormControl>
                                   <Input type="date" {...field} />
                                 </FormControl>
@@ -1015,7 +1041,7 @@ export default function Financial() {
                             name="priority"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Priority</FormLabel>
+                                <FormLabel required>Priority</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -1055,9 +1081,7 @@ export default function Financial() {
                               <span className="text-sm text-gray-600">
                                 {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                               </span>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
+                              <EditButton
                                 onClick={() => {
                                   setEditingSavingsGoal(goal);
                                   savingsForm.reset({
@@ -1071,9 +1095,8 @@ export default function Financial() {
                                   });
                                   setShowSavingsDialog(true);
                                 }}
-                              >
-                                Edit
-                              </Button>
+                                aria-label={`Edit ${goal.title}`}
+                              />
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
@@ -1121,7 +1144,10 @@ export default function Financial() {
                         Add Category
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>
                           {editingCategory ? "Edit Category" : "Add New Category"}
@@ -1134,7 +1160,7 @@ export default function Financial() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category Name</FormLabel>
+                                <FormLabel required>Category Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Food & Dining, Transportation" {...field} />
                                 </FormControl>
@@ -1147,7 +1173,7 @@ export default function Financial() {
                             name="type"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Category Type</FormLabel>
+                                <FormLabel required>Category Type</FormLabel>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
@@ -1168,7 +1194,7 @@ export default function Financial() {
                             name="budgetedAmount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Budgeted Amount</FormLabel>
+                                <FormLabel required>Budgeted Amount</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="number" 
@@ -1187,7 +1213,7 @@ export default function Financial() {
                             name="color"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Color</FormLabel>
+                                <FormLabel optional>Color</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="color" 
@@ -1229,9 +1255,7 @@ export default function Financial() {
                             <span className="font-semibold text-gray-900">
                               {formatCurrency(category.budgetedAmount)}
                             </span>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
+                            <EditButton
                               onClick={() => {
                                 setEditingCategory(category);
                                 categoryForm.reset({
@@ -1242,9 +1266,8 @@ export default function Financial() {
                                 });
                                 setShowCategoryDialog(true);
                               }}
-                            >
-                              Edit
-                            </Button>
+                              aria-label={`Edit ${category.name}`}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1275,7 +1298,10 @@ export default function Financial() {
                         Add Bank Account
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-md">
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+                    >
                       <DialogHeader>
                         <DialogTitle>{editingBank ? "Edit Bank Account" : "Add Bank Account"}</DialogTitle>
                         <DialogDescription>
@@ -1289,7 +1315,7 @@ export default function Financial() {
                             name="bankName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bank Name</FormLabel>
+                                <FormLabel required>Bank Name</FormLabel>
                                 <FormControl>
                                   <Input placeholder="e.g., Chase, Bank of America" {...field} data-testid="input-bank-name" />
                                 </FormControl>
@@ -1302,7 +1328,7 @@ export default function Financial() {
                             name="accountType"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Account Type</FormLabel>
+                                <FormLabel required>Account Type</FormLabel>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl>
                                     <SelectTrigger data-testid="select-account-type">
@@ -1340,7 +1366,7 @@ export default function Financial() {
                             name="bankWebsite"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Bank Website URL</FormLabel>
+                                <FormLabel optional>Bank Website URL</FormLabel>
                                 <FormControl>
                                   <Input placeholder="https://www.yourbank.com/login" {...field} data-testid="input-bank-website" />
                                 </FormControl>
@@ -1409,9 +1435,7 @@ export default function Financial() {
                                   Visit Bank
                                 </Button>
                               )}
-                              <Button
-                                variant="outline"
-                                size="sm"
+                              <EditButton
                                 onClick={() => {
                                   setEditingBank(account);
                                   bankForm.reset({
@@ -1423,10 +1447,9 @@ export default function Financial() {
                                   });
                                   setShowBankDialog(true);
                                 }}
+                                aria-label={`Edit ${account.bankName}`}
                                 data-testid={`button-edit-bank-${account.id}`}
-                              >
-                                Edit
-                              </Button>
+                              />
                               <Button
                                 variant="outline"
                                 size="sm"

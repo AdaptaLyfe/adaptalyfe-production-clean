@@ -1,0 +1,253 @@
+Fix the Flutter app bug in:
+
+**Achievements / Rewards → Rewards**
+
+### Bug
+
+A user can redeem the **same reward multiple times**, even when **"Maximum Redemptions (Optional)"** is configured with a limit.
+
+Example:
+
+* Maximum Redemptions = 2
+* User redeems the reward 2 times → allowed
+* User tries to redeem it a 3rd time → **must be blocked**
+* Currently the 3rd, 4th, 5th, etc. redemption can still happen.
+
+### IMPORTANT
+
+Do NOT apply only a UI-side fix.
+
+Find and fix the **root cause in the complete redemption flow**, including:
+
+* Flutter UI
+* BLoC/Cubit
+* Repository
+* Firebase/Firestore/API data layer
+* Redemption count calculation
+* Reward validation
+* State refresh/update after redemption
+
+The redemption limit must be enforced reliably even if:
+
+* The user taps the Redeem button multiple times quickly.
+* The user leaves and reopens the screen.
+* The app is restarted.
+* The reward list is refreshed.
+* The same reward is opened again.
+* Multiple redemption requests are triggered.
+* Cached/stale reward data exists.
+* The user tries to bypass the UI validation.
+
+### Required behavior
+
+When **Maximum Redemptions** is empty/null:
+
+* Keep the existing unlimited redemption behavior.
+
+When **Maximum Redemptions = N**:
+
+* Allow redemption only while the user's valid redemption count is less than N.
+* Once the limit is reached, block all further redemptions.
+
+Example:
+
+```text
+Maximum Redemptions = 3
+
+Redemption #1 → Allowed
+Redemption #2 → Allowed
+Redemption #3 → Allowed
+Redemption #4 → Blocked
+```
+
+### Error handling
+
+When the limit has already been reached, show a clear user-friendly message such as:
+
+**Title:** Redemption Limit Reached
+
+**Message:** You have reached the maximum redemption limit for this reward.
+
+Do not create duplicate error messages or duplicate dialogs/snackbars.
+
+### Important data logic
+
+First inspect the existing database/model structure and determine exactly how reward redemptions are stored.
+
+Calculate the redemption count from the **actual persisted redemption records**, not only from the currently displayed UI list.
+
+Make sure the count is:
+
+* Correct for the current user.
+* Based on successful/completed redemptions only.
+* Not increased when a redemption attempt fails.
+* Not incorrectly reset after refresh/restart.
+* Not duplicated because of repeated state emissions.
+
+If the existing data model already stores redemption records/counts, reuse the existing architecture instead of creating unnecessary new collections or fields.
+
+### Prevent duplicate/rapid redemption
+
+Protect the redemption operation against:
+
+* Double taps.
+* Multiple simultaneous redemption requests.
+* Repeated BLoC events.
+* Race conditions.
+
+The Redeem button should become disabled/loading while the redemption request is being processed.
+
+However, **button disabling must NOT be the only protection**.
+
+The final validation must happen immediately before the redemption is persisted.
+
+### Atomic / server-side protection
+
+If the app uses Firestore, implement the limit check and redemption write using an appropriate **Firestore transaction or other atomic/server-side-safe approach** so two simultaneous redemption requests cannot both pass the limit check.
+
+For example, if:
+
+```text
+Maximum Redemptions = 5
+Current count = 5
+```
+
+two requests must NOT both successfully create additional redemption records.
+
+If the current backend architecture uses another API/database, implement the equivalent server-side/atomic protection appropriate for that architecture.
+
+### BLoC requirements
+
+Follow the project's existing BLoC/Cubit architecture.
+
+Do not introduce a completely different state-management pattern.
+
+Ensure:
+
+* Redeem event cannot accidentally execute multiple times.
+* Loading state is handled correctly.
+* Success state updates the redemption count.
+* Limit-reached state is handled explicitly.
+* Failure state does not increment the count.
+* Reward details/list refreshes correctly after successful redemption.
+
+### UI requirements
+
+Update the UI so that when the limit is reached:
+
+* The Redeem button is disabled or clearly unavailable.
+* The current redemption count and maximum limit are displayed if the existing design supports this.
+* The user cannot continue redeeming the reward.
+* UI state remains correct after navigating away and returning.
+
+Do not change unrelated UI or functionality.
+
+### Persistence requirements
+
+After a successful redemption:
+
+1. Persist the redemption.
+2. Persist/update the count if the current architecture uses a stored count.
+3. Refresh/update BLoC state.
+4. Update the Reward Details screen.
+5. Update the Rewards list if necessary.
+
+After app restart, the same limit must still be enforced from persisted data.
+
+### Edge cases to test
+
+Test all of these:
+
+1. Maximum Redemptions = 1
+
+   * First redemption → Allowed
+   * Second redemption → Blocked
+
+2. Maximum Redemptions = 3
+
+   * First 3 → Allowed
+   * 4th → Blocked
+
+3. Maximum Redemptions is empty
+
+   * Unlimited behavior remains unchanged.
+
+4. Maximum Redemptions = 0
+
+   * Treat according to the existing product/business rule.
+   * Do not silently allow unlimited redemptions unless that is already the defined behavior.
+
+5. User rapidly taps Redeem multiple times.
+
+6. User opens the same reward on two screens.
+
+7. App is restarted after reaching the limit.
+
+8. Rewards are refreshed after reaching the limit.
+
+9. Redemption request fails.
+
+   * Count must NOT increase.
+
+10. Two redemption requests happen at almost the same time.
+
+* The database must enforce the maximum limit.
+
+11. Existing users with previous redemption records.
+
+* Their existing redemption history must be counted correctly.
+
+### DO NOT
+
+* Do not simply hide the Redeem button.
+* Do not rely only on a local variable.
+* Do not rely only on BLoC state.
+* Do not reset the redemption count when the screen opens.
+* Do not create duplicate redemption records.
+* Do not modify unrelated Rewards/Achievements functionality.
+* Do not rewrite the entire Rewards module unnecessarily.
+* Do not use hardcoded limits.
+* Do not assume the currently loaded list contains all redemption records.
+
+### Before making changes
+
+Inspect the existing code and identify:
+
+1. Reward model.
+2. Maximum Redemptions field.
+3. Redemption model/collection.
+4. Current redemption creation flow.
+5. BLoC/Cubit event and state.
+6. Repository method.
+7. Firebase/API write operation.
+8. How the current redemption count is calculated.
+9. Why the limit is currently being bypassed.
+
+Then implement the smallest complete fix that solves the root cause.
+
+### Verification
+
+After implementing the fix:
+
+* Run `flutter analyze`.
+* Run the relevant tests.
+* Add/update automated tests for the redemption-limit logic.
+* Test the actual Firebase/API persistence flow.
+* Verify rapid repeated redemption attempts.
+* Verify the limit after app restart.
+* Verify existing redemption history.
+* Verify no duplicate redemption records are created.
+
+Do not consider the task complete just because the UI appears correct.
+
+The bug should be considered fixed only when the **persisted redemption layer also prevents redemption beyond the configured maximum**.
+
+At the end, provide:
+
+1. Root cause found.
+2. Files changed.
+3. Exact fix implemented.
+4. How redemption count is calculated.
+5. How concurrent/duplicate redemption is prevented.
+6. Tests performed and their results.
+7. Any remaining limitation or assumption.

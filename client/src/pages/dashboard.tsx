@@ -10,6 +10,7 @@ import QuickActions from "@/components/quick-actions/QuickActions";
 import DailyTasksModule from "@/components/daily-tasks-module";
 import DailySummary from "@/components/daily-summary";
 import DailyGuideCard from "@/components/daily-guide-card";
+import TodayFlowCard from "@/components/ai-ready/today-flow";
 
 const FinancialModule = lazy(() => import("@/components/financial-module"));
 const MoodModule = lazy(() => import("@/components/mood-module"));
@@ -18,7 +19,6 @@ const CaregiverModule = lazy(() => import("@/components/caregiver-module"));
 const AppointmentsModule = lazy(() => import("@/components/appointments-module"));
 const DashboardCustomizer = lazy(() => import("@/components/dashboard-customizer"));
 const MoodRequirementModal = lazy(() => import("@/components/mood-requirement-modal"));
-const AIChatbot = lazy(() => import("@/components/ai-chatbot"));
 const HealthWellnessModule = lazy(() => import("@/components/health-wellness-module"));
 const AccessibilitySettingsModule = lazy(() => import("@/components/accessibility-settings-module"));
 const LifeSkillsModule = lazy(() => import("@/components/life-skills-module"));
@@ -145,6 +145,11 @@ export default function Dashboard() {
 
         <QuickActions />
 
+        {/* AI-ready Today story — uses live task/event data and isolated demo states only when needed */}
+        <div className="mt-6">
+          <TodayFlowCard />
+        </div>
+
         {/* Adaptalyfe Guide — loads asynchronously, does not block the dashboard */}
         <div className="mt-6">
           <DailyGuideCard />
@@ -270,11 +275,6 @@ export default function Dashboard() {
           </Droppable>
         </DragDropContext>
       </div>
-
-      {/* AI Chatbot */}
-      <Suspense fallback={null}>
-        <AIChatbot />
-      </Suspense>
 
       {/* Modals disabled - customizer removed */}
 

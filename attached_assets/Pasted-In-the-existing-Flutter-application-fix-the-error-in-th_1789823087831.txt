@@ -1,0 +1,61 @@
+In the existing Flutter application, fix the error in the **Daily Tasks → Add New Task** flow.
+
+### Current issue
+
+When the user:
+
+1. Opens **Daily Tasks**
+2. Clicks **Add New Task**
+3. Enters the required task details
+4. Clicks **Create Task**
+
+The app shows this error:
+
+> We could not load your daily tasks
+> Invalid task data
+> Try Again
+
+### Required fix
+
+* Investigate the complete **Create Task** flow.
+* Check the Daily Task model, request/payload data, repository, API/service, BLoC/Cubit, and response parsing.
+* Find why the newly created task is being treated as **invalid task data**.
+* Make sure the task data sent during **Create Task** matches the expected backend/API/Firebase data structure.
+* Make sure required fields have the correct names, types, null handling, and date/time format.
+* Fix the issue without breaking the existing:
+
+  * Daily Task list
+  * Add Task UI
+  * Edit Task
+  * Update Task
+  * Delete Task
+  * Task completion
+  * Existing authentication/user handling
+* Do not rewrite the entire Daily Tasks feature.
+* Make the **smallest safe code changes** necessary to fix the root cause.
+
+### Error handling
+
+After the fix:
+
+* Successfully created tasks should appear in the Daily Tasks list immediately or after the existing refresh flow.
+* Do not show **"Invalid task data"** for valid task creation.
+* Keep the existing error handling for genuine API/backend failures.
+* If task creation fails because of invalid user input, show a clear user-friendly validation message instead.
+
+### Important
+
+Before changing code, trace the complete flow:
+
+`Create Task Button → UI → BLoC/Cubit → Repository → API/Firebase → Task Model → Response → Daily Task List`
+
+Compare the data structure used for **creating a task** with the structure expected when **loading/parsing daily tasks**.
+
+Do not change unrelated features or UI.
+
+After fixing:
+
+1. Explain the root cause.
+2. List the files changed.
+3. Explain what was changed in each file.
+4. Confirm that Create, Load, Edit, Update, and Delete Daily Tasks still work.

@@ -1,0 +1,343 @@
+In the existing **Flutter project**, fix the **Sleep Routine → Log Sleep** functionality.
+
+### Problem
+
+On the **Log Sleep** screen, the user currently has fields such as:
+
+* Sleep Date
+* Bed Time
+* Time Fell Asleep
+* Wake Time
+
+There is currently **no Wake Date** field.
+
+Because of this, the app incorrectly assumes that the Wake Time belongs to the same date as the Sleep Date.
+
+Example:
+
+* Sleep Date: September 22
+* Bed Time: 10:00 PM
+* Time Fell Asleep: 10:30 PM
+* Wake Time: 8:00 AM
+
+The app currently compares `8:00 AM` with `10:30 PM` on the same date and shows an error such as:
+
+> Wake time cannot be earlier than sleep time.
+
+This is incorrect because **8:00 AM means the next morning, September 23**.
+
+---
+
+## Required Fix
+
+Add a new field:
+
+**Wake Date**
+
+Place it beside or directly before/after the **Wake Time** field so the relationship is visually clear.
+
+The Log Sleep form should now contain:
+
+* Sleep Date
+* Bed Time
+* Time Fell Asleep
+* Wake Date
+* Wake Time
+
+Use the existing Flutter date/time picker design and styling wherever possible. Do not unnecessarily redesign the screen.
+
+---
+
+## Correct Date/Time Logic
+
+The application must compare **complete DateTime values**, not only the time portion.
+
+For example:
+
+### Valid Case 1 — Sleep at night, wake next morning
+
+Sleep Date:
+`September 22`
+
+Time Fell Asleep:
+`10:30 PM`
+
+Wake Date:
+`September 23`
+
+Wake Time:
+`8:00 AM`
+
+Result:
+
+**Allowed**
+
+Because:
+
+`September 23, 8:00 AM > September 22, 10:30 PM`
+
+---
+
+### Valid Case 2 — Same-day sleep and wake
+
+Sleep Date:
+`September 22`
+
+Time Fell Asleep:
+`2:00 PM`
+
+Wake Date:
+`September 22`
+
+Wake Time:
+`5:00 PM`
+
+Result:
+
+**Allowed**
+
+Because the wake DateTime is after the sleep DateTime.
+
+---
+
+### Invalid Case — Wake before sleep on the same date
+
+Sleep Date:
+`September 22`
+
+Time Fell Asleep:
+`10:00 PM`
+
+Wake Date:
+`September 22`
+
+Wake Time:
+`9:00 PM`
+
+Result:
+
+**Not allowed**
+
+Show the existing validation error/message indicating that wake time/date must be after sleep time/date.
+
+---
+
+### Invalid Case — Wake Date before Sleep Date
+
+Sleep Date:
+`September 22`
+
+Time Fell Asleep:
+`10:00 PM`
+
+Wake Date:
+`September 21`
+
+Wake Time:
+`8:00 AM`
+
+Result:
+
+**Not allowed**
+
+The Wake DateTime cannot be before the Sleep/Fell Asleep DateTime.
+
+---
+
+## Important Validation Rule
+
+The primary validation should be:
+
+```text
+Wake DateTime > Fell Asleep DateTime
+```
+
+Do NOT validate using only:
+
+```text
+wakeTime > sleepTime
+```
+
+because that causes the overnight sleep bug.
+
+The comparison must include both:
+
+```text
+Date + Time
+```
+
+for both sleep and wake.
+
+---
+
+## Date Picker Rules
+
+For **Wake Date**:
+
+* Allow the user to select the appropriate wake date.
+* The wake date should normally be the same date or a later date than the sleep date.
+* Do not allow a wake date earlier than the sleep date.
+* If appropriate for the existing product requirements, allow future dates only according to the existing sleep-log rules. Do not introduce a new restriction unless the existing app already has one.
+* Preserve the existing date format and localization behavior.
+
+---
+
+## Existing Data / Edit Sleep
+
+This fix must also work when:
+
+* Creating a new sleep log
+* Editing an existing sleep log
+* Viewing saved sleep data
+* Updating an existing sleep record
+* Loading sleep data from the backend
+* Offline/local storage, if the project uses it
+
+If the existing backend/data model currently stores only `wakeTime`, update the implementation carefully so the wake date is persisted correctly.
+
+Prefer storing complete date/time information rather than relying on a time-only value.
+
+Before changing the backend model/API, inspect the existing implementation and follow the project's current architecture and API conventions.
+
+Do not break existing sleep records.
+
+---
+
+## Existing Architecture
+
+First inspect the existing Flutter implementation for:
+
+* Sleep Routine screen
+* Log Sleep screen
+* Sleep model/entity
+* Sleep BLoC/Cubit/controller
+* Repository
+* API/data source
+* Local database/storage, if any
+* Create sleep API
+* Update sleep API
+* Sleep validation
+* Date/time picker components
+
+Follow the existing project architecture and coding style.
+
+Do not create a second parallel implementation.
+
+---
+
+## UI Requirements
+
+Add:
+
+**Wake Date**
+
+next to/near:
+
+**Wake Time**
+
+Example:
+
+```text
+Wake Date       Wake Time
+[09/23/2026]    [08:00 AM]
+```
+
+Keep the UI responsive for:
+
+* Android
+* iOS
+* Small screens
+* Large screens
+
+Do not change unrelated Sleep Routine UI.
+
+---
+
+## Error Handling
+
+The validation must be user-friendly.
+
+If:
+
+`Wake DateTime <= Fell Asleep DateTime`
+
+prevent saving and display the existing appropriate validation style/message.
+
+Do not show contradictory or duplicate validation messages.
+
+---
+
+## Important Edge Cases
+
+Test all of these cases:
+
+1. 10:00 PM → 8:00 AM next day → **Allowed**
+2. 10:00 PM → 9:00 AM next day → **Allowed**
+3. 10:00 PM → 9:00 PM same day → **Not allowed**
+4. 10:00 PM → 11:00 PM same day → **Allowed**
+5. 11:30 PM → 12:30 AM next day → **Allowed**
+6. Sleep Date Sep 22 → Wake Date Sep 21 → **Not allowed**
+7. Same sleep/wake DateTime → **Not allowed**
+8. Different dates with earlier clock time → correctly evaluate using full DateTime
+9. Different dates with later clock time → correctly evaluate using full DateTime
+10. Edit an existing sleep record → Wake Date loads correctly
+11. Save → reopen the record → Wake Date remains correct
+12. App restart → saved Wake Date remains correct
+
+---
+
+## Timezone / Date Handling
+
+Use the project's existing timezone/date handling approach.
+
+Do not convert dates/times unnecessarily between UTC and local time.
+
+Sleep logging is based on the user's local sleep/wake date and time.
+
+Be careful not to introduce a one-day shift when saving or loading dates.
+
+---
+
+## Regression Prevention
+
+Before finishing:
+
+1. Find every place where sleep start/fell-asleep and wake time are compared.
+2. Replace incorrect time-only comparisons with full DateTime comparisons where required.
+3. Check both create and edit flows.
+4. Check frontend validation.
+5. Check backend/API payload mapping.
+6. Check model serialization/deserialization.
+7. Check local storage/database mapping if present.
+8. Check existing sleep history/details screens.
+9. Make sure overnight sleep is supported.
+10. Make sure same-day invalid combinations are still rejected.
+11. Make sure no duplicate validation message is introduced.
+12. Do not modify unrelated features.
+
+### Definition of Done
+
+The bug is considered fixed only when:
+
+* **Wake Date is visible on Log Sleep.**
+* User can select Wake Date.
+* Wake Date + Wake Time are treated as one complete DateTime.
+* Overnight sleep such as **10:00 PM → 8:00 AM next day is allowed**.
+* Same-day invalid sleep such as **10:00 PM → 9:00 PM is rejected**.
+* Wake Date before Sleep Date is rejected.
+* Create and Edit flows both work.
+* Saved data correctly preserves Wake Date.
+* Existing sleep records are not broken.
+* No duplicate/incorrect validation messages appear.
+* No unrelated functionality or UI is changed.
+
+After implementation, run the relevant Flutter tests/analyzer/build checks and fix any errors caused by this change.
+
+At the end, provide a short summary of:
+
+* Files changed
+* What was changed
+* Validation logic used
+* API/model changes, if any
+* Tests performed
+* Any migration/backward-compatibility handling for existing sleep records

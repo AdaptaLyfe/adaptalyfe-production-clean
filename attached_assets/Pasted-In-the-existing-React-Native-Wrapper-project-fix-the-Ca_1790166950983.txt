@@ -1,0 +1,228 @@
+In the existing React Native + Wrapper project, fix the Calendar event scheduling bugs below. Do not rebuild the Calendar from scratch. First inspect the existing Calendar implementation, event creation flow, date/time handling, wrapper/native calendar integration, and event display logic.
+
+## BUG 1 — "All Day Event" is not actually all-day
+
+Issue:
+When the user selects the **"All day Event"** option while creating a Calendar event, the event is still being created/displayed as a timed event.
+
+Required behavior:
+
+* If **All day Event = ON**, the event must be stored and displayed as an actual all-day event.
+* It must not have a normal start/end time.
+* The Calendar UI should show it in the all-day section.
+* If **All day Event = OFF**, keep the existing timed-event behavior unchanged.
+* Make sure the all-day flag is correctly passed through every layer:
+
+  * Event creation form
+  * Local state
+  * Validation
+  * API/backend payload
+  * Database/storage if applicable
+  * Wrapper/native calendar integration
+  * Calendar event display
+  * Event edit/update flow
+
+Do not simply hide the time in the UI. The underlying event must actually be marked as an all-day event.
+
+## BUG 2 — Event appears on the previous day
+
+Issue:
+When the user selects:
+
+September 1, 2026
+
+the created event appears on:
+
+August 31, 2026
+
+This means the selected calendar date is being shifted to the previous day somewhere in the date/time conversion flow.
+
+Example:
+User selects:
+09/01/2026
+
+Expected:
+09/01/2026
+
+Actual:
+08/31/2026
+
+## ROOT-CAUSE FIX REQUIRED
+
+Investigate the complete date flow and identify where the date is being shifted.
+
+Check specifically for:
+
+* JavaScript Date timezone conversion
+* UTC conversion
+* `toISOString()`
+* `new Date(...)`
+* `Date.parse()`
+* Unix timestamps
+* `setUTCDate()` / `getUTCDate()`
+* `setDate()` / `getDate()`
+* Local timezone vs UTC conversion
+* Date-only values being converted into UTC
+* Wrapper/native calendar timezone handling
+* Backend/API serialization and deserialization
+* Calendar library date conversion
+* Event edit/update conversion
+
+Pay special attention to code such as:
+
+`new Date("2026-09-01")`
+
+and:
+
+`date.toISOString()`
+
+because date-only values can be interpreted/converting differently depending on timezone.
+
+## IMPORTANT DATE RULE
+
+For an all-day event, the selected calendar date must remain the same calendar date throughout the application.
+
+For example:
+
+User selects:
+September 1, 2026
+
+The event must remain:
+September 1, 2026
+
+It must NEVER become:
+August 31, 2026
+or
+September 2, 2026
+
+Do not fix this by adding or subtracting arbitrary hours such as:
+
++5:30
+-5:30
++24 hours
+-24 hours
+
+That would only hide the underlying timezone problem.
+
+Instead, use a consistent date representation appropriate for all-day events and preserve the user's selected calendar date.
+
+## TIMED EVENTS
+
+Do not break existing timed events.
+
+For timed events:
+
+* Preserve the correct start date/time.
+* Preserve the correct end date/time.
+* Respect the user's/device's timezone.
+* Do not convert a timed event incorrectly to UTC/local time.
+* Do not change existing behavior unless it is part of the bug.
+
+## EDIT EVENT
+
+Also test editing an existing event.
+
+Verify:
+
+1. Create event on September 1 → appears on September 1.
+2. Edit September 1 event → still remains September 1.
+3. Turn All Day ON → becomes an actual all-day event.
+4. Turn All Day OFF → becomes a normal timed event.
+5. Save/update → date does not shift.
+6. Reopen the event → date remains correct.
+
+## TEST THESE CASES
+
+Test at minimum:
+
+### Case 1
+
+Selected date: August 31, 2026
+All Day: ON
+Expected: August 31, 2026 all-day event
+
+### Case 2
+
+Selected date: September 1, 2026
+All Day: ON
+Expected: September 1, 2026 all-day event
+
+### Case 3
+
+Selected date: September 2, 2026
+All Day: ON
+Expected: September 2, 2026 all-day event
+
+### Case 4
+
+September 1, 2026
+Timed event
+Expected: September 1, 2026 at the selected time
+
+### Case 5
+
+September 1, 2026
+Edit existing event
+Expected: September 1, 2026
+
+### Case 6
+
+Create event → save → close Calendar → reopen Calendar
+Expected: event remains on the exact selected date.
+
+## IMPORTANT
+
+Before modifying code:
+
+1. Find the Calendar event creation component/screen.
+2. Find the Calendar event model/type.
+3. Find the date conversion/formatting utilities.
+4. Find the API/backend request and response handling.
+5. Find the React Native Wrapper/native calendar integration.
+6. Trace the complete event lifecycle from date selection → save → storage/API → calendar display.
+
+Then identify the exact point where:
+
+* `allDay` is lost/ignored.
+* The selected date is shifted by timezone conversion.
+
+Fix the underlying cause.
+
+Do not create duplicate date-handling logic if the project already has a date utility. Reuse or properly fix the existing date utility where appropriate.
+
+## REGRESSION REQUIREMENT
+
+Do not modify unrelated Calendar features.
+
+After the fix, verify that:
+
+* Create event works.
+* Update event works.
+* Delete event works.
+* Timed events still work.
+* All-day events work.
+* Event dates remain exactly as selected.
+* Calendar display and event details show the same date.
+* Backend/API data remains consistent.
+* Wrapper/native calendar receives the correct all-day flag and date.
+* No duplicate events are created.
+
+If tests already exist, update/add tests for these bugs.
+
+Add regression tests specifically for:
+
+1. All-day flag preservation.
+2. September 1, 2026 staying September 1, 2026.
+3. Date conversion not shifting an all-day event to the previous day.
+4. Create → save → reload preserving the same date.
+5. Edit → save preserving the same date.
+
+Finally, explain:
+
+* Root cause of the previous-day bug.
+* Root cause of the all-day bug.
+* Files changed.
+* What was changed.
+* How the fix prevents the bugs from reopening.
+
+Do not give me a temporary workaround. Implement a proper root-cause fix in the existing React Native + Wrapper architecture.

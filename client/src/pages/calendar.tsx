@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FieldLabel } from "@/components/ui/field-label";
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -22,9 +23,23 @@ import {
   MapPin
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  getCalendarEventDateKey,
+  formatLocalCalendarDate,
+} from "@/lib/calendar-date";
+import { getCalendarEventDisplayFields } from "@/lib/calendar-event-display";
+import { buildCalendarEventPayload } from "@/lib/calendar-event-payload";
+import { isDailyTaskScheduledForDate } from "@/lib/daily-task-schedule";
+import { isDailyTaskCompletedForDate } from "@/lib/daily-task-completion";
+import { formatCategoryLabel } from "@/lib/display-labels";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { DailyTask, Bill, Appointment, MoodEntry, CalendarEvent } from "@shared/schema";
+import { EventPreparationCard } from "@/components/ai-ready";
+
+type CalendarDailyTask = DailyTask & {
+  completionDates?: string[];
+};
 
 export default function Calendar() {
   const { isPremiumUser } = useSubscriptionEnforcement();
@@ -43,7 +58,7 @@ export default function Calendar() {
       </div>
     );
   }
-  const [currentDate, setCurrentDate] = useState(new Date('2025-07-08'));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -62,7 +77,7 @@ export default function Calendar() {
 
   const queryClient = useQueryClient();
 
-  const { data: tasks = [] } = useQuery<DailyTask[]>({
+  const { data: tasks = [] } = useQuery<CalendarDailyTask[]>({
     queryKey: ["/api/daily-tasks"],
   });
 
@@ -85,33 +100,7 @@ export default function Calendar() {
   // Calendar event creation mutation
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
-      let startDateTime;
-      
-      if (newEvent.allDay) {
-        // For all-day events, use the date without time
-        startDateTime = `${eventData.startDate}T00:00:00`;
-      } else {
-        // For timed events, combine date and time in local timezone
-        const timeStr = eventData.startTime || '12:00';
-        startDateTime = `${eventData.startDate}T${timeStr}:00`;
-      }
-      
-      let endDateTime = null;
-      if (eventData.endDate && eventData.endTime) {
-        endDateTime = `${eventData.endDate}T${eventData.endTime}:00`;
-      }
-
-      const payload = {
-        title: eventData.title,
-        description: eventData.description || "",
-        startDate: startDateTime,
-        endDate: endDateTime,
-        allDay: eventData.allDay,
-        category: eventData.category,
-        color: eventData.color,
-        location: eventData.location || "",
-        reminderMinutes: eventData.reminderMinutes || 15
-      };
+      const payload = buildCalendarEventPayload(eventData);
 
       console.log("Creating calendar event with payload:", payload);
       return apiRequest("POST", "/api/calendar-events", payload);
@@ -157,26 +146,19 @@ export default function Calendar() {
   };
 
   const getEventsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalCalendarDate(date);
     const events: any[] = [];
 
     // Add calendar events
     calendarEvents.forEach(event => {
-      // Parse the stored date properly considering it's in local timezone
-      const eventDate = event.startDate.split('T')[0];
-      if (eventDate === dateStr) {
-        let displayTime = null;
-        if (!event.allDay) {
-          // Create a new date object for proper time display
-          const eventDateTime = new Date(event.startDate);
-          displayTime = eventDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        
+      const display = getCalendarEventDisplayFields(event);
+      if (display.dateKey === dateStr) {
         events.push({
           id: `event-${event.id}`,
           type: 'event',
           title: event.title,
-          time: displayTime,
+          time: display.time,
+          allDay: display.allDay,
           completed: event.isCompleted,
           category: event.category,
           icon: CalendarIcon,
@@ -186,27 +168,28 @@ export default function Calendar() {
       }
     });
 
-    // Add daily tasks to every day
+    // Add daily task occurrences only on dates where the task is scheduled.
     tasks.forEach(task => {
-      if (task.frequency === 'daily' || !task.frequency) {
+      if (isDailyTaskScheduledForDate(task, dateStr) && (task.frequency === 'daily' || !task.frequency)) {
+        const completedForDate = isDailyTaskCompletedForDate(task, dateStr);
         events.push({
           id: `task-${task.id}`,
           type: 'task',
           title: task.title,
           time: null,
-          completed: task.isCompleted,
-          category: task.category || 'daily',
-          icon: task.isCompleted ? CheckCircle : Circle,
-          color: task.isCompleted ? 'text-green-600' : 'text-blue-600'
+          completed: completedForDate,
+          category: formatCategoryLabel(task.category || 'daily'),
+          icon: completedForDate ? CheckCircle : Circle,
+          color: completedForDate ? 'text-green-600' : 'text-blue-600'
         });
       }
     });
 
     // Weekly and monthly tasks with due dates
     tasks.forEach(task => {
-      if (task.dueDate) {
-        const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
-        if (taskDate === dateStr) {
+      if (task.frequency !== 'daily' && task.dueDate) {
+        const taskDate = getCalendarEventDateKey(task.dueDate);
+        if (taskDate === dateStr && isDailyTaskScheduledForDate(task, dateStr)) {
           events.push({
             id: `scheduled-task-${task.id}`,
             type: 'task',
@@ -346,7 +329,9 @@ export default function Calendar() {
               >
                 <div className="flex items-center justify-between">
                   <div className="truncate flex-1">{event.title}</div>
-                  {event.time && (
+                  {event.allDay ? (
+                    <div className="ml-1 text-xs opacity-70 font-normal">All day</div>
+                  ) : event.time && (
                     <div className="ml-1 text-xs opacity-70 font-normal">
                       {event.time}
                     </div>
@@ -370,7 +355,7 @@ export default function Calendar() {
     }
 
     return (
-      <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-lg overflow-hidden">
+      <div className="grid min-w-[760px] grid-cols-7 gap-0 overflow-hidden rounded-lg border border-gray-200">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div key={day} className="bg-gray-100 p-3 text-center font-semibold text-gray-700 border-b border-gray-200">
             {day}
@@ -466,7 +451,9 @@ export default function Calendar() {
                         >
                           <div className="font-bold mb-2 leading-tight">{event.title}</div>
                           <div className="space-y-1">
-                            {event.time && (
+                            {event.allDay ? (
+                              <div className="text-sm opacity-90">All day</div>
+                            ) : event.time && (
                               <div className="text-sm opacity-90 flex items-center gap-2">
                                 <Clock className="w-4 h-4 flex-shrink-0" />
                                 <span>{event.time}</span>
@@ -522,6 +509,19 @@ export default function Calendar() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {events.length > 0 && (
+            <EventPreparationCard
+              title={events[0].title}
+              time={events[0].time || undefined}
+              detail="See the day's related steps before moving into the next activity."
+              steps={events.slice(0, 4).map((event) => ({
+                id: event.id,
+                label: event.title,
+                completed: Boolean(event.completed),
+                detail: event.time || undefined,
+              }))}
+            />
+          )}
           {events.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No events scheduled for this day</p>
           ) : (
@@ -534,7 +534,9 @@ export default function Calendar() {
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{event.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    {event.time && (
+                    {event.allDay ? (
+                      <Badge variant="outline" className="text-xs">All day</Badge>
+                    ) : event.time && (
                       <Badge variant="outline" className="text-xs">
                         <Clock className="w-3 h-3 mr-1" />
                         {event.time}
@@ -579,14 +581,14 @@ export default function Calendar() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <CalendarIcon className="w-8 h-8 text-blue-600" />
           Calendar
         </h1>
         
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-4">
           <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -594,7 +596,10 @@ export default function Calendar() {
                 Add Event
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogContent
+              overlayClassName="z-[110]"
+              className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+            >
               <DialogHeader>
                 <DialogTitle>Add New Event</DialogTitle>
               </DialogHeader>
@@ -611,7 +616,7 @@ export default function Calendar() {
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-sm font-medium">Start Date</label>
+                    <FieldLabel required className="text-sm font-medium">Start Date</FieldLabel>
                     <Input
                       type="date"
                       value={newEvent.startDate}
@@ -619,7 +624,7 @@ export default function Calendar() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Start Time</label>
+                    <FieldLabel optional className="text-sm font-medium">Start Time</FieldLabel>
                     <Input
                       type="time"
                       disabled={newEvent.allDay}
@@ -633,7 +638,7 @@ export default function Calendar() {
                     checked={newEvent.allDay}
                     onCheckedChange={(checked) => setNewEvent({ ...newEvent, allDay: !!checked })}
                   />
-                  <label className="text-sm font-medium">All Day Event</label>
+                  <FieldLabel optional className="text-sm font-medium">All Day Event</FieldLabel>
                 </div>
                 <Select value={newEvent.category} onValueChange={(value) => setNewEvent({ ...newEvent, category: value })}>
                   <SelectTrigger>
@@ -676,8 +681,8 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
+        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-4">
           <Button
             onClick={() => navigateDate('prev')}
             variant="outline"
@@ -735,7 +740,7 @@ export default function Calendar() {
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 overflow-x-auto pb-1">
         {view === 'month' && renderMonthView()}
         {view === 'week' && renderWeekView()}
         {view === 'day' && renderDayView()}

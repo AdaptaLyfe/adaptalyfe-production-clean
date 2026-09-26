@@ -232,10 +232,15 @@ export default function DailyGuideCard() {
     <Card className="overflow-hidden border-0 shadow-md rounded-2xl">
       {/* ── Header banner ── */}
       <div className={`bg-gradient-to-r ${config.headerGradient} px-5 pt-5 pb-6`}>
-        <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-5 h-5 text-white/90" aria-hidden="true" />
-          <span className="text-white/90 text-xs font-semibold uppercase tracking-widest">
-            {config.label}
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Icon className="w-5 h-5 text-white/90" aria-hidden="true" />
+            <span className="text-white/90 text-xs font-semibold uppercase tracking-widest">
+              {config.label}
+            </span>
+          </div>
+          <span className="rounded-full border border-white/30 bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white/95">
+            Proactive Guide
           </span>
         </div>
         <h2 className="text-white font-bold text-xl leading-snug drop-shadow-sm">

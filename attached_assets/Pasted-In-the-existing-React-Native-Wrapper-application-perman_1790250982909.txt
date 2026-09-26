@@ -1,0 +1,168 @@
+In the existing **React Native + Wrapper** application, permanently fix the validation issue in **Trusted Contact → Add New Contact**.
+
+### Bug
+
+When adding a new Trusted Contact:
+
+* Email address format is not validated correctly.
+* Phone number format is not validated correctly.
+* Invalid values can sometimes pass validation.
+* The issue has been fixed before but keeps reopening, so do a complete root-cause fix instead of a temporary UI-only fix.
+
+### Required behavior
+
+#### 1. Email validation
+
+Validate the email before allowing the Trusted Contact to be saved.
+
+Reject examples such as:
+
+* `test`
+* `test@`
+* `@gmail.com`
+* `test@gmail`
+* `test..test@gmail.com`
+* `test @gmail.com`
+* empty email
+
+Accept normal valid formats such as:
+
+* `test@gmail.com`
+* `john.doe@example.com`
+
+Do not rely only on keyboard/input type. Perform actual validation in the form logic.
+
+#### 2. Phone number validation
+
+Validate the phone number before allowing the Trusted Contact to be saved.
+
+Requirements:
+
+* Reject empty phone numbers.
+* Reject alphabetic characters.
+* Reject invalid characters.
+* Reject obviously invalid/incomplete phone numbers.
+* Handle the phone number format already expected by the existing application/backend.
+* Preserve the existing country-code behavior if the app already supports country codes.
+* Do not create a new incompatible phone-number format.
+
+Use a proper phone-number validation approach rather than checking only whether the field contains digits.
+
+### 3. Validation must happen before API/database submission
+
+The save flow must be:
+
+User enters data
+→ Validate fields
+→ Show validation error
+→ Stop submission if invalid
+→ Only submit to backend when all required fields are valid
+
+Invalid data must NEVER reach the API/database.
+
+### 4. Find the root cause
+
+Do not simply modify the visible input component.
+
+First inspect the complete Trusted Contact flow:
+
+* Add Trusted Contact screen
+* Email input component
+* Phone input component
+* Form validation
+* Submit/save handler
+* Wrapper/native layer if involved
+* API/service/repository layer
+* Backend validation if present
+* Existing shared validation utilities
+* Edit Trusted Contact flow if it uses the same validation
+
+Identify why the previous validation fix keeps reopening.
+
+If there are multiple validation implementations, consolidate them or make sure they use the same validation rules.
+
+### 5. Prevent duplicate/inconsistent validation
+
+Make sure:
+
+* UI validation and submit validation use consistent rules.
+* Validation cannot be bypassed by pressing Save quickly.
+* Validation cannot be bypassed when fields are changed programmatically.
+* Existing valid Trusted Contacts continue to work.
+* Edit/update Trusted Contact also uses the correct validation if it shares the same fields.
+* Do not introduce duplicate error messages.
+
+### 6. Error messages
+
+Use clear field-specific messages, for example:
+
+Email:
+**"Please enter a valid email address."**
+
+Phone:
+**"Please enter a valid phone number."**
+
+Show the error next to the appropriate field using the existing app's error-message style.
+
+Do not change the application's existing design system.
+
+### 7. Regression prevention
+
+After fixing the issue, test at least these cases:
+
+EMAIL
+
+* Empty
+* `test`
+* `test@`
+* `@gmail.com`
+* `test@gmail`
+* `test..test@gmail.com`
+* `test @gmail.com`
+* Valid email
+
+PHONE
+
+* Empty
+* Too short
+* Alphabetic input
+* Special-character-only input
+* Invalid phone number
+* Valid phone number
+* Valid phone number with existing supported country code
+
+Also test:
+
+* Add Trusted Contact with valid email + valid phone
+* Add Trusted Contact with invalid email + valid phone
+* Add Trusted Contact with valid email + invalid phone
+* Add Trusted Contact with both invalid
+* Edit an existing Trusted Contact
+* Save button/loading behavior
+* API submission
+
+### Important
+
+Do NOT rewrite unrelated parts of the application.
+
+Do NOT change the backend/API contract unless absolutely necessary.
+
+Do NOT create a temporary workaround.
+
+Fix the validation at the correct shared/root level so the same bug does not reopen later.
+
+Before making changes, inspect the existing implementation and explain:
+
+1. Where the Trusted Contact validation currently happens.
+2. Why invalid email/phone values are currently being accepted.
+3. Which files/components/services need to be changed.
+
+Then implement the fix and verify the complete Add/Edit Trusted Contact flow.
+
+Finally provide:
+
+* Root cause
+* Files changed
+* Validation rules implemented
+* Tests performed
+* Confirmation that invalid data cannot be submitted to the backend

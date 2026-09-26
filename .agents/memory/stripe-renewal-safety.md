@@ -14,3 +14,9 @@ Staging billing must remain on Stripe test-mode credentials with its own webhook
 **Why:** Vite embeds the publishable key into the built frontend, and mixing live/test Stripe objects or secrets invalidates webhook verification and risks real charges.
 
 **How to apply:** Rebuild staging after changing its Stripe test publishable key. Keep production live keys only in production; do not roll them into staging after tests.
+
+Stripe subscription billing periods may be exposed on the subscription item rather than only on the top-level subscription in newer Stripe API payloads.
+
+**Why:** Assuming only `subscription.current_period_end` can produce an invalid date and repeated webhook HTTP 500 retries when Stripe sends a newer object shape.
+
+**How to apply:** Webhook and confirmation code should prefer the top-level period end but fall back to the first subscription item's period end, and fail with an explicit diagnostic when neither is valid.

@@ -1,0 +1,108 @@
+In the existing **React Native + Wrapper** application, fix the following issue in:
+
+**Academic / Student Planner → Add New Assignment popup**
+
+### Bug
+
+When the user opens the **"Add New Assignment"** popup, the **last input field** automatically contains the value **"2"**.
+
+The purpose of this field/value is not clear to the user. The field should not display a hardcoded value like `2` when the form is opened.
+
+### Required behavior
+
+1. Find the exact last field in the **Add New Assignment** form that currently displays `2` by default.
+2. Trace where this value is coming from:
+
+   * React state initialization
+   * default form values
+   * model/interface defaults
+   * wrapper/native layer
+   * API payload preparation
+   * database/default data
+   * reusable input component
+3. Understand what this field represents before changing the implementation.
+4. **Do not simply hide the value `2` in the UI.** Fix the actual source of the unwanted default value.
+5. When the user opens **Add New Assignment**:
+
+   * The field must be empty.
+   * Show a clear, meaningful placeholder explaining what the user should enter.
+   * Example: `Enter value` or, preferably, a field-specific placeholder based on what the field actually represents.
+6. The placeholder must disappear automatically when the user enters a value.
+7. Do not use a hardcoded `"2"` as the initial input value.
+8. Do not break the existing assignment creation flow.
+9. If the backend/API requires a default value of `2`, keep that backend requirement separate from the UI:
+
+   * UI input should initially be empty.
+   * Only send the required default when it is actually appropriate according to the existing business logic.
+   * Do not change backend behavior unless necessary.
+10. If the field is optional, submitting the form without entering a value should continue to work correctly.
+11. If the field is required, show proper validation when the user submits without entering a value.
+12. Check both **React Native UI and Wrapper integration** so the value is not being reintroduced from another layer.
+
+### Important — prevent the bug from reopening
+
+Do a complete code search for:
+
+* the Add New Assignment component
+* the last field
+* the value `2`
+* initial/default assignment values
+* assignment form state
+* assignment model/interface
+* assignment creation payload
+* wrapper/native bridge related to assignments
+
+Find the **root cause**, not just the visible UI symptom.
+
+Also check whether:
+
+* the form state is reused after opening/closing the popup
+* the previous assignment data is being retained
+* `useState(2)` or equivalent exists
+* `defaultValue={2}` exists
+* form reset logic restores `2`
+* wrapper data initialization restores `2`
+* API response mapping restores `2`
+
+### UI requirement
+
+The field should look like a normal empty input when the popup opens:
+
+**[ Field-specific placeholder ]**
+
+Not:
+
+**[ 2 ]**
+
+Use the existing application's design system, styling, spacing, fonts, and input components. Do not redesign the popup.
+
+### Regression testing
+
+After making the fix, test this complete flow:
+
+1. Open Academic / Student Planner.
+2. Open **Add New Assignment**.
+3. Confirm the last field is empty.
+4. Confirm a meaningful placeholder is visible.
+5. Enter a value.
+6. Confirm the placeholder disappears.
+7. Submit the assignment.
+8. Confirm the assignment is created successfully.
+9. Close and reopen **Add New Assignment**.
+10. Confirm the field is empty again.
+11. Create another assignment and verify the previous value is not carried over.
+12. Edit an existing assignment, if editing uses the same field, and confirm existing saved data is still displayed correctly.
+13. Verify the fix works consistently after navigating away and coming back.
+14. Verify there are no new console errors, validation errors, API errors, or wrapper errors.
+
+### Important constraints
+
+* Do not change unrelated Academic / Student Planner functionality.
+* Do not change existing API contracts unnecessarily.
+* Do not remove existing validation.
+* Do not create a second implementation of the assignment form.
+* Reuse the existing components and state management.
+* Keep the fix clean and maintainable.
+* Explain the **root cause**, the **files changed**, and **why the fix prevents the value `2` from appearing again** after implementation.
+
+Do not stop after changing the UI. **Trace the complete data flow and fix the root cause so this issue does not reopen.**

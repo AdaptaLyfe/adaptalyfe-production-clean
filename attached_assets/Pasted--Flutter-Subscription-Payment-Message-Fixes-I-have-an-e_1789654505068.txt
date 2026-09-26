@@ -1,0 +1,96 @@
+### Flutter — Subscription & Payment Message Fixes
+
+I have an existing Flutter application migrated from React Native + Wrapper. Please fix the following subscription and payment message issues.
+
+**Important:**
+
+* Work only on the existing Flutter code.
+* Do not change the React Native or Wrapper code.
+* Keep the existing subscription flow, API integration, Stripe integration, and UI design unchanged.
+* Make only the required error message and title changes.
+* Follow the existing Flutter project architecture and state management.
+
+### 1. Restore My Subscription — No Subscription Error
+
+**Issue:**
+
+After signing up, the user sees the **"Restore My Subscription"** button.
+
+When the user clicks this button without having any subscription, the app shows:
+
+> Could not check your payment. Please try again.
+
+**Required change:**
+
+* When the user clicks "Restore My Subscription" without an existing subscription, show a proper, specific error message.
+* Do not show the generic "Could not check your payment. Please try again." message for this case.
+* Use the actual backend/Stripe response to determine whether the user has no subscription.
+* Keep the existing restore subscription functionality unchanged.
+
+**Expected behavior:**
+
+If the user has no subscription to restore, show a clear message such as:
+
+Title: **No Subscription Found**
+
+Message: **We couldn't find an active subscription to restore.**
+
+Use the existing app's error popup/toast design and wording conventions if already available.
+
+### 2. Payment Details Error Title
+
+**Current title:**
+
+> Could not save payment method
+
+**Required title:**
+
+> Could not proceed with payment method
+
+**Reason:**
+
+The user is subscribing to a plan, so the current title "Could not save payment method" is not specific to the subscription flow.
+
+**Change:**
+
+* Replace the inappropriate title with:
+  **"Could not proceed with payment method"**
+* Keep the existing error message body unless it also needs to be updated for accuracy.
+* Do not change payment processing logic.
+
+### 3. Payment Success Title
+
+**Current title:**
+
+> Payment method saved!
+
+**Required title:**
+
+> Payment details saved!
+
+**Change:**
+
+* Replace "Payment method saved!" with:
+  **"Payment details saved!"**
+* Keep the existing success message body and UI design unchanged.
+* Do not change Stripe payment or subscription logic.
+
+### 4. Verification & Testing
+
+Please verify all changes in the Flutter application:
+
+1. Sign up as a new user.
+2. Click "Restore My Subscription" without having a subscription.
+3. Verify that the proper "No Subscription Found" error is displayed instead of the generic payment error.
+4. Test the payment method error scenario.
+5. Verify the title is "Could not proceed with payment method".
+6. Test the successful payment details flow.
+7. Verify the title is "Payment details saved!".
+
+### Final Requirements
+
+* Do not modify unrelated screens or features.
+* Do not change API requests, Stripe configuration, or subscription logic.
+* Do not remove existing validation.
+* Check all occurrences of these messages in the Flutter code to avoid inconsistent titles.
+* Provide a summary of the files changed and explain how each issue was fixed.

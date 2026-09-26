@@ -1,0 +1,228 @@
+Fix the **Caregiver Setup** flow in the existing Flutter application.
+
+### Current Bug
+
+When a user invites a caregiver:
+
+1. Caregiver receives the invitation.
+2. Caregiver accepts the invitation successfully.
+3. The invitation shows **ACCEPTED** status in the Invitations section.
+4. However, the accepted caregiver's name does **NOT** appear in the **Active Caregivers** list.
+5. The accepted caregiver continues to appear in the **Invitations** section with **ACCEPTED** status.
+
+The issue keeps coming back after previous fixes. Do NOT make another temporary UI-only fix. Find and fix the actual root cause.
+
+### Required Behavior
+
+After a caregiver accepts an invitation:
+
+* The caregiver must immediately appear in **Active Caregivers**.
+* The caregiver should no longer be treated as a pending invitation.
+* The invitation can remain in the invitation/history section only if the existing product design requires invitation history, but it must clearly remain separate from the active caregiver relationship.
+* The Active Caregivers list must use the actual accepted caregiver relationship/data.
+* The accepted caregiver must still appear correctly after:
+
+  * leaving the screen
+  * reopening Caregiver Setup
+  * navigating to another screen and coming back
+  * app restart
+  * logout/login
+  * refreshing/reloading data
+
+### IMPORTANT: Investigate Root Cause First
+
+Before changing code, trace the complete flow:
+
+**Invite caregiver → invitation document/data created → caregiver receives invitation → caregiver accepts → acceptance data is updated/created → caregiver relationship is stored → Active Caregivers query → UI state/BLoC refresh**
+
+Check all relevant:
+
+* Flutter screens/widgets
+* BLoC/Cubit
+* Events
+* States
+* Repository
+* Data sources/services
+* Firebase/Firestore queries
+* Firestore collection/document structure
+* caregiver IDs/user IDs
+* invitation IDs
+* accepted status fields
+* caregiver relationship fields
+* streams/listeners
+* local state/cache
+* navigation lifecycle
+* refresh/reload logic
+
+### Critical Checks
+
+Verify exactly what happens when the caregiver accepts an invitation.
+
+Check whether the acceptance currently only changes something like:
+
+```text
+invitation.status = ACCEPTED
+```
+
+but does NOT create/update the actual active caregiver relationship.
+
+If Active Caregivers depends on a separate collection/document/relationship, make sure that relationship is created or updated when the invitation is accepted.
+
+Also verify that the Active Caregivers query uses the correct:
+
+* user ID
+* caregiver ID
+* invited user ID
+* relationship ID
+* status
+* collection/document path
+
+Do not assume the invitation document itself is the Active Caregiver record.
+
+### Avoid This Incorrect Fix
+
+Do NOT simply change:
+
+```text
+ACCEPTED invitation → display it in Active Caregivers
+```
+
+unless the application's existing architecture explicitly defines accepted invitations as active caregiver relationships.
+
+Instead, follow the existing data model and make sure the accepted caregiver relationship is persisted correctly.
+
+### State Management
+
+After successful acceptance:
+
+1. Persist the caregiver relationship.
+2. Update the relevant BLoC/Cubit state.
+3. Refresh/reload Active Caregivers from the source of truth.
+4. Refresh invitation state.
+5. Make sure the UI rebuilds using the updated state.
+
+Do not rely only on local `setState()` or manually adding the caregiver to a list.
+
+### Data Consistency
+
+The fix must survive reopening the screen.
+
+For example:
+
+```text
+Accept invitation
+      ↓
+Persist accepted caregiver relationship
+      ↓
+Reload Caregiver Setup
+      ↓
+Fetch Active Caregivers from database
+      ↓
+Accepted caregiver appears
+```
+
+The database must be the source of truth.
+
+### Duplicate/Existing Relationship Handling
+
+Also handle these cases safely:
+
+* Accepting the same invitation twice
+* Refreshing immediately after acceptance
+* Opening Caregiver Setup multiple times
+* Existing active caregiver relationship
+* Invitation already marked ACCEPTED
+* Multiple caregivers
+* Multiple invitations
+* Caregiver removing/revoking relationship if that functionality already exists
+
+Do not create duplicate caregiver relationships.
+
+### UI Requirements
+
+Keep the existing UI design unchanged.
+
+Do not redesign:
+
+* Active Caregivers section
+* Invitations section
+* caregiver cards
+* buttons
+* colors
+* spacing
+* navigation
+
+Only fix the underlying functionality and state/data synchronization.
+
+### Debugging Requirement
+
+Add temporary debug logs while investigating, if necessary, to clearly verify:
+
+```text
+Invitation ID
+Inviter/User ID
+Caregiver User ID
+Invitation Status
+Acceptance result
+Created/updated caregiver relationship ID
+Active Caregiver query
+Active Caregiver result count
+```
+
+Use these logs to identify where the data flow breaks.
+
+After confirming the fix, remove unnecessary debug logs.
+
+### IMPORTANT — Do Not Stop After First Fix
+
+This bug has been fixed before but returns after reopening the screen/app.
+
+Therefore, after implementing the fix, test the complete flow multiple times:
+
+#### Test 1
+
+Invite caregiver → Accept → Open Caregiver Setup → caregiver appears in Active Caregivers.
+
+#### Test 2
+
+Invite caregiver → Accept → leave screen → reopen Caregiver Setup → caregiver still appears.
+
+#### Test 3
+
+Invite caregiver → Accept → restart app → open Caregiver Setup → caregiver still appears.
+
+#### Test 4
+
+Invite caregiver → Accept → logout → login → open Caregiver Setup → caregiver still appears.
+
+#### Test 5
+
+Invite 2–3 caregivers → accept all → verify all accepted caregivers appear correctly.
+
+#### Test 6
+
+Refresh/reload data → verify accepted caregivers remain in Active Caregivers.
+
+#### Test 7
+
+Verify Invitations section does not incorrectly treat accepted caregivers as pending invitations.
+
+### Final Requirement
+
+Do not give me a superficial workaround.
+
+Find the **root cause**, fix the **database/data relationship**, fix the **BLoC/state synchronization**, and fix the **UI refresh/reload behavior** where necessary.
+
+Before finishing, inspect all related caregiver invitation and active caregiver code so the fix works consistently across the entire flow.
+
+At the end, tell me:
+
+1. Root cause found
+2. Files changed
+3. Database/Firestore changes made
+4. BLoC/state changes made
+5. Why the fix survives screen reopening/app restart
+6. Tests performed
+7. Any migration or existing-data handling required
+
+Do not modify unrelated features.

@@ -1,0 +1,124 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  combineLocalDateAndTime,
+  getSleepRoutineTimeValidationError,
+  getSleepTimeValidationError,
+  getWakeTimeValidationError,
+} from "./sleep-time-validation";
+
+test("combines a local calendar date and clock time without shifting the date", () => {
+  const combined = combineLocalDateAndTime("2026-09-23", "08:15");
+  assert.ok(combined);
+  assert.equal(combined.getFullYear(), 2026);
+  assert.equal(combined.getMonth(), 8);
+  assert.equal(combined.getDate(), 23);
+  assert.equal(combined.getHours(), 8);
+  assert.equal(combined.getMinutes(), 15);
+});
+
+test("rejects invalid calendar dates when combining sleep values", () => {
+  assert.equal(combineLocalDateAndTime("2026-02-30", "08:15"), undefined);
+});
+
+test("allows equal and later 24-hour times", () => {
+  assert.equal(getSleepTimeValidationError("22:00", "22:00"), null);
+  assert.equal(getSleepTimeValidationError("22:00", "22:30"), null);
+});
+
+test("rejects an earlier 24-hour sleep time", () => {
+  assert.equal(
+    getSleepTimeValidationError("22:00", "21:30"),
+    "Time fell asleep must be the same as or later than bedtime",
+  );
+});
+
+test("handles 12-hour AM/PM values", () => {
+  assert.equal(getSleepTimeValidationError("10:00 PM", "10:30 PM"), null);
+  assert.equal(getSleepTimeValidationError("10:00 PM", "9:30 PM"), "Time fell asleep must be the same as or later than bedtime");
+  assert.equal(getSleepTimeValidationError("11:00 AM", "12:00 PM"), null);
+});
+
+test("compares ISO timestamps and rejects malformed values", () => {
+  assert.equal(
+    getSleepTimeValidationError(
+      "2026-09-15T22:00:00.000Z",
+      "2026-09-15T22:30:00.000Z",
+    ),
+    null,
+  );
+  assert.equal(
+    getSleepTimeValidationError(
+      "2026-09-15T22:00:00.000Z",
+      "2026-09-15T21:30:00.000Z",
+    ),
+    "Time fell asleep must be the same as or later than bedtime",
+  );
+  assert.equal(
+    getSleepTimeValidationError("not-a-time", "22:00"),
+    "Bedtime and time fell asleep must be valid times",
+  );
+});
+
+test("compares complete wake timestamps across dates", () => {
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:30:00.000Z",
+      "2026-09-23T08:00:00.000Z",
+    ),
+    null,
+  );
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:00:00.000Z",
+      "2026-09-22T21:00:00.000Z",
+    ),
+    "Wake time must be later than time fell asleep",
+  );
+  assert.equal(
+    getWakeTimeValidationError(
+      "2026-09-22T22:00:00.000Z",
+      "2026-09-21T08:00:00.000Z",
+    ),
+    "Wake time must be later than time fell asleep",
+  );
+});
+
+test("rejects equal and allows later wake times", () => {
+  assert.equal(
+    getWakeTimeValidationError("22:00", "22:00"),
+    "Wake time must be later than time fell asleep",
+  );
+  assert.equal(getWakeTimeValidationError("22:00", "22:30"), null);
+});
+
+test("rejects a wake time earlier than sleep time in 24-hour format", () => {
+  assert.equal(
+    getWakeTimeValidationError("22:30", "22:00"),
+    "Wake time must be later than time fell asleep",
+  );
+});
+
+test("handles AM/PM wake-time comparisons", () => {
+  assert.equal(getWakeTimeValidationError("10:00 AM", "10:30 AM"), null);
+  assert.equal(
+    getWakeTimeValidationError("10:00 AM", "9:30 AM"),
+    "Wake time must be later than time fell asleep",
+  );
+  assert.equal(
+    getWakeTimeValidationError("10:00 PM", "9:30 PM"),
+    "Wake time must be later than time fell asleep",
+  );
+});
+
+test("applies both sleep-time ordering rules together", () => {
+  assert.equal(
+    getSleepRoutineTimeValidationError("22:00", "21:30", "22:00"),
+    "Time fell asleep must be the same as or later than bedtime",
+  );
+  assert.equal(
+    getSleepRoutineTimeValidationError("21:00", "22:00", "21:30"),
+    "Wake time must be later than time fell asleep",
+  );
+});

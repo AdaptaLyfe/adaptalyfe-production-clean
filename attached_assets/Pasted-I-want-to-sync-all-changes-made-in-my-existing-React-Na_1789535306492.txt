@@ -1,0 +1,48 @@
+I want to sync all changes made in my existing **React Native + Wrapper application during the last 2 days** into my existing **Flutter application**.
+
+### Main Goal
+
+Make the Flutter app match the latest React Native + Wrapper app changes, including UI, features, navigation, validation, and bug fixes.
+
+### Instructions
+
+1. Review the complete React Native + Wrapper project and identify all changes made during the last 2 days.
+2. Compare those changes with the existing Flutter project.
+3. Apply all missing changes to the Flutter app using the existing Flutter architecture and BLoC structure.
+4. Do not miss any UI changes, new features, navigation changes, validation updates, or bug fixes.
+
+### Important Recent Changes to Sync
+
+* Password mismatch error:
+
+  * Change error title from "Password Mismatch" to only "Password".
+  * Remove duplicate error messages.
+  * Keep existing validation behavior unchanged.
+
+* Login → Dashboard:
+
+  * Fix the issue where Dashboard does not open after successful login.
+  * Identify and fix the root cause.
+  * Ensure successful login navigates to the Dashboard without errors.
+
+### Flutter Requirements
+
+* Use the existing Flutter project.
+* Use the existing BLoC structure.
+* Maintain the same backend, APIs, authentication, and app flow.
+* Keep the existing Flutter UI design unless the React Native app has a newer design.
+* Do not rewrite the entire Flutter application.
+* Do not remove existing working features.
+* Make changes screen by screen and feature by feature.
+
+### Verification
+
+Before finishing:
+
+* Compare React Native + Wrapper and Flutter screens.
+* Verify all changes from the last 2 days are applied.
+* Test login, password mismatch validation, and Dashboard navigation.
+* Check for compilation errors and navigation issues.
+* Provide a summary of every change made in Flutter.
+
+If you cannot access the React Native project's Git history or recent changes, ask me to provide the relevant commits, files, or screenshots instead of guessing.

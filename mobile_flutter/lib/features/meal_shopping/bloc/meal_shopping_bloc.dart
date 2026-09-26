@@ -1,0 +1,517 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/network/api_client.dart';
+import '../data/meal_shopping_repository.dart';
+import '../models/meal_shopping_models.dart';
+import 'meal_shopping_event.dart';
+import 'meal_shopping_state.dart';
+
+class MealShoppingBloc extends Bloc<MealShoppingEvent, MealShoppingState> {
+  MealShoppingBloc(this.repository) : super(const MealShoppingState()) {
+    on<MealShoppingStarted>(_load);
+    on<RefreshMealShopping>(_load);
+    on<AddMealPlan>(_addMealPlan);
+    on<ToggleMealCompletion>(_toggleMeal);
+    on<DeleteMealPlan>(_deleteMeal);
+    on<AddShoppingItem>(_addShoppingItem);
+    on<ToggleShoppingItem>(_toggleShoppingItem);
+    on<DeleteShoppingItem>(_deleteShoppingItem);
+    on<AddGroceryStore>(_addGroceryStore);
+    on<UpdateGroceryStore>(_updateGroceryStore);
+    on<DeleteGroceryStore>(_deleteGroceryStore);
+  }
+
+  final MealShoppingRepository repository;
+  bool _loadInFlight = false;
+
+  Future<void> _load(
+    MealShoppingEvent event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (_loadInFlight || state.isBusy) return;
+    _loadInFlight = true;
+    emit(
+      state.copyWith(
+        status: MealShoppingStatus.loading,
+        action: MealShoppingAction.none,
+        activeId: null,
+        errorMessage: null,
+        actionMessage: null,
+        sessionInvalid: false,
+      ),
+    );
+    try {
+      final snapshot = await _fetchAll();
+      _emitSnapshot(emit, snapshot);
+    } catch (error) {
+      _emitFailure(emit, error);
+    } finally {
+      _loadInFlight = false;
+    }
+  }
+
+  Future<void> _addMealPlan(
+    AddMealPlan event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.addingMeal,
+        activeId: null,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createMealPlan(event.input);
+      await _reloadAfterMealMutation(
+        emit,
+        successMessage: 'Meal plan saved successfully!',
+      );
+    } catch (error) {
+      _emitActionFailure(emit, error, 'Failed to save meal plan. Please try again.');
+    }
+  }
+
+  Future<void> _toggleMeal(
+    ToggleMealCompletion event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.completingMeal,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.updateMealCompletion(event.id, event.isCompleted);
+      await _reloadAfterMutation(
+        emit,
+        successMessage: event.isCompleted
+            ? 'Meal marked as complete.'
+            : 'Meal marked as incomplete.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to update meal completion. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _deleteMeal(
+    DeleteMealPlan event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingMeal,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteMealPlan(event.id);
+      await _reloadAfterMealMutation(
+        emit,
+        successMessage: 'Meal plan deleted successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete meal plan. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _addShoppingItem(
+    AddShoppingItem event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    if ((event.input.estimatedCost != null &&
+            event.input.estimatedCost! < 0) ||
+        (event.input.actualCost != null && event.input.actualCost! < 0)) {
+      emit(
+        state.copyWith(
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: 'Enter a valid non-negative amount',
+          actionMessage: null,
+        ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.addingShoppingItem,
+        activeId: null,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.createShoppingItem(event.input);
+      await _reloadAfterShoppingMutation(
+        emit,
+        successMessage: 'Shopping item added successfully!',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to save shopping item. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _toggleShoppingItem(
+    ToggleShoppingItem event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.completingShoppingItem,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.updateShoppingPurchased(
+        event.id,
+        event.isPurchased,
+        actualCost: event.actualCost,
+      );
+      await _reloadAfterMutation(
+        emit,
+        successMessage: event.isPurchased
+            ? 'Shopping item marked as purchased.'
+            : 'Shopping item marked as active.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to update shopping item. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _deleteShoppingItem(
+    DeleteShoppingItem event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingShoppingItem,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteShoppingItem(event.id);
+      await _reloadAfterShoppingMutation(
+        emit,
+        successMessage: 'Shopping item removed.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to remove shopping item. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _addGroceryStore(
+    AddGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    await _runStoreMutation(
+      emit,
+      action: MealShoppingAction.addingGroceryStore,
+      operation: () => repository.createGroceryStore(event.input),
+      successMessage: 'The grocery store has been added successfully.',
+      failureMessage: 'Failed to add the grocery store. Please try again.',
+    );
+  }
+
+  Future<void> _updateGroceryStore(
+    UpdateGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    await _runStoreMutation(
+      emit,
+      action: MealShoppingAction.updatingGroceryStore,
+      activeId: event.id,
+      operation: () => repository.updateGroceryStore(event.id, event.input),
+      successMessage: 'The grocery store has been updated successfully.',
+      failureMessage: 'Failed to update the grocery store. Please try again.',
+    );
+  }
+
+  Future<void> _deleteGroceryStore(
+    DeleteGroceryStore event,
+    Emitter<MealShoppingState> emit,
+  ) async {
+    if (state.isBusy) return;
+    emit(
+      state.copyWith(
+        action: MealShoppingAction.deletingGroceryStore,
+        activeId: event.id,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await repository.deleteGroceryStore(event.id);
+      await _reloadAfterStoreMutation(
+        emit,
+        successMessage: 'The grocery store has been removed successfully.',
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Failed to delete the grocery store. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _runStoreMutation(
+    Emitter<MealShoppingState> emit, {
+    required MealShoppingAction action,
+    int? activeId,
+    required Future<GroceryStoreModel> Function() operation,
+    required String successMessage,
+    required String failureMessage,
+  }) async {
+    emit(
+      state.copyWith(
+        action: action,
+        activeId: activeId,
+        errorMessage: null,
+        actionMessage: null,
+      ),
+    );
+    try {
+      await operation();
+      await _reloadAfterStoreMutation(
+        emit,
+        successMessage: successMessage,
+      );
+    } catch (error) {
+      _emitActionFailure(emit, error, failureMessage);
+    }
+  }
+
+  Future<void> _reloadAfterStoreMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    try {
+      final stores = await repository.getGroceryStores();
+      emit(
+        state.copyWith(
+          status: MealShoppingStatus.loaded,
+          groceryStores: stores,
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'The store was saved, but your grocery stores could not be refreshed.',
+      );
+    }
+  }
+
+  Future<void> _reloadAfterMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    final snapshot = await _fetchAll();
+    _emitSnapshot(
+      emit,
+      snapshot,
+      actionMessage: successMessage,
+    );
+  }
+
+  Future<void> _reloadAfterMealMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    try {
+      final mealPlans = await repository.getMealPlans();
+      emit(
+        state.copyWith(
+          status: MealShoppingStatus.loaded,
+          mealPlans: mealPlans,
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Meal plan was saved, but the meal list could not be refreshed.',
+      );
+    }
+  }
+
+  Future<void> _reloadAfterShoppingMutation(
+    Emitter<MealShoppingState> emit, {
+    required String successMessage,
+  }) async {
+    try {
+      final results = await Future.wait([
+        repository.getShoppingItems(),
+        repository.getActiveShoppingItems(),
+      ]);
+      List<GroceryStoreModel> stores = const [];
+      try {
+        stores = await repository.getGroceryStores();
+      } catch (_) {
+        // Grocery-store availability should not hide a usable shopping list
+        // or replace an already loaded store list with an empty one.
+        stores = state.groceryStores;
+      }
+      emit(
+        state.copyWith(
+          status: MealShoppingStatus.loaded,
+          shoppingItems: results[0] as List<ShoppingItemModel>,
+          activeShoppingItems: results[1] as List<ShoppingItemModel>,
+          groceryStores: stores,
+          action: MealShoppingAction.none,
+          activeId: null,
+          errorMessage: null,
+          actionMessage: successMessage,
+          sessionInvalid: false,
+        ),
+      );
+    } catch (error) {
+      _emitActionFailure(
+        emit,
+        error,
+        'Shopping item was saved, but the shopping list could not be refreshed.',
+      );
+    }
+  }
+
+  Future<
+      (
+        List<MealPlanModel>,
+        List<ShoppingItemModel>,
+        List<ShoppingItemModel>,
+        List<GroceryStoreModel>
+      )> _fetchAll() async {
+    final results = await Future.wait([
+      repository.getMealPlans(),
+      repository.getShoppingItems(),
+      repository.getActiveShoppingItems(),
+    ]);
+    List<GroceryStoreModel> stores = const [];
+    try {
+      stores = await repository.getGroceryStores();
+    } catch (_) {
+      // Grocery-store availability should not block meal and list loading.
+    }
+    return (
+      results[0] as List<MealPlanModel>,
+      results[1] as List<ShoppingItemModel>,
+      results[2] as List<ShoppingItemModel>,
+      stores,
+    );
+  }
+
+  void _emitSnapshot(
+    Emitter<MealShoppingState> emit,
+    (
+      List<MealPlanModel>,
+      List<ShoppingItemModel>,
+      List<ShoppingItemModel>,
+      List<GroceryStoreModel>
+    ) snapshot, {
+    String? actionMessage,
+  }) {
+    emit(
+      state.copyWith(
+        status: MealShoppingStatus.loaded,
+        mealPlans: snapshot.$1,
+        shoppingItems: snapshot.$2,
+        activeShoppingItems: snapshot.$3,
+        groceryStores: snapshot.$4,
+        action: MealShoppingAction.none,
+        activeId: null,
+        errorMessage: null,
+        actionMessage: actionMessage,
+        sessionInvalid: false,
+      ),
+    );
+  }
+
+  void _emitFailure(Emitter<MealShoppingState> emit, Object error) {
+    emit(
+      state.copyWith(
+        status: state.hasData
+            ? MealShoppingStatus.loaded
+            : MealShoppingStatus.failure,
+        action: MealShoppingAction.none,
+        activeId: null,
+        errorMessage: _messageFor(error),
+        sessionInvalid:
+            error is ApiException && error.type == ApiErrorType.unauthorized,
+      ),
+    );
+  }
+
+  void _emitActionFailure(
+    Emitter<MealShoppingState> emit,
+    Object error,
+    String fallback,
+  ) {
+    emit(
+      state.copyWith(
+        status: state.hasData
+            ? MealShoppingStatus.loaded
+            : MealShoppingStatus.failure,
+        action: MealShoppingAction.none,
+        activeId: null,
+        errorMessage: error is ApiException ? error.message : fallback,
+        sessionInvalid:
+            error is ApiException && error.type == ApiErrorType.unauthorized,
+      ),
+    );
+  }
+
+  String _messageFor(Object error) {
+    if (error is ApiException) return error.message;
+    if (error is FormatException) return error.message;
+    return 'Unable to load meal plans and shopping lists. Please try again.';
+  }
+}

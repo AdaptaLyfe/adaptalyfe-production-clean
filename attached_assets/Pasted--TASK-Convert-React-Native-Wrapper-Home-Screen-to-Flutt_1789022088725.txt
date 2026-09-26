@@ -1,0 +1,492 @@
+# TASK: Convert React Native + Wrapper Home Screen to Flutter
+
+I have an existing mobile application built using React Native + a web/wrapper architecture.
+
+I am migrating the MOBILE HOME SCREEN from the existing React Native version to Flutter.
+
+Your job is to recreate the existing Home Screen in Flutter as closely as possible.
+
+IMPORTANT:
+This is NOT a redesign.
+This is NOT a simplified version.
+This is NOT a new UI.
+
+I want the Flutter Home Screen to visually and functionally match the existing React Native mobile Home Screen.
+
+---
+
+# 1. FIRST: ANALYZE THE EXISTING HOME SCREEN
+
+Before writing Flutter code:
+
+Inspect the complete existing React Native Home Screen implementation.
+
+Find:
+
+* Home Screen component
+* All child components used by Home
+* Header
+* App bar
+* Navigation
+* Banners
+* Images
+* Cards
+* Buttons
+* Lists
+* Horizontal lists
+* Vertical lists
+* Sections
+* Categories
+* Search
+* Filters
+* Tabs
+* Icons
+* Text
+* Badges
+* Bottom navigation
+* Floating buttons
+* Empty states
+* Loading states
+* Error states
+* API calls
+* API response models
+* Navigation actions
+* Click actions
+* Deep links
+* Authentication-dependent UI
+* User-specific data
+* Any conditional UI
+* Any animations
+* Any scrolling behavior
+
+DO NOT start coding after finding only the main Home component.
+
+Trace ALL child components and dependencies used by the Home Screen.
+
+---
+
+# 2. CREATE A COMPLETE HOME SCREEN INVENTORY
+
+Before implementation, create a checklist of every UI section.
+
+Example:
+
+HOME SCREEN
+
+1. Header
+2. User/profile section
+3. Search section
+4. Banner section
+5. Category section
+6. Featured section
+7. Product/list section
+8. Promotional section
+9. Additional sections
+10. Bottom navigation
+
+The actual sections must come from the existing React Native implementation.
+
+DO NOT assume the example above represents my actual application.
+
+---
+
+# 3. IMPORTANT: DO NOT SKIP ANY UI
+
+The previous implementation was incomplete.
+
+It implemented only 1–2 sections of the Home Screen.
+
+Do NOT repeat this mistake.
+
+The Flutter implementation must contain ALL sections present in the original React Native Home Screen.
+
+If the React Native Home Screen has:
+
+* 5 sections → Flutter must have 5 sections
+* 10 sections → Flutter must have 10 sections
+* 15 sections → Flutter must have 15 sections
+
+Do not remove sections because they are difficult.
+
+Do not replace complex sections with placeholders.
+
+Do not create fake simplified UI.
+
+Do not say "this section can be added later."
+
+Implement the complete Home Screen.
+
+---
+
+# 4. VISUAL MATCHING REQUIREMENT
+
+Match the existing React Native UI as closely as technically possible.
+
+Match:
+
+* Screen structure
+* Layout
+* Width
+* Height
+* Padding
+* Margin
+* Alignment
+* Border radius
+* Borders
+* Shadows
+* Background colors
+* Text colors
+* Font sizes
+* Font weights
+* Line heights
+* Icons
+* Images
+* Image aspect ratios
+* Card sizes
+* Button sizes
+* Section spacing
+* Horizontal scrolling
+* Vertical scrolling
+* Header height
+* Bottom navigation height
+* Safe area behavior
+
+Do not redesign the UI.
+
+Do not choose different colors.
+
+Do not make the UI "better" unless required for Flutter compatibility.
+
+---
+
+# 5. RESPONSIVE BEHAVIOR
+
+The Flutter Home Screen must work correctly on the same mobile screen sizes supported by the existing application.
+
+Use Flutter responsive layout where required.
+
+However:
+
+Do NOT change the visual design just to make it responsive.
+
+The target is the same mobile experience.
+
+---
+
+# 6. FLUTTER ARCHITECTURE
+
+Use:
+
+Flutter
++
+BLoC
+
+Do NOT put business logic directly inside widgets.
+
+Use a clean structure similar to:
+
+lib/
+├── core/
+│   ├── network/
+│   ├── constants/
+│   ├── theme/
+│   └── utils/
+│
+├── features/
+│   └── home/
+│       ├── bloc/
+│       │   ├── home_bloc.dart
+│       │   ├── home_event.dart
+│       │   └── home_state.dart
+│       │
+│       ├── data/
+│       │   ├── home_api.dart
+│       │   ├── home_model.dart
+│       │   └── home_repository.dart
+│       │
+│       └── presentation/
+│           ├── pages/
+│           │   └── home_page.dart
+│           │
+│           └── widgets/
+│               ├── home_header.dart
+│               ├── home_banner.dart
+│               ├── home_category_section.dart
+│               ├── home_card.dart
+│               └── ...
+│
+└── main.dart
+
+Adjust the folder structure based on the actual project.
+
+Do not create unnecessary architecture.
+
+Keep the BLoC implementation simple and understandable.
+
+---
+
+# 7. BLoC REQUIREMENT
+
+Use BLoC for:
+
+* Home API loading
+* Home data
+* Loading state
+* Success state
+* Error state
+* Refresh
+* User-dependent Home data if applicable
+
+Example states:
+
+HomeInitial
+HomeLoading
+HomeLoaded
+HomeError
+
+Example events:
+
+LoadHome
+RefreshHome
+
+Use the existing API/backend whenever possible.
+
+DO NOT create fake hardcoded production data if the React Native application already gets the data from an API.
+
+---
+
+# 8. EXISTING BACKEND
+
+VERY IMPORTANT:
+
+Reuse the existing backend/API flow.
+
+Before creating new APIs:
+
+Find how React Native currently gets Home Screen data.
+
+Identify:
+
+* API endpoint
+* HTTP method
+* Headers
+* Authentication
+* Parameters
+* Query parameters
+* Request body
+* Response structure
+* Pagination
+* Images
+* Error handling
+
+Then migrate this logic to Flutter.
+
+Do not change the backend unless absolutely necessary.
+
+Do not create a different API flow just for Flutter.
+
+---
+
+# 9. EXISTING ASSETS
+
+Reuse existing:
+
+* Images
+* Logos
+* Icons
+* Fonts
+* SVGs
+* Local assets
+
+If an asset already exists in the project, use it.
+
+Do not replace existing assets with random Flutter icons.
+
+If an icon/image has no direct Flutter equivalent, find the closest implementation while keeping the appearance as close as possible.
+
+---
+
+# 10. NAVIGATION
+
+Find every navigation action in the existing Home Screen.
+
+For example:
+
+* Profile
+* Search
+* Category
+* Product
+* Details
+* Notifications
+* Other screens
+
+Implement the same navigation behavior in Flutter.
+
+Use the project's existing navigation solution if already configured.
+
+Do not create duplicate navigation systems.
+
+---
+
+# 11. STATES
+
+Implement all existing states from React Native.
+
+At minimum check for:
+
+Loading
+Loaded
+Empty
+Error
+Refresh
+
+Also check for:
+
+* No internet
+* Missing image
+* Missing data
+* Authentication state
+* User-specific content
+* API failure
+
+Do not show a blank screen when data is unavailable.
+
+---
+
+# 12. SCROLLING
+
+Analyze the original React Native screen carefully.
+
+Determine:
+
+* Is the entire page vertically scrollable?
+* Are there horizontal lists?
+* Are there nested scroll sections?
+* Are there sticky headers?
+* Is there pull-to-refresh?
+* Are there pagination/load-more sections?
+
+Reproduce the same behavior in Flutter.
+
+---
+
+# 13. DO NOT USE PLACEHOLDERS
+
+Do NOT create things like:
+
+"Banner goes here"
+
+"Product section"
+
+"Coming soon"
+
+"TODO"
+
+"More sections can be added later"
+
+The actual UI must be implemented.
+
+---
+
+# 14. IMPLEMENTATION PROCESS
+
+Do the work in this order.
+
+STEP 1
+Analyze the complete React Native Home Screen.
+
+STEP 2
+Trace all child components and dependencies.
+
+STEP 3
+Create a complete Home Screen UI inventory.
+
+STEP 4
+Identify all API/backend dependencies.
+
+STEP 5
+Identify all assets.
+
+STEP 6
+Create Flutter models/repository.
+
+STEP 7
+Create Home BLoC.
+
+STEP 8
+Create the complete Home Screen.
+
+STEP 9
+Create reusable Flutter widgets for repeated UI.
+
+STEP 10
+Implement navigation.
+
+STEP 11
+Implement loading/error/empty states.
+
+STEP 12
+Run the Flutter application.
+
+STEP 13
+Compare the Flutter Home Screen with the original React Native Home Screen.
+
+STEP 14
+Fix visual differences.
+
+STEP 15
+Verify every section is implemented.
+
+---
+
+# 15. COMPLETENESS CHECK
+
+Before saying the task is complete, verify:
+
+[ ] Header implemented
+[ ] Every Home section implemented
+[ ] Every card implemented
+[ ] Every button implemented
+[ ] Every image implemented
+[ ] Every icon implemented
+[ ] Every text implemented
+[ ] Every API call migrated
+[ ] Every navigation action migrated
+[ ] Loading state implemented
+[ ] Error state implemented
+[ ] Empty state implemented
+[ ] Refresh implemented if present
+[ ] Horizontal scrolling implemented
+[ ] Vertical scrolling implemented
+[ ] Bottom navigation implemented if part of Home
+[ ] Authentication behavior implemented
+[ ] Existing assets reused
+[ ] BLoC implemented
+[ ] No business logic inside UI widgets
+[ ] No fake production data
+[ ] No placeholder sections
+[ ] No TODO sections
+[ ] No major visual differences
+
+---
+
+# 16. VERY IMPORTANT FINAL RULE
+
+Do NOT stop after implementing only the first 1–2 sections.
+
+The entire Home Screen must be migrated.
+
+If the Home Screen is large, implement it in multiple internal steps, but the final Flutter Home Screen must contain ALL sections.
+
+After implementation, provide me with:
+
+1. Files created/changed
+2. Complete Home Screen structure
+3. BLoC flow
+4. API flow
+5. Assets used
+6. Navigation implemented
+7. Any remaining differences
+8. Any errors that need my attention
+
+Do not claim the Home Screen is complete unless every section from the original React Native Home Screen has been checked and implemented.

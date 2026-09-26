@@ -11,8 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { insertEmergencyResourceSchema, type EmergencyResource, type InsertEmergencyResource } from "@shared/schema";
+import { apiRequest, ApiError } from "@/lib/queryClient";
+import { EditButton } from "@/components/ui/edit-button";
+import { insertEmergencyResourceSchema, type EmergencyResource } from "@shared/schema";
+import { z } from "zod";
 import { 
   Shield, 
   Phone, 
@@ -20,7 +22,6 @@ import {
   Globe, 
   Clock, 
   Plus, 
-  Edit, 
   Trash2,
   Heart,
   Hospital,
@@ -29,36 +30,53 @@ import {
   AlertTriangle
 } from "lucide-react";
 
+const emergencyResourceFormSchema = insertEmergencyResourceSchema.omit({
+  userId: true,
+});
+
+type EmergencyResourceFormValues = z.infer<typeof emergencyResourceFormSchema>;
+
 export default function EmergencyResourcesModule() {
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState<EmergencyResource | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: resources = [], isLoading } = useQuery<EmergencyResource[]>({
+  const { data: rawResources, isLoading } = useQuery<
+    EmergencyResource[] | null
+  >({
     queryKey: ["/api/emergency-resources"],
   });
+  const resources = Array.isArray(rawResources) ? rawResources : [];
 
-  const form = useForm<InsertEmergencyResource>({
-    resolver: zodResolver(insertEmergencyResourceSchema),
+  const form = useForm<EmergencyResourceFormValues>({
+    resolver: zodResolver(emergencyResourceFormSchema),
     defaultValues: {
       name: "",
-      type: "crisis",
+      resourceType: "crisis",
       phoneNumber: "",
       address: "",
       website: "",
       description: "",
       availabilityHours: "",
       isEmergencyOnly: false,
-      caregiverId: 1, // This would come from the caregiver's session
+      isAvailable24_7: false,
     },
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: InsertEmergencyResource) => {
-      return await apiRequest("POST", "/api/emergency-resources", data);
+    mutationFn: async (data: EmergencyResourceFormValues) => {
+      const response = await apiRequest("POST", "/api/emergency-resources", data);
+      return await response.json() as EmergencyResource;
     },
-    onSuccess: () => {
+    onSuccess: (createdResource) => {
+      queryClient.setQueryData<EmergencyResource[] | null>(
+        ["/api/emergency-resources"],
+        (currentResources) => [
+          ...(Array.isArray(currentResources) ? currentResources : []),
+          createdResource,
+        ],
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-resources"] });
       toast({
         title: "Success",
@@ -67,20 +85,30 @@ export default function EmergencyResourcesModule() {
       form.reset();
       setShowForm(false);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to add emergency resource",
+        description: error instanceof ApiError && error.code === "RESOURCE_SCHEMA_UPDATE_REQUIRED"
+          ? error.message
+          : "Failed to add emergency resource",
         variant: "destructive",
       });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<InsertEmergencyResource> }) => {
-      return await apiRequest("PUT", `/api/emergency-resources/${id}`, data);
+    mutationFn: async ({ id, data }: { id: number; data: Partial<EmergencyResourceFormValues> }) => {
+      const response = await apiRequest("PUT", `/api/emergency-resources/${id}`, data);
+      return await response.json() as EmergencyResource;
     },
-    onSuccess: () => {
+    onSuccess: (updatedResource) => {
+      queryClient.setQueryData<EmergencyResource[] | null>(
+        ["/api/emergency-resources"],
+        (currentResources) =>
+          (Array.isArray(currentResources) ? currentResources : []).map((resource) =>
+            resource.id === updatedResource.id ? updatedResource : resource,
+          ),
+      );
       queryClient.invalidateQueries({ queryKey: ["/api/emergency-resources"] });
       toast({
         title: "Success",
@@ -89,10 +117,12 @@ export default function EmergencyResourcesModule() {
       setEditingResource(null);
       form.reset();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update emergency resource",
+        description: error instanceof ApiError && error.code === "RESOURCE_SCHEMA_UPDATE_REQUIRED"
+          ? error.message
+          : "Failed to update emergency resource",
         variant: "destructive",
       });
     },
@@ -118,7 +148,7 @@ export default function EmergencyResourcesModule() {
     },
   });
 
-  const handleSubmit = (data: InsertEmergencyResource) => {
+  const handleSubmit = (data: EmergencyResourceFormValues) => {
     if (editingResource) {
       updateMutation.mutate({ id: editingResource.id, data });
     } else {
@@ -131,14 +161,14 @@ export default function EmergencyResourcesModule() {
     setShowForm(true);
     form.reset({
       name: resource.name,
-      type: resource.type,
+      resourceType: resource.resourceType,
       phoneNumber: resource.phoneNumber || "",
       address: resource.address || "",
       website: resource.website || "",
       description: resource.description || "",
       availabilityHours: resource.availabilityHours || "",
       isEmergencyOnly: resource.isEmergencyOnly || false,
-      caregiverId: resource.caregiverId,
+      isAvailable24_7: resource.isAvailable24_7 || false,
     });
   };
 
@@ -203,7 +233,7 @@ export default function EmergencyResourcesModule() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Resource Name</FormLabel>
+                          <FormLabel required>Resource Name</FormLabel>
                           <FormControl>
                             <Input placeholder="Crisis Hotline, Local Counselor, etc." {...field} />
                           </FormControl>
@@ -214,10 +244,10 @@ export default function EmergencyResourcesModule() {
 
                     <FormField
                       control={form.control}
-                      name="type"
+                      name="resourceType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Type</FormLabel>
+                          <FormLabel required>Type</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -371,10 +401,10 @@ export default function EmergencyResourcesModule() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {getTypeIcon(resource.type)}
+                        {getTypeIcon(resource.resourceType)}
                         <h3 className="font-semibold text-lg">{resource.name}</h3>
-                        <Badge className={getTypeColor(resource.type)}>
-                          {resource.type.replace("_", " ")}
+                        <Badge className={getTypeColor(resource.resourceType)}>
+                          {resource.resourceType.replace("_", " ")}
                         </Badge>
                         {resource.isEmergencyOnly && (
                           <Badge variant="destructive" className="text-xs">
@@ -431,13 +461,10 @@ export default function EmergencyResourcesModule() {
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
-                      <Button
+                      <EditButton
                         onClick={() => startEdit(resource)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
+                        aria-label={`Edit ${resource.name}`}
+                      />
                       <Button
                         onClick={() => deleteMutation.mutate(resource.id)}
                         variant="ghost"

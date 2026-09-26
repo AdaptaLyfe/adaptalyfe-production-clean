@@ -1,0 +1,117 @@
+You are working on an existing Flutter application. Do NOT rebuild the Academic Planner from scratch. Inspect the existing Academic Planner implementation, BLoC/provider setup, routes, models, repositories, and UI first, then fix the existing functionality.
+
+## Academic Planner — Fix Required
+
+There are currently two issues in the Academic Planner section.
+
+### 1. Add Class — Class Does Not Appear After Adding
+
+Flow:
+
+1. Open **Academic Planner**.
+2. Open **Add Class**.
+3. Fill in the class details.
+4. Click the **Add Class** button.
+5. User returns to the Academic Planner screen.
+6. The newly added class is NOT displayed.
+
+Fix this issue.
+
+Requirements:
+
+* Keep the existing Add Class UI and design.
+* Keep the existing fields, validation, model, API/database logic, and navigation unless a change is required to fix the bug.
+* Make sure the Add Class action actually saves the class using the existing data flow.
+* After successfully adding the class, update/reload the Academic Planner class list.
+* Make sure the Academic Planner screen receives the latest data when returning from Add Class.
+* If the list uses `AcademicBloc`, make sure the appropriate event is dispatched after adding the class or when returning to the Academic Planner screen.
+* Do not require the user to manually refresh the page.
+* Prevent duplicate class entries when refreshing/reloading.
+* Preserve existing classes.
+
+Expected result:
+
+Add Class → click Add Class → return to Academic Planner → newly added class is immediately visible.
+
+---
+
+### 2. Academic Task → Add Assignment — AcademicBloc Provider Error
+
+Flow:
+
+1. Open **Academic Planner**.
+2. Open **Academic Task**.
+3. Click **Add Assignment**.
+4. Click the button to save/add the assignment.
+5. The following error appears:
+
+`Could not find the correct Provider<AcademicBloc> above this StatefulBuilder Widget`
+
+Fix the provider/BLoC scope issue.
+
+Requirements:
+
+* Find where `AcademicBloc` is created/provided.
+* Ensure `AcademicBloc` is available above every widget that needs to access it.
+* Pay special attention to `StatefulBuilder` used inside the Add Assignment UI/dialog/bottom sheet.
+* Do NOT simply create a second unrelated `AcademicBloc` inside the `StatefulBuilder` unless the existing architecture requires it.
+* Reuse the existing `AcademicBloc` instance where appropriate.
+* Make sure the `BuildContext` used with:
+
+  * `context.read<AcademicBloc>()`
+  * `context.watch<AcademicBloc>()`
+  * `BlocProvider.of<AcademicBloc>(context)`
+    has access to the correct `AcademicBloc`.
+* If the Add Assignment UI is inside a dialog, modal, bottom sheet, or separate route, make sure the existing `AcademicBloc` is correctly passed into that new context.
+* Keep the existing BLoC architecture and state management pattern.
+* Do not replace BLoC with another state-management solution.
+* Do not create unnecessary global providers.
+
+### Important
+
+Check the complete flow:
+
+Academic Planner
+→ Academic Tasks
+→ Add Assignment
+→ Enter assignment details
+→ Save/Add Assignment
+→ Assignment is saved
+→ No Provider error
+→ Assignment appears in the task/assignment list.
+
+Also verify:
+
+Academic Planner
+→ Add Class
+→ Enter class details
+→ Add Class
+→ Return to Academic Planner
+→ New class appears immediately.
+
+### Code Quality
+
+Before making changes:
+
+1. Inspect the existing Academic Planner files.
+2. Identify the current `AcademicBloc`, events, states, repository/data source, models, and provider setup.
+3. Trace the Add Class flow.
+4. Trace the Add Assignment flow.
+5. Identify the exact reason the `AcademicBloc` is unavailable inside `StatefulBuilder`.
+6. Make the smallest clean fix possible.
+
+Do not modify unrelated screens or functionality.
+
+After making the changes:
+
+* Run `flutter analyze`.
+* Fix any errors introduced by your changes.
+* Run/build the Flutter app if possible.
+* Verify both flows.
+* Give me a short summary of:
+
+  1. Root cause of Add Class not appearing.
+  2. Root cause of the `Provider<AcademicBloc>` error.
+  3. Files changed.
+  4. What was changed in each file.
+  5. How both flows were verified.

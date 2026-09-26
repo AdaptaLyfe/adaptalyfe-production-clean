@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { type PersonalDocument } from "@shared/schema";
-import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Edit, Image as ImageIcon, Link as LinkIcon, Camera, Clock } from "lucide-react";
+import { Plus, FileText, Shield, Car, Heart, CreditCard, AlertTriangle, User, ExternalLink, Trash2, Image as ImageIcon, Link as LinkIcon, Camera, Clock } from "lucide-react";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
@@ -29,12 +30,49 @@ const CATEGORIES = [
 ];
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  category: z.string().min(1, "Category is required"),
-  documentType: z.enum(["text", "image", "link"]),
+  title: z.string().trim().min(1, "Title is required"),
+  category: z.string().trim().min(1, "Category is required"),
+  documentType: z.enum(["text", "image", "link"], {
+    required_error: "Document type is required",
+    invalid_type_error: "Document type is required",
+  }),
   content: z.string().optional(),
   linkUrl: z.string().optional(),
   isImportant: z.boolean().optional(),
+}).superRefine((data, context) => {
+  if (data.documentType === "text" && !data.content?.trim()) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["content"],
+      message: "Information is required",
+    });
+  }
+
+  if (data.documentType === "link") {
+    const linkUrl = data.linkUrl?.trim() || "";
+
+    if (!linkUrl) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["linkUrl"],
+        message: "Website URL is required",
+      });
+      return;
+    }
+
+    try {
+      const parsedUrl = new URL(linkUrl);
+      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+        throw new Error("Unsupported URL protocol");
+      }
+    } catch {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["linkUrl"],
+        message: "Enter a valid website URL",
+      });
+    }
+  }
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -61,6 +99,21 @@ export default function PersonalDocuments() {
       isImportant: false,
     },
   });
+
+  const openAddDocument = () => {
+    setEditingDoc(null);
+    setDocType("text");
+    setUploadedImageUrl("");
+    form.reset({
+      title: "",
+      category: "medical",
+      documentType: "text",
+      content: "",
+      linkUrl: "",
+      isImportant: false,
+    });
+    setIsOpen(true);
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -202,7 +255,7 @@ export default function PersonalDocuments() {
         <Button 
           className="w-full sm:w-auto" 
           data-testid="button-add-document"
-          onClick={() => setIsOpen(true)}
+          onClick={openAddDocument}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Document
@@ -217,7 +270,10 @@ export default function PersonalDocuments() {
             setUploadedImageUrl("");
           }
         }}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
+          <DialogContent
+            overlayClassName="z-[110]"
+            className="z-[120] max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain w-[95vw] sm:w-full"
+          >
             <DialogHeader>
               <DialogTitle>{editingDoc ? "Edit Document" : "Add New Document"}</DialogTitle>
               <DialogDescription>
@@ -315,6 +371,11 @@ export default function PersonalDocuments() {
                       <span className="text-xs sm:text-sm">Link</span>
                     </Button>
                   </div>
+                  {form.formState.errors.documentType?.message && (
+                    <p className="text-sm font-medium text-destructive mt-2">
+                      {form.formState.errors.documentType.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Conditional Content Fields */}
@@ -557,10 +618,7 @@ export default function PersonalDocuments() {
                   )}
 
                   <div className="flex gap-2 flex-wrap">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex-1 sm:flex-none"
+                    <EditButton
                       onClick={() => {
                         setEditingDoc(doc);
                         setDocType(doc.documentType as "text" | "image" | "link");
@@ -575,11 +633,9 @@ export default function PersonalDocuments() {
                         });
                         setIsOpen(true);
                       }}
+                      aria-label={`Edit ${doc.title}`}
                       data-testid={`button-edit-${doc.id}`}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
+                    />
                     <Button
                       variant="ghost"
                       size="sm"

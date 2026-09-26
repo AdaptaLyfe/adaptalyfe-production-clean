@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, AlertTriangle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { FieldLabel } from "@/components/ui/field-label";
 
 interface MoodRequirementModalProps {
   isOpen: boolean;
@@ -83,9 +84,9 @@ export default function MoodRequirementModal({ isOpen, onClose }: MoodRequiremen
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-3 block">
+            <FieldLabel required className="text-sm font-medium text-gray-700 mb-3 block">
               How are you feeling today?
-            </label>
+            </FieldLabel>
             <div className="grid grid-cols-1 gap-2">
               {moodOptions.map((option) => (
                 <button

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EditButton } from "@/components/ui/edit-button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getSkillProgressState } from "@/lib/skill-progress";
+import {
+  isValidSkillLevelRange,
+  skillLevelRangeError,
+} from "@/lib/skill-level-validation";
+import type { TransitionSkill } from "@shared/schema";
+import {
+  normalizeTransitionSkillPriority,
+  transitionSkillPrioritySchema,
+} from "@shared/skill-priority";
 import { 
   Star, 
   Trophy, 
@@ -29,7 +40,6 @@ import {
   Briefcase,
   Heart,
   Brain,
-  Edit,
   Trash2
 } from "lucide-react";
 
@@ -40,8 +50,76 @@ const skillFormSchema = z.object({
   currentLevel: z.number().min(1).max(10).default(1),
   targetLevel: z.number().min(1).max(10).default(5),
   targetDate: z.string().optional(),
-  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-});
+  priority: transitionSkillPrioritySchema,
+}).refine(
+  (values) => isValidSkillLevelRange(values.currentLevel, values.targetLevel),
+  {
+    message: skillLevelRangeError,
+    path: ["targetLevel"],
+  },
+);
+
+type SkillFormValues = z.infer<typeof skillFormSchema>;
+
+function logLifeSkill(operation: string, message: string, details?: unknown) {
+  if (import.meta.env.DEV) {
+    console.debug(`[LifeSkills][${operation}] ${message}`, details ?? "");
+  }
+}
+
+function parseTransitionSkillResponse(responseData: unknown): TransitionSkill {
+  const candidate =
+    (responseData as { skill?: unknown; transitionSkill?: unknown; data?: unknown } | null)
+      ?.skill ??
+    (responseData as { transitionSkill?: unknown; data?: unknown } | null)?.transitionSkill ??
+    (responseData as { data?: unknown } | null)?.data ??
+    responseData;
+
+  if (!candidate || typeof candidate !== "object") {
+    throw new Error("The server returned an invalid skill response.");
+  }
+
+  const id = Number((candidate as { id?: unknown }).id);
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error("The server returned an invalid skill response.");
+  }
+
+  const skill = candidate as TransitionSkill;
+  return {
+    ...skill,
+    id,
+    priority: normalizeTransitionSkillPriority(skill.priority) ?? "",
+  };
+}
+
+function parseTransitionSkillsResponse(responseData: unknown): TransitionSkill[] {
+  const candidate =
+    (responseData as {
+      skills?: unknown;
+      transitionSkills?: unknown;
+      data?: unknown;
+    } | null)?.skills ??
+    (responseData as { transitionSkills?: unknown; data?: unknown } | null)
+      ?.transitionSkills ??
+    (responseData as { data?: unknown } | null)?.data ??
+    responseData;
+
+  if (candidate === null || candidate === undefined) return [];
+  if (!Array.isArray(candidate)) {
+    throw new Error("The server returned an invalid Life Skills list.");
+  }
+
+  return candidate
+    .filter((skill) => skill && typeof skill === "object")
+    .map(parseTransitionSkillResponse);
+}
+
+function getSkillMutationErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message.replace(/^\d+:\s*/, "");
+  }
+  return fallback;
+}
 
 const categoryConfig = {
   academic: { label: "Academic Skills", icon: BookOpen, color: "bg-blue-500" },
@@ -57,6 +135,7 @@ export default function SkillsMilestones() {
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<any>(null);
+  const [busySkillIds, setBusySkillIds] = useState<Set<number>>(() => new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const form = useForm({
@@ -81,24 +160,54 @@ export default function SkillsMilestones() {
       currentLevel: 1,
       targetLevel: 5,
       targetDate: "",
-      priority: "medium" as const,
     },
   });
 
   // Fetch transition skills data
-  const { data: transitionSkills = [], isLoading: skillsLoading, refetch: refetchSkills } = useQuery({
+  const {
+    data: transitionSkillsData,
+    isLoading: skillsLoading,
+    isError: skillsQueryError,
+    refetch: refetchSkills,
+  } = useQuery<unknown, Error, TransitionSkill[] | null>({
     queryKey: ["/api/transition-skills"],
+    select: (responseData) =>
+      responseData === null ? null : parseTransitionSkillsResponse(responseData),
     staleTime: 0,
   });
+  const transitionSkills = Array.isArray(transitionSkillsData)
+    ? transitionSkillsData
+    : [];
+  const skillsRequestFailed = skillsQueryError || transitionSkillsData === null;
 
   // Create skill mutation
   const createSkillMutation = useMutation({
-    mutationFn: async (skillData: any) => {
-      return apiRequest("POST", "/api/transition-skills", skillData);
+    mutationFn: async (skillData: SkillFormValues): Promise<TransitionSkill> => {
+      const payload = {
+        skillName: skillData.skillName.trim(),
+        description: skillData.description?.trim() || null,
+        skillCategory: skillData.skillCategory,
+        currentLevel: skillData.currentLevel,
+        targetLevel: skillData.targetLevel,
+        priority: skillData.priority,
+      };
+      logLifeSkill("create", "request started", payload);
+      const response = await apiRequest("POST", "/api/transition-skills", payload);
+      const responseData = await response.json();
+      logLifeSkill("create", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
+    onSuccess: (createdSkill) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) => [
+          createdSkill,
+          ...currentSkills.filter((skill) => skill.id !== createdSkill.id),
+        ],
+      );
+      logLifeSkill("create", "state updated and UI success", {
+        id: createdSkill.id,
+      });
       setIsAddSkillOpen(false);
       form.reset();
       toast({
@@ -106,10 +215,15 @@ export default function SkillsMilestones() {
         description: "New skill milestone added!",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      logLifeSkill("create", "failed", error);
+      const message =
+        error instanceof Error && error.message
+          ? error.message.replace(/^\d+:\s*/, "")
+          : "Unable to save this skill right now. Please try again.";
       toast({
         title: "Error",
-        description: "Failed to add skill milestone",
+        description: message,
         variant: "destructive",
       });
     },
@@ -118,26 +232,82 @@ export default function SkillsMilestones() {
   // Update skill progress mutation
   const updateSkillMutation = useMutation({
     mutationFn: async ({ id, currentLevel }: { id: number; currentLevel: number }) => {
-      return apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
+      logLifeSkill("progress", "request started", { id, currentLevel });
+      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, { currentLevel });
+      const responseData = await response.json();
+      logLifeSkill("progress", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
+    onMutate: ({ id }) => {
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
+    },
+    onSuccess: (updatedSkill: TransitionSkill, variables) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) =>
+          currentSkills.map((skill) =>
+            skill.id === variables.id ? { ...skill, ...updatedSkill } : skill,
+          ),
+      );
+      logLifeSkill("progress", "state updated and UI success", {
+        id: updatedSkill.id,
+      });
       toast({
         title: "Progress Updated",
         description: "Great job on improving your skills!",
+      });
+    },
+    onError: (error, variables) => {
+      logLifeSkill("progress", "failed", { id: variables.id, error });
+      toast({
+        title: "Error",
+        description: getSkillMutationErrorMessage(
+          error,
+          "Unable to update skill progress. Please try again.",
+        ),
+        variant: "destructive",
+      });
+    },
+    onSettled: (_data, _error, variables) => {
+      setBusySkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(variables.id);
+        return nextIds;
       });
     },
   });
 
   // Edit skill mutation
   const editSkillMutation = useMutation({
-    mutationFn: async ({ id, skillData }: { id: number; skillData: any }) => {
-      return apiRequest("PATCH", `/api/transition-skills/${id}`, skillData);
+    mutationFn: async ({ id, skillData }: { id: number; skillData: SkillFormValues }) => {
+      const payload = {
+        skillName: skillData.skillName.trim(),
+        description: skillData.description?.trim() || null,
+        skillCategory: skillData.skillCategory,
+        currentLevel: skillData.currentLevel,
+        targetLevel: skillData.targetLevel,
+        priority: skillData.priority,
+      };
+      logLifeSkill("edit", "request started", { id, payload });
+      const response = await apiRequest("PATCH", `/api/transition-skills/${id}`, payload);
+      const responseData = await response.json();
+      logLifeSkill("edit", "response received", responseData);
+      return parseTransitionSkillResponse(responseData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
+    onMutate: ({ id }) => {
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
+    },
+    onSuccess: (updatedSkill) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) =>
+          currentSkills.map((skill) =>
+            skill.id === updatedSkill.id ? { ...skill, ...updatedSkill } : skill,
+          ),
+      );
+      logLifeSkill("edit", "state updated and UI success", {
+        id: updatedSkill.id,
+      });
       setIsEditSkillOpen(false);
       setEditingSkill(null);
       editForm.reset();
@@ -146,11 +316,19 @@ export default function SkillsMilestones() {
         description: "Skill updated successfully!",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      logLifeSkill("edit", "failed", error);
       toast({
         title: "Error",
-        description: "Failed to update skill",
+        description: getSkillMutationErrorMessage(error, "Failed to update skill"),
         variant: "destructive",
+      });
+    },
+    onSettled: (_data, _error, variables) => {
+      setBusySkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(variables.id);
+        return nextIds;
       });
     },
   });
@@ -158,21 +336,40 @@ export default function SkillsMilestones() {
   // Delete skill mutation
   const deleteSkillMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/transition-skills/${id}`);
+      logLifeSkill("delete", "request started", { id });
+      await apiRequest("DELETE", `/api/transition-skills/${id}`);
+      return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/transition-skills"] });
-      refetchSkills();
+    onMutate: (id) => {
+      setBusySkillIds((currentIds) => new Set(currentIds).add(id));
+    },
+    onSuccess: (deletedSkillId) => {
+      queryClient.setQueryData<TransitionSkill[]>(
+        ["/api/transition-skills"],
+        (currentSkills = []) =>
+          currentSkills.filter((skill) => skill.id !== deletedSkillId),
+      );
+      logLifeSkill("delete", "state updated and UI success", {
+        id: deletedSkillId,
+      });
       toast({
         title: "Success",
         description: "Skill deleted successfully!",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      logLifeSkill("delete", "failed", error);
       toast({
         title: "Error",
-        description: "Failed to delete skill",
+        description: getSkillMutationErrorMessage(error, "Failed to delete skill"),
         variant: "destructive",
+      });
+    },
+    onSettled: (_data, _error, id) => {
+      setBusySkillIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(id);
+        return nextIds;
       });
     },
   });
@@ -190,7 +387,7 @@ export default function SkillsMilestones() {
       currentLevel: skill.currentLevel || 1,
       targetLevel: skill.targetLevel || 5,
       targetDate: skill.targetDate || "",
-      priority: skill.priority || "medium",
+      priority: normalizeTransitionSkillPriority(skill.priority) ?? undefined,
     });
     setIsEditSkillOpen(true);
   };
@@ -223,6 +420,19 @@ export default function SkillsMilestones() {
         <div className="text-center py-12">
           <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-600">Loading your skills and milestones...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (skillsRequestFailed) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <p className="text-gray-600 mb-4">
+            Unable to load your skills and milestones right now.
+          </p>
+          <Button onClick={() => refetchSkills()}>Try again</Button>
         </div>
       </div>
     );
@@ -262,7 +472,10 @@ export default function SkillsMilestones() {
               <div>
                 <p className="text-sm text-gray-600">Completed</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {transitionSkills.filter((s: any) => (s.currentLevel || 1) >= (s.targetLevel || 5)).length}
+                  {transitionSkills.filter((s: any) => {
+                    const progress = getSkillProgressState(s.currentLevel, s.targetLevel);
+                    return progress.isCompleted;
+                  }).length}
                 </p>
               </div>
             </div>
@@ -279,9 +492,8 @@ export default function SkillsMilestones() {
                 <p className="text-sm text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {transitionSkills.filter((s: any) => {
-                    const current = s.currentLevel || 1;
-                    const target = s.targetLevel || 5;
-                    return current < target && current > 1;
+                    const progress = getSkillProgressState(s.currentLevel, s.targetLevel);
+                    return progress.isInProgress;
                   }).length}
                 </p>
               </div>
@@ -330,7 +542,10 @@ export default function SkillsMilestones() {
               Add Skill Milestone
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent
+            overlayClassName="z-[110]"
+            className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+          >
             <DialogHeader>
               <DialogTitle>Add New Skill Milestone</DialogTitle>
               <DialogDescription>
@@ -344,7 +559,7 @@ export default function SkillsMilestones() {
                   name="skillName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Skill Name</FormLabel>
+                      <FormLabel required>Skill Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Time Management, Cooking, Communication" {...field} />
                       </FormControl>
@@ -358,7 +573,7 @@ export default function SkillsMilestones() {
                   name="skillCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -382,7 +597,7 @@ export default function SkillsMilestones() {
                     name="currentLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Level (1-10)</FormLabel>
+                        <FormLabel required>Current Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -402,7 +617,7 @@ export default function SkillsMilestones() {
                     name="targetLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Target Level (1-10)</FormLabel>
+                        <FormLabel required>Target Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -440,7 +655,7 @@ export default function SkillsMilestones() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -491,7 +706,7 @@ export default function SkillsMilestones() {
                   name="skillName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Skill Name</FormLabel>
+                      <FormLabel required>Skill Name</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., Time Management, Cooking, Communication" {...field} />
                       </FormControl>
@@ -505,7 +720,7 @@ export default function SkillsMilestones() {
                   name="skillCategory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel required>Category</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -529,7 +744,7 @@ export default function SkillsMilestones() {
                     name="currentLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Current Level (1-10)</FormLabel>
+                        <FormLabel required>Current Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -549,7 +764,7 @@ export default function SkillsMilestones() {
                     name="targetLevel"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Target Level (1-10)</FormLabel>
+                        <FormLabel required>Target Level (1-10)</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -587,11 +802,11 @@ export default function SkillsMilestones() {
                   name="priority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                      <FormLabel required>Priority</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -685,7 +900,7 @@ export default function SkillsMilestones() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleProgressUpdate(skill.id, Math.max(1, (skill.currentLevel || 1) - 1))}
-                        disabled={updateSkillMutation.isPending || (skill.currentLevel || 1) <= 1}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) <= 1}
                       >
                         -
                       </Button>
@@ -693,37 +908,39 @@ export default function SkillsMilestones() {
                         variant="default"
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updateSkillMutation.isPending || (skill.currentLevel || 1) >= 10}
+                        onClick={() => handleProgressUpdate(
+                          skill.id,
+                          Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
+                        )}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         Update Progress
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleProgressUpdate(skill.id, Math.min(10, (skill.currentLevel || 1) + 1))}
-                        disabled={updateSkillMutation.isPending || (skill.currentLevel || 1) >= 10}
+                        onClick={() => handleProgressUpdate(
+                          skill.id,
+                          Math.min(skill.targetLevel || 5, (skill.currentLevel || 1) + 1),
+                        )}
+                        disabled={busySkillIds.has(skill.id) || (skill.currentLevel || 1) >= (skill.targetLevel || 5)}
                       >
                         +
                       </Button>
                     </div>
                     
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
+                      <EditButton
                         onClick={() => handleEditSkill(skill)}
-                      >
-                        <Edit size={14} className="mr-1" />
-                        Edit
-                      </Button>
+                        aria-label={`Edit ${skill.skillName}`}
+                        disabled={busySkillIds.has(skill.id)}
+                      />
                       <Button
                         variant="outline"
                         size="sm"
                         className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleDeleteSkill(skill.id)}
-                        disabled={deleteSkillMutation.isPending}
+                        disabled={busySkillIds.has(skill.id)}
                       >
                         <Trash2 size={14} className="mr-1" />
                         Delete

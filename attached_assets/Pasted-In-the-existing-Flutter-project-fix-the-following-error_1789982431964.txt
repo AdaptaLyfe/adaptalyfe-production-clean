@@ -1,0 +1,89 @@
+In the existing Flutter project, fix the following errors in the **Health Records** section.
+
+## 1. Health Records → Reactions
+
+### Issue A — Error while adding a Reaction
+
+When the user adds a new Reaction, an error is displayed unexpectedly.
+
+Fix:
+
+* Check the complete add-reaction flow.
+* Identify the actual cause of the error.
+* Make sure valid Reaction data can be added successfully.
+* Validate required fields before submitting.
+* Handle API/backend errors correctly if the API is involved.
+* Do not show an error when the Reaction is added successfully.
+* Keep the existing UI and design unchanged.
+
+### Issue B — Error after tapping "Cancel" while adding Reaction Notes
+
+When the user adds Reaction Notes and then taps **Cancel**, an error is displayed.
+
+Fix:
+
+* Cancel should simply close the add/edit form or modal.
+* Cancel must NOT call the save/add API.
+* Cancel must NOT trigger validation errors.
+* Cancel must NOT show an error message.
+* Discard unsaved changes when Cancel is tapped.
+* Keep existing saved data unchanged.
+* Make sure the screen returns to the previous state correctly.
+
+---
+
+## 2. Health Records → Trusted Contacts
+
+### Issue C — Error while adding a new Trusted Contact
+
+When the user adds a new Trusted Contact, an error is displayed unexpectedly.
+
+Fix:
+
+* Check the complete Trusted Contact creation flow.
+* Identify and fix the root cause.
+* Validate required contact fields before submission.
+* Make sure valid Trusted Contact data is saved successfully.
+* Handle API/backend responses correctly.
+* Do not show an error when the contact is successfully added.
+* Keep the existing UI and design unchanged.
+
+### Issue D — Error after tapping "Cancel" while adding Trusted Contact details
+
+When the user enters Trusted Contact details and taps **Cancel**, an error is displayed.
+
+Fix:
+
+* Cancel should only close the add/edit form or modal.
+* Cancel must NOT call the save/add API.
+* Cancel must NOT trigger form validation.
+* Cancel must NOT show an error message.
+* Discard unsaved changes.
+* Keep previously saved Trusted Contact data unchanged.
+* Return to the previous screen/state correctly.
+
+## Important Requirements
+
+* This is an **existing Flutter project**. Do not rebuild the feature from scratch.
+* First inspect the existing code and identify the root cause.
+* Fix the actual issue instead of hiding or suppressing errors globally.
+* Do not modify unrelated Health Records features.
+* Do not change existing UI design, colors, spacing, navigation, or functionality unless required for the fix.
+* Preserve the existing architecture, state management, API services, models, and repository structure.
+* If BLoC/Cubit/Provider/etc. is already used, follow the existing pattern.
+* Check loading, success, error, and cancel states carefully.
+* Make sure Cancel actions do not accidentally trigger submission or validation.
+* Handle null/empty response data safely.
+* Run `flutter analyze` and fix any issues caused by your changes.
+* Test all four scenarios after making the changes.
+
+### Acceptance Criteria
+
+1. Reaction can be added successfully without an unexpected error.
+2. Tapping Cancel after entering Reaction Notes produces no error.
+3. Trusted Contact can be added successfully without an unexpected error.
+4. Tapping Cancel after entering Trusted Contact details produces no error.
+5. No duplicate API calls occur.
+6. Cancel never submits data.
+7. Existing saved data is not deleted or modified when Cancel is tapped.
+8. No unrelated functionality is changed.

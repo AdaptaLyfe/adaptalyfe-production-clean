@@ -1,0 +1,173 @@
+In the existing **React Native + Wrapper project**, fix the following issues properly. Do NOT rewrite the project or change unrelated functionality.
+
+## 1. Popup / Modal Size Issue
+
+Problem:
+Popups/modals used to add different items such as:
+
+* Contact
+* Reaction
+* Trusted Contact
+* Other "Add" forms
+
+are not fitting correctly according to the page/screen size.
+
+Requirements:
+
+* First inspect the existing popup/modal implementation and identify the common/root cause.
+* Make the popup responsive according to the available screen/page size.
+* It must work correctly on:
+
+  * Small mobile screens
+  * Large mobile screens
+  * Tablet
+  * Different orientations if supported
+  * Wrapper/web environment if supported by the existing project
+* Popup should never:
+
+  * Go outside the visible screen
+  * Be cut off
+  * Hide important buttons such as Save/Cancel
+  * Create unwanted horizontal overflow
+  * Become too tall for the screen
+  * Get hidden behind the keyboard
+* When the keyboard opens, the popup content should remain accessible.
+* Use the existing project styling/design system. Do not introduce a completely different UI.
+* Prefer fixing the shared/common modal component if multiple screens use the same component instead of creating separate hacks for every screen.
+* If different popup types require different heights, make the modal content dynamically adapt to its content and available screen height.
+* Make the content scrollable when the content is larger than the available height.
+* Preserve existing navigation, form behavior, buttons, API calls, and state management.
+
+## 2. Trusted Contact Validation
+
+Problem:
+The **Trusted Contact → Add New Contact** form does not properly validate:
+
+* Email address
+* Phone number
+
+Fix the validation properly.
+
+### Email validation
+
+Requirements:
+
+* Required field if email is required by the existing business logic.
+* Reject clearly invalid email formats.
+* Accept normal valid email formats such as:
+
+  * [example@gmail.com](mailto:example@gmail.com)
+  * [john.doe@company.com](mailto:john.doe@company.com)
+  * [user+test@example.com](mailto:user+test@example.com)
+* Reject examples such as:
+
+  * example
+  * example@
+  * @gmail.com
+  * user@
+  * user @gmail.com
+  * user@gmail
+* Trim unnecessary spaces before validation/submission.
+* Do not accept leading/trailing spaces as part of the actual email.
+* Show a clear existing-style validation error.
+* Do not allow submission while the email is invalid.
+
+### Phone number validation
+
+Requirements:
+
+* Validate the phone number according to the existing application's supported country/format.
+* Do not rely only on checking whether the field contains numbers.
+* Reject obviously invalid values such as:
+
+  * letters
+  * random symbols
+  * too few digits
+  * too many digits
+  * invalid phone format
+* Handle spaces, `+`, and country code correctly according to the existing phone-number behavior.
+* Trim unnecessary spaces.
+* Prevent submission when the phone number is invalid.
+* Keep the existing UI and phone input behavior unless a change is required for correct validation.
+
+## 3. Important: Prevent the Bug From Returning
+
+Before making changes:
+
+1. Search the entire project for:
+
+   * Trusted Contact
+   * Add Contact
+   * Contact modal
+   * Modal
+   * Popup
+   * Dialog
+   * Email validation
+   * Phone validation
+2. Identify whether multiple screens share the same modal/form/validation component.
+3. Fix the root/common implementation where possible instead of adding duplicate validation code.
+4. Check both frontend validation and the final submit handler.
+5. Make sure invalid data cannot bypass validation by pressing Save/Submit directly.
+6. Preserve existing API/backend validation and error handling.
+7. Do not remove existing validation that is already working.
+
+## 4. Regression Prevention
+
+After implementing the fix, test all affected flows:
+
+### Popup tests
+
+* Open Contact popup
+* Open Reaction popup
+* Open Trusted Contact popup
+* Open other existing Add popups
+* Test on small and large screen sizes
+* Open popup while keyboard is visible
+* Enter long text
+* Verify Save/Cancel buttons remain accessible
+* Verify no overflow or clipped content
+
+### Trusted Contact tests
+
+Test valid and invalid email addresses.
+
+Test valid and invalid phone numbers.
+
+Verify:
+
+* Invalid email → Save blocked
+* Invalid phone → Save blocked
+* Both invalid → Save blocked
+* Valid email + valid phone → Save works
+* Keyboard does not cover validation messages/buttons
+* Existing Trusted Contact edit/update functionality still works
+
+## 5. Code Quality
+
+* Follow the existing React Native + Wrapper architecture and coding style.
+* Reuse existing components/utilities where possible.
+* Do not duplicate validation logic.
+* Do not use arbitrary fixed modal heights that can break on another screen size.
+* Use responsive dimensions based on available screen size/insets.
+* Handle keyboard and safe-area properly.
+* Do not modify unrelated screens or features.
+* Do not change API contracts unless absolutely required.
+* Do not change existing business logic.
+
+## 6. Final Verification
+
+After the fix:
+
+* Run the project's existing lint/type-check/test/build commands.
+* Fix any errors caused by your changes.
+* Check for TypeScript/JavaScript errors and warnings related to the modified code.
+* Verify the application builds successfully.
+* Give me a short summary of:
+
+  1. Root cause of popup sizing issue
+  2. Root cause of Trusted Contact validation issue
+  3. Files/components changed
+  4. Validation rules implemented
+  5. Tests performed
+
+Most importantly: **fix the root cause, not just the visible symptom, so the same popup sizing and Trusted Contact validation bugs do not reappear on another screen.**

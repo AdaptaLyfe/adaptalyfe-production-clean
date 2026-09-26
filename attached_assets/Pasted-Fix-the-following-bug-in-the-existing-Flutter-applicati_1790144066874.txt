@@ -1,0 +1,104 @@
+Fix the following bug in the existing Flutter application:
+
+### Bug
+
+**Achievements / Rewards → Rewards**
+
+A user can redeem the same reward multiple times, even when **"Maximum Redemptions (Optional)"** is configured with a limit.
+
+Example:
+
+* Maximum Redemptions = 2
+* User redeems the reward 2 times → allowed
+* User tries to redeem it a 3rd time → currently still allowed ❌
+* Expected → 3rd redemption must be blocked ✅
+
+### Required Fix
+
+Investigate the complete reward redemption flow before making changes.
+
+1. Find:
+
+   * Reward model/data structure
+   * "Maximum Redemptions (Optional)" field
+   * Reward details screen
+   * Redeem button/action
+   * Redemption service/repository/API
+   * Firestore/database/API queries related to reward redemptions
+   * Any BLoC/Cubit/state management used for rewards
+
+2. Implement proper redemption-limit validation.
+
+Rules:
+
+* If **Maximum Redemptions is empty/null**, there should be **no redemption-limit restriction**.
+* If **Maximum Redemptions = N**, the user must not be able to redeem that reward more than N times.
+* Count only valid/successful redemptions for that specific user and specific reward.
+* When the current redemption count reaches the maximum, disable/hide the Redeem action as appropriate and prevent redemption.
+* If the user somehow bypasses the UI, the business-logic/backend/data layer must still reject the redemption.
+* Never rely only on the button being disabled.
+
+3. Prevent race conditions/double redemption:
+
+* Make the redemption check and redemption creation/update atomic where the backend/database supports it.
+* Prevent rapid multiple taps from creating multiple redemption records.
+* Show a loading state while redemption is processing.
+* Ignore duplicate redemption requests while one request is already in progress.
+
+4. Handle edge cases:
+
+* Maximum Redemptions = 1 → only one successful redemption allowed.
+* Maximum Redemptions = 2 → only two successful redemptions allowed.
+* Maximum Redemptions = 0 → follow the existing product/business rule; do not silently interpret it incorrectly.
+* Maximum Redemptions = null/empty → unlimited.
+* Existing users who have already redeemed the reward must have their previous redemption count included.
+* Failed/cancelled redemption attempts must not incorrectly increase the successful redemption count.
+* If redemption data is paginated, do NOT count only the currently loaded page. Use the complete/authoritative count.
+* Ensure the count is calculated for the correct logged-in user and correct reward ID.
+
+5. UI behavior:
+
+* Display the current redemption status if the existing design supports it, for example:
+  `2 / 2 redemptions used`
+* Once the maximum is reached, show the existing appropriate "limit reached" behavior/message.
+* Do not change the existing UI design unnecessarily.
+
+6. Important:
+   Do NOT create a workaround only on the Rewards screen.
+
+Trace the actual redemption flow and fix the root cause so the limit is enforced consistently from:
+**UI → BLoC/Cubit → Repository/Service → API/Firebase/database**
+
+7. Before finishing:
+
+* Search the entire project for all reward redemption implementations.
+* Check whether there are multiple redemption paths.
+* Make sure every path uses the same maximum-redemption validation.
+* Preserve the existing architecture, naming conventions, authentication, and unrelated reward functionality.
+* Do not break existing reward creation/editing or other Achievements functionality.
+
+### Testing / Acceptance Criteria
+
+Create or update tests for at least these cases:
+
+1. Maximum = 1 → first redemption succeeds, second is rejected.
+2. Maximum = 2 → first and second succeed, third is rejected.
+3. Maximum = 5 → sixth redemption is rejected.
+4. Maximum is null/empty → redemption remains unlimited.
+5. Existing redemption history is correctly counted.
+6. Failed redemption does not increase the count.
+7. Rapidly tapping Redeem cannot create duplicate redemptions.
+8. Refreshing/reopening the app does not reset the redemption count.
+9. Different rewards maintain separate redemption counts.
+10. Different users have separate redemption counts.
+11. Reaching the limit updates the UI correctly.
+12. Direct/bypassed calls cannot exceed the configured limit.
+
+After implementing the fix:
+
+* Run Flutter analyze.
+* Run the relevant unit/widget/integration tests.
+* Verify there are no new errors or warnings related to this change.
+* Give me a concise summary of the root cause, files changed, logic implemented, and tests performed.
+
+Do not make unrelated changes.

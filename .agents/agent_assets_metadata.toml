@@ -6,78 +6,91 @@ id = "yc6EVVJnGwo8ZVNYO9jwZ"
 uri = "file://adaptalyfe-ios-20260318.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS Project — Full Xcode Build (March 18, 2026)"
+logical_id = "2571041e-b08f-4d31-88d2-391af3879fb2"
 
 [[outputs]]
 id = "Tdz2fImSouHLlZ3GZTj_4"
 uri = "file://adaptalyfe-ios-20260323.zip"
 type = "unspecified"
 title = "Adaptalyfe iOS — Self-Contained Xcode Project (March 23, 2026)"
+logical_id = "42e051e5-21cc-4dc5-a46f-9fb4e4287726"
 
 [[outputs]]
 id = "j0eqxErgg29l2C_qyBH2q"
 uri = "file://android-assets.zip"
 type = "unspecified"
 title = "Android Assets Folder (with splash screen fix)"
+logical_id = "3cec425c-4393-4e92-938c-a6fc21e7aff0"
 
 [[outputs]]
 id = "BlD2WsbvXKslwjtkM001G"
 uri = "file://public-only.zip"
 type = "unspecified"
 title = "public folder — UPDATED (first-paint fix included)"
+logical_id = "1bf71eec-cd6f-4884-85c4-098f074800b5"
 
 [[outputs]]
 id = "pWpAdKVuBVh-qrBHACpuG"
 uri = "file://capacitor-config-fix.zip"
 type = "unspecified"
 title = "capacitor.config.json (splash screen fix)"
+logical_id = "87b61f5f-0a2b-48c0-b625-953532010c57"
 
 [[outputs]]
 id = "Ipf2gP_rtuiqqz9wA2nzZ"
 uri = "file://android-values-fix.zip"
 type = "unspecified"
 title = "Android window background fix (2 files only)"
+logical_id = "b6b473d7-5713-4047-85fc-77db373cec2b"
 
 [[outputs]]
 id = "mTd8_i9fGFJ55GeKXuVFU"
 uri = "file://FINAL-android-fix.zip"
 type = "unspecified"
 title = "FINAL Android Fix — All 4 files (one APK build needed)"
+logical_id = "867bde6e-d333-4ca0-b73a-6ab978c4152d"
 
 [[outputs]]
 id = "JoJYQYg6EunXnDzQAaAp-"
 uri = "file://adaptalyfe-final.zip"
 type = "unspecified"
 title = "adaptalyfe-final.zip - Complete project with all Apple rejection fixes (14MB)"
+logical_id = "919b8757-3798-4d5c-b340-5ddb1857bb8a"
 
 [[outputs]]
 id = "GZmALdfBo3S9wFeKewgwl"
 uri = "file://attached_assets/promo_images/promo_basic_1024.png"
 type = "image"
 title = "Basic Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "89313e68-2637-4a0d-9532-1105db17df6a"
 
 [[outputs]]
 id = "eaAxee7Jp3r2RbO0nFw1F"
 uri = "file://attached_assets/promo_images/promo_premium_1024.png"
 type = "image"
 title = "Premium Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "46a7996f-a35f-4c12-97b1-a31807dcaf44"
 
 [[outputs]]
 id = "X7QEppAbn2ex02UnIEfsY"
 uri = "file://attached_assets/promo_images/promo_family_1024.png"
 type = "image"
 title = "Family Plan Promo (1024x1024 RGB - no alpha)"
+logical_id = "3fe987cf-f28d-4c2f-ab39-b4fc53c19aa4"
 
 [[outputs]]
 id = "PDQDRPJkzeaOkfhgEDb9S"
 uri = "file://attached_assets/promo_images/adaptalyfe_promo_images.zip"
 type = "unspecified"
 title = "All 3 Promotional Images (ZIP)"
+logical_id = "9874c804-d994-42cc-a625-858448935a15"
 
 [[outputs]]
 id = "X7SzQl8wzb0F37Icq5wOL"
 uri = "file://TECH_STACK_AND_CODE_FLOW.md"
 type = "text"
 title = "Adaptalyfe — Tech Stack & Code Flow Reference"
+logical_id = "906ba525-3023-470b-99e6-81c7ef137592"
 
 [[outputs]]
 id = "5Z5vKi6VOTPunuZpLvzBZ"
@@ -85,3 +98,2650 @@ uri = "file://adaptalyfe-android-billing9-plugin-fix.zip"
 type = "unspecified"
 title = "Android Billing 9 Plugin Fix"
 description = "Replacement GooglePlayBillingPlugin.java updated for Google Play Billing Library 9.0.0."
+logical_id = "907d2f89-73e3-46f5-b665-6333da56c98b"
+
+[[outputs]]
+id = "D7rWzXV9InE6mlUmYkKqR"
+uri = "file://backups/adaptalyfe-production-backup-20260903-062100.zip"
+type = "unspecified"
+title = "AdaptaLyfe production database backup"
+description = "Verified ZIP backup of the live Railway/Replit production PostgreSQL database. Includes a PostgreSQL custom-format dump, README restore notes, SHA-256 checksum, and 514 validated archive entries."
+logical_id = "afbf2a77-d434-4838-b26c-9ec4c5eeb5cb"
+content_hash = "sha256:741a2098b7b0bc843f11320f5de3e2af816924a5a8f6b32d28b306f13fd35c0c"
+size = 4722915
+mtime_ms = 1788416470020
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/afbf2a77-d434-4838-b26c-9ec4c5eeb5cb/cef13cf2-1785-40c5-a172-e90679c39075"
+storage_version_token = "1788416479527806"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "SRIBijOqD2DXUtDVHjsj-"
+uri = "file://exports/adaptalyfe_flutter_phase1.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Code ZIP"
+description = "Updated Flutter project including Splash, Login, Signup, Home, authentication flow, API client, secure session storage, Android/iOS scaffolds, and the latest compile fixes. Generated caches and build output are excluded."
+logical_id = "7981e44f-db7f-4b04-bc84-a25a98984239"
+content_hash = "sha256:6dbfbbaf46b14b4e87485042e05640dfee8e08189ecf85ce886554e49055ab08"
+size = 146829
+mtime_ms = 1788869894516
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7981e44f-db7f-4b04-bc84-a25a98984239/80249952-0333-4ece-b91a-72cea6ea9cb1"
+storage_version_token = "1788869899664526"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "lxRpJc0Y8reGxcoVsUBMU"
+uri = "file://flutter-code.zip"
+type = "unspecified"
+title = "Flutter code ZIP"
+description = "Complete mobile_flutter source package, excluding generated build and cache files."
+logical_id = "23b85ee6-81f0-4749-a8d0-bb07c00148aa"
+content_hash = "sha256:2867f7f4f75ca0260eeafd35afda211248aaa0f1cf90804095c95660aedd7e51"
+size = 369658
+mtime_ms = 1788942507884
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/23b85ee6-81f0-4749-a8d0-bb07c00148aa/a52ab48d-dcd8-48a1-a47b-c6e0cc0b5727"
+storage_version_token = "1788942511657479"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ggwgB3haV4NLglB5kEDjD"
+uri = "file://flutter-code-updated.zip"
+type = "unspecified"
+title = "Updated Flutter code ZIP"
+description = "Updated Flutter source with only the notification callback file changed for the reported dismissActionId analyzer error."
+logical_id = "1a20d7aa-8dc9-4c8d-a34c-1252927bd73f"
+content_hash = "sha256:78306a134cd873ead23ce7127fdfad031a7414d3ae9f96f81626f51c7d96678e"
+size = 369592
+mtime_ms = 1788947828587
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1a20d7aa-8dc9-4c8d-a34c-1252927bd73f/aa866f6a-ade5-4cab-a86a-2cbaadbd98f7"
+storage_version_token = "1788947832776375"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YWJN6BoBLTPQWXSS_e3gy"
+uri = "file://flutter-code-bottom-navigation-fixed.zip"
+type = "unspecified"
+title = "Flutter bottom navigation fix"
+description = "Updated Flutter source with the authenticated navigation shell moved into GoRouter so the bottom navigation has an Overlay ancestor."
+logical_id = "172ace29-3da8-4107-9317-8b348557cb9d"
+content_hash = "sha256:7a08591f4f8b1fbbfe4f4bdcffed1cf610ea936a67f8264e248174d06d7746e9"
+size = 369603
+mtime_ms = 1788957668486
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/172ace29-3da8-4107-9317-8b348557cb9d/972eaf51-7cad-4c50-9643-03c8b8a29af9"
+storage_version_token = "1788957673686002"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nbfRRfT88zrIV_67-GgCU"
+uri = "file://flutter-home-dashboard-updated.zip"
+type = "unspecified"
+title = "Corrected Flutter Home dashboard source"
+description = "Updated ZIP with the MoodEntryInput import fix and unused financial import cleanup."
+logical_id = "05f6dac8-f540-4fe6-b69d-f7ef27c29c9f"
+content_hash = "sha256:ca16ef985a897fc1a463536b8da1984a357cefb5f7029b12e5a9115c33bd6b61"
+size = 377966
+mtime_ms = 1789023340895
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05f6dac8-f540-4fe6-b69d-f7ef27c29c9f/941d755b-aa37-460b-8f2e-d4e697e04bc1"
+storage_version_token = "1789023345768903"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GDc-_1RAlXcFv6wcr0seR"
+uri = "file://flutter-settings-updated.zip"
+type = "unspecified"
+title = "Updated Flutter Settings ZIP"
+description = "Latest Flutter Settings migration package with React-parity settings UI, BLoC save/reset actions, caregiver locks, organization access, account deletion, and native Android/iOS voice testing."
+logical_id = "14ebbe98-b608-41cd-8f9b-44cafa41a274"
+content_hash = "sha256:695ad03683dd7f9d0725432f5cffa249a860e0a953c942b7b3eb7d0695bba105"
+size = 383705
+mtime_ms = 1789027140209
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/14ebbe98-b608-41cd-8f9b-44cafa41a274/5bfaca88-ea06-4572-b99f-ffaf7dfd0f49"
+storage_version_token = "1789027389649750"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4oN2JX-Ov2AIZF9HacPz_"
+uri = "file://flutter-settings-files-only.zip"
+type = "unspecified"
+title = "Updated Flutter files only"
+description = "Only the seven changed/new Flutter files; no full project source included."
+logical_id = "6ef8824f-75ca-4b9c-91aa-9cf4e4acb5f0"
+content_hash = "sha256:e6b77728e922bff2b8e1f5ae4f77ee67feb5ec4ec817bbd3ef5cb42ebf507246"
+size = 20256
+mtime_ms = 1789027554299
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6ef8824f-75ca-4b9c-91aa-9cf4e4acb5f0/b7df169e-47d6-4291-b7d8-b1966cea2ca6"
+storage_version_token = "1789027558989214"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XJMbMUycVohwVXhCRyfgF"
+uri = "file://flutter-home-migration.zip"
+type = "unspecified"
+title = "Flutter Home migration"
+description = "Updated Flutter project with the same-to-same Home dashboard surfaces, live Daily Guide, configurable quick actions and modules, Today flow, AdaptAI chat, and action confirmation."
+logical_id = "94f415c0-183b-4d18-9d66-a28723481bc2"
+content_hash = "sha256:02669465919d128787bb51fbef2e345299ac5aa5f42f146c19fcd56b0039d830"
+size = 401179
+mtime_ms = 1789028949683
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/94f415c0-183b-4d18-9d66-a28723481bc2/76f59cd9-5591-4801-9c63-15c2fc655060"
+storage_version_token = "1789028956110086"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "r2Z3sISejLZIX4XU5E_uC"
+uri = "file://flutter-home-changed-files.zip"
+type = "unspecified"
+title = "Flutter Home changed files"
+description = "ZIP containing only the changed and newly added Flutter Home migration files."
+logical_id = "c5fbdbc8-fac6-4cd3-adfb-5a55c3dc3beb"
+content_hash = "sha256:01321185b27d3642aec1a777897ccdb8b01d5cf50a6465bc05d261ff024826e4"
+size = 36105
+mtime_ms = 1789029063835
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c5fbdbc8-fac6-4cd3-adfb-5a55c3dc3beb/4f30d885-9edf-44dc-bb06-fccd51be2cb3"
+storage_version_token = "1789029068888523"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "EOzF-PIrk0gKTdvgafQ2h"
+uri = "file://flutter-home-parity-changed-files.zip"
+type = "unspecified"
+title = "Flutter Home parity changed files"
+description = "Only the six Flutter files changed for the React Native reference parity pass; no React, backend, or attached reference images included."
+logical_id = "b7fc832a-112a-433a-8b43-aa1214ef3651"
+content_hash = "sha256:0e47d5c78349f9f3f23b653ed08d96a545dc1b9573a9da79b07c0ae720bb221f"
+size = 31490
+mtime_ms = 1789030377143
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b7fc832a-112a-433a-8b43-aa1214ef3651/19dafd4d-21b9-4c5f-bd55-28bee055d0b0"
+storage_version_token = "1789030381752232"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "oYcPtybAy4_GUdGF6dfBU"
+uri = "file://flutter-home-parity-final.zip"
+type = "unspecified"
+title = "Flutter Home parity final changes"
+description = "Updated Flutter-only Home parity changes, route wiring, Quick Action alignment, live dashboard modules, Today/Daily Guide improvements, AdaptAI action states, and the Personal Documents feature."
+logical_id = "13f93a11-4da9-4a09-a23b-eedec6b4f46f"
+content_hash = "sha256:3cac66514c1a3e83c651820f4bd07fb05af45187cb4cda6ce8e28a43c2a940c5"
+size = 36834
+mtime_ms = 1789032480107
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/13f93a11-4da9-4a09-a23b-eedec6b4f46f/8cfd1559-1b33-4434-aa49-20231ecb88ae"
+storage_version_token = "1789032485251640"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "t-XGZ9V9QoBmA0HNx55bv"
+uri = "file://flutter-chatbox-provider-fix.zip"
+type = "unspecified"
+title = "Flutter chatbox provider fix"
+description = "Only the two Flutter files changed to fix the HomeBloc ProviderNotFoundException when opening the chatbox."
+logical_id = "5dadc94b-d3b2-47bd-aa03-0cbd6c90067d"
+content_hash = "sha256:faf81d727451ac2344863229a799b7c4a0c7cb9e59fe48b347aafcc852120dfa"
+size = 20793
+mtime_ms = 1789033869656
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5dadc94b-d3b2-47bd-aa03-0cbd6c90067d/c23874e5-b672-40b1-aaef-31b605ec0963"
+storage_version_token = "1789033873905327"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "vO91H_WZBeQ18nbIEhfc4"
+uri = "file://flutter-mood-log-home-change.zip"
+type = "unspecified"
+title = "Flutter Mood Log Home change"
+description = "ZIP containing the single changed Flutter file for the React-matching Home Mood Log feature."
+logical_id = "cf633cb7-e290-4960-aa7f-dc1e6252df39"
+content_hash = "sha256:0c52e68324157cf4ab70d62d9ef391de56dc0665cd12596a241488ae97646edd"
+size = 21919
+mtime_ms = 1789038963539
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cf633cb7-e290-4960-aa7f-dc1e6252df39/d5dd8202-c4d8-4975-8299-5cb1a1a7a0b5"
+storage_version_token = "1789038967897009"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GdyptfTqcvAoPIIJhYa93"
+uri = "file://flutter-drawer-change.zip"
+type = "unspecified"
+title = "Flutter drawer change"
+description = "ZIP containing the single changed Flutter file for the React-matching Home drawer."
+logical_id = "58bac7fb-afd3-4346-8fb5-4b83739a125b"
+content_hash = "sha256:67176ea6ef23bb9cac5234db9b36ccc9e3d42c59ffa62fddc2c2a27abfc64eb9"
+size = 4443
+mtime_ms = 1789040563585
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/58bac7fb-afd3-4346-8fb5-4b83739a125b/d67ba15c-649e-477f-b725-590f5b35916b"
+storage_version_token = "1789040570407269"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "figkwePQ9NX8Mjve_B0qj"
+uri = "file://flutter-mood-log-check-fix.zip"
+type = "unspecified"
+title = "Flutter Mood Log check fix"
+description = "ZIP containing the changed Flutter Home Mood Log file with the selected-mood check indicator."
+logical_id = "390bd645-defe-4f8f-8b51-d1dbfe231afb"
+content_hash = "sha256:b65c575e45e302e10bc7494c781c1fbfd2a7f0cab97de815bf3d4f9912d2df66"
+size = 21995
+mtime_ms = 1789042378672
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/390bd645-defe-4f8f-8b51-d1dbfe231afb/a07f1a8f-c094-4423-a8cd-feefecdb6ed2"
+storage_version_token = "1789042382511949"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "N-S762iN5YWW9MjgOYA9F"
+uri = "file://flutter-home-mood-ui-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood UI fix"
+description = "ZIP containing the changed Flutter Home Mood Log file with the React-style mobile layout adjustments."
+logical_id = "0606c581-ae47-49a5-9306-799e7de5abe7"
+content_hash = "sha256:fd47541701cbdf039f49af0304ca8d3fad7eaa7dad123981550337b1f0b39ebb"
+size = 22049
+mtime_ms = 1789043348917
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0606c581-ae47-49a5-9306-799e7de5abe7/8168a3db-16ee-48a0-adc4-b965222d5d6b"
+storage_version_token = "1789043353027157"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "H8yMVdlKSDkWvXzAuP-Zh"
+uri = "file://flutter-home-mood-reference-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood reference fix"
+description = "ZIP containing the changed Flutter Home Mood Log file styled to match the attached reference."
+logical_id = "8c52a6f1-c0bc-424b-af08-0e6dbfeccd44"
+content_hash = "sha256:8e57421dadaf2a39e5e0778ae47959ecd4f4dcff6f12e6475922ec895f136742"
+size = 22074
+mtime_ms = 1789044355932
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8c52a6f1-c0bc-424b-af08-0e6dbfeccd44/28ed1994-5659-4e0b-80f6-c28fade2136e"
+storage_version_token = "1789044359937508"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "V2UBbQsyjMp6f4-tAG9mP"
+uri = "file://flutter-home-quick-actions-layout-fix.zip"
+type = "unspecified"
+title = "Flutter Home Quick Actions layout fix"
+description = "ZIP containing the changed Flutter Home widget with the responsive Quick Actions header fix."
+logical_id = "ac2b6eca-a546-48bf-a4d9-bdde3dfc9589"
+content_hash = "sha256:52563eb28fe88087d4d6e02fd6e8b66713ad5184c2c7967375e720576caf59fe"
+size = 22203
+mtime_ms = 1789044696088
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ac2b6eca-a546-48bf-a4d9-bdde3dfc9589/69210a95-dce4-4662-9a83-abf612122701"
+storage_version_token = "1789044703110986"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1iUsr0r5nRxnrA6aR5MaW"
+uri = "file://flutter-home-mood-blank-card-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood blank-card fix"
+description = "ZIP containing the changed Flutter Home widget with the visible Mood Log loading state and legacy mood-module ID handling."
+logical_id = "74b0acd7-a9db-43b6-ac5a-5b001299a578"
+content_hash = "sha256:15a608b5d95c5f8de766968f1075d4313023a1e47d4c6b9298cca3f699f27178"
+size = 22485
+mtime_ms = 1789045384684
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/74b0acd7-a9db-43b6-ac5a-5b001299a578/821acc8b-0f75-464d-848d-2c65e1f3b440"
+storage_version_token = "1789045389907654"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "R4FPbeJPvZTBIyuGJeMpw"
+uri = "file://flutter-home-mood-react-parity-fix.zip"
+type = "unspecified"
+title = "Flutter Home Mood React parity fix"
+description = "ZIP containing the corrected Flutter Home widget. The full Mood Log remains visible during loading, matching the React mobile behavior."
+logical_id = "ba7ff8be-ae63-4af7-939f-18cebcb7cf46"
+content_hash = "sha256:a335e66b21e8b852aced11f1943d6fcfca88bd02930cc72820385a2d14301b29"
+size = 22247
+mtime_ms = 1789045466984
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba7ff8be-ae63-4af7-939f-18cebcb7cf46/576e0006-5485-473a-9209-3351eb4ded1f"
+storage_version_token = "1789045474517390"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_LOMNetFLDWda33pnpKMs"
+uri = "file://flutter-daily-task-screen-parity.zip"
+type = "unspecified"
+title = "Flutter Daily Task screen parity package"
+description = "Complete mobile_flutter project with the Daily Tasks screen migrated to Flutter + BLoC, existing API integration, forms, task actions, states, and navigation."
+logical_id = "cf2fe3d8-a31e-4633-ba46-01c920fd4dd9"
+content_hash = "sha256:12515639ea078936445ba3dfea5e88cf466457c8af1a8c17a5cc34f056d95aec"
+size = 421342
+mtime_ms = 1789046179684
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cf2fe3d8-a31e-4633-ba46-01c920fd4dd9/d8361119-8ed0-4795-9ff6-81dbe54d11db"
+storage_version_token = "1789046183697477"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BrInAl7UFo1D55UJxVOED"
+uri = "file://flutter-daily-task-changed-files.zip"
+type = "unspecified"
+title = "Changed Flutter Daily Task files only"
+description = "Contains only the three modified files: daily_tasks_bloc.dart, daily_tasks_event.dart, and daily_tasks_screen.dart."
+logical_id = "894b7ecd-a9e5-4f3d-92d0-e36906a23fc5"
+content_hash = "sha256:cdcf12eea2d86171dce8052bc862115d54b9d1431cf0edcf3101ed73fc162538"
+size = 9490
+mtime_ms = 1789046496273
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/894b7ecd-a9e5-4f3d-92d0-e36906a23fc5/b2550de4-b19f-47b4-a3c9-65c5579c59e0"
+storage_version_token = "1789046500248552"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "spwdSEJ9m4bu6yK34Eap0"
+uri = "file://flutter-add-meal-changed-files.zip"
+type = "unspecified"
+title = "Changed Flutter Add Meal files only"
+description = "Contains only the three modified Flutter files for the Add Meal fix: meal_shopping_bloc.dart, meal_shopping_models.dart, and meal_shopping_screen.dart."
+logical_id = "f3dff37f-1961-458b-903b-e144803ad419"
+content_hash = "sha256:a3333d8c7df750f7ab158f4a1587a847d896f7ae77597d99d3c365802e04d3e4"
+size = 10210
+mtime_ms = 1789117081632
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f3dff37f-1961-458b-903b-e144803ad419/8f44fe88-f522-47f3-9f48-fcacc43a664f"
+storage_version_token = "1789117085694876"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9LMVQpmW8_L9DMOE4IHDX"
+uri = "file://flutter-calendar-changed-files.zip"
+type = "unspecified"
+title = "Flutter Calendar changed file"
+description = "ZIP containing the updated mobile Flutter Calendar BLoC file."
+logical_id = "4219aa5d-e30f-4948-8cef-20f4eaf68b76"
+content_hash = "sha256:994fa9eef56295a57b818ce50fdd40618de9b5d508e317795d7aa9ad8571bfc8"
+size = 1726
+mtime_ms = 1789119848306
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4219aa5d-e30f-4948-8cef-20f4eaf68b76/34a78ba3-65d5-4050-9d37-1e6200a2ed9e"
+storage_version_token = "1789119852076306"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DOyXXhSwfy9tLTvWozs9s"
+uri = "file://flutter-calendar-react-parity-files.zip"
+type = "unspecified"
+title = "Flutter Calendar React parity files"
+description = "Changed Flutter Calendar files plus the React-versus-Flutter parity review."
+logical_id = "5fbaec55-5e59-4cfe-a19c-aa5b99bb4b29"
+content_hash = "sha256:71114ed92dd16ee4af92b671bcd03efbe5259732790852ac058af5a5265ea9dc"
+size = 15964
+mtime_ms = 1789121073827
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5fbaec55-5e59-4cfe-a19c-aa5b99bb4b29/638f527d-0e53-49e2-98a3-46521b2dea95"
+storage_version_token = "1789121077756801"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PO77_K-Nsw0iQkkQW152K"
+uri = "file://flutter-calendar-overflow-fix.zip"
+type = "unspecified"
+title = "Flutter Calendar overflow fix"
+description = "ZIP containing the updated Calendar screen with responsive month-grid sizing and compact narrow-phone cells."
+logical_id = "8039fac7-8c01-4650-a3e8-1c51aea9ae5a"
+content_hash = "sha256:6a3823b69143039930cf5aaf438e452836533e08bced2f2f7fa588aa4b3640a8"
+size = 10319
+mtime_ms = 1789121449078
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8039fac7-8c01-4650-a3e8-1c51aea9ae5a/bc83225e-413d-4af4-a293-9a4a1ddd3280"
+storage_version_token = "1789121454887634"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YwOcNFLD_u87kQhrGIXts"
+uri = "file://flutter-home-quick-actions-ui-fix.zip"
+type = "unspecified"
+title = "Flutter Home Quick Actions UI fix"
+description = "ZIP containing the only changed Flutter Home file."
+logical_id = "ffc3c043-0c70-4ce1-984b-42676a4a99ba"
+content_hash = "sha256:f8cd32057d76fc75337a87d0992089e7e20c4878f96b626b0e80daa877f05068"
+size = 22351
+mtime_ms = 1789121902315
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffc3c043-0c70-4ce1-984b-42676a4a99ba/a7580f99-0bc4-4a89-9248-185e91913251"
+storage_version_token = "1789121906262015"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "trOvE6HOP6brxduFc6fol"
+uri = "file://flutter-home-drawer-ui-fix.zip"
+type = "unspecified"
+title = "Flutter Home drawer UI fix"
+description = "ZIP containing the only changed Flutter drawer/navigation file."
+logical_id = "ee0d5f73-1d6c-42ab-a1af-b78aa60de3d7"
+content_hash = "sha256:93840158cdfa957573bdaf88964e0f110198f66fc2dd7816074748ade8c4aa98"
+size = 4972
+mtime_ms = 1789123118543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ee0d5f73-1d6c-42ab-a1af-b78aa60de3d7/18317601-7bb6-4a3f-93fe-5327ec55ecee"
+storage_version_token = "1789123123814209"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wtyb54qEcqsb2Gs9EizHQ"
+uri = "file://flutter-medical-react-parity-files.zip"
+type = "unspecified"
+title = "Fixed Flutter Medical files"
+description = "Updated package fixing the ProviderNotFoundException when submitting Medical add/edit dialogs."
+logical_id = "8e73f0b8-ca59-4f9f-a26b-ab9bd77f4095"
+content_hash = "sha256:a6caa542f2d86d168083889b1a62525b85a6bbf989376dff11727fffc4aa9f23"
+size = 19498
+mtime_ms = 1789129313199
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e73f0b8-ca59-4f9f-a26b-ab9bd77f4095/4c6c3d99-e1bb-4278-9d0f-35935a3d97cf"
+storage_version_token = "1789129334766358"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9mfu2RCTLmRI30lfV6T_P"
+uri = "file://flutter-medical-react-parity-files-updated.zip"
+type = "unspecified"
+title = "Updated Flutter Medical files"
+description = "Renamed ZIP containing the updated Medical Flutter files with the dialog BLoC provider fix."
+logical_id = "b3052097-a4e5-4c0c-9ce2-299ab5b3ebfa"
+content_hash = "sha256:a6caa542f2d86d168083889b1a62525b85a6bbf989376dff11727fffc4aa9f23"
+size = 19498
+mtime_ms = 1789129899458
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b3052097-a4e5-4c0c-9ce2-299ab5b3ebfa/e3b4e275-bc79-4406-be06-793506e7667f"
+storage_version_token = "1789129904042052"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "emvy733A2HqUn_sN-maB0"
+uri = "file://flutter-medical-react-parity-files-build-scope-fix.zip"
+type = "unspecified"
+title = "Flutter Medical build-scope fix"
+description = "Updated Flutter Medical package aligned with the React dialog lifecycle. Mutations now keep dialogs open while pending and close after success, preventing the dirty-widget build-scope assertion."
+logical_id = "2f2623be-3926-4cc8-b7f3-c57cc01cf55d"
+content_hash = "sha256:c7d8057053f8553c3b31810ba38af33987c154543e0ed86dc0a16c6acaf9d1b4"
+size = 20085
+mtime_ms = 1789131132126
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f2623be-3926-4cc8-b7f3-c57cc01cf55d/b50ffd9a-c642-450b-b364-6ae95dac9139"
+storage_version_token = "1789131136648120"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cl-27gOMPVuF3v4Uq8ezn"
+uri = "file://adaptalyfe-flutter-responsive-update.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter responsive update"
+description = "Complete mobile_flutter source package with responsive layouts applied across the app shell, auth, dashboard, tools, health, settings, caregiver, and content screens."
+logical_id = "d36f2e72-18a9-4629-bbf5-31be8507a924"
+content_hash = "sha256:63bcf9cf2981f178774171a0e0990d945c9644d5c61d9149c1a0694a098e47a4"
+size = 433877
+mtime_ms = 1789139394390
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d36f2e72-18a9-4629-bbf5-31be8507a924/f6f2c9a7-57c3-4569-b9a9-3c3ad16b71db"
+storage_version_token = "1789139400836793"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hsAkAd73EUtKOle9674uX"
+uri = "file://adaptalyfe-flutter-responsive-updated-files.zip"
+type = "unspecified"
+title = "Only updated Flutter files"
+description = "Contains only the 24 Flutter files updated for responsive layouts, including the shared responsive helper."
+logical_id = "b0bd205f-c44e-4654-92f0-bcef3e6ac09a"
+content_hash = "sha256:6ffa53e60b13dbd850d6c2366a93db1a578581c885a175e544a1b788fc8356f9"
+size = 164681
+mtime_ms = 1789139556438
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0bd205f-c44e-4654-92f0-bcef3e6ac09a/d99050a7-dc28-49a3-ab7e-00ca9191fe4c"
+storage_version_token = "1789139560295077"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "uDySx8Oo8EzxLFfWtQ2b0"
+uri = "file://adaptalyfe-alertdialog-fix-files.zip"
+type = "unspecified"
+title = "Only AlertDialog fix files"
+description = "Contains only the three Flutter files updated to remove the unsupported AlertDialog constraints parameter."
+logical_id = "6af6684d-3f29-4c53-8576-45256fdb297d"
+content_hash = "sha256:c0beff71ed9f064f1670be5fd838a32af2805faa028ddd5e80ed1ef41465821d"
+size = 27191
+mtime_ms = 1789140213673
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6af6684d-3f29-4c53-8576-45256fdb297d/e3313784-25c0-4c32-a78e-127249a6c6c8"
+storage_version_token = "1789140219462333"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "-By1R2Qkm_OtIw2yO6aoT"
+uri = "file://adaptalyfe-home-customization-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Home customization changed files"
+description = "Updated Flutter files for Home customization, Quick Actions, dashboard layout persistence, and related state/repository logic."
+logical_id = "29a0c707-6024-4a17-b6fd-09fc9bb31c93"
+content_hash = "sha256:cddb6379e453fd1dd736d80c8d2acfbe9867b3072d13c94046c0aaf64d9978f9"
+size = 38242
+mtime_ms = 1789190534412
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/29a0c707-6024-4a17-b6fd-09fc9bb31c93/c7bc06ce-a375-4167-97d8-21e4fcd813b0"
+storage_version_token = "1789193672030027"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9B8APG3fOMLXzlMS2352C"
+uri = "file://adaptalyfe-quick-actions-updated-file.zip"
+type = "unspecified"
+title = "Updated Flutter Quick Actions file"
+description = "Contains only the updated Home Quick Actions widget with React-aligned grid spacing, card sizing, icon sizing, and reorder layout."
+logical_id = "f25e67a4-a0c4-446c-b5d7-2bf1e36676ba"
+content_hash = "sha256:bde3fb0ffd5c367e71d9ec932d370fd38474c4e266d85721ea926b8a2137755e"
+size = 26317
+mtime_ms = 1789197695951
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f25e67a4-a0c4-446c-b5d7-2bf1e36676ba/d0750936-5679-43f3-8e18-4c65d7f7ff1a"
+storage_version_token = "1789197699601426"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8wMkvjZXJ2tN-H3O2iYRc"
+uri = "file://exports/adaptalyfe_flutter_updated_files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter updated files"
+description = "43 Flutter files changed in the latest project commit, preserving the mobile_flutter folder structure."
+logical_id = "938a4e7d-7930-4fc4-a991-9ccf57b3a387"
+content_hash = "sha256:1168a0f7711fc6d802c778f05bfa644ae999fe04b80426f9ee6bdca81616a4a7"
+size = 99622
+mtime_ms = 1789536213510
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/938a4e7d-7930-4fc4-a991-9ccf57b3a387/545bbd8f-7ab5-4ac4-a60f-44aac63a5c02"
+storage_version_token = "1789536217452967"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kkeLdPehDoJZigKLeDt7L"
+uri = "file://exports/adaptalyfe_flutter_error_fixes.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter error fixes"
+description = "Corrected navigation helpers, included the missing app route observer, fixed daily-task constructor fields, and fixed sleep-date validation."
+logical_id = "9fd00bdb-b484-498e-8907-132e1f8145ae"
+content_hash = "sha256:ec8e0c5810a14ee4f9b2ee7660d888be31fb72afbf7e09d3ef0a67c3d6b9cb0e"
+size = 7804
+mtime_ms = 1789537116543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9fd00bdb-b484-498e-8907-132e1f8145ae/9b076c81-50e5-4db6-ad2a-90230e4adae5"
+storage_version_token = "1789537120620910"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "me6Om4VtDOMQLNmp8WDmP"
+uri = "file://exports/adaptalyfe-flutter-updated-files.zip"
+type = "unspecified"
+title = "Updated Flutter file ZIP"
+description = "Contains the updated mobile Flutter subscription BLoC file with the specific no-subscription restore message."
+logical_id = "a3d3c017-6a46-476f-b104-1eb6ff948263"
+content_hash = "sha256:1c5321e192aba80219c2c9e08271daedf545bb8254371a6681d2e134f3bc3059"
+size = 2632
+mtime_ms = 1789705710215
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a3d3c017-6a46-476f-b104-1eb6ff948263/93200c7a-8ae6-4bc8-9fb9-b71ed9aa2258"
+storage_version_token = "1789705714351237"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "veg-dG6D9nbE5DuLmu7-8"
+uri = "file://exports/adaptalyfe-flutter-login-shopping-fixes.zip"
+type = "unspecified"
+title = "Updated Flutter login and shopping files ZIP"
+description = "Contains the two Flutter source files changed for friendly login errors and negative shopping-cost protection."
+logical_id = "6fe2b54e-bde6-4cac-a2a0-b6b5079cb311"
+content_hash = "sha256:de56bb930d923b92bd32f37a7b41264193893a6c5ac0299096cf215bdb8eeff8"
+size = 2942
+mtime_ms = 1789707072481
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6fe2b54e-bde6-4cac-a2a0-b6b5079cb311/14612382-c331-466a-8ebe-458ed436ecdb"
+storage_version_token = "1789707076425996"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X75GJpWjfF2NrGJeYaS4C"
+uri = "file://meal-plan-flutter-changes.zip"
+type = "unspecified"
+title = "Meal & Plan Flutter changes"
+description = "ZIP containing only the changed Flutter files for Meal Planning, Shopping List, grocery-store management, premium access, and purchase-cost handling."
+logical_id = "5c27b9bf-d777-401e-8482-a9eeb419cebe"
+content_hash = "sha256:f491b352cd149bebbc9f18b75db1dc54eb714af6e95c47511255b0a46db9b0b2"
+size = 18966
+mtime_ms = 1789710283845
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5c27b9bf-d777-401e-8482-a9eeb419cebe/3e591732-79e7-4221-bafd-a8dfa8f25d36"
+storage_version_token = "1789710296055415"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1DkVcV59gPlbTBVcbR2S4"
+uri = "file://exports/adaptalyfe-health-records-flutter-updates.zip"
+type = "unspecified"
+title = "Adaptalyfe Health Records Flutter Updates"
+description = "ZIP containing the three changed Flutter Health Records source files with their original folder structure."
+logical_id = "43f84bb1-c1e6-46da-bd3b-b1ed5e7381c7"
+content_hash = "sha256:5a98b013876b55f3b29a504361a09fa0776c811b91535c1ce6fde0bda3aaddbd"
+size = 16474
+mtime_ms = 1789711668203
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/43f84bb1-c1e6-46da-bd3b-b1ed5e7381c7/21711218-97c2-4345-8557-3d2f40094151"
+storage_version_token = "1789711672704295"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fJQUB1ggBTiIn0ebsXBSG"
+uri = "file://exports/adaptalyfe-flutter-auth-updates.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Auth Updates"
+description = "ZIP containing all changed Flutter Login, Signup, Forgot Password, reset-password, BLoC, API, routing, Android, and iOS files. React Native and Wrapper files are not included."
+logical_id = "fdaf31b7-a29c-407c-b863-ebdc402c813a"
+content_hash = "sha256:049cd91d8a829b9c9d4dfc91e1b173a905d45a710aa2df557fc7cdddb26d52a7"
+size = 29254
+mtime_ms = 1789714372839
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/fdaf31b7-a29c-407c-b863-ebdc402c813a/dbd3816b-1760-4dce-b62e-bb5b763386a0"
+storage_version_token = "1789714378078569"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d1P86dgQZmfRJSLi7FA8M"
+uri = "file://exports/adaptalyfe-flutter-sleep-feature.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Sleep Feature"
+description = "Complete Flutter Sleep feature source with models, API/repository, BLoC, validation, calculations, trends, UI, routing, and navigation wiring. React Native and Wrapper files were not modified or included."
+logical_id = "82eabd64-3a19-439c-8a81-ad038083ea75"
+content_hash = "sha256:9d0d4597794d245875a670bb86fc661c024def0b3d17ddf1289e3711b89fe349"
+size = 27423
+mtime_ms = 1789715477083
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82eabd64-3a19-439c-8a81-ad038083ea75/b31b28a3-1392-41ab-beb5-793327c34f43"
+storage_version_token = "1789715491651710"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "R2TegPONmbHBlnqFOgL1E"
+uri = "file://exports/adaptalyfe-flutter-sleep-feature-fixed.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Sleep Crash Fix"
+description = "Updated Flutter Sleep feature ZIP. Fixes the numeric stats crash after add, update, delete, and returning to the Sleep screen by replacing the mixed-type reduce with a safe numeric fold. Includes the complete Sleep feature source and routing/navigation files."
+logical_id = "0773571a-64b3-4b18-8491-2553eba4fbfd"
+content_hash = "sha256:ab74f49e59f0788b572909add78df015d165f50c9c844b6e0dff260bcbbf65d1"
+size = 27419
+mtime_ms = 1789717782196
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0773571a-64b3-4b18-8491-2553eba4fbfd/07c9b33d-ef0a-4aa3-8c3e-ad067b7c5ea9"
+storage_version_token = "1789717789167676"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "bJ2e0x09-68CKXY0WISRm"
+uri = "file://exports/adaptalyfe-flutter-health-records-crash-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Crash Fix"
+description = "Updated Flutter Health Records feature ZIP. Protects all CRUD flows from late BLoC emissions after navigation, normalizes persisted dropdown values, clamps legacy dates for date pickers, and includes Sensitivities, Notes, Reactions, Trusted Contacts, Healthcare Contacts, Personal Notes, plus routing and navigation files."
+logical_id = "2f5e0123-77e7-4968-95de-5e3aedd59d86"
+content_hash = "sha256:5e3f2e5794b71a93611ba53a66884e51774a931bd127452b064f1040d4bea3d8"
+size = 31570
+mtime_ms = 1789718547212
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f5e0123-77e7-4968-95de-5e3aedd59d86/a23bb4ff-3b0e-4906-8191-1ebe46bdf994"
+storage_version_token = "1789718568853933"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T06dgRYnf7shBQ148qnqz"
+uri = "file://exports/adaptalyfe-flutter-health-records-build-scope-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Build-Scope Fix"
+description = "Updated Flutter Health Records ZIP with the screenshot-specific fix. Add and edit dialogs now close directly through the BLoC listener without rebuilding the animated submit button during the same success transition. Includes CRUD lifecycle guards, persisted-value normalization, date safety, the complete medical feature, routing, and navigation."
+logical_id = "10d6af5b-afe5-4558-afb0-11efc03162db"
+content_hash = "sha256:b35b573a69099d12283ac61125701b72615b378d12ffe7a115b51a47bb43febb"
+size = 31560
+mtime_ms = 1789719210767
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/10d6af5b-afe5-4558-afb0-11efc03162db/33ccc571-f4bc-49f6-806e-617d1fca0909"
+storage_version_token = "1789719220152721"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zI8XgupHfqwMiBTj29ZTh"
+uri = "file://exports/adaptalyfe-flutter-health-records-update-build-scope-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Health Records Update Fix"
+description = "Final Flutter Health Records ZIP. Fixes the update crash by waiting for the Material submit-button animation to settle before closing the dialog, while preserving CRUD lifecycle guards, dropdown/date safety, complete medical feature files, routing, and navigation."
+logical_id = "7f3b611d-2fa5-485a-86f7-803ee817fd59"
+content_hash = "sha256:4425430ac7eb8a25ce1f6e97478ac34f6212028d2ba1add63516c2ca4153e3ff"
+size = 31592
+mtime_ms = 1789719651319
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7f3b611d-2fa5-485a-86f7-803ee817fd59/b46cff54-d9d5-4bf2-bee1-6f2efb0bfd7f"
+storage_version_token = "1789719657148778"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LdG9XHbzVV6vg6BwJttet"
+uri = "file://exports/resources-flutter-updated-files.zip"
+type = "unspecified"
+title = "Updated Flutter Resources files"
+description = "ZIP archive containing the seven updated Flutter Resources feature files."
+logical_id = "e06cb15a-0f25-4ffc-9651-c818ae61a567"
+content_hash = "sha256:4c6ce54885b51192ae6d1e50b95e34a950d3ae9c19e39d63dd64c4a391a25083"
+size = 25492
+mtime_ms = 1789721448801
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e06cb15a-0f25-4ffc-9651-c818ae61a567/ff66c867-5184-4ce4-864b-3d0f16a36ea3"
+storage_version_token = "1789721452998183"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "3_jh7z8QtCgomjgAuRk7z"
+uri = "file://artifacts/adaptalyfe-cross-platform-auth-subscription-updates.zip"
+type = "unspecified"
+title = "Adaptalyfe auth and subscription updates"
+description = "ZIP containing the 7 Flutter files changed for shared account authentication, entitlement refresh, subscription restore handling, and expiry data."
+logical_id = "c39aabf5-df82-4006-9c92-d666d46cfd65"
+content_hash = "sha256:cf66efb11e94b16220a6f135ae3192ccebf54d7411b991cefe58451eeb9825bc"
+size = 13037
+mtime_ms = 1789724391024
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c39aabf5-df82-4006-9c92-d666d46cfd65/94ea697d-a17a-44c9-bf8c-cc0868d9e466"
+storage_version_token = "1789724396431901"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PCXm3MT8jDoDTj-msyTNn"
+uri = "file://artifacts/adaptalyfe-flutter-changed-files-fixed.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter changed files"
+description = "ZIP containing the 8 updated Flutter source files, including the auth type fix and unused calendar import cleanup."
+logical_id = "3cd93914-8904-44fe-ac6f-edeb8bad4469"
+content_hash = "sha256:f005baf0e34e57cc4a93f98a0ea9592e49317e62449d3843a8d2dd407b67e558"
+size = 24119
+mtime_ms = 1789730796889
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3cd93914-8904-44fe-ac6f-edeb8bad4469/d659ac4c-558a-45b2-ba6e-e6fd168da47d"
+storage_version_token = "1789730802307912"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DxgSvAoZmD9OtoQqpNYIV"
+uri = "file://artifacts/adaptalyfe-flutter-overlay-fix-updated-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter overlay fix files"
+description = "ZIP containing the 12 updated Flutter source files for duplicate overlay, dialog, navigation, and subscription BLoC fixes."
+logical_id = "02df1206-02ea-4e99-94ef-b57393674327"
+content_hash = "sha256:f5ddf2a602c082ea12cf537642cbd2f62f1af8205f29e8720094aed71768ca94"
+size = 93422
+mtime_ms = 1789732327045
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02df1206-02ea-4e99-94ef-b57393674327/44e22c63-1bb3-448d-aa19-bbf6c772627e"
+storage_version_token = "1789732331932444"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8UQTCrv5_SwQVZiRYZNV7"
+uri = "file://artifacts/adaptalyfe-flutter-meal-shopping-updated-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Meal & Shopping files"
+description = "ZIP containing the complete updated Flutter Meal & Shopping feature folder. React Native files are not included."
+logical_id = "857ac4f0-577b-41f5-be95-b7e8d93895af"
+content_hash = "sha256:ddf8728adb8ec6cd521d54a68575a68a0c36e9b38a11731267db4a6db770188c"
+size = 20329
+mtime_ms = 1789733297570
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/857ac4f0-577b-41f5-be95-b7e8d93895af/52d4edc4-e53a-452e-8a53-17743a73bc81"
+storage_version_token = "1789733301492223"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d4rPRzKWhN36OFaV9u6cS"
+uri = "file://artifacts/adaptalyfe-flutter-meal-shopping-lifecycle-fix.zip"
+type = "unspecified"
+title = "Flutter Meal & Shopping lifecycle fix"
+description = "ZIP containing the changed Flutter Meal & Shopping screen only. React Native files are not included."
+logical_id = "ffe7618f-8fde-4422-a632-26cbd5af9c73"
+content_hash = "sha256:de021987eedd7e70c3e8499a66fc43a5a2ffa91ec9798e5b78341b011195c6a2"
+size = 12250
+mtime_ms = 1789733852230
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ffe7618f-8fde-4422-a632-26cbd5af9c73/a4cff1c6-4d60-430c-add9-059bce287244"
+storage_version_token = "1789733855934793"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "B31ceLgffHpxmVwr1p5Tc"
+uri = "file://artifacts/flutter-resources-changed-file.zip"
+type = "unspecified"
+title = "Flutter Resources changed file"
+description = "ZIP containing the changed Flutter Resources BLoC file."
+logical_id = "c8914d4d-25fb-4b2f-a345-1339ef8d5ac7"
+content_hash = "sha256:009f6c065d8d469b49583b000fd23e754236b059b8b2c256839232228e386614"
+size = 2456
+mtime_ms = 1789734841449
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c8914d4d-25fb-4b2f-a345-1339ef8d5ac7/39c61ede-48eb-48a1-9d59-37fc15d0647e"
+storage_version_token = "1789734844919706"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xJaA67fsqU-UIULCozPTy"
+uri = "file://artifacts/flutter-skills-changed-files.zip"
+type = "unspecified"
+title = "Flutter Skills changed files"
+description = "ZIP containing the three changed Flutter Skills files."
+logical_id = "91f5a8c9-a68b-45bd-aa37-6e9843d4a6d2"
+content_hash = "sha256:0d1ef11bc0a2f7259d858cb8effe9c34d96c3367b87c94de39ee6f0a3163320d"
+size = 8064
+mtime_ms = 1789735522991
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/91f5a8c9-a68b-45bd-aa37-6e9843d4a6d2/f55dd41a-5386-4558-9861-da697da5daef"
+storage_version_token = "1789735526978654"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "eHLj19L6PX0FPm5qzBcNe"
+uri = "file://exports/adaptalyfe-mobile-flutter-resources.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter Resources ZIP"
+description = "Source zip of the existing Flutter application, including the completed Resources section. Generated build files and dependencies are excluded."
+logical_id = "dc934327-7f3e-4dc9-8f40-9c46268ce35f"
+content_hash = "sha256:1a25111ecea0f68402e029415ce172f53935c26059fa79f21acd75a701cd3bad"
+size = 488183
+mtime_ms = 1789736127740
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc934327-7f3e-4dc9-8f40-9c46268ce35f/6f2da258-803f-4197-ad49-e3a590237e0b"
+storage_version_token = "1789736131245826"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "HfxHRu-DdbXLo1-dWUIju"
+uri = "file://exports/adaptalyfe-resources-changed-files.zip"
+type = "unspecified"
+title = "Adaptalyfe Resources Flutter Changed Files"
+description = "Only the two Flutter files changed during the React/Wrapper parity audit. No React Native files are included."
+logical_id = "4e478923-dc00-4b9b-ad52-09f1003b9adf"
+content_hash = "sha256:9a803eaf4d1533087621c85827f3a29b9ff068d1362b333fd974974c2f1a1256"
+size = 21855
+mtime_ms = 1789736662656
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4e478923-dc00-4b9b-ad52-09f1003b9adf/afa55f78-39ac-4c0b-8140-d99831f6c00d"
+storage_version_token = "1789736669264734"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ogXVM3jo_MSl717vtjrih"
+uri = "file://medical-flutter-changed-files.zip"
+type = "unspecified"
+title = "Medical Flutter changed files"
+description = "ZIP containing only the three Flutter files changed for the Medical section parity work."
+logical_id = "f04fcbc5-d5ca-4a55-a5b4-4bb796918456"
+content_hash = "sha256:012c0f23be510017edd618239346ab49fb71b9aecadc22976d091bf119061867"
+size = 18736
+mtime_ms = 1789738028050
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f04fcbc5-d5ca-4a55-a5b4-4bb796918456/f6632ca2-8c74-466a-9220-bf25ff781265"
+storage_version_token = "1789738033239664"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Fq-VvFym9i8tFr_032k4L"
+uri = "file://life-skills-flutter-changed-files.zip"
+type = "unspecified"
+title = "Skills section changed file"
+description = "Contains the single changed Flutter file for the Life Skills / Skills & Milestones section."
+logical_id = "cabf8ffb-7bca-4262-912d-32af49053612"
+content_hash = "sha256:595e9c8525f71f14bc71ed97af7fb21769984d19f9ff5585243db77125510543"
+size = 6199
+mtime_ms = 1789738712559
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cabf8ffb-7bca-4262-912d-32af49053612/9753865c-959d-48df-bb4c-3c0d7c4582cf"
+storage_version_token = "1789738741559292"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "URF04WCxzYnY5h_BRYgsb"
+uri = "file://life-skills-flutter-save-fix.zip"
+type = "unspecified"
+title = "Life Skills Flutter save fix"
+description = "Contains the two Flutter files changed to persist newly added Life Skills and refresh the saved collection."
+logical_id = "5a2a6be7-e9d5-4fd4-937e-e58ebe040ea1"
+content_hash = "sha256:e04a87a4e407efbfc0c7166cd0c1a46cdfbf6028c54d9dc1fc7b4eae9b5569c0"
+size = 2444
+mtime_ms = 1789791332063
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5a2a6be7-e9d5-4fd4-937e-e58ebe040ea1/47b44a46-d662-4c53-865e-8834f01b5e8b"
+storage_version_token = "1789791340950351"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4dsYUnj-hEYZ0mo_r0krH"
+uri = "file://academic-planner-flutter-changes.zip"
+type = "unspecified"
+title = "Academic Planner Flutter changes"
+description = "ZIP containing the seven changed Academic Planner Flutter files."
+logical_id = "342cc1da-029e-4e05-a8fc-5fd60c976ac6"
+content_hash = "sha256:be8e501dbb952b8bb1274a8f79b76b1bdedd5a9108bbdcf97e063ff6fe09110d"
+size = 20637
+mtime_ms = 1789792462113
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/342cc1da-029e-4e05-a8fc-5fd60c976ac6/8094a642-9386-4a63-846d-c949cede740a"
+storage_version_token = "1789792467422944"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "647C30Pr9rjvV5a1jVm96"
+uri = "file://life-skills-flutter-crud-changes.zip"
+type = "unspecified"
+title = "Life Skills Flutter CRUD changes"
+description = "Updated Flutter Life Skills files plus the authenticated server persistence fixes."
+logical_id = "be3d1ef5-eaeb-4e30-9108-1a36b5bf87a2"
+content_hash = "sha256:6d9c8e255c4c133a0d8449e4650628e7719365dd11eae63bd66b3108e7fb4964"
+size = 85417
+mtime_ms = 1789794729165
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be3d1ef5-eaeb-4e30-9108-1a36b5bf87a2/7af38777-de1a-4bec-b4b8-cf21794dc8e3"
+storage_version_token = "1789794733629626"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T1dW-boIcEKSAYSErwhy0"
+uri = "file://life-skill-create-fix.zip"
+type = "unspecified"
+title = "Life Skill creation fix"
+description = "React Life Skill create flow, wrapper request error handling, and server response fixes."
+logical_id = "eb51964d-e348-4484-a923-fa65fa376dd5"
+content_hash = "sha256:1b9f5beddd7e64d0e6091193ec8ed4d06e19ee1f5f04359f20bc3df9cd3b16d2"
+size = 57290
+mtime_ms = 1789795181252
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eb51964d-e348-4484-a923-fa65fa376dd5/5e716c26-07ca-4c3d-9131-fd83c5152520"
+storage_version_token = "1789795195633121"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "0gUwyoKnlXtg0V-fdA5R2"
+uri = "file://life-skills-flutter-create-fix.zip"
+type = "unspecified"
+title = "Flutter Life Skill creation fix"
+description = "Flutter BLoC and API response fixes for immediate Life Skill creation and reliable response handling."
+logical_id = "45651410-e6e0-4252-aa3c-c146c4362fea"
+content_hash = "sha256:edeed01acf84e39765efea30f726f563e64aa12edfa3933bfc5549235f6d104c"
+size = 2557
+mtime_ms = 1789795329803
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/45651410-e6e0-4252-aa3c-c146c4362fea/713e6efe-2afc-404a-951a-4e1abd29745f"
+storage_version_token = "1789795334354355"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8pHEOo1sjy_HOUqRehDpH"
+uri = "file://life-skill-cross-platform-fix.zip"
+type = "unspecified"
+title = "Life Skill cross-platform fix"
+description = "React/wrapper, Flutter, and server schema-compatibility fixes for Life Skill creation."
+logical_id = "bd84a894-d6e6-4e85-89e5-eb33deeedcf6"
+content_hash = "sha256:61cc8517909e4111b82eaf86ec29f4736c4014c0dee02e9c63193e928cfb89e6"
+size = 84838
+mtime_ms = 1789795825664
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd84a894-d6e6-4e85-89e5-eb33deeedcf6/e0c38530-b798-4005-aae7-09ee25b4b2df"
+storage_version_token = "1789795839111766"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "khRfq594tVi5WFziq5Zg7"
+uri = "file://life-skill-crud-fix.zip"
+type = "unspecified"
+title = "Life Skills CRUD fix"
+description = "React/wrapper Life Skills CRUD improvements plus server update-not-found handling and production schema compatibility."
+logical_id = "76a2f06f-eba8-4c1f-a165-e177fefd8612"
+content_hash = "sha256:c7b736bdd67ebf6edc5cb35cc41241f1ed074165cefdd05a80db9cb113d25b19"
+size = 79175
+mtime_ms = 1789796439496
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/76a2f06f-eba8-4c1f-a165-e177fefd8612/d0de6ef2-0961-4a0e-aa2b-a0a6ba113bea"
+storage_version_token = "1789796445525476"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1qKOqbnBM-aXfraSSsaAl"
+uri = "file://life-skills-final-cross-platform-fix.zip"
+type = "unspecified"
+title = "Final Life Skills cross-platform fix"
+description = "Complete React/wrapper, Flutter, API logging, race-prevention, CRUD, and production-schema compatibility patch."
+logical_id = "966c2ba7-c9ec-42dc-823f-59e5ccc774d0"
+content_hash = "sha256:5a0ee86fcda014e0eb4e8bcb88debb17ec2a9dee727cf39873fb286c773b4f71"
+size = 96644
+mtime_ms = 1789797323088
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/966c2ba7-c9ec-42dc-823f-59e5ccc774d0/d138370c-215c-450a-8f86-1f478f230397"
+storage_version_token = "1789797330367920"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nvyohplqSnftFQcW-n5gB"
+uri = "file://exports/flutter-quick-actions-changes.zip"
+type = "unspecified"
+title = "Flutter Quick Actions changed files"
+description = "Zip archive containing the three changed Flutter files with their project-relative paths preserved."
+logical_id = "7dac977d-6f1d-4a95-a8ea-bc177c4da041"
+content_hash = "sha256:824be7537cd5c76429263f213a05029a43a9b34b5c4d69173fe0f0ccb98afa78"
+size = 31885
+mtime_ms = 1789800403584
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7dac977d-6f1d-4a95-a8ea-bc177c4da041/b65ed6e5-7ae4-40cc-b73b-a084b2d94e58"
+storage_version_token = "1789800407022400"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kEfX06qR3fvLHp58ZJPM2"
+uri = "file://exports/flutter-daily-tasks-updated-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks updated files"
+description = "Zip archive containing the updated Flutter routes, Daily Tasks BLoC, and Home screen files with project-relative paths preserved."
+logical_id = "d5766944-552e-41c7-a81a-7ae4d0e21b10"
+content_hash = "sha256:3c9409ba51b580d31fe2b84b43607c4f4d7a72191a15e96745551f50a5a0d7d6"
+size = 7489
+mtime_ms = 1789801047464
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d5766944-552e-41c7-a81a-7ae4d0e21b10/5866565f-c9cb-483a-861c-403f27a5d6a3"
+storage_version_token = "1789801052471919"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wB7xF9dWWQt7frDAmWjt6"
+uri = "file://exports/flutter-compile-fixes.zip"
+type = "unspecified"
+title = "Flutter compile fixes"
+description = "Updated Flutter files matching the reported analyzer errors, with project-relative paths preserved."
+logical_id = "cfedd236-665f-483d-9a37-4416b10dbfa5"
+content_hash = "sha256:b117e4cf8de29b4fa6bd9faf10c2d8e60f5c4dd5db298a1b12547ec1bb2da43c"
+size = 35370
+mtime_ms = 1789801604680
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cfedd236-665f-483d-9a37-4416b10dbfa5/5204be62-4f47-46f6-8f48-4f901c73e3bc"
+storage_version_token = "1789801610163285"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PnD2X3mPtZGQ-764Aw6LX"
+uri = "file://exports/flutter-daily-tasks-save-fix.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks save fix"
+description = "Complete Daily Tasks Flutter feature with mutation-response fallback so created, updated, and deleted tasks remain visible even if the follow-up refresh request fails."
+logical_id = "e76b7620-2c7c-43b1-b4c4-fde0635b7d61"
+content_hash = "sha256:e470dd2518374b70c5f6cca39e4a50f89b272a12e309e89a5a778f0a067bfe89"
+size = 15733
+mtime_ms = 1789804199260
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e76b7620-2c7c-43b1-b4c4-fde0635b7d61/49397c8e-803a-472c-a136-963dafbf75cf"
+storage_version_token = "1789804204080072"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DUu2iFuROn9FPpBUbLBui"
+uri = "file://exports/flutter-daily-tasks-complete-fix.zip"
+type = "unspecified"
+title = "Complete Flutter Daily Tasks fix"
+description = "Updated Daily Tasks feature with create, read, update, delete, completion handling, save-response fallback, and a form that remains open when saving fails."
+logical_id = "ba437dac-9ccf-40a0-b123-c96f15f7e93e"
+content_hash = "sha256:26bd07dbe04782a6883c51c19fdda93874cb0cd6cdfa69f0f8826ae1fd158510"
+size = 15937
+mtime_ms = 1789804315987
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ba437dac-9ccf-40a0-b123-c96f15f7e93e/538f489b-0842-4d0e-877e-68581b601b87"
+storage_version_token = "1789804368102661"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wSM7QrY5coeXQM0xGJhMu"
+uri = "file://exports/full-mobile-flutter-project.zip"
+type = "unspecified"
+title = "Full Flutter project"
+description = "Complete mobile_flutter project source, including Android, iOS, assets, pubspec, and lib code. Generated build/cache folders are excluded."
+logical_id = "c495c5fd-d1f2-40d6-a13f-8a66dc709490"
+content_hash = "sha256:1a86bdbfd9e72afe48d02a442f5690e134665b99de7b58fe8d14cf85b0024ce3"
+size = 496403
+mtime_ms = 1789804983530
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c495c5fd-d1f2-40d6-a13f-8a66dc709490/74c2ea9f-0547-49ec-8128-fff31d9feb36"
+storage_version_token = "1789804988082744"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "7ZU5cmibgJiHxEXN6ez1a"
+uri = "file://artifacts/medical-flutter-changed-files.zip"
+type = "unspecified"
+title = "Medical Flutter changed files"
+description = "ZIP containing the changed Flutter medical feature files and the refill-order backend route update."
+logical_id = "30ca9c67-c9cb-4e16-b476-530c886443e0"
+content_hash = "sha256:25eb75d1ff5f8fcfd999453841519a76f5b438fcaed8a19317553f5a57bcdeaa"
+size = 76324
+mtime_ms = 1789806604010
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30ca9c67-c9cb-4e16-b476-530c886443e0/63b8d6ad-36ae-47fc-8971-76896617a8e5"
+storage_version_token = "1789806608156354"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "83GOSXN10GBARHbKP8WJ5"
+uri = "file://artifacts/adaptalyfe-medication-health-records-separated.zip"
+type = "unspecified"
+title = "Medication List and Health Records Flutter files"
+description = "Changed Flutter routing, medical feature files, and authenticated refill-order backend route. The ZIP mirrors the React separation: /medical for Health Records and /pharmacy for Medication List."
+logical_id = "0a55ce8d-94e0-4357-869f-5a9243f2c206"
+content_hash = "sha256:968a020fcd48dcaab476c63dca1acaec3c7814a5a47f49c3710f695eefbf408e"
+size = 80363
+mtime_ms = 1789807403632
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0a55ce8d-94e0-4357-869f-5a9243f2c206/6af28db2-64c9-43c8-b614-4c5dfb2b8dbe"
+storage_version_token = "1789807422736645"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9lRnwWlpzqCB-8BKdjNnT"
+uri = "file://artifacts/adaptalyfe-medication-health-records-full-review.zip"
+type = "unspecified"
+title = "Full Flutter medical and meal changes"
+description = "ZIP containing the reviewed Flutter routing, Health Records, Medication List, Meal & Shopping Add Meal fix, and backend refill route files."
+logical_id = "cff129ee-cb5e-438d-8ab4-a1653996da51"
+content_hash = "sha256:eaef76d4e40dee26e7b7df9b8e7f3e8f8020c22d5ec6a5de8b9bf4a7ee2e96c6"
+size = 93033
+mtime_ms = 1789808567147
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cff129ee-cb5e-438d-8ab4-a1653996da51/7eb28147-5163-4ed0-8360-d91fa9c288ff"
+storage_version_token = "1789808574654838"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "04b5k0fJ6nj7rIyXPNeto"
+uri = "file://artifacts/changed-source-files-only.zip"
+type = "unspecified"
+title = "Changed source files only"
+description = "ZIP containing only the 10 changed Flutter and backend source files. No attached files, manifests, metadata, or extra directories included."
+logical_id = "311b6700-d1ac-45f6-9a31-1c457d830680"
+content_hash = "sha256:c147ab58b3afa489860b1d898e8ec9cacb9c7a948ac44ccd5bda1cc80f3c6b5f"
+size = 91555
+mtime_ms = 1789808653151
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/311b6700-d1ac-45f6-9a31-1c457d830680/d621bbf2-40ad-4210-a30e-41ef916e5277"
+storage_version_token = "1789808657251302"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nVmFR4MiHVe1XJDF3yh_p"
+uri = "file://artifacts/meal-shopping-shopping-list-crash-fix-changed-files.zip"
+type = "unspecified"
+title = "Shopping List crash fix changed file"
+description = "ZIP containing only the changed Flutter source file for the Shopping List Add Item crash fix."
+logical_id = "3c0bbe38-7b93-4479-9b9d-b32009765ff8"
+content_hash = "sha256:27159f76a5ead0bd41032d36f8b9cbaca6380e24c3b3ec05e0cac8c7fb4f8447"
+size = 12548
+mtime_ms = 1789809260134
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3c0bbe38-7b93-4479-9b9d-b32009765ff8/f61348e5-5b69-475b-8f21-3c5d2a0a89b3"
+storage_version_token = "1789809271228036"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8BXRB9DqtEUEzzkLVvGSQ"
+uri = "file://artifacts/meal-shopping-mark-purchased-crash-fix-changed-files.zip"
+type = "unspecified"
+title = "Meal & Shopping Mark Purchased crash fix"
+description = "ZIP containing only the changed Flutter source file for the Mark Purchased controller lifecycle fix."
+logical_id = "9b0fac8b-db29-4c35-ab10-8034b9741289"
+content_hash = "sha256:4923f85bcd7c4b900971e2d69c359b3d12d34f715cb31a5e665ebf07a0ecbca5"
+size = 12636
+mtime_ms = 1789810335720
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9b0fac8b-db29-4c35-ab10-8034b9741289/d78c3cad-4b7f-4292-bf1e-73624b489a02"
+storage_version_token = "1789810341258258"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "jg9i8LRjr7C3rM7BLotcv"
+uri = "file://artifacts/meal-shopping-add-store-changed-files.zip"
+type = "unspecified"
+title = "Meal & Shopping Add New Store fix"
+description = "ZIP containing only the changed Flutter source file for the Add New Store flow."
+logical_id = "d64a02b9-6d1f-4a72-aada-5a345a5763b5"
+content_hash = "sha256:edf17ac5492317762fd2be6f53ddcb8627bebeb0b0483e790804e1198d735e03"
+size = 12630
+mtime_ms = 1789810881059
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d64a02b9-6d1f-4a72-aada-5a345a5763b5/8034de13-4b38-4457-86ec-229a92f3502c"
+storage_version_token = "1789810887026096"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "aj-GwGekoG0WNF6Q__mix"
+uri = "file://artifacts/meal-shopping-add-store-flow-changed-files.zip"
+type = "unspecified"
+title = "Meal & Shopping Add Store flow"
+description = "ZIP containing only the changed Flutter source file for the Add Store flow."
+logical_id = "0417af30-4edf-40e8-b5f5-aa8fa9f4b69c"
+content_hash = "sha256:edf17ac5492317762fd2be6f53ddcb8627bebeb0b0483e790804e1198d735e03"
+size = 12630
+mtime_ms = 1789811309446
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0417af30-4edf-40e8-b5f5-aa8fa9f4b69c/45bd8e6f-3085-4c82-8beb-fe106b94f99d"
+storage_version_token = "1789811314024687"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nCysLVLcRcfqMj4YtVAAi"
+uri = "file://artifacts/trusted-contact-save-crash-changed-files.zip"
+type = "unspecified"
+title = "Trusted Contact crash fix — changed files"
+description = "ZIP containing the updated Flutter medical presentation source file only."
+logical_id = "2701a4fc-327f-4b78-ab08-4c40f0f36c89"
+content_hash = "sha256:a62bdc2a1b23ab129481264d4cff612998c3d54678f5a2a2932886339000f6a4"
+size = 16732
+mtime_ms = 1789813321843
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2701a4fc-327f-4b78-ab08-4c40f0f36c89/0843e3ec-daf9-4fb7-898b-9f9fcf7c4939"
+storage_version_token = "1789813327259132"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8R_VHrgMSkjK6aJKoiBcj"
+uri = "file://artifacts/healthcare-contact-update-crash-changed-files.zip"
+type = "unspecified"
+title = "Healthcare Contact update crash fix — changed files"
+description = "ZIP containing only the updated Flutter medical presentation source file."
+logical_id = "ef896b9e-db3a-40ea-9acd-82d374597a92"
+content_hash = "sha256:c3eb936f9e1e02e50d5315304360081bb10811fc5be6dc716839bb457184c407"
+size = 16773
+mtime_ms = 1789814525118
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ef896b9e-db3a-40ea-9acd-82d374597a92/5d0a8005-38d0-4c71-8669-6a14674187a0"
+storage_version_token = "1789814529123889"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kqk7FKfd9mov-YPrtWGhu"
+uri = "file://artifacts/health-record-personal-notes-crash-changed-files.zip"
+type = "unspecified"
+title = "Health Record Personal Notes crash fix — changed files"
+description = "ZIP containing only the updated Flutter medical presentation source file."
+logical_id = "33007798-7364-4b0a-87d4-18abeb932505"
+content_hash = "sha256:263fef37e70639942b20e3d8d6b7dff7460bec81553440230acebcc89ca95a19"
+size = 17150
+mtime_ms = 1789814909778
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/33007798-7364-4b0a-87d4-18abeb932505/3cb9ec9d-b178-4af7-a757-7ca2387f5ad6"
+storage_version_token = "1789814914382731"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BfaxfT-7JmXDIc66G-Dyh"
+uri = "file://artifacts/ai-chat-assistant-full-screen-changed-files.zip"
+type = "unspecified"
+title = "AI Chat Assistant full-screen update — changed files"
+description = "ZIP containing the route update, reusable chat UI navigation change, and dedicated AIChatAssistantScreen."
+logical_id = "deeacab1-c465-4c52-83bd-5f02c95795c9"
+content_hash = "sha256:231c6313e341fe7045a714a411e98caf19e2bdc8fc6f777ba6e975b54532fc1d"
+size = 30266
+mtime_ms = 1789815748758
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/deeacab1-c465-4c52-83bd-5f02c95795c9/5722c901-dd67-4c7f-9782-5ae622ba20d4"
+storage_version_token = "1789815752971670"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ZArwh3lrCIBLMrx0qfELJ"
+uri = "file://artifacts/ai-chat-overlay-helper-fix-changed-files.zip"
+type = "unspecified"
+title = "AI Chat Assistant helper fix — changed file"
+description = "ZIP containing the updated home chat widget source file only."
+logical_id = "82d39391-c42d-4822-bceb-ac42757b6e22"
+content_hash = "sha256:f8c1d79cf88d697ccc1fa9ea3159108ac865ae39be0636a5343036fae5f6378f"
+size = 26399
+mtime_ms = 1789816154626
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/82d39391-c42d-4822-bceb-ac42757b6e22/2f600c5d-7f66-4b72-a270-e4d642793730"
+storage_version_token = "1789816159027104"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k0XfqJ03x1Rq_t7Lm37Y0"
+uri = "file://artifacts/quick-action-ai-chat-navigation-changed-files.zip"
+type = "unspecified"
+title = "Quick Action AI Chat navigation fix — changed file"
+description = "ZIP containing the updated Quick Actions navigation source file only."
+logical_id = "16e90a6e-7f20-4a1e-9769-4897f9d196dc"
+content_hash = "sha256:e86278e86338818ebf357813bbe017d5556b17d94fa3d209efeca657371f403d"
+size = 26453
+mtime_ms = 1789817137177
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/16e90a6e-7f20-4a1e-9769-4897f9d196dc/9665c761-d4bd-4565-9e29-d4317cf58bb1"
+storage_version_token = "1789817142811961"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hLy6WchHNW_FA0zlnTqjJ"
+uri = "file://artifacts/medication-list-fix-changed-files.zip"
+type = "unspecified"
+title = "Medication List fix — changed files"
+description = "ZIP containing the Flutter medication lifecycle, edit/delete flow, BLoC/API changes, and the matching server routes/storage updates."
+logical_id = "e72e8c6f-180a-45a0-852f-7b6b52af5a6c"
+content_hash = "sha256:35129424b783e3fc22ce778f3e3a00c9e8c40696f4207eb2309d127e45c4c9c9"
+size = 101446
+mtime_ms = 1789818206053
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e72e8c6f-180a-45a0-852f-7b6b52af5a6c/fb403c63-a143-4aca-a9c0-e9d3eaa81e34"
+storage_version_token = "1789818210683615"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "HwVAp3piseTJUVgCPQGV3"
+uri = "file://artifacts/medication-list-edit-delete-followup-changed-files.zip"
+type = "unspecified"
+title = "Medication List Edit/Delete fix — changed file"
+description = "ZIP containing the updated Flutter Medication List screen with the edit-form safety safeguard."
+logical_id = "25fca634-dcca-4ab6-a48e-c9c609836ad4"
+content_hash = "sha256:de33ad2bd5c3aba1f9bee22861dcf90337f40e4b4923e9de66744ce198812859"
+size = 17778
+mtime_ms = 1789819085497
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/25fca634-dcca-4ab6-a48e-c9c609836ad4/da520a9d-1870-449b-aa21-1811f50ac7e1"
+storage_version_token = "1789819100034847"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "CI3uHQGv_wcvX12xOUD5a"
+uri = "file://artifacts/academic-planner-add-class-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Flutter changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/academic/presentation/academic_planner_screen.dart."
+logical_id = "d0e972c5-3377-4473-a60a-57d375564a72"
+content_hash = "sha256:c934a51890b34922b506b0b5f7bb2757e700964f6c3e3a0ade8ad2b61709fd7f"
+size = 13263
+mtime_ms = 1789820577796
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d0e972c5-3377-4473-a60a-57d375564a72/877d2e1a-f478-408a-b09c-a90121f28c52"
+storage_version_token = "1789820583466756"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Y-IMh7buZlgeW-KxioY2b"
+uri = "file://artifacts/skills-add-fix-changed-files.zip"
+type = "unspecified"
+title = "Skill save fix — changed file ZIP"
+description = "Contains only migrations/0001_add_transition_skill_priority.sql, which adds the missing transition skill priority column."
+logical_id = "cd6aa04a-bc42-41ac-a3fd-1ab44c6beb27"
+content_hash = "sha256:e4c9e4e2302e8b47945b0416b3ccad9f8c2e654c54cf8de5197ebf1ef175e1e3"
+size = 346
+mtime_ms = 1789821247173
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/cd6aa04a-bc42-41ac-a3fd-1ab44c6beb27/a37e14ef-b90d-47b5-b726-772cbe013359"
+storage_version_token = "1789821254574434"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k88ySwhSQIor3a10rC4GA"
+uri = "file://artifacts/flutter-skill-save-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Skill save fix — changed files ZIP"
+description = "Contains the updated Flutter Skill screen and the required transition_skills priority migration."
+logical_id = "e1ab02bc-d775-4513-9345-c1e8520d81b7"
+content_hash = "sha256:57c95bd2484fb2759444f6f294f609042301df7a9b10bfe29f53d64ec7d6a8c9"
+size = 6542
+mtime_ms = 1789821329558
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e1ab02bc-d775-4513-9345-c1e8520d81b7/6aa5e631-5ca6-48d8-b33c-25a2716ee8dd"
+storage_version_token = "1789821333788344"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "jVksyUYB9baqorvSyADeg"
+uri = "file://artifacts/academic-planner-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner fix — changed files ZIP"
+description = "Contains only the updated AcademicBloc and Academic Planner screen files."
+logical_id = "4c5bd714-d2e8-4938-86f1-0ffd53d320e6"
+content_hash = "sha256:c0e0a2c1e2dfb5cf6fde748851859557023ef336b9ee3361900821905f89e797"
+size = 15024
+mtime_ms = 1789821802652
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c5bd714-d2e8-4938-86f1-0ffd53d320e6/020a425f-b1cd-4ca3-8311-626865933e56"
+storage_version_token = "1789821813623510"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fjxIPZbVeym6qaLPe8tpP"
+uri = "file://artifacts/daily-tasks-fix-changed-files.zip"
+type = "unspecified"
+title = "Daily Tasks fix — changed files ZIP"
+description = "Contains only server/storage.ts with the legacy daily_tasks persistence compatibility fix."
+logical_id = "8e8e6e4f-aae7-4db0-a1a7-e1c8917a3ecb"
+content_hash = "sha256:c7cfb45f2453da59a99847bcad70dafc0cf4ddac8826128b141543ab081b8598"
+size = 25592
+mtime_ms = 1789822697024
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e8e6e4f-aae7-4db0-a1a7-e1c8917a3ecb/84f5e6e4-655b-4d2d-867d-6bdb3962b751"
+storage_version_token = "1789822711599210"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "CotcpWHQSqQntU5ixzT5o"
+uri = "file://artifacts/flutter-daily-tasks-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks fix — changed files ZIP"
+description = "Contains the updated DailyTasksBloc and server storage compatibility fix for legacy daily_tasks schemas."
+logical_id = "b0e49796-1279-4e1f-b808-8a6474aeb207"
+content_hash = "sha256:92fa8bd4d8d32431e5414f8201f74417723ee2faf9e6426e9a0e0ffdb43a8ae5"
+size = 27734
+mtime_ms = 1789822793116
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b0e49796-1279-4e1f-b808-8a6474aeb207/8174b84f-3568-443b-8c68-cdd871a86e47"
+storage_version_token = "1789822798673498"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "T5L_A2p6FPo27qF2J-RHw"
+uri = "file://artifacts/flutter-daily-tasks-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks changed-file ZIP"
+description = "Contains the Flutter DailyTasksBloc file changed for the Create Task flow."
+logical_id = "900a0f04-2088-4349-850a-6fc7bc28c907"
+content_hash = "sha256:84f9f0a05238840748368d8f15983567b3a4c007d7fd6f9ef9d041eb4ed84982"
+size = 2164
+mtime_ms = 1789823118657
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/900a0f04-2088-4349-850a-6fc7bc28c907/8f9b05b1-d787-4214-b11a-84deae0d80b6"
+storage_version_token = "1789823123038360"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "gUAfsQSyjOzPNHbiNNbFJ"
+uri = "file://artifacts/flutter-academic-planner-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Planner fix — changed-file ZIP"
+description = "Contains the Academic Planner presentation file with the stateful Add Assignment dialog lifecycle fix."
+logical_id = "af0f550b-c0cc-4fd0-b738-2c6252b3cad3"
+content_hash = "sha256:2f54b3eb71bf16f57b0433714911e761d98e41bfdb944fd0c63dab93504f4909"
+size = 13482
+mtime_ms = 1789823703114
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/af0f550b-c0cc-4fd0-b738-2c6252b3cad3/a6186db5-1d18-48be-b879-2d9b70b8a223"
+storage_version_token = "1789823707888099"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "msGxheNO68S8p8KAbPG_k"
+uri = "file://artifacts/flutter-academic-study-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Study fix — changed files ZIP"
+description = "Contains the Study Start Session lifecycle fix, confirmed Delete flow, BLoC/API/repository updates, and server persistence route/storage changes."
+logical_id = "f7b93865-e6d1-41cc-8ab4-3520c4f92d68"
+content_hash = "sha256:9b52dd0e546259e053c83988c6e9b562539a0ffba4763245ac89ccffcf7e0a2f"
+size = 93110
+mtime_ms = 1789824103068
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f7b93865-e6d1-41cc-8ab4-3520c4f92d68/814c1e98-5a1b-4708-8058-5e7c4ae9bda0"
+storage_version_token = "1789824111575773"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hcuyXe3YdNarBUligzOH5"
+uri = "file://artifacts/flutter-academic-planner-bugfix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Academic Planner bugfix — changed files ZIP"
+description = "Contains the lifecycle fixes for Academic Planner dialogs, assignment deletion, study deletion handling, and the required backend persistence changes."
+logical_id = "dab9527d-c11d-4e0c-a38d-da72d4d06329"
+content_hash = "sha256:6d31156baeb8b27da39c5da577bfd7d3e327f6afa1551d6bf5314abc77c85cc0"
+size = 96078
+mtime_ms = 1789825051547
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dab9527d-c11d-4e0c-a38d-da72d4d06329/959065d0-5243-4d55-81b0-c732039f654b"
+storage_version_token = "1789825060103198"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q2MqE3LH50qsuD-LXEkDL"
+uri = "file://artifacts/academic-planner-schedule-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Schedule Add Class fix — changed files ZIP"
+description = "Contains the Academic Planner screen with the Add Class persistence/state visibility fix and full saved class details rendering."
+logical_id = "e698b088-62b0-4c52-9f40-b502f9ab2f00"
+content_hash = "sha256:e4fac78162d60c4c93eaa2545ebbc70b8e87ec3eaa0d53c18692709bb173fd20"
+size = 14017
+mtime_ms = 1789825524551
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e698b088-62b0-4c52-9f40-b502f9ab2f00/e3faee5d-6e4b-41d8-9fd8-ec7a18c0cc26"
+storage_version_token = "1789825528663517"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "qKp4LOBM7jEKW_gK1nmXu"
+uri = "file://artifacts/flutter-pharmacy-create-lifecycle-fix-changed-files.zip"
+type = "unspecified"
+title = "Create Pharmacy runtime-error fix — changed files ZIP"
+description = "Contains the stateful Create Pharmacy dialog fix with correct controller ownership, mounted success navigation, and no arbitrary delay or manual early disposal."
+logical_id = "eef0942e-524c-49db-86c6-2ccfef09baf3"
+content_hash = "sha256:a375b69409f7ab72e2ee2bf5aac79e9431d13b65bff5d1553e47920f5ea9a988"
+size = 17863
+mtime_ms = 1789826076873
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eef0942e-524c-49db-86c6-2ccfef09baf3/4a65f66c-0d52-4a81-afb8-409df6654f56"
+storage_version_token = "1789826086653406"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "e_2rQ3O1zIfeAA47rypzW"
+uri = "file://artifacts/flutter-phone-number-validation-changed-files.zip"
+type = "unspecified"
+title = "Flutter phone number validation — changed files ZIP"
+description = "Contains the shared 10-digit numeric formatter/validator and updates to every relevant Flutter phone-number field."
+logical_id = "8a3143a2-c468-46d5-bf9e-bbb6a24915e2"
+content_hash = "sha256:92d2c8ce9057e95fe91400c1a35f7cf25bbdb1ca10d469caedf416d4c8dfbf10"
+size = 50344
+mtime_ms = 1789826518147
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8a3143a2-c468-46d5-bf9e-bbb6a24915e2/7ea269e2-b395-4134-8d4f-01ae0b87b218"
+storage_version_token = "1789826522693699"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xMXeav4PvICMON8nslWEn"
+uri = "file://artifacts/flutter-theme-changes.zip"
+type = "unspecified"
+title = "Flutter theme changes — changed files ZIP"
+description = "Theme-only Flutter changes: centralized colors, text styles, ThemeData, and app theme wiring."
+logical_id = "4ef88a37-51c4-40bd-a7ac-f082b20cc10e"
+content_hash = "sha256:c3c23f4b7d9524db51fec5b854f0c315e7464ac93232b420a0d03631d5015692"
+size = 4738
+mtime_ms = 1789826997152
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4ef88a37-51c4-40bd-a7ac-f082b20cc10e/90bb92aa-ba19-4097-b62b-0315810e54d6"
+storage_version_token = "1789827006381741"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "QiQZ68kKjb0ZLqRNyu84D"
+uri = "file://artifacts/flutter-responsive-ui-changes.zip"
+type = "unspecified"
+title = "Flutter responsive UI changes — changed files ZIP"
+description = "Contains the 12 Flutter files updated to improve responsive layouts, dialog sizing, keyboard handling, adaptive grids, and narrow-screen text/action behavior."
+logical_id = "4c9dd060-806d-42c2-b5b8-9bce73941b61"
+content_hash = "sha256:8eba567c722c0dfbd4bbf916fc86f35385d521dc262d327ac9cb980a2a4cc45a"
+size = 125787
+mtime_ms = 1789969027432
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c9dd060-806d-42c2-b5b8-9bce73941b61/ceda0c60-66cd-4095-b08e-ed51ca2d61e6"
+storage_version_token = "1789969031913141"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "lgmbcucgorVvVUPnns_aZ"
+uri = "file://artifacts/flutter-signup-validation-flow.zip"
+type = "unspecified"
+title = "Flutter Sign Up validation flow — changed file ZIP"
+description = "Contains only signup_screen.dart with sequential first-error validation while preserving the existing UI, messages, password checks, and submission behavior."
+logical_id = "0915dbd6-9a65-4736-92f1-00cadd67a636"
+content_hash = "sha256:621ca752402b4b4ac379890d22c1bed9c6f19ed6e6cbc1d964fe7aadff586f94"
+size = 5930
+mtime_ms = 1789969732631
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0915dbd6-9a65-4736-92f1-00cadd67a636/9b5b7fda-a60a-4ec9-9899-fbf0c5810740"
+storage_version_token = "1789969744269937"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4H6W-z7o3gn8pIDUsbqnm"
+uri = "file://artifacts/flutter-signup-live-validation.zip"
+type = "unspecified"
+title = "Flutter Sign Up live validation — changed file ZIP"
+description = "Contains only signup_screen.dart with immediate per-field validation updates while preserving existing rules, styling, auth logic, navigation, and BLoC behavior."
+logical_id = "ecc8c65f-4465-4959-8298-a605e4f9cc5e"
+content_hash = "sha256:367001e8d184df64abe2130851c223ac0850687074f9081144fa704014eee2ff"
+size = 5738
+mtime_ms = 1789970386374
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ecc8c65f-4465-4959-8298-a605e4f9cc5e/5231f04b-ccb5-440e-86d4-8753f8d3709b"
+storage_version_token = "1789970391655061"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "X7yre1mvJDx-f8mS4MQuJ"
+uri = "file://artifacts/flutter-signup-live-validation-fixed.zip"
+type = "unspecified"
+title = "Flutter Sign Up validation fix — corrected ZIP"
+description = "Contains the corrected signup_screen.dart. The password-change callback is passed into _SignupCard, fixing the undefined-method errors while preserving live validation behavior."
+logical_id = "f489fb7f-8086-482a-9f07-e0e9b65d36b2"
+content_hash = "sha256:ef22e5a0cff0459d2317fa5b81b56f1f06bc1f4943ff9fa42cbbbcb9d2b8e73b"
+size = 5756
+mtime_ms = 1789970568074
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f489fb7f-8086-482a-9f07-e0e9b65d36b2/0ed93275-ac23-43f5-871f-41a99e989912"
+storage_version_token = "1789970574899224"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9I3AI1EixC91n-nNRbw8z"
+uri = "file://artifacts/flutter-google-play-subscription-fix.zip"
+type = "unspecified"
+title = "Flutter Google Play subscription fix — changed files ZIP"
+description = "Contains only the two changed Android files that align the Flutter app package with the existing Google Play and server configuration."
+logical_id = "1a8142c7-e1b6-4aeb-b258-7435f97a22de"
+content_hash = "sha256:85a20fbefc48b90b0c058d34b5b2195181a02117e469952c665b67924aa125b9"
+size = 1850
+mtime_ms = 1789971005634
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1a8142c7-e1b6-4aeb-b258-7435f97a22de/9c7c296a-b679-4f48-9b1e-c05b5f1e2902"
+storage_version_token = "1789971016800974"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xFd8rTJpSEtUxQwHagQze"
+uri = "file://artifacts/flutter-emergency-contact-dropdown-fix.zip"
+type = "unspecified"
+title = "Flutter emergency contact dropdown fix — changed file ZIP"
+description = "Contains only resources_screen.dart with safe normalization for stored relationship values in the emergency contact Add/Edit dropdown."
+logical_id = "ac88c8ee-5725-47e3-9824-2089210c9bc3"
+content_hash = "sha256:42b100287daef4679b8c43647265abcb29f3c600c9048b92a5a4d3b28730b58b"
+size = 19571
+mtime_ms = 1789971538942
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ac88c8ee-5725-47e3-9824-2089210c9bc3/711df94a-5697-4c69-9432-029b0d92a2f5"
+storage_version_token = "1789971544807012"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Qe65t0z2tupsRAxCl-lbY"
+uri = "file://artifacts/flutter-resources-edit-fix.zip"
+type = "unspecified"
+title = "Flutter Resources edit fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/resources/data/resources_api.dart with the minimal response parsing fix."
+logical_id = "4069edea-ad56-4a69-8682-14986f578448"
+content_hash = "sha256:0cd9f7f179e8f8b744ed80912300306ef8ec004baad1db51a51ec44d7820a281"
+size = 1156
+mtime_ms = 1789972726176
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4069edea-ad56-4a69-8682-14986f578448/670f3113-f649-4a27-86e8-4206a3e6175e"
+storage_version_token = "1789972731356817"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "C6kTh497NqdDkP1rMJtyR"
+uri = "file://artifacts/flutter-emergency-resource-add-fix.zip"
+type = "unspecified"
+title = "Flutter emergency resource add fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/resources/presentation/resources_screen.dart with the matching Type-to-Phone spacing adjustment."
+logical_id = "947e7953-c799-4221-b042-71a543b084e2"
+content_hash = "sha256:df9ac5c79892a08dabd603673e56675e9398cec575ef95ffb1d581477c34b2f7"
+size = 19569
+mtime_ms = 1789973198649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/947e7953-c799-4221-b042-71a543b084e2/d0cafd02-5889-4ff0-aa2a-847f6f747222"
+storage_version_token = "1789973204508548"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xIXGjZGNRuXaNzXtPESw1"
+uri = "file://artifacts/flutter-meals-shopping-add-cancel-fix.zip"
+type = "unspecified"
+title = "Meals & Shopping Add/Cancel fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the dialog lifecycle and navigation fix."
+logical_id = "c0adaebc-e958-466a-ab3c-66aa3c795848"
+content_hash = "sha256:d450e4e7df9463bf595c2494e9b252cf44df785cb97521c3ff08f457054b8ad7"
+size = 12729
+mtime_ms = 1789976599869
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c0adaebc-e958-466a-ab3c-66aa3c795848/ee55259f-103d-47c6-ab09-2ef8f6ed4a14"
+storage_version_token = "1789976610411101"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "77du0aw5y7ZPv9IfyxmWA"
+uri = "file://artifacts/flutter-shopping-list-add-cancel-fix.zip"
+type = "unspecified"
+title = "Shopping List Add/Cancel fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the Shopping List dialog lifecycle fix."
+logical_id = "e882dcc9-e8bd-40be-a488-47500937c6e7"
+content_hash = "sha256:7a12ff6da2536ba4b293a2b39477e72d5aff8793e966f1dbf44f7ddc023203e0"
+size = 12852
+mtime_ms = 1789977022306
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e882dcc9-e8bd-40be-a488-47500937c6e7/6c989109-a796-40d2-816c-fa0e1ecb6d21"
+storage_version_token = "1789977034707683"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5XIpX7FGVjuBvCEDbXp3H"
+uri = "file://artifacts/flutter-mark-purchased-popup-fix.zip"
+type = "unspecified"
+title = "Mark as Purchased popup fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/meal_shopping/presentation/meal_shopping_screen.dart with the safe purchase dialog lifecycle and action handling."
+logical_id = "0e127ac8-afa3-4c5f-ae6c-a2c485c27d25"
+content_hash = "sha256:7a12ff6da2536ba4b293a2b39477e72d5aff8793e966f1dbf44f7ddc023203e0"
+size = 12852
+mtime_ms = 1789978048987
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0e127ac8-afa3-4c5f-ae6c-a2c485c27d25/4cc26488-ac7d-4a3e-8447-be8e64b45b56"
+storage_version_token = "1789978055151343"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ZcJ1y90j4gMK3-FvmvV9O"
+uri = "file://artifacts/flutter-health-records-sensitivity-notes-fix.zip"
+type = "unspecified"
+title = "Health Records fixes — changed Flutter file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart with the Sensitivity lifecycle fix and Notes dialog close-safety fix."
+logical_id = "00cb56ec-5895-44ea-a2e0-40df451c12ac"
+content_hash = "sha256:8c74ff9449beb0d2c57b781f8f142b1075098bb4610fdb9b2217c7916dd25bc7"
+size = 18142
+mtime_ms = 1789981954837
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/00cb56ec-5895-44ea-a2e0-40df451c12ac/303bc63b-db18-4576-a1b2-7e3e4cf2cc6e"
+storage_version_token = "1789981961171669"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d3Bn1uIFKjW7J1KIFcfYM"
+uri = "file://artifacts/flutter-health-records-reactions-contacts-fix.zip"
+type = "unspecified"
+title = "Health Records Reactions and Trusted Contacts — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart. The Trusted Contact success listener is now mounted-safe and delayed; the existing Reaction lifecycle fix is preserved."
+logical_id = "b6f8c2aa-95ba-4325-bf9e-9181128c3ce2"
+content_hash = "sha256:2957e8b7dd99d3b25d00672db250034f8ee2c2d0cf8545eb9ef1b825106c1b2a"
+size = 17897
+mtime_ms = 1789982580623
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b6f8c2aa-95ba-4325-bf9e-9181128c3ce2/02528d45-c929-4674-a701-574e1f24ed1d"
+storage_version_token = "1789982585033643"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sBZ1JO71FS163fOOKnSkh"
+uri = "file://artifacts/flutter-health-records-provider-notes-medications-fix.zip"
+type = "unspecified"
+title = "Health Records dialog fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/medical/presentation/medical_screen.dart with the shared safe success-navigation fix for Healthcare Contacts, Personal Notes, and Medications."
+logical_id = "dc1eff7d-1202-46b7-811f-a75673842081"
+content_hash = "sha256:99eba7cc4550b88bd31a0ef24026d33615e8b61e512bbafca13ddffb6e96b3dd"
+size = 17900
+mtime_ms = 1789982851885
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dc1eff7d-1202-46b7-811f-a75673842081/aa464b0e-5c54-4f0a-8d15-82a54c27b233"
+storage_version_token = "1789982856534891"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cMsn1q2cSieKs0yfSVfED"
+uri = "file://artifacts/flutter-phone-validation-fix.zip"
+type = "unspecified"
+title = "Flutter phone validation fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/core/utils/phone_number.dart. The shared validator now requires exactly 10 ASCII digits without trimming or accepting any other characters."
+logical_id = "0517db93-7f63-4954-a085-76ec5728f7f2"
+content_hash = "sha256:83ce1af4368a8934ac4200c0d3eaef6ebc5ad39299a62dc7df1958b3426f349f"
+size = 534
+mtime_ms = 1789983072787
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0517db93-7f63-4954-a085-76ec5728f7f2/aad7654d-3a4d-40c5-9e92-1c78ae94d0a6"
+storage_version_token = "1789983079079863"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IaumPfjJVnM7ALg218BEY"
+uri = "file://artifacts/flutter-responsive-layout-fix.zip"
+type = "unspecified"
+title = "Flutter responsive layout fix — changed files ZIP"
+description = "Contains only the eight Flutter files changed to address confirmed responsive overflow risks in navigation, shared dialog sizing, Home quick actions, Academic dialogs, Calendar, Meal Shopping, Medical cards, and Mood history."
+logical_id = "b186ef3f-cebc-4c3e-ad3c-5d340b5b689a"
+content_hash = "sha256:31f967f743fecf541b696fc9cb2f390c131a3d94e46cd70aa2e7f5fd4fed900d"
+size = 93802
+mtime_ms = 1789983621216
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b186ef3f-cebc-4c3e-ad3c-5d340b5b689a/cf328c01-eecd-44bb-a811-171cb30b954f"
+storage_version_token = "1789983632615005"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Ze1xjmq3_r_IuximttRz9"
+uri = "file://artifacts/flutter-subscription-wallets-fix.zip"
+type = "unspecified"
+title = "Flutter subscription wallet implementation"
+description = "Changed Flutter, Android, and iOS files for Stripe card, Google Pay, and Apple Pay subscription checkout, with the existing native store flow preserved."
+logical_id = "e2605de5-4d86-4e73-8406-162f82ee0d88"
+content_hash = "sha256:74db598789ed63fecb2e951fc5e793454fe113b9fdd2c58c7dc0c4a9223b91e6"
+size = 25559
+mtime_ms = 1789990642711
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e2605de5-4d86-4e73-8406-162f82ee0d88/0fe0afea-4c2b-4eff-9632-380bd8d7309a"
+storage_version_token = "1789990649318181"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9c8fxuhKJEofnoYqlitD_"
+uri = "file://artifacts/flutter-emergency-resource-add-fix-v2.zip"
+type = "unspecified"
+title = "Flutter Emergency Resource add fix"
+description = "Contains the two changed Flutter files for resilient Emergency Resource response parsing and debug exception logging."
+logical_id = "41ef0533-aadc-46fe-b76a-1805be32792e"
+content_hash = "sha256:635d409453a2c9ef94f74b28c091a5007af1027511be2e71356021d798f65a09"
+size = 3899
+mtime_ms = 1790064379480
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/41ef0533-aadc-46fe-b76a-1805be32792e/cea3d985-47fb-48b5-b12f-1574ffc2b3ea"
+storage_version_token = "1790064390421985"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "w86U_Y2aKt9r-pV5wFxnH"
+uri = "file://artifacts/flutter-daily-tasks-completion-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Daily Tasks completion fix"
+description = "Changed files for the Daily Tasks completion-state and per-task rebuild fix."
+logical_id = "811e7eec-fec6-46d3-a82c-85c5587fd759"
+content_hash = "sha256:e8c304b915ac5b7e077e7cdba881c9852df1289af4f65ac74497afdc59d5476c"
+size = 10067
+mtime_ms = 1790064843055
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/811e7eec-fec6-46d3-a82c-85c5587fd759/8bb35195-9a25-4e16-8668-9555e631be5c"
+storage_version_token = "1790064852149406"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MhId4lHx4JHc6OC9aSD3v"
+uri = "file://artifacts/flutter-financial-bill-reminder-ui-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter financial UI fix"
+description = "Changed financial screen file with consistent budget dialog spacing and matching expense/income buttons."
+logical_id = "6c49baab-46a6-4cf0-b85f-6eda0526e4d7"
+content_hash = "sha256:950be87f13fca968c652dcae1e4a419295f1164192d8e7990391449e53e1970a"
+size = 8294
+mtime_ms = 1790065215616
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6c49baab-46a6-4cf0-b85f-6eda0526e4d7/6acfb2a9-d21c-46a9-a72f-c5a32f10cb7c"
+storage_version_token = "1790065219827538"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5U8Wy6dEc60ycHgX6V4CL"
+uri = "file://artifacts/flutter-sleep-routine-wake-date-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Sleep Routine wake date fix"
+description = "Changed sleep form and validation files for Wake Date support and strict full DateTime ordering."
+logical_id = "c25d6af6-9616-4810-8847-1bd2aeb3ae69"
+content_hash = "sha256:5010970df1bb1a7e297f0e1e770dbf2c9b12cd4428028d069a95691646303d5f"
+size = 12256
+mtime_ms = 1790065878391
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c25d6af6-9616-4810-8847-1bd2aeb3ae69/ba6436e3-e112-4305-9b31-d164d0c760f5"
+storage_version_token = "1790065885335549"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "EyhDjqnBMDg0Ryq0Lb5Tc"
+uri = "file://artifacts/flutter-sleep-routine-overview-create-edit-fix-changed-files.zip"
+type = "unspecified"
+title = "Sleep Routine Overview create/edit fix — changed files"
+description = "ZIP containing the four source files changed for the Sleep Routine create/edit and duplicate-date fix."
+logical_id = "2c0adedb-c0bd-4f5b-8f08-1722561e0f80"
+content_hash = "sha256:cdca69b3a0e1e1f0d208b07a700f1a33e42fe05fd80afa44c980645e904955cc"
+size = 60365
+mtime_ms = 1790067688666
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c0adedb-c0bd-4f5b-8f08-1722561e0f80/1aba426a-fb96-4a2b-a275-5268d5810e10"
+storage_version_token = "1790067694777426"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XbRirlfD-M4ids_x7J45Q"
+uri = "file://artifacts/flutter-medication-list-pharmacy-notes-fix-changed-files.zip"
+type = "unspecified"
+title = "Medication List fixes — changed file ZIP"
+description = "Contains the single Flutter presentation file changed for refresh icons and the Link Pharmacy lifecycle fix."
+logical_id = "9041ce59-6d2d-45fa-a667-1ff9c77d5ee5"
+content_hash = "sha256:bb4637272118a20ad36dc71a78b40b74abe769f4baef01fcfd10aa0bf1ec7544"
+size = 17812
+mtime_ms = 1790069396279
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9041ce59-6d2d-45fa-a667-1ff9c77d5ee5/49f9687b-6f30-4290-8bd3-388b0fe57229"
+storage_version_token = "1790069404649863"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "5RaX9jsnVdI5Un5j0Z626"
+uri = "file://artifacts/flutter-medication-list-pharmacy-notes-crash-fix-changed-files.zip"
+type = "unspecified"
+title = "Link Pharmacy crash fix — changed file ZIP"
+description = "Contains the final medical_screen.dart lifecycle fix for the Link Pharmacy save flow."
+logical_id = "8bf803e5-91fb-49af-a5de-309461bbabc0"
+content_hash = "sha256:0116a5d37fc42b8805d1dc7bbb35023dd04ec77cb14cbadebd80e27de60c19e4"
+size = 17894
+mtime_ms = 1790069763520
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8bf803e5-91fb-49af-a5de-309461bbabc0/bf2420de-c6fd-46dd-a0fd-52ca24c28771"
+storage_version_token = "1790069768196201"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sC8XDNUbWB6cTTpSENHx4"
+uri = "file://artifacts/flutter-calendar-bugs-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar bugs fix — changed file ZIP"
+description = "Contains the three files changed for calendar edit navigation and all-day date handling."
+logical_id = "6150add7-e4ac-4206-b473-8c7b3e7ebdd8"
+content_hash = "sha256:e18dac7effe8f46ceb9df1506ecad2ad50542e83d27d23f938091d7562a1f1d9"
+size = 59499
+mtime_ms = 1790070668142
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6150add7-e4ac-4206-b473-8c7b3e7ebdd8/df2bb51c-aba3-4c97-9828-7a6ce46e3008"
+storage_version_token = "1790070675365437"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8JzC2z6nUNQIgopCHA-dI"
+uri = "file://artifacts/flutter-academic-planner-schedule-fix-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner Schedule fix — changed file ZIP"
+description = "Contains the single changed Flutter file for the responsive Add New Class dialog and dynamic semester choices."
+logical_id = "4572ced5-82e1-437f-bdcf-d9c3a934ec1a"
+content_hash = "sha256:884ab6488a7cabee7a9d402c2823c67835966bff0b356a0f1148288f845f2ab1"
+size = 14173
+mtime_ms = 1790071056160
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4572ced5-82e1-437f-bdcf-d9c3a934ec1a/4a4a736d-be88-463a-935a-adb4c08e9a0a"
+storage_version_token = "1790071075264158"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "6wHuk14SGfoP7nGU0DlHV"
+uri = "file://artifacts/flutter-assignment-validation-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter assignment validation fix — changed files ZIP"
+description = "Contains the three changed files for in-dialog due-date validation, decimal estimated-hours support, and the shared assignment schema precision update."
+logical_id = "c7db39b6-c00d-4ac9-95f3-94171e2654c8"
+content_hash = "sha256:862d54c814652830dfa1f72f514e3d2f14c2554c7c462933721ffd02ff50392d"
+size = 34306
+mtime_ms = 1790071557274
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c7db39b6-c00d-4ac9-95f3-94171e2654c8/1d36312f-af81-44af-80ae-b46dfa2ae053"
+storage_version_token = "1790071564130312"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "te6e5Il49Q2IXSiFmW3_1"
+uri = "file://artifacts/flutter-study-group-dialog-overflow-fix-changed-files.zip"
+type = "unspecified"
+title = "Study Group dialog overflow fix — changed file ZIP"
+description = "Contains the single changed Flutter presentation file for the responsive Create Study Group dialog."
+logical_id = "11885efa-0f78-47ae-b5a6-be26c5ecbf78"
+content_hash = "sha256:28ec1134b331d29f8d1bdd180bd8da72e3ab78ecc7ca99328062c9d54eb57356"
+size = 14294
+mtime_ms = 1790071787859
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/11885efa-0f78-47ae-b5a6-be26c5ecbf78/7d8f02c1-6a31-457f-bc12-3f072acfdf4b"
+storage_version_token = "1790071794180421"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XrxIQxnqdvAvMb7JM6rPl"
+uri = "file://artifacts/flutter-skill-milestone-level-label-fix-changed-files.zip"
+type = "unspecified"
+title = "Skill milestone level label fix — changed file ZIP"
+description = "Contains the single changed Flutter skills presentation file for responsive level labels and validation messages."
+logical_id = "78c03d4f-d3d3-4f21-aef9-7043e3557e93"
+content_hash = "sha256:8b1e2283357e09db27681e28aada19626c917dc4e63933db06ef0b80cc79888e"
+size = 6164
+mtime_ms = 1790072096785
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/78c03d4f-d3d3-4f21-aef9-7043e3557e93/22e33944-ea2e-4bb0-91b3-b17eb5c30637"
+storage_version_token = "1790072101199750"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "kcLYUKc_DIRdjR90shzEb"
+uri = "file://artifacts/flutter-life-skills-add-edit-dialog-fix-changed-files.zip"
+type = "unspecified"
+title = "Updated Life Skills Add/Edit fix — changed file ZIP"
+description = "Contains only mobile_flutter/lib/features/skills/presentation/skills_screen.dart with the explicitly bounded Dialog layout."
+logical_id = "15237d25-3ed3-4190-b031-00f748ed6ec0"
+content_hash = "sha256:e17dc88183d6d2f0ea1ac2023ccf164e1ff483db3c29c742481fa6889d2a9254"
+size = 6599
+mtime_ms = 1790080099251
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/15237d25-3ed3-4190-b031-00f748ed6ec0/7771528b-3312-4f1d-a623-c00e0cef7760"
+storage_version_token = "1790080103829565"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "WjVWmgE0JJ0D9hnLJVdnp"
+uri = "file://artifacts/flutter-subscription-plan-selection-changed-files.zip"
+type = "unspecified"
+title = "Flutter subscription plan selection — changed files ZIP"
+description = "Contains only the four changed Subscription BLoC and presentation files, preserving their project paths."
+logical_id = "bd4bd681-6a41-47e5-93f9-05db7c66100e"
+content_hash = "sha256:776a9bdbeb1c011546a573dfebfa59e9fcb33949ee0d94280810d1308550d24f"
+size = 10721
+mtime_ms = 1790083082230
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bd4bd681-6a41-47e5-93f9-05db7c66100e/3eb9de9b-958c-4da9-8abb-0f0070147220"
+storage_version_token = "1790083089930165"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "FATdpUHrTijSm2NezMFCc"
+uri = "file://artifacts/flutter-native-wallet-flow-compatibility-changed-files.zip"
+type = "unspecified"
+title = "Flutter native wallet flow — changed files ZIP"
+description = "Contains only the two Flutter Subscription files changed after reviewing the existing React Native wrapper flow."
+logical_id = "9a115e06-d197-427f-b949-f28ffc8d160a"
+content_hash = "sha256:38ba70866e507864ed1910c2169074520068825c27107db15b11f5f843375107"
+size = 9012
+mtime_ms = 1790137616626
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9a115e06-d197-427f-b949-f28ffc8d160a/01758995-21ee-4698-8049-a97c912b4a2f"
+storage_version_token = "1790137624532252"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "m0SVSYk-ijwNN7MYDNAjh"
+uri = "file://artifacts/flutter-subscription-plan-selection-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter subscription plan-selection fix — changed files ZIP"
+description = "Contains exactly the two Dart files changed to start native store checkout after selecting an available plan and show an unavailable-store message."
+logical_id = "609bfaa0-db4a-4117-a8a7-6154bfe59f8c"
+content_hash = "sha256:aca814b65c71f30d867d60ae344218ef41e66706ae6e60a79a17ac27736443bc"
+size = 8872
+mtime_ms = 1790139765578
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/609bfaa0-db4a-4117-a8a7-6154bfe59f8c/b4c3d6e4-036f-4539-a25a-bdcf0fe11082"
+storage_version_token = "1790139780938762"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "92ZgNK7pu4qNohzKYZ5hv"
+uri = "file://artifacts/flutter-subscription-availability-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter subscription availability fix — changed files ZIP"
+description = "Contains exactly the four Flutter subscription files changed to report store connection, product configuration, and tester-account issues accurately."
+logical_id = "078a62d1-fc13-4745-8003-3774065b5a85"
+content_hash = "sha256:bf3cbdfaf5e9a662fa0e152015056c7f8643a59f96dd0fc0d8561ae2e9609477"
+size = 11685
+mtime_ms = 1790141174017
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/078a62d1-fc13-4745-8003-3774065b5a85/0fa49994-e8d7-41dc-9535-0cd581972ec1"
+storage_version_token = "1790141182018614"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fO2fTN52OFvKKfkNRIx_s"
+uri = "file://artifacts/flutter-google-play-subscription-lookup-fix-changed-files.zip"
+type = "unspecified"
+title = "Flutter Google Play subscription lookup fix — changed files ZIP"
+description = "Contains exactly the two Flutter subscription files changed to retry selected-product lookup and log requested, returned, missing, selected, and store-availability details."
+logical_id = "754186b6-1d73-4479-890c-46de75c7b08a"
+content_hash = "sha256:22ca167a38ac06a10cdc33d5ae6651e82c7a92ae25b66d2c041ee39f2c5c6f0f"
+size = 5321
+mtime_ms = 1790142253415
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/754186b6-1d73-4479-890c-46de75c7b08a/08c71279-2e32-4afe-b2aa-64e25f45b69d"
+storage_version_token = "1790142260463076"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "fn4tpkcxC4F5_mCbwtQM-"
+uri = "file://rewards-redemption-limit-fix.zip"
+type = "unspecified"
+title = "Rewards redemption limit fix"
+description = "ZIP containing only the four changed Rewards source files."
+logical_id = "da1c6c92-976d-44fb-9074-74bcb8c718f0"
+content_hash = "sha256:9622f79de77c326db26fd0fb954eefea9ba7149815165d8240c89070b668ec8b"
+size = 85682
+mtime_ms = 1790144472645
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/da1c6c92-976d-44fb-9074-74bcb8c718f0/7274a95a-d49a-45d5-a1ef-cba138b80d8e"
+storage_version_token = "1790144478162536"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "LS2JfldfrsdmZ8EzaKg3s"
+uri = "file://feature-menu-message-fix.zip"
+type = "unspecified"
+title = "Feature menu message fix"
+description = "ZIP containing only the changed Flutter navigation file."
+logical_id = "3dcc15fe-0028-4a1a-b0ea-f81a8a870772"
+content_hash = "sha256:91d9b46e3dd4dcb88680302674495d37e36652bd3b2d8c6374ae5ed969bbef0c"
+size = 5540
+mtime_ms = 1790145121369
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3dcc15fe-0028-4a1a-b0ea-f81a8a870772/24ac2010-1060-40f5-8036-3281cb1547ee"
+storage_version_token = "1790145125749998"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "3fjAsmQv3QieA-C8NLiCQ"
+uri = "file://caregiver-fix-changed-files.zip"
+type = "unspecified"
+title = "Caregiver fix — changed files"
+description = "ZIP containing only the five files changed for the caregiver acceptance, active-access, removal, and relogin fix."
+logical_id = "9f12aeec-a45b-4150-9d75-089cc81d904b"
+content_hash = "sha256:ec93d3e54fd2e887db176b7e046e09cd68a6c35b5e7561a61979bdbfcfb0f149"
+size = 83586
+mtime_ms = 1790146250543
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9f12aeec-a45b-4150-9d75-089cc81d904b/e0c89900-7eca-4cf9-b19b-a6651bc83778"
+storage_version_token = "1790146260596091"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "V241b03qKWH4ZTqdUIBVx"
+uri = "file://artifacts/settings-dashboard-customization-changed-files.zip"
+type = "unspecified"
+title = "Settings dashboard customization changed files"
+description = "ZIP containing only the two Flutter files changed for the Settings → Your Dashboard customization fix."
+logical_id = "29e99f4b-1d44-4836-9fc3-b7ca4d90d6c3"
+content_hash = "sha256:314805a32ad47c27076485d6d083626322fb0a368f986fcfde4124cf8f03a1b6"
+size = 16772
+mtime_ms = 1790146885649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/29e99f4b-1d44-4836-9fc3-b7ca4d90d6c3/d79e95ed-12ea-428a-89d8-6955d7d21f80"
+storage_version_token = "1790146891445737"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ekSBlTx6HS4gDjMYYF0bF"
+uri = "file://artifacts/academic-planner-assignment-hours-changed-files.zip"
+type = "unspecified"
+title = "Academic Planner assignment-hours changed files"
+description = "ZIP containing only the five files changed for the decimal Estimated Hours assignment fix."
+logical_id = "e2c77639-6e9e-47e6-ba3e-b7e97690523f"
+content_hash = "sha256:d3d501185dfcb462464410a6a1a1ee3021c04bce3c4925dc023194c1736d9c29"
+size = 77631
+mtime_ms = 1790149406507
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e2c77639-6e9e-47e6-ba3e-b7e97690523f/435aeffc-51ff-4ad9-b036-ba0e541a6b93"
+storage_version_token = "1790149410844362"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nB8eqZZGokk3vScX4KMAf"
+uri = "file://artifacts/current-streak-fix-changed-files.zip"
+type = "unspecified"
+title = "Current Streak fix changed files"
+description = "ZIP containing only the four files changed for the Home Current Streak fix."
+logical_id = "3c616c0d-8e86-4d7c-bb0c-7a4050d27b51"
+content_hash = "sha256:50420c1d79249d1101e2f19b911dcb06e03fa390d73e2880f161019140f4f6f0"
+size = 30687
+mtime_ms = 1790149995376
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3c616c0d-8e86-4d7c-bb0c-7a4050d27b51/a10126a3-c340-41ee-a41c-2081ef2a15c9"
+storage_version_token = "1790149998773316"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "YzahuCc8YTK_3cf3HvDKw"
+uri = "file://deliverables/rewards-badges-changed-files.zip"
+type = "unspecified"
+title = "Rewards and Badges changed files"
+description = "ZIP containing only the files changed for the Flutter Rewards → Badges implementation, server badge reconciliation, and focused tests."
+logical_id = "f2700f5d-0f09-47fe-acd9-348fa2a8108e"
+content_hash = "sha256:8363dfd182729ad1dc4276086450f3b1784e25f40b80c08313f2006bbeafb360"
+size = 120486
+mtime_ms = 1790150558263
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f2700f5d-0f09-47fe-acd9-348fa2a8108e/b43475fb-624f-4ea3-934a-54d93133fa61"
+storage_version_token = "1790150561882947"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "yVbmAAn0C1hI0D1PgF-oZ"
+uri = "file://deliverables/google-play-billing-changed-files.zip"
+type = "unspecified"
+title = "Google Play billing changed files"
+description = "ZIP containing the single server file changed for this billing safety fix. The Flutter purchase code and Android identifiers were already internally consistent and were not changed."
+logical_id = "b4bdbb83-c366-4473-b19e-0b01e59de36a"
+content_hash = "sha256:c4462159aed54d4bb3550557f18ede987a44d1558ba12d2fd815b1c5f6fc1e20"
+size = 48598
+mtime_ms = 1790156731925
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b4bdbb83-c366-4473-b19e-0b01e59de36a/c994d696-a269-4a32-800d-054313b80239"
+storage_version_token = "1790156737206775"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "W-vXm-vQj003ad6flaFK5"
+uri = "file://deliverables/flutter-google-play-billing-files.zip"
+type = "unspecified"
+title = "Flutter Google Play billing files"
+description = "ZIP containing the Flutter subscription BLoC and purchase service files used by the Google Play billing flow."
+logical_id = "386a397d-9aca-406a-9474-2059d66b7bf9"
+content_hash = "sha256:c9945708cf3ee2267ddb6d99b44495ff7fe06fa735bd7eb9e33bcdf74244430d"
+size = 5321
+mtime_ms = 1790156971237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/386a397d-9aca-406a-9474-2059d66b7bf9/7c411154-3d82-42c6-8d71-d837fac87c1f"
+storage_version_token = "1790156976585250"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "XGOiS9QaWn6FWDTeEGEy4"
+uri = "file://deliverables/flutter-ui-overflow-changed-files.zip"
+type = "unspecified"
+title = "Flutter UI overflow changed file"
+description = "ZIP containing the single Flutter file changed for the responsive Create Study Group and Add New Class dialog fixes."
+logical_id = "4af4f457-b39d-4076-98cf-6d63be6e8070"
+content_hash = "sha256:d8c5e83d846a61f948e328f7ec97ef930930f53dd7053d81d12bac901e85b779"
+size = 14512
+mtime_ms = 1790158791744
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4af4f457-b39d-4076-98cf-6d63be6e8070/84650bff-2e58-4944-9042-7084d56434aa"
+storage_version_token = "1790158867740026"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "4RRB1uEIpHJey7WZE0Zkv"
+uri = "file://deliverables/flutter-calendar-bugfix-changed-files.zip"
+type = "unspecified"
+title = "Flutter calendar bugfix changed files"
+description = "ZIP containing the three Flutter files changed for calendar event navigation, all-day persistence, date-range rendering, and focused event refresh."
+logical_id = "86b5bda7-880c-4a19-a7ce-dd298bff41a0"
+content_hash = "sha256:479f210c3663548d01dd82cff720b10c9dc323f15360f91186ff5ad314838042"
+size = 14806
+mtime_ms = 1790159633388
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86b5bda7-880c-4a19-a7ce-dd298bff41a0/5ad0bd49-a267-4868-a346-42ebd36a28ab"
+storage_version_token = "1790159646366658"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "moHl2gTvbVqhvFXTQnt9A"
+uri = "file://artifacts/flutter-daily-tasks-emergency-resource-fixes.zip"
+type = "unspecified"
+title = "Flutter daily tasks and emergency resource fixes"
+description = "ZIP containing only the four changed source files for this request."
+logical_id = "4f25e305-537a-4aa2-9c36-a2b14cc181d2"
+content_hash = "sha256:d1e915411a4cd8a1ec1737f76744922af4711fa025c84b4cebed99bffbbdc584"
+size = 61582
+mtime_ms = 1790160204172
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4f25e305-537a-4aa2-9c36-a2b14cc181d2/6dfcfdcb-cf51-49f5-8d8b-ee9777b7af2f"
+storage_version_token = "1790160210437307"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KSSOTKv1qH1ky6iEjN9wN"
+uri = "file://artifacts/flutter-calendar-undefined-state-fix.zip"
+type = "unspecified"
+title = "Flutter calendar state fix"
+description = "ZIP containing only the changed calendar_screen.dart file."
+logical_id = "f8b1b9be-ef46-4a5a-894b-be46db31a3f2"
+content_hash = "sha256:710fbf796d762979e4d99f2d9bce4da75b6dee27bb66a8783656ed72092f8fe6"
+size = 11276
+mtime_ms = 1790160761150
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f8b1b9be-ef46-4a5a-894b-be46db31a3f2/3da84db3-572d-4178-8562-cd3f141c465c"
+storage_version_token = "1790160765180382"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "BEahlEpm-1EXv2DZ4Oz9y"
+uri = "file://deliverables/emergency-resource-flutter-changes.zip"
+type = "unspecified"
+title = "Emergency Resource Flutter changes"
+description = "ZIP containing the single changed Flutter source file for the Emergency Resource form flow."
+logical_id = "3852d936-fa7e-4019-89f2-b03a7fce4f40"
+content_hash = "sha256:6b7a4b458617fed57f76c7cea1357c3f1e65329058c64738946bdbcf9886bc6d"
+size = 20032
+mtime_ms = 1790225910425
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/3852d936-fa7e-4019-89f2-b03a7fce4f40/49507b8c-d0e6-400a-ad4d-1cabaf85449a"
+storage_version_token = "1790225915054674"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "UD-yBAJ03PfAYSvpkuCe8"
+uri = "file://attached_assets/calendar-all-day-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar all-day fix — changed files"
+description = "ZIP containing only the two updated Flutter Calendar source files."
+logical_id = "be889c05-085b-4c77-90b1-54bcb2210f59"
+content_hash = "sha256:49eb94c328d5b78554c519e26b6574e255db5af5e9ecaaff3c320d1cb08bf832"
+size = 13217
+mtime_ms = 1790227186416
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/be889c05-085b-4c77-90b1-54bcb2210f59/257af242-27bc-415b-8887-d65f7b199ae5"
+storage_version_token = "1790227201279244"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "hjQgokNWqEG5jX24wC9hd"
+uri = "file://attached_assets/flutter-reported-errors-changed-files.zip"
+type = "unspecified"
+title = "Flutter error fixes — changed file"
+description = "ZIP containing only the updated Resources screen with the four invalid border arguments corrected."
+logical_id = "0ea4af9b-29b9-49d0-9ee7-3fda481ba262"
+content_hash = "sha256:8ce47c6bbff1c6b35f23f40398df90d4d97a99d20f7fc39c908f5a39c34ea920"
+size = 20040
+mtime_ms = 1790227839334
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0ea4af9b-29b9-49d0-9ee7-3fda481ba262/cab78d31-93bc-41b9-a25a-60f68294661d"
+storage_version_token = "1790227845010448"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8uAye3kwk7GNJYPnCJp0I"
+uri = "file://attached_assets/calendar-pretty-display-label-fix.zip"
+type = "unspecified"
+title = "Calendar prettyDisplayLabel fix"
+description = "One-file ZIP. Extract at the Flutter project root to replace lib/features/calendar/presentation/calendar_screen.dart."
+logical_id = "550f0f5d-b9dd-4155-ab62-d5a78ed4c873"
+content_hash = "sha256:574c7a21c4bd0c32fa9e143f4e321a19170bf31e7681914f252de14aca787169"
+size = 11654
+mtime_ms = 1790228350135
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/550f0f5d-b9dd-4155-ab62-d5a78ed4c873/d34456c3-a95f-4641-b386-c857db35123b"
+storage_version_token = "1790228354699197"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "6cXT0taY6dB9beBRXtRV1"
+uri = "file://attached_assets/calendar-display-label-complete-fix.zip"
+type = "unspecified"
+title = "Complete Flutter display-label fix"
+description = "Includes calendar_screen.dart and its required lib/core/utils/display_labels.dart dependency. Extract both at the Flutter project root."
+logical_id = "2d800c68-f4d1-4b92-b463-101982160ed0"
+content_hash = "sha256:a376f9f66a17250dbe76f538ca1bae451a5c78961c935a19052e1d8b16d8d5e7"
+size = 12018
+mtime_ms = 1790228781451
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2d800c68-f4d1-4b92-b463-101982160ed0/0281d2ea-0de5-44a9-826a-554ef5abf179"
+storage_version_token = "1790228785852983"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "214_sF9qHQRiO_NuDioRN"
+uri = "file://attached_assets/reward-redemption-limit-fix.zip"
+type = "unspecified"
+title = "Reward redemption limit fix"
+description = "ZIP contains the updated storage enforcement, shared redemption-limit rules, and focused regression tests. Extract at the repository root."
+logical_id = "190814a5-ca8d-472b-9cfd-96596a1a66db"
+content_hash = "sha256:d0796492f5ada02bb38f1f1d6eddb65d0ab8493de1b7382b40ee717ea11969ad"
+size = 29020
+mtime_ms = 1790229675444
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/190814a5-ca8d-472b-9cfd-96596a1a66db/eb633352-9112-484c-8394-6be4657afc49"
+storage_version_token = "1790229683884997"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Wn7V4iBTdKiRvh0bhpOre"
+uri = "file://attached_assets/flutter-reward-redemption-fix.zip"
+type = "unspecified"
+title = "Flutter reward redemption files"
+description = "Flutter-only ZIP with the three updated Rewards BLoC, repository, and API files. Extract at the mobile_flutter project root."
+logical_id = "8b6228c5-4b92-44e8-b516-38c5dde4648e"
+content_hash = "sha256:3ca9858ccaff584059ea3f6a3dcb792bb35630642831d3d2c7a7cb38846ca90f"
+size = 3108
+mtime_ms = 1790229821803
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8b6228c5-4b92-44e8-b516-38c5dde4648e/f139d0f6-71d8-4ab9-9d80-7922c202ce06"
+storage_version_token = "1790230049630579"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PycVXs60P3VIP_MyLTlSw"
+uri = "file://artifacts/caregiver-invitation-flow-20260924.zip"
+type = "unspecified"
+title = "Caregiver invitation flow ZIP"
+description = "Six caregiver-specific changed or added source files, including the Flutter refresh/filter changes, server query and safe relationship repair, plus a focused mapping test."
+logical_id = "c079a1df-de84-414a-a4c9-5f318d70e589"
+content_hash = "sha256:099f2fef840414f45a2e8de90d077a7c161e47a96985679a2ffe2a7bad6275a7"
+size = 84007
+mtime_ms = 1790231381924
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c079a1df-de84-414a-a4c9-5f318d70e589/f51a63e8-f988-4976-b596-7f254d952120"
+storage_version_token = "1790231396008739"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Ttc8e1Z63mX0xE1_fEsNT"
+uri = "file://dashboard-customization-fix.zip"
+type = "unspecified"
+title = "Dashboard customization fix ZIP"
+description = "Contains only the three Flutter source files changed for this dashboard persistence fix."
+logical_id = "105cda85-1b62-4343-842a-396ffc73ce6f"
+content_hash = "sha256:de16a48ef3eac74a4ee47dd6bcac43f195a1fd5cd75edb170ce00d5d3ee371bf"
+size = 31462
+mtime_ms = 1790232342503
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/105cda85-1b62-4343-842a-396ffc73ce6f/c77ee6e7-428e-4539-a734-ee704a285ec7"
+storage_version_token = "1790232349211482"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ex7Yq9zqZJKF7VsOBJDfJ"
+uri = "file://deliverables/academic-planner-decimal-hours-fix.zip"
+type = "unspecified"
+title = "Academic Planner Decimal-Hours Fix"
+description = "ZIP containing only the 13 changed source, test, and migration files."
+logical_id = "99cc5282-9c40-443c-936d-c19ed8d4e462"
+content_hash = "sha256:7ef21035f50a77a3435eae463a61a1673a129d0f8a02023cad88cee566ce0174"
+size = 105515
+mtime_ms = 1790233877437
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/99cc5282-9c40-443c-936d-c19ed8d4e462/9ddde3d7-6152-4209-9809-7726ba166bed"
+storage_version_token = "1790233885575910"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "uEQC2WRqTQZSuNXhnQWqh"
+uri = "file://adaptalyfe-reward-redemption-fix.zip"
+type = "unspecified"
+title = "Reward redemption fix ZIP"
+description = "Only the Flutter Rewards source files and regression tests changed for this fix."
+logical_id = "02d9c6d7-3693-4e99-8148-c1adfa83b08e"
+content_hash = "sha256:f7f86c2f5d13f9a6a57dbaae414c702e08b633720dd2943196911e173fdf3870"
+size = 16431
+mtime_ms = 1790235989277
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/02d9c6d7-3693-4e99-8148-c1adfa83b08e/cb3d5121-6948-4918-a7e4-003d4c175dac"
+storage_version_token = "1790235994791216"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Y-3dI88PSRYYQ0YyObShY"
+uri = "file://.agents/outputs/caregiver-invitation-fix.zip"
+type = "unspecified"
+title = "Caregiver invitation fix files"
+description = "ZIP containing only the four changed caregiver invitation source and regression-test files."
+logical_id = "5628a44e-2893-46fe-8163-621845a89717"
+content_hash = "sha256:97be2b37fb8bc6be079dc3739f2fb7aa1824f660d649205269a6208ae346444c"
+size = 78148
+mtime_ms = 1790237183048
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/5628a44e-2893-46fe-8163-621845a89717/1485e71f-1f3a-47d7-b05b-3668fc87d5f0"
+storage_version_token = "1790237198436638"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "L4XaYeRx4xNm_gEce6HMe"
+uri = "file://.agents/outputs/academic-planner-estimated-hours-regression.zip"
+type = "unspecified"
+title = "Academic Planner estimated-hours regression tests"
+description = "ZIP containing only the assignment-specific test files added or updated for decimal hours."
+logical_id = "782bcee6-a5d3-49ff-80aa-70ee08c50d65"
+content_hash = "sha256:4eb16c9fbefe81760f07f5af329f064d7dcfbf3ece6fdf5f42c643eb993bfded"
+size = 1949
+mtime_ms = 1790240753775
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/782bcee6-a5d3-49ff-80aa-70ee08c50d65/548688d1-04b6-4c37-b92c-72ff8e7d79e7"
+storage_version_token = "1790240783763138"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q7pruEwyPCVV2SL9wcjOC"
+uri = "file://artifacts/current-streak-fix.zip"
+type = "unspecified"
+title = "Current Streak fix source ZIP"
+description = "Contains only the seven source and test files changed for this fix."
+logical_id = "560b7e1b-c410-41a3-a3e2-e09a5d090d60"
+content_hash = "sha256:7f42127f417e53d59e1582d12bac989b847d2f1497eabf8ebd7d5b89b139e4c4"
+size = 87500
+mtime_ms = 1790241922776
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/560b7e1b-c410-41a3-a3e2-e09a5d090d60/4f0ffe0c-e48e-43db-977f-a1dafa23e7f5"
+storage_version_token = "1790241929348442"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xJtYU4RLAZAlaLBr0xN4q"
+uri = "file://mobile_flutter_settings_changes_20260925.zip"
+type = "unspecified"
+title = "Flutter Settings changed files"
+description = "ZIP archive with the 9 updated Flutter source files and 3 new regression tests."
+logical_id = "d57c1fca-fff7-4ecb-8e9a-1e0f758adac4"
+content_hash = "sha256:7081b9ca676935eb368b88c78b42d7a709c28a27b7a56b646c0175f466fb3b6d"
+size = 43928
+mtime_ms = 1790314429200
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d57c1fca-fff7-4ecb-8e9a-1e0f758adac4/82001592-155a-4259-b565-83269a2e3710"
+storage_version_token = "1790314440719693"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MnFwmwLOdURbLHIJOHCPm"
+uri = "file://mobile_flutter_settings_fixed_20260925.zip"
+type = "unspecified"
+title = "Fixed Flutter Settings files"
+description = "Updated ZIP with all 9 Settings-related Flutter source files and 3 regression tests."
+logical_id = "8cff3ff1-e05a-49c5-ba80-a4978ce23c88"
+content_hash = "sha256:923afe9bfb82d54e62ea96fb9c20d2968b035c84bd37fb33a7d2b6a221e8ac70"
+size = 43930
+mtime_ms = 1790314722644
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8cff3ff1-e05a-49c5-ba80-a4978ce23c88/03d65a2a-0937-48f0-90d1-43cea59e0058"
+storage_version_token = "1790314726605033"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "d4w2eYE8SPOuFW4Fqy61l"
+uri = "file://mobile_flutter_settings_final_20260925.zip"
+type = "unspecified"
+title = "Flutter Settings analyzer fix"
+description = "ZIP with the complete Settings changes plus explicit user-scoped dashboard-store APIs and updated callers/tests."
+logical_id = "bffc8fee-81cf-45a9-8929-d5b201d00a56"
+content_hash = "sha256:a3c842e53441a52f77d9e9f561cb613e90036938affb49e4fdd41e99c268e439"
+size = 47694
+mtime_ms = 1790315328649
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bffc8fee-81cf-45a9-8929-d5b201d00a56/99a76618-2e6a-4e79-ab7a-fc25e88f532a"
+storage_version_token = "1790315334844570"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tHoUQjPBLNJdnqcNo73OS"
+uri = "file://mobile_flutter_settings_homebloc_fixed_20260925.zip"
+type = "unspecified"
+title = "Flutter HomeBloc error fix"
+description = "Complete Settings change ZIP with HomeBloc loading, save, and reset calls aligned to the user-scoped repository API."
+logical_id = "ab650519-cbcc-4b87-9ad5-397272335646"
+content_hash = "sha256:2e238723b3ae49aa1df18a602c48863438cd6b7bcfff283e6da0bb74c5aa43dc"
+size = 51133
+mtime_ms = 1790315749816
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ab650519-cbcc-4b87-9ad5-397272335646/7bd072a2-83b5-40db-ade3-2d907cfe3cb9"
+storage_version_token = "1790315753880408"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rsfzGXIpp369K0m34W8nz"
+uri = "file://deliverables/academic-assignment-decimal-flow.zip"
+type = "unspecified"
+title = "Academic assignment decimal-flow source ZIP"
+description = "The assignment form, decimal-aware model and server parser, persistence schema/storage, and related regression tests. The current workspace already supports fractional hours; no source code was changed in this turn."
+logical_id = "270d0222-4949-4c84-9ce1-8ad34bcd6f11"
+content_hash = "sha256:f8b1cf68b50033ede7a2684c7e438e9f8b6ca996c687741d365f08ef3c41e8c1"
+size = 117817
+mtime_ms = 1790316980505
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/270d0222-4949-4c84-9ce1-8ad34bcd6f11/c825203b-5204-4496-8295-f3ff2073c1f9"
+storage_version_token = "1790316985225616"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "VfwbI_PqeM_qMUFDjPu1V"
+uri = "file://deliverables/flutter-current-streak-fix.zip"
+type = "unspecified"
+title = "Flutter Current Streak fix ZIP"
+description = "Contains the changed Home screen file. Home now refreshes its authoritative user/streak data when the app returns to the foreground."
+logical_id = "113b29db-d0e2-4f78-8112-01975bb83da1"
+content_hash = "sha256:bb0fc52914915729a8e626ed5ce3175b9b9751c94f008bcdc656c531bb88cb04"
+size = 2418
+mtime_ms = 1790317954132
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/113b29db-d0e2-4f78-8112-01975bb83da1/0c8e940b-006a-48b5-98f3-b474473a6d24"
+storage_version_token = "1790317965999570"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "enyCAvllJqy5TVfmrIpI1"
+uri = "file://deliverables/rewards-badges-fix.zip"
+type = "unspecified"
+title = "Rewards badges fix ZIP"
+description = "One-file Flutter patch for the Rewards → Badges empty-catalog and no-earned-badges states."
+logical_id = "732ea964-7cdd-4bc0-8bca-2dc55bbdf111"
+content_hash = "sha256:08403028f3bcc8e75420a9aa0a455255c8774034c7250f14b77f6438887dd841"
+size = 10327
+mtime_ms = 1790318491810
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/732ea964-7cdd-4bc0-8bca-2dc55bbdf111/04ca35de-8359-4175-a753-606050964fd1"
+storage_version_token = "1790318495959134"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MnBWlJXIHHJUWhq0_E7rB"
+uri = "file://deliverables/rewards-badge-analyzer-fix.zip"
+type = "unspecified"
+title = "Flutter badge analyzer fix ZIP"
+description = "Matching Rewards screen and reward model files; the model defines AchievementBadgeStatus and the badgeStatus getter referenced by the screen."
+logical_id = "4c53fc42-9c01-4e72-b3c8-0b0ade105eea"
+content_hash = "sha256:a0c5711bbc8f8c4153cc751ecd04584cb4c8524159d6433dd5f68a2ff19a0b15"
+size = 13471
+mtime_ms = 1790318673158
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4c53fc42-9c01-4e72-b3c8-0b0ade105eea/b6213362-d4ff-447e-9d6e-438e5576d033"
+storage_version_token = "1790318678305676"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "GIWmWwdKQFDiomd0weO9v"
+uri = "file://deliverables/assignment-decimal-hours-fix.zip"
+type = "unspecified"
+title = "Assignment decimal-hours fix ZIP"
+description = "Contains the guarded Railway migration command, its package script, and the integer-to-real SQL migration."
+logical_id = "192c7faf-8f72-45c9-9360-5dd550f9ef82"
+content_hash = "sha256:fd80d4e1528f864535cbaed41f0b881c6688636628eb7fe327372a5eb0c2cb08"
+size = 3840
+mtime_ms = 1790319405834
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/192c7faf-8f72-45c9-9360-5dd550f9ef82/a817254d-7c60-40b0-9e57-420d669b34de"
+storage_version_token = "1790319443719541"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PNJSMcHHWzIZ2KujuCMha"
+uri = "file://deliverables/flutter-assignment-hours-source.zip"
+type = "unspecified"
+title = "Flutter assignment-hours files ZIP"
+description = "Current Flutter assignment model, planner screen, and decimal-hours test. No Flutter source files were modified in the database migration fix."
+logical_id = "9c76fba5-d9b4-4990-80d5-e4494b195a52"
+content_hash = "sha256:0e342db6cb801d9b1fb2cca48a444b4d13b65c57b9e8bdb13ffbcf54c1105ef3"
+size = 19379
+mtime_ms = 1790319571414
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/9c76fba5-d9b4-4990-80d5-e4494b195a52/1f67fa1f-3bf7-499d-9849-2c899c7cf4e2"
+storage_version_token = "1790319576991170"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "tMlrNrX3x_ErgTzgkAa7s"
+uri = "file://deliverables/flutter-responsive-fixes.zip"
+type = "unspecified"
+title = "Flutter responsive fixes"
+description = "ZIP containing the 12 changed Flutter presentation files for the responsive-layout fixes."
+logical_id = "69dd8f8b-9090-4b07-a9b1-675c9fba767f"
+content_hash = "sha256:6529c73551a6a0a94a69a00c6b2416b8b67f5b9f6bc6c83f2254049ab5623f48"
+size = 120227
+mtime_ms = 1790325151378
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/69dd8f8b-9090-4b07-a9b1-675c9fba767f/53fcb5ae-7f84-46ea-bb18-23ae8003e282"
+storage_version_token = "1790325172750789"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Kq6R6pFwkueiy6_eOCcxr"
+uri = "file://deliverables/dart-analysis-fix.zip"
+type = "unspecified"
+title = "Dart analysis fix files"
+description = "Four targeted Flutter files: the current SleepState/screen pair plus the two home files updated for the reported analyzer warnings."
+logical_id = "ee461cc8-e3f1-42da-a1ff-4917a14f6e00"
+content_hash = "sha256:1d4627e518c2494a83ff3c9565a74818030376ce2ecb02733315e67242e891cf"
+size = 40308
+mtime_ms = 1790326088182
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/ee461cc8-e3f1-42da-a1ff-4917a14f6e00/5ed74540-b5af-49f9-93ee-832c1be1bbab"
+storage_version_token = "1790326097428227"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "1K_jIMOw2vsa7JmjqPqQq"
+uri = "file://subscription-flow-flutter-changes.zip"
+type = "unspecified"
+title = "Flutter subscription changes"
+description = "ZIP containing the 11 Flutter-only files changed for the subscription flow."
+logical_id = "2395ca6b-0b42-4b83-bac3-32eae66ead39"
+content_hash = "sha256:501c1d2f7e0d5d2edfaf0a348f7538d712aeb91308c694fe040376c27687513a"
+size = 21317
+mtime_ms = 1790329437800
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2395ca6b-0b42-4b83-bac3-32eae66ead39/77a12096-a105-4f71-89fe-3b99af9659eb"
+storage_version_token = "1790329484787145"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "7BNmZD00o35SnAEBGRowK"
+uri = "file://flutter-subscription-error-fix.zip"
+type = "unspecified"
+title = "Flutter subscription analyzer fix"
+description = "ZIP with the two compile fixes plus the subscription BLoC and helper contract needed for the unresolved symbols."
+logical_id = "6b4abaf6-ddc1-4283-b81e-5c0ce8365630"
+content_hash = "sha256:f447b0449dfece07503bf0d99440b3f252cbf8b1e5fe2d657d8e0bdd591cdd6d"
+size = 13465
+mtime_ms = 1790330052682
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/6b4abaf6-ddc1-4283-b81e-5c0ce8365630/67cb9fff-f245-4be1-b4be-79ed5a15bde2"
+storage_version_token = "1790330062645910"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "k8WBognlCIgB7tHZnIN-u"
+uri = "file://subscription-offer-token-fix.zip"
+type = "unspecified"
+title = "Google Play purchase compile fix"
+description = "ZIP containing the fixed Flutter purchase service. It keeps the offer-token validation and lets the plugin read the token from GooglePlayProductDetails, without the unsupported constructor parameter."
+logical_id = "2c3f065e-a5a6-4ef0-a44d-14711eb1623c"
+content_hash = "sha256:b4ae3e3049e3accbd6adbbafe7758f7811b0ac7b95cecd82d42f99fde4944fdc"
+size = 1614
+mtime_ms = 1790333836004
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2c3f065e-a5a6-4ef0-a44d-14711eb1623c/4eb2111f-2380-45a0-afed-5875e94bab82"
+storage_version_token = "1790333847468694"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "2_sEoiEPAyy4Irm3wMMze"
+uri = "file://flutter-dart-3-5-3-iap-fix.zip"
+type = "unspecified"
+title = "Dart 3.5.3 dependency fix"
+description = "ZIP containing the Flutter pubspec pin and compatible purchase-service implementation."
+logical_id = "8e57c6fa-215b-4482-ab3e-28f129f0293e"
+content_hash = "sha256:ed4d10eefa4d6c23f1a95392faa8ca6891ee379905fadeedce341025f3903ed3"
+size = 2241
+mtime_ms = 1790334060361
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/8e57c6fa-215b-4482-ab3e-28f129f0293e/cf7bc372-2392-402a-839c-fde3fc10d086"
+storage_version_token = "1790334069313660"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9jJ-jD10LbCralVcF6AgR"
+uri = "file://emergency-resource-migration-kit.zip"
+type = "unspecified"
+title = "Emergency Resource migration kit"
+description = "The existing idempotent schema migration plus apply and verification instructions for the Railway staging database."
+logical_id = "2735103a-f1fc-428d-80f3-02dc351d9750"
+content_hash = "sha256:2cc70e1ac3b094e5d187e3d32c60c6cad282d9b0a79d2273c8971ba1786e70b6"
+size = 1387
+mtime_ms = 1790398427237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2735103a-f1fc-428d-80f3-02dc351d9750/5ab37907-97a3-444a-8e14-de93cf3b0264"
+storage_version_token = "1790398439298337"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "ef2xpaK-phgTaBt8TeYFV"
+uri = "file://emergency-resource-flutter-changed-file.zip"
+type = "unspecified"
+title = "Emergency Resource Flutter diagnostics"
+description = "ZIP containing the single changed Flutter API client file, with debug-only, redacted request/response diagnostics."
+logical_id = "4185078c-d12b-4f4c-ab6b-bac110f18d14"
+content_hash = "sha256:ed5998c6e052c6dfd5b51b1e57a005cb2f9fcdaa6cbada3c013d49a7737c27da"
+size = 3443
+mtime_ms = 1790399137005
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4185078c-d12b-4f4c-ab6b-bac110f18d14/830edb5a-d40b-49d8-8f36-c55f0276cb83"
+storage_version_token = "1790399141535460"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MrWfH_GizWNx0J_bjOVUH"
+uri = "file://calendar-event-all-day-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar all-day date fix"
+description = "ZIP containing the calendar model, screen, and regression-test files with their mobile_flutter paths preserved."
+logical_id = "d422fe8b-b677-4ac2-92c2-09959edf52ad"
+content_hash = "sha256:0ba2beac954693f7788c3aa873a6a668e83f6d8a5ef71199aaf934ad6f39f000"
+size = 15170
+mtime_ms = 1790400805376
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d422fe8b-b677-4ac2-92c2-09959edf52ad/460fc7c0-870e-4ba6-9b96-394f52587992"
+storage_version_token = "1790400809301307"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "gX1jWXNs15wOaPF2_HyTj"
+uri = "file://academic-planner-add-class-dialog-fix.zip"
+type = "unspecified"
+title = "Academic Planner Add Class overflow fix"
+description = "ZIP containing the changed Academic Planner Flutter screen with its original project path preserved."
+logical_id = "388e472b-763a-445a-81f4-31cb525d7ace"
+content_hash = "sha256:97c1ef4a1328566fb50f1b928df41248a16faa70d461ac2992ad1f8e58a8fa13"
+size = 15072
+mtime_ms = 1790401419173
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/388e472b-763a-445a-81f4-31cb525d7ace/2a44ed8f-fe25-4f97-ba72-41000c009637"
+storage_version_token = "1790401425065075"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_2AStNmC0u9fo0-drT8Nx"
+uri = "file://dashboard-customize-click-fix.zip"
+type = "unspecified"
+title = "Dashboard Customize fix"
+description = "ZIP containing the single changed Flutter source file with its original project path preserved."
+logical_id = "aca42134-536e-42ef-b687-a8abe4857c5d"
+content_hash = "sha256:635f9b52410665100728be3d9a12cda8b1f9f7db0704065e6f352cbed1863be0"
+size = 27434
+mtime_ms = 1790402192197
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/aca42134-536e-42ef-b687-a8abe4857c5d/74c63ff7-ccc8-4c44-b83d-576820f500a6"
+storage_version_token = "1790402196010675"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "vfnH5s0Dc7Y9Ci4gnZgpn"
+uri = "file://dashboard-customize-popup-fix.zip"
+type = "unspecified"
+title = "Dashboard Customize popup fix"
+description = "ZIP containing only the updated Flutter dashboard widget file, with its original project path preserved."
+logical_id = "85dbb39e-5996-4265-83ca-3b02384caeaf"
+content_hash = "sha256:868afbb75a712cb808f3d72847c6b9533b7f37e8fd484c326b9b27ae73e26e4c"
+size = 27425
+mtime_ms = 1790404033237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/85dbb39e-5996-4265-83ca-3b02384caeaf/1c8de09c-e97d-45fc-a870-1f601d5452c8"
+storage_version_token = "1790404041581365"
+content_type = "application/octet-stream"

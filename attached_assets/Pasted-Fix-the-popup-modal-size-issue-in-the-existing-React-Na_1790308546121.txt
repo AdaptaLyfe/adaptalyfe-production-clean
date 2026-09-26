@@ -1,0 +1,89 @@
+Fix the popup/modal size issue in the existing **React Native + Wrapper** application.
+
+### Problem
+
+Some popups/modals are not displaying with the correct size. The popup may:
+
+* Become too large or too small.
+* Get clipped or overflow the screen.
+* Have incorrect height/width on different screen sizes.
+* Change size when content changes.
+* Reappear with the same size/layout bug after navigating away and opening it again.
+
+This bug has been fixed before but keeps coming back. **Do not apply another temporary workaround. Fix the root cause properly.**
+
+### Requirements
+
+1. **Find the root cause**
+
+   * Inspect the existing popup/modal implementation.
+   * Check all related components, styles, wrappers, providers, navigation, and reusable modal components.
+   * Identify why the popup dimensions are being calculated or rendered incorrectly.
+   * Check whether multiple modal implementations are using conflicting styles.
+
+2. **Fix popup sizing**
+
+   * Make the popup responsive for different screen sizes.
+   * Keep proper width with horizontal margins.
+   * Allow the height to adjust according to content.
+   * Prevent content from being cut off.
+   * Prevent unnecessary excessive empty space.
+   * Handle long text, forms, buttons, keyboard, and scrolling correctly.
+   * Make sure the popup works in both portrait and landscape where applicable.
+
+3. **Prevent the bug from reopening**
+
+   * Do not add a hardcoded width/height only to hide the problem.
+   * Do not duplicate the modal component.
+   * Do not add repeated state updates or forced re-renders just to make the popup appear correctly.
+   * Fix the shared/reusable modal or layout component if that is the actual source.
+   * Ensure modal state is properly reset when opening and closing.
+   * Ensure stale dimensions/layout state are not reused when the popup opens again.
+
+4. **Navigation and reopen testing**
+   Test this flow multiple times:
+
+   `Open Popup → Close Popup → Navigate → Return → Open Popup Again`
+
+   Also test:
+
+   `Open Popup → Submit/Save → Close → Open Again`
+
+   The popup must have the correct size every time.
+
+5. **Keyboard handling**
+
+   * Verify the popup when the keyboard opens.
+   * Make sure text fields are not hidden behind the keyboard.
+   * Prevent the popup from overflowing when the keyboard is visible.
+   * Do not break existing input behavior.
+
+6. **Do not break existing functionality**
+
+   * Do not change business logic.
+   * Do not change APIs.
+   * Do not change database logic.
+   * Do not change navigation behavior unless required to fix the modal lifecycle.
+   * Do not change unrelated screens or components.
+
+### Important
+
+Before making changes, inspect the existing implementation and identify the **actual root cause**.
+
+After fixing it:
+
+* Test the popup on small, medium, and large screens.
+* Test with short and long content.
+* Test with keyboard open/closed.
+* Open and close the popup repeatedly.
+* Navigate away and return, then open it again.
+* Make sure the same popup-size bug does **not** return.
+
+If the popup is implemented as a shared/reusable component, fix the shared component rather than adding separate fixes to individual screens.
+
+Finally, provide:
+
+1. Root cause of the bug.
+2. Files/components changed.
+3. What was changed.
+4. How you verified that the bug does not reopen.

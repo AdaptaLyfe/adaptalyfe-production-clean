@@ -1,0 +1,132 @@
+Fix the Calendar "All Day Event" functionality in the existing Flutter application.
+
+### Current Bug
+
+When creating a calendar event:
+
+1. User selects a date.
+2. User enables the **"All day event"** toggle.
+3. User saves the event.
+4. The event is not displayed correctly in the **All Day** section for the selected date.
+
+There is also confusion between:
+
+* **Whole Day** = event is for one complete selected date.
+* **All Day / Repeating All Day** = event should continue/repeat for all days starting from the selected date, based on the existing app's intended behavior.
+
+### Required Behavior
+
+Implement the correct behavior without breaking the existing calendar functionality.
+
+#### 1. Whole Day Event
+
+If the event is intended to cover only the selected date:
+
+* Show the event on the selected date.
+* Display it as **"Whole Day"**.
+* It must NOT appear on other dates.
+* It must be treated as a single-day event.
+
+#### 2. All Day Event
+
+When the user enables the **"All day event"** toggle:
+
+* The event must be saved with the correct all-day information.
+* It must appear in the Calendar's **All Day** section.
+* It must start from the user's selected start date.
+* If the existing application defines this option as a repeating all-day event, ensure it is displayed on every applicable day starting from the selected date according to the existing recurrence configuration.
+* Do not convert it into a timed event.
+* Do not require a start/end time for an all-day event.
+
+### Important Technical Requirements
+
+First inspect the existing Calendar implementation before making changes.
+
+Check:
+
+* Event creation screen/form.
+* "All day event" toggle state.
+* Event model/entity.
+* Date and time conversion logic.
+* Event creation/update repository/service.
+* Local database/API/Firebase mapping if used.
+* Calendar UI rendering/filtering logic.
+* Recurrence/repeating-event logic.
+* Timezone handling.
+* Start date and end date handling.
+
+Find the **root cause** instead of applying only a UI workaround.
+
+Make sure the same event data is interpreted consistently between:
+
+`Create Event → Model → Storage/API → Fetch Events → Calendar → All Day section`
+
+### Date Handling
+
+Be careful with:
+
+* `DateTime`
+* UTC/local time conversion
+* Start-of-day and end-of-day
+* Date-only values
+* Timezone conversion
+
+Do not allow timezone conversion to move an all-day event to the previous or next date.
+
+For an all-day event, preserve the selected calendar date correctly.
+
+### Existing Functionality
+
+Do NOT break:
+
+* Normal timed events.
+* Existing event creation/edit/delete.
+* Existing recurring events.
+* Existing reminders/notifications.
+* Existing calendar navigation.
+* Existing date selection.
+* Existing UI/design.
+* Existing API/database structure unless a change is actually required.
+
+Do not rewrite the Calendar feature from scratch.
+
+### Validation
+
+After implementing the fix, test at minimum:
+
+1. Create a normal timed event → verify correct date/time.
+2. Create a single-day whole-day event → verify it shows as **"Whole Day"** only on the selected date.
+3. Enable **"All day event"** → verify it appears in the All Day section.
+4. Start an all-day event on today's date → verify it starts on today's date.
+5. Start an all-day event on a future date → verify it starts exactly on that selected date.
+6. Test moving between previous/next calendar dates.
+7. Edit an all-day event → verify its date/type remains correct.
+8. Delete an all-day event → verify it disappears correctly.
+9. Test recurring all-day events → verify recurrence starts from the selected date.
+10. Test around midnight/timezone boundaries to ensure the event does not shift by one day.
+11. Verify existing timed events still work exactly as before.
+
+### Bug Prevention
+
+Before finishing:
+
+* Search the entire project for all usages of the event's all-day field and date fields.
+* Ensure there is no second piece of logic overriding the all-day value.
+* Ensure create, edit, fetch, storage, and display use the same date semantics.
+* Do not hardcode a specific date.
+* Do not add duplicate events to make the UI appear correct.
+* Do not hide the problem with UI-only filtering.
+* Add/update tests for all-day and whole-day behavior if the project has tests.
+* Confirm there are no analyzer errors, runtime exceptions, or unintended changes.
+
+### Final Requirement
+
+After fixing the issue, explain:
+
+1. What the root cause was.
+2. Which files were changed.
+3. How the all-day date is now stored and displayed.
+4. How **"Whole Day"** differs from **"All Day"** in the implementation.
+5. What tests were performed.
+
+Keep the existing architecture and coding style of the Flutter project.

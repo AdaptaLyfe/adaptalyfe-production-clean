@@ -1,0 +1,215 @@
+In the Flutter Academic Planner / Student Planner, fix the Assignment create/update error properly.
+
+### Current Issue
+
+In:
+
+**Academic Planner / Student Planner → Assignment**
+
+When creating a new assignment or updating an existing assignment, the operation fails with:
+
+**"Failed to create assignment"**
+or
+**"Failed to update assignment"**
+
+This happens when **Estimated Hours** contains a decimal value such as:
+
+* `2.5`
+* `1.5`
+* `3.5`
+* `0.5`
+
+Integer values such as `2` may work correctly.
+
+The issue keeps coming back after previous fixes, so do NOT apply only a UI-level workaround. Find and fix the actual root cause across the complete data flow.
+
+### Requirements
+
+1. Inspect the complete Assignment flow:
+
+   * Assignment UI/form
+   * TextField/controller
+   * Form validation
+   * Assignment model
+   * JSON serialization/deserialization
+   * BLoC events/states
+   * AcademicBloc
+   * Repository
+   * Data source/API
+   * Firebase/Firestore or backend mapping
+   * Create assignment
+   * Update assignment
+   * Read/load assignment
+
+2. Check the `estimatedHours` data type everywhere.
+
+3. `estimatedHours` must support decimal values.
+
+   Examples:
+
+   * `0.5`
+   * `1.5`
+   * `2.5`
+   * `2.75`
+   * `3.5`
+
+4. Do NOT convert decimal values to integers using:
+
+   * `int.parse()`
+   * `.toInt()`
+   * integer-only model fields
+   * integer-only database/API conversion
+
+5. Use an appropriate decimal-compatible type consistently throughout the application.
+
+6. Be careful with parsing user input.
+
+   For example, if the user enters:
+
+   `2.5`
+
+   it should be safely converted to a numeric decimal value and saved correctly.
+
+7. Handle invalid input safely:
+
+   * Empty value
+   * Non-numeric value
+   * Negative value
+   * Invalid decimal format
+
+8. Make sure both operations work:
+
+   * Create Assignment with `2.5` hours
+   * Update Assignment from `2` → `2.5` hours
+   * Update Assignment from `2.5` → `3.5` hours
+   * Update Assignment from `2.5` → `2` hours
+
+9. Check whether the backend/database currently expects an integer. If so, update the mapping/schema/data handling so decimal hours are supported without breaking existing assignments.
+
+10. Check JSON serialization and deserialization carefully.
+
+For example, make sure this does not fail:
+
+```text
+estimatedHours: 2.5
+```
+
+and that loading an existing assignment containing `2.5` also works.
+
+11. Check BLoC error handling. Do not hide the actual exception behind only:
+
+```text
+Failed to create assignment
+```
+
+During debugging, identify the actual exception and fix its root cause.
+
+12. Preserve existing behavior for all other Assignment fields:
+
+* Title
+* Description
+* Due date
+* Course/Class
+* Priority
+* Status
+* Estimated hours
+* Any other existing fields
+
+13. Do NOT rewrite the whole Academic Planner or Assignment module unnecessarily.
+
+14. Do NOT change the UI design unless required for decimal input.
+
+15. Make the Estimated Hours field user-friendly:
+
+* Allow decimal input
+* Use an appropriate numeric keyboard/input formatter
+* Allow values such as `2.5`
+* Prevent invalid negative values if the current business rule does not allow them
+
+### Important: Existing Data Compatibility
+
+There may already be assignments stored with:
+
+```text
+2
+```
+
+and newer assignments may contain:
+
+```text
+2.5
+```
+
+The application must correctly handle BOTH.
+
+Do not break existing integer assignment records.
+
+### Debugging Requirement
+
+Before changing code:
+
+1. Trace the complete create flow.
+2. Trace the complete update flow.
+3. Find exactly where `2.5` is being rejected, incorrectly parsed, converted, or serialized.
+4. Check the actual exception/error response.
+5. Fix the root cause.
+6. Check every layer where `estimatedHours` is handled.
+
+### Testing
+
+After fixing, test at minimum:
+
+#### Create
+
+* `2`
+* `2.5`
+* `1.5`
+* `0.5`
+* `2.75`
+
+#### Update
+
+* `2` → `2.5`
+* `2.5` → `3.5`
+* `2.5` → `2`
+* `1.5` → `2.75`
+
+#### Validation
+
+* Empty
+* `abc`
+* `-2`
+* Invalid decimal input
+
+### Regression Check
+
+After the fix, verify:
+
+* Assignment list still loads.
+* Assignment details still load.
+* Existing assignments still display correctly.
+* Create works.
+* Update works.
+* Delete still works.
+* Assignment status updates still work.
+* BLoC state transitions still work.
+* No `Provider`/`Bloc` errors are introduced.
+* No `TextEditingController` lifecycle/dispose errors are introduced.
+* No unrelated Academic Planner features are changed.
+
+### Final Requirement
+
+Do not just tell me what the problem is.
+
+**Inspect the existing code, identify the root cause, implement the complete fix, and verify the create/update flow with decimal estimated hours such as `2.5`.**
+
+If you find multiple places where `estimatedHours` is incorrectly treated as an integer, fix ALL of them so the same bug does not reopen later.
+
+At the end, provide:
+
+1. Root cause
+2. Files changed
+3. What was fixed
+4. How decimal values are now handled
+5. Tests performed
+6. Any migration/backend consideration, if required

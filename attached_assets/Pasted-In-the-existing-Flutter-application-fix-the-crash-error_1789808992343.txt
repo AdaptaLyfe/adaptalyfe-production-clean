@@ -1,0 +1,56 @@
+In the existing Flutter application, fix the crash/error that occurs in the **Meal & Shopping → Shopping List** section.
+
+### Current issue
+
+When the user:
+
+1. Opens **Meal & Shopping**
+2. Enters a shopping item
+3. Clicks **"Add Shopping List"**
+
+the app throws these errors:
+
+```text
+Tried to build dirty widget in the wrong build scope.
+'package:flutter/src/widgets/framework.dart':
+Failed assertion: line 6065 pos 14: '_dependents.isEmpty': is not true.
+
+A TextEditingController was used after being disposed.
+```
+
+### Required task
+
+Find and fix the **root cause** of these errors.
+
+#### 1. TextEditingController lifecycle
+
+* Find all `TextEditingController` instances related to the shopping item/add-shopping-item screen.
+* Make sure a controller is not used after `dispose()`.
+* Do not dispose a controller while it is still being used by a `TextField`, `TextFormField`, listener, callback, or widget rebuild.
+* If the controller is created inside a widget, manage it properly inside `State`.
+* Remove listeners before disposing controllers when necessary.
+* Do not create/dispose controllers repeatedly inside `build()`.
+* If the controller is passed to another widget, make sure the parent/child lifecycle is handled correctly.
+
+#### 2. Widget build lifecycle
+
+Investigate the:
+
+```text
+Tried to build dirty widget in the wrong build scope
+```
+
+error.
+
+Check for:
+
+* `setState()` being called during `build()`.
+* `setState()` being called after the widget has been disposed.
+* State updates occurring immediately while the widget tree is rebuilding.
+* `notifyListeners()` being triggered during the build phase.
+* Provider/BLoC state changes causing an invalid rebuild.
+* `TextEditingController` listeners triggering state changes at the wrong time.
+* Dialog/bottom-sheet closing while a controller or dependent widget is still rebuilding.
+* Calling navigation, `setState`, or state updates synchronously during widget build.
+
+Use the correct Flutter lifecycle approach instead of adding arbitrary delays just

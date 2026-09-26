@@ -1,4 +1,37 @@
 - [Adaptalyfe infra](adaptalyfe-infra.md) — staging URL, DATABASE_URL vs NEON_DATABASE_URL split, Railway vars, key auth/nav decisions.
+- [Railway build dependencies](railway-build-dependencies.md) — Railway builds must explicitly install dev dependencies before Vite/esbuild runs.
 - [Stripe renewal safety](stripe-renewal-safety.md) — trials require a saved card; staging Stripe credentials and webhook secrets stay test-only.
 - [Cross-platform billing](cross-platform-billing.md) — one active entitlement works everywhere; never offer a second platform purchase.
 - [Concurrent client sessions](concurrent-client-sessions.md) — browser cookies and native bearer sessions are independent credentials for one account.
+- [Validation baseline](validation-baseline.md) — the full TypeScript check has unrelated legacy failures; use focused checks plus the production build for this area.
+- [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.
+- [Mobile invitation entry](mobile-invitation-entry.md) — native deep links may omit or contain stale codes, so mobile acceptance must always expose editable code entry and verification.
+- [Health Records modal viewport](health-records-modal-viewport.md) — keep keyboard-aware visual viewport sizing scoped to Health Records portals, not shared modal rules.
+- [Web modal stacking](web-modal-stacking.md) — page-level overlays cannot clear fixed navigation by z-index alone; portal them and constrain tall dialogs below the header.
+- [AdaptAI context boundaries](adaptai-context.md) — server-built allowlists and authenticated user scope prevent cross-user or unnecessary sensitive data from reaching AI.
+- [AdaptAI action safety](adaptai-action-safety.md) — state changes must use explicit Zod actions, authenticated ownership checks, and confirmation before execution.
+- [Proactive guidance safety](proactive-guidance.md) — one best user-scoped candidate per worker pass, explicit preferences, and stable occurrence deduplication prevent notification floods.
+- [Shared chatbot surface](shared-chatbot-surface.md) — mount the single chatbot instance in the app shell so route changes preserve its conversation state.
+- [Flutter scaffold verification](flutter-scaffold.md) — Flutter files can be scaffolded here, but SDK-side pub get and platform builds need a Flutter-enabled environment.
+- [Flutter subscription contract](flutter-subscription-contract.md) — forward platform receipt/token data to existing verification routes; backend remains the entitlement authority.
+- [Flutter settings contract](flutter-settings-contract.md) — use the five supported preference columns; keep dashboard and explicitly local web preferences on-device.
+- [Flutter analytics](flutter-analytics.md) — native Firebase uses Dart-defined public options and best-effort centralized event logging.
+- [Flutter native notifications](flutter-native-notifications.md) — platform delivery stays separate from server notification list/read state; no device-token route currently exists.
+- [Flutter navigation](flutter-navigation.md) — GoRouter guards auth while one app shell owns bottom navigation, More modules, drawer, and global logout.
+- [Flutter architecture](flutter-architecture.md) — migrated features use presentation → BLoC → repository → API → ApiClient, with shared current-user access.
+- [Flutter medical mutations](flutter-medical-mutations.md) — Health Records mutations update only the affected collection; global post-mutation reloads can hide successful writes.
+- [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
+- [Flutter overlay safety](flutter-overlay-safety.md) — serialize feature overlays and use shell-scoped shared BLoCs to prevent duplicate modal routes and competing listeners.
+- [Flutter responsive layout](flutter-responsive-layout.md) — use available constraints, not device width alone, for nested surfaces and keyboard-aware mobile layouts.
+- [Flutter Home customization](flutter-home-customization.md) — preserve React-style local customization and keep dashboard preferences user-scoped on-device.
+- [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
+- [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
+- [Resource collection safety](resource-collection-safety.md) — resource reads can resolve to null on API failure, so collection consumers must normalize before iteration.
+- [Emergency resource schema compatibility](emergency-resource-schema-compatibility.md) — old deployed tables may lack optional fields; preserve basic saves without discarding filled details.
+- [Academic Planner mutations](academic-planner-mutations.md) — keep successful class creation visible from the mutation response instead of depending on an unrelated full-dashboard reload.
+- [Daily task schema compatibility](daily-task-schema-compatibility.md) — normalize PostgreSQL boolean capability results before selecting legacy versus current persistence paths.
+- [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.
+- [Sleep wake date handling](sleep-wake-date-handling.md) — wake date is carried by the existing full wake timestamp; compare wake and fell-asleep DateTimes strictly.
+- [Reward redemption limits](reward-redemption-limits.md) — pending redemptions reserve finite limits; denied records do not count and null remains unlimited.
+- [Streak activity dates](streak-activity-dates.md) — keep date-only records as calendar keys and normalize timestamp sources in the user's timezone.
+- [Skill milestone priority](transition-skill-priority.md) — Medium is creation-only; saved priorities must round-trip, and schema gaps must not silently discard them.

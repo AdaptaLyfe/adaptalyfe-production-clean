@@ -1,0 +1,330 @@
+I have an existing Flutter application with an existing payment/subscription flow.
+
+I want to add **Google Pay for Android** and **Apple Pay for iOS** to the existing payment system.
+
+IMPORTANT:
+
+* Do NOT create a new Flutter project.
+* Do NOT remove or rewrite the existing payment flow.
+* First inspect the existing project structure, payment implementation, backend/API integration, subscription flow, and dependencies.
+* Reuse the existing architecture and coding style.
+* Make the implementation production-ready.
+* Keep Android and iOS behavior separate where required.
+* Do not break the existing card/payment method flow.
+
+## Goal
+
+Add:
+
+1. Google Pay → Android
+2. Apple Pay → iOS
+
+The user should be able to select:
+
+* Credit/Debit Card
+* Google Pay (Android)
+* Apple Pay (iOS)
+
+Only show the payment methods supported by the current platform.
+
+## Step 1 — Analyze Existing Project
+
+Before making changes:
+
+1. Inspect `pubspec.yaml`.
+2. Identify the current payment provider/library.
+3. Find all existing payment-related files.
+4. Identify how payment intents/payment methods are currently created.
+5. Identify the existing subscription/payment flow.
+6. Identify backend APIs/functions used for payments.
+7. Identify existing Android configuration.
+8. Identify existing iOS configuration.
+9. Check whether Stripe or another payment provider is already integrated.
+
+Do not make assumptions about the payment provider.
+
+If Stripe is already used, integrate Google Pay and Apple Pay through the existing Stripe implementation instead of introducing another payment system.
+
+## Step 2 — Choose the Correct Flutter Implementation
+
+Use the payment provider's officially supported Flutter SDK/package for Google Pay and Apple Pay.
+
+If Stripe is already used:
+
+* Use the current Stripe Flutter integration.
+* Use Stripe's supported Google Pay implementation for Android.
+* Use Stripe's supported Apple Pay implementation for iOS.
+* Reuse the existing PaymentIntent/SetupIntent/subscription backend flow.
+* Do not store card numbers, Google Pay tokens, Apple Pay tokens, or other sensitive payment information in Firestore or local storage.
+
+Use the latest stable package versions compatible with the existing Flutter/Dart version.
+
+Before changing dependencies, check compatibility with the current project.
+
+## Step 3 — Payment UI
+
+Update the existing payment screen.
+
+Example:
+
+Payment Method
+
+○ Credit/Debit Card
+
+○ Google Pay
+
+○ Apple Pay
+
+Platform rules:
+
+Android:
+
+* Show Google Pay if supported/configured.
+* Do not show Apple Pay.
+
+iOS:
+
+* Show Apple Pay if supported/configured.
+* Do not show Google Pay unless the existing payment provider officially supports the required configuration.
+
+Do not show unsupported payment methods.
+
+Keep the existing UI style and theme.
+
+## Step 4 — Google Pay
+
+Implement Google Pay for Android.
+
+Requirements:
+
+* Configure Google Pay correctly.
+* Add all required Android configuration.
+* Use the existing payment backend.
+* Create/use the required PaymentIntent or payment method flow.
+* Handle successful payment.
+* Handle cancelled payment.
+* Handle failed payment.
+* Handle Google Pay unavailable/not supported.
+* Handle configuration errors.
+* Show user-friendly error messages.
+
+Do not expose secret keys in Flutter code.
+
+Never put Stripe secret keys or backend secrets in:
+
+* Flutter source code
+* `AndroidManifest.xml`
+* `Info.plist`
+* Firebase/Firestore
+* Git repository
+
+## Step 5 — Apple Pay
+
+Implement Apple Pay for iOS.
+
+Requirements:
+
+* Configure Apple Pay capability.
+* Configure Merchant ID where required.
+* Add the required Apple Pay entitlement/configuration.
+* Configure the payment provider correctly.
+* Use the existing backend PaymentIntent/SetupIntent flow.
+* Handle successful payment.
+* Handle cancelled payment.
+* Handle failed payment.
+* Handle Apple Pay unavailable/not supported.
+* Handle configuration errors.
+* Show user-friendly error messages.
+
+Do not expose secret keys.
+
+## Step 6 — Backend
+
+Inspect the existing backend/payment API before making changes.
+
+If the current backend already creates PaymentIntents:
+
+* Reuse it.
+* Modify it only if necessary to support wallet payments.
+
+If backend changes are required:
+
+* Clearly identify every required backend change.
+* Keep secret keys on the backend only.
+* Do not move secret-key logic into Flutter.
+
+If the existing subscription system uses Stripe subscriptions, make sure the implementation works correctly with the current subscription flow.
+
+## Step 7 — Payment States
+
+Create/maintain clear payment states:
+
+* Initial
+* Loading
+* Payment Successful
+* Payment Cancelled
+* Payment Failed
+* Payment Not Available
+* Configuration Error
+
+Example user-friendly messages:
+
+Success:
+"Payment successful!"
+
+Cancelled:
+"Payment was cancelled."
+
+Failed:
+"Payment could not be completed. Please try again."
+
+Unavailable:
+"This payment method is currently unavailable."
+
+Do not expose technical exceptions directly to users.
+
+## Step 8 — Architecture
+
+Follow the existing project architecture.
+
+If the project uses BLoC:
+
+Use the existing BLoC pattern.
+
+For example:
+
+PaymentEvent:
+
+* SelectPaymentMethod
+* PayWithCard
+* PayWithGooglePay
+* PayWithApplePay
+* PaymentCancelled
+* PaymentReset
+
+PaymentState:
+
+* initial
+* loading
+* success
+* failure
+* cancelled
+
+Do not introduce another state-management solution.
+
+Keep payment logic outside widgets as much as possible.
+
+Recommended structure if compatible with the existing project:
+
+lib/
+features/
+payment/
+data/
+domain/
+presentation/
+bloc/
+pages/
+widgets/
+
+But if the project already has a different structure, follow the existing structure instead of reorganizing the whole project.
+
+## Step 9 — Platform Configuration
+
+Android:
+
+* Add required Google Pay configuration.
+* Verify AndroidManifest/config files.
+* Verify minimum SDK/compile SDK compatibility.
+* Verify release configuration.
+
+iOS:
+
+* Add Apple Pay capability.
+* Configure Merchant ID.
+* Update entitlements.
+* Verify Info.plist if required.
+* Verify Podfile compatibility.
+* Verify deployment target.
+
+Do not make unrelated changes to Android or iOS configuration.
+
+## Step 10 — Environment Configuration
+
+Use environment/configuration variables for:
+
+* Stripe publishable key
+* Merchant ID
+* API URLs
+* Other non-secret configuration
+
+Never hardcode secret keys.
+
+Clearly identify which values I need to configure manually.
+
+## Step 11 — Testing
+
+After implementation, test:
+
+### Android
+
+1. Card payment
+2. Google Pay successful payment
+3. Google Pay cancellation
+4. Google Pay failure
+5. Google Pay unavailable
+6. Existing subscription flow
+
+### iOS
+
+1. Card payment
+2. Apple Pay successful payment
+3. Apple Pay cancellation
+4. Apple Pay failure
+5. Apple Pay unavailable
+6. Existing subscription flow
+
+### Regression
+
+Verify that:
+
+* Existing card payments still work.
+* Existing subscription flow still works.
+* Login/register is unaffected.
+* No unrelated UI is changed.
+* No duplicate payment requests are created.
+* Payment button cannot be repeatedly tapped while processing.
+
+## Step 12 — Important Security Requirements
+
+Never:
+
+* Put Stripe secret key in Flutter.
+* Store raw card details.
+* Store wallet tokens manually.
+* Log sensitive payment information.
+* Commit secret keys to Git.
+* Bypass backend payment verification.
+
+Use the payment provider's official secure flow.
+
+## Final Output
+
+After implementation, provide me with:
+
+1. Files changed.
+2. New packages added.
+3. Android configuration changes.
+4. iOS configuration changes.
+5. Backend changes required.
+6. Environment variables/configuration I need to add.
+7. Exact commands to run.
+8. Testing steps for Android Google Pay.
+9. Testing steps for iOS Apple Pay.
+10. Any manual setup required in Google Pay/Google Pay Console.
+11. Any manual setup required in Apple Developer/Apple Pay.
+12. Any limitations or requirements for physical devices.
+
+IMPORTANT:
+Do not just give me sample code.
+
+Inspect my existing Flutter project first and implement the feature into the existing payment architecture with the minimum necessary changes.

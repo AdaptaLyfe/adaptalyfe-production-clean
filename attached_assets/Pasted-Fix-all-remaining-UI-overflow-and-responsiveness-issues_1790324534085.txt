@@ -1,0 +1,136 @@
+Fix all remaining UI overflow and responsiveness issues in the existing Flutter application.
+
+Important: Do NOT create a new project or rewrite the application. Work with the existing code, screens, widgets, navigation, functionality, and design.
+
+### Main Problem
+
+Some screens still show UI overflow on certain screen sizes, such as:
+
+* RenderFlex overflowed
+* Bottom overflow
+* Right/left overflow
+* Text overflow
+* Keyboard causing overflow
+* Content getting cut off
+* Buttons or fields going outside the screen
+* Dialog/bottom sheet content not fitting
+* Fixed-width widgets breaking on smaller screens
+
+### Required Work
+
+1. **Find ALL overflow issues**
+
+   * Review the entire Flutter application screen by screen.
+   * Check mobile portrait.
+   * Check mobile landscape.
+   * Check tablet sizes.
+   * Check desktop/window sizes.
+   * Check web/resizable browser sizes if supported.
+
+2. **Make the UI properly responsive**
+
+   * Do not use unnecessary fixed widths/heights.
+   * Use `Expanded`, `Flexible`, `Wrap`, `ConstrainedBox`, `LayoutBuilder`, `MediaQuery`, or appropriate responsive widgets where needed.
+   * Make Row layouts adapt to smaller screens.
+   * Make long text wrap properly.
+   * Make buttons responsive.
+   * Make cards and containers adapt to available width.
+   * Make forms responsive.
+   * Make lists and grids responsive.
+   * Ensure spacing and padding scale appropriately.
+
+3. **Scrolling**
+
+   * If content can become taller than the screen, make the correct parent scrollable.
+   * Use `SingleChildScrollView`, `ListView`, `CustomScrollView`, etc. where appropriate.
+   * Do NOT simply add scrolling everywhere.
+   * Avoid nested scrolling problems.
+   * Make sure the keyboard does not hide form fields or cause overflow.
+
+4. **Dialogs and Bottom Sheets**
+
+   * Check all dialogs and bottom sheets.
+   * Ensure their content fits on small screens.
+   * Make them scrollable when necessary.
+   * Ensure buttons remain visible when the keyboard opens.
+
+5. **Text**
+
+   * Fix long titles, labels, error messages, and descriptions.
+   * Use proper wrapping or ellipsis where appropriate.
+   * Do not unnecessarily reduce font size just to hide overflow.
+
+6. **Desktop/Web**
+
+   * Prevent content from stretching excessively on very large screens.
+   * Use reasonable maximum widths where appropriate.
+   * Keep the existing design.
+   * Make layouts work correctly when the browser/window is resized.
+
+### Very Important
+
+Do NOT use quick hacks such as:
+
+* Randomly increasing container height
+* `overflow: hidden` just to hide the problem
+* Excessive fixed heights
+* Excessive fixed widths
+* Removing UI elements
+* Making text extremely small
+
+Fix the actual layout/root cause.
+
+### Testing Process
+
+After making changes:
+
+1. Run the application.
+2. Open every major screen.
+3. Resize the screen to different widths/heights.
+4. Test portrait and landscape.
+5. Test with the keyboard open on forms.
+6. Look specifically for:
+
+   * `RenderFlex overflowed`
+   * `A RenderFlex overflowed by ... pixels`
+   * `RenderBox was not laid out`
+   * clipped content
+   * buttons going outside the screen
+   * text being cut off
+7. Fix every issue found.
+8. Re-run the application.
+9. Check the same screens again.
+10. If another overflow appears after a fix, fix that issue too.
+11. Repeat this process until the UI is stable across different screen sizes.
+
+### Important Instruction
+
+Do not stop after fixing only the first overflow.
+
+**Reopen and recheck the affected screens multiple times after every layout change.**
+
+Before finishing, perform a final responsive review of the complete application and fix any remaining overflow or layout problems.
+
+Keep all existing:
+
+* Functionality
+* BLoC/business logic
+* API integration
+* Firebase integration
+* Navigation
+* Validation
+* UI design
+* Colors
+* Typography
+* Features
+
+Only modify the UI/layout code required to make the application properly responsive.
+
+At the end, give me:
+
+1. List of screens checked
+2. Overflow issues found
+3. Root cause of each issue
+4. Changes made
+5. Screen sizes/layouts tested
+6. Any remaining issues, if there are genuinely any

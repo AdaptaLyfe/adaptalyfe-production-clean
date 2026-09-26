@@ -1,0 +1,58 @@
+Fix the "Feature" menu item message in the existing Flutter application.
+
+### Current issue
+
+When the user opens the menu and taps **"Feature"**, the app displays:
+
+**"This feature is not available in the flutter app yet"**
+
+The problem is that the message exposes the technology/framework name **"Flutter"**. The app is a production application and should never mention Flutter, React Native, Wrapper, framework, or implementation technology to the end user.
+
+### Required fix
+
+If this feature is not currently available, keep the unavailable-feature behavior, but replace the message with a professional, user-friendly message.
+
+Use:
+
+**Title:** `Feature Unavailable`
+
+**Message:** `This feature is not available at the moment. Please check back later.`
+
+### Important requirements
+
+1. Find the existing implementation for the **"Feature"** menu item.
+2. Replace the current Flutter-specific message completely.
+3. Do NOT mention:
+
+   * Flutter
+   * React Native
+   * Wrapper
+   * framework
+   * development
+   * implementation details
+4. Keep the existing navigation/menu behavior unchanged.
+5. Do not remove or disable the Feature menu item unless the existing product requirements specifically require it.
+6. Make sure the same old message is not coming from another hardcoded location, fallback, localization file, constant, or reusable dialog.
+7. Search the entire project for:
+
+   * `This feature is not available in the flutter app yet`
+   * `flutter app`
+   * `Feature`
+   * the existing unavailable-feature dialog/message
+8. Update all relevant occurrences so the old message cannot appear again.
+9. If the project uses localization/string constants, update the proper source instead of creating a duplicate string.
+10. Keep the existing UI styling and dialog behavior unless necessary for this fix.
+11. Do not make unrelated changes.
+12. After the change, verify the complete flow:
+    **Menu → Feature → Feature Unavailable message**
+13. Confirm that the final user-facing message contains no technology/framework name.
+
+### Expected result
+
+When the user taps **Feature**, they should see:
+
+**Feature Unavailable**
+
+**This feature is not available at the moment. Please check back later.**
+
+Implement the fix directly in the existing project and make sure there is no remaining code path that displays the old Flutter-specific message.

@@ -1,35 +1,26 @@
 import { db } from "./db";
-import { dailyTasks, notifications } from "@shared/schema";
-import { eq, and, isNull, lte, gt } from "drizzle-orm";
+import { dailyTasks, users } from "@shared/schema";
+import { evaluateAndSurfaceProactiveGuidance } from "./proactive-guidance.js";
 
-interface ReminderNotification {
-  id: number;
-  userId: number;
-  title: string;
-  message: string;
-  type: string;
-  priority: string;
-  isRead: boolean;
-  createdAt: Date;
-  taskId?: number;
-}
-
+/**
+ * The existing minute-based worker is intentionally kept as the scheduling
+ * mechanism. The decision layer selects at most one useful notification per
+ * user and handles preferences and idempotency before anything is inserted.
+ */
 class TaskReminderService {
   private intervalId: NodeJS.Timeout | null = null;
   private isRunning = false;
 
   start() {
     if (this.isRunning) return;
-    
+
     this.isRunning = true;
-    console.log("🔔 Task Reminder Service started");
-    
-    // Check for due tasks every minute
+    console.log("🔔 Proactive Guidance Service started");
+
     this.intervalId = setInterval(() => {
       this.checkDueTasks().catch(console.error);
-    }, 60000); // 1 minute
-    
-    // Also check immediately on start
+    }, 60000);
+
     this.checkDueTasks().catch(console.error);
   }
 
@@ -39,126 +30,48 @@ class TaskReminderService {
       this.intervalId = null;
     }
     this.isRunning = false;
-    console.log("🔔 Task Reminder Service stopped");
+    console.log("🔔 Proactive Guidance Service stopped");
   }
 
   private async checkDueTasks() {
     try {
       const now = new Date();
-      const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
-      const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-      
-      // Find tasks that are scheduled for the current time and not completed
-      const dueTasks = await db
-        .select()
-        .from(dailyTasks)
-        .where(
-          and(
-            eq(dailyTasks.isCompleted, false),
-            eq(dailyTasks.scheduledTime, currentTime)
-          )
-        );
+      const userRows = await db.select({ id: users.id }).from(users);
 
-      for (const task of dueTasks) {
-        await this.sendTaskReminder(task);
-        
-        // For now, we'll skip tracking to avoid database issues
-      }
-
-      // Also check for overdue tasks (scheduled time passed but not completed)
-      const overdueTime = new Date(now.getTime() - 30 * 60000); // 30 minutes ago
-      const overdueTimeStr = overdueTime.toTimeString().slice(0, 5);
-      
-      const overdueTasks = await db
-        .select()
-        .from(dailyTasks)
-        .where(
-          and(
-            eq(dailyTasks.isCompleted, false),
-            lte(dailyTasks.scheduledTime, overdueTimeStr),
-            gt(dailyTasks.scheduledTime, '00:00') // Has a scheduled time
-          )
-        );
-
-      for (const task of overdueTasks) {
-        await this.sendOverdueReminder(task);
-        
-        // For now, we'll skip tracking to avoid database issues
-      }
-
-    } catch (error) {
-      console.error("Error checking due tasks:", error);
-    }
-  }
-
-  private async sendTaskReminder(task: any) {
-    try {
-      const reminderNotification = {
-        userId: task.userId,
-        type: 'task_reminder',
-        title: `⏰ Time for: ${task.title}`,
-        message: `Your task "${task.title}" is scheduled for now. ${task.estimatedMinutes} minutes estimated.`,
-        priority: 'high',
-        isRead: false,
-        createdAt: new Date(),
-        metadata: {
-          taskId: task.id,
-          taskCategory: task.category,
-          estimatedMinutes: task.estimatedMinutes,
-          pointValue: task.pointValue
+      for (const user of userRows) {
+        try {
+          const result = await evaluateAndSurfaceProactiveGuidance(user.id, now);
+          if (result.notification) {
+            console.log(
+              `🔔 Proactive guidance sent: ${result.notification.title} for user ${user.id}`,
+            );
+          }
+        } catch (error) {
+          // One malformed user's data should not stop guidance for everyone else.
+          console.error(`Error evaluating proactive guidance for user ${user.id}:`, error);
         }
-      };
-
-      await db.insert(notifications).values(reminderNotification);
-      
-      console.log(`🔔 Task reminder sent: ${task.title} for user ${task.userId}`);
+      }
     } catch (error) {
-      console.error("Error sending task reminder:", error);
+      console.error("Error checking proactive guidance:", error);
     }
   }
 
-  private async sendOverdueReminder(task: any) {
-    try {
-      const overdueNotification = {
-        userId: task.userId,
-        type: 'task_overdue',
-        title: `⚠️ Overdue: ${task.title}`,
-        message: `Your task "${task.title}" was scheduled for ${task.scheduledTime} and is now overdue. You can still complete it today!`,
-        priority: 'high',
-        isRead: false,
-        createdAt: new Date(),
-        metadata: {
-          taskId: task.id,
-          taskCategory: task.category,
-          scheduledTime: task.scheduledTime,
-          pointValue: task.pointValue
-        }
-      };
-
-      await db.insert(notifications).values(overdueNotification);
-      
-      console.log(`⚠️ Overdue reminder sent: ${task.title} for user ${task.userId}`);
-    } catch (error) {
-      console.error("Error sending overdue reminder:", error);
-    }
-  }
-
-  // Method to manually trigger reminder check (useful for testing)
+  // Method to manually trigger a guidance check (useful for testing).
   async checkNow() {
     await this.checkDueTasks();
   }
 
-  // Reset reminders for a new day (called at midnight)
+  // Preserve the existing maintenance hook for recurring task state.
   async resetDailyReminders() {
     try {
       await db
         .update(dailyTasks)
-        .set({ 
+        .set({
           lastReminderSent: null,
-          lastOverdueReminder: null
+          lastOverdueReminder: null,
         });
-      
-      console.log("🔄 Daily reminders reset for new day");
+
+      console.log("🔄 Daily reminder state reset");
     } catch (error) {
       console.error("Error resetting daily reminders:", error);
     }
