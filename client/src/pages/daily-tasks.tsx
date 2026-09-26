@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { EditButton } from "@/components/ui/edit-button";
@@ -522,9 +523,17 @@ export default function DailyTasks() {
       </div>
 
       {/* Add Task Dialog */}
-      {isAddDialogOpen && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsAddDialogOpen(false)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+      {isAddDialogOpen && typeof document !== "undefined" && createPortal(
+        <div
+          className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50"
+          style={{ paddingTop: "calc(5rem + var(--safe-area-inset-top))" }}
+          onClick={() => setIsAddDialogOpen(false)}
+        >
+          <div
+            className="responsive-modal-panel rounded-lg bg-white shadow-xl"
+            style={{ maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))" }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Daily Task</h2>
@@ -640,7 +649,8 @@ export default function DailyTasks() {
             </div>
           </div>
         </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Task Dialog */}

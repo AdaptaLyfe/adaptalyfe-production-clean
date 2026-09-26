@@ -40,6 +40,11 @@ import type {
   TransitionSkill
 } from "@shared/schema";
 
+const headerSafeDialogStyle = {
+  top: "calc(50% + 2rem)",
+  maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+};
+
 export default function AcademicPlanner() {
   const { hasFeature } = useSubscriptionEnforcement();
   const { toast } = useToast();
@@ -956,7 +961,11 @@ export default function AcademicPlanner() {
               )}
               
               <Dialog open={isAddStudySessionOpen} onOpenChange={setIsAddStudySessionOpen}>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogContent
+                      overlayClassName="z-[110]"
+                      className="z-[120] overflow-y-auto overscroll-contain"
+                      style={headerSafeDialogStyle}
+                    >
                       <DialogHeader>
                         <DialogTitle>Start Study Session</DialogTitle>
                       </DialogHeader>
@@ -1089,7 +1098,11 @@ export default function AcademicPlanner() {
                       Add Location
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] overflow-y-auto overscroll-contain"
+                    style={headerSafeDialogStyle}
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Campus Location</DialogTitle>
                       <DialogDescription>
@@ -1200,7 +1213,11 @@ export default function AcademicPlanner() {
                       Add Route
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent
+                    overlayClassName="z-[110]"
+                    className="z-[120] overflow-y-auto overscroll-contain"
+                    style={headerSafeDialogStyle}
+                  >
                     <DialogHeader>
                       <DialogTitle>Add Transportation Route</DialogTitle>
                       <DialogDescription>
@@ -1313,7 +1330,11 @@ export default function AcademicPlanner() {
                     Create Study Group
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] overflow-y-auto overscroll-contain"
+                  style={headerSafeDialogStyle}
+                >
                   <DialogHeader>
                     <DialogTitle>Create Study Group</DialogTitle>
                     <DialogDescription>

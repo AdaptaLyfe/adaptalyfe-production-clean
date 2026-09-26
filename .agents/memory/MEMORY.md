@@ -7,6 +7,7 @@
 - [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.
 - [Mobile invitation entry](mobile-invitation-entry.md) — native deep links may omit or contain stale codes, so mobile acceptance must always expose editable code entry and verification.
 - [Health Records modal viewport](health-records-modal-viewport.md) — keep keyboard-aware visual viewport sizing scoped to Health Records portals, not shared modal rules.
+- [Web modal stacking](web-modal-stacking.md) — page-level overlays cannot clear fixed navigation by z-index alone; portal them and constrain tall dialogs below the header.
 - [AdaptAI context boundaries](adaptai-context.md) — server-built allowlists and authenticated user scope prevent cross-user or unnecessary sensitive data from reaching AI.
 - [AdaptAI action safety](adaptai-action-safety.md) — state changes must use explicit Zod actions, authenticated ownership checks, and confirmation before execution.
 - [Proactive guidance safety](proactive-guidance.md) — one best user-scoped candidate per worker pass, explicit preferences, and stable occurrence deduplication prevent notification floods.

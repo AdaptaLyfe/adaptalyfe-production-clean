@@ -410,9 +410,10 @@ export default function RewardsPage() {
               </DialogTrigger>
               <DialogContent
                 overlayClassName="z-[110]"
-                className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden"
+                className="z-[120] max-w-md max-h-[calc(100dvh-6rem)] flex flex-col overflow-hidden"
                 style={{
-                  maxHeight: "calc(100dvh - max(2rem, var(--safe-area-inset-top) + var(--safe-area-inset-bottom) + 2rem))",
+                  top: "calc(50% + 2rem)",
+                  maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
                 }}
                 aria-describedby="create-reward-description"
               >
