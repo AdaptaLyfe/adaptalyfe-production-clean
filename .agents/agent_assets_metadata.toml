@@ -2815,3 +2815,17 @@ mtime_ms = 1790414138976
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d4b6eb6b-14ef-481a-9333-d2147a269928/a4d38377-2db0-48a9-9144-70d49b019c63"
 storage_version_token = "1790414170627494"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IfwtQsZOTde699yhqPbJx"
+uri = "file://deliverables/flutter-assignment-flow-reference.zip"
+type = "unspecified"
+title = "Flutter assignment flow reference ZIP"
+description = "Flutter-only archive of the relevant assignment form, model, BLoC, repository, API, and existing decimal-hours test. These files are unchanged; no Flutter source file was modified."
+logical_id = "c20d4f15-8777-4c9a-8145-11c0af48695b"
+content_hash = "sha256:054193b27bd0f44703721938bc63888d5ab368a2200544ebabc079fd0e0d0959"
+size = 23292
+mtime_ms = 1790417837349
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c20d4f15-8777-4c9a-8145-11c0af48695b/208730bd-6cbf-4918-adde-a0ad478b456c"
+storage_version_token = "1790417842994012"
+content_type = "application/octet-stream"
