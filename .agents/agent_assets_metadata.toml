@@ -2787,3 +2787,17 @@ mtime_ms = 1790412176961
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/32735a4d-0260-4260-9c45-0a773ac3050d/16798752-5345-4343-b500-5c13bdd3b492"
 storage_version_token = "1790412180908201"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "QmvRkRbj5qItBknm2bpHQ"
+uri = "file://outputs/assignment-estimated-hours-flutter-files.zip"
+type = "unspecified"
+title = "Flutter assignment hours files"
+description = "ZIP of the assignment form, model/serialization, and existing estimated-hours test."
+logical_id = "30db6013-4509-4db4-82b4-73bd77fff7b6"
+content_hash = "sha256:2313488742d88e2da2604ecd7bd4f49d77e0637f645632c5fe1d5cd500e2e958"
+size = 19266
+mtime_ms = 1790412448341
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30db6013-4509-4db4-82b4-73bd77fff7b6/7d4d21c7-8a1b-47b9-b523-b00b91c952f6"
+storage_version_token = "1790412453053902"
+content_type = "application/octet-stream"
