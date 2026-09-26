@@ -1,0 +1,130 @@
+Fix the Calendar event creation and display logic in the existing Flutter application.
+
+### Current Issue
+
+In the Calendar screen, when creating an event:
+
+* User enables the **"All day event"** toggle.
+* Selects a date.
+* Saves the event.
+* The event is NOT displayed correctly as an all-day event on the selected date.
+
+The all-day event behavior needs to be fixed properly.
+
+### Required Behavior
+
+#### 1. All-day event = ON
+
+When the user enables **"All day event"**:
+
+* The event must be saved as an all-day event.
+* It must appear in the **All Day** section of the calendar.
+* It must appear on the **selected start date**.
+* It should not depend on a start/end time.
+* Do not display it as a timed event.
+* When the user closes and reopens the Calendar screen, the event must still appear correctly.
+* When the app is restarted, the event must still appear correctly.
+
+#### 2. Whole Day vs All Day
+
+Handle these two concepts correctly:
+
+**Whole Day**
+
+* If the event is intended to cover the complete selected day only, display the label **"Whole Day"**.
+* It should belong only to the selected date.
+
+**All Day**
+
+* If the **"All day event"** toggle is enabled, treat it as an all-day calendar event.
+* The event should start from the selected date and remain an all-day event according to its configured date range.
+* Do not incorrectly convert it into a timed event.
+
+### Important
+
+Do NOT create a temporary UI-only fix.
+
+Check the complete flow:
+
+1. Event creation form
+2. All-day toggle
+3. Event model
+4. Date/time conversion
+5. API/repository/database save
+6. Event fetching
+7. Calendar event mapping
+8. Calendar All Day section
+9. Event editing
+10. Event reopening
+11. Event deletion
+12. App restart
+
+### Date/Time Handling
+
+Be careful with:
+
+* `DateTime`
+* timezone conversion
+* start date
+* end date
+* start time
+* end time
+* `isAllDay` / equivalent field
+
+Do not accidentally change the selected date because of UTC/local timezone conversion.
+
+### Persistence
+
+After creating an all-day event:
+
+* Navigate away from Calendar.
+* Reopen Calendar.
+* The event must still appear in the correct All Day section.
+* Restart the app and verify again.
+* Edit and save the event and verify that it remains an all-day event.
+
+### Do Not Break Existing Functionality
+
+Keep existing:
+
+* Calendar UI
+* Timed events
+* Event creation
+* Event editing
+* Event deletion
+* Recurring events
+* API structure
+* Existing state management/BLoC
+* Existing database/backend behavior
+
+Only fix the incorrect all-day/whole-day event handling.
+
+### Before Changing Code
+
+First inspect the existing Calendar implementation and identify:
+
+* Event model
+* Create Event screen
+* All-day toggle implementation
+* BLoC/events/states
+* Repository/API
+* Calendar widget/event mapping
+* Date/time conversion logic
+
+Then make the smallest proper fix across the affected layers.
+
+### Final Verification
+
+Test these cases:
+
+1. Create normal timed event → should remain a timed event.
+2. Enable "All day event" → event appears in All Day section.
+3. Select a specific date → event appears on that exact date.
+4. Close/reopen Calendar → event still appears.
+5. Restart app → event still appears.
+6. Edit all-day event → remains all-day.
+7. Delete all-day event → removed correctly.
+8. Create Whole Day event → displays **"Whole Day"** correctly.
+9. Verify timezone/date conversion does not move the event to the previous or next day.
+
+Do not change unrelated functionality. Fix the root cause and provide a short explanation of what was causing the issue and what files were changed.
