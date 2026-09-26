@@ -2843,3 +2843,17 @@ mtime_ms = 1790418990937
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a5e774bd-fdb7-46a0-a9b9-e8e7db373228/3b56dcbd-d48f-4220-a761-def2909f8d61"
 storage_version_token = "1790419001199313"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xZW_iNB0Z1qXIILkZf03b"
+uri = "file://deliverables/academic-assignment-decimal-fix.zip"
+type = "unspecified"
+title = "Assignment decimal-hours fix ZIP"
+description = "Contains the Flutter assignment create/update path, decimal validation and serialization, server/API support, regression tests, and the existing database migration runner."
+logical_id = "f6c422bf-91ba-4978-9aec-7899250795bd"
+content_hash = "sha256:4d9edae5acd89c6ab8ffaa74953888e77bf317be3f1c114e526e6ec0c69000e8"
+size = 127498
+mtime_ms = 1790424532066
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f6c422bf-91ba-4978-9aec-7899250795bd/35fbaf5a-eabe-47c1-9e73-982f0866b8cd"
+storage_version_token = "1790424537306100"
+content_type = "application/octet-stream"
