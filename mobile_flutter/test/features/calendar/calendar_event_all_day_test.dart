@@ -22,6 +22,21 @@ void main() {
     expect(payload['recurrenceRule'], isNull);
   });
 
+  test('all-day dates keep their selected calendar components', () {
+    final input = CalendarEventInput(
+      title: 'Holiday',
+      startDate: DateTime.utc(2026, 9, 26, 23, 30),
+      endDate: DateTime.utc(2026, 9, 27, 23, 30),
+      allDay: true,
+      category: 'personal',
+    );
+
+    final payload = input.toJson();
+    expect(payload['startDate'], '2026-09-26');
+    expect(payload['endDate'], '2026-09-27');
+    expect(payload['allDay'], isTrue);
+  });
+
   test('all-day recurrence serializes the rule with the selected start date', () {
     final input = CalendarEventInput(
       title: 'Daily medication reminder',

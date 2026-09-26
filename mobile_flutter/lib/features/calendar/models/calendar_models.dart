@@ -199,12 +199,12 @@ class CalendarEventInput extends Equatable {
         'title': title.trim(),
         if (_hasText(description)) 'description': description!.trim(),
         'startDate': allDay
-            ? calendarDateKey(startDate)
+            ? _calendarEventDateKey(startDate)
             : calendarDateTimeIso(startDate),
         'endDate': endDate == null
             ? null
             : allDay
-                ? calendarDateKey(endDate!)
+                ? _calendarEventDateKey(endDate!)
                 : calendarDateTimeIso(endDate!),
         'allDay': allDay,
         'category': category,
@@ -261,3 +261,8 @@ String? _asNullableString(Object? value) {
 }
 
 bool _hasText(String? value) => value != null && value.trim().isNotEmpty;
+
+String _calendarEventDateKey(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';
