@@ -2829,3 +2829,17 @@ mtime_ms = 1790417837349
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c20d4f15-8777-4c9a-8145-11c0af48695b/208730bd-6cbf-4918-adde-a0ad478b456c"
 storage_version_token = "1790417842994012"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IL6RQ2kSMwXEtaww07hc4"
+uri = "file://deliverables/flutter-subscription-refresh-changes.zip"
+type = "unspecified"
+title = "Flutter subscription changes ZIP"
+description = "Contains only the Flutter subscription BLoC, state/event, screen, and focused regression test changed for app-wide entitlement refresh after verified purchases and restore."
+logical_id = "a5e774bd-fdb7-46a0-a9b9-e8e7db373228"
+content_hash = "sha256:1bbaf5efe0887e043300a475b1cfbd0011fddc21c0bb3e3ea83a8c21a616c2e2"
+size = 14695
+mtime_ms = 1790418990937
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a5e774bd-fdb7-46a0-a9b9-e8e7db373228/3b56dcbd-d48f-4220-a761-def2909f8d61"
+storage_version_token = "1790419001199313"
+content_type = "application/octet-stream"

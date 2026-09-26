@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
 import '../../../core/layout/responsive.dart';
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
@@ -51,12 +53,20 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
           previous.errorMessage != current.errorMessage ||
           previous.actionMessage != current.actionMessage ||
           previous.subscription != current.subscription ||
+          (!previous.shouldRefreshAuthentication &&
+              current.shouldRefreshAuthentication) ||
           (!previous.shouldNavigateToDashboard &&
               current.shouldNavigateToDashboard),
       listener: (context, state) async {
         if (state.sessionInvalid) {
           if (context.mounted) context.go('/login');
           return;
+        }
+        if (state.shouldRefreshAuthentication) {
+          context.read<AuthBloc>().add(const RefreshAuthentication());
+          context
+              .read<SubscriptionBloc>()
+              .add(const SubscriptionAuthenticationRefreshHandled());
         }
         final url = state.managementUrl;
         if (url != null) {
