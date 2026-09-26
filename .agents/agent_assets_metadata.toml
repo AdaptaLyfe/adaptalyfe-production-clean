@@ -2703,3 +2703,17 @@ mtime_ms = 1790400805376
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d422fe8b-b677-4ac2-92c2-09959edf52ad/460fc7c0-870e-4ba6-9b96-394f52587992"
 storage_version_token = "1790400809301307"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "gX1jWXNs15wOaPF2_HyTj"
+uri = "file://academic-planner-add-class-dialog-fix.zip"
+type = "unspecified"
+title = "Academic Planner Add Class overflow fix"
+description = "ZIP containing the changed Academic Planner Flutter screen with its original project path preserved."
+logical_id = "388e472b-763a-445a-81f4-31cb525d7ace"
+content_hash = "sha256:97c1ef4a1328566fb50f1b928df41248a16faa70d461ac2992ad1f8e58a8fa13"
+size = 15072
+mtime_ms = 1790401419173
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/388e472b-763a-445a-81f4-31cb525d7ace/2a44ed8f-fe25-4f97-ba72-41000c009637"
+storage_version_token = "1790401425065075"
+content_type = "application/octet-stream"
