@@ -1,0 +1,190 @@
+Fix the assignment creation/update error in the existing Flutter **Academic Planner / Student Planner** module.
+
+### Current Issue
+
+In:
+
+**Academic Planner / Student Planner → Assignment**
+
+When creating a new assignment or updating an existing assignment, the user can enter **Estimated Hours** as a decimal value, for example:
+
+* `2.5`
+* `1.5`
+* `0.5`
+* `3.75`
+
+When a decimal value such as **2.5 hours** is entered, the app shows:
+
+**"Failed to create assignment"**
+
+or
+
+**"Failed to update assignment"**
+
+The assignment is not successfully saved.
+
+### Required Fix
+
+Fix the issue so that **Estimated Hours supports decimal values correctly**.
+
+For example:
+
+**Create Assignment**
+
+* Estimated Hours: `2.5`
+* Assignment should be created successfully.
+
+**Update Assignment**
+
+* Existing Estimated Hours: `2.0`
+* Change to `2.5`
+* Assignment should update successfully.
+
+Also support normal integer values such as `1`, `2`, `3`, etc.
+
+### Important Investigation
+
+Do not only fix the UI validation.
+
+Inspect the complete data flow:
+
+**TextField → Controller → Validation → Model → BLoC/State → Repository → API/Firebase/Database → Response → UI**
+
+Find where the decimal value is being incorrectly converted or rejected.
+
+Check for issues such as:
+
+* `int.parse()` being used for estimated hours
+* `int` model field where `double` is required
+* `double.parse()` missing
+* API request converting `2.5` to an integer
+* JSON serialization/deserialization using the wrong type
+* Backend/API expecting an integer
+* Database field/type conversion
+* BLoC event/state using an incorrect type
+* Existing assignment model converting decimal values incorrectly
+* Validation incorrectly allowing only whole numbers
+
+### Expected Data Type
+
+Estimated hours should support decimal numbers.
+
+Use an appropriate numeric type such as:
+
+```dart
+double
+```
+
+wherever the application requires decimal precision.
+
+When reading from a TextField, safely convert the value to a `double`.
+
+For example:
+
+```dart
+final estimatedHours = double.tryParse(value);
+```
+
+Do not blindly use `int.parse()` for this field.
+
+### Input Validation
+
+Keep existing validation behavior, but allow valid decimal values.
+
+Valid examples:
+
+* `0.5`
+* `1.5`
+* `2`
+* `2.5`
+* `3.75`
+* `10.5`
+
+Invalid values should still be handled gracefully according to the existing validation rules.
+
+Do not allow the app to crash because of an invalid numeric conversion.
+
+### Create Assignment
+
+Verify the complete create flow:
+
+1. Open Academic Planner.
+2. Open Assignment.
+3. Create a new assignment.
+4. Enter all required fields.
+5. Enter Estimated Hours = `2.5`.
+6. Save.
+7. Assignment should be created successfully.
+8. Assignment should display `2.5` hours correctly.
+
+### Update Assignment
+
+Verify the update flow:
+
+1. Open an existing assignment.
+2. Edit the assignment.
+3. Change Estimated Hours to `2.5`.
+4. Save.
+5. Assignment should update successfully.
+6. Reopen the assignment.
+7. Estimated Hours should still display `2.5`.
+
+### Important
+
+Check both **create and update** paths because they may use different request/model logic.
+
+Also check whether the backend/API returns the value as:
+
+```text
+2.5
+```
+
+or:
+
+```text
+2
+```
+
+and make the Dart model safely handle both integer and decimal numeric responses.
+
+For example, avoid assumptions that the API will always return exactly one numeric type.
+
+### Preserve Existing Functionality
+
+Do NOT:
+
+* Change the assignment UI design.
+* Remove existing validation.
+* Change unrelated Academic Planner features.
+* Change API contracts unless required.
+* Convert all assignment fields to `double`.
+* Add hardcoded special handling only for `2.5`.
+* Use string values throughout the application when a numeric value is required.
+* Hide the error without fixing the actual save/update problem.
+
+Make the **smallest safe fix** using the existing Flutter architecture and state-management pattern.
+
+### Final Testing
+
+Test at minimum:
+
+| Action | Estimated Hours | Expected Result |
+| ------ | --------------: | --------------- |
+| Create |             `2` | Success         |
+| Create |           `2.5` | Success         |
+| Create |           `0.5` | Success         |
+| Create |          `3.75` | Success         |
+| Update |             `2` | Success         |
+| Update |           `2.5` | Success         |
+| Update |           `0.5` | Success         |
+| Update |          `3.75` | Success         |
+
+Also verify that after saving and reopening the assignment, the decimal value is preserved correctly.
+
+Finally, provide:
+
+1. Root cause of the error.
+2. Files changed.
+3. Exact data-type/conversion issue that was fixed.
+4. Confirmation that both create and update support decimal Estimated Hours.
+5. Any API/backend limitation discovered during investigation.
