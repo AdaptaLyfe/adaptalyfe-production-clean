@@ -2731,3 +2731,17 @@ mtime_ms = 1790402192197
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/aca42134-536e-42ef-b687-a8abe4857c5d/74c63ff7-ccc8-4c44-b83d-576820f500a6"
 storage_version_token = "1790402196010675"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "vfnH5s0Dc7Y9Ci4gnZgpn"
+uri = "file://dashboard-customize-popup-fix.zip"
+type = "unspecified"
+title = "Dashboard Customize popup fix"
+description = "ZIP containing only the updated Flutter dashboard widget file, with its original project path preserved."
+logical_id = "85dbb39e-5996-4265-83ca-3b02384caeaf"
+content_hash = "sha256:868afbb75a712cb808f3d72847c6b9533b7f37e8fd484c326b9b27ae73e26e4c"
+size = 27425
+mtime_ms = 1790404033237
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/85dbb39e-5996-4265-83ca-3b02384caeaf/1c8de09c-e97d-45fc-a870-1f601d5452c8"
+storage_version_token = "1790404041581365"
+content_type = "application/octet-stream"
