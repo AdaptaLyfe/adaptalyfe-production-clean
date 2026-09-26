@@ -21,6 +21,12 @@ void _logLifeSkillsApi(String message) {
   }
 }
 
+void _logEmergencyResourceApi(String message) {
+  if (kDebugMode) {
+    debugPrint('[EmergencyResource][ApiClient] $message');
+  }
+}
+
 /// A successful API result with the original status and parsed response data.
 class ApiResponse<T> {
   const ApiResponse({
@@ -172,12 +178,23 @@ class ApiClient {
     T Function(dynamic data)? parser,
   }) async {
     final isLifeSkillsRequest = path.startsWith('/api/transition-skills');
+    final isEmergencyResourceRequest =
+        path == '/api/emergency-resources' ||
+        path.startsWith('/api/emergency-resources/');
     final requestHeaders = await _requestHeaders();
     if (isLifeSkillsRequest) {
       _logLifeSkillsApi(
         'request method=$method path=$path '
         'payload=${data ?? '<none>'} '
         'hasBearerToken=${requestHeaders.containsKey('Authorization')}',
+      );
+    }
+    if (isEmergencyResourceRequest) {
+      _logEmergencyResourceApi(
+        'request origin=${_safeRequestOrigin(_dio.options.baseUrl)} '
+        'method=$method path=$path '
+        'hasBearerToken=${requestHeaders.containsKey('Authorization')} '
+        'payloadShape=${_safeEmergencyResourcePayloadShape(data)}',
       );
     }
 
@@ -194,6 +211,13 @@ class ApiClient {
       );
 
       final statusCode = response.statusCode;
+      if (isEmergencyResourceRequest) {
+        _logEmergencyResourceApi(
+          'response method=$method path=$path '
+          'status=${statusCode ?? 'unknown'} '
+          'bodyShape=${_safeEmergencyResourcePayloadShape(response.data)}',
+        );
+      }
       if (isLifeSkillsRequest) {
         _logLifeSkillsApi(
           'response method=$method path=$path status=$statusCode '
@@ -217,6 +241,12 @@ class ApiClient {
       rethrow;
     } on DioException catch (error) {
       final normalized = _dioException(error);
+      if (isEmergencyResourceRequest) {
+        _logEmergencyResourceApi(
+          'transport failure method=$method path=$path '
+          'type=${normalized.type} status=${normalized.statusCode ?? 'none'}',
+        );
+      }
       if (isLifeSkillsRequest) {
         _logLifeSkillsApi(
           'dio failure method=$method path=$path error=$normalized',
@@ -224,6 +254,12 @@ class ApiClient {
       }
       throw normalized;
     } catch (error) {
+      if (isEmergencyResourceRequest) {
+        _logEmergencyResourceApi(
+          'unexpected failure method=$method path=$path '
+          'type=${error.runtimeType}',
+        );
+      }
       if (isLifeSkillsRequest) {
         _logLifeSkillsApi(
           'unexpected failure method=$method path=$path error=$error',
@@ -343,6 +379,37 @@ class ApiClient {
         trimmed.startsWith('[') ||
         trimmed.contains('package:flutter/') ||
         RegExp(r'\bat [\w./\\:-]+\([^)]*\)').hasMatch(trimmed);
+  }
+
+  static String _safeRequestOrigin(String baseUrl) {
+    final uri = Uri.tryParse(baseUrl);
+    if (uri == null || uri.host.isEmpty) return '<unknown>';
+    final port = uri.hasPort ? ':${uri.port}' : '';
+    return '${uri.scheme}://${uri.host}$port';
+  }
+
+  /// Logs only JSON keys and value shapes; resource values may be sensitive.
+  static String _safeEmergencyResourcePayloadShape(Object? payload) {
+    if (payload is Map) {
+      final fields = payload.entries.map((entry) {
+        return '${entry.key}:${_safeEmergencyResourceValueShape(entry.value)}';
+      }).join(',');
+      return '{$fields}';
+    }
+    if (payload is List) return 'list(count=${payload.length})';
+    return _safeEmergencyResourceValueShape(payload);
+  }
+
+  static String _safeEmergencyResourceValueShape(Object? value) {
+    if (value == null) return 'null';
+    if (value is String) {
+      return value.trim().isEmpty ? 'empty-string' : 'string';
+    }
+    if (value is bool) return 'bool';
+    if (value is num) return 'number';
+    if (value is Map) return 'object';
+    if (value is List) return 'list';
+    return value.runtimeType.toString();
   }
 
   static bool _acceptHttpStatus(int? statusCode) {
