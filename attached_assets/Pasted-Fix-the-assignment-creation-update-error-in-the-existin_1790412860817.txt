@@ -1,0 +1,234 @@
+Fix the assignment creation/update error in the existing Flutter application.
+
+### Location
+
+**Academic Planner → Assignments**
+
+### Current Issue
+
+When the user creates or edits an assignment and enters an **Estimated Hours** value containing a decimal, for example:
+
+* `2.5`
+* `1.5`
+* `0.5`
+* `3.5`
+
+the operation fails and shows:
+
+* **"Failed to create assignment"**
+  or
+* **"Failed to update assignment"**
+
+Whole numbers may work correctly, but decimal estimated-hour values are causing the create/update operation to fail.
+
+### Required Fix
+
+Find the root cause and fix the estimated-hours handling properly.
+
+The application must support decimal values for estimated hours.
+
+Examples that should work:
+
+```text
+0.5
+1.5
+2.5
+2.75
+3.5
+4
+```
+
+The value should be correctly handled through the complete flow:
+
+**TextField → Validation → Model → BLoC/State → Repository → API/Firebase/Database → Assignment → Dashboard/List**
+
+### Important Investigation
+
+Before changing the code, inspect the existing implementation for:
+
+* Estimated hours TextField
+* Assignment form
+* Assignment model
+* Create assignment logic
+* Update assignment logic
+* BLoC/events/states
+* Repository
+* API/Firebase/database mapping
+* JSON serialization/deserialization
+* Backend field type
+* Any `int.parse()` or integer-only conversion
+* Any `int` model field being used for estimated hours
+* Any `double` being incorrectly converted to `int`
+* Any validation that rejects decimal values
+
+Look specifically for code similar to:
+
+```dart
+int.parse(...)
+```
+
+or:
+
+```dart
+int estimatedHours
+```
+
+or JSON/database conversion that expects an integer.
+
+### Expected Data Type
+
+Estimated hours should support decimal values.
+
+Use an appropriate numeric type such as:
+
+```dart
+double
+```
+
+where required.
+
+For example:
+
+```dart
+final double estimatedHours;
+```
+
+When reading from JSON/database, safely handle both integer and decimal values.
+
+For example, the implementation should be able to handle:
+
+```text
+2
+2.0
+2.5
+```
+
+without crashing or failing.
+
+Do not blindly change every integer field to double. Only change the fields and conversion logic related to **estimated hours**.
+
+### Input Validation
+
+Make sure the Estimated Hours field:
+
+* Accepts decimal numbers.
+* Accepts values such as `2.5`.
+* Rejects invalid text.
+* Does not crash when the field is empty.
+* Keeps the existing required-field validation.
+* Keeps the existing minimum/maximum validation if already present.
+
+If the app uses a numeric keyboard, make sure the decimal separator can be entered.
+
+### Create Assignment
+
+Test:
+
+1. Open **Academic Planner → Assignments**.
+2. Tap **Add/Create Assignment**.
+3. Enter all required information.
+4. Set Estimated Hours to `2.5`.
+5. Create the assignment.
+
+Expected result:
+
+**Assignment is created successfully.**
+
+There should be no:
+
+> Failed to create assignment
+
+error.
+
+### Update Assignment
+
+Test:
+
+1. Open an existing assignment.
+2. Edit Estimated Hours.
+3. Change it to `2.5`.
+4. Save/update.
+
+Expected result:
+
+**Assignment is updated successfully.**
+
+There should be no:
+
+> Failed to update assignment
+
+error.
+
+### Additional Tests
+
+Test these values:
+
+```text
+0.5
+1.5
+2
+2.0
+2.5
+3.75
+5.5
+10
+```
+
+Also verify that existing assignments using whole numbers continue to work.
+
+### Important
+
+Do NOT:
+
+* Remove decimal support.
+* Convert `2.5` to `2`.
+* Round decimal values unnecessarily.
+* Change unrelated Academic Planner functionality.
+* Change the existing UI design.
+* Change unrelated database fields.
+* Create a separate duplicate assignment model.
+* Add fake delays or retry loops to hide the error.
+* Suppress the actual exception.
+
+Find and fix the **actual root cause**.
+
+### Error Handling
+
+If the backend/API/database rejects the value because of an incorrect data type, fix the mapping/conversion at the correct layer instead of hiding the error.
+
+Also check whether the backend expects:
+
+```text
+double/number
+```
+
+or:
+
+```text
+string
+```
+
+and make the Flutter request match the existing backend contract.
+
+### Final Verification
+
+After fixing:
+
+* Create assignment with `2.5` → must succeed.
+* Update assignment to `2.5` → must succeed.
+* Create assignment with `1.5` → must succeed.
+* Update assignment to `3.75` → must succeed.
+* Create/update with whole numbers → must still work.
+* Reopen the assignment → estimated hours must display correctly.
+* Navigate away and return → value must remain correct.
+* Restart the app if persistence is expected → value must remain correct.
+
+Finally, explain:
+
+1. **Root cause of the failure**
+2. **Files changed**
+3. **What was changed for decimal estimated hours**
+4. **Whether the issue was in UI, model, BLoC, repository, API, Firebase/database, or serialization**
+5. **How create and update were tested**
+
+Make the **smallest safe fix** and preserve all existing Academic Planner functionality.
