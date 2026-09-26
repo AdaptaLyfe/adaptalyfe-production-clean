@@ -1,0 +1,227 @@
+Fix the **Subscription feature** in the existing Flutter application.
+
+### Current Issue
+
+The subscription functionality is currently **not working correctly**.
+
+Do NOT rebuild the subscription system from scratch. First inspect the existing implementation and identify the actual root cause.
+
+### First: Inspect the Existing Code
+
+Find and review:
+
+* Subscription screen
+* Subscription plans
+* Subscribe/Purchase button
+* Subscription BLoC/state management
+* Subscription repository/service
+* API calls
+* Backend subscription logic
+* Stripe/payment integration
+* Customer creation/retrieval
+* Payment/checkout flow
+* Subscription status checking
+* Current user/subscription state
+* Trial period logic
+* Restore subscription functionality
+* Success/failure handling
+* Webhook handling if implemented
+* Environment/configuration variables
+* Android/iOS payment configuration if applicable
+
+Trace the complete flow:
+
+**User → Select Plan → Subscribe → Payment → Backend → Subscription Created → Subscription Status Updated → App UI**
+
+### Fix Requirements
+
+Make the existing subscription flow work end-to-end.
+
+When the user taps **Subscribe**:
+
+1. Validate the selected subscription plan.
+2. Call the existing backend/payment service.
+3. Properly create or retrieve the customer if required.
+4. Start the payment/subscription flow.
+5. Handle the payment result correctly.
+6. Create/activate the subscription on the backend.
+7. Save/update the subscription status.
+8. Refresh the user's subscription state.
+9. Update the Flutter UI immediately.
+10. Show the correct success or failure message.
+
+### Trial
+
+The application currently uses a **1-day free trial**.
+
+Verify that:
+
+* The 1-day trial is configured correctly.
+* The trial is applied only when appropriate.
+* The subscription status during the trial is handled correctly.
+* The UI correctly shows the user's subscription/trial status.
+* The user is not incorrectly charged $0 or treated as unsubscribed after completing the subscription flow.
+
+Do not change the trial duration unless the existing backend/payment configuration requires it.
+
+### Subscription Status
+
+Verify all subscription states, including:
+
+* No subscription
+* Trial active
+* Active subscription
+* Payment failed
+* Subscription cancelled
+* Subscription expired
+* Subscription past due
+
+The Dashboard/app should always display the **latest subscription status**.
+
+Do not rely only on locally cached subscription data.
+
+### Restore Subscription
+
+Fix **Restore My Subscription** as well.
+
+When the user has an existing subscription:
+
+* Restore/fetch the subscription from the backend/payment provider.
+* Update the user's subscription status.
+* Refresh the Flutter state.
+* Navigate/display the correct subscribed state.
+
+If no subscription exists, show a clear user-friendly message.
+
+### Important Flutter Requirements
+
+Use the application's existing:
+
+* BLoC/state management
+* Repository pattern
+* API service
+* Models
+* Navigation
+* Error handling
+
+Do not introduce a completely new architecture.
+
+If BLoC is already used:
+
+* Check events and states.
+* Check whether the subscription state is emitted correctly.
+* Make sure the UI listens to the correct BLoC.
+* Prevent stale subscription state.
+* Prevent duplicate API/payment calls.
+* Handle loading, success, and failure states correctly.
+
+### Payment/Stripe Debugging
+
+If Stripe is being used, carefully verify:
+
+* Stripe publishable key
+* Backend secret key configuration
+* Customer ID
+* Price/Plan ID
+* Product ID
+* Payment method configuration
+* Payment Intent/Setup Intent if used
+* Subscription creation API
+* Trial configuration
+* Return/payment success handling
+* Webhook configuration
+* Backend subscription status update
+
+Do not expose secret keys in Flutter code.
+
+If the problem is caused by a backend/API configuration rather than Flutter, clearly identify it instead of creating a fake Flutter-side workaround.
+
+### Error Handling
+
+Replace generic errors such as:
+
+> Subscription failed
+
+with useful user-friendly messages based on the actual failure.
+
+Also add proper logging/debug information during development for:
+
+* API request
+* API response status
+* Subscription ID
+* Customer ID
+* Price/plan ID
+* Payment status
+* Backend response
+* Webhook/subscription status
+
+Never log secret keys, passwords, payment secrets, or sensitive payment information.
+
+### Important
+
+Do NOT:
+
+* Rewrite the entire subscription system.
+* Remove existing subscription functionality.
+* Change unrelated screens.
+* Change the existing UI unnecessarily.
+* Create fake/mock successful subscriptions.
+* Hardcode `isSubscribed = true`.
+* Bypass payment verification.
+* Use delays to pretend the subscription succeeded.
+* Store sensitive Stripe secret keys in Flutter.
+* Break the existing login/user system.
+
+### Test These Scenarios
+
+Test all of the following:
+
+#### Test 1 — New User
+
+* Register/login.
+* Open Subscription.
+* Select plan.
+* Subscribe.
+* Complete payment/trial.
+* Verify subscription becomes active/trial.
+* Close and reopen the app.
+* Verify status remains correct.
+
+#### Test 2 — Existing Subscriber
+
+* Login with an existing subscribed user.
+* Open Subscription.
+* Verify the correct plan/status is displayed.
+
+#### Test 3 — Restore
+
+* Login with an account that already has a subscription.
+* Tap **Restore My Subscription**.
+* Verify the subscription is restored correctly.
+
+#### Test 4 — Failed Payment
+
+* Simulate/handle a failed payment.
+* Verify the app does not mark the user as subscribed.
+
+#### Test 5 — Cancelled/Expired
+
+* Verify cancelled/expired subscriptions are not incorrectly shown as active.
+
+#### Test 6 — Trial
+
+* Verify the existing **1-day trial** is correctly represented in both backend and Flutter UI.
+
+### Final Output
+
+After fixing the issue, provide:
+
+1. Root cause of why subscription was not working.
+2. Files changed.
+3. Exact changes made.
+4. Whether the issue was Flutter, API, Stripe, backend, webhook, or configuration.
+5. How subscription status now flows through the application.
+6. Test results for each scenario above.
+7. Any environment variables or external configuration that still needs to be configured.
+
+Make the **smallest safe fix possible** and preserve the existing application architecture and functionality.
