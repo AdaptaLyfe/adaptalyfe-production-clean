@@ -2252,11 +2252,18 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
         },
         builder: (context, state) {
           final isSubmitting = state.action == AcademicAction.addingClass;
-          return AlertDialog(
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: AppResponsive.dialogMaxHeight(
+                context,
+                fraction: .96,
+              ),
+            ),
+            child: AlertDialog(
             scrollable: true,
             insetPadding: EdgeInsets.symmetric(
               horizontal: AppResponsive.isCompact(context) ? 12 : 24,
-              vertical: 24,
+              vertical: 12,
             ),
             title: const Text('Add New Class'),
             content: ConstrainedBox(
@@ -2417,6 +2424,7 @@ class _AcademicClassDialogState extends State<_AcademicClassDialog> {
                 child: Text(isSubmitting ? 'Adding...' : 'Add Class'),
               ),
             ],
+            ),
           );
         },
       ),

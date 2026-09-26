@@ -1,0 +1,48 @@
+Fix the Flutter UI overflow issue in:
+
+**Academic Planner / Student Planner → Schedule → Add New Class**
+
+### Current Issue
+
+When the user opens the **"Add New Class"** popup by tapping the **"+ Add Class"** button, Flutter shows:
+
+**"OVERFLOWED BY 14 PIXELS"**
+
+The popup content does not fit properly within the available height.
+
+### Required Fix
+
+1. Find the **Add New Class** popup/dialog/bottom sheet used from the Schedule screen.
+2. Fix the **14 pixels overflow** properly.
+3. Make the popup responsive for:
+
+   * Small mobile screens
+   * Normal mobile screens
+   * Large mobile screens
+   * Different screen heights
+   * Different text/font sizes where possible
+4. Do **not** simply reduce the font size or hide/remove fields to make the overflow disappear.
+5. Keep all existing fields, buttons, validation, functionality, and design.
+6. If the popup uses `Column`, `Container`, `SingleChildScrollView`, `ListView`, `Flexible`, or `Expanded`, restructure the layout correctly so the content can scroll when required.
+7. Make sure the keyboard opening does not cause another overflow.
+8. Make sure the **Save/Add Class** button remains accessible and is not hidden behind the keyboard or outside the visible area.
+9. Preserve the existing BLoC/state management and API functionality. Do not change business logic.
+10. Check for any fixed height that is causing the popup to exceed the available screen height and replace it with a responsive layout where necessary.
+
+### Important
+
+Do not give me a temporary workaround.
+
+**Properly fix the root cause of the overflow.**
+
+After making the changes:
+
+* Run/analyze the Flutter project.
+* Open **Academic Planner → Schedule → + Add Class**.
+* Test opening the popup repeatedly.
+* Test on different screen heights.
+* Test with the keyboard opened.
+* Confirm there is **no "OVERFLOWED BY 14 PIXELS"** or any other RenderFlex overflow.
+* Confirm all existing Add New Class functionality still works.
+
+Do not modify unrelated screens or features.
