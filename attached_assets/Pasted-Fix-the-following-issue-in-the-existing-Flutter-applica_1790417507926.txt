@@ -1,0 +1,264 @@
+Fix the following issue in the existing **Flutter application**.
+
+## Issue
+
+Flow:
+
+**Academic Planner → Assignment → Add Assignment**
+
+When the user enters:
+
+**Estimated Hours: 2.5**
+
+and clicks:
+
+**Add Assignment**
+
+the app shows:
+
+**"Failed to create assignment"**
+
+The assignment is not created successfully.
+
+---
+
+## IMPORTANT: Review React Native + Wrapper First
+
+Before changing the Flutter code, **first inspect and understand the existing React Native + Wrapper implementation of the same flow**.
+
+Find and review:
+
+* Academic Planner
+* Assignment list
+* Add Assignment screen/form
+* Estimated Hours field
+* Assignment validation
+* Assignment creation API/service
+* Request payload/body
+* Data model
+* Backend/API response handling
+* Error handling
+* Any conversion/parsing of estimated hours
+* Any database/Firebase logic if used
+* How the React Native + Wrapper app handles decimal values such as `2.5`
+
+Use the React Native + Wrapper implementation as the **behavioral reference**.
+
+Do not assume the Flutter implementation is correct.
+
+---
+
+## Reproduce the Flutter Issue
+
+After reviewing the React Native + Wrapper flow, reproduce this exact case in Flutter:
+
+1. Open **Academic Planner**
+2. Open **Assignment**
+3. Tap **Add Assignment**
+4. Fill all required fields
+5. Enter:
+   `2.5`
+   in **Estimated Hours**
+6. Tap **Add Assignment**
+7. Observe the error:
+   `"Failed to create assignment"`
+
+Find the actual root cause instead of hiding the error.
+
+---
+
+## Investigate Estimated Hours Carefully
+
+Pay special attention to the data type.
+
+The value:
+
+`2.5`
+
+is a decimal number and should NOT be incorrectly handled as an integer.
+
+Check for code such as:
+
+```dart
+int.parse(...)
+```
+
+or:
+
+```dart
+int?
+```
+
+or:
+
+```dart
+int.tryParse(...)
+```
+
+when the field is expected to support decimal hours.
+
+Check the complete flow:
+
+**TextField → validation → model → BLoC/event → repository → API/service → request payload → backend**
+
+Determine exactly where `2.5` is being converted incorrectly or rejected.
+
+Do NOT automatically change the data type without comparing it with the React Native + Wrapper implementation and backend contract.
+
+---
+
+## Compare React Native vs Flutter
+
+Create a clear comparison internally:
+
+### React Native + Wrapper
+
+* What type is estimated hours?
+* How is `2.5` parsed?
+* What value is sent to the backend?
+* What does the API expect?
+* How is success handled?
+* How is failure handled?
+
+### Flutter
+
+* What type is estimated hours?
+* How is `2.5` parsed?
+* What value is being sent?
+* Is the request payload identical?
+* Is the API endpoint identical?
+* Is validation identical?
+* Is the response/error handling identical?
+
+Identify the difference causing the failure.
+
+---
+
+## Required Fix
+
+Implement the Flutter fix so that decimal estimated hours work correctly.
+
+For example, if the existing backend supports decimal hours:
+
+* `1`
+* `1.5`
+* `2`
+* `2.5`
+* `3.75`
+
+then Flutter should correctly accept and send these values using the same format as React Native + Wrapper.
+
+Do not break existing whole-number values.
+
+---
+
+## Preserve Existing Functionality
+
+Do NOT:
+
+* Rewrite the entire Academic Planner.
+* Create a new architecture.
+* Change unrelated assignment functionality.
+* Change the UI design.
+* Change API endpoints unnecessarily.
+* Change backend behavior unless the investigation proves it is required.
+* Hardcode `2.5`.
+* Add a fake success response.
+* Hide the error with `try/catch`.
+* Remove validation just to make the assignment submit.
+* Add arbitrary delays.
+* Create duplicate BLoCs/providers/repositories.
+
+Use the **existing Flutter architecture and state management**.
+
+---
+
+## Error Handling
+
+If the API actually returns an error, do not replace it blindly with a generic message.
+
+Check the actual exception/API response and identify why assignment creation fails.
+
+If the issue is a parsing/type mismatch, fix the type conversion at the correct layer.
+
+If the backend expects a specific format, make Flutter send exactly the same format used by React Native + Wrapper.
+
+---
+
+## Test Cases
+
+After fixing, test at minimum:
+
+### Test 1
+
+Estimated Hours:
+
+`2.5`
+
+Expected:
+
+Assignment created successfully.
+
+### Test 2
+
+Estimated Hours:
+
+`2`
+
+Expected:
+
+Assignment created successfully.
+
+### Test 3
+
+Estimated Hours:
+
+`1.5`
+
+Expected:
+
+Assignment created successfully.
+
+### Test 4
+
+Estimated Hours:
+
+`3.75`
+
+Expected:
+
+Assignment created successfully, if supported by the existing backend/React Native implementation.
+
+### Test 5
+
+Invalid input
+
+Verify the existing validation still works correctly.
+
+### Test 6
+
+Assignment List
+
+After successful creation:
+
+* Assignment should appear in the assignment list.
+* Estimated hours should display correctly.
+* Opening the assignment should show the correct value.
+* Editing the assignment should preserve the decimal value.
+
+---
+
+## Final Requirement
+
+Before finishing, provide a short report:
+
+1. **React Native + Wrapper flow:** how assignment creation works.
+2. **Root cause:** exactly why Flutter failed when `2.5` was entered.
+3. **Flutter fix:** what was changed.
+4. **Files changed:** list the files.
+5. **API payload:** confirm what Flutter now sends for estimated hours.
+6. **Testing:** confirm `2.5`, whole numbers, and other supported decimal values were tested.
+
+Most importantly:
+
+**Do not simply patch the Flutter error. First understand the working React Native + Wrapper implementation and make Flutter follow the same data flow and API contract.**
