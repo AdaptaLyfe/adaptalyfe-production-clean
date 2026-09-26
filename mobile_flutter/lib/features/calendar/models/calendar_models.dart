@@ -147,6 +147,9 @@ class CalendarEventModel extends Equatable {
   final bool isRecurring;
   final String? recurrenceRule;
 
+  bool get isWholeDay =>
+      !allDay && startDate.hour == 0 && startDate.minute == 0;
+
   @override
   List<Object?> get props => [
         id,

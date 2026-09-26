@@ -470,7 +470,10 @@ class _WeekCalendar extends StatelessWidget {
           final date = start.add(Duration(days: index));
           final items = _itemsForDate(state, date);
           final allDayItems = items.where((item) => item.allDay).toList();
-          final timedItems = items.where((item) => !item.allDay).toList();
+          final wholeDayItems = items.where((item) => item.wholeDay).toList();
+          final timedItems = items
+              .where((item) => !item.allDay && !item.wholeDay)
+              .toList();
           final isToday = DateUtils.isSameDay(date, DateTime.now());
           return Container(
             padding: const EdgeInsets.all(12),
@@ -560,8 +563,45 @@ class _WeekCalendar extends StatelessWidget {
                                 .toList(),
                           ),
                         ],
-                        if (timedItems.isNotEmpty) ...[
+                        if (wholeDayItems.isNotEmpty) ...[
                           if (allDayItems.isNotEmpty)
+                            const SizedBox(height: 8),
+                          const Text(
+                            'Whole Day',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: wholeDayItems
+                                .map(
+                                  (item) => _CalendarItemCard(
+                                    item: item,
+                                    compact: true,
+                                    onEdit: item.eventId == null
+                                        ? null
+                                        : () => _showCalendarEventDialog(
+                                              context,
+                                              item.eventId,
+                                            ),
+                                    onDelete: item.eventId == null
+                                        ? null
+                                        : () => _confirmDeleteEvent(
+                                              context,
+                                              item.eventId!,
+                                            ),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                        if (timedItems.isNotEmpty) ...[
+                          if (allDayItems.isNotEmpty ||
+                              wholeDayItems.isNotEmpty)
                             const SizedBox(height: 8),
                           const Text(
                             'Timed',
@@ -617,7 +657,10 @@ class _DayCalendar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _itemsForDate(state, state.selectedDate);
     final allDayItems = items.where((item) => item.allDay).toList();
-    final timedItems = items.where((item) => !item.allDay).toList();
+    final wholeDayItems = items.where((item) => item.wholeDay).toList();
+    final timedItems = items
+        .where((item) => !item.allDay && !item.wholeDay)
+        .toList();
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -668,8 +711,40 @@ class _DayCalendar extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (timedItems.isNotEmpty) ...[
+                  if (wholeDayItems.isNotEmpty) ...[
                     if (allDayItems.isNotEmpty) const SizedBox(height: 4),
+                    const Text(
+                      'Whole Day',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...wholeDayItems.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _CalendarItemCard(
+                          item: item,
+                          onEdit: item.eventId == null
+                              ? null
+                              : () => _showCalendarEventDialog(
+                                    context,
+                                    item.eventId,
+                                  ),
+                          onDelete: item.eventId == null
+                              ? null
+                              : () => _confirmDeleteEvent(
+                                    context,
+                                    item.eventId!,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (timedItems.isNotEmpty) ...[
+                    if (allDayItems.isNotEmpty || wholeDayItems.isNotEmpty)
+                      const SizedBox(height: 4),
                     const Text(
                       'Timed',
                       style: TextStyle(
@@ -1235,6 +1310,7 @@ class _CalendarItem {
     required this.location,
     this.eventId,
     this.allDay = false,
+    this.wholeDay = false,
     this.isRecurring = false,
     this.recurrenceRule,
     this.time,
@@ -1248,6 +1324,7 @@ class _CalendarItem {
   final String? location;
   final int? eventId;
   final bool allDay;
+  final bool wholeDay;
   final bool isRecurring;
   final String? recurrenceRule;
   final String? time;
@@ -1259,9 +1336,7 @@ class _CalendarItem {
     if (allDay) {
       return _repeatLabel('All Day');
     }
-    if (type == _CalendarItemType.event &&
-        start.hour == 0 &&
-        start.minute == 0) {
+    if (wholeDay) {
       return _repeatLabel('Whole Day');
     }
     if (type == _CalendarItemType.task && start.hour == 0) {
@@ -1382,6 +1457,7 @@ List<_CalendarItem> _itemsForDate(CalendarState state, DateTime date) {
           location: event.location,
           eventId: event.id,
           allDay: event.allDay,
+          wholeDay: event.isWholeDay,
           isRecurring: event.isRecurring,
           recurrenceRule: event.recurrenceRule,
         ),

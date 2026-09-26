@@ -82,8 +82,23 @@ void main() {
       allDay: false,
     );
 
+    expect(event.isWholeDay, isTrue);
     expect(calendarEventOccursOnDate(event, DateTime(2026, 9, 25)), isTrue);
     expect(calendarEventOccursOnDate(event, DateTime(2026, 9, 26)), isFalse);
+  });
+
+  test('all-day and timed events are not classified as Whole Day', () {
+    final allDay = _event(
+      startDate: DateTime(2026, 9, 25),
+      allDay: true,
+    );
+    final timed = _event(
+      startDate: DateTime(2026, 9, 25, 9),
+      allDay: false,
+    );
+
+    expect(allDay.isWholeDay, isFalse);
+    expect(timed.isWholeDay, isFalse);
   });
 
   test('non-recurring all-day events stay only on their selected date range', () {

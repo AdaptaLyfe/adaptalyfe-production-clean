@@ -2689,3 +2689,17 @@ mtime_ms = 1790399137005
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4185078c-d12b-4f4c-ab6b-bac110f18d14/830edb5a-d40b-49d8-8f36-c55f0276cb83"
 storage_version_token = "1790399141535460"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "MrWfH_GizWNx0J_bjOVUH"
+uri = "file://calendar-event-all-day-fix-changed-files.zip"
+type = "unspecified"
+title = "Calendar all-day display fix"
+description = "ZIP with the three changed Flutter files, preserving their mobile_flutter paths."
+logical_id = "d422fe8b-b677-4ac2-92c2-09959edf52ad"
+content_hash = "sha256:e9758d717c6aa76a600f545c8e13599343bd34e4eea6baf81b1a03599c962e3e"
+size = 15045
+mtime_ms = 1790400257094
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d422fe8b-b677-4ac2-92c2-09959edf52ad/764c3fbe-eb24-4b5b-b7c5-6374f057ed01"
+storage_version_token = "1790400269219041"
+content_type = "application/octet-stream"
