@@ -525,21 +525,6 @@ class _BadgesTab extends StatelessWidget {
     final badgeErrorMessage = state.badgeErrorMessage ??
         (state.status == RewardsStatus.failure ? state.errorMessage : null);
 
-    if (badgeErrorMessage != null &&
-        state.achievements.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _BadgeErrorNotice(
-            title: state.sessionInvalid ? 'Session expired' : null,
-            message: badgeErrorMessage,
-            onRetry: () =>
-                context.read<RewardsBloc>().add(const RefreshRewards()),
-          ),
-        ),
-      );
-    }
-
     final earned = state.achievements
         .where(
           (achievement) =>

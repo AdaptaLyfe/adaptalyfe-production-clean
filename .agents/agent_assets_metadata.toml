@@ -2759,3 +2759,17 @@ mtime_ms = 1790410506865
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e86a7206-0d9e-4af4-bac2-856176fbce7d/50c0f11c-6b46-4a8e-9b1b-4ccb9b6e1f41"
 storage_version_token = "1790410510668721"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xKYaeb5yhcKpd6yEGUFSZ"
+uri = "file://outputs/rewards-badges-screen-fix.zip"
+type = "unspecified"
+title = "Rewards badges screen fix — changed file"
+description = "ZIP containing only the Rewards badges screen file changed in this pass."
+logical_id = "2028d846-31dc-4e12-b28c-e92ce7a609e9"
+content_hash = "sha256:bf83fa56826d8d97237181495b977fb52490b5fa18170a834d8a087b4fb698f5"
+size = 10449
+mtime_ms = 1790411217425
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2028d846-31dc-4e12-b28c-e92ce7a609e9/8127360f-ec34-41c9-9bdc-39854a81b02f"
+storage_version_token = "1790411238066805"
+content_type = "application/octet-stream"
