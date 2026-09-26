@@ -2157,9 +2157,10 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     final hasPremium = premium.isNotEmpty;
     final dialog = AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 520;
+      title: Builder(
+        builder: (context) {
+          final compact =
+              AppResponsive.dialogWidth(context, maxWidth: 600) < 520;
           final title = Text(
             'Customize Your Dashboard',
             maxLines: compact ? 2 : 1,
