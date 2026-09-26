@@ -2717,3 +2717,17 @@ mtime_ms = 1790401419173
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/388e472b-763a-445a-81f4-31cb525d7ace/2a44ed8f-fe25-4f97-ba72-41000c009637"
 storage_version_token = "1790401425065075"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "_2AStNmC0u9fo0-drT8Nx"
+uri = "file://dashboard-customize-click-fix.zip"
+type = "unspecified"
+title = "Dashboard Customize fix"
+description = "ZIP containing the single changed Flutter source file with its original project path preserved."
+logical_id = "aca42134-536e-42ef-b687-a8abe4857c5d"
+content_hash = "sha256:635f9b52410665100728be3d9a12cda8b1f9f7db0704065e6f352cbed1863be0"
+size = 27434
+mtime_ms = 1790402192197
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/aca42134-536e-42ef-b687-a8abe4857c5d/74c63ff7-ccc8-4c44-b83d-576820f500a6"
+storage_version_token = "1790402196010675"
+content_type = "application/octet-stream"

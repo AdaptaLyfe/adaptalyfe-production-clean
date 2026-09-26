@@ -1875,19 +1875,27 @@ class HomeDashboardModules extends StatelessWidget {
     BuildContext context,
     List<DashboardModuleModel> modules,
   ) async {
+    final bloc = context.read<HomeBloc>();
     await _runHomeOverlay<void>(
       () => showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => _DashboardModuleEditor(modules: modules),
+        builder: (_) => _DashboardModuleEditor(
+          bloc: bloc,
+          modules: modules,
+        ),
       ),
     );
   }
 }
 
 class _DashboardModuleEditor extends StatefulWidget {
-  const _DashboardModuleEditor({required this.modules});
+  const _DashboardModuleEditor({
+    required this.bloc,
+    required this.modules,
+  });
 
+  final HomeBloc bloc;
   final List<DashboardModuleModel> modules;
 
   @override
@@ -1932,7 +1940,7 @@ class _DashboardModuleEditorState extends State<_DashboardModuleEditor> {
     final normalized = _normalizedItems(next);
     final generation = ++_saveGeneration;
     final completion = Completer<bool>();
-    final bloc = context.read<HomeBloc>();
+    final bloc = widget.bloc;
     setState(() {
       items = normalized;
       _pendingSaves++;
