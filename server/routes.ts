@@ -2697,6 +2697,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency resources routes
+  function getEmergencyResourceDatabaseFailure(error: unknown):
+    | { status: number; message: string; code: string }
+    | undefined {
+    let current: unknown = error;
+
+    for (let depth = 0; depth < 5 && current && typeof current === "object"; depth += 1) {
+      const cause = current as { code?: unknown; cause?: unknown };
+      switch (cause.code) {
+        case "42P01":
+          return {
+            status: 503,
+            message: "The emergency resources table is missing from this database and must be created before resources can be saved.",
+            code: "RESOURCE_TABLE_SETUP_REQUIRED",
+          };
+        case "42703":
+        case "23502":
+          return {
+            status: 503,
+            message: "The emergency resources database is missing a required field and its schema must be updated before resources can be saved.",
+            code: "RESOURCE_SCHEMA_UPDATE_REQUIRED",
+          };
+        case "23503":
+          return {
+            status: 409,
+            message: "This resource could not be linked to the signed-in account. Please sign out and sign back in, then try again.",
+            code: "RESOURCE_ACCOUNT_REFERENCE_ERROR",
+          };
+      }
+      current = cause.cause;
+    }
+
+    return undefined;
+  }
+
   app.get("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2723,6 +2757,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({
           message: error.issues[0]?.message ?? "Invalid emergency resource data.",
           errors: error.flatten().fieldErrors,
+        });
+      }
+      const databaseFailure = getEmergencyResourceDatabaseFailure(error);
+      if (databaseFailure) {
+        return res.status(databaseFailure.status).json({
+          message: databaseFailure.message,
+          code: databaseFailure.code,
         });
       }
       res.status(500).json({ message: "Failed to create emergency resource" });

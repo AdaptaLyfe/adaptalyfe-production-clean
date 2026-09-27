@@ -36,6 +36,26 @@ const emergencyResourceFormSchema = insertEmergencyResourceSchema.omit({
 
 type EmergencyResourceFormValues = z.infer<typeof emergencyResourceFormSchema>;
 
+function getEmergencyResourceCreateErrorMessage(
+  error: unknown,
+  fallback: string,
+): string {
+  if (error instanceof ApiError) {
+    const message = error.message.trim();
+    const safeMessage =
+      message && !message.startsWith("<")
+        ? message.replace(/\s+/g, " ").slice(0, 180)
+        : fallback;
+    return `${safeMessage} (HTTP ${error.status})`;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim().slice(0, 180);
+  }
+
+  return fallback;
+}
+
 export default function EmergencyResourcesModule() {
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState<EmergencyResource | null>(null);
@@ -88,9 +108,10 @@ export default function EmergencyResourcesModule() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof ApiError && error.code === "RESOURCE_SCHEMA_UPDATE_REQUIRED"
-          ? error.message
-          : "Failed to add emergency resource",
+        description: getEmergencyResourceCreateErrorMessage(
+          error,
+          "Failed to add emergency resource",
+        ),
         variant: "destructive",
       });
     },

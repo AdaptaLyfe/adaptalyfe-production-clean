@@ -23,6 +23,22 @@ test("emergency resources accept an omitted or blank optional phone number", () 
   }
 });
 
+test("a minimal counselor resource payload with blank optional fields is valid", () => {
+  const result = insertEmergencyResourceSchema.safeParse({
+    ...baseResource,
+    resourceType: "counselor",
+    phoneNumber: "",
+    address: "Local address",
+    website: "",
+    description: "",
+    availabilityHours: "",
+    isEmergencyOnly: false,
+    isAvailable24_7: false,
+  });
+
+  assert.equal(result.success, true);
+});
+
 test("emergency resources accept and normalize valid US phone formats", () => {
   for (const phoneNumber of [
     "6502530000",
