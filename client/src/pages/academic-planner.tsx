@@ -45,6 +45,11 @@ const headerSafeDialogStyle = {
   maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
 };
 
+const addClassDialogStyle = {
+  top: "calc((100dvh + 5rem + var(--safe-area-inset-top)) / 2)",
+  maxHeight: "calc(100dvh - 7rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+};
+
 export default function AcademicPlanner() {
   const { hasFeature } = useSubscriptionEnforcement();
   const { toast } = useToast();
@@ -579,14 +584,167 @@ export default function AcademicPlanner() {
         {/* Today's Schedule */}
         <TabsContent value="schedule" className="space-y-6 mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Today's Schedule
-              </CardTitle>
-              <CardDescription>
-                Your classes and study sessions for today
-              </CardDescription>
+            <CardHeader className="flex flex-col gap-4 space-y-0 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1.5">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Calendar className="w-5 h-5" />
+                  Today's Schedule
+                </CardTitle>
+                <CardDescription>
+                  Your classes and study sessions for today
+                </CardDescription>
+              </div>
+              <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full shrink-0 sm:w-auto" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Class
+                  </Button>
+                </DialogTrigger>
+                <DialogContent
+                  overlayClassName="z-[110]"
+                  className="z-[120] flex max-h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-2xl sm:max-w-xl sm:p-6"
+                  style={addClassDialogStyle}
+                >
+                  <DialogHeader className="shrink-0 space-y-1 pr-8 text-left">
+                    <DialogTitle className="text-xl">Add New Class</DialogTitle>
+                    <DialogDescription>
+                      Add the class details and choose when it meets each week.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="academic-planner-form academic-class-form min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-1 py-1">
+                    <div className="space-y-1.5">
+                      <label htmlFor="academic-class-name" className="academic-class-label">
+                        Class name <span aria-hidden="true" className="text-red-600">*</span>
+                      </label>
+                      <Input
+                        id="academic-class-name"
+                        placeholder="e.g. Biology 101"
+                        value={newClass.className}
+                        onChange={(e) => setNewClass({ ...newClass, className: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="academic-class-instructor" className="academic-class-label">
+                        Instructor <span aria-hidden="true" className="text-red-600">*</span>
+                      </label>
+                      <Input
+                        id="academic-class-instructor"
+                        placeholder="Instructor name"
+                        value={newClass.instructor}
+                        onChange={(e) => setNewClass({ ...newClass, instructor: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-building" className="academic-class-label">Building</label>
+                        <Input
+                          id="academic-class-building"
+                          placeholder="Building"
+                          value={newClass.building}
+                          onChange={(e) => setNewClass({ ...newClass, building: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-room" className="academic-class-label">Room</label>
+                        <Input
+                          id="academic-class-room"
+                          placeholder="Room"
+                          value={newClass.room}
+                          onChange={(e) => setNewClass({ ...newClass, room: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-start-time" className="academic-class-label">Start time</label>
+                        <Input
+                          id="academic-class-start-time"
+                          type="time"
+                          value={newClass.startTime}
+                          onChange={(e) => setNewClass({ ...newClass, startTime: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-end-time" className="academic-class-label">End time</label>
+                        <Input
+                          id="academic-class-end-time"
+                          type="time"
+                          value={newClass.endTime}
+                          onChange={(e) => setNewClass({ ...newClass, endTime: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-day" className="academic-class-label">Day of week</label>
+                        <Select
+                          value={newClass.dayOfWeek.toString()}
+                          onValueChange={(value) => setNewClass({ ...newClass, dayOfWeek: parseInt(value) })}
+                        >
+                          <SelectTrigger id="academic-class-day">
+                            <SelectValue placeholder="Choose a day" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">Sunday</SelectItem>
+                            <SelectItem value="1">Monday</SelectItem>
+                            <SelectItem value="2">Tuesday</SelectItem>
+                            <SelectItem value="3">Wednesday</SelectItem>
+                            <SelectItem value="4">Thursday</SelectItem>
+                            <SelectItem value="5">Friday</SelectItem>
+                            <SelectItem value="6">Saturday</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label htmlFor="academic-class-credits" className="academic-class-label">Credits</label>
+                        <Input
+                          id="academic-class-credits"
+                          type="number"
+                          value={newClass.credits}
+                          onChange={(e) => setNewClass({ ...newClass, credits: parseInt(e.target.value) || 3 })}
+                          min="1"
+                          max="6"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label htmlFor="academic-class-semester" className="academic-class-label">Semester</label>
+                      <Select value={newClass.semester} onValueChange={(value) => setNewClass({ ...newClass, semester: value })}>
+                        <SelectTrigger id="academic-class-semester">
+                          <SelectValue placeholder="Choose a semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Fall 2025">Fall 2025</SelectItem>
+                          <SelectItem value="Spring 2026">Spring 2026</SelectItem>
+                          <SelectItem value="Summer 2025">Summer 2025</SelectItem>
+                          <SelectItem value="Winter 2025">Winter 2025</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                    <Button
+                      onClick={() => setIsAddClassOpen(false)}
+                      variant="outline"
+                      className="w-full sm:w-auto sm:min-w-32"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateClass}
+                      disabled={createClassMutation.isPending}
+                      className="w-full sm:w-auto sm:min-w-40"
+                    >
+                      {createClassMutation.isPending ? "Creating..." : "Create Class"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {todayClasses.length > 0 ? (
@@ -613,105 +771,6 @@ export default function AcademicPlanner() {
                 <div className="text-center py-8">
                   <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">No classes scheduled for today</p>
-                  <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="mt-4" size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Class
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent
-                      overlayClassName="z-[110]"
-                      className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
-                    >
-                      <DialogHeader>
-                        <DialogTitle>Add New Class</DialogTitle>
-                      </DialogHeader>
-                      <div className="academic-planner-form space-y-4 pr-2">
-                        <Input
-                          placeholder="Class name"
-                          value={newClass.className}
-                          onChange={(e) => setNewClass({ ...newClass, className: e.target.value })}
-                          required
-                        />
-                        <Input
-                          placeholder="Instructor"
-                          value={newClass.instructor}
-                          onChange={(e) => setNewClass({ ...newClass, instructor: e.target.value })}
-                          required
-                        />
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            placeholder="Building"
-                            value={newClass.building}
-                            onChange={(e) => setNewClass({ ...newClass, building: e.target.value })}
-                          />
-                          <Input
-                            placeholder="Room"
-                            value={newClass.room}
-                            onChange={(e) => setNewClass({ ...newClass, room: e.target.value })}
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <Input
-                            type="time"
-                            value={newClass.startTime}
-                            onChange={(e) => setNewClass({ ...newClass, startTime: e.target.value })}
-                          />
-                          <Input
-                            type="time"
-                            value={newClass.endTime}
-                            onChange={(e) => setNewClass({ ...newClass, endTime: e.target.value })}
-                          />
-                        </div>
-                        <Select value={newClass.dayOfWeek.toString()} onValueChange={(value) => setNewClass({ ...newClass, dayOfWeek: parseInt(value) })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Day of week" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="0">Sunday</SelectItem>
-                            <SelectItem value="1">Monday</SelectItem>
-                            <SelectItem value="2">Tuesday</SelectItem>
-                            <SelectItem value="3">Wednesday</SelectItem>
-                            <SelectItem value="4">Thursday</SelectItem>
-                            <SelectItem value="5">Friday</SelectItem>
-                            <SelectItem value="6">Saturday</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          type="number"
-                          placeholder="Credits"
-                          value={newClass.credits}
-                          onChange={(e) => setNewClass({ ...newClass, credits: parseInt(e.target.value) || 3 })}
-                          min="1"
-                          max="6"
-                        />
-                        <Select value={newClass.semester} onValueChange={(value) => setNewClass({ ...newClass, semester: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Semester" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Fall 2025">Fall 2025</SelectItem>
-                            <SelectItem value="Spring 2026">Spring 2026</SelectItem>
-                            <SelectItem value="Summer 2025">Summer 2025</SelectItem>
-                            <SelectItem value="Winter 2025">Winter 2025</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <div className="flex space-x-2">
-                          <Button 
-                            onClick={handleCreateClass} 
-                            disabled={createClassMutation.isPending} 
-                            className="flex-1"
-                          >
-                            {createClassMutation.isPending ? "Creating..." : "Create Class"}
-                          </Button>
-                          <Button onClick={() => setIsAddClassOpen(false)} variant="outline" className="flex-1">
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </div>
               )}
             </CardContent>
