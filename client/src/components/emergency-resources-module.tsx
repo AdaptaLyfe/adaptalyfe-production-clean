@@ -274,7 +274,13 @@ export default function EmergencyResourcesModule() {
                         <FormItem>
                           <FormLabel>Phone Number</FormLabel>
                           <FormControl>
-                            <Input placeholder="(555) 123-4567" {...field} />
+                            <Input
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              placeholder="e.g. +1 (650) 253-0000"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

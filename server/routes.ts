@@ -225,6 +225,7 @@ import {
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
   insertStreakTrackingSchema, insertVoiceInteractionSchema, insertQuickResponseSchema,
   insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema,
+  updateEmergencyResourceSchema,
   insertTransitionSkillSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -2720,7 +2721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (error instanceof z.ZodError) {
         return res.status(400).json({
-          message: "Please provide a resource name and type.",
+          message: error.issues[0]?.message ?? "Invalid emergency resource data.",
           errors: error.flatten().fieldErrors,
         });
       }
@@ -2738,8 +2739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Emergency resource not found" });
       }
 
-      const updates = { ...req.body };
-      delete updates.userId;
+      const updates = updateEmergencyResourceSchema.parse(req.body);
       const resource = await storage.updateEmergencyResource(resourceId, updates);
       
       if (!resource) {
@@ -2751,6 +2751,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error updating emergency resource:", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.issues[0]?.message ?? "Invalid emergency resource data.",
+          errors: error.flatten().fieldErrors,
+        });
       }
       res.status(500).json({ message: "Failed to update emergency resource" });
     }

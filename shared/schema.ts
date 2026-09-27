@@ -833,7 +833,18 @@ export const insertEmergencyResourceSchema = createInsertSchema(emergencyResourc
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  phoneNumber: z.string().trim().optional().nullable().refine(
+    (value) => value == null || value.length === 0 || isValidContactPhoneNumber(value),
+    "Please enter a valid US phone number.",
+  ).transform((value) =>
+    value == null || value.length === 0 ? value : normalizeContactPhoneNumber(value),
+  ),
 });
+
+export const updateEmergencyResourceSchema = insertEmergencyResourceSchema
+  .omit({ userId: true })
+  .partial();
 
 export const insertUserPrivacySettingsSchema = createInsertSchema(userPrivacySettings).omit({
   id: true,
