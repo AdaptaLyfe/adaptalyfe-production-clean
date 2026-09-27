@@ -1,10 +1,10 @@
 ---
 name: Emergency contact phone policy
-description: Why trusted-contact phones use US format-only validation instead of number validity lookup.
+description: Why trusted-contact phones require both US formatting and US numbering validity.
 ---
 
-Emergency contacts intentionally accept US-formatted numbers based on syntax alone, without checking whether the number is actually assigned. International numbers outside optional `+1` are not accepted for new or edited contacts.
+Emergency contacts must match the requested US input format and pass US numbering metadata checks. Reject numbers the metadata considers invalid, numbers attributed to other countries (including Canadian `+1` numbers), and non-US country codes. This does not prove that a valid-looking number is live or reachable.
 
-**Why:** The requested US-format rule is meant to accept ten-digit input even when a telephone-number library considers that number unassigned. The earlier validity lookup rejected a format-matching value in Health Records.
+**Why:** The user clarified that strict US numbering is preferable to the earlier format-only rule; a ten-digit regex alone cannot establish that a number belongs to the US.
 
-**How to apply:** Keep contact entry and server acceptance consistent with this product policy. Do not reintroduce number-assignment checks or international formats without confirming that the validation requirements have changed.
+**How to apply:** Keep contact entry and server acceptance consistent. Do not relax the rule back to format-only acceptance or treat every `+1` number as US without confirming a product-policy change.

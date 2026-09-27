@@ -13,7 +13,7 @@ const baseContact = {
   phoneNumber: "6502530000",
 };
 
-test("trusted contact accepts US phone formats, including 10-digit format-only numbers", () => {
+test("trusted contact accepts valid US numbers in common US formats", () => {
   for (const phoneNumber of [
     "6502530000",
     "650-253-0000",
@@ -21,7 +21,6 @@ test("trusted contact accepts US phone formats, including 10-digit format-only n
     "(650) 253-0000",
     "+1 650 253 0000",
     "+1 (650) 253-0000",
-    "1212121212",
   ]) {
     const result = insertEmergencyContactSchema.safeParse({
       ...baseContact,
@@ -87,7 +86,7 @@ test("trusted contact accepts emails with alphanumeric names and letter-only ext
   }
 });
 
-test("trusted contact rejects invalid phone formats and lengths", () => {
+test("trusted contact rejects non-US, unassigned, and malformed numbers", () => {
   for (const phoneNumber of [
     "123",
     "123456",
@@ -97,6 +96,11 @@ test("trusted contact rejects invalid phone formats and lengths", () => {
     "+1 (650) 25A-3000",
     "+91 98765 43210",
     "+2 650 253 0000",
+    "+1 416 555 0123",
+    "9876543210",
+    "1212121212",
+    "0000000000",
+    "1111111111",
     "650)253(0000",
     "(650253-0000",
     "!!!",
@@ -136,6 +140,12 @@ test("trusted contact updates validate changed email and phone values", () => {
     }).success,
     false,
   );
+  assert.equal(
+    updateEmergencyContactSchema.safeParse({
+      phoneNumber: "1212121212",
+    }).success,
+    false,
+  );
 });
 
 test("trusted contact form errors are field-specific and share backend rules", () => {
@@ -164,6 +174,6 @@ test("trusted contact form errors are field-specific and share backend rules", (
   );
   assert.deepEqual(
     getEmergencyContactFieldErrors("asfsd@gmail.com", "1212121212"),
-    {},
+    { phoneNumber: "Please enter a valid phone number." },
   );
 });
