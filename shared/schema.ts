@@ -892,10 +892,10 @@ export const insertEmergencyContactSchema = createInsertSchema(emergencyContacts
   id: true,
   createdAt: true,
 }).extend({
-  phoneNumber: z.string().trim().transform(normalizeContactPhoneNumber).refine(
+  phoneNumber: z.string().trim().refine(
     isValidContactPhoneNumber,
     "Please enter a valid phone number.",
-  ),
+  ).transform(normalizeContactPhoneNumber),
   email: z.string().trim().optional().nullable().refine(
     (value) => value == null || (value.length > 0 && isValidContactEmail(value)),
     "Please enter a valid email address.",

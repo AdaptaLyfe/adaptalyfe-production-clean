@@ -134,16 +134,15 @@ export default function EmergencyContacts() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const email = formData.email.trim();
-    const phoneNumber = normalizeContactPhoneNumber(formData.phoneNumber);
     const emailRequired = !editingContact || Boolean(editingContact.email?.trim());
-    const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber, { emailRequired });
+    const fieldErrors = getEmergencyContactFieldErrors(email, formData.phoneNumber, { emailRequired });
     setContactValidationErrors(fieldErrors);
     if (fieldErrors.email || fieldErrors.phoneNumber) return;
 
     saveMutation.mutate({
       name: formData.name,
       relationship: formData.relationship,
-      phoneNumber,
+      phoneNumber: normalizeContactPhoneNumber(formData.phoneNumber),
       isPrimary: formData.isPrimary,
       isEmergencyContact: formData.isEmergencyContact,
       notes: formData.notes,

@@ -962,16 +962,16 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = normalizeContactPhoneNumber(String(formData.get("phoneNumber") ?? ""));
+                const rawPhoneNumber = String(formData.get("phoneNumber") ?? "");
                 const email = String(formData.get("email") ?? "").trim();
-                const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber);
+                const fieldErrors = getEmergencyContactFieldErrors(email, rawPhoneNumber);
                 setContactFormErrors(fieldErrors);
                 if (fieldErrors.email || fieldErrors.phoneNumber) return;
 
                 createContact.mutate({
                   name: formData.get("name") as string,
                   relationship: formData.get("relationship") as string,
-                  phoneNumber,
+                  phoneNumber: normalizeContactPhoneNumber(rawPhoneNumber),
                   email,
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
@@ -1471,10 +1471,10 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const phoneNumber = normalizeContactPhoneNumber(String(formData.get("phoneNumber") ?? ""));
+                const rawPhoneNumber = String(formData.get("phoneNumber") ?? "");
                 const email = String(formData.get("email") ?? "").trim();
                 const emailRequired = Boolean(editingContact.email?.trim());
-                const fieldErrors = getEmergencyContactFieldErrors(email, phoneNumber, { emailRequired });
+                const fieldErrors = getEmergencyContactFieldErrors(email, rawPhoneNumber, { emailRequired });
                 setEditingContactFormErrors(fieldErrors);
                 if (fieldErrors.email || fieldErrors.phoneNumber) return;
 
@@ -1482,7 +1482,7 @@ export default function MedicalInformationModule() {
                   id: editingContact.id,
                   name: formData.get("name") as string,
                   relationship: formData.get("relationship") as string,
-                  phoneNumber,
+                  phoneNumber: normalizeContactPhoneNumber(rawPhoneNumber),
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
