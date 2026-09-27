@@ -27,6 +27,7 @@ import { useHealthRecordsModalViewport } from "@/hooks/use-health-records-modal-
 import {
   getEmergencyContactFieldErrors,
   normalizeContactPhoneNumber,
+  usPhoneRegex,
   type ContactFieldValidationErrors,
 } from "@shared/contact-validation";
 
@@ -116,6 +117,8 @@ export default function MedicalInformationModule() {
   const [contactFormErrors, setContactFormErrors] = useState<ContactFieldValidationErrors>({});
   const [editingContactFormErrors, setEditingContactFormErrors] = useState<ContactFieldValidationErrors>({});
   const [editingProvider, setEditingProvider] = useState<PrimaryCareProvider | null>(null);
+  const [providerFormErrors, setProviderFormErrors] = useState<ContactFieldValidationErrors>({});
+  const [editingProviderFormErrors, setEditingProviderFormErrors] = useState<ContactFieldValidationErrors>({});
   const [showConditionDialog, setShowConditionDialog] = useState(false);
   const [showAllergyDialog, setShowAllergyDialog] = useState(false);
   const [showAdverseMedDialog, setShowAdverseMedDialog] = useState(false);
@@ -307,6 +310,8 @@ export default function MedicalInformationModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/primary-care-providers"] });
       toast({ title: "Success", description: "Healthcare contact added successfully" });
+      setProviderFormErrors({});
+      setShowProviderDialog(false);
     }
   });
 
@@ -316,6 +321,7 @@ export default function MedicalInformationModule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/primary-care-providers"] });
       toast({ title: "Success", description: "Healthcare contact updated successfully" });
+      setEditingProviderFormErrors({});
       setEditingProvider(null);
     }
   });
@@ -599,7 +605,10 @@ export default function MedicalInformationModule() {
         <TabsContent value="providers" className="space-y-4 mt-6 h-96 overflow-y-scroll">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Healthcare Contacts</h3>
-            <Button onClick={() => setShowProviderDialog(true)} data-testid="button-add-healthcare-contact">
+            <Button onClick={() => {
+              setProviderFormErrors({});
+              setShowProviderDialog(true);
+            }} data-testid="button-add-healthcare-contact">
               <Plus className="w-4 h-4 mr-2" />
               Add Healthcare Contact
             </Button>
@@ -641,7 +650,10 @@ export default function MedicalInformationModule() {
                       </div>
                       <div className="flex gap-2">
                         <EditButton
-                          onClick={() => setEditingProvider(provider)}
+                          onClick={() => {
+                            setEditingProviderFormErrors({});
+                            setEditingProvider(provider);
+                          }}
                           aria-label={`Edit ${provider.name}`}
                         />
                         <Button size="sm" variant="outline" onClick={() => deleteProvider.mutate(provider.id)}>
@@ -1077,13 +1089,19 @@ export default function MedicalInformationModule() {
 
       {/* Provider Dialog */}
       {showProviderDialog && (
-        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setShowProviderDialog(false)} data-testid="dialog-backdrop-provider">
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => {
+          setProviderFormErrors({});
+          setShowProviderDialog(false);
+        }} data-testid="dialog-backdrop-provider">
           <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="dialog-content-provider">
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Add Primary Care Provider</h2>
                 <button
-                  onClick={() => setShowProviderDialog(false)}
+                  onClick={() => {
+                    setProviderFormErrors({});
+                    setShowProviderDialog(false);
+                  }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                   data-testid="button-close-provider-dialog"
                 >
@@ -1095,18 +1113,22 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const rawPhoneNumber = String(formData.get("phoneNumber") ?? "");
+                const email = String(formData.get("email") ?? "").trim();
+                const fieldErrors = getEmergencyContactFieldErrors(email, rawPhoneNumber, { emailRequired: false });
+                setProviderFormErrors(fieldErrors);
+                if (fieldErrors.email || fieldErrors.phoneNumber) return;
+
                 createProvider.mutate({
                   name: formData.get("name") as string,
                   specialty: formData.get("specialty") as string,
                   practiceName: formData.get("practiceName") as string,
-                  phoneNumber: formData.get("phoneNumber") as string,
-                  email: formData.get("email") as string,
+                  phoneNumber: normalizeContactPhoneNumber(rawPhoneNumber),
+                  email,
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
                 });
-                e.currentTarget.reset();
-                setShowProviderDialog(false);
               }} className="space-y-4">
                 <div>
                   <Label htmlFor="name" required>Provider Name</Label>
@@ -1121,23 +1143,56 @@ export default function MedicalInformationModule() {
                   <Input name="practiceName" placeholder="Medical center or clinic name" />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
+                  <Label htmlFor="provider-phone-number" required>Phone Number</Label>
                   <Input 
+                    id="provider-phone-number"
                     name="phoneNumber" 
                     required 
-                    placeholder="Office phone number" 
+                    placeholder="e.g. +1 (650) 253-0000"
                     type="tel"
-                    pattern="[0-9+\-\s\(\)]*"
-                    onKeyPress={(e) => {
-                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
-                        e.preventDefault();
-                      }
+                    inputMode="tel"
+                    autoComplete="tel"
+                    pattern={usPhoneRegex.source}
+                    aria-invalid={Boolean(providerFormErrors.phoneNumber)}
+                    aria-describedby={providerFormErrors.phoneNumber ? "provider-phone-number-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setProviderFormErrors((current) => ({
+                        ...current,
+                        phoneNumber: "Please enter a valid phone number.",
+                      }));
                     }}
+                    onChange={() => setProviderFormErrors((current) => ({ ...current, phoneNumber: undefined }))}
                   />
+                  {providerFormErrors.phoneNumber && (
+                    <p id="provider-phone-number-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {providerFormErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input name="email" type="email" placeholder="Office email" />
+                  <Label htmlFor="provider-email">Email</Label>
+                  <Input
+                    id="provider-email"
+                    name="email"
+                    type="email"
+                    placeholder="Office email"
+                    aria-invalid={Boolean(providerFormErrors.email)}
+                    aria-describedby={providerFormErrors.email ? "provider-email-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setProviderFormErrors((current) => ({
+                        ...current,
+                        email: "Please enter a valid email address.",
+                      }));
+                    }}
+                    onChange={() => setProviderFormErrors((current) => ({ ...current, email: undefined }))}
+                  />
+                  {providerFormErrors.email && (
+                    <p id="provider-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {providerFormErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="address">Address</Label>
@@ -1162,7 +1217,10 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowProviderDialog(false)}
+                  onClick={() => {
+                    setProviderFormErrors({});
+                    setShowProviderDialog(false);
+                  }}
                   >
                     Cancel
                   </Button>
@@ -1591,13 +1649,19 @@ export default function MedicalInformationModule() {
 
       {/* Edit Provider Dialog */}
       {editingProvider && (
-        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => setEditingProvider(null)}>
+        <div className="responsive-modal-backdrop health-records-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50" style={modalViewportStyle} onClick={() => {
+          setEditingProviderFormErrors({});
+          setEditingProvider(null);
+        }}>
           <div className="responsive-modal-panel health-records-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Edit Primary Care Provider</h2>
                 <button
-                  onClick={() => setEditingProvider(null)}
+                  onClick={() => {
+                    setEditingProviderFormErrors({});
+                    setEditingProvider(null);
+                  }}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
                 >
                   ×
@@ -1608,19 +1672,23 @@ export default function MedicalInformationModule() {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const rawPhoneNumber = String(formData.get("phoneNumber") ?? "");
+                const email = String(formData.get("email") ?? "").trim();
+                const fieldErrors = getEmergencyContactFieldErrors(email, rawPhoneNumber, { emailRequired: false });
+                setEditingProviderFormErrors(fieldErrors);
+                if (fieldErrors.email || fieldErrors.phoneNumber) return;
+
                 updateProvider.mutate({
                   id: editingProvider.id,
                   name: formData.get("name") as string,
                   specialty: formData.get("specialty") as string,
                   practiceName: formData.get("practiceName") as string,
-                  phoneNumber: formData.get("phoneNumber") as string,
-                  email: formData.get("email") as string,
+                  phoneNumber: normalizeContactPhoneNumber(rawPhoneNumber),
+                  email,
                   address: formData.get("address") as string,
                   isPrimary: formData.get("isPrimary") === "on",
                   notes: formData.get("notes") as string,
                 });
-                e.currentTarget.reset();
-                setEditingProvider(null);
               }} className="space-y-4">
                 <div>
                   <Label htmlFor="name" required>Provider Name</Label>
@@ -1635,24 +1703,58 @@ export default function MedicalInformationModule() {
                   <Input name="practiceName" placeholder="Medical center or clinic name" defaultValue={editingProvider.practiceName || ""} />
                 </div>
                 <div>
-                  <Label htmlFor="phoneNumber" required>Phone Number</Label>
+                  <Label htmlFor="edit-provider-phone-number" required>Phone Number</Label>
                   <Input 
+                    id="edit-provider-phone-number"
                     name="phoneNumber" 
                     required 
-                    placeholder="Office phone number" 
+                    placeholder="e.g. +1 (650) 253-0000"
                     defaultValue={editingProvider.phoneNumber}
                     type="tel"
-                    pattern="[0-9+\-\s\(\)]*"
-                    onKeyPress={(e) => {
-                      if (!/[0-9+\-\s\(\)]/.test(e.key)) {
-                        e.preventDefault();
-                      }
+                    inputMode="tel"
+                    autoComplete="tel"
+                    pattern={usPhoneRegex.source}
+                    aria-invalid={Boolean(editingProviderFormErrors.phoneNumber)}
+                    aria-describedby={editingProviderFormErrors.phoneNumber ? "edit-provider-phone-number-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setEditingProviderFormErrors((current) => ({
+                        ...current,
+                        phoneNumber: "Please enter a valid phone number.",
+                      }));
                     }}
+                    onChange={() => setEditingProviderFormErrors((current) => ({ ...current, phoneNumber: undefined }))}
                   />
+                  {editingProviderFormErrors.phoneNumber && (
+                    <p id="edit-provider-phone-number-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {editingProviderFormErrors.phoneNumber}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input name="email" type="email" placeholder="Office email" defaultValue={editingProvider.email || ""} />
+                  <Label htmlFor="edit-provider-email">Email</Label>
+                  <Input
+                    id="edit-provider-email"
+                    name="email"
+                    type="email"
+                    placeholder="Office email"
+                    defaultValue={editingProvider.email || ""}
+                    aria-invalid={Boolean(editingProviderFormErrors.email)}
+                    aria-describedby={editingProviderFormErrors.email ? "edit-provider-email-error" : undefined}
+                    onInvalid={(event) => {
+                      event.preventDefault();
+                      setEditingProviderFormErrors((current) => ({
+                        ...current,
+                        email: "Please enter a valid email address.",
+                      }));
+                    }}
+                    onChange={() => setEditingProviderFormErrors((current) => ({ ...current, email: undefined }))}
+                  />
+                  {editingProviderFormErrors.email && (
+                    <p id="edit-provider-email-error" role="alert" className="mt-1 text-sm text-red-600">
+                      {editingProviderFormErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="address">Address</Label>
@@ -1677,7 +1779,10 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setEditingProvider(null)}
+                    onClick={() => {
+                      setEditingProviderFormErrors({});
+                      setEditingProvider(null);
+                    }}
                   >
                     Cancel
                   </Button>

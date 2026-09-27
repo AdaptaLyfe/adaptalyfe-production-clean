@@ -215,7 +215,8 @@ async function verifyAndUpgradePassword(user: any, password: string): Promise<bo
 // Stripe instance is created dynamically when needed
 import { 
   insertDailyTaskSchema, insertBillSchema, insertBankAccountSchema, insertMoodEntrySchema, 
-  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema, insertMessageSchema,
+  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema,
+  insertPrimaryCareProviderSchema, updatePrimaryCareProviderSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
   insertShoppingListSchema, updateShoppingItemPurchasedSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
@@ -4168,11 +4169,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/primary-care-providers", async (req, res) => {
     try {
       const userId = 1; // Hardcoded for demo
-      const providerData = { ...req.body, userId };
+      const providerData = insertPrimaryCareProviderSchema.parse({ ...req.body, userId });
       const provider = await storage.createPrimaryCareProvider(providerData);
       res.status(201).json(provider);
     } catch (error) {
       console.error("Error creating primary care provider:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
+      }
       res.status(500).json({ message: "Failed to create primary care provider" });
     }
   });
@@ -4180,10 +4184,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/primary-care-providers/:id", async (req, res) => {
     try {
       const providerId = parseInt(req.params.id);
-      const provider = await storage.updatePrimaryCareProvider(providerId, req.body);
+      const updates = updatePrimaryCareProviderSchema.parse(req.body);
+      const provider = await storage.updatePrimaryCareProvider(providerId, updates);
       res.json(provider);
     } catch (error) {
       console.error("Error updating primary care provider:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
+      }
       res.status(500).json({ message: "Failed to update primary care provider" });
     }
   });

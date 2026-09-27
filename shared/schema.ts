@@ -909,7 +909,22 @@ export const updateEmergencyContactSchema = insertEmergencyContactSchema
 export const insertPrimaryCareProviderSchema = createInsertSchema(primaryCareProviders).omit({
   id: true,
   createdAt: true,
+}).extend({
+  phoneNumber: z.string().trim().refine(
+    isValidContactPhoneNumber,
+    "Please enter a valid phone number.",
+  ).transform(normalizeContactPhoneNumber),
+  email: z.string().trim().optional().nullable()
+    .refine(
+      (value) => value == null || value.length === 0 || isValidContactEmail(value),
+      "Please enter a valid email address.",
+    )
+    .transform((value) => value == null || value.length === 0 ? null : value),
 });
+
+export const updatePrimaryCareProviderSchema = insertPrimaryCareProviderSchema
+  .omit({ userId: true })
+  .partial();
 
 export const insertSymptomEntrySchema = createInsertSchema(symptomEntries).omit({
   id: true,
