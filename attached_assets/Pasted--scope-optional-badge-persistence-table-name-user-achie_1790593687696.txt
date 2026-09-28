@@ -1,0 +1,79 @@
+[
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "achievement_type",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "category",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "description",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "earned_at",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "icon_name",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "id",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "level",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "points",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "title",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "optional badge persistence",
+    "table_name": "user_achievements",
+    "column_name": "user_id",
+    "required_by_badges": false,
+    "status": "MISSING TABLE"
+  },
+  {
+    "scope": "separate notifications endpoint",
+    "table_name": "notifications",
+    "column_name": "dedupe_key",
+    "required_by_badges": false,
+    "status": "MISSING COLUMN"
+  }
+]
