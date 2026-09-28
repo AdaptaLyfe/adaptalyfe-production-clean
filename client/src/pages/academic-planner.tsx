@@ -907,6 +907,7 @@ export default function AcademicPlanner() {
                       }}
                       min="0.01"
                       max="100"
+                      step="any"
                     />
                     {assignmentHoursError && (
                       <p className="text-sm text-red-600">{assignmentHoursError}</p>
