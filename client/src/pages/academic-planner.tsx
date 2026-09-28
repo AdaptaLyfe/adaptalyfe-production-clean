@@ -688,7 +688,7 @@ export default function AcademicPlanner() {
                           <SelectTrigger id="academic-class-day">
                             <SelectValue placeholder="Choose a day" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             <SelectItem value="0">Sunday</SelectItem>
                             <SelectItem value="1">Monday</SelectItem>
                             <SelectItem value="2">Tuesday</SelectItem>
@@ -717,7 +717,7 @@ export default function AcademicPlanner() {
                         <SelectTrigger id="academic-class-semester">
                           <SelectValue placeholder="Choose a semester" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           <SelectItem value="Fall 2025">Fall 2025</SelectItem>
                           <SelectItem value="Spring 2026">Spring 2026</SelectItem>
                           <SelectItem value="Summer 2025">Summer 2025</SelectItem>
@@ -1045,7 +1045,7 @@ export default function AcademicPlanner() {
                           <SelectTrigger>
                             <SelectValue placeholder="Study technique" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             <SelectItem value="reading">Reading</SelectItem>
                             <SelectItem value="flashcards">Flashcards</SelectItem>
                             <SelectItem value="practice-problems">Practice Problems</SelectItem>
@@ -1191,7 +1191,7 @@ export default function AcademicPlanner() {
                         <SelectTrigger>
                           <SelectValue placeholder="Category" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           <SelectItem value="academic">Academic</SelectItem>
                           <SelectItem value="dining">Dining</SelectItem>
                           <SelectItem value="recreation">Recreation</SelectItem>
@@ -1424,7 +1424,7 @@ export default function AcademicPlanner() {
                         <SelectTrigger>
                           <SelectValue placeholder="Meeting day" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           <SelectItem value="Monday">Monday</SelectItem>
                           <SelectItem value="Tuesday">Tuesday</SelectItem>
                           <SelectItem value="Wednesday">Wednesday</SelectItem>

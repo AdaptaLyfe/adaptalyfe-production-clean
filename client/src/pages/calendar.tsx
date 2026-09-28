@@ -644,7 +644,7 @@ export default function Calendar() {
                   <SelectTrigger>
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[130]">
                     <SelectItem value="personal">Personal</SelectItem>
                     <SelectItem value="work">Work</SelectItem>
                     <SelectItem value="health">Health</SelectItem>

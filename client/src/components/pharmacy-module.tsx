@@ -356,7 +356,7 @@ export default function PharmacyModule() {
                         <SelectTrigger>
                           <SelectValue placeholder="Select pharmacy" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           {userPharmacies.map((up) => (
                             <SelectItem key={up.id} value={up.pharmacyId.toString()}>
                               {up.pharmacy?.name}
@@ -390,7 +390,7 @@ export default function PharmacyModule() {
                             <SelectTrigger>
                               <SelectValue placeholder="Select shape" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[130]">
                               <SelectItem value="round">Round</SelectItem>
                               <SelectItem value="oval">Oval</SelectItem>
                               <SelectItem value="oblong">Oblong</SelectItem>
@@ -410,7 +410,7 @@ export default function PharmacyModule() {
                           <SelectTrigger>
                             <SelectValue placeholder="Select size" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             <SelectItem value="small">Small</SelectItem>
                             <SelectItem value="medium">Medium</SelectItem>
                             <SelectItem value="large">Large</SelectItem>
@@ -679,7 +679,7 @@ export default function PharmacyModule() {
                         <SelectTrigger>
                           <SelectValue placeholder="Choose a pharmacy" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           {pharmacies.map((pharmacy) => (
                             <SelectItem key={pharmacy.id} value={pharmacy.id.toString()}>
                               <div className="flex items-center gap-2">
