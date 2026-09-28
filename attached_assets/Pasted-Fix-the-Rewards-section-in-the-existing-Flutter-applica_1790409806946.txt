@@ -1,0 +1,170 @@
+Fix the **Rewards** section in the existing Flutter application.
+
+### Current Issue
+
+When the user opens:
+
+**Rewards → Reward Badges**
+
+the app shows errors such as:
+
+* **"Rewards are unavailable"**
+* **"Failed to fetch reward badges"**
+
+The reward badges are not loading correctly.
+
+### Required Fix
+
+Investigate and fix the root cause of the reward badge fetching failure.
+
+First inspect the existing implementation:
+
+* Rewards screen
+* Reward badges widget/screen
+* Rewards BLoC/Cubit/Provider currently being used
+* Rewards repository/service
+* API/Firebase/database calls
+* Reward badge model/parsing
+* Authentication/user ID handling
+* Loading, success, and error states
+
+Do **not** create a new rewards system. Fix the existing implementation.
+
+### Check These Areas
+
+#### 1. API / Backend Request
+
+Verify:
+
+* Correct API endpoint is being called.
+* Correct HTTP method is used.
+* Required headers/token are included.
+* Authenticated user ID is passed correctly.
+* Request parameters are correct.
+* API response is actually received.
+
+If the API endpoint has changed, use the endpoint already defined/configured by the existing project instead of hardcoding a new URL.
+
+#### 2. Response Parsing
+
+Check whether the API response structure matches the Flutter model.
+
+Verify:
+
+* JSON field names
+* `null` values
+* List/object structure
+* Reward badge IDs
+* Badge names
+* Badge descriptions
+* Badge images/icons
+* Progress/completion fields
+
+Make the model parsing null-safe where appropriate.
+
+Do not silently fail when a response contains an optional/missing field.
+
+#### 3. Authentication
+
+Verify that the Rewards request is made only after the user authentication/session information is available.
+
+Check for issues such as:
+
+* Missing token
+* Expired token
+* Null user ID
+* Incorrect user ID
+* Request being triggered before authentication is initialized
+
+Do not bypass authentication or security checks.
+
+#### 4. BLoC / State Management
+
+If Rewards uses BLoC/Cubit:
+
+Verify the complete flow:
+
+`Rewards Screen → Event → BLoC/Cubit → Repository → API → Response → State → UI`
+
+Make sure:
+
+* Loading state is emitted correctly.
+* Success state contains the fetched reward badges.
+* Error state is only emitted when the request actually fails.
+* The UI rebuilds when the success state is received.
+* The BLoC is not being disposed before the request completes.
+* Duplicate API calls are not being triggered unnecessarily.
+
+Use the project's existing state-management pattern.
+
+#### 5. Error Handling
+
+Do not show:
+
+**"Rewards are unavailable"**
+
+for every type of failure.
+
+Handle errors appropriately:
+
+* Successful response → display reward badges.
+* Empty reward list → show a proper empty-state message.
+* Authentication error → handle authentication/session issue.
+* Server/API error → show a meaningful retry message.
+* Network error → show a network/retry message.
+* Invalid response → log the parsing/response problem and show a safe error state.
+
+Keep the existing UI design unless a UI change is required.
+
+### Important
+
+Do NOT:
+
+* Remove the Rewards feature.
+* Replace the backend with mock data.
+* Hardcode reward badges just to make the screen appear.
+* Hide the error without fixing the underlying issue.
+* Change unrelated features.
+* Change the existing API contract unnecessarily.
+* Create duplicate repositories/BLoCs.
+* Add arbitrary delays such as `Future.delayed()`.
+
+### Debugging
+
+Add appropriate debug logging temporarily if needed to identify:
+
+1. Rewards request started
+2. User/authentication information available
+3. API status code
+4. API response structure
+5. Parsing result
+6. Number of reward badges returned
+7. BLoC/Cubit state emitted
+
+Do not log passwords, tokens, or other sensitive information.
+
+### Test These Cases
+
+After fixing, verify:
+
+1. Open **Rewards** while logged in.
+2. Reward badges load successfully.
+3. No **"Failed to fetch reward badges"** error appears when the API succeeds.
+4. Test with zero badges and verify a proper empty state.
+5. Test network/API failure and verify a proper error state.
+6. Navigate away from Rewards and return.
+7. Open Rewards multiple times.
+8. Verify there are no duplicate API calls or BLoC errors.
+9. Verify existing Rewards functionality remains unchanged.
+
+### Final Response
+
+After fixing, tell me:
+
+* Root cause of the error.
+* Files changed.
+* What was wrong with the API/model/BLoC/state flow.
+* What was changed to fix it.
+* How you tested the Rewards screen.
+
+Make the **smallest safe fix** and preserve the existing Flutter architecture and UI.

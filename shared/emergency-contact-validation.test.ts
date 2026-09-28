@@ -13,13 +13,14 @@ const baseContact = {
   phoneNumber: "6502530000",
 };
 
-test("trusted contact accepts common national and international phone formats", () => {
+test("trusted contact accepts valid US numbers in common US formats", () => {
   for (const phoneNumber of [
     "6502530000",
     "650-253-0000",
+    "650.253.0000",
     "(650) 253-0000",
     "+1 650 253 0000",
-    "+91 98765 43210",
+    "+1 (650) 253-0000",
   ]) {
     const result = insertEmergencyContactSchema.safeParse({
       ...baseContact,
@@ -55,6 +56,9 @@ test("trusted contact rejects invalid email formats", () => {
     "test..test@gmail.com",
     "test @gmail.com",
     "a@b..com",
+    "test@gmail.c",
+    "test@gmail.c0",
+    "test@-gmail.com",
   ]) {
     const result = insertEmergencyContactSchema.safeParse({
       ...baseContact,
@@ -65,8 +69,14 @@ test("trusted contact rejects invalid email formats", () => {
   }
 });
 
-test("trusted contact accepts ordinary valid email formats", () => {
-  for (const email of ["test@gmail.com", "john.doe@example.com"]) {
+test("trusted contact accepts emails with alphanumeric names and letter-only extensions", () => {
+  for (const email of [
+    "test@gmail.com",
+    "john.doe@example.com",
+    "asfsd@gmail.com",
+    "a@b.co",
+    "person+tag@sub.example.org",
+  ]) {
     const result = insertEmergencyContactSchema.safeParse({
       ...baseContact,
       email,
@@ -76,7 +86,7 @@ test("trusted contact accepts ordinary valid email formats", () => {
   }
 });
 
-test("trusted contact rejects invalid phone formats and lengths", () => {
+test("trusted contact rejects non-US, unassigned, and malformed numbers", () => {
   for (const phoneNumber of [
     "123",
     "123456",
@@ -84,8 +94,15 @@ test("trusted contact rejects invalid phone formats and lengths", () => {
     "abc5551234",
     "++15551234567",
     "+1 (650) 25A-3000",
+    "+91 98765 43210",
+    "+2 650 253 0000",
+    "+1 416 555 0123",
+    "9876543210",
+    "1212121212",
     "0000000000",
     "1111111111",
+    "650)253(0000",
+    "(650253-0000",
     "!!!",
     "650/253/0000",
   ]) {
@@ -123,6 +140,12 @@ test("trusted contact updates validate changed email and phone values", () => {
     }).success,
     false,
   );
+  assert.equal(
+    updateEmergencyContactSchema.safeParse({
+      phoneNumber: "1212121212",
+    }).success,
+    false,
+  );
 });
 
 test("trusted contact form errors are field-specific and share backend rules", () => {
@@ -147,6 +170,10 @@ test("trusted contact form errors are field-specific and share backend rules", (
   );
   assert.deepEqual(
     getEmergencyContactFieldErrors("jane.doe@example.com", "+91 98765 43210"),
-    {},
+    { phoneNumber: "Please enter a valid phone number." },
+  );
+  assert.deepEqual(
+    getEmergencyContactFieldErrors("asfsd@gmail.com", "1212121212"),
+    { phoneNumber: "Please enter a valid phone number." },
   );
 });

@@ -84,7 +84,10 @@ class PurchaseService {
           'Check the Play product and offer setup, then try again.',
         );
       }
-      purchaseParam = GooglePlayPurchaseParam(productDetails: product);
+      purchaseParam = GooglePlayPurchaseParam(
+        productDetails: product,
+        offerToken: product.offerToken,
+      );
     } else {
       purchaseParam = PurchaseParam(productDetails: product);
     }

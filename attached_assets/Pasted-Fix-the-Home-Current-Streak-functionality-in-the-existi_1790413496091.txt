@@ -1,0 +1,136 @@
+Fix the **Home → Current Streak** functionality in the existing Flutter application.
+
+### Current Issue
+
+On the **Home** screen, the **Current Streak** value is always showing:
+
+**0 days**
+
+It looks like the streak calculation or data loading is not working correctly.
+
+### Required Fix
+
+Investigate the existing implementation and fix the **Current Streak** functionality properly.
+
+The Current Streak should represent the user's actual consecutive activity days based on the existing app's data and business logic.
+
+### First Inspect
+
+Before making changes, find:
+
+* Home/Dashboard screen where **Current Streak** is displayed.
+* Current Streak widget/card.
+* Existing streak calculation logic, if any.
+* Daily Task/activity completion data.
+* API/Firebase/local database used for activity data.
+* Existing BLoC/Provider/Riverpod/state-management implementation.
+* Date/time handling and timezone logic.
+* Any repository/service responsible for fetching completed activities.
+
+**Do not create a separate or duplicate streak system if one already exists.**
+
+### Expected Behavior
+
+For example:
+
+* User completes an activity/task today → streak should become at least **1 day**.
+* User completed activity yesterday and today → streak should show **2 days**.
+* User has completed activities for 5 consecutive days → show **5 days**.
+* If the user misses a required day according to the existing business rules, the current streak should reset appropriately.
+* If there is no completed activity, showing **0 days** is correct.
+
+Use the application's existing definition of a completed day/activity if one already exists.
+
+### Important
+
+Do not simply hardcode the value.
+
+Do not show a fake/random streak.
+
+Do not use a static `0`.
+
+Do not change unrelated Home screen functionality.
+
+Do not change the UI design.
+
+Do not create unnecessary API calls.
+
+### State Management
+
+Make sure the Current Streak is actually connected to the latest activity/task data.
+
+If the project uses BLoC:
+
+* Find the existing Home/Dashboard BLoC.
+* Load the required activity data.
+* Calculate or retrieve the current streak.
+* Emit the updated streak in the appropriate state.
+* Make sure the Home screen rebuilds when the streak changes.
+* Avoid creating duplicate BLoC instances.
+
+If the project uses Provider/Riverpod/etc., follow the existing architecture instead.
+
+### Refresh Behavior
+
+The streak must update correctly when:
+
+1. User completes a task/activity.
+2. User returns to Home.
+3. Home screen is reopened.
+4. User navigates away and comes back.
+5. App is restarted, if the data is persisted.
+
+Do not rely only on the initial widget build.
+
+### Date Handling
+
+Pay special attention to:
+
+* Today vs yesterday.
+* Consecutive calendar dates.
+* Date-only comparison instead of comparing full timestamps.
+* User's local timezone.
+* Duplicate activities on the same day.
+* Activities completed near midnight.
+
+Do not introduce timezone bugs.
+
+### Debugging
+
+If the current streak is still 0, trace the complete data flow:
+
+**Completed Activity → Storage/API → Repository → BLoC/State → Home Screen → Current Streak**
+
+Check whether:
+
+* Completion data is actually saved.
+* The correct user ID is being used.
+* Dates are being parsed correctly.
+* The streak calculation receives the expected data.
+* The Home screen receives the calculated value.
+* The UI is displaying the state value rather than a default `0`.
+
+Add temporary debug logs if needed during investigation, then remove unnecessary logs before finishing.
+
+### Final Testing
+
+Test at least these cases:
+
+1. No completed activity → `0 days`
+2. Complete activity today → `1 day`
+3. Complete activity on consecutive days → correct streak
+4. Multiple activities on the same day → count that day only
+5. Missing day → correct reset behavior
+6. Navigate away and return to Home → correct streak
+7. Restart app → correct persisted streak
+8. Different user accounts → each user's streak is independent
+
+Finally, explain:
+
+* Why Current Streak was always showing 0.
+* Which files were changed.
+* Where the streak is now calculated/retrieved.
+* How the Home screen receives the updated value.
+* What test cases were verified.
+
+Make the **smallest safe fix using the existing project architecture** and do not modify unrelated features.

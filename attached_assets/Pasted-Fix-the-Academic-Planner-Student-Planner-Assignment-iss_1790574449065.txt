@@ -1,0 +1,194 @@
+Fix the **Academic Planner / Student Planner → Assignment** issue in the existing Flutter application.
+
+### Current Issue
+
+When the user tries to add a new assignment and enters a decimal value in **Estimated Hours**, such as:
+
+* `2.5`
+* `1.5`
+* `3.25`
+
+the app shows:
+
+**"Invalid assignment data"**
+
+The error appears beside/around the popup even though decimal estimated hours should be valid.
+
+### Required Fix
+
+Update the Assignment form validation and data handling so that **Estimated Hours accepts decimal values**.
+
+Examples that should be accepted:
+
+```text
+1
+2
+2.5
+1.5
+3.25
+10.5
+```
+
+The value should be parsed correctly as a numeric/`double` value instead of being treated as an integer.
+
+### Important
+
+Inspect the complete existing flow:
+
+```text
+Assignment Popup/Form
+        ↓
+Estimated Hours TextField
+        ↓
+Validation
+        ↓
+Assignment Model
+        ↓
+BLoC/State
+        ↓
+Repository/API/Database
+        ↓
+Save Assignment
+        ↓
+Assignment List
+```
+
+Find where the decimal value is being rejected or incorrectly converted.
+
+Check for code such as:
+
+```dart
+int.parse(...)
+```
+
+or:
+
+```dart
+int.tryParse(...)
+```
+
+or model/API/database fields that incorrectly expect an integer.
+
+Use appropriate `double` parsing for Estimated Hours, for example:
+
+```dart
+double.tryParse(value)
+```
+
+Do not blindly replace every integer field in the Assignment model. Change only the **Estimated Hours** field and the related validation/data conversion.
+
+### Validation Requirements
+
+Estimated Hours should:
+
+* Accept whole numbers.
+* Accept decimal numbers.
+* Reject empty input if the field is required.
+* Reject invalid text such as `abc`.
+* Reject negative values if negative hours are not allowed by the existing business rules.
+* Continue showing the existing validation message for genuinely invalid values.
+
+Examples:
+
+| Input  | Expected                                    |
+| ------ | ------------------------------------------- |
+| `2`    | ✅ Valid                                     |
+| `2.5`  | ✅ Valid                                     |
+| `1.5`  | ✅ Valid                                     |
+| `3.25` | ✅ Valid                                     |
+| `0.5`  | ✅ Valid if zero/positive values are allowed |
+| `abc`  | ❌ Invalid                                   |
+| `-2`   | ❌ Invalid                                   |
+| empty  | ❌ Invalid if required                       |
+
+### UI
+
+Keep the existing Assignment popup UI and styling unchanged.
+
+Do not redesign the form.
+
+The **"Invalid assignment data"** error should NOT appear when the user enters a valid decimal Estimated Hours value such as `2.5`.
+
+After successfully saving:
+
+* Assignment should be created.
+* Estimated Hours should display correctly.
+* No duplicate error should appear.
+* Popup should close normally.
+* Assignment list should refresh normally.
+
+### Check Existing Data Types
+
+Inspect:
+
+* Assignment model
+* Form controller
+* Validation logic
+* BLoC events/states
+* Repository
+* API request/response mapping
+* Firebase/Firestore/local database mapping, if used
+* JSON serialization/deserialization
+
+Make sure the type is consistent throughout the complete flow.
+
+For example:
+
+```dart
+final double? estimatedHours;
+```
+
+and JSON/API conversion should preserve decimal values.
+
+Avoid converting:
+
+```text
+2.5 → 2
+```
+
+The saved value must remain:
+
+```text
+2.5
+```
+
+### Do Not
+
+* Do not change unrelated Assignment fields.
+* Do not change other Academic Planner features.
+* Do not remove validation.
+* Do not hide the error message.
+* Do not use string hacks to bypass validation.
+* Do not hardcode `2.5`.
+* Do not change the existing UI design.
+* Do not create a new architecture.
+* Do not introduce unnecessary packages.
+
+Use the existing Flutter architecture and state-management pattern.
+
+### Testing
+
+Test at minimum:
+
+1. Add assignment with `2`.
+2. Add assignment with `2.5`.
+3. Add assignment with `1.5`.
+4. Add assignment with `3.25`.
+5. Try invalid text `abc`.
+6. Try negative value `-2`.
+7. Try empty Estimated Hours.
+8. Edit an existing assignment and change Estimated Hours to `2.5`.
+9. Reopen the assignment and verify `2.5` is still displayed correctly.
+10. Verify no **"Invalid assignment data"** error appears for valid decimal values.
+
+After fixing, run the Flutter analyzer/tests if available and make sure there are no new errors.
+
+Finally, tell me:
+
+1. What caused the issue?
+2. Which files were changed?
+3. Where was the integer/decimal conversion problem?
+4. How did you fix it?
+5. What tests were performed?
+
+Make the **smallest safe fix** and preserve all existing functionality.

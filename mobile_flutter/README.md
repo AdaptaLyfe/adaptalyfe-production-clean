@@ -82,10 +82,18 @@ wallet token. The existing backend `/api/create-subscription` and
 `/api/confirm-subscription` routes create and verify the recurring Stripe
 subscription.
 
-Build with the non-secret client configuration:
+The default API host is `https://app.getadaptalyfeapp.com/`, matching the
+React/Capacitor wrapper and production API. Run against production with:
 
 ```bash
 flutter pub get
+flutter run
+```
+
+To develop against Railway staging instead, override the API host and use
+staging Stripe test configuration:
+
+```bash
 flutter run \
   --dart-define=ADAPTALYFE_API_BASE_URL=https://staging.getadaptalyfeapp.com/ \
   --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_... \

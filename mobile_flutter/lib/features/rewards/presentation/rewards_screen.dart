@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/app_route_observer.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -118,6 +119,7 @@ class _RewardsBody extends StatelessWidget {
         message: state.errorMessage ?? 'Unable to load your rewards.',
         onRetry: () =>
             context.read<RewardsBloc>().add(const RefreshRewards()),
+        sessionInvalid: state.sessionInvalid,
       );
     }
 
@@ -267,6 +269,57 @@ class _RewardsTab extends StatelessWidget {
           const Text(
             'Earn points and redeem rewards created for you.',
             style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            color: const Color(0xFFEFF6FF),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.bolt_rounded,
+                        color: Color(0xFF2563EB),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'How to earn points',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Complete a Daily Task that shows points. Mark it complete '
+                    'to add those points to your balance. Tasks worth 0 points '
+                    'do not earn points. When creating or editing a task, '
+                    'choose its point value.',
+                    style: TextStyle(
+                      color: Color(0xFF374151),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/daily-tasks'),
+                      icon: const Icon(Icons.checklist_rounded),
+                      label: const Text('Open Daily Tasks'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 14),
           if (state.rewards.isEmpty)
@@ -514,26 +567,29 @@ class _RewardCard extends StatelessWidget {
   }
 }
 
-class _BadgesTab extends StatelessWidget {
+class _BadgesTab extends StatefulWidget {
   const _BadgesTab({required this.state});
 
   final RewardsState state;
 
   @override
+  State<_BadgesTab> createState() => _BadgesTabState();
+}
+
+class _BadgesTabState extends State<_BadgesTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (state.status == RewardsStatus.failure &&
-        state.achievements.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: _BadgeErrorNotice(
-            message: state.errorMessage ?? 'Unable to load your badges.',
-            onRetry: () =>
-                context.read<RewardsBloc>().add(const RefreshRewards()),
-          ),
-        ),
-      );
-    }
+    final state = widget.state;
+    final badgeErrorMessage = state.badgeErrorMessage ??
+        (state.status == RewardsStatus.failure ? state.errorMessage : null);
 
     final earned = state.achievements
         .where(
@@ -556,70 +612,81 @@ class _BadgesTab extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: () => _refresh(context),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
-        children: [
-          if (state.isLoading && state.achievements.isEmpty) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 8),
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: ListView(
+          key: const PageStorageKey<String>('rewards-badges-list'),
+          controller: _scrollController,
+          primary: false,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding:
+              AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 72),
+          children: [
+            if (state.isLoading && state.achievements.isEmpty) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 8),
+              const Text(
+                'Loading badges...',
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+            ] else if (state.isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 12),
+            ],
+            if (badgeErrorMessage != null) ...[
+              _BadgeErrorNotice(
+                title: state.sessionInvalid ? 'Session expired' : null,
+                message: badgeErrorMessage,
+                onRetry: () =>
+                    context.read<RewardsBloc>().add(const RefreshRewards()),
+                compact: state.achievements.isNotEmpty,
+              ),
+              const SizedBox(height: 12),
+            ],
             const Text(
-              'Loading badges...',
-              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              'Badges & Achievements',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: 12),
-          ] else if (state.isLoading) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 5),
+            const Text(
+              'Celebrate the achievements recorded by Adaptalyfe. Scroll down to see badges in progress and locked badges.',
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+            ),
+            const SizedBox(height: 14),
+            if (state.achievements.isEmpty &&
+                state.status == RewardsStatus.loaded &&
+                state.badgeErrorMessage == null)
+              const _EmptyCard(
+                icon: Icons.emoji_events_outlined,
+                title: 'No badges available yet',
+                message:
+                    'There are no badges to show right now. Check back as your progress is updated.',
+              )
+            else if (earned.isEmpty &&
+                state.achievements.isNotEmpty &&
+                state.status == RewardsStatus.loaded)
+              const _EmptyCard(
+                icon: Icons.emoji_events_outlined,
+                title: 'No badges earned yet',
+                message:
+                    'Start earning badges by completing milestones, earning points, and redeeming rewards.',
+              ),
+            if (earned.isNotEmpty)
+              _BadgeSection(title: 'Earned Badges', badges: earned),
+            if (inProgress.isNotEmpty)
+              _BadgeSection(title: 'In Progress', badges: inProgress),
+            if (locked.isNotEmpty)
+              _BadgeSection(title: 'Locked', badges: locked),
+            const SizedBox(height: 8),
+            const _BadgeInstructions(),
           ],
-          if (state.status == RewardsStatus.failure) ...[
-            _BadgeErrorNotice(
-              message: state.errorMessage ?? 'Unable to refresh your badges.',
-              onRetry: () =>
-                  context.read<RewardsBloc>().add(const RefreshRewards()),
-              compact: true,
-            ),
-            const SizedBox(height: 12),
-          ],
-          const Text(
-            'Badges & Achievements',
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Celebrate the achievements recorded by Adaptalyfe.',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
-          ),
-          const SizedBox(height: 14),
-          const _BadgeInstructions(),
-          const SizedBox(height: 12),
-          if (state.achievements.isEmpty &&
-              state.status == RewardsStatus.loaded)
-            _BadgeErrorNotice(
-              message: 'Unable to load badges. Please try again.',
-              onRetry: () =>
-                  context.read<RewardsBloc>().add(const RefreshRewards()),
-            )
-          else if (earned.isEmpty &&
-              state.achievements.isNotEmpty &&
-              state.status == RewardsStatus.loaded)
-            const _EmptyCard(
-              icon: Icons.emoji_events_outlined,
-              title: 'No badges earned yet',
-              message:
-                  'Start earning badges by completing milestones, earning points, and redeeming rewards.',
-            ),
-          if (earned.isNotEmpty)
-            _BadgeSection(title: 'Earned Badges', badges: earned),
-          if (inProgress.isNotEmpty)
-            _BadgeSection(title: 'In Progress', badges: inProgress),
-          if (locked.isNotEmpty)
-            _BadgeSection(title: 'Locked', badges: locked),
-        ],
+        ),
       ),
     );
   }
@@ -677,11 +744,13 @@ class _BadgeErrorNotice extends StatelessWidget {
   const _BadgeErrorNotice({
     required this.message,
     required this.onRetry,
+    this.title,
     this.compact = false,
   });
 
   final String message;
   final VoidCallback onRetry;
+  final String? title;
   final bool compact;
 
   @override
@@ -694,24 +763,18 @@ class _BadgeErrorNotice extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!compact) ...[
-              const Text(
-                'Badges could not be loaded',
-                style: TextStyle(
-                  color: Color(0xFF7C2D12),
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                ),
+            Text(
+              title ??
+                  (compact
+                      ? 'Could not refresh badges. Showing the last loaded results.'
+                      : 'Badges could not be loaded'),
+              style: TextStyle(
+                color: const Color(0xFF7C2D12),
+                fontSize: compact ? 14 : 17,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 6),
-            ] else
-              const Text(
-                'Could not refresh badges. Showing the last loaded results.',
-                style: TextStyle(
-                  color: Color(0xFF7C2D12),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            ),
+            if (!compact) const SizedBox(height: 6),
             Text(
               message,
               style: const TextStyle(color: Color(0xFF7C2D12)),
@@ -756,8 +819,12 @@ class _BadgeInstructions extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Earn reward points, redeem rewards, or complete skill milestones. '
-              'Badges unlock automatically when you reach their requirement.',
+              'Badges unlock automatically as you make progress:\n'
+              '• Redeem 1 reward: First Reward\n'
+              '• Redeem 5 rewards: Reward Collector\n'
+              '• Earn 100 lifetime points: Point Starter\n'
+              '• Earn 500 lifetime points: Point Master\n'
+              '• Complete 1 skill milestone: Milestone Achiever',
               style: TextStyle(
                 color: Color(0xFF4B5563),
                 fontSize: 13,
@@ -1405,10 +1472,15 @@ class _RewardsLoading extends StatelessWidget {
 }
 
 class _RewardsError extends StatelessWidget {
-  const _RewardsError({required this.message, required this.onRetry});
+  const _RewardsError({
+    required this.message,
+    required this.onRetry,
+    this.sessionInvalid = false,
+  });
 
   final String message;
   final VoidCallback onRetry;
+  final bool sessionInvalid;
 
   @override
   Widget build(BuildContext context) {
@@ -1424,9 +1496,9 @@ class _RewardsError extends StatelessWidget {
               color: Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Rewards are unavailable',
-              style: TextStyle(
+            Text(
+              sessionInvalid ? 'Sign in to continue' : 'Could not load rewards',
+              style: const TextStyle(
                 color: Color(0xFF111827),
                 fontSize: 18,
                 fontWeight: FontWeight.w700,

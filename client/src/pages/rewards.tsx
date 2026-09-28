@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "wouter";
 import { 
   Gift, 
   Star, 
@@ -33,6 +34,93 @@ import {
   DollarSign,
   Trash2
 } from "lucide-react";
+
+type RewardBadge = {
+  id: number;
+  achievementType: string;
+  title: string;
+  description: string;
+  category: string;
+  isEarned: boolean;
+  progress: number;
+  target: number;
+  requirement: string;
+  earnedAt: string | null;
+};
+
+function RewardBadgeSection({
+  title,
+  badges,
+}: {
+  title: string;
+  badges: RewardBadge[];
+}) {
+  return (
+    <section className="space-y-3">
+      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {badges.map((badge) => {
+          const progress = Math.max(0, Math.min(badge.progress, badge.target));
+          const progressPercent =
+            badge.target > 0 ? (progress / badge.target) * 100 : 0;
+          const earnedDate = badge.earnedAt ? new Date(badge.earnedAt) : null;
+          const earnedDateLabel =
+            earnedDate && !Number.isNaN(earnedDate.getTime())
+              ? earnedDate.toLocaleDateString()
+              : null;
+
+          return (
+            <Card key={`${badge.achievementType}-${badge.id}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <Award className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
+                    <div className="min-w-0">
+                      <CardTitle className="text-base">{badge.title}</CardTitle>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {badge.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={badge.isEarned ? "default" : "secondary"}>
+                    {badge.isEarned
+                      ? "Earned"
+                      : badge.progress > 0
+                        ? "In progress"
+                        : "Locked"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">How to earn:</span>{" "}
+                  {badge.requirement}
+                </p>
+                {badge.isEarned ? (
+                  earnedDateLabel && (
+                    <p className="text-xs text-gray-500">
+                      Earned {earnedDateLabel}
+                    </p>
+                  )
+                ) : (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Progress</span>
+                      <span>
+                        {progress} / {badge.target}
+                      </span>
+                    </div>
+                    <Progress value={progressPercent} />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 const REWARD_CATEGORIES = [
   { value: "privilege", label: "Privilege", icon: Star, color: "bg-yellow-100 text-yellow-800" },
@@ -134,6 +222,31 @@ export default function RewardsPage() {
     queryKey: ["/api/points/transactions"],
   });
 
+  // Badge loading stays separate so a badge-service error never blocks rewards or points.
+  const {
+    data: badgesData = [],
+    isLoading: badgesLoading,
+    isError: badgesError,
+    refetch: refetchBadges,
+  } = useQuery<RewardBadge[]>({
+    queryKey: ["/api/rewards/badges"],
+    staleTime: 0,
+  });
+  const badges = Array.isArray(badgesData) ? badgesData : [];
+  const earnedBadges = badges.filter((badge) => badge.isEarned);
+  const inProgressBadges = badges.filter(
+    (badge) => !badge.isEarned && badge.progress > 0,
+  );
+  const lockedBadges = badges.filter(
+    (badge) => !badge.isEarned && badge.progress <= 0,
+  );
+  const nextPointsBadge = badges
+    .filter((badge) => badge.category === "points" && !badge.isEarned)
+    .sort((left, right) => left.target - right.target)[0];
+  const nextPointsBadgeProgress = nextPointsBadge
+    ? Math.max(0, Math.min(nextPointsBadge.progress, nextPointsBadge.target))
+    : 0;
+
   // Create reward mutation (for caregivers)
   const createRewardMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -220,6 +333,7 @@ export default function RewardsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/balance"] });
       queryClient.invalidateQueries({ queryKey: ["/api/points/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rewards/badges"] });
       setIsRedeemDialogOpen(false);
       setSelectedReward(null);
       toast({ title: "Success", description: "Reward redeemed! Waiting for caregiver approval." });
@@ -709,13 +823,40 @@ export default function RewardsPage() {
     </div>
 
       <Tabs defaultValue="rewards" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="rewards">Available Rewards</TabsTrigger>
           <TabsTrigger value="progress">My Progress</TabsTrigger>
+          <TabsTrigger value="badges">Badges</TabsTrigger>
           <TabsTrigger value="history">Point History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="rewards" className="space-y-4">
+          <Card className="border-blue-200 bg-blue-50/70">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Zap className="h-5 w-5 text-blue-600" />
+                How to earn points
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              <p>
+                Complete a Daily Task that has points shown on it. Marking it
+                complete adds those points to your balance; tasks worth 0 points
+                do not earn points.
+              </p>
+              <p>
+                When creating or editing a task, choose its point value to set
+                how many points it awards.
+              </p>
+              <Link
+                href="/daily-tasks"
+                className="inline-flex min-h-10 items-center font-semibold text-blue-700 underline underline-offset-4"
+              >
+                Open Daily Tasks
+              </Link>
+            </CardContent>
+          </Card>
+
           {rewards.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
@@ -795,6 +936,72 @@ export default function RewardsPage() {
           )}
         </TabsContent>
 
+        <TabsContent value="badges" className="space-y-4">
+          <Card className="border-blue-100 bg-blue-50/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Award className="h-5 w-5 text-blue-600" />
+                How to earn badges
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              <p>Badges unlock automatically when you meet a requirement:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                <li>Redeem 1 reward — First Reward</li>
+                <li>Redeem 5 rewards — Reward Collector</li>
+                <li>Earn 100 lifetime reward points — Point Starter</li>
+                <li>Earn 500 lifetime reward points — Point Master</li>
+                <li>Complete 1 skill milestone — Milestone Achiever</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          {badgesLoading ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-gray-600">
+                Loading badges…
+              </CardContent>
+            </Card>
+          ) : badgesError ? (
+            <Card role="alert" className="border-amber-200 bg-amber-50">
+              <CardContent className="flex flex-col items-start gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-amber-900">
+                  Badges couldn’t be loaded. Your rewards and points are still
+                  available. Try again shortly.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => void refetchBadges()}
+                >
+                  Try again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : badges.length === 0 ? (
+            <Card className="text-center py-10">
+              <CardContent>
+                <Award className="mx-auto mb-3 h-12 w-12 text-gray-400" />
+                <h3 className="text-lg font-semibold">No badges available yet</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Check back as your progress is recorded.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {earnedBadges.length > 0 && (
+                <RewardBadgeSection title="Earned Badges" badges={earnedBadges} />
+              )}
+              {inProgressBadges.length > 0 && (
+                <RewardBadgeSection title="In Progress" badges={inProgressBadges} />
+              )}
+              {lockedBadges.length > 0 && (
+                <RewardBadgeSection title="Locked" badges={lockedBadges} />
+              )}
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="progress" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
@@ -828,14 +1035,54 @@ export default function RewardsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold">100 Points</p>
-                  <p className="text-sm text-gray-600">Special Achievement Badge</p>
-                </div>
-                <Progress value={((pointsBalance?.lifetimeEarned || 0) % 100)} className="w-full" />
-                <p className="text-sm text-center text-gray-500">
-                  {100 - ((pointsBalance?.lifetimeEarned || 0) % 100)} points to go!
-                </p>
+                {badgesLoading ? (
+                  <p className="text-center text-sm text-gray-600">
+                    Loading badge progress…
+                  </p>
+                ) : badgesError ? (
+                  <p className="text-center text-sm text-amber-800">
+                    Badge progress is unavailable right now. Check the Badges tab
+                    to retry.
+                  </p>
+                ) : nextPointsBadge ? (
+                  <>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold">
+                        {nextPointsBadge.target} Points
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {nextPointsBadge.title}
+                      </p>
+                    </div>
+                    <Progress
+                      value={
+                        nextPointsBadge.target > 0
+                          ? (nextPointsBadgeProgress / nextPointsBadge.target) * 100
+                          : 0
+                      }
+                      className="w-full"
+                    />
+                    <p className="text-sm text-center text-gray-500">
+                      {Math.max(
+                        0,
+                        nextPointsBadge.target - nextPointsBadgeProgress,
+                      )}{" "}
+                      points to go
+                    </p>
+                  </>
+                ) : badges.length === 0 ? (
+                  <p className="text-center text-sm text-gray-600">
+                    Badge milestones will appear here when available.
+                  </p>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">Complete</p>
+                    <p className="text-sm text-gray-600">
+                      You’ve earned all available points badges.
+                    </p>
+                    <Progress value={100} className="mt-4 w-full" />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -1,9 +1,11 @@
-import { isValidPhoneNumber } from "libphonenumber-js/max";
-import { z } from "zod";
+import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 
 const CONTACT_PHONE_SEPARATORS = /[\s().-]/g;
-const CONTACT_PHONE_CHARACTERS = /^\+?[0-9\s().-]+$/;
-const CONTACT_EMAIL_SCHEMA = z.string().trim().email();
+
+// US input format: optionally +1, a balanced or plain area code,
+// and a seven-digit local number with optional single separators.
+export const usPhoneRegex = /^(?:\+1[-. ]?)?(?:\([0-9]{3}\)|[0-9]{3})[-. ]?[0-9]{3}[-. ]?[0-9]{4}$/;
+export const emailRegex = /^[A-Z0-9]+(?:[._%+-][A-Z0-9]+)*@[A-Z0-9]+(?:-[A-Z0-9]+)*(?:\.[A-Z0-9]+(?:-[A-Z0-9]+)*)*\.[A-Z]{2,}$/i;
 
 /**
  * Keep the stored contact number compact while accepting common human-readable
@@ -13,16 +15,15 @@ export const normalizeContactPhoneNumber = (value: string) =>
   value.trim().replace(CONTACT_PHONE_SEPARATORS, "");
 
 export const isValidContactPhoneNumber = (value: string) => {
-  const trimmedValue = value.trim();
-  if (!trimmedValue || !CONTACT_PHONE_CHARACTERS.test(trimmedValue)) {
-    return false;
-  }
+  const trimmed = value.trim();
+  if (!usPhoneRegex.test(trimmed)) return false;
 
-  return isValidPhoneNumber(normalizeContactPhoneNumber(trimmedValue), "US");
+  const number = parsePhoneNumberFromString(normalizeContactPhoneNumber(trimmed), "US");
+  return number?.country === "US" && number.isValid();
 };
 
 export const isValidContactEmail = (value: string) =>
-  CONTACT_EMAIL_SCHEMA.safeParse(value).success;
+  emailRegex.test(value.trim());
 
 export type ContactFieldValidationErrors = {
   email?: string;

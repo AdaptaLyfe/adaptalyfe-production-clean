@@ -32,6 +32,7 @@ class SubscriptionState extends Equatable {
     this.stripeAvailable = false,
     this.walletAvailable = false,
     this.shouldNavigateToDashboard = false,
+    this.shouldRefreshAuthentication = false,
   });
 
   final SubscriptionStatus status;
@@ -49,6 +50,7 @@ class SubscriptionState extends Equatable {
   final bool stripeAvailable;
   final bool walletAvailable;
   final bool shouldNavigateToDashboard;
+  final bool shouldRefreshAuthentication;
 
   bool get isLoading =>
       status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
@@ -77,6 +79,7 @@ class SubscriptionState extends Equatable {
     bool? stripeAvailable,
     bool? walletAvailable,
     bool? shouldNavigateToDashboard,
+    bool? shouldRefreshAuthentication,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
@@ -109,6 +112,8 @@ class SubscriptionState extends Equatable {
       walletAvailable: walletAvailable ?? this.walletAvailable,
       shouldNavigateToDashboard:
           shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
+      shouldRefreshAuthentication:
+          shouldRefreshAuthentication ?? this.shouldRefreshAuthentication,
     );
   }
 
@@ -129,6 +134,7 @@ class SubscriptionState extends Equatable {
         stripeAvailable,
         walletAvailable,
         shouldNavigateToDashboard,
+        shouldRefreshAuthentication,
       ];
 }
 

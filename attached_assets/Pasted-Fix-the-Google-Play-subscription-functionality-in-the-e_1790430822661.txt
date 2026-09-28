@@ -1,0 +1,411 @@
+Fix the **Google Play subscription** functionality in the existing Flutter application.
+
+### Current Issue
+
+Google subscription is currently **not working**.
+
+Do not rebuild the subscription system from scratch. First inspect the existing implementation and identify exactly why the Google Play subscription purchase flow is failing.
+
+### Important
+
+This is an existing Flutter project. Preserve the current UI, subscription screens, BLoC/state management, backend, and existing iOS subscription functionality.
+
+Only fix the Google Play / Android subscription flow.
+
+---
+
+## 1. Inspect the Existing Implementation
+
+First inspect:
+
+* `pubspec.yaml`
+* Subscription service/repository
+* Subscription BLoC/Cubit/provider
+* Subscription screen
+* Android configuration
+* Google Play Billing implementation
+* Product IDs
+* Purchase stream/listener
+* Purchase verification logic
+* Restore purchase logic
+* Backend/API/Firebase subscription status handling
+* Any existing Stripe/subscription code
+
+Determine whether the project is using:
+
+* `in_app_purchase`
+* `in_app_purchase_android`
+* RevenueCat
+* Google Play Billing directly
+* Another subscription package
+
+Do not introduce another subscription package unless the existing implementation cannot support the required flow.
+
+---
+
+## 2. Google Play Product Configuration
+
+Verify that the Android subscription product IDs in Flutter exactly match the IDs configured in Google Play Console.
+
+Check:
+
+* Product ID
+* Subscription ID
+* Base plan ID
+* Offer ID
+* Package/application ID
+* Product type
+* Price
+* Billing period
+* Offer/trial configuration
+
+Do not hardcode incorrect IDs.
+
+Create one clear source of truth for the Google subscription product IDs.
+
+---
+
+## 3. Google Play Billing Flow
+
+Make sure the complete flow works:
+
+```text
+Open Subscription Screen
+        ↓
+Load Google Play Products
+        ↓
+Product Found
+        ↓
+Display Subscription
+        ↓
+User Taps Subscribe
+        ↓
+Start Google Play Purchase
+        ↓
+Purchase Stream Receives Update
+        ↓
+Check Purchase Status
+        ↓
+Verify Purchase
+        ↓
+Update User Subscription
+        ↓
+Complete Purchase
+        ↓
+Refresh Subscription UI
+```
+
+Handle all important purchase states:
+
+* `pending`
+* `purchased`
+* `restored`
+* `error`
+* `canceled`
+* `unavailable`
+
+Do not treat `pending` or `canceled` as successful subscriptions.
+
+---
+
+## 4. Purchase Listener
+
+Verify that the purchase update listener is registered correctly and is not being created multiple times.
+
+The listener should:
+
+* Receive purchase updates.
+* Process each purchase safely.
+* Handle restored purchases.
+* Handle errors.
+* Update BLoC/state correctly.
+* Complete the purchase when required.
+* Avoid duplicate processing.
+
+Make sure the listener is initialized before starting the purchase flow.
+
+Also make sure it is properly disposed when the service/BLoC is destroyed.
+
+---
+
+## 5. Product Loading
+
+When the subscription screen opens:
+
+* Check whether Google Play billing is available.
+* Query the configured product IDs.
+* Log the returned product details.
+* If no products are returned, show a useful error instead of silently failing.
+
+Add debug logging such as:
+
+```text
+Google Play Billing Available: true/false
+Requested Product IDs: [...]
+Found Product IDs: [...]
+Missing Product IDs: [...]
+Purchase Started
+Purchase Status: ...
+Purchase Error: ...
+Purchase Completed
+```
+
+Do not expose sensitive information in production logs.
+
+---
+
+## 6. Purchase Verification
+
+Do not mark the user as subscribed only because the purchase callback was received.
+
+Use the existing backend verification mechanism if the application already has one.
+
+Verify:
+
+* Purchase token
+* Product ID
+* Purchase status
+* Subscription status
+* Expiration/renewal information if available
+
+After successful verification:
+
+```text
+Google Play Purchase
+        ↓
+Backend Verification
+        ↓
+Subscription Active
+        ↓
+Update User Account
+        ↓
+Refresh App Subscription State
+```
+
+If backend verification already exists, fix the existing flow instead of creating a duplicate system.
+
+---
+
+## 7. Restore Purchases
+
+Make sure:
+
+**Restore Purchases**
+
+works correctly on Android.
+
+After restoring:
+
+* Find the user's active subscription.
+* Verify it.
+* Update the application's subscription state.
+* Refresh the UI.
+
+Do not automatically assume that restore means the subscription is currently active.
+
+---
+
+## 8. BLoC / State Management
+
+Use the existing BLoC architecture.
+
+Create or fix appropriate states such as:
+
+```text
+SubscriptionInitial
+SubscriptionLoading
+SubscriptionProductsLoaded
+SubscriptionPurchasePending
+SubscriptionPurchaseSuccess
+SubscriptionPurchaseError
+SubscriptionRestored
+SubscriptionActive
+SubscriptionInactive
+```
+
+Do not create unnecessary duplicate BLoCs.
+
+Make sure the subscription screen rebuilds when the purchase state changes.
+
+---
+
+## 9. Android Configuration
+
+Inspect Android configuration for Google Play Billing compatibility.
+
+Check:
+
+* `applicationId`
+* Android manifest
+* Gradle configuration
+* compile SDK
+* target SDK
+* min SDK
+* billing dependency/package version
+* release configuration
+
+Use versions compatible with the existing Flutter version.
+
+Do not blindly upgrade Flutter or all dependencies.
+
+---
+
+## 10. Google Play Testing
+
+Make the implementation compatible with Google Play testing.
+
+Verify the project is using the correct:
+
+* Application ID
+* Signed build
+* Google Play uploaded application
+* Subscription product
+* Tester account
+
+Important:
+
+Do not assume a normal locally installed APK will behave exactly like a Google Play test build.
+
+Document anything that must be configured in Google Play Console.
+
+---
+
+## 11. Error Handling
+
+Show user-friendly messages for common problems:
+
+* Google Play unavailable
+* Product not found
+* Purchase canceled
+* Purchase pending
+* Purchase failed
+* Verification failed
+* Subscription expired
+* Restore failed
+
+Do not show raw technical exceptions to users.
+
+For debugging, keep detailed logs available in debug mode.
+
+---
+
+## 12. Prevent Duplicate Purchases
+
+Before starting a new purchase:
+
+* Check whether a purchase is already pending.
+* Check whether the user already has an active subscription.
+* Prevent multiple purchase requests from being triggered by repeated taps.
+
+Disable the Subscribe button while the purchase request is processing.
+
+---
+
+## 13. Existing Subscription Logic
+
+The application may already support another payment/subscription method.
+
+Do NOT break:
+
+* Existing iOS subscription
+* Existing Stripe functionality
+* Existing subscription screen
+* User authentication
+* Existing backend
+* Existing trial logic
+* Restore subscription functionality
+
+Keep platform-specific logic separated where necessary:
+
+```text
+Android → Google Play Billing
+iOS     → App Store
+```
+
+---
+
+## 14. Testing Checklist
+
+After implementation, test:
+
+### Product Loading
+
+* [ ] Google Play billing available
+* [ ] Product ID found
+* [ ] Correct price displayed
+* [ ] Correct subscription period displayed
+
+### Purchase
+
+* [ ] Subscribe button works
+* [ ] Google Play purchase dialog opens
+* [ ] Successful purchase handled
+* [ ] Pending purchase handled
+* [ ] Canceled purchase handled
+* [ ] Failed purchase handled
+
+### Verification
+
+* [ ] Purchase token received
+* [ ] Purchase verified
+* [ ] Backend subscription updated
+* [ ] User becomes subscribed
+* [ ] Subscription UI updates
+
+### Restore
+
+* [ ] Restore purchases works
+* [ ] Existing subscription detected
+* [ ] Subscription state updated
+
+### Reopening App
+
+* [ ] Close app
+* [ ] Reopen app
+* [ ] Subscription status is correctly restored
+* [ ] User does not need to purchase again
+
+### Edge Cases
+
+* [ ] Double tap Subscribe
+* [ ] Network unavailable
+* [ ] Google Play unavailable
+* [ ] Product unavailable
+* [ ] Expired subscription
+* [ ] Canceled subscription
+
+---
+
+## 15. Very Important Debugging Rule
+
+Do not simply tell me:
+
+> "Google subscription is fixed."
+
+First identify the actual root cause.
+
+Check the existing code and report:
+
+1. Current Google subscription implementation.
+2. Exact reason it was not working.
+3. Files that need changes.
+4. Product ID/configuration problems, if any.
+5. Billing/purchase listener problems, if any.
+6. Verification/backend problems, if any.
+7. Android/Google Play configuration problems, if any.
+
+Then implement the fix.
+
+### Final Requirement
+
+Make the **smallest safe changes** necessary.
+
+Do not rewrite unrelated code.
+
+Do not change the existing UI.
+
+Do not remove working subscription functionality.
+
+After fixing, run/analyze the Flutter project and make sure there are no compilation errors, runtime errors, or BLoC lifecycle issues related to the subscription flow.
+
+Also provide a final **Google Play Console setup checklist** showing exactly what needs to be configured outside the Flutter code for the subscription to work.

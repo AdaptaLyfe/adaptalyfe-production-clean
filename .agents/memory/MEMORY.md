@@ -19,6 +19,7 @@
 - [Flutter native notifications](flutter-native-notifications.md) — platform delivery stays separate from server notification list/read state; no device-token route currently exists.
 - [Flutter navigation](flutter-navigation.md) — GoRouter guards auth while one app shell owns bottom navigation, More modules, drawer, and global logout.
 - [Flutter architecture](flutter-architecture.md) — migrated features use presentation → BLoC → repository → API → ApiClient, with shared current-user access.
+- [Flutter reward badges](flutter-reward-badges.md) — badge failures stay scoped to badges; preserve the rest of Rewards and distinguish an empty result from an error.
 - [Flutter medical mutations](flutter-medical-mutations.md) — Health Records mutations update only the affected collection; global post-mutation reloads can hide successful writes.
 - [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
 - [Flutter overlay safety](flutter-overlay-safety.md) — serialize feature overlays and use shell-scoped shared BLoCs to prevent duplicate modal routes and competing listeners.
@@ -28,6 +29,7 @@
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
 - [Resource collection safety](resource-collection-safety.md) — resource reads can resolve to null on API failure, so collection consumers must normalize before iteration.
 - [Emergency resource schema compatibility](emergency-resource-schema-compatibility.md) — old deployed tables may lack optional fields; preserve basic saves without discarding filled details.
+- [US contact phone policy](emergency-contact-phone-policy.md) — contact and local resource phone numbers must pass US numbering validation.
 - [Academic Planner mutations](academic-planner-mutations.md) — keep successful class creation visible from the mutation response instead of depending on an unrelated full-dashboard reload.
 - [Daily task schema compatibility](daily-task-schema-compatibility.md) — normalize PostgreSQL boolean capability results before selecting legacy versus current persistence paths.
 - [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.

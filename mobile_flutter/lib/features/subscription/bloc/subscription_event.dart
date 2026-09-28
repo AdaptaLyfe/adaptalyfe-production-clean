@@ -65,6 +65,11 @@ final class SubscriptionNavigationHandled extends SubscriptionEvent {
   const SubscriptionNavigationHandled();
 }
 
+final class SubscriptionAuthenticationRefreshHandled
+    extends SubscriptionEvent {
+  const SubscriptionAuthenticationRefreshHandled();
+}
+
 final class ManagementUrlHandled extends SubscriptionEvent {
   const ManagementUrlHandled();
 }

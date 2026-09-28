@@ -86,6 +86,52 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "./email-service";
 
+function logApiRouteError(route: string, error: unknown): void {
+  const errorFields =
+    typeof error === "object" && error !== null
+      ? (error as Record<string, unknown>)
+      : undefined;
+  const causeFields =
+    typeof errorFields?.cause === "object" && errorFields.cause !== null
+      ? (errorFields.cause as Record<string, unknown>)
+      : undefined;
+  const readString = (
+    fields: Record<string, unknown> | undefined,
+    key: string,
+  ): string | undefined =>
+    typeof fields?.[key] === "string" ? (fields[key] as string) : undefined;
+  const rawMessage = readString(errorFields, "message");
+  const causeMessage = readString(causeFields, "message");
+  const message =
+    causeMessage ||
+    (rawMessage && !/failed query:|params:/i.test(rawMessage)
+      ? rawMessage
+      : "Database/API request failed");
+
+  const details = {
+    name: readString(errorFields, "name"),
+    message,
+    databaseCode:
+      readString(errorFields, "code") || readString(causeFields, "code"),
+    table: readString(errorFields, "table") || readString(causeFields, "table"),
+    column:
+      readString(errorFields, "column") || readString(causeFields, "column"),
+    constraint:
+      readString(errorFields, "constraint") ||
+      readString(causeFields, "constraint"),
+    cause: causeFields
+      ? {
+          name: readString(causeFields, "name"),
+          databaseCode: readString(causeFields, "code"),
+        }
+      : undefined,
+    stack: error instanceof Error ? error.stack : readString(errorFields, "stack"),
+  };
+
+  // Deliberately omit request headers, session tokens, user data, and SQL values.
+  console.error(`[${route}] ${JSON.stringify(details)}`);
+}
+
 function isValidCalendarDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -215,7 +261,8 @@ async function verifyAndUpgradePassword(user: any, password: string): Promise<bo
 // Stripe instance is created dynamically when needed
 import { 
   insertDailyTaskSchema, insertBillSchema, insertBankAccountSchema, insertMoodEntrySchema, 
-  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema, insertMessageSchema,
+  insertAchievementSchema, insertCaregiverSchema, insertEmergencyContactSchema, updateEmergencyContactSchema,
+  insertPrimaryCareProviderSchema, updatePrimaryCareProviderSchema, insertMessageSchema,
   insertBudgetEntrySchema, insertSavingsGoalSchema, insertSavingsTransactionSchema, 
   insertBudgetCategorySchema, insertAppointmentSchema, insertMealPlanSchema,
   insertShoppingListSchema, updateShoppingItemPurchasedSchema, insertGroceryStoreSchema, loginSchema, registerSchema, insertPharmacySchema, insertUserPharmacySchema,
@@ -224,6 +271,7 @@ import {
   insertNotificationSchema, insertUserPreferencesSchema, insertUserAchievementSchema,
   insertStreakTrackingSchema, insertVoiceInteractionSchema, insertQuickResponseSchema,
   insertMessageReactionSchema, insertActivityPatternSchema, insertEmergencyResourceSchema,
+  updateEmergencyResourceSchema,
   insertTransitionSkillSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -884,19 +932,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
               });
             });
-            const { password, ...userResponse } = user;
-            await storage.refreshUserActivityStreak(
+            const streakDays = await storage.refreshUserActivityStreak(
               user.id,
               getCurrentCalendarDate(req),
               getActivityDateTimeZone(req),
             );
             const refreshedUser = await storage.getUserById(user.id);
-            if (refreshedUser) {
-              req.session.user = refreshedUser;
-              const { password: _, ...refreshedResponse } = refreshedUser;
-              return res.json(refreshedResponse);
-            }
-            return res.json(userResponse);
+            const responseUser = { ...(refreshedUser ?? user), streakDays };
+            req.session.user = responseUser;
+            const { password: _, ...refreshedResponse } = responseUser;
+            return res.json(refreshedResponse);
           }
         } catch (error) {
           console.error("Error rebuilding session:", error);
@@ -913,23 +958,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const freshUser = await storage.getUserById(sessionUser.id);
       if (freshUser) {
-        await storage.refreshUserActivityStreak(
+        const streakDays = await storage.refreshUserActivityStreak(
           freshUser.id,
           getCurrentCalendarDate(req),
           getActivityDateTimeZone(req),
         );
         const refreshedUser = await storage.getUserById(freshUser.id);
-        if (refreshedUser) {
-          req.session.user = refreshedUser;
-          const { password, ...userResponse } = refreshedUser;
-          return res.json(userResponse);
-        }
-        req.session.user = freshUser;
-        const { password, ...userResponse } = freshUser;
+        const responseUser = { ...(refreshedUser ?? freshUser), streakDays };
+        req.session.user = responseUser;
+        const { password, ...userResponse } = responseUser;
         return res.json(userResponse);
       }
     } catch (error) {
-      console.error("Error fetching fresh user data:", error);
+      console.error("Error refreshing current user data and activity streak:", error);
+      return res.status(503).json({
+        message: "Unable to refresh current user data. Please try again.",
+      });
     }
     
     // Fallback to session data
@@ -1008,7 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notifications = await storage.getNotificationsByUser(user.id);
       res.json(notifications);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      logApiRouteError("/api/notifications", error);
       res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
@@ -2699,6 +2743,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency resources routes
+  function getEmergencyResourceDatabaseFailure(error: unknown):
+    | { status: number; message: string; code: string }
+    | undefined {
+    let current: unknown = error;
+
+    for (let depth = 0; depth < 5 && current && typeof current === "object"; depth += 1) {
+      const cause = current as { code?: unknown; cause?: unknown };
+      switch (cause.code) {
+        case "42P01":
+          return {
+            status: 503,
+            message: "The emergency resources table is missing from this database and must be created before resources can be saved.",
+            code: "RESOURCE_TABLE_SETUP_REQUIRED",
+          };
+        case "42703":
+        case "23502":
+          return {
+            status: 503,
+            message: "The emergency resources database is missing a required field and its schema must be updated before resources can be saved.",
+            code: "RESOURCE_SCHEMA_UPDATE_REQUIRED",
+          };
+        case "23503":
+          return {
+            status: 409,
+            message: "This resource could not be linked to the signed-in account. Please sign out and sign back in, then try again.",
+            code: "RESOURCE_ACCOUNT_REFERENCE_ERROR",
+          };
+      }
+      current = cause.cause;
+    }
+
+    return undefined;
+  }
+
   app.get("/api/emergency-resources", requireAuth, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2723,8 +2801,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       if (error instanceof z.ZodError) {
         return res.status(400).json({
-          message: "Please provide a resource name and type.",
+          message: error.issues[0]?.message ?? "Invalid emergency resource data.",
           errors: error.flatten().fieldErrors,
+        });
+      }
+      const databaseFailure = getEmergencyResourceDatabaseFailure(error);
+      if (databaseFailure) {
+        return res.status(databaseFailure.status).json({
+          message: databaseFailure.message,
+          code: databaseFailure.code,
         });
       }
       res.status(500).json({ message: "Failed to create emergency resource" });
@@ -2741,8 +2826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Emergency resource not found" });
       }
 
-      const updates = { ...req.body };
-      delete updates.userId;
+      const updates = updateEmergencyResourceSchema.parse(req.body);
       const resource = await storage.updateEmergencyResource(resourceId, updates);
       
       if (!resource) {
@@ -2754,6 +2838,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error updating emergency resource:", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
+      }
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: error.issues[0]?.message ?? "Invalid emergency resource data.",
+          errors: error.flatten().fieldErrors,
+        });
       }
       res.status(500).json({ message: "Failed to update emergency resource" });
     }
@@ -4172,11 +4262,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/primary-care-providers", async (req, res) => {
     try {
       const userId = 1; // Hardcoded for demo
-      const providerData = { ...req.body, userId };
+      const providerData = insertPrimaryCareProviderSchema.parse({ ...req.body, userId });
       const provider = await storage.createPrimaryCareProvider(providerData);
       res.status(201).json(provider);
     } catch (error) {
       console.error("Error creating primary care provider:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
+      }
       res.status(500).json({ message: "Failed to create primary care provider" });
     }
   });
@@ -4184,10 +4277,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/primary-care-providers/:id", async (req, res) => {
     try {
       const providerId = parseInt(req.params.id);
-      const provider = await storage.updatePrimaryCareProvider(providerId, req.body);
+      const updates = updatePrimaryCareProviderSchema.parse(req.body);
+      const provider = await storage.updatePrimaryCareProvider(providerId, updates);
       res.json(provider);
     } catch (error) {
       console.error("Error updating primary care provider:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
+      }
       res.status(500).json({ message: "Failed to update primary care provider" });
     }
   });
@@ -6770,14 +6867,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/rewards/badges", async (req: any, res) => {
     try {
-      if (!req.session.userId || !req.session.user) {
+      const userId = req.session?.userId;
+      if (!userId) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const badges = await storage.getRewardBadges(req.session.user.id);
+      let user = req.session.user;
+      if (!user || String(user.id) !== String(userId)) {
+        user = await storage.getUserById(userId);
+        if (!user) {
+          return res.status(401).json({ message: "Authentication required" });
+        }
+        req.session.user = user;
+      }
+
+      const badges = await storage.getRewardBadges(user.id);
       res.json(badges);
     } catch (error) {
-      console.error("Error fetching reward badges:", error);
+      logApiRouteError("/api/rewards/badges", error);
       res.status(500).json({ message: "Failed to fetch reward badges" });
     }
   });

@@ -2745,3 +2745,171 @@ mtime_ms = 1790404033237
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/85dbb39e-5996-4265-83ca-3b02384caeaf/1c8de09c-e97d-45fc-a870-1f601d5452c8"
 storage_version_token = "1790404041581365"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "PILXSKmRLryj4LfAozq8T"
+uri = "file://outputs/rewards-badges-fix.zip"
+type = "unspecified"
+title = "Rewards badges fix — changed files"
+description = "ZIP containing only the five changed server, Flutter, and test files for the Rewards badges fix."
+logical_id = "e86a7206-0d9e-4af4-bac2-856176fbce7d"
+content_hash = "sha256:7c29da655a3a97bbc2c4007c87bbb59c655c7a41b35c759a9c52619a0a7f3f47"
+size = 66215
+mtime_ms = 1790410506865
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/e86a7206-0d9e-4af4-bac2-856176fbce7d/50c0f11c-6b46-4a8e-9b1b-4ccb9b6e1f41"
+storage_version_token = "1790410510668721"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xKYaeb5yhcKpd6yEGUFSZ"
+uri = "file://outputs/rewards-badges-screen-fix.zip"
+type = "unspecified"
+title = "Rewards badges screen fix — changed file"
+description = "ZIP containing only the Rewards badges screen file changed in this pass."
+logical_id = "2028d846-31dc-4e12-b28c-e92ce7a609e9"
+content_hash = "sha256:bf83fa56826d8d97237181495b977fb52490b5fa18170a834d8a087b4fb698f5"
+size = 10449
+mtime_ms = 1790411217425
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2028d846-31dc-4e12-b28c-e92ce7a609e9/8127360f-ec34-41c9-9bdc-39854a81b02f"
+storage_version_token = "1790411238066805"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "voDVIMlcgW8B1Vz1N7F2f"
+uri = "file://outputs/assignment-estimated-hours-migration-package.zip"
+type = "unspecified"
+title = "Assignment estimated-hours migration package"
+description = "Contains the existing migration and guarded runner to make the database column decimal-capable."
+logical_id = "32735a4d-0260-4260-9c45-0a773ac3050d"
+content_hash = "sha256:41b6e2a6f626eeca08c271c54215b57d54045f02c1b261c8322fd650e035646c"
+size = 1573
+mtime_ms = 1790412176961
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/32735a4d-0260-4260-9c45-0a773ac3050d/16798752-5345-4343-b500-5c13bdd3b492"
+storage_version_token = "1790412180908201"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "QmvRkRbj5qItBknm2bpHQ"
+uri = "file://outputs/assignment-estimated-hours-flutter-files.zip"
+type = "unspecified"
+title = "Flutter assignment-hours files"
+description = "Flutter-only bundle of the assignment form, model/serialization, and validation test. No Flutter source was changed because the decimal flow is already implemented."
+logical_id = "30db6013-4509-4db4-82b4-73bd77fff7b6"
+content_hash = "sha256:2313488742d88e2da2604ecd7bd4f49d77e0637f645632c5fe1d5cd500e2e958"
+size = 19266
+mtime_ms = 1790412448341
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/30db6013-4509-4db4-82b4-73bd77fff7b6/a71911f5-4024-42c1-ae16-c6307c38a59c"
+storage_version_token = "1790412990328646"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "9WOd_DCaWybNcHB0ur8pR"
+uri = "file://deliverables/current-streak-changed-files.zip"
+type = "unspecified"
+title = "Current streak fix — changed files"
+description = "ZIP contains the changed file server/routes.ts."
+logical_id = "d4b6eb6b-14ef-481a-9333-d2147a269928"
+content_hash = "sha256:c1e0e49bc7990719c623f1f6e403886f5bd0ce69c051a6484495a2589acb46c1"
+size = 49306
+mtime_ms = 1790414138976
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d4b6eb6b-14ef-481a-9333-d2147a269928/a4d38377-2db0-48a9-9144-70d49b019c63"
+storage_version_token = "1790414170627494"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IfwtQsZOTde699yhqPbJx"
+uri = "file://deliverables/flutter-assignment-flow-reference.zip"
+type = "unspecified"
+title = "Flutter assignment flow reference ZIP"
+description = "Flutter-only archive of the relevant assignment form, model, BLoC, repository, API, and existing decimal-hours test. These files are unchanged; no Flutter source file was modified."
+logical_id = "c20d4f15-8777-4c9a-8145-11c0af48695b"
+content_hash = "sha256:054193b27bd0f44703721938bc63888d5ab368a2200544ebabc079fd0e0d0959"
+size = 23292
+mtime_ms = 1790417837349
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c20d4f15-8777-4c9a-8145-11c0af48695b/208730bd-6cbf-4918-adde-a0ad478b456c"
+storage_version_token = "1790417842994012"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "IL6RQ2kSMwXEtaww07hc4"
+uri = "file://deliverables/flutter-subscription-refresh-changes.zip"
+type = "unspecified"
+title = "Flutter subscription changes ZIP"
+description = "Contains only the Flutter subscription BLoC, state/event, screen, and focused regression test changed for app-wide entitlement refresh after verified purchases and restore."
+logical_id = "a5e774bd-fdb7-46a0-a9b9-e8e7db373228"
+content_hash = "sha256:1bbaf5efe0887e043300a475b1cfbd0011fddc21c0bb3e3ea83a8c21a616c2e2"
+size = 14695
+mtime_ms = 1790418990937
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a5e774bd-fdb7-46a0-a9b9-e8e7db373228/3b56dcbd-d48f-4220-a761-def2909f8d61"
+storage_version_token = "1790419001199313"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xZW_iNB0Z1qXIILkZf03b"
+uri = "file://deliverables/academic-assignment-decimal-fix.zip"
+type = "unspecified"
+title = "Assignment decimal-hours fix ZIP"
+description = "Contains the Flutter assignment create/update path, decimal validation and serialization, server/API support, regression tests, and the existing database migration runner."
+logical_id = "f6c422bf-91ba-4978-9aec-7899250795bd"
+content_hash = "sha256:4d9edae5acd89c6ab8ffaa74953888e77bf317be3f1c114e526e6ec0c69000e8"
+size = 127498
+mtime_ms = 1790424532066
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f6c422bf-91ba-4978-9aec-7899250795bd/35fbaf5a-eabe-47c1-9e73-982f0866b8cd"
+storage_version_token = "1790424537306100"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "-l00BrFcVU1jzV8y6EaBn"
+uri = "file://exports/google-play-subscription-fix.zip"
+type = "unspecified"
+title = "Google Play subscription fix ZIP"
+description = "Contains the changed Flutter purchase service at its original project path."
+logical_id = "a4521f35-8134-4e06-83e3-9d5ef9b7d47a"
+content_hash = "sha256:716d0fc78600735d771329e4fc2cbdf892daa1428355e20313329bfdd3fa8085"
+size = 1627
+mtime_ms = 1790430862863
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a4521f35-8134-4e06-83e3-9d5ef9b7d47a/5f6f47cd-56ee-4404-903f-b9699d75d4cf"
+storage_version_token = "1790430866077761"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wn9O1CUNRnRugGOSPXg2-"
+uri = "file://exports/adaptalyfe-flutter-rewards-points.zip"
+type = "unspecified"
+title = "Flutter Rewards and Points source ZIP"
+description = "Focused bundle of the Flutter Rewards and Daily Tasks Dart classes, route registration, and shared helpers."
+logical_id = "d9f51f03-cb81-487f-b723-1e6c77727ea2"
+content_hash = "sha256:d8d76eafdf6ce995625126857202cc36d043bad704b1681fd1e4c8a9f2cfbfb5"
+size = 41939
+mtime_ms = 1790586726687
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d9f51f03-cb81-487f-b723-1e6c77727ea2/ef43b415-4299-4ee0-9395-32b6b06ecd60"
+storage_version_token = "1790586732145635"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "zltUL4TjxKbJoAX_paPjH"
+uri = "file://exports/flutter-rewards-badges-screen-fix.zip"
+type = "unspecified"
+title = "Flutter Badges screen fix"
+description = "ZIP containing the updated Rewards screen Dart file and a short readme."
+logical_id = "0898cc97-0513-4a2a-ac04-ce0c3ff8aac8"
+content_hash = "sha256:7909d8030cba99c10115ae53372d9853175e896913c40a6f3c90ba9c3bc5ffe7"
+size = 11419
+mtime_ms = 1790588994399
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/0898cc97-0513-4a2a-ac04-ce0c3ff8aac8/5178bc74-56e8-4515-84e8-4cf754bdf907"
+storage_version_token = "1790589006461653"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "nyTHg-iuHBkjZXZr0_26y"
+uri = "file://exports/flutter-rewards-badges-data-fix.zip"
+type = "unspecified"
+title = "Flutter Rewards badges data fix"
+description = "Latest ZIP with Flutter pointed at the React/Capacitor API host, safe badge-request diagnostics, current screen source, and build notes."
+logical_id = "86675b3b-ff40-4fc4-ab9b-d64b8d0a527d"
+content_hash = "sha256:b4adbe96f88fd8ba75046bd2d58fa318cbbf39024d81fe39b9b4bf2c1006d33a"
+size = 17720
+mtime_ms = 1790591516099
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86675b3b-ff40-4fc4-ab9b-d64b8d0a527d/4a1bae8d-1a33-47f4-b536-c2f0185a52b4"
+storage_version_token = "1790591540002562"
+content_type = "application/octet-stream"

@@ -108,6 +108,40 @@ html, body {
   outline-offset: 2px;
 }
 
+/* Give Add Class its own consistent, clearly visible field treatment. */
+.academic-class-form {
+  scrollbar-gutter: stable;
+}
+
+.academic-class-label {
+  display: block;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.academic-class-form input,
+.academic-class-form [role="combobox"] {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 2.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.academic-class-form input:focus,
+.academic-class-form [role="combobox"]:focus,
+.academic-class-form [role="combobox"][data-state="open"] {
+  border-color: #059669;
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(5 150 105 / 16%);
+}
+
 /* Android-native header styling */
 .android-header {
   padding-top: max(env(safe-area-inset-top, 0px), var(--android-status-bar-height, 24px));

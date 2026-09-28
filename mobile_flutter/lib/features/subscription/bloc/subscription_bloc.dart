@@ -33,6 +33,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<RecoverSubscriptionRequested>(_recover);
     on<ManageSubscriptionRequested>(_manage);
     on<SubscriptionNavigationHandled>(_clearDashboardNavigation);
+    on<SubscriptionAuthenticationRefreshHandled>(
+      _clearAuthenticationRefresh,
+    );
     on<ManagementUrlHandled>(_clearManagementUrl);
     on<PurchaseUpdatesReceived>(_handlePurchases);
     _purchaseSubscription = purchaseService.purchaseStream.listen(
@@ -550,6 +553,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(state.copyWith(shouldNavigateToDashboard: false));
   }
 
+  void _clearAuthenticationRefresh(
+    SubscriptionAuthenticationRefreshHandled event,
+    Emitter<SubscriptionState> emit,
+  ) {
+    if (!state.shouldRefreshAuthentication) return;
+    emit(state.copyWith(shouldRefreshAuthentication: false));
+  }
+
   Future<void> _handlePurchases(
     PurchaseUpdatesReceived event,
     Emitter<SubscriptionState> emit,
@@ -727,6 +738,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Your previous subscription was restored.',
+          shouldRefreshAuthentication: true,
         ),
       );
     } on ApiException catch (error) {
@@ -839,6 +851,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: null,
           actionMessage: 'Your subscription is now active.',
           shouldNavigateToDashboard: true,
+          shouldRefreshAuthentication: true,
         ),
       );
     } on ApiException catch (error) {

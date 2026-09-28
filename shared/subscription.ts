@@ -1,1 +1,1 @@
-export const FREE_TRIAL_DAYS = 1;
+export const FREE_TRIAL_DAYS = 7;
