@@ -178,10 +178,19 @@ class ApiClient {
     T Function(dynamic data)? parser,
   }) async {
     final isLifeSkillsRequest = path.startsWith('/api/transition-skills');
+    final isRewardBadgesRequest = path == '/api/rewards/badges';
     final isEmergencyResourceRequest =
         path == '/api/emergency-resources' ||
         path.startsWith('/api/emergency-resources/');
     final requestHeaders = await _requestHeaders();
+    if (isRewardBadgesRequest && kDebugMode) {
+      debugPrint(
+        '[Rewards][ApiClient] request method=$method '
+        'origin=${_safeRequestOrigin(_dio.options.baseUrl)} '
+        'path=$path '
+        'hasBearerToken=${requestHeaders.containsKey('Authorization')}',
+      );
+    }
     if (isLifeSkillsRequest) {
       _logLifeSkillsApi(
         'request method=$method path=$path '
@@ -211,6 +220,12 @@ class ApiClient {
       );
 
       final statusCode = response.statusCode;
+      if (isRewardBadgesRequest && kDebugMode) {
+        debugPrint(
+          '[Rewards][ApiClient] response path=$path '
+          'status=${statusCode ?? 'unknown'}',
+        );
+      }
       if (isEmergencyResourceRequest) {
         _logEmergencyResourceApi(
           'response method=$method path=$path '
