@@ -86,6 +86,52 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "./email-service";
 
+function logApiRouteError(route: string, error: unknown): void {
+  const errorFields =
+    typeof error === "object" && error !== null
+      ? (error as Record<string, unknown>)
+      : undefined;
+  const causeFields =
+    typeof errorFields?.cause === "object" && errorFields.cause !== null
+      ? (errorFields.cause as Record<string, unknown>)
+      : undefined;
+  const readString = (
+    fields: Record<string, unknown> | undefined,
+    key: string,
+  ): string | undefined =>
+    typeof fields?.[key] === "string" ? (fields[key] as string) : undefined;
+  const rawMessage = readString(errorFields, "message");
+  const causeMessage = readString(causeFields, "message");
+  const message =
+    causeMessage ||
+    (rawMessage && !/failed query:|params:/i.test(rawMessage)
+      ? rawMessage
+      : "Database/API request failed");
+
+  const details = {
+    name: readString(errorFields, "name"),
+    message,
+    databaseCode:
+      readString(errorFields, "code") || readString(causeFields, "code"),
+    table: readString(errorFields, "table") || readString(causeFields, "table"),
+    column:
+      readString(errorFields, "column") || readString(causeFields, "column"),
+    constraint:
+      readString(errorFields, "constraint") ||
+      readString(causeFields, "constraint"),
+    cause: causeFields
+      ? {
+          name: readString(causeFields, "name"),
+          databaseCode: readString(causeFields, "code"),
+        }
+      : undefined,
+    stack: error instanceof Error ? error.stack : readString(errorFields, "stack"),
+  };
+
+  // Deliberately omit request headers, session tokens, user data, and SQL values.
+  console.error(`[${route}] ${JSON.stringify(details)}`);
+}
+
 function isValidCalendarDate(value: unknown): value is string {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00.000Z`);
@@ -1006,7 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notifications = await storage.getNotificationsByUser(user.id);
       res.json(notifications);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      logApiRouteError("/api/notifications", error);
       res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
@@ -6838,7 +6884,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const badges = await storage.getRewardBadges(user.id);
       res.json(badges);
     } catch (error) {
-      console.error("Error fetching reward badges:", error);
+      logApiRouteError("/api/rewards/badges", error);
       res.status(500).json({ message: "Failed to fetch reward badges" });
     }
   });

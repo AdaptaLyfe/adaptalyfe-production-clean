@@ -60,6 +60,12 @@ The deployed database can also lag behind the shared schema; broad ORM selects a
 
 **How to apply:** Prefer capability-aware reads for transitional deployments, log the underlying exception, and still synchronize the deployed schema through the supported deployment migration flow.
 
+Railway's structured logs can show an empty message when `console.error(label, error)` receives an Error object as a separate argument.
+
+**Why:** The stack was visible in the log, but the database exception message was missing.
+
+**How to apply:** Emit one serialized log entry with sanitized error message, SQLSTATE, table/column/constraint, and stack fields; omit SQL parameters, request headers, and user data.
+
 Avoid unqualified ORM `returning()` calls while supporting a legacy table shape. Even when an update only writes old columns, `returning()` can implicitly select every modeled column and fail on a deployed database that lacks a newer column.
 
 **Why:** Daily-task completion fallback still returned HTTP 500 because its update implicitly requested the missing creation-date column.
