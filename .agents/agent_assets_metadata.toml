@@ -2871,3 +2871,17 @@ mtime_ms = 1790430862863
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a4521f35-8134-4e06-83e3-9d5ef9b7d47a/5f6f47cd-56ee-4404-903f-b9699d75d4cf"
 storage_version_token = "1790430866077761"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "wn9O1CUNRnRugGOSPXg2-"
+uri = "file://exports/adaptalyfe-flutter-rewards-points.zip"
+type = "unspecified"
+title = "Flutter Rewards and Points source ZIP"
+description = "Focused bundle of the Flutter Rewards and Daily Tasks Dart classes, route registration, and shared helpers."
+logical_id = "d9f51f03-cb81-487f-b723-1e6c77727ea2"
+content_hash = "sha256:d8d76eafdf6ce995625126857202cc36d043bad704b1681fd1e4c8a9f2cfbfb5"
+size = 41939
+mtime_ms = 1790586726687
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d9f51f03-cb81-487f-b723-1e6c77727ea2/ef43b415-4299-4ee0-9395-32b6b06ecd60"
+storage_version_token = "1790586732145635"
+content_type = "application/octet-stream"
