@@ -745,8 +745,12 @@ class _BadgeInstructions extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Earn reward points, redeem rewards, or complete skill milestones. '
-              'Badges unlock automatically when you reach their requirement.',
+              'Badges unlock automatically as you make progress:\n'
+              '• Redeem 1 reward: First Reward\n'
+              '• Redeem 5 rewards: Reward Collector\n'
+              '• Earn 100 lifetime points: Point Starter\n'
+              '• Earn 500 lifetime points: Point Master\n'
+              '• Complete 1 skill milestone: Milestone Achiever',
               style: TextStyle(
                 color: Color(0xFF4B5563),
                 fontSize: 13,

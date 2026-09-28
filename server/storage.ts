@@ -2704,6 +2704,7 @@ export class DatabaseStorage implements IStorage {
       transactionEarnings,
       skillRows,
       legacyAchievements,
+      badgePersistenceSchema,
     ] = await Promise.all([
       this.getExistingUserPointsBalance(userId),
       db
@@ -2749,7 +2750,41 @@ export class DatabaseStorage implements IStorage {
         .from(achievements)
         .where(eq(achievements.userId, userId))
         .orderBy(desc(achievements.earnedAt)),
+      db.execute(sql`
+        SELECT
+          EXISTS (
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_name = 'user_achievements'
+          ) AS has_table,
+          COUNT(*) FILTER (
+            WHERE column_name IN (
+              'id',
+              'user_id',
+              'achievement_type',
+              'title',
+              'description',
+              'icon_name',
+              'earned_at',
+              'category',
+              'points',
+              'level'
+            )
+          ) = 10 AS has_required_columns
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'user_achievements'
+      `),
     ]);
+
+    const badgePersistenceRow = badgePersistenceSchema.rows[0] as {
+      has_table?: unknown;
+      has_required_columns?: unknown;
+    } | undefined;
+    const canPersistBadges =
+      schemaCapabilityIsTrue(badgePersistenceRow?.has_table) &&
+      schemaCapabilityIsTrue(badgePersistenceRow?.has_required_columns);
 
     const stats = {
       lifetimeEarned: resolveLifetimeEarned(
@@ -2763,49 +2798,55 @@ export class DatabaseStorage implements IStorage {
     const storedByType = new Map<string, UserAchievement>();
     let storedAchievements: UserAchievement[] = [];
 
-    await db.transaction(async (tx) => {
-      // Serialize award checks for this user so overlapping badge requests
-      // cannot both insert the same earned badge.
-      await tx.execute(
-        sql`SELECT pg_advisory_xact_lock(
-          ${userId},
-          hashtext('adaptalyfe_reward_badge_awards')
-        )`,
-      );
+    if (canPersistBadges) {
+      await db.transaction(async (tx) => {
+        // Serialize award checks for this user so overlapping badge requests
+        // cannot both insert the same earned badge.
+        await tx.execute(
+          sql`SELECT pg_advisory_xact_lock(
+            ${userId},
+            hashtext('adaptalyfe_reward_badge_awards')
+          )`,
+        );
 
-      storedAchievements = await tx
-        .select()
-        .from(userAchievements)
-        .where(eq(userAchievements.userId, userId))
-        .orderBy(desc(userAchievements.earnedAt));
+        storedAchievements = await tx
+          .select()
+          .from(userAchievements)
+          .where(eq(userAchievements.userId, userId))
+          .orderBy(desc(userAchievements.earnedAt));
 
-      for (const achievement of storedAchievements) {
-        if (!storedByType.has(achievement.achievementType)) {
-          storedByType.set(achievement.achievementType, achievement);
+        for (const achievement of storedAchievements) {
+          if (!storedByType.has(achievement.achievementType)) {
+            storedByType.set(achievement.achievementType, achievement);
+          }
         }
-      }
 
-      const newlyEarnedBadges = newlyEarnedRewardBadges(
-        evaluations,
-        new Set(storedByType.keys()),
+        const newlyEarnedBadges = newlyEarnedRewardBadges(
+          evaluations,
+          new Set(storedByType.keys()),
+        );
+        for (const badge of newlyEarnedBadges) {
+          const [created] = await tx
+            .insert(userAchievements)
+            .values({
+              userId,
+              achievementType: badge.type,
+              title: badge.title,
+              description: badge.description,
+              iconName: badge.iconName,
+              category: badge.category,
+              points: badge.points,
+              level: 1,
+            })
+            .returning();
+          if (created) storedByType.set(badge.type, created);
+        }
+      });
+    } else {
+      console.warn(
+        "Reward badge persistence schema is unavailable; returning computed badge progress without saved award timestamps.",
       );
-      for (const badge of newlyEarnedBadges) {
-        const [created] = await tx
-          .insert(userAchievements)
-          .values({
-            userId,
-            achievementType: badge.type,
-            title: badge.title,
-            description: badge.description,
-            iconName: badge.iconName,
-            category: badge.category,
-            points: badge.points,
-            level: 1,
-          })
-          .returning();
-        if (created) storedByType.set(badge.type, created);
-      }
-    });
+    }
 
     const badges: RewardBadgeView[] = evaluations.map((badge, index) => {
       const stored = storedByType.get(badge.type);
