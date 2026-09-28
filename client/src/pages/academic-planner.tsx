@@ -868,7 +868,7 @@ export default function AcademicPlanner() {
                       <SelectTrigger>
                         <SelectValue placeholder="Assignment type" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[130]">
                         <SelectItem value="homework">Homework</SelectItem>
                         <SelectItem value="project">Project</SelectItem>
                         <SelectItem value="exam">Exam</SelectItem>
@@ -890,7 +890,7 @@ export default function AcademicPlanner() {
                       <SelectTrigger>
                         <SelectValue placeholder="Priority" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[130]">
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
