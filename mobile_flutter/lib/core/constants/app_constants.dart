@@ -2,7 +2,7 @@ abstract final class AppConstants {
   static const appName = 'Adaptalyfe';
   static const apiBaseUrl = String.fromEnvironment(
     'ADAPTALYFE_API_BASE_URL',
-    defaultValue: 'https://app.adaptalyfeapp.com/',
+    defaultValue: 'https://app.getadaptalyfeapp.com/',
   );
   static const sessionTokenKey = 'adaptalyfe_session_token';
   static const stripePublishableKey = String.fromEnvironment(

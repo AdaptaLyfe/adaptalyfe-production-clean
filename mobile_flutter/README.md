@@ -82,8 +82,8 @@ wallet token. The existing backend `/api/create-subscription` and
 `/api/confirm-subscription` routes create and verify the recurring Stripe
 subscription.
 
-The default API host is the published app, matching the React web/Capacitor
-wrapper. Run against production with:
+The default API host is `https://app.getadaptalyfeapp.com/`, matching the
+React/Capacitor wrapper and production API. Run against production with:
 
 ```bash
 flutter pub get
