@@ -254,8 +254,9 @@ abstract final class AssignmentHours {
   }
 
   static double? parse(String? value) {
-    if (validationMessage(value) != null) return null;
-    return double.parse(value!.trim());
+    final text = value?.trim() ?? '';
+    if (validationMessage(text) != null) return null;
+    return double.tryParse(text);
   }
 
   static double validate(double value) {
