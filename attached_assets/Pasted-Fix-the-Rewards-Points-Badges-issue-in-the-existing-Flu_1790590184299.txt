@@ -1,0 +1,213 @@
+Fix the **Rewards & Points → Badges** issue in the existing Flutter application.
+
+### Current Issue
+
+When the user opens:
+
+**Rewards & Points → Badges**
+
+the badges are not displayed.
+
+Instead, the screen shows:
+
+> **Badges could not be loaded**
+> The badge service is temporarily unavailable. Try again.
+
+The goal is to find and fix the actual root cause instead of hiding the error.
+
+### Required Fix
+
+Investigate the complete Badges data flow:
+
+**Badges Screen → BLoC/State Management → Repository/Service → API/Firebase/Backend → Badge Model → UI**
+
+Find why badge data is failing to load.
+
+Check for:
+
+* Incorrect API endpoint
+* Incorrect request parameters
+* Authentication/token issue
+* 401/403 errors
+* Incorrect response parsing
+* Badge model mismatch
+* Null or missing fields
+* Incorrect JSON keys
+* Empty response handling
+* Repository/service exceptions
+* Incorrect BLoC event/state handling
+* Incorrect Firebase query, if Firebase is used
+* Network/request configuration
+* Backend response format changes
+* Pagination issues, if badges use pagination
+
+### Important
+
+Do NOT simply replace the error message or add fake/static badges.
+
+Use the **real badge data source already used by the application**.
+
+Do not create dummy badge data unless the existing project explicitly uses mock data for development.
+
+### Inspect Existing Code First
+
+Before making changes, locate and inspect:
+
+* Badges screen/page
+* Badge model
+* Badge BLoC/Cubit/Provider
+* Badge events and states
+* Badge repository
+* Badge service/API client
+* API response models
+* Authentication/token handling
+* Rewards & Points navigation
+* Any existing badge-related endpoints or Firebase collections
+
+Follow the existing project architecture and state-management pattern.
+
+Do not introduce a completely new architecture.
+
+### Error Handling
+
+Improve error handling so the actual root cause can be identified during development.
+
+For example, log useful information such as:
+
+* HTTP status code
+* API response body
+* Request endpoint
+* Parsing exception
+* Authentication error
+* Repository/service exception
+
+Do not expose sensitive tokens or credentials in logs.
+
+### UI Requirements
+
+After fixing the data issue:
+
+* Open **Rewards & Points → Badges**.
+* Fetch the real badge data.
+* Display all available badges correctly.
+* Show badge name.
+* Show badge description/details if available.
+* Show badge icon/image if available.
+* Show earned/unearned status if supported by the existing API.
+* Preserve the existing UI design.
+* Preserve existing badge sorting/filtering behavior.
+
+### Loading State
+
+Make sure the screen correctly handles:
+
+1. Loading
+2. Successful badge response
+3. Empty badge response
+4. API/network failure
+
+If the API returns an empty list, show an appropriate empty state instead of:
+
+> "Badge service is temporarily unavailable."
+
+Only show the service-unavailable error when an actual service/request failure occurs.
+
+### Retry
+
+If the existing screen has a retry option:
+
+* Retry the actual badge request.
+* Do not require the user to restart the app.
+* Make sure the BLoC/Cubit state resets correctly before retrying.
+
+### Authentication
+
+Verify that the currently logged-in user's authentication token/user ID is correctly passed to the badge service.
+
+Do not bypass authentication or security checks.
+
+### Final Testing
+
+Test all of these cases:
+
+#### Test 1 — Normal
+
+Open:
+
+**Rewards & Points → Badges**
+
+Expected:
+
+* Badges load successfully.
+* All available badge data is displayed.
+
+#### Test 2 — Multiple badges
+
+Verify that the screen does not display only the first badge.
+
+Expected:
+
+* All badges returned by the backend are displayed.
+
+#### Test 3 — Empty response
+
+If the backend returns no badges:
+
+* Show a proper empty state.
+* Do not show "service temporarily unavailable."
+
+#### Test 4 — Network failure
+
+Disconnect the network and open Badges.
+
+Expected:
+
+* Proper error state.
+* Retry works after the network is restored.
+
+#### Test 5 — Reopen
+
+Navigate:
+
+**Rewards & Points → Badges → Back → Badges**
+
+Expected:
+
+* Badges continue to load correctly.
+* No stale or broken state.
+
+#### Test 6 — App restart
+
+Restart the app and open Badges again.
+
+Expected:
+
+* Badge data loads correctly using the existing backend/data source.
+
+### Important Restrictions
+
+Do NOT:
+
+* Add fake badges.
+* Hardcode badge data.
+* Remove the error handling.
+* Hide the error with `try/catch` without fixing the cause.
+* Add arbitrary delays.
+* Change unrelated Rewards features.
+* Change the existing UI unnecessarily.
+* Replace the existing architecture.
+* Break other Rewards & Points screens.
+
+### Final Response
+
+After fixing the issue, tell me:
+
+1. **Root cause**
+2. **Files changed**
+3. **What was fixed**
+4. **API/Firebase issue, if any**
+5. **How badge data now flows**
+6. **Testing performed**
+7. Any remaining backend issue that cannot be fixed from Flutter
+
+Make the **smallest safe production-ready fix** while preserving the existing application behavior.
