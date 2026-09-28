@@ -530,7 +530,7 @@ export default function Financial() {
                                           <SelectValue placeholder="Select entry type" />
                                         </SelectTrigger>
                                       </FormControl>
-                                      <SelectContent>
+                                      <SelectContent className="z-[130]">
                                         <SelectItem value="income">Income</SelectItem>
                                         <SelectItem value="expense">Expense</SelectItem>
                                       </SelectContent>
@@ -575,7 +575,7 @@ export default function Financial() {
                                           <SelectTrigger className="h-11 w-28 shrink-0" aria-label="Choose a predefined amount">
                                             <SelectValue placeholder="Presets" />
                                           </SelectTrigger>
-                                          <SelectContent className="max-h-60">
+                                          <SelectContent className="z-[130] max-h-60">
                                             {budgetAmountPresets.map(amount => (
                                               <SelectItem key={amount} value={amount}>
                                                 {amount}
@@ -1048,7 +1048,7 @@ export default function Financial() {
                                       <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
                                   </FormControl>
-                                  <SelectContent>
+                                  <SelectContent className="z-[130]">
                                     <SelectItem value="low">Low</SelectItem>
                                     <SelectItem value="medium">Medium</SelectItem>
                                     <SelectItem value="high">High</SelectItem>
@@ -1180,7 +1180,7 @@ export default function Financial() {
                                       <SelectValue placeholder="Select category type" />
                                     </SelectTrigger>
                                   </FormControl>
-                                  <SelectContent>
+                                  <SelectContent className="z-[130]">
                                     <SelectItem value="income">Income</SelectItem>
                                     <SelectItem value="expense">Expense</SelectItem>
                                   </SelectContent>
@@ -1335,7 +1335,7 @@ export default function Financial() {
                                       <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                   </FormControl>
-                                  <SelectContent>
+                                  <SelectContent className="z-[130]">
                                     <SelectItem value="checking">Checking</SelectItem>
                                     <SelectItem value="savings">Savings</SelectItem>
                                     <SelectItem value="credit">Credit Card</SelectItem>
