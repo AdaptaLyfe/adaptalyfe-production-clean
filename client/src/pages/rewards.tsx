@@ -605,7 +605,7 @@ export default function RewardsPage() {
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="z-[130]">
                               {REWARD_CATEGORIES.map((category) => (
                                 <SelectItem key={category.value} value={category.value}>
                                   {category.label}
@@ -631,7 +631,7 @@ export default function RewardsPage() {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             {REWARD_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
                                 {type.label}

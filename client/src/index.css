@@ -36,7 +36,15 @@ html, body {
 .academic-planner-form,
 .reward-create-form {
   padding-top: 1px;
+}
+
+.academic-planner-form {
   padding-left: 1px;
+}
+
+.reward-create-form {
+  /* Leave room for the focused outline so the control's left edge stays visible. */
+  padding-left: 4px;
 }
 
 /* Keep the Create New Reward controls' left borders visible while focused/open. */
