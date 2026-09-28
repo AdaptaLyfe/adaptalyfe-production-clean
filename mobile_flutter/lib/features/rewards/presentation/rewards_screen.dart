@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/app_route_observer.dart';
 import '../../auth/bloc/auth_bloc.dart';
@@ -268,6 +269,57 @@ class _RewardsTab extends StatelessWidget {
           const Text(
             'Earn points and redeem rewards created for you.',
             style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            color: const Color(0xFFEFF6FF),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.bolt_rounded,
+                        color: Color(0xFF2563EB),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'How to earn points',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Complete a Daily Task that shows points. Mark it complete '
+                    'to add those points to your balance. Tasks worth 0 points '
+                    'do not earn points. When creating or editing a task, '
+                    'choose its point value.',
+                    style: TextStyle(
+                      color: Color(0xFF374151),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/daily-tasks'),
+                      icon: const Icon(Icons.checklist_rounded),
+                      label: const Text('Open Daily Tasks'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 14),
           if (state.rewards.isEmpty)

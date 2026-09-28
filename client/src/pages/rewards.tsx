@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "wouter";
 import { 
   Gift, 
   Star, 
@@ -830,6 +831,32 @@ export default function RewardsPage() {
         </TabsList>
 
         <TabsContent value="rewards" className="space-y-4">
+          <Card className="border-blue-200 bg-blue-50/70">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Zap className="h-5 w-5 text-blue-600" />
+                How to earn points
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              <p>
+                Complete a Daily Task that has points shown on it. Marking it
+                complete adds those points to your balance; tasks worth 0 points
+                do not earn points.
+              </p>
+              <p>
+                When creating or editing a task, choose its point value to set
+                how many points it awards.
+              </p>
+              <Link
+                href="/daily-tasks"
+                className="inline-flex min-h-10 items-center font-semibold text-blue-700 underline underline-offset-4"
+              >
+                Open Daily Tasks
+              </Link>
+            </CardContent>
+          </Card>
+
           {rewards.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
