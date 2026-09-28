@@ -567,13 +567,27 @@ class _RewardCard extends StatelessWidget {
   }
 }
 
-class _BadgesTab extends StatelessWidget {
+class _BadgesTab extends StatefulWidget {
   const _BadgesTab({required this.state});
 
   final RewardsState state;
 
   @override
+  State<_BadgesTab> createState() => _BadgesTabState();
+}
+
+class _BadgesTabState extends State<_BadgesTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final badgeErrorMessage = state.badgeErrorMessage ??
         (state.status == RewardsStatus.failure ? state.errorMessage : null);
 
@@ -598,73 +612,81 @@ class _BadgesTab extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: () => _refresh(context),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 32),
-        children: [
-          if (state.isLoading && state.achievements.isEmpty) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 8),
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: ListView(
+          key: const PageStorageKey<String>('rewards-badges-list'),
+          controller: _scrollController,
+          primary: false,
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding:
+              AppResponsive.pagePadding(context).copyWith(top: 4, bottom: 72),
+          children: [
+            if (state.isLoading && state.achievements.isEmpty) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 8),
+              const Text(
+                'Loading badges...',
+                style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+            ] else if (state.isLoading) ...[
+              const LinearProgressIndicator(),
+              const SizedBox(height: 12),
+            ],
+            if (badgeErrorMessage != null) ...[
+              _BadgeErrorNotice(
+                title: state.sessionInvalid ? 'Session expired' : null,
+                message: badgeErrorMessage,
+                onRetry: () =>
+                    context.read<RewardsBloc>().add(const RefreshRewards()),
+                compact: state.achievements.isNotEmpty,
+              ),
+              const SizedBox(height: 12),
+            ],
             const Text(
-              'Loading badges...',
-              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              'Badges & Achievements',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: 12),
-          ] else if (state.isLoading) ...[
-            const LinearProgressIndicator(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 5),
+            const Text(
+              'Celebrate the achievements recorded by Adaptalyfe. Scroll down to see badges in progress and locked badges.',
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+            ),
+            const SizedBox(height: 14),
+            if (state.achievements.isEmpty &&
+                state.status == RewardsStatus.loaded &&
+                state.badgeErrorMessage == null)
+              const _EmptyCard(
+                icon: Icons.emoji_events_outlined,
+                title: 'No badges available yet',
+                message:
+                    'There are no badges to show right now. Check back as your progress is updated.',
+              )
+            else if (earned.isEmpty &&
+                state.achievements.isNotEmpty &&
+                state.status == RewardsStatus.loaded)
+              const _EmptyCard(
+                icon: Icons.emoji_events_outlined,
+                title: 'No badges earned yet',
+                message:
+                    'Start earning badges by completing milestones, earning points, and redeeming rewards.',
+              ),
+            if (earned.isNotEmpty)
+              _BadgeSection(title: 'Earned Badges', badges: earned),
+            if (inProgress.isNotEmpty)
+              _BadgeSection(title: 'In Progress', badges: inProgress),
+            if (locked.isNotEmpty)
+              _BadgeSection(title: 'Locked', badges: locked),
+            const SizedBox(height: 8),
+            const _BadgeInstructions(),
           ],
-          if (badgeErrorMessage != null) ...[
-            _BadgeErrorNotice(
-              title: state.sessionInvalid ? 'Session expired' : null,
-              message: badgeErrorMessage,
-              onRetry: () =>
-                  context.read<RewardsBloc>().add(const RefreshRewards()),
-              compact: state.achievements.isNotEmpty,
-            ),
-            const SizedBox(height: 12),
-          ],
-          const Text(
-            'Badges & Achievements',
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 5),
-          const Text(
-            'Celebrate the achievements recorded by Adaptalyfe.',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
-          ),
-          const SizedBox(height: 14),
-          const _BadgeInstructions(),
-          const SizedBox(height: 12),
-          if (state.achievements.isEmpty &&
-              state.status == RewardsStatus.loaded &&
-              state.badgeErrorMessage == null)
-            const _EmptyCard(
-              icon: Icons.emoji_events_outlined,
-              title: 'No badges available yet',
-              message:
-                  'There are no badges to show right now. Check back as your progress is updated.',
-            )
-          else if (earned.isEmpty &&
-              state.achievements.isNotEmpty &&
-              state.status == RewardsStatus.loaded)
-            const _EmptyCard(
-              icon: Icons.emoji_events_outlined,
-              title: 'No badges earned yet',
-              message:
-                  'Start earning badges by completing milestones, earning points, and redeeming rewards.',
-            ),
-          if (earned.isNotEmpty)
-            _BadgeSection(title: 'Earned Badges', badges: earned),
-          if (inProgress.isNotEmpty)
-            _BadgeSection(title: 'In Progress', badges: inProgress),
-          if (locked.isNotEmpty)
-            _BadgeSection(title: 'Locked', badges: locked),
-        ],
+        ),
       ),
     );
   }
