@@ -22,7 +22,7 @@ export function useSubscriptionEnforcement() {
   const [location, setLocation] = useLocation();
   
   // Skip enforcement on auth pages
-  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html"].includes(location);
+  const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/utility-portal"].includes(location);
   
   const { data: user } = useQuery<User>({ 
     queryKey: ["/api/user"],

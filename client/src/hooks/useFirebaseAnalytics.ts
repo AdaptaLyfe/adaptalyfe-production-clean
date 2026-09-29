@@ -19,20 +19,24 @@ import {
 
 export function useFirebaseAnalytics() {
   const [location] = useLocation();
+  const isUtilityPortal = location === "/utility-portal";
   const prevLocation = useRef(location);
   const sessionStart = useRef(Date.now());
   const initialized = useRef(false);
 
   const { data: user } = useQuery<User>({
     queryKey: ["/api/user"],
+    enabled: !isUtilityPortal,
   });
 
   const { data: subscription } = useQuery<SubscriptionData>({
     queryKey: ["/api/subscription"],
-    enabled: !!user,
+    enabled: !isUtilityPortal && !!user,
   });
 
   useEffect(() => {
+    if (isUtilityPortal) return;
+
     if (!initialized.current) {
       initFirebaseAnalytics().then(() => {
         initialized.current = true;
@@ -47,10 +51,10 @@ export function useFirebaseAnalytics() {
       window.addEventListener("beforeunload", handleBeforeUnload);
       return () => window.removeEventListener("beforeunload", handleBeforeUnload);
     }
-  }, []);
+  }, [isUtilityPortal]);
 
   useEffect(() => {
-    if (!user || !initialized.current) return;
+    if (isUtilityPortal || !user || !initialized.current) return;
 
     const createdAt = user.createdAt ? new Date(user.createdAt as string | Date).getTime() : Date.now();
     const daysSinceSignup = Math.max(0, Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24)));
@@ -82,10 +86,10 @@ export function useFirebaseAnalytics() {
         subscription_status: subscription.status,
       });
     }
-  }, [user, subscription]);
+  }, [isUtilityPortal, user, subscription]);
 
   useEffect(() => {
-    if (!initialized.current) return;
+    if (isUtilityPortal || !initialized.current) return;
     if (prevLocation.current !== location) {
       trackPageNavigation(prevLocation.current, location);
       prevLocation.current = location;
@@ -110,5 +114,5 @@ export function useFirebaseAnalytics() {
     const screenName = screenNameMap[location] || location;
     trackScreenView(screenName);
     trackDailyActivity("page_view");
-  }, [location]);
+  }, [isUtilityPortal, location]);
 }

@@ -85,6 +85,7 @@ import pg from "pg";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { sendPasswordResetEmail } from "./email-service";
+import { registerUtilityPortalRoutes } from "./utility-portal-routes";
 
 function logApiRouteError(route: string, error: unknown): void {
   const errorFields =
@@ -420,6 +421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false,
     max: 5,
   });
+
+  // Mount before Adaptalyfe session middleware so portal requests never inspect,
+  // refresh, or depend on the Adaptalyfe browser session.
+  registerUtilityPortalRoutes(app, pgPool);
   
   // Create session table if not exists
   pgPool.query(`
@@ -484,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     }
   }));
-  
+
   // CRITICAL: Global middleware to check Authorization header for mobile auth
   // This runs BEFORE all endpoints and loads session from token if present
   app.use(async (req: any, res, next) => {
