@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+// Keep utility portal sessions separate from Adaptalyfe sessions.
 const COOKIE_NAME = "utility.sid";
 const COOKIE_PATH = "/api/utility-portal";
 const SESSION_HOURS = 8;
