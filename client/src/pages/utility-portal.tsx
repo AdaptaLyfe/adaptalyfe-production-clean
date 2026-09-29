@@ -340,9 +340,6 @@ function LoginPage({
                 Access is monitored. Unauthorized use is prohibited.
               </p>
             </div>
-            <p className="mt-4 text-center text-xs text-slate-400">
-              This fictional portal is a demonstration. No real utility service or payment is provided.
-            </p>
           </div>
         </section>
       </main>
