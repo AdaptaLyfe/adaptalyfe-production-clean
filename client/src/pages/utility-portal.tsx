@@ -240,7 +240,7 @@ function LoginPage({
 
         <section className="w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_55px_-35px_rgba(23,59,94,0.45)] sm:p-8">
           <div className="mb-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#51728e]">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#69729c]">
               Consumer sign-in
             </p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#303b78]">
@@ -819,9 +819,9 @@ export default function UtilityPortal() {
 
   if (view === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f2f5f8]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f4f3f4]">
         <div className="flex items-center gap-3 text-sm font-medium text-slate-600" role="status">
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#315c7e] border-t-transparent" />
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#485495] border-t-transparent" />
           Loading secure consumer portal…
         </div>
       </div>
@@ -830,17 +830,17 @@ export default function UtilityPortal() {
 
   if (view === "error") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f2f5f8] px-5">
+      <div className="flex min-h-screen items-center justify-center bg-[#f4f3f4] px-5">
         <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-50 text-amber-700">
             <Clock3 size={21} aria-hidden="true" />
           </div>
-          <h1 className="mt-4 text-xl font-semibold text-[#183754]">Portal temporarily unavailable</h1>
+          <h1 className="mt-4 text-xl font-semibold text-[#303b78]">Portal temporarily unavailable</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">{pageError}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-5 h-10 rounded-lg bg-[#234f73] px-4 text-sm font-semibold text-white hover:bg-[#183e60]"
+            className="mt-5 h-10 rounded-lg bg-[#3d498c] px-4 text-sm font-semibold text-white hover:bg-[#2e3673]"
           >
             Try again
           </button>
