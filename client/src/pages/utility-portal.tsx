@@ -190,12 +190,12 @@ function LoginPage({
           </div>
           <a
             href={supportPhoneLink}
-            aria-label={`Call Rachel at ${supportPhone}`}
+            aria-label={`Call us at ${supportPhone}`}
             className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#485495] transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495]"
           >
             <PhoneCall size={17} aria-hidden="true" />
             <span className="flex flex-col leading-tight">
-              <span className="text-xs">Call Rachel</span>
+              <span className="text-xs">Call us</span>
               <span>{supportPhone}</span>
             </span>
           </a>
@@ -320,7 +320,7 @@ function LoginPage({
                 <a className="font-semibold underline" href={`mailto:${supportEmail}`}>
                   {supportEmail}
                 </a>{" "}
-                or call Rachel at{" "}
+                or call us at{" "}
                 <a className="font-semibold underline" href={supportPhoneLink}>
                   {supportPhone}
                 </a>
@@ -716,7 +716,7 @@ function UtilityDashboardPage({
               </a>
               <a href={supportPhoneLink} className="inline-flex items-center gap-1.5 font-medium text-[#485495] hover:underline">
                 <PhoneCall size={14} aria-hidden="true" />
-                Call Rachel: {supportPhone}
+                Call us: {supportPhone}
               </a>
             </div>
           </footer>
