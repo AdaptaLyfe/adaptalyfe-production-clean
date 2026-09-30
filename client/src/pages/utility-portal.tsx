@@ -14,6 +14,7 @@ import {
   LockKeyhole,
   LogOut,
   MapPin,
+  PhoneCall,
   ReceiptText,
   ShieldCheck,
   Zap,
@@ -74,6 +75,8 @@ type UtilityDashboard = {
 };
 
 const supportEmail = "portal-support@municipal-utilities.example";
+const supportPhone = "+1 (276) 206-6748";
+const supportPhoneLink = "tel:+12762066748";
 
 function money(value: number) {
   return new Intl.NumberFormat("en-US", {
@@ -186,11 +189,15 @@ function LoginPage({
             Secure Consumer Access Portal
           </div>
           <a
-            href={`mailto:${supportEmail}`}
+            href={supportPhoneLink}
+            aria-label={`Call Rachel at ${supportPhone}`}
             className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#485495] transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495]"
           >
-            <CircleHelp size={17} aria-hidden="true" />
-            <span className="hidden sm:inline">Help & support</span>
+            <PhoneCall size={17} aria-hidden="true" />
+            <span className="flex flex-col leading-tight">
+              <span className="text-xs">Call Rachel</span>
+              <span>{supportPhone}</span>
+            </span>
           </a>
         </div>
       </header>
@@ -309,11 +316,14 @@ function LoginPage({
 
             {showRecovery && (
               <div role="status" className="rounded-lg border border-sky-200 bg-sky-50 px-3.5 py-3 text-sm leading-5 text-sky-900">
-                For this demonstration, contact the service desk at{" "}
+                For password assistance, email the service desk at{" "}
                 <a className="font-semibold underline" href={`mailto:${supportEmail}`}>
                   {supportEmail}
                 </a>{" "}
-                for password assistance.
+                or call Rachel at{" "}
+                <a className="font-semibold underline" href={supportPhoneLink}>
+                  {supportPhone}
+                </a>
               </div>
             )}
             {error && (
@@ -699,10 +709,16 @@ function UtilityDashboardPage({
 
           <footer className="flex flex-col justify-between gap-3 border-t border-slate-200 py-5 text-xs text-slate-500 sm:flex-row sm:items-center">
             <p>Municipal Utility Services Portal · Demonstration environment</p>
-            <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-1.5 font-medium text-[#485495] hover:underline">
-              <CircleHelp size={14} aria-hidden="true" />
-              Contact support
-            </a>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-1.5 font-medium text-[#485495] hover:underline">
+                <CircleHelp size={14} aria-hidden="true" />
+                Email support
+              </a>
+              <a href={supportPhoneLink} className="inline-flex items-center gap-1.5 font-medium text-[#485495] hover:underline">
+                <PhoneCall size={14} aria-hidden="true" />
+                Call Rachel: {supportPhone}
+              </a>
+            </div>
           </footer>
         </main>
       </div>
