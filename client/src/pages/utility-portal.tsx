@@ -131,11 +131,11 @@ function downloadBill(bill: UtilityBill, consumer: UtilityDashboard["consumer"])
 function UtilityMark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#173b5e] text-white shadow-sm">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-b-[3px] border-[#b34b62] bg-[#303b78] text-white shadow-sm">
         <Building2 aria-hidden="true" size={25} strokeWidth={1.7} />
       </div>
       <div className="min-w-0">
-        <p className={`font-semibold leading-tight text-[#183754] ${compact ? "text-sm" : "text-base"}`}>
+          <p className={`font-semibold leading-tight text-[#303b78] ${compact ? "text-sm" : "text-base"}`}>
           Municipal Utility
         </p>
         <p className={`leading-tight text-slate-500 ${compact ? "text-xs" : "text-sm"}`}>
@@ -177,7 +177,7 @@ function LoginPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#f2f5f8] text-slate-800">
+    <div className="min-h-screen bg-[#f4f3f4] text-slate-800">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
           <UtilityMark />
@@ -187,7 +187,7 @@ function LoginPage({
           </div>
           <a
             href={`mailto:${supportEmail}`}
-            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#315c7e] transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315c7e]"
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#485495] transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495]"
           >
             <CircleHelp size={17} aria-hidden="true" />
             <span className="hidden sm:inline">Help & support</span>
@@ -197,11 +197,11 @@ function LoginPage({
 
       <main className="mx-auto grid min-h-[calc(100vh-81px)] max-w-7xl items-center gap-10 px-5 py-10 sm:px-8 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-16 lg:py-16">
         <section className="mx-auto w-full max-w-xl lg:mx-0">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#d6e2eb] bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.11em] text-[#315c7e]">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[#d9dbe6] bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.11em] text-[#485495]">
             <BadgeCheck size={15} aria-hidden="true" />
             Official consumer access
           </div>
-          <h1 className="max-w-xl text-3xl font-semibold tracking-tight text-[#183754] sm:text-4xl">
+          <h1 className="max-w-xl text-3xl font-semibold tracking-tight text-[#303b78] sm:text-4xl">
             Municipal Utility Services Portal
           </h1>
           <p className="mt-4 max-w-lg text-base leading-7 text-slate-600">
@@ -229,7 +229,7 @@ function LoginPage({
             </div>
           </div>
 
-          <div className="mt-8 flex gap-3 rounded-xl border border-[#d9e4ec] bg-[#eaf1f6] p-4 text-sm leading-6 text-[#345570]">
+          <div className="mt-8 flex gap-3 rounded-xl border border-[#d9dbe6] bg-[#ececf2] p-4 text-sm leading-6 text-[#465184]">
             <ShieldCheck className="mt-0.5 shrink-0" size={19} aria-hidden="true" />
             <p>
               <span className="font-semibold">Your privacy matters.</span>{" "}
@@ -243,7 +243,7 @@ function LoginPage({
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#51728e]">
               Consumer sign-in
             </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#183754]">
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#303b78]">
               Access your account
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -266,7 +266,7 @@ function LoginPage({
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
                 placeholder="Enter your Consumer ID"
-                className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#35688f] focus:ring-4 focus:ring-[#35688f]/10"
+                className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#5965a6] focus:ring-4 focus:ring-[#5965a6]/10"
               />
             </div>
 
@@ -284,7 +284,7 @@ function LoginPage({
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Enter your password"
-                className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#35688f] focus:ring-4 focus:ring-[#35688f]/10"
+                className="h-12 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#5965a6] focus:ring-4 focus:ring-[#5965a6]/10"
               />
             </div>
 
@@ -294,14 +294,14 @@ function LoginPage({
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(event) => setRememberMe(event.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 accent-[#244f73] focus:ring-[#35688f]"
+                  className="h-4 w-4 rounded border-slate-300 accent-[#3d498c] focus:ring-[#5965a6]"
                 />
                 Remember me
               </label>
               <button
                 type="button"
                 onClick={() => setShowRecovery((visible) => !visible)}
-                className="text-sm font-medium text-[#315c7e] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315c7e]"
+                className="text-sm font-medium text-[#485495] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495]"
               >
                 Forgot password?
               </button>
@@ -325,7 +325,7 @@ function LoginPage({
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#234f73] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#183e60] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#234f73] disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#3d498c] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2e3673] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3d498c] disabled:cursor-wait disabled:opacity-70"
             >
               {submitting ? "Signing in…" : "Sign in securely"}
               {!submitting && <ChevronRight size={17} aria-hidden="true" />}
@@ -334,7 +334,7 @@ function LoginPage({
 
           <div className="mt-6 border-t border-slate-100 pt-5">
             <div className="flex items-start gap-2.5 text-xs leading-5 text-slate-500">
-              <LockKeyhole className="mt-0.5 shrink-0 text-[#51728e]" size={15} aria-hidden="true" />
+              <LockKeyhole className="mt-0.5 shrink-0 text-[#69729c]" size={15} aria-hidden="true" />
               <p>
                 <span className="font-semibold text-slate-700">Authorized Users Only.</span>{" "}
                 Access is monitored. Unauthorized use is prohibited.
@@ -373,7 +373,7 @@ function UtilityDashboardPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f6f8] text-slate-800">
+    <div className="min-h-screen bg-[#f4f3f4] text-slate-800">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
           <UtilityMark compact />
@@ -386,7 +386,7 @@ function UtilityDashboardPage({
               type="button"
               onClick={() => void signOut()}
               disabled={signingOut}
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315c7e] disabled:opacity-60"
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495] disabled:opacity-60"
             >
               <LogOut size={16} aria-hidden="true" />
               <span className="hidden sm:inline">{signingOut ? "Signing out…" : "Sign out"}</span>
@@ -402,7 +402,7 @@ function UtilityDashboardPage({
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Consumer account
               </p>
-              <p className="mt-2 truncate text-sm font-semibold text-[#183754]">{dashboard.consumer.name}</p>
+              <p className="mt-2 truncate text-sm font-semibold text-[#303b78]">{dashboard.consumer.name}</p>
               <p className="mt-1 text-xs text-slate-500">{dashboard.consumer.consumerNumber}</p>
             </div>
             <nav aria-label="Utility account sections" className="space-y-1">
@@ -417,8 +417,8 @@ function UtilityDashboardPage({
                   href={href}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                     index === 0
-                      ? "bg-[#e9f0f5] font-semibold text-[#1f4d70]"
-                      : "text-slate-600 hover:bg-white hover:text-[#1f4d70]"
+                      ? "bg-[#e9eaf1] font-semibold text-[#414c90]"
+                      : "text-slate-600 hover:bg-white hover:text-[#414c90]"
                   }`}
                 >
                   {index === 0 ? <Activity size={17} aria-hidden="true" /> : null}
@@ -429,12 +429,12 @@ function UtilityDashboardPage({
                 </a>
               ))}
             </nav>
-            <div className="rounded-xl border border-[#dce7ee] bg-[#eaf1f6] p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#264f70]">
+            <div className="rounded-xl border border-[#d9dbe6] bg-[#ececf2] p-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#414c83]">
                 <ShieldCheck size={16} aria-hidden="true" />
                 Account security
               </div>
-              <p className="mt-2 text-xs leading-5 text-[#49677e]">
+              <p className="mt-2 text-xs leading-5 text-[#586286]">
                 Your portal session is separate from other services.
               </p>
             </div>
@@ -444,8 +444,8 @@ function UtilityDashboardPage({
         <main id="overview" className="min-w-0 space-y-6">
           <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-medium text-[#52718a]">Consumer services</p>
-              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#183754] sm:text-3xl">
+              <p className="text-sm font-medium text-[#69729c]">Consumer services</p>
+              <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#303b78] sm:text-3xl">
                 Welcome, {dashboard.consumer.name.split(" ")[0]}
               </h1>
               <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-500">
@@ -462,19 +462,19 @@ function UtilityDashboardPage({
           <section aria-label="Account summary" className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-medium text-slate-500">Total outstanding</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#183754]">{money(totalDue)}</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#303b78]">{money(totalDue)}</p>
               <p className="mt-2 text-xs text-slate-500">Across active utility services</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-medium text-slate-500">Active connections</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#183754]">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#303b78]">
                 {dashboard.connections.filter((connection) => connection.is_active).length}
               </p>
               <p className="mt-2 text-xs text-slate-500">Electricity and water services</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm font-medium text-slate-500">Next due date</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#183754]">
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-[#303b78]">
                 {nextDue ? displayDate(nextDue.due_date) : "No amount due"}
               </p>
               <p className="mt-2 text-xs text-slate-500">
@@ -486,7 +486,7 @@ function UtilityDashboardPage({
           <section id="bills" aria-labelledby="bill-heading">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <h2 id="bill-heading" className="text-lg font-semibold text-[#183754]">Current bills</h2>
+                <h2 id="bill-heading" className="text-lg font-semibold text-[#303b78]">Current bills</h2>
                 <p className="mt-1 text-sm text-slate-500">Review charges and due dates for each service.</p>
               </div>
               <span className="hidden items-center gap-1.5 text-xs text-slate-500 sm:flex">
@@ -513,7 +513,7 @@ function UtilityDashboardPage({
                           <Icon size={20} aria-hidden="true" />
                         </span>
                         <div>
-                          <h3 className="font-semibold text-[#183754]">{connectionLabel(connection.utility_type)}</h3>
+                          <h3 className="font-semibold text-[#303b78]">{connectionLabel(connection.utility_type)}</h3>
                           <p className="mt-0.5 text-xs text-slate-500">Connection {connection.connection_number}</p>
                         </div>
                       </div>
@@ -526,7 +526,7 @@ function UtilityDashboardPage({
                       <div className="flex items-end justify-between gap-3">
                         <div>
                           <p className="text-xs font-medium text-slate-500">Current bill</p>
-                          <p className="mt-1 text-3xl font-semibold tracking-tight text-[#183754]">
+                          <p className="mt-1 text-3xl font-semibold tracking-tight text-[#303b78]">
                             {money(bill?.amount ?? connection.current_bill)}
                           </p>
                         </div>
@@ -562,7 +562,7 @@ function UtilityDashboardPage({
                           <button
                             type="button"
                             onClick={() => downloadBill(bill, dashboard.consumer)}
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#315c7e]"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#485495]"
                           >
                             <FileDown size={16} aria-hidden="true" />
                             Download bill
@@ -572,7 +572,7 @@ function UtilityDashboardPage({
                           <button
                             type="button"
                             onClick={() => setSelectedBill(bill)}
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#234f73] px-3.5 text-sm font-semibold text-white transition hover:bg-[#183e60] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#234f73]"
+                            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#3d498c] px-3.5 text-sm font-semibold text-white transition hover:bg-[#2e3673] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3d498c]"
                           >
                             <CreditCard size={16} aria-hidden="true" />
                             Pay bill
@@ -594,7 +594,7 @@ function UtilityDashboardPage({
 
           <section id="connections" aria-labelledby="connections-heading">
             <div className="mb-3">
-              <h2 id="connections-heading" className="text-lg font-semibold text-[#183754]">Service connections</h2>
+              <h2 id="connections-heading" className="text-lg font-semibold text-[#303b78]">Service connections</h2>
               <p className="mt-1 text-sm text-slate-500">Meter readings and service identifiers on your account.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -602,7 +602,7 @@ function UtilityDashboardPage({
                 const Icon = connectionIcon(connection.utility_type);
                 return (
                   <div key={connection.connection_number} className="rounded-xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#183754]">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#303b78]">
                       <Icon size={17} aria-hidden="true" />
                       {connectionLabel(connection.utility_type)}
                     </div>
@@ -626,7 +626,7 @@ function UtilityDashboardPage({
             <div id="payments" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white">
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                 <div>
-                  <h2 className="font-semibold text-[#183754]">Recent payments</h2>
+                  <h2 className="font-semibold text-[#303b78]">Recent payments</h2>
                   <p className="mt-1 text-xs text-slate-500">Recent account activity</p>
                 </div>
                 <ReceiptText className="text-slate-400" size={19} aria-hidden="true" />
@@ -659,7 +659,7 @@ function UtilityDashboardPage({
             <div id="requests" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white">
               <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                 <div>
-                  <h2 className="font-semibold text-[#183754]">Service requests</h2>
+                  <h2 className="font-semibold text-[#303b78]">Service requests</h2>
                   <p className="mt-1 text-xs text-slate-500">Questions and service follow-ups</p>
                 </div>
                 <CircleHelp className="text-slate-400" size={19} aria-hidden="true" />
@@ -688,7 +688,7 @@ function UtilityDashboardPage({
                   <p className="text-sm text-slate-500">There are no open service requests.</p>
                   <a
                     href={`mailto:${supportEmail}`}
-                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#315c7e] hover:underline"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#485495] hover:underline"
                   >
                     Contact support <ChevronRight size={13} aria-hidden="true" />
                   </a>
@@ -699,7 +699,7 @@ function UtilityDashboardPage({
 
           <footer className="flex flex-col justify-between gap-3 border-t border-slate-200 py-5 text-xs text-slate-500 sm:flex-row sm:items-center">
             <p>Municipal Utility Services Portal · Demonstration environment</p>
-            <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-1.5 font-medium text-[#315c7e] hover:underline">
+            <a href={`mailto:${supportEmail}`} className="inline-flex items-center gap-1.5 font-medium text-[#485495] hover:underline">
               <CircleHelp size={14} aria-hidden="true" />
               Contact support
             </a>
@@ -721,10 +721,10 @@ function UtilityDashboardPage({
             aria-labelledby="demo-payment-title"
             className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eaf1f6] text-[#315c7e]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#ececf2] text-[#485495]">
               <CreditCard size={21} aria-hidden="true" />
             </div>
-            <h2 id="demo-payment-title" className="mt-4 text-xl font-semibold text-[#183754]">
+            <h2 id="demo-payment-title" className="mt-4 text-xl font-semibold text-[#303b78]">
               Demonstration only
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -739,7 +739,7 @@ function UtilityDashboardPage({
             <button
               type="button"
               onClick={() => setSelectedBill(null)}
-              className="mt-5 h-11 w-full rounded-lg bg-[#234f73] px-4 text-sm font-semibold text-white transition hover:bg-[#183e60] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#234f73]"
+              className="mt-5 h-11 w-full rounded-lg bg-[#3d498c] px-4 text-sm font-semibold text-white transition hover:bg-[#2e3673] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3d498c]"
             >
               Close
             </button>
