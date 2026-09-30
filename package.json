@@ -34,7 +34,8 @@
     "test:caregiver-context": "tsx --test server/caregiver-context.test.ts",
     "test:assignment-input": "tsx --test server/assignment-input.test.ts",
     "db:push": "drizzle-kit push",
-    "db:migrate:assignment-hours": "node scripts/migrate-assignment-hours.mjs"
+    "db:migrate:assignment-hours": "node scripts/migrate-assignment-hours.mjs",
+    "db:migrate:utility-portal": "node scripts/migrate-utility-portal.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",

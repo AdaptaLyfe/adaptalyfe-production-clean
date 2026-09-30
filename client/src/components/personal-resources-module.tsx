@@ -231,7 +231,7 @@ export default function PersonalResourcesModule() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           <SelectItem value="music">Music</SelectItem>
                           <SelectItem value="videos">Videos</SelectItem>
                           <SelectItem value="websites">Websites</SelectItem>

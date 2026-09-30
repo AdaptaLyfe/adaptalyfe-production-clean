@@ -580,7 +580,7 @@ export default function SkillsMilestones() {
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           {Object.entries(categoryConfig).map(([key, config]) => (
                             <SelectItem key={key} value={key}>{config.label}</SelectItem>
                           ))}
@@ -662,7 +662,7 @@ export default function SkillsMilestones() {
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="z-[130]">
                           <SelectItem value="low">Low</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="high">High</SelectItem>

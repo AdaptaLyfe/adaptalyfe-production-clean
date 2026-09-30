@@ -37,3 +37,4 @@
 - [Reward redemption limits](reward-redemption-limits.md) — pending redemptions reserve finite limits; denied records do not count and null remains unlimited.
 - [Streak activity dates](streak-activity-dates.md) — keep date-only records as calendar keys and normalize timestamp sources in the user's timezone.
 - [Skill milestone priority](transition-skill-priority.md) — Medium is creation-only; saved priorities must round-trip, and schema gaps must not silently discard them.
+- [Dev preview stylesheet mismatch](dev-preview-stylesheet-mismatch.md) — Tailwind classes may exist in served/build CSS while screenshots still appear unstyled; verify assets before changing components.

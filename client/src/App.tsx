@@ -83,6 +83,7 @@ import RewardsPage from "@/pages/rewards";
 import SleepTracking from "@/pages/sleep-tracking";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import CaregiverMessages from "@/pages/caregiver-messages";
+import UtilityPortal from "@/pages/utility-portal";
 const AIChatbot = React.lazy(() => import("@/components/ai-chatbot"));
 
 // Simple Route Component - no authentication required
@@ -95,14 +96,14 @@ function App() {
   const [isCheckingSession, setIsCheckingSession] = React.useState(true);
   
   // Initialize subscription enforcement for global use (only if not on auth pages)
-    const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location);
+    const isAuthPage = ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password", "/utility-portal"].includes(location);
     const isPasswordRecoveryPage = ["/forgot-password", "/reset-password"].includes(location);
   useSubscriptionEnforcement();
   useFirebaseAnalytics();
   
   // IMMEDIATE session check - runs synchronously on every render
   const sessionToken = getSessionToken();
-   const shouldRedirectToDashboard = sessionToken && isAuthPage && !isPasswordRecoveryPage && location !== "/privacy-policy";
+   const shouldRedirectToDashboard = sessionToken && isAuthPage && !isPasswordRecoveryPage && location !== "/privacy-policy" && location !== "/utility-portal";
 
   React.useEffect(() => {
     const openResetLink = (url: string) => {
@@ -150,6 +151,11 @@ function App() {
     let cancelled = false;
 
     const restoreSession = async () => {
+      if (location === "/utility-portal") {
+        setIsCheckingSession(false);
+        return;
+      }
+
       if (!isAuthPage || isPasswordRecoveryPage || location === "/privacy-policy") {
         setIsCheckingSession(false);
         return;
@@ -197,6 +203,14 @@ function App() {
           <p className="text-gray-600">Loading Adaptalyfe...</p>
         </div>
       </div>
+    );
+  }
+
+  if (location === "/utility-portal") {
+    return (
+      <ReactErrorBoundary>
+        <UtilityPortal />
+      </ReactErrorBoundary>
     );
   }
 

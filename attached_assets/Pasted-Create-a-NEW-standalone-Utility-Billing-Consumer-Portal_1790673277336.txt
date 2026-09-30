@@ -1,0 +1,104 @@
+Create a NEW standalone Utility Billing Consumer Portal Login page inside the existing project.
+
+IMPORTANT:
+- Do NOT modify, delete, migrate, rename, or affect the existing project's database, tables, users, authentication, APIs, or existing login.
+- Create a completely SEPARATE database/schema/tables ONLY for this new Utility Billing Portal.
+- Keep this feature isolated so it can be removed later without affecting the existing application.
+- This is a UI/demo portal for now, but structure it cleanly for future production use.
+- Do not use any real US government agency name, seal, logo, or branding. Use a fictional municipal utility/government-style design.
+
+PORTAL PURPOSE:
+Create a professional USA-style municipal utility billing portal for:
+- Water Supply Billing
+- Electricity / Power Billing
+- Consumer Management
+
+LOGIN PAGE:
+- Professional government/municipal utility visual style
+- Clean white/light-gray interface
+- Official-looking but fictional branding
+- Header with fictional name: "Municipal Utility Services Portal"
+- Subtitle: "Secure Consumer Access Portal"
+- Utility/municipal building style visual treatment
+- Login card centered on page
+- Username / Consumer ID field
+- Password field
+- Remember Me
+- Forgot Password
+- Sign In button
+- Help / Contact Support link
+- Security/privacy notice
+- "Authorized Users Only" message
+- Responsive desktop/tablet/mobile design
+
+AFTER LOGIN:
+Create a simple Consumer Dashboard showing:
+- Consumer Name
+- Consumer ID
+- Service Address
+- Active Utility Connections
+- Current Electricity Bill
+- Current Water Bill
+- Total Outstanding Amount
+- Next Due Date
+- Recent Payments
+- Download Bill
+- Pay Bill
+- Payment History
+- Service Requests / Complaints
+
+UTILITY CONNECTIONS:
+Show separate cards for:
+1. Electricity / Power
+   - Connection Number
+   - Meter Number
+   - Current Reading
+   - Consumption
+   - Current Bill
+
+2. Water Supply
+   - Connection Number
+   - Meter Number
+   - Current Reading
+   - Water Consumption
+   - Current Bill
+
+DESIGN:
+- Make it look like a legitimate US municipal utility customer portal.
+- Professional enterprise/government UX.
+- Avoid flashy startup/AI styling.
+- Use accessible typography, strong spacing, clear labels and structured information.
+- Include subtle security indicators and government-portal-style information hierarchy.
+- Make the login page visually polished and suitable for an RFP demonstration.
+
+DATABASE ISOLATION:
+Create separate tables/database namespace such as:
+- utility_users
+- utility_consumers
+- utility_connections
+- utility_bills
+- utility_payments
+- utility_service_requests
+
+Do NOT connect these tables to existing application's user/auth tables.
+
+AUTHENTICATION:
+- Implement login only against the new utility_users table.
+- Passwords must be securely hashed.
+- Use environment variables for the new database connection.
+- Do not expose database credentials in frontend code.
+- Keep existing authentication completely untouched.
+
+DEMO DATA:
+Create a small set of fictional demo consumers and fictional utility billing data only.
+Do not use real customer information.
+
+Do not build the full billing system yet.
+For this task, focus on:
+1. Login page
+2. Separate authentication/database
+3. Consumer dashboard
+4. Electricity and Water billing summary
+5. Professional USA municipal utility portal UI
+
+Before making changes, inspect the existing project structure and identify the safest way to isolate this feature. Do not alter existing functionality.

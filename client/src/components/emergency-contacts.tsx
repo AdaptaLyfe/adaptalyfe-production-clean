@@ -438,7 +438,14 @@ export default function EmergencyContacts() {
                   Add Contact
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent
+                overlayClassName="z-[110]"
+                className="z-[120] w-[calc(100vw-2rem)] max-w-md max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain"
+                style={{
+                  top: "calc(50% + 1rem)",
+                  maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+                }}
+              >
                 <DialogHeader>
                   <DialogTitle>
                     {editingContact ? "Edit Contact" : "Add Contact"}
@@ -466,7 +473,7 @@ export default function EmergencyContacts() {
                       <SelectTrigger>
                         <SelectValue placeholder="Select relationship" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[130]">
                         <SelectItem value="parent">Parent</SelectItem>
                         <SelectItem value="guardian">Guardian</SelectItem>
                         <SelectItem value="sibling">Sibling</SelectItem>
