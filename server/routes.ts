@@ -6986,22 +6986,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const rewardId = parseInt(req.params.id);
-      const redemptions = await storage.getRewardRedemptions(req.session.user.id);
-      const hasBeenRedeemed = redemptions.some((redemption) => redemption.rewardId === rewardId);
-
-      if (hasBeenRedeemed) {
-        return res.status(409).json({
-          error: "This reward cannot be deleted because it has already been redeemed.",
-          code: "REWARD_ALREADY_REDEEMED",
-        });
+      const archived = await storage.deleteReward(rewardId);
+      if (!archived) {
+        return res.status(404).json({ message: "Reward not found" });
       }
 
-      await storage.deleteReward(rewardId);
-      console.log("Deleted reward:", rewardId);
-      res.json({ success: true, message: "Reward deleted successfully" });
+      console.log("Archived reward:", rewardId);
+      res.json({
+        success: true,
+        isActive: false,
+        message: "Reward archived successfully",
+      });
     } catch (error) {
-      console.error("Error deleting reward:", error);
-      res.status(500).json({ message: "Failed to delete reward", error: error.message });
+      console.error("Error archiving reward:", error);
+      res.status(500).json({ message: "Failed to archive reward", error: error.message });
     }
   });
 

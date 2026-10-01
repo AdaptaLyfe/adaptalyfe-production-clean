@@ -214,7 +214,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
               .where((reward) => reward.id != event.rewardId)
               .toList(),
           busyKey: null,
-          actionMessage: 'Reward deleted successfully.',
+          actionMessage: 'Reward archived successfully.',
           errorMessage: null,
           sessionInvalid: false,
         ),
@@ -226,7 +226,7 @@ class RewardsBloc extends Bloc<RewardsEvent, RewardsState> {
         emit,
         error,
         'reward-${event.rewardId}',
-        fallback: 'Unable to delete this reward.',
+        fallback: 'Unable to archive this reward.',
       );
     }
   }

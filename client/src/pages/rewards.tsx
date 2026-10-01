@@ -32,7 +32,7 @@ import {
   ShoppingBag,
   MapPin,
   DollarSign,
-  Trash2
+  Archive
 } from "lucide-react";
 
 type RewardBadge = {
@@ -297,28 +297,28 @@ export default function RewardsPage() {
     },
   });
 
-  // Delete reward mutation
-  const deleteRewardMutation = useMutation({
+  // Archive reward mutation. The API preserves the reward and its redemption history.
+  const archiveRewardMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log("=== MUTATION: Deleting reward ===");
+      console.log("=== MUTATION: Archiving reward ===");
       console.log("ID:", id);
       const result = await apiRequest("DELETE", `/api/rewards/${id}`);
-      console.log("Delete result:", result);
+      console.log("Archive result:", result);
       return result;
     },
     onSuccess: () => {
-      console.log("=== DELETE SUCCESS ===");
+      console.log("=== ARCHIVE SUCCESS ===");
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
-      toast({ title: "Success", description: "Reward deleted successfully!" });
+      toast({
+        title: "Reward archived",
+        description: "It is no longer available to redeem. Its history has been kept.",
+      });
     },
     onError: (error: any) => {
-      console.error("=== DELETE ERROR ===", error);
-      const description = error?.code === "REWARD_ALREADY_REDEEMED"
-        ? "This reward cannot be deleted because it has already been redeemed."
-        : error?.message || "Failed to delete reward";
+      console.error("=== ARCHIVE ERROR ===", error);
       toast({ 
-        title: "Error", 
-        description,
+        title: "Error",
+        description: error?.message || "Failed to archive reward",
         variant: "destructive" 
       });
     },
@@ -436,15 +436,17 @@ export default function RewardsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (reward: Reward) => {
-    console.log("=== DELETE CLICKED ===");
-    console.log("Reward to delete:", reward);
+  const handleArchive = (reward: Reward) => {
+    console.log("=== ARCHIVE CLICKED ===");
+    console.log("Reward to archive:", reward);
     
-    if (confirm(`Are you sure you want to delete "${reward.title}"?`)) {
-      console.log("User confirmed delete, calling mutation for ID:", reward.id);
-      deleteRewardMutation.mutate(reward.id);
+    if (confirm(
+      `Archive "${reward.title}"? It will no longer be available to redeem, and its history will be kept.`,
+    )) {
+      console.log("User confirmed archive, calling mutation for ID:", reward.id);
+      archiveRewardMutation.mutate(reward.id);
     } else {
-      console.log("User cancelled delete");
+      console.log("User cancelled archive");
     }
   };
 
@@ -896,11 +898,13 @@ export default function RewardsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleDelete(reward)}
-                              className="h-7 w-7 p-0 hover:bg-red-100"
+                              onClick={() => handleArchive(reward)}
+                              className="h-7 w-7 p-0 hover:bg-slate-100"
+                              aria-label={`Archive ${reward.title}`}
+                              title={`Archive ${reward.title}`}
                               data-testid={`button-delete-reward-${reward.id}`}
                             >
-                              <Trash2 className="w-4 h-4 text-red-600" />
+                              <Archive className="w-4 h-4 text-slate-600" />
                             </Button>
                           </div>
                         </div>

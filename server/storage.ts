@@ -3786,7 +3786,12 @@ export class DatabaseStorage implements IStorage {
     const userRewards = await db
       .select()
       .from(rewards)
-      .where(eq(rewards.userId, userId));
+      .where(
+        and(
+          eq(rewards.userId, userId),
+          or(eq(rewards.isActive, true), isNull(rewards.isActive)),
+        ),
+      );
 
     if (userRewards.length === 0) return userRewards;
 
@@ -3878,7 +3883,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteReward(id: number): Promise<boolean> {
-    const result = await db.delete(rewards).where(eq(rewards.id, id));
+    const result = await db
+      .update(rewards)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(rewards.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -3981,7 +3989,13 @@ export class DatabaseStorage implements IStorage {
       const [reward] = await tx
         .select()
         .from(rewards)
-        .where(and(eq(rewards.id, rewardId), eq(rewards.userId, userId)))
+        .where(
+          and(
+            eq(rewards.id, rewardId),
+            eq(rewards.userId, userId),
+            or(eq(rewards.isActive, true), isNull(rewards.isActive)),
+          ),
+        )
         .for("update");
 
       if (!reward) {

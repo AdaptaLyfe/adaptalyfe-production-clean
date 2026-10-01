@@ -1623,19 +1623,18 @@ Future<void> _confirmDelete(
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Delete reward?'),
-      content: Text('This will remove "${reward.title}" from your rewards.'),
+      title: const Text('Archive reward?'),
+      content: Text(
+        'This will remove "${reward.title}" from available rewards, and its redemption history will be kept.',
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
           child: const Text('Cancel'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: const Text('Delete'),
+          child: const Text('Archive'),
         ),
       ],
     ),

@@ -35,6 +35,7 @@
 - [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.
 - [Sleep wake date handling](sleep-wake-date-handling.md) — wake date is carried by the existing full wake timestamp; compare wake and fell-asleep DateTimes strictly.
 - [Reward redemption limits](reward-redemption-limits.md) — pending redemptions reserve finite limits; denied records do not count and null remains unlimited.
+- [Reward archiving](reward-archiving.md) — archive removed rewards with `isActive=false`; hide them from new claims while preserving redemption and points history.
 - [Streak activity dates](streak-activity-dates.md) — keep date-only records as calendar keys and normalize timestamp sources in the user's timezone.
 - [Skill milestone priority](transition-skill-priority.md) — Medium is creation-only; saved priorities must round-trip, and schema gaps must not silently discard them.
 - [Dev preview stylesheet mismatch](dev-preview-stylesheet-mismatch.md) — Tailwind classes may exist in served/build CSS while screenshots still appear unstyled; verify assets before changing components.
