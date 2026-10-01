@@ -681,9 +681,10 @@ export default function RewardsPage() {
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent
               overlayClassName="z-[110]"
-              className="z-[120] w-[calc(100vw-2rem)] max-w-md max-h-[calc(100dvh-6rem)] flex flex-col overflow-hidden"
+              className="z-[120] w-[calc(100vw-2rem)] max-w-md flex flex-col overflow-hidden"
               style={{
                 top: "calc(50% + 1rem)",
+                height: "min(42rem, calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)))",
                 maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
               }}
               aria-describedby="edit-reward-description"
@@ -695,7 +696,8 @@ export default function RewardsPage() {
                 </p>
               </DialogHeader>
               <Form {...editForm}>
-                <div className="reward-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2">
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="reward-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2">
                   <FormField
                     control={editForm.control}
                     name="title"
@@ -812,18 +814,21 @@ export default function RewardsPage() {
                     )}
                   />
 
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="button" 
-                      onClick={onEditSubmit}
-                      disabled={editRewardMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
-                    </Button>
+                  </div>
+                  <div className="shrink-0 border-t border-gray-200 bg-white pt-4 dark:border-gray-700 dark:bg-gray-900">
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={onEditSubmit}
+                        disabled={editRewardMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Form>
