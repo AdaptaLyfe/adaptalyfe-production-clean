@@ -683,9 +683,9 @@ export default function RewardsPage() {
               overlayClassName="z-[110]"
               className="z-[120] w-[calc(100vw-2rem)] max-w-md flex flex-col overflow-hidden"
               style={{
-                top: "calc(50% + 1rem)",
-                height: "min(42rem, calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)))",
-                maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+                top: "calc((100dvh + 5rem + var(--safe-area-inset-top)) / 2)",
+                height: "min(42rem, calc(100dvh - 7rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)))",
+                maxHeight: "calc(100dvh - 7rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
               }}
               aria-describedby="edit-reward-description"
             >
