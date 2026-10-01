@@ -38,6 +38,16 @@ const budgetSchema = z.object({
 
 const budgetAmountPresets = Array.from({ length: 20 }, (_, index) => ((index + 1) / 10).toFixed(1));
 
+const defaultSavingsGoalValues = {
+  title: "",
+  description: "",
+  targetAmount: 0,
+  currentAmount: 0,
+  targetDate: "",
+  category: "general",
+  priority: "medium" as const,
+};
+
 const savingsGoalSchema = z.object({
   title: z.string().min(1, "Goal title is required"),
   description: z.string().optional(),
@@ -157,16 +167,24 @@ export default function Financial() {
 
   const savingsForm = useForm({
     resolver: zodResolver(savingsGoalSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      targetAmount: 0,
-      currentAmount: 0,
-      targetDate: "",
-      category: "general",
-      priority: "medium" as const,
-    },
+    defaultValues: defaultSavingsGoalValues,
   });
+
+  const resetSavingsGoalForm = () => savingsForm.reset(defaultSavingsGoalValues);
+
+  const openAddSavingsGoalDialog = () => {
+    setEditingSavingsGoal(null);
+    resetSavingsGoalForm();
+    setShowSavingsDialog(true);
+  };
+
+  const handleSavingsDialogOpenChange = (open: boolean) => {
+    setShowSavingsDialog(open);
+    if (!open) {
+      setEditingSavingsGoal(null);
+      resetSavingsGoalForm();
+    }
+  };
 
   const categoryForm = useForm({
     resolver: zodResolver(categorySchema),
@@ -267,7 +285,7 @@ export default function Financial() {
       queryClient.refetchQueries({ queryKey: ["/api/savings-goals"] });
       setShowSavingsDialog(false);
       setEditingSavingsGoal(null);
-      savingsForm.reset();
+      resetSavingsGoalForm();
       toast({
         title: "Success",
         description: editingSavingsGoal 
@@ -939,13 +957,15 @@ export default function Financial() {
                     <Target className="text-vibrant-green" size={24} />
                     <span>Savings Goals</span>
                   </div>
-                  <Dialog open={showSavingsDialog} onOpenChange={setShowSavingsDialog}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
-                        <Plus size={16} className="mr-2" />
-                        Add Goal
-                      </Button>
-                    </DialogTrigger>
+                  <Dialog open={showSavingsDialog} onOpenChange={handleSavingsDialogOpenChange}>
+                    <Button
+                      type="button"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={openAddSavingsGoalDialog}
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Add Goal
+                    </Button>
                     <DialogContent
                       overlayClassName="z-[110]"
                       className="z-[120] max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
