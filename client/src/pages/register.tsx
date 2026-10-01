@@ -90,7 +90,7 @@ export default function Register() {
     if (!formData.ageVerified) {
       toast({
         title: "Age Verification Required",
-        description: "Users under 13 must have a parent or guardian create their account",
+        description: "You must be 13 or older to create an Adaptalyfe account.",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -303,7 +303,7 @@ export default function Register() {
                         I confirm that I am 13 years of age or older
                       </Label>
                       <p className="text-amber-700 mt-1">
-                        Users under 13 must have a parent or guardian create an account on their behalf.
+                        Adaptalyfe is not available to children under 13.
                       </p>
                     </div>
                   </div>

@@ -26,6 +26,7 @@ const subscriptionPlans = <SubscriptionPlan>[
     popular: true,
     features: [
       'Everything in Basic',
+      '7-day free trial',
       'Unlimited tasks (up to 1,000)',
       'Advanced analytics & insights',
       'Medication management',
@@ -45,6 +46,7 @@ const subscriptionPlans = <SubscriptionPlan>[
     productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
+      '7-day free trial',
       'Up to 5 additional member accounts',
       'Unlimited caregiver connections',
       'Family dashboard & shared progress',

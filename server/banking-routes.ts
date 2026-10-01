@@ -32,16 +32,27 @@ const plaidClient = new PlaidApi(plaidConfiguration);
 // Demo mode checker
 const isDemoMode = !process.env.PLAID_CLIENT_ID || !process.env.PLAID_SECRET;
 
-// Encryption key for sensitive data
-const ENCRYPTION_KEY = process.env.BANKING_ENCRYPTION_KEY || 'default-key-change-in-production';
+// Never encrypt banking data with a predictable fallback key. In production,
+// fail during startup if the secret is missing; elsewhere, fail on use.
+const ENCRYPTION_KEY = process.env.BANKING_ENCRYPTION_KEY?.trim();
+if (process.env.NODE_ENV === "production" && !ENCRYPTION_KEY) {
+  throw new Error("BANKING_ENCRYPTION_KEY is required in production");
+}
+
+function requireEncryptionKey(): string {
+  if (!ENCRYPTION_KEY) {
+    throw new Error("Banking encryption is unavailable: BANKING_ENCRYPTION_KEY is not configured");
+  }
+  return ENCRYPTION_KEY;
+}
 
 // Utility functions for encryption/decryption
 function encrypt(text: string): string {
-  return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  return CryptoJS.AES.encrypt(text, requireEncryptionKey()).toString();
 }
 
 function decrypt(ciphertext: string): string {
-  const bytes = CryptoJS.AES.decrypt(ciphertext, ENCRYPTION_KEY);
+  const bytes = CryptoJS.AES.decrypt(ciphertext, requireEncryptionKey());
   return bytes.toString(CryptoJS.enc.Utf8);
 }
 

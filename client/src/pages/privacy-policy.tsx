@@ -376,28 +376,18 @@ export default function PrivacyPolicy() {
         {/* Children's Privacy */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl">Children's Privacy (Under 13)</CardTitle>
+            <CardTitle className="text-2xl">Children's Privacy</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <h3 className="text-lg font-semibold text-blue-600">Parental Consent</h3>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex gap-2">
-                <span className="font-semibold min-w-fit">Required:</span>
-                <span>We require verifiable parental consent for users under 13</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-semibold min-w-fit">Limited Collection:</span>
-                <span>We collect only information necessary for the service</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-semibold min-w-fit">Parental Control:</span>
-                <span>Parents can review, modify, or delete their child's information</span>
-              </li>
-              <li className="flex gap-2">
-                <span className="font-semibold min-w-fit">No Marketing:</span>
-                <span>We don't market to children or collect information for marketing</span>
-              </li>
-            </ul>
+            <h3 className="text-lg font-semibold text-blue-600">
+              Adaptalyfe is not available to children under 13
+            </h3>
+            <p className="text-gray-700">
+              Children under 13 may not create an account or use Adaptalyfe. We do not knowingly
+              collect personal information from children under 13. If we learn that a child under
+              13 has provided personal information, we will take steps to delete it and close the
+              associated account.
+            </p>
           </CardContent>
         </Card>
 
