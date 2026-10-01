@@ -49,7 +49,7 @@ export function registerAnalyticsRoutes(app: Express) {
     }
   });
 
-  // Track when users click payment links (cost savings)
+  // Track when users click payment links
   app.post("/api/analytics/link-click", async (req: AuthenticatedRequest, res) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
@@ -98,7 +98,7 @@ export function registerAnalyticsRoutes(app: Express) {
     }
   });
 
-  // Get usage analytics for admin/cost optimization
+  // Get usage analytics for admin reporting
   app.get("/api/analytics/usage", async (req: AuthenticatedRequest, res) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
@@ -114,14 +114,9 @@ export function registerAnalyticsRoutes(app: Express) {
       const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
 
       const report = await PaymentAnalytics.getUsageReport(startDate, endDate);
-      const monthlyPlaidCosts = await PaymentAnalytics.estimateMonthlyPlaidCosts();
 
       res.json({
         report,
-        monthlyPlaidCosts,
-        costSavingsFromLinks: report
-          .filter(r => r.eventType === 'link_clicked')
-          .reduce((total, r) => total + (r.totalEvents * 0.12), 0), // $0.12 saved per link click
       });
     } catch (error: any) {
       res.status(500).json({ 

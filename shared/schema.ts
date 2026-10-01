@@ -1129,15 +1129,15 @@ export const userPreferences = pgTable("user_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Payment Analytics - Track payment method preferences and Plaid usage
+// Payment analytics; obsolete Plaid columns remain mapped to preserve existing database data.
 export const paymentAnalytics = pgTable("payment_analytics", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  eventType: text("event_type").notNull(), // 'method_selected', 'plaid_connection', 'payment_processed', 'link_clicked', 'api_call'
+  eventType: text("event_type").notNull(), // 'method_selected', 'payment_processed', 'link_clicked'
   paymentMethod: text("payment_method"), // 'link', 'autopay'
   billId: integer("bill_id").references(() => bills.id, { onDelete: "cascade" }),
-  plaidApiCall: text("plaid_api_call"), // 'link_token', 'account_balance', 'payment_initiate', etc.
-  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 4 }), // Cost in dollars for Plaid API calls
+  legacyApiCall: text("plaid_api_call"),
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 4 }),
   metadata: json("metadata"), // Additional context
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

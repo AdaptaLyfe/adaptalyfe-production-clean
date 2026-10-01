@@ -252,7 +252,7 @@ function App() {
             </button>
             <button 
               onClick={() => {
-                alert("AdaptaLyfe Features:\n\n• 16 Daily Tasks with completion tracking\n• Financial Management with 3 bills\n• 21+ Mood Entries with ratings\n• Medical Management with medications\n• Academic Planning with classes\n• AI Assistant with intelligent responses\n• Caregiver Dashboard with monitoring\n• Banking Integration with Plaid\n• Pharmacy Integration with medications\n• Emergency Resources and contacts\n\nAll features have real demo data for testing!");
+                alert("AdaptaLyfe Features:\n\n• 16 Daily Tasks with completion tracking\n• Financial Management with 3 bills\n• 21+ Mood Entries with ratings\n• Medical Management with medications\n• Academic Planning with classes\n• AI Assistant with intelligent responses\n• Caregiver Dashboard with monitoring\n• Manually managed bank account details\n• Pharmacy Integration with medications\n• Emergency Resources and contacts\n\nAll features have real demo data for testing!");
               }}
               style={{
                 background: "#16a34a",

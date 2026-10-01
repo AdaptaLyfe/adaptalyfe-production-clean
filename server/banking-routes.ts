@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { PlaidApi, Configuration, PlaidEnvironments, Products, CountryCode } from 'plaid';
 import CryptoJS from 'crypto-js';
 import puppeteer from 'puppeteer';
 import { db } from './db';
@@ -8,29 +7,12 @@ import {
   billPayments, 
   paymentTransactions, 
   paymentLimits,
-  payeeCredentials,
-  balanceHistory 
+  payeeCredentials
 } from '@shared/banking-schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { storage } from './storage';
 
 const router = Router();
-
-// Initialize Plaid client with demo fallback
-const plaidConfiguration = new Configuration({
-  basePath: PlaidEnvironments.sandbox, // Use sandbox for development
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID || 'demo-client-id',
-      'PLAID-SECRET': process.env.PLAID_SECRET || 'demo-secret',
-    },
-  },
-});
-
-const plaidClient = new PlaidApi(plaidConfiguration);
-
-// Demo mode checker
-const isDemoMode = !process.env.PLAID_CLIENT_ID || !process.env.PLAID_SECRET;
 
 // Never encrypt banking data with a predictable fallback key. In production,
 // fail during startup if the secret is missing; elsewhere, fail on use.
@@ -87,7 +69,8 @@ router.get('/accounts', async (req: any, res) => {
       ...account,
       accountNumber: account.accountNumber ? '****' + decrypt(account.accountNumber).slice(-4) : '',
       routingNumber: account.routingNumber ? '****' + decrypt(account.routingNumber).slice(-4) : '',
-      plaidAccessToken: undefined, // Never send access tokens to frontend
+      legacyPlaidAccountId: undefined,
+      legacyPlaidAccessToken: undefined,
     }));
 
     res.json(safeAccounts);
@@ -109,185 +92,14 @@ router.get('/bank-accounts', requireAuth, async (req: any, res) => {
       ...account,
       accountNumber: account.accountNumber ? '****' + decrypt(account.accountNumber).slice(-4) : '',
       routingNumber: account.routingNumber ? '****' + decrypt(account.routingNumber).slice(-4) : '',
-      plaidAccessToken: undefined, // Never send access tokens to frontend
+      legacyPlaidAccountId: undefined,
+      legacyPlaidAccessToken: undefined,
     }));
 
     res.json(safeAccounts);
   } catch (error) {
     console.error('Error fetching bank accounts:', error);
     res.status(500).json({ message: 'Failed to fetch bank accounts' });
-  }
-});
-
-// Initialize Plaid Link for connecting bank accounts
-router.post('/bank-accounts/connect-plaid', requireAuth, async (req: any, res) => {
-  try {
-    if (isDemoMode) {
-      // Create demo bank accounts for testing
-      await db.insert(bankAccounts).values([
-        {
-          userId: req.user.id,
-          accountName: 'Demo Checking Account',
-          accountType: 'checking',
-          bankName: 'Demo Bank',
-          accountNumber: encrypt('1234567890'),
-          routingNumber: encrypt('123456789'),
-          balance: '2500.00',
-          plaidAccountId: 'demo-checking-123',
-          plaidAccessToken: encrypt('demo-access-token'),
-          isActive: true,
-        },
-        {
-          userId: req.user.id,
-          accountName: 'Demo Savings Account',
-          accountType: 'savings',
-          bankName: 'Demo Bank',
-          accountNumber: encrypt('0987654321'),
-          routingNumber: encrypt('123456789'),
-          balance: '8750.00',
-          plaidAccountId: 'demo-savings-456',
-          plaidAccessToken: encrypt('demo-access-token'),
-          isActive: true,
-        }
-      ]);
-
-      return res.json({ 
-        message: 'Demo bank accounts connected successfully',
-        demo_mode: true,
-        linkToken: 'demo-link-token-12345'
-      });
-    }
-
-    const linkTokenResponse = await plaidClient.linkTokenCreate({
-      user: {
-        client_user_id: req.user.id.toString(),
-      },
-      client_name: 'Adaptalyfe',
-      products: [Products.Transactions, Products.Auth],
-      country_codes: [CountryCode.Us],
-      language: 'en',
-      webhook: `${process.env.WEBHOOK_URL}/api/banking/plaid-webhook`,
-      redirect_uri: `${process.env.APP_URL}/banking-integration`,
-    });
-
-    res.json({ linkToken: linkTokenResponse.data.link_token });
-  } catch (error) {
-    console.error('Error creating Plaid link token:', error);
-    res.status(500).json({ 
-      message: 'Failed to create link token',
-      demo_mode: isDemoMode,
-      error: isDemoMode ? 'Demo mode active - created sample accounts' : 'Server error'
-    });
-  }
-});
-
-// Handle Plaid Link success (called after user connects their bank)
-router.post('/bank-accounts/plaid-exchange', requireAuth, async (req: any, res) => {
-  try {
-    const { public_token } = req.body;
-
-    if (isDemoMode) {
-      // Demo mode - accounts already created in connect-plaid
-      return res.json({ 
-        message: 'Demo bank accounts connected successfully',
-        demo_mode: true
-      });
-    }
-
-    // Exchange public token for access token
-    const exchangeResponse = await plaidClient.itemPublicTokenExchange({
-      public_token,
-    });
-
-    const accessToken = exchangeResponse.data.access_token;
-
-    // Get account information
-    const accountsResponse = await plaidClient.accountsGet({
-      access_token: accessToken,
-    });
-
-    // Store each account in database
-    for (const account of accountsResponse.data.accounts) {
-      await db.insert(bankAccounts).values({
-        userId: req.user.id,
-        accountName: account.name,
-        accountType: account.subtype || account.type,
-        bankName: accountsResponse.data.item.institution_id || 'Unknown Bank',
-        accountNumber: encrypt(account.account_id),
-        routingNumber: account.routing_number ? encrypt(account.routing_number) : null,
-        balance: account.balances.current?.toString() || '0',
-        plaidAccountId: account.account_id,
-        plaidAccessToken: encrypt(accessToken),
-        isActive: true,
-      });
-
-      // Record initial balance
-      await db.insert(balanceHistory).values({
-        bankAccountId: account.account_id,
-        balance: account.balances.current?.toString() || '0',
-      });
-    }
-
-    res.json({ message: 'Bank accounts connected successfully' });
-  } catch (error) {
-    console.error('Error exchanging Plaid token:', error);
-    res.status(500).json({ message: 'Failed to connect bank accounts' });
-  }
-});
-
-// Sync account balance with Plaid
-router.post('/bank-accounts/:id/sync', requireAuth, async (req: any, res) => {
-  try {
-    const accountId = parseInt(req.params.id);
-    
-    const [account] = await db
-      .select()
-      .from(bankAccounts)
-      .where(and(
-        eq(bankAccounts.id, accountId),
-        eq(bankAccounts.userId, req.user.id)
-      ));
-
-    if (!account || !account.plaidAccessToken) {
-      return res.status(404).json({ message: 'Account not found or not connected to Plaid' });
-    }
-
-    const accessToken = decrypt(account.plaidAccessToken);
-
-    // Get updated balance from Plaid
-    const accountsResponse = await plaidClient.accountsGet({
-      access_token: accessToken,
-    });
-
-    const plaidAccount = accountsResponse.data.accounts.find(
-      acc => acc.account_id === account.plaidAccountId
-    );
-
-    if (plaidAccount) {
-      const newBalance = plaidAccount.balances.current?.toString() || '0';
-
-      // Update account balance
-      await db
-        .update(bankAccounts)
-        .set({ 
-          balance: newBalance,
-          lastSynced: new Date(),
-        })
-        .where(eq(bankAccounts.id, accountId));
-
-      // Record balance history
-      await db.insert(balanceHistory).values({
-        bankAccountId: accountId,
-        balance: newBalance,
-      });
-
-      res.json({ message: 'Balance updated successfully', balance: newBalance });
-    } else {
-      res.status(404).json({ message: 'Account not found in Plaid' });
-    }
-  } catch (error) {
-    console.error('Error syncing account balance:', error);
-    res.status(500).json({ message: 'Failed to sync balance' });
   }
 });
 
@@ -559,30 +371,6 @@ router.post('/bill-payments/:id/process', requireAuth, async (req: any, res) => 
   }
 });
 
-// Plaid webhook handler
-router.post('/plaid-webhook', async (req, res) => {
-  try {
-    const { webhook_type, webhook_code, item_id } = req.body;
-
-    console.log('Plaid webhook received:', { webhook_type, webhook_code, item_id });
-
-    if (webhook_type === 'TRANSACTIONS') {
-      // Handle transaction updates
-      // Sync new transactions and balances
-    } else if (webhook_type === 'ITEM') {
-      // Handle item updates (account connection issues, etc.)
-      if (webhook_code === 'ERROR') {
-        // Handle account connection errors
-      }
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Error handling Plaid webhook:', error);
-    res.status(500).json({ message: 'Webhook processing failed' });
-  }
-});
-
 // Simple connect account endpoint that frontend expects
 router.post('/connect-account', async (req: any, res) => {
   try {
@@ -621,8 +409,6 @@ router.post('/connect-account', async (req: any, res) => {
       accountNumber: encrypt(accountNumber),
       routingNumber: encrypt(routingNumber),
       balance: '0.00', // Default balance
-      plaidAccountId: null,
-      plaidAccessToken: null,
       isActive: true,
     };
 

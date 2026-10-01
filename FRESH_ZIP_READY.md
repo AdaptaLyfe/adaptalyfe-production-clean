@@ -26,7 +26,7 @@
 ✅ Express.js backend with PostgreSQL  
 ✅ Mobile app configuration (Capacitor/EAS)  
 ✅ HIPAA compliance and security  
-✅ Banking integration (Plaid)  
+✅ Manual bank-account details
 ✅ Payment processing (Stripe)  
 ✅ All core modules ready  
 ✅ App store submission prepared  

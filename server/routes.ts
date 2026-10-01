@@ -6698,15 +6698,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Banking demo routes (simplified for now)
-  app.post('/api/bank-accounts/connect-plaid', (req, res) => {
-    res.json({ 
-      message: 'Demo bank accounts connected successfully',
-      demo_mode: true,
-      linkToken: 'demo-link-token-12345'
-    });
-  });
-
   app.get('/api/bank-accounts', (req, res) => {
     res.json([
       {

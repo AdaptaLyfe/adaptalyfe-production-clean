@@ -6,7 +6,7 @@ A comprehensive mobile application designed to support teens and adults with neu
 
 - **Daily Task Management** - Visual step-by-step task breakdowns
 - **Medication Reminders** - HIPAA-compliant medication tracking
-- **Banking Integration** - Secure automated bill pay with Plaid
+- **Bank Accounts** - Manually recorded bank-account details and financial tracking
 - **AdaptAI Assistant** - AI-powered support and guidance
 - **Emergency Features** - Quick access to emergency contacts
 - **Caregiver Network** - Family and caregiver monitoring dashboard

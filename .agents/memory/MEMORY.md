@@ -40,3 +40,4 @@
 - [Streak activity dates](streak-activity-dates.md) — keep date-only records as calendar keys and normalize timestamp sources in the user's timezone.
 - [Skill milestone priority](transition-skill-priority.md) — Medium is creation-only; saved priorities must round-trip, and schema gaps must not silently discard them.
 - [Dev preview stylesheet mismatch](dev-preview-stylesheet-mismatch.md) — Tailwind classes may exist in served/build CSS while screenshots still appear unstyled; verify assets before changing components.
+- [Deployment bundle sync](deployment-bundle-sync.md) — source changes do not update tracked server bundles, static copies, or hard-coded hashed asset URLs.

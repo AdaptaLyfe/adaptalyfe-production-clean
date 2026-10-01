@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { paymentAnalytics, type InsertPaymentAnalytics } from "@shared/schema";
+import { paymentAnalytics } from "@shared/schema";
 import { eq, sql, and, gte, lte } from "drizzle-orm";
 
 export class PaymentAnalytics {
@@ -14,18 +14,6 @@ export class PaymentAnalytics {
     });
   }
 
-  // Track Plaid API usage with cost estimation
-  static async trackPlaidUsage(userId: number, apiCall: string, estimatedCost: number, billId?: number) {
-    await db.insert(paymentAnalytics).values({
-      userId,
-      billId,
-      eventType: 'api_call',
-      plaidApiCall: apiCall,
-      estimatedCost: estimatedCost.toString(),
-      metadata: { timestamp: new Date().toISOString(), provider: 'plaid' }
-    });
-  }
-
   // Track payment link clicks
   static async trackLinkClick(userId: number, billId: number, payeeWebsite: string) {
     await db.insert(paymentAnalytics).values({
@@ -36,7 +24,6 @@ export class PaymentAnalytics {
       metadata: { 
         timestamp: new Date().toISOString(),
         payeeWebsite,
-        costSavings: 0.12 // Estimated Plaid API cost avoided
       }
     });
   }
@@ -56,7 +43,7 @@ export class PaymentAnalytics {
     });
   }
 
-  // Get usage analytics for cost optimization
+  // Get payment usage analytics
   static async getUsageReport(startDate?: Date, endDate?: Date) {
     const conditions = [];
     if (startDate) conditions.push(gte(paymentAnalytics.createdAt, startDate));
@@ -66,16 +53,13 @@ export class PaymentAnalytics {
       .select({
         eventType: paymentAnalytics.eventType,
         paymentMethod: paymentAnalytics.paymentMethod,
-        plaidApiCall: paymentAnalytics.plaidApiCall,
         totalEvents: sql<number>`count(*)`,
-        totalCost: sql<number>`sum(CAST(${paymentAnalytics.estimatedCost} AS decimal))`,
       })
       .from(paymentAnalytics)
       .where(conditions.length ? and(...conditions) : undefined)
       .groupBy(
         paymentAnalytics.eventType, 
-        paymentAnalytics.paymentMethod,
-        paymentAnalytics.plaidApiCall
+        paymentAnalytics.paymentMethod
       );
 
     return report;
@@ -97,38 +81,4 @@ export class PaymentAnalytics {
 
     return preferences;
   }
-
-  // Estimate monthly Plaid costs
-  static async estimateMonthlyPlaidCosts(userId?: number) {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
-    const conditions = [
-      gte(paymentAnalytics.createdAt, thirtyDaysAgo),
-      eq(paymentAnalytics.eventType, 'api_call')
-    ];
-    
-    if (userId) {
-      conditions.push(eq(paymentAnalytics.userId, userId));
-    }
-
-    const costs = await db
-      .select({
-        totalCost: sql<number>`sum(CAST(${paymentAnalytics.estimatedCost} AS decimal))`,
-        apiCallCount: sql<number>`count(*)`,
-      })
-      .from(paymentAnalytics)
-      .where(and(...conditions));
-
-    return costs[0] || { totalCost: 0, apiCallCount: 0 };
-  }
 }
-
-// Plaid API Cost Constants (based on current pricing)
-export const PLAID_COSTS = {
-  LINK_TOKEN: 0.60,        // Per successful connection
-  ACCOUNT_INFO: 0.12,      // Per account info request
-  BALANCE: 0.03,           // Per balance check
-  TRANSACTIONS: 0.12,      // Per transaction pull
-  PAYMENT_INITIATE: 0.25,  // Per payment initiation
-  IDENTITY: 0.12,          // Per identity verification
-};

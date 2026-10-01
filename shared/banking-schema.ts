@@ -2,7 +2,7 @@ import { pgTable, text, varchar, integer, decimal, boolean, timestamp, json } fr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Bank Accounts table for Plaid integration
+// Legacy Plaid columns are retained for database compatibility; no Plaid integration is active.
 export const bankAccounts = pgTable("bank_accounts", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   userId: integer("user_id").notNull(),
@@ -13,8 +13,8 @@ export const bankAccounts = pgTable("bank_accounts", {
   routingNumber: varchar("routing_number", { length: 255 }), // encrypted
   balance: decimal("balance", { precision: 12, scale: 2 }).default("0"),
   isActive: boolean("is_active").default(true),
-  plaidAccountId: varchar("plaid_account_id", { length: 255 }),
-  plaidAccessToken: text("plaid_access_token"), // encrypted
+  legacyPlaidAccountId: varchar("plaid_account_id", { length: 255 }),
+  legacyPlaidAccessToken: text("plaid_access_token"), // encrypted legacy data
   lastSynced: timestamp("last_synced").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

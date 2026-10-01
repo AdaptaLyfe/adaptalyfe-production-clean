@@ -42,7 +42,7 @@ eas build --platform android
 - Complete React/TypeScript frontend
 - Express.js backend with PostgreSQL
 - Comprehensive UI component library
-- Banking integration with Plaid
+- Manual bank-account details and financial tracking
 - Medical information management
 - Academic planning tools
 - Mood tracking and wellness features
