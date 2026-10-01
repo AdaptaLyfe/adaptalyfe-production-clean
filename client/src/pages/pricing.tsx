@@ -298,7 +298,9 @@ export default function Pricing() {
                 Is there a free trial for premium plans?
               </h3>
               <p className="text-gray-600">
-                Yes! All premium plans come with a {FREE_TRIAL_DAYS}-day free trial. No credit card required to start your trial.
+                Yes! All premium plans come with a {FREE_TRIAL_DAYS}-day free trial. Payment
+                method requirements depend on how you subscribe, and the billing terms are shown
+                before you confirm.
               </p>
             </div>
             
