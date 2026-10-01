@@ -34,7 +34,7 @@ html, body {
 
 /* Keep modal form controls inside the scroll viewport so their borders are not clipped. */
 .academic-planner-form,
-.reward-create-form {
+.reward-form {
   padding-top: 1px;
 }
 
@@ -42,14 +42,14 @@ html, body {
   padding-left: 1px;
 }
 
-.reward-create-form {
+.reward-form {
   /* Leave room for the focused outline so the control's left edge stays visible. */
   padding-left: 4px;
 }
 
-/* Keep the Create New Reward controls' left borders visible while focused/open. */
-.reward-create-form .reward-create-control:focus,
-.reward-create-form .reward-create-control[data-state="open"] {
+/* Keep reward text fields and dropdown borders visible while focused/open. */
+.reward-form .reward-form-control:focus,
+.reward-form .reward-form-control[data-state="open"] {
   border-left-color: var(--input);
   border-left-style: solid;
   border-left-width: 1px;

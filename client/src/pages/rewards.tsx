@@ -540,7 +540,7 @@ export default function RewardsPage() {
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className="reward-create-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2"
+                    className="reward-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2"
                   >
                   <FormField
                     control={form.control}
@@ -549,7 +549,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
-                          <Input className="reward-create-control" placeholder="Extra screen time" {...field} />
+                          <Input className="reward-form-control" placeholder="Extra screen time" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -563,7 +563,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel optional>Description</FormLabel>
                         <FormControl>
-                          <Textarea className="reward-create-control" placeholder="30 minutes of extra screen time on weekends" {...field} />
+                          <Textarea className="reward-form-control" placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -579,7 +579,7 @@ export default function RewardsPage() {
                           <FormLabel required>Points Required</FormLabel>
                           <FormControl>
                             <Input
-                              className="reward-create-control"
+                              className="reward-form-control"
                               type="number" 
                               {...field} 
                               onChange={(e) => {
@@ -601,7 +601,7 @@ export default function RewardsPage() {
                           <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="reward-create-control">
+                              <SelectTrigger className="reward-form-control">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
@@ -627,7 +627,7 @@ export default function RewardsPage() {
                         <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger className="reward-create-control">
+                            <SelectTrigger className="reward-form-control">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
@@ -651,7 +651,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel optional>Value</FormLabel>
                         <FormControl>
-                          <Input className="reward-create-control" placeholder="$10 or 30 minutes" {...field} />
+                          <Input className="reward-form-control" placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -685,7 +685,7 @@ export default function RewardsPage() {
                 </p>
               </DialogHeader>
               <Form {...editForm}>
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="reward-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                   <FormField
                     control={editForm.control}
                     name="title"
@@ -693,7 +693,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel required>Reward Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Extra screen time" {...field} />
+                          <Input className="reward-form-control" placeholder="Extra screen time" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -707,7 +707,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel optional>Description</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="30 minutes of extra screen time on weekends" {...field} />
+                          <Textarea className="reward-form-control" placeholder="30 minutes of extra screen time on weekends" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -722,7 +722,8 @@ export default function RewardsPage() {
                         <FormItem>
                           <FormLabel required>Points Required</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
+                              className="reward-form-control"
                               type="number" 
                               {...field} 
                               onChange={(e) => {
@@ -744,7 +745,7 @@ export default function RewardsPage() {
                           <FormLabel required>Category</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="reward-form-control">
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
@@ -770,7 +771,7 @@ export default function RewardsPage() {
                         <FormLabel required>Type</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="reward-form-control">
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
@@ -794,7 +795,7 @@ export default function RewardsPage() {
                       <FormItem>
                         <FormLabel optional>Value</FormLabel>
                         <FormControl>
-                          <Input placeholder="$10 or 30 minutes" {...field} />
+                          <Input className="reward-form-control" placeholder="$10 or 30 minutes" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
