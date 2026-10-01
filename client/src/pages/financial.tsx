@@ -48,6 +48,14 @@ const defaultSavingsGoalValues = {
   priority: "medium" as const,
 };
 
+const defaultBankAccountValues = {
+  bankName: "",
+  accountType: "checking" as const,
+  accountNickname: "",
+  bankWebsite: "",
+  lastFour: "",
+};
+
 const savingsGoalSchema = z.object({
   title: z.string().min(1, "Goal title is required"),
   description: z.string().optional(),
@@ -198,14 +206,24 @@ export default function Financial() {
 
   const bankForm = useForm({
     resolver: zodResolver(bankAccountSchema),
-    defaultValues: {
-      bankName: "",
-      accountType: "checking" as const,
-      accountNickname: "",
-      bankWebsite: "",
-      lastFour: "",
-    },
+    defaultValues: defaultBankAccountValues,
   });
+
+  const resetBankForm = () => bankForm.reset(defaultBankAccountValues);
+
+  const openAddBankDialog = () => {
+    setEditingBank(null);
+    resetBankForm();
+    setShowBankDialog(true);
+  };
+
+  const handleBankDialogOpenChange = (open: boolean) => {
+    setShowBankDialog(open);
+    if (!open) {
+      setEditingBank(null);
+      resetBankForm();
+    }
+  };
 
 
 
@@ -378,7 +396,7 @@ export default function Financial() {
       queryClient.refetchQueries({ queryKey: ["/api/bank-accounts"] });
       setShowBankDialog(false);
       setEditingBank(null);
-      bankForm.reset();
+      resetBankForm();
       toast({
         title: "Success",
         description: editingBank 
@@ -1305,19 +1323,16 @@ export default function Financial() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>My Bank Accounts</CardTitle>
-                  <Dialog open={showBankDialog} onOpenChange={(open) => {
-                    setShowBankDialog(open);
-                    if (!open) {
-                      setEditingBank(null);
-                      bankForm.reset();
-                    }
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-add-bank">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Bank Account
-                      </Button>
-                    </DialogTrigger>
+                  <Dialog open={showBankDialog} onOpenChange={handleBankDialogOpenChange}>
+                    <Button
+                      type="button"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      data-testid="button-add-bank"
+                      onClick={openAddBankDialog}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Bank Account
+                    </Button>
                     <DialogContent
                       overlayClassName="z-[110]"
                       className="z-[120] max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
