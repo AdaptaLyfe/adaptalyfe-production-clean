@@ -679,15 +679,23 @@ export default function RewardsPage() {
 
           {/* Edit Reward Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" aria-describedby="edit-reward-description">
-              <DialogHeader>
+            <DialogContent
+              overlayClassName="z-[110]"
+              className="z-[120] w-[calc(100vw-2rem)] max-w-md max-h-[calc(100dvh-6rem)] flex flex-col overflow-hidden"
+              style={{
+                top: "calc(50% + 1rem)",
+                maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+              }}
+              aria-describedby="edit-reward-description"
+            >
+              <DialogHeader className="shrink-0">
                 <DialogTitle>Edit Reward</DialogTitle>
                 <p id="edit-reward-description" className="text-sm text-gray-600">
                   Update reward details
                 </p>
               </DialogHeader>
               <Form {...editForm}>
-                <div className="reward-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="reward-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2">
                   <FormField
                     control={editForm.control}
                     name="title"
@@ -751,7 +759,7 @@ export default function RewardsPage() {
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="z-[130]">
                               {REWARD_CATEGORIES.map((category) => (
                                 <SelectItem key={category.value} value={category.value}>
                                   {category.label}
@@ -777,7 +785,7 @@ export default function RewardsPage() {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             {REWARD_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
                                 {type.label}
