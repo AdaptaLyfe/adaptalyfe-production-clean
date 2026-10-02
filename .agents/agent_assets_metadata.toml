@@ -2941,3 +2941,17 @@ mtime_ms = 1790943207806
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/56958da1-37fb-45e3-a267-54efa659aac3/4604c40b-684c-46ab-8de2-da819f4a95cf"
 storage_version_token = "1790943261183793"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8FY2LaTp4wg2sIyByHOVr"
+uri = "file://deliverables/google-play-subscription-flow-fix.zip"
+type = "unspecified"
+title = "Google Play subscription flow fixes"
+description = "ZIP containing only the two changed source files: server-side Google Play verification and restore ordering, plus Flutter subscription purchase-state handling and safe diagnostics."
+logical_id = "d3e15860-4915-48be-9511-cae3b12867bd"
+content_hash = "sha256:2b040dc517f7176c67aae09e3cf758634cc4f62cf02277a502fe7e3d968b98d1"
+size = 57425
+mtime_ms = 1790945505386
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/f3f6ed6d-2c07-4dd4-ba38-ee03387fd930"
+storage_version_token = "1790945510015284"
+content_type = "application/octet-stream"

@@ -6013,6 +6013,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Google Play Store subscription verification
   app.post("/api/google-play/verify-purchase", async (req: any, res) => {
+    let productIdForLog = "unknown";
+    let verificationPhase = "request validation";
     try {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
@@ -6046,6 +6048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!planInfo) {
         return res.status(400).json({ message: "Invalid product ID" });
       }
+      productIdForLog = productId;
 
       const tokenOwner = await storage.getUserByGooglePlayToken(purchaseToken);
       if (tokenOwner && tokenOwner.id !== user.id) {
@@ -6054,6 +6057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      verificationPhase = "Google Play verification";
       const androidPublisher = await createGooglePlayPublisher();
       const purchaseResult =
         await androidPublisher.purchases.subscriptionsv2.get({
@@ -6064,41 +6068,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expectedProductId: productId,
       });
       if (entitlement.productId !== productId) {
+        console.warn(
+          `[Google Play] Verification rejected: product=${productId}, ` +
+            "reason=product-mismatch.",
+        );
         return res.status(400).json({
           message: "Product ID mismatch in purchase verification",
         });
       }
       if (entitlement.status !== 'active') {
+        console.info(
+          `[Google Play] Verification found no active entitlement: ` +
+            `product=${productId}, ` +
+            `storeState=${purchaseResult.data.subscriptionState ?? "unknown"}.`,
+        );
         return res.status(400).json({
           message: "Google Play reports that this subscription is not active.",
         });
       }
       const expiryTime = entitlement.expiresAt;
       if (!expiryTime) {
+        console.warn(
+          `[Google Play] Verification rejected: product=${productId}, ` +
+            "reason=missing-expiry.",
+        );
         return res.status(502).json({
           message: "Google Play verification did not return an expiration time",
         });
       }
 
-      if (
-        purchaseResult.data.acknowledgementState ===
-        'ACKNOWLEDGEMENT_STATE_PENDING'
-      ) {
-        try {
-          await androidPublisher.purchases.subscriptions.acknowledge({
-            packageName: 'com.adaptalyfe.app',
-            subscriptionId: productId,
-            token: purchaseToken,
-          });
-        } catch (ackError: any) {
-          console.error(
-            "Google Play purchase acknowledgement failed:",
-            ackError?.message ?? "Unknown error",
-          );
-        }
-      }
-
-      await storage.updateUser(user.id, {
+      verificationPhase = "database persistence";
+      const persistedUser = await storage.updateUser(user.id, {
         subscriptionTier: entitlement.tier,
         subscriptionStatus: entitlement.status,
         subscriptionExpiresAt: expiryTime,
@@ -6107,6 +6107,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         googlePlayOrderId: orderId || null,
         googlePlayProductId: productId,
       });
+      if (
+        !persistedUser ||
+        persistedUser.subscriptionTier !== entitlement.tier ||
+        persistedUser.subscriptionStatus !== entitlement.status ||
+        persistedUser.subscriptionPlatform !== 'google_play' ||
+        persistedUser.googlePlayPurchaseToken !== purchaseToken ||
+        persistedUser.googlePlayProductId !== productId ||
+        !persistedUser.subscriptionExpiresAt
+      ) {
+        throw new Error("Google Play entitlement was not persisted.");
+      }
+      console.info(
+        `[Google Play] Entitlement persisted: product=${productId}, ` +
+          `tier=${entitlement.tier}, status=${entitlement.status}.`,
+      );
 
       req.session.user = {
         ...req.session.user,
@@ -6119,18 +6134,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         googlePlayProductId: productId,
       };
 
+      verificationPhase = "session persistence";
       // Force session persistence before responding so the next /api/subscription
       // call from the client sees the active subscription immediately.
       await new Promise<void>((resolve) => {
         req.session.save((err: any) => {
-          if (err) console.error("Session save error after Google Play verify:", err);
+          if (err) {
+            console.error(
+              "Session save failed after Google Play verification:",
+              err?.name ?? "Unknown error",
+            );
+          }
           resolve();
         });
       });
 
-      console.log(
-        `Google Play subscription verified for user ${user.id}: ${productId} -> ${entitlement.tier}`,
-      );
+      if (
+        purchaseResult.data.acknowledgementState ===
+        'ACKNOWLEDGEMENT_STATE_PENDING'
+      ) {
+        verificationPhase = "Google Play acknowledgement";
+        try {
+          await androidPublisher.purchases.subscriptions.acknowledge({
+            packageName: 'com.adaptalyfe.app',
+            subscriptionId: productId,
+            token: purchaseToken,
+          });
+        } catch (ackError: any) {
+          console.error(
+            `[Google Play] Acknowledgement failed after persistence: ` +
+              `product=${productId}, ` +
+              `httpStatus=${ackError?.response?.status ?? "unknown"}.`,
+          );
+        }
+      }
 
       res.json({
         success: true,
@@ -6140,11 +6177,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platform: 'google_play',
       });
     } catch (error: any) {
-      console.error(
-        "Google Play verification error:",
-        error?.message ?? "Unknown error",
-      );
       const notConfigured = error?.message?.includes('not configured');
+      console.error(
+        `[Google Play] Verification failed: phase=${verificationPhase}, ` +
+          `product=${productIdForLog}, error=${error?.name ?? "Unknown"}, ` +
+          `httpStatus=${error?.response?.status ?? "unknown"}, ` +
+          `serviceAccountMissing=${notConfigured}, ` +
+          `errorCode=${error?.code ?? "unknown"}.`,
+      );
       res.status(notConfigured ? 503 : 500).json({
         message: notConfigured
           ? "Google Play verification not configured"
@@ -6589,6 +6629,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/google-play/restore-purchases", async (req: any, res) => {
+    let productIdForLog = "unknown";
+    let restorePhase = "request validation";
     try {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
@@ -6617,6 +6659,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const purchase of purchases) {
         if (!purchase.purchaseToken || !purchase.productId) continue;
         if (!googlePlayTierForProductId(purchase.productId)) continue;
+        productIdForLog = purchase.productId;
 
         const tokenOwner = await storage.getUserByGooglePlayToken(
           purchase.purchaseToken,
@@ -6630,6 +6673,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         let purchaseResult: any;
         try {
+          restorePhase = "Google Play verification";
           purchaseResult =
             await androidPublisher.purchases.subscriptionsv2.get({
               packageName: 'com.adaptalyfe.app',
@@ -6652,27 +6696,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           entitlement.productId !== purchase.productId ||
           !entitlement.expiresAt
         ) {
+          console.info(
+            `[Google Play] Restore candidate not eligible: ` +
+              `product=${purchase.productId}, ` +
+              `storeState=${purchaseResult.data.subscriptionState ?? "unknown"}.`,
+          );
           continue;
         }
-        if (
-          purchaseResult.data.acknowledgementState ===
-          'ACKNOWLEDGEMENT_STATE_PENDING'
-        ) {
-          try {
-            await androidPublisher.purchases.subscriptions.acknowledge({
-              packageName: 'com.adaptalyfe.app',
-              subscriptionId: purchase.productId,
-              token: purchase.purchaseToken,
-            });
-          } catch (ackError: any) {
-            console.error(
-              "Google Play restore acknowledgement failed:",
-              ackError?.message ?? "Unknown error",
-            );
-          }
-        }
 
-        await storage.updateUser(user.id, {
+        restorePhase = "database persistence";
+        const persistedUser = await storage.updateUser(user.id, {
           subscriptionTier: entitlement.tier,
           subscriptionStatus: entitlement.status,
           subscriptionExpiresAt: entitlement.expiresAt,
@@ -6681,37 +6714,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
           googlePlayOrderId: purchase.orderId || null,
           googlePlayProductId: entitlement.productId,
         });
-
-        const updatedUser = await storage.getUserById(user.id);
+        if (
+          !persistedUser ||
+          persistedUser.subscriptionTier !== entitlement.tier ||
+          persistedUser.subscriptionStatus !== entitlement.status ||
+          persistedUser.subscriptionPlatform !== 'google_play' ||
+          persistedUser.googlePlayPurchaseToken !== purchase.purchaseToken ||
+          persistedUser.googlePlayProductId !== entitlement.productId ||
+          !persistedUser.subscriptionExpiresAt
+        ) {
+          throw new Error("Restored Google Play entitlement was not persisted.");
+        }
+        console.info(
+          `[Google Play] Restored entitlement persisted: ` +
+            `product=${entitlement.productId}, tier=${entitlement.tier}.`,
+        );
         req.session.user = {
-          ...(updatedUser ?? req.session.user),
+          ...req.session.user,
+          subscriptionTier: entitlement.tier,
+          subscriptionStatus: entitlement.status,
+          subscriptionExpiresAt: entitlement.expiresAt,
+          subscriptionPlatform: 'google_play',
+          googlePlayPurchaseToken: purchase.purchaseToken,
+          googlePlayOrderId: purchase.orderId || null,
+          googlePlayProductId: entitlement.productId,
         };
+        restorePhase = "session persistence";
         await new Promise<void>((resolve) => {
           req.session.save((err: any) => {
             if (err) {
               console.error(
                 "Session save failed after Google Play restore:",
-                err?.message ?? "Unknown error",
+                err?.name ?? "Unknown error",
               );
             }
             resolve();
           });
         });
 
-        console.log(
-          `Restored Google Play subscription for user ${user.id}: ${entitlement.productId}`,
-        );
+        if (
+          purchaseResult.data.acknowledgementState ===
+          'ACKNOWLEDGEMENT_STATE_PENDING'
+        ) {
+          restorePhase = "Google Play acknowledgement";
+          try {
+            await androidPublisher.purchases.subscriptions.acknowledge({
+              packageName: 'com.adaptalyfe.app',
+              subscriptionId: purchase.productId,
+              token: purchase.purchaseToken,
+            });
+          } catch (ackError: any) {
+            console.error(
+              `[Google Play] Restore acknowledgement failed after persistence: ` +
+                `product=${purchase.productId}, ` +
+                `httpStatus=${ackError?.response?.status ?? "unknown"}.`,
+            );
+          }
+        }
+        restorePhase = "complete";
         restored = true;
         break;
       }
 
       res.json({ restored, message: restored ? "Subscription restored successfully" : "No valid purchases found" });
     } catch (error: any) {
-      console.error(
-        "Restore purchases verification failed:",
-        error?.message ?? "Unknown error",
-      );
       const notConfigured = error?.message?.includes('not configured');
+      console.error(
+        `[Google Play] Restore failed: phase=${restorePhase}, ` +
+          `product=${productIdForLog}, error=${error?.name ?? "Unknown"}, ` +
+          `httpStatus=${error?.response?.status ?? "unknown"}, ` +
+          `serviceAccountMissing=${notConfigured}, ` +
+          `errorCode=${error?.code ?? "unknown"}.`,
+      );
       res.status(notConfigured ? 503 : 500).json({
         message: notConfigured
           ? "Google Play verification not configured"

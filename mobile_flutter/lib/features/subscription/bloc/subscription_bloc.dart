@@ -566,6 +566,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) async {
     final purchases = event.purchases.whereType<PurchaseDetails>().toList();
+    for (final purchase in purchases) {
+      debugPrint(
+        '[Subscription IAP] Purchase update received: '
+        'productId=${purchase.productID}, status=${purchase.status.name}, '
+        'source=${purchase.verificationData.source}',
+      );
+    }
     final restorePurchases = purchases
         .where(
           (item) =>
@@ -608,6 +615,35 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
                   : 'The store could not complete your purchase. '
                       'Check your store account and try again.',
               actionMessage: cancelled ? 'Payment was cancelled.' : null,
+              shouldNavigateToDashboard: false,
+            ),
+          );
+          _signalRestoreEvent();
+        } catch (error) {
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.failure,
+              busyPlanId: null,
+              errorMessage: _messageFor(error),
+            ),
+          );
+          _signalRestoreEvent();
+        } finally {
+          _finishPurchaseEvent(key);
+        }
+        continue;
+      }
+      if (item.status == PurchaseStatus.canceled) {
+        final key = _claimPurchaseEvent(item);
+        if (key == null) continue;
+        try {
+          await purchaseService.complete(item);
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.cancelled,
+              busyPlanId: null,
+              errorMessage: null,
+              actionMessage: 'Payment was cancelled.',
               shouldNavigateToDashboard: false,
             ),
           );
@@ -819,6 +855,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         throw const FormatException('The store returned an unknown plan.');
       }
       final verification = await _verify(item, plan, emit);
+      debugPrint(
+        '[Subscription IAP] Verification result: '
+        'productId=${plan.productId}, success=${verification.success}',
+      );
       if (!verification.success) {
         await purchaseService.complete(item);
         throw ApiException(
@@ -828,6 +868,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
       await purchaseService.complete(item);
       final subscription = await repository.getSubscription();
+      debugPrint(
+        '[Subscription IAP] Subscription refreshed: '
+        'plan=${subscription.planType}, status=${subscription.status}',
+      );
       if (!subscription.grantsAccess) {
         emit(
           state.copyWith(
@@ -882,6 +926,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     } catch (error) {
+      debugPrint(
+        '[Subscription IAP] Purchase processing failed: '
+        'productId=${item.productID}, errorType=${error.runtimeType}',
+      );
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
@@ -956,6 +1004,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     // base64 receipt data on iOS and the purchase token on Android.
     final source = purchase.verificationData.source.toLowerCase();
     final storePlatform = subscriptionStorePlatformFromSource(source);
+    debugPrint(
+      '[Subscription IAP] Verification started: '
+      'productId=${plan.productId}, source=$source',
+    );
     if (storePlatform == SubscriptionStorePlatform.appStore) {
       return repository.verifyApplePurchase(
         receiptData: serverData,
