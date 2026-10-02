@@ -45,6 +45,11 @@ import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { buildNextAction, isNextActionRequest } from "./next-action";
+import { googlePlayTierForProductId, resolveGooglePlayEntitlement } from "./google-play-entitlement";
+import {
+  createGooglePlayPublisher,
+  isAuthenticatedGooglePlayPush,
+} from "./google-play-client";
 import {
   buildTasksRoutinesResponse,
   isTasksRoutinesRequest,
@@ -5175,54 +5180,140 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
         return res.json(adminSubscription);
       }
+
+      if (user.subscriptionPlatform === 'google_play') {
+        if (!user.googlePlayPurchaseToken) {
+          return res.status(503).json({
+            message: "Google Play subscription cannot be verified.",
+          });
+        }
+        try {
+          const androidPublisher = await createGooglePlayPublisher();
+          const result = await androidPublisher.purchases.subscriptionsv2.get({
+            packageName: 'com.adaptalyfe.app',
+            token: user.googlePlayPurchaseToken,
+          });
+          const entitlement = resolveGooglePlayEntitlement(result.data, {
+            expectedProductId: user.googlePlayProductId ?? undefined,
+          });
+          const update = {
+            subscriptionStatus: entitlement.status,
+            subscriptionTier: entitlement.tier,
+            subscriptionExpiresAt:
+              entitlement.expiresAt ?? user.subscriptionExpiresAt,
+            subscriptionPlatform: 'google_play',
+            googlePlayPurchaseToken: user.googlePlayPurchaseToken,
+            googlePlayProductId:
+              entitlement.productId ?? user.googlePlayProductId,
+          };
+          const previousExpiry = user.subscriptionExpiresAt
+            ? new Date(user.subscriptionExpiresAt).getTime()
+            : null;
+          const verifiedExpiry = entitlement.expiresAt?.getTime() ?? null;
+          const changed =
+            user.subscriptionStatus !== update.subscriptionStatus ||
+            user.subscriptionTier !== update.subscriptionTier ||
+            user.subscriptionPlatform !== update.subscriptionPlatform ||
+            user.googlePlayProductId !== update.googlePlayProductId ||
+            previousExpiry !==
+              (verifiedExpiry ?? previousExpiry);
+          if (changed) {
+            await storage.updateUserSubscription(user.id, update);
+            const refreshedUser = await storage.getUserById(user.id);
+            if (!refreshedUser) {
+              throw new Error("User record disappeared after verification.");
+            }
+            user = refreshedUser;
+          }
+          req.session.user = user;
+        } catch (error: any) {
+          console.error(
+            "Google Play subscription refresh failed:",
+            error?.message ?? "Unknown error",
+          );
+          return res.status(503).json({
+            message:
+              "Google Play subscription status could not be verified. Please try again.",
+          });
+        }
+      }
       
       // Calculate trial days left for regular users
       const trialEndDate = new Date(user.createdAt);
       trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
       const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
-      
-      // Check subscription status. Trust subscriptionStatus as the single source of truth.
-      // Stripe, Apple, and Google webhooks update this field to 'cancelled'/'past_due' when
-      // a subscription lapses — so if it says 'active', that is definitive. We do NOT
-      // additionally require stripeSubscriptionId or a non-expired subscriptionExpiresAt,
-      // because those fields can be null/stale for valid subscribers.
-      const isActiveSubscription = user.subscriptionStatus === 'active';
+
+      const isGooglePlaySubscription =
+        user.subscriptionPlatform === 'google_play' &&
+        Boolean(user.googlePlayPurchaseToken);
+      const googlePlayExpiry = user.subscriptionExpiresAt
+        ? new Date(user.subscriptionExpiresAt)
+        : null;
+      const hasValidGooglePlayExpiry =
+        googlePlayExpiry !== null &&
+        Number.isFinite(googlePlayExpiry.getTime()) &&
+        googlePlayExpiry.getTime() > now.getTime();
+      const activeGoogleTier = isGooglePlaySubscription
+        ? googlePlayTierForProductId(user.googlePlayProductId)
+        : null;
+
+      // A Google cancellation only stops renewal. Keep access through the
+      // verified expiry; a stale active record must not survive that expiry.
+      const isActiveSubscription =
+        (user.subscriptionStatus === 'active' &&
+          (user.subscriptionPlatform !== 'google_play' ||
+            !googlePlayExpiry ||
+            hasValidGooglePlayExpiry)) ||
+        (isGooglePlaySubscription &&
+          user.subscriptionStatus === 'cancelled' &&
+          hasValidGooglePlayExpiry);
+      const hasTrialAccess =
+        !isGooglePlaySubscription && trialDaysLeft > 0;
+      const effectivePlan = isActiveSubscription
+        ? activeGoogleTier ?? user.subscriptionTier ?? 'free'
+        : hasTrialAccess
+          ? user.subscriptionTier ?? 'free'
+          : 'free';
+      const isPremiumPlan =
+        effectivePlan === 'premium' || effectivePlan === 'family';
+      const isFamilyPlan = effectivePlan === 'family';
 
       const subscription = {
         id: user.id,
-        planType: user.subscriptionTier || "free",
-        status: isActiveSubscription ? "active" : (trialDaysLeft > 0 ? "trialing" : "expired"),
+        planType: effectivePlan,
+        status: isActiveSubscription ? "active" : (hasTrialAccess ? "trialing" : "expired"),
         billingCycle: "monthly",
         subscriptionPlatform: user.subscriptionPlatform || null,
         currentPeriodStart: user.createdAt,
-        currentPeriodEnd: user.subscriptionExpiresAt || trialEndDate.toISOString(),
-        trialDaysLeft: trialDaysLeft > 0 ? trialDaysLeft : null,
+        currentPeriodEnd:
+          user.subscriptionExpiresAt || trialEndDate.toISOString(),
+        trialDaysLeft: hasTrialAccess && trialDaysLeft > 0 ? trialDaysLeft : null,
         usageStats: {
-          tasks: { count: 0, limit: user.subscriptionTier === 'family' ? null : (user.subscriptionTier === 'premium' ? 1000 : 50) },
-          caregivers: { count: 0, limit: user.subscriptionTier === 'family' ? null : (user.subscriptionTier === 'premium' ? 5 : 1) },
-          dataExports: { count: 0, limit: user.subscriptionTier === 'free' ? 0 : null }
+          tasks: { count: 0, limit: isFamilyPlan ? null : (effectivePlan === 'premium' ? 1000 : 50) },
+          caregivers: { count: 0, limit: isFamilyPlan ? null : (effectivePlan === 'premium' ? 5 : 1) },
+          dataExports: { count: 0, limit: effectivePlan === 'free' ? 0 : null }
         },
         features: {
           // Basic+ features
-          taskManagement: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
-          moodTracking: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
-          financialTracking: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
-          basicReminders: user.subscriptionTier !== 'free' || trialDaysLeft > 0,
+          taskManagement: effectivePlan !== 'free' || hasTrialAccess,
+          moodTracking: effectivePlan !== 'free' || hasTrialAccess,
+          financialTracking: effectivePlan !== 'free' || hasTrialAccess,
+          basicReminders: effectivePlan !== 'free' || hasTrialAccess,
           // Premium+ features
-          wearableDevices: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          mealPlanning: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          medicationManagement: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          advancedAnalytics: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          voiceCommands: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          academicPlanner: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
-          prioritySupport: (user.subscriptionTier === 'premium' || user.subscriptionTier === 'family') || trialDaysLeft > 0,
+          wearableDevices: isPremiumPlan || hasTrialAccess,
+          mealPlanning: isPremiumPlan || hasTrialAccess,
+          medicationManagement: isPremiumPlan || hasTrialAccess,
+          advancedAnalytics: isPremiumPlan || hasTrialAccess,
+          voiceCommands: isPremiumPlan || hasTrialAccess,
+          academicPlanner: isPremiumPlan || hasTrialAccess,
+          prioritySupport: isPremiumPlan || hasTrialAccess,
           // Family-only features
-          locationSafety: user.subscriptionTier === 'family' || trialDaysLeft > 0,
-          familyDashboard: user.subscriptionTier === 'family',
-          multiUserAccounts: user.subscriptionTier === 'family',
-          emergencyProtocols: user.subscriptionTier === 'family',
-          customReporting: user.subscriptionTier === 'family',
-          unlimitedCaregivers: user.subscriptionTier === 'family',
+          locationSafety: isFamilyPlan || hasTrialAccess,
+          familyDashboard: isFamilyPlan,
+          multiUserAccounts: isFamilyPlan,
+          emergencyProtocols: isFamilyPlan,
+          customReporting: isFamilyPlan,
+          unlimitedCaregivers: isFamilyPlan,
         }
       };
       
@@ -5956,82 +6047,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid product ID" });
       }
 
-      let verified = false;
-      let expiryTime: Date | null = null;
-
-      if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-        try {
-          const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-          const { google } = await import('googleapis');
-          const auth = new google.auth.GoogleAuth({
-            credentials: serviceAccount,
-            scopes: ['https://www.googleapis.com/auth/androidpublisher'],
-          });
-          const androidPublisher = google.androidpublisher({ version: 'v3', auth });
-
-          const packageName = 'com.adaptalyfe.app';
-          const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
-            packageName,
-            token: purchaseToken,
-          });
-
-          const subscriptionState = purchaseResult.data.subscriptionState;
-          if (subscriptionState === 'SUBSCRIPTION_STATE_ACTIVE' || subscriptionState === 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD') {
-            const lineItems = purchaseResult.data.lineItems;
-            if (lineItems && lineItems.length > 0) {
-              const matchingItem = lineItems.find((item: any) => item.productId === productId);
-              if (!matchingItem) {
-                console.error(`Product ID mismatch: expected ${productId}, got ${lineItems.map((i: any) => i.productId).join(',')}`);
-                return res.status(400).json({ message: "Product ID mismatch in purchase verification" });
-              }
-
-              verified = true;
-              const expiryStr = matchingItem.expiryTime;
-              if (expiryStr) {
-                expiryTime = new Date(expiryStr);
-              }
-            } else {
-              verified = true;
-            }
-
-            if (verified && purchaseResult.data.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING') {
-              try {
-                await androidPublisher.purchases.subscriptions.acknowledge({
-                  packageName,
-                  subscriptionId: productId,
-                  token: purchaseToken,
-                });
-                console.log(`Acknowledged purchase for ${productId}`);
-              } catch (ackError: any) {
-                console.error("Purchase acknowledgement error:", ackError.message);
-              }
-            }
-          } else {
-            console.error(`Subscription not active: state=${subscriptionState}`);
-            return res.status(400).json({ message: "Subscription is not active" });
-          }
-        } catch (apiError: any) {
-          console.error("Google Play API verification error:", apiError.message);
-          return res.status(500).json({ message: "Purchase verification failed - API error" });
-        }
-      } else {
-        console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
-        return res.status(503).json({ message: "Google Play verification not configured" });
+      const tokenOwner = await storage.getUserByGooglePlayToken(purchaseToken);
+      if (tokenOwner && tokenOwner.id !== user.id) {
+        return res.status(409).json({
+          message: "This Google Play purchase is already linked to another account.",
+        });
       }
 
-      if (!verified) {
-        return res.status(400).json({ message: "Purchase verification failed" });
+      const androidPublisher = await createGooglePlayPublisher();
+      const purchaseResult =
+        await androidPublisher.purchases.subscriptionsv2.get({
+          packageName: 'com.adaptalyfe.app',
+          token: purchaseToken,
+        });
+      const entitlement = resolveGooglePlayEntitlement(purchaseResult.data, {
+        expectedProductId: productId,
+      });
+      if (entitlement.productId !== productId) {
+        return res.status(400).json({
+          message: "Product ID mismatch in purchase verification",
+        });
       }
-
+      if (entitlement.status !== 'active') {
+        return res.status(400).json({
+          message: "Google Play reports that this subscription is not active.",
+        });
+      }
+      const expiryTime = entitlement.expiresAt;
       if (!expiryTime) {
         return res.status(502).json({
           message: "Google Play verification did not return an expiration time",
         });
       }
 
+      if (
+        purchaseResult.data.acknowledgementState ===
+        'ACKNOWLEDGEMENT_STATE_PENDING'
+      ) {
+        try {
+          await androidPublisher.purchases.subscriptions.acknowledge({
+            packageName: 'com.adaptalyfe.app',
+            subscriptionId: productId,
+            token: purchaseToken,
+          });
+        } catch (ackError: any) {
+          console.error(
+            "Google Play purchase acknowledgement failed:",
+            ackError?.message ?? "Unknown error",
+          );
+        }
+      }
+
       await storage.updateUser(user.id, {
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: 'active',
+        subscriptionTier: entitlement.tier,
+        subscriptionStatus: entitlement.status,
         subscriptionExpiresAt: expiryTime,
         subscriptionPlatform: 'google_play',
         googlePlayPurchaseToken: purchaseToken,
@@ -6041,10 +6110,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       req.session.user = {
         ...req.session.user,
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: 'active',
+        subscriptionTier: entitlement.tier,
+        subscriptionStatus: entitlement.status,
         subscriptionExpiresAt: expiryTime,
         subscriptionPlatform: 'google_play',
+        googlePlayPurchaseToken: purchaseToken,
+        googlePlayOrderId: orderId || null,
+        googlePlayProductId: productId,
       };
 
       // Force session persistence before responding so the next /api/subscription
@@ -6056,18 +6128,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
 
-      console.log(`Google Play subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType} (${planInfo.billingCycle})`);
+      console.log(
+        `Google Play subscription verified for user ${user.id}: ${productId} -> ${entitlement.tier}`,
+      );
 
       res.json({
         success: true,
-        planType: planInfo.planType,
+        planType: entitlement.tier,
         billingCycle: planInfo.billingCycle,
         expiresAt: expiryTime.toISOString(),
         platform: 'google_play',
       });
     } catch (error: any) {
-      console.error("Google Play verification error:", error);
-      res.status(500).json({ message: "Failed to verify purchase", error: error.message });
+      console.error(
+        "Google Play verification error:",
+        error?.message ?? "Unknown error",
+      );
+      const notConfigured = error?.message?.includes('not configured');
+      res.status(notConfigured ? 503 : 500).json({
+        message: notConfigured
+          ? "Google Play verification not configured"
+          : "Failed to verify purchase",
+      });
     }
   });
 
@@ -6421,106 +6503,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //   Topic: create a Cloud Pub/Sub topic, subscribe with push endpoint:
   //   https://app.getadaptalyfeapp.com/api/google-play/notifications
   app.post("/api/google-play/notifications", async (req: any, res) => {
-    // Acknowledge immediately so Pub/Sub doesn't retry
-    res.status(200).json({ received: true });
-
     try {
       // Pub/Sub wraps the message in { message: { data: base64, messageId } }
       const pubsubMessage = req.body?.message;
       if (!pubsubMessage?.data) {
-        console.warn("Google Play notification: no Pub/Sub message data");
-        return;
+        return res.status(200).json({ received: true });
       }
 
       const decoded = Buffer.from(pubsubMessage.data, 'base64').toString('utf8');
       const notification = JSON.parse(decoded);
-      console.log("Google Play notification:", JSON.stringify(notification));
-
       const { subscriptionNotification, voidedPurchaseNotification } = notification;
-      if (!subscriptionNotification) return;
+      if (notification.testNotification) {
+        return res.status(200).json({ received: true });
+      }
+      if (!subscriptionNotification && !voidedPurchaseNotification) {
+        return res.status(200).json({ received: true });
+      }
 
-      const { notificationType, purchaseToken, subscriptionId } = subscriptionNotification;
-
-      // https://developer.android.com/google/play/billing/rtdn-reference
-      // 1=RECOVERED 2=RENEWED 3=CANCELED 4=PURCHASED 5=ON_HOLD 6=IN_GRACE_PERIOD
-      // 7=RESTARTED 12=REVOKED 13=EXPIRED
-      const RENEWED   = [1, 2, 4, 7];
-      const CANCELLED = [3, 12];
-      const EXPIRED   = [13];
-
-      const productToPlan: Record<string, { tier: string }> = {
-        adaptalyfe_basic_monthly:   { tier: 'basic' },
-        adaptalyfe_premium_monthly: { tier: 'premium' },
-        adaptalyfe_family_monthly:  { tier: 'family' },
-      };
+      const notificationType = Number(
+        subscriptionNotification?.notificationType ?? 0,
+      );
+      const authenticatedPush = await isAuthenticatedGooglePlayPush(req);
+      const isRevocationNotification =
+        notificationType === 12 || Boolean(voidedPurchaseNotification);
+      if (isRevocationNotification && !authenticatedPush) {
+        console.warn(
+          "Google Play revocation push was not authenticated; entitlement will follow the verified API state only.",
+        );
+      }
+      const purchaseToken =
+        subscriptionNotification?.purchaseToken ??
+        voidedPurchaseNotification?.purchaseToken;
+      const subscriptionId = subscriptionNotification?.subscriptionId;
+      if (typeof purchaseToken !== 'string' || purchaseToken.length === 0) {
+        return res.status(400).json({ message: "Purchase token is required" });
+      }
 
       // Find user by stored purchase token
-      const user = purchaseToken
-        ? await storage.getUserByGooglePlayToken(purchaseToken)
-        : undefined;
-
+      const user = await storage.getUserByGooglePlayToken(purchaseToken);
       if (!user) {
-        console.warn(`Google Play notif: no user found for purchaseToken=${purchaseToken?.slice(0, 20)}...`);
-        return;
+        console.warn("Google Play notification has no matching account.");
+        return res.status(200).json({ received: true });
       }
 
-      const planInfo = productToPlan[subscriptionId];
-
-      if (RENEWED.includes(notificationType) && planInfo) {
-        // Verify with Google Play API to get the actual expiry date
-        let expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 1); // fallback: extend 1 month
-
-        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-          try {
-            const { google } = await import('googleapis') as any;
-            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-            const auth = new google.auth.GoogleAuth({
-              credentials: serviceAccount,
-              scopes: ['https://www.googleapis.com/auth/androidpublisher'],
-            });
-            const androidPublisher = google.androidpublisher({ version: 'v3', auth });
-            // Use subscriptionsv2 (same API as verify-purchase endpoint for consistency)
-            const result = await androidPublisher.purchases.subscriptionsv2.get({
-              packageName: 'com.adaptalyfe.app',
-              token: purchaseToken,
-            });
-            const lineItems = result.data?.lineItems;
-            if (lineItems && lineItems.length > 0) {
-              const item = lineItems.find((li: any) => li.productId === subscriptionId) || lineItems[0];
-              if (item?.expiryTime) {
-                expiresAt = new Date(item.expiryTime);
-              }
-            }
-          } catch (gpErr: any) {
-            console.warn("Google Play API verification failed, using +1 month fallback:", gpErr.message);
-          }
-        }
-
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: 'active',
-          subscriptionTier: planInfo.tier,
-          subscriptionExpiresAt: expiresAt,
-          subscriptionPlatform: 'google_play',
-        });
-        console.log(`✅ Google Play renewal: user ${user.id} (${user.username}) → ${planInfo.tier} until ${expiresAt.toISOString()}`);
-      } else if (CANCELLED.includes(notificationType)) {
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: 'cancelled',
-          subscriptionTier: 'free',
-        });
-        console.log(`✅ Google Play cancel: user ${user.id} (${user.username}) subscription cancelled`);
-      } else if (EXPIRED.includes(notificationType)) {
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: 'inactive',
-          subscriptionTier: 'free',
-        });
-        console.log(`✅ Google Play expired: user ${user.id} (${user.username}) subscription expired`);
-      } else {
-        console.log(`Google Play notif type ${notificationType} for user ${user.id} — no action needed`);
+      const androidPublisher = await createGooglePlayPublisher();
+      const result = await androidPublisher.purchases.subscriptionsv2.get({
+        packageName: 'com.adaptalyfe.app',
+        token: purchaseToken,
+      });
+      const entitlement = resolveGooglePlayEntitlement(result.data, {
+        expectedProductId: subscriptionId || user.googlePlayProductId || undefined,
+        forceRevoke: authenticatedPush && isRevocationNotification,
+      });
+      if (!googlePlayTierForProductId(entitlement.productId)) {
+        console.warn("Google Play notification returned an unconfigured product.");
+        return res.status(200).json({ received: true });
       }
+
+      await storage.updateUserSubscription(user.id, {
+        subscriptionStatus: entitlement.status,
+        subscriptionTier: entitlement.tier,
+        subscriptionExpiresAt:
+          entitlement.expiresAt ?? user.subscriptionExpiresAt,
+        subscriptionPlatform: 'google_play',
+        googlePlayPurchaseToken: purchaseToken,
+        googlePlayProductId: entitlement.productId,
+      });
+      console.info("Google Play notification applied.", {
+        messageId: pubsubMessage.messageId ?? null,
+        notificationType,
+        state: result.data?.subscriptionState ?? null,
+        entitlement: entitlement.status,
+        tier: entitlement.tier,
+      });
+      return res.status(200).json({ received: true });
     } catch (error: any) {
-      console.error("Google Play notification processing error:", error);
+      console.error(
+        "Google Play notification verification failed:",
+        error?.message ?? "Unknown error",
+      );
+      return res
+        .status(500)
+        .json({ message: "Google Play notification processing failed" });
     }
   });
 
@@ -6536,82 +6600,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!purchases || !Array.isArray(purchases) || purchases.length === 0) {
         return res.json({ restored: false, message: "No purchases to restore" });
       }
-
-      const productToPlan: Record<string, { planType: string; billingCycle: string }> = {
-        adaptalyfe_basic_monthly: { planType: 'basic', billingCycle: 'monthly' },
-        adaptalyfe_premium_monthly: { planType: 'premium', billingCycle: 'monthly' },
-        adaptalyfe_family_monthly: { planType: 'family', billingCycle: 'monthly' },
-      };
+      const freshUser = await storage.getUserById(req.session.userId);
+      if (
+        freshUser?.subscriptionStatus === 'active' &&
+        freshUser.subscriptionPlatform &&
+        freshUser.subscriptionPlatform !== 'google_play'
+      ) {
+        return res.status(409).json({
+          message:
+            "This account already has an active subscription. It works on Android without another Google Play purchase.",
+        });
+      }
 
       let restored = false;
+      const androidPublisher = await createGooglePlayPublisher();
       for (const purchase of purchases) {
         if (!purchase.purchaseToken || !purchase.productId) continue;
-        const planInfo = productToPlan[purchase.productId];
-        if (!planInfo) continue;
+        if (!googlePlayTierForProductId(purchase.productId)) continue;
 
-        let expiresAt: Date | null = null;
+        const tokenOwner = await storage.getUserByGooglePlayToken(
+          purchase.purchaseToken,
+        );
+        if (tokenOwner && tokenOwner.id !== user.id) {
+          return res.status(409).json({
+            message:
+              "A Google Play purchase is already linked to another account.",
+          });
+        }
 
-        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-          try {
-            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-            const { google } = await import('googleapis');
-            const auth = new google.auth.GoogleAuth({
-              credentials: serviceAccount,
-              scopes: ['https://www.googleapis.com/auth/androidpublisher'],
-            });
-            const androidPublisher = google.androidpublisher({ version: 'v3', auth });
-            const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
+        let purchaseResult: any;
+        try {
+          purchaseResult =
+            await androidPublisher.purchases.subscriptionsv2.get({
               packageName: 'com.adaptalyfe.app',
               token: purchase.purchaseToken,
             });
-            const state = purchaseResult.data.subscriptionState;
-            if (state !== 'SUBSCRIPTION_STATE_ACTIVE' && state !== 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD') {
-              continue;
-            }
-            const lineItems = purchaseResult.data.lineItems;
-            if (lineItems && lineItems.length > 0 && lineItems[0].expiryTime) {
-              expiresAt = new Date(lineItems[0].expiryTime);
-            }
-          } catch (verifyError: any) {
-            console.error("Restore verification error:", verifyError.message);
+        } catch (verifyError: any) {
+          const status =
+            verifyError?.response?.status ?? verifyError?.code;
+          if (status === 400 || status === 404 || status === 410) {
             continue;
           }
-        } else {
-          console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
-          return res.status(503).json({ message: "Google Play verification not configured" });
+          throw verifyError;
         }
 
-        if (!expiresAt) {
+        const entitlement = resolveGooglePlayEntitlement(purchaseResult.data, {
+          expectedProductId: purchase.productId,
+        });
+        if (
+          entitlement.status !== 'active' ||
+          entitlement.productId !== purchase.productId ||
+          !entitlement.expiresAt
+        ) {
           continue;
+        }
+        if (
+          purchaseResult.data.acknowledgementState ===
+          'ACKNOWLEDGEMENT_STATE_PENDING'
+        ) {
+          try {
+            await androidPublisher.purchases.subscriptions.acknowledge({
+              packageName: 'com.adaptalyfe.app',
+              subscriptionId: purchase.productId,
+              token: purchase.purchaseToken,
+            });
+          } catch (ackError: any) {
+            console.error(
+              "Google Play restore acknowledgement failed:",
+              ackError?.message ?? "Unknown error",
+            );
+          }
         }
 
         await storage.updateUser(user.id, {
-          subscriptionTier: planInfo.planType,
-          subscriptionStatus: 'active',
-          subscriptionExpiresAt: expiresAt,
+          subscriptionTier: entitlement.tier,
+          subscriptionStatus: entitlement.status,
+          subscriptionExpiresAt: entitlement.expiresAt,
           subscriptionPlatform: 'google_play',
           googlePlayPurchaseToken: purchase.purchaseToken,
           googlePlayOrderId: purchase.orderId || null,
-          googlePlayProductId: purchase.productId,
+          googlePlayProductId: entitlement.productId,
         });
 
+        const updatedUser = await storage.getUserById(user.id);
         req.session.user = {
-          ...req.session.user,
-          subscriptionTier: planInfo.planType,
-          subscriptionStatus: 'active',
-          subscriptionExpiresAt: expiresAt,
-          subscriptionPlatform: 'google_play',
+          ...(updatedUser ?? req.session.user),
         };
+        await new Promise<void>((resolve) => {
+          req.session.save((err: any) => {
+            if (err) {
+              console.error(
+                "Session save failed after Google Play restore:",
+                err?.message ?? "Unknown error",
+              );
+            }
+            resolve();
+          });
+        });
 
-        console.log(`Restored Google Play subscription for user ${user.id}: ${purchase.productId}`);
+        console.log(
+          `Restored Google Play subscription for user ${user.id}: ${entitlement.productId}`,
+        );
         restored = true;
         break;
       }
 
       res.json({ restored, message: restored ? "Subscription restored successfully" : "No valid purchases found" });
     } catch (error: any) {
-      console.error("Restore purchases error:", error);
-      res.status(500).json({ message: "Failed to restore purchases", error: error.message });
+      console.error(
+        "Restore purchases verification failed:",
+        error?.message ?? "Unknown error",
+      );
+      const notConfigured = error?.message?.includes('not configured');
+      res.status(notConfigured ? 503 : 500).json({
+        message: notConfigured
+          ? "Google Play verification not configured"
+          : "Failed to restore purchases",
+      });
     }
   });
 

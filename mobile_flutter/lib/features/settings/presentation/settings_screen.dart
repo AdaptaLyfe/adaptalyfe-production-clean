@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/layout/responsive.dart';
 import '../../../core/platform/text_to_speech_service.dart';
+import '../../subscription/bloc/subscription_bloc.dart';
+import '../../subscription/bloc/subscription_event.dart';
+import '../../subscription/bloc/subscription_state.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
@@ -96,7 +100,7 @@ class _SettingsBody extends StatelessWidget {
               children: [
                 const _SettingsPageHeader(),
                 const SizedBox(height: 16),
-                _SubscriptionStatusCard(state: state),
+                const _SubscriptionStatusCard(),
                 const SizedBox(height: 16),
                 _ReactAppearanceCard(state: state),
                 const SizedBox(height: 16),
@@ -174,16 +178,84 @@ class _SettingsPageHeader extends StatelessWidget {
   }
 }
 
-class _SubscriptionStatusCard extends StatelessWidget {
-  const _SubscriptionStatusCard({required this.state});
+class _SubscriptionStatusCard extends StatefulWidget {
+  const _SubscriptionStatusCard();
 
-  final SettingsState state;
+  @override
+  State<_SubscriptionStatusCard> createState() =>
+      _SubscriptionStatusCardState();
+}
+
+class _SubscriptionStatusCardState extends State<_SubscriptionStatusCard>
+    with WidgetsBindingObserver {
+  bool _requestedInitialRefresh = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_requestedInitialRefresh) return;
+    _requestedInitialRefresh = true;
+    context.read<SubscriptionBloc>().add(const RefreshSubscription());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      context.read<SubscriptionBloc>().add(const RefreshSubscription());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = state.user;
-    if (user == null || user.subscriptionStatus == 'active') {
-      if (user == null) return const SizedBox.shrink();
+    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
+      builder: (context, state) {
+        final subscription = state.subscription;
+        if (state.isLoading) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: LinearProgressIndicator(),
+            ),
+          );
+        }
+        if (state.status == SubscriptionStatus.failure) {
+          return Card(
+            child: ListTile(
+              leading: const Icon(Icons.sync_problem_rounded),
+              title: const Text('Subscription status unavailable'),
+              subtitle: const Text(
+                'Refresh to check your verified plan before purchasing again.',
+              ),
+              trailing: IconButton(
+                tooltip: 'Refresh subscription status',
+                onPressed: () => context
+                    .read<SubscriptionBloc>()
+                    .add(const RefreshSubscription()),
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ),
+          );
+        }
+        if (subscription?.grantsAccess == true) {
+          final title = subscription!.isTrialing
+              ? 'Your trial is active'
+              : '${_humanize(subscription.planType)} Plan — Active';
+          final message = subscription.isTrialing &&
+                  subscription.trialDaysLeft != null
+              ? '${subscription.trialDaysLeft} trial days remaining.'
+              : _subscriptionMessage(subscription.subscriptionPlatform);
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -208,14 +280,14 @@ class _SubscriptionStatusCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${_humanize(user.subscriptionTier ?? 'subscription')} Plan — Active',
+                    title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   Text(
-                    _subscriptionMessage(user.subscriptionPlatform),
+                    message,
                     style: const TextStyle(
                       color: Color(0xD9FFFFFF),
                       fontSize: 12,
@@ -227,9 +299,10 @@ class _SubscriptionStatusCard extends StatelessWidget {
           ],
         ),
       );
-    }
+        }
 
-    return Container(
+        final billingPlatform = _currentBillingPlatformLabel();
+        return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -246,10 +319,10 @@ class _SubscriptionStatusCard extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          const info = Column(
+          final info = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Activate Your Subscription',
                 style: TextStyle(
                   color: Colors.white,
@@ -257,15 +330,18 @@ class _SubscriptionStatusCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              SizedBox(height: 3),
-              Text(
-                'Unlock all features — daily tasks, finance, mood tracking, appointments & more.',
+              const SizedBox(height: 3),
+              const Text(
+                'Unlock plan features for daily tasks, finance, mood tracking, appointments & more.',
                 style: TextStyle(color: Color(0xD9FFFFFF), fontSize: 13),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
-                'Plans from \$4.99/month · Billed through Apple ID · Cancel anytime',
-                style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 11),
+                'Plans from \$4.99/month · Billed through $billingPlatform · Cancel anytime',
+                style: const TextStyle(
+                  color: Color(0xB3FFFFFF),
+                  fontSize: 11,
+                ),
               ),
             ],
           );
@@ -288,7 +364,7 @@ class _SubscriptionStatusCard extends StatelessWidget {
                 child: Icon(Icons.workspace_premium_rounded),
               ),
               const SizedBox(width: 12),
-              const Expanded(child: info),
+              Expanded(child: info),
             ],
           );
 
@@ -310,14 +386,28 @@ class _SubscriptionStatusCard extends StatelessWidget {
                       child: Icon(Icons.workspace_premium_rounded),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(child: info),
+                    Expanded(child: info),
                     const SizedBox(width: 8),
                     action,
                   ],
                 );
         },
       ),
+        );
+      },
     );
+  }
+}
+
+String _currentBillingPlatformLabel() {
+  if (kIsWeb) return 'the Adaptalyfe website';
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+      return 'Google Play';
+    case TargetPlatform.iOS:
+      return 'Apple ID';
+    default:
+      return 'the Adaptalyfe website';
   }
 }
 

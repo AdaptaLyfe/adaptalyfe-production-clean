@@ -2927,3 +2927,17 @@ mtime_ms = 1790936720269
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f6a988dc-1cb0-42fa-adfd-f53fb966296e/6765b788-659e-422c-b9d7-b5ad324078af"
 storage_version_token = "1790936739674441"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q5g4xAr-lkMvuJ7OehC0M"
+uri = "file://deliverables/google-play-subscription-flow-changes.zip"
+type = "unspecified"
+title = "Google Play subscription flow changes"
+description = "ZIP containing the 13 changed Flutter/backend source and test files, preserving their project paths. Generated build files and internal agent notes are excluded."
+logical_id = "56958da1-37fb-45e3-a267-54efa659aac3"
+content_hash = "sha256:8402856c6c278118d8aa51638189d40e37302604f009bbaa4081beecba26636c"
+size = 124475
+mtime_ms = 1790943207806
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/56958da1-37fb-45e3-a267-54efa659aac3/4604c40b-684c-46ab-8de2-da819f4a95cf"
+storage_version_token = "1790943261183793"
+content_type = "application/octet-stream"

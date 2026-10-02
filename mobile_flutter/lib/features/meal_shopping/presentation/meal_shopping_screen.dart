@@ -8,6 +8,11 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../subscription/bloc/subscription_bloc.dart';
+import '../../subscription/bloc/subscription_event.dart';
+import '../../subscription/bloc/subscription_state.dart';
+import '../../subscription/models/subscription_models.dart';
+import '../../subscription/subscription_access.dart';
 import '../bloc/meal_shopping_bloc.dart';
 import '../bloc/meal_shopping_event.dart';
 import '../bloc/meal_shopping_state.dart';
@@ -15,14 +20,100 @@ import '../models/meal_shopping_models.dart';
 
 final Set<String> _openMealShoppingOverlays = <String>{};
 
-class MealShoppingScreen extends StatelessWidget {
+class MealShoppingScreen extends StatefulWidget {
   const MealShoppingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    if (!_hasMealPlanningAccess(context)) {
-      return const _MealPlanningPremiumPrompt();
+  State<MealShoppingScreen> createState() => _MealShoppingScreenState();
+}
+
+class _MealShoppingScreenState extends State<MealShoppingScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refreshEntitlement();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      _refreshEntitlement();
     }
+  }
+
+  void _refreshEntitlement() {
+    context.read<SubscriptionBloc>().add(const RefreshSubscription());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
+      builder: (context, subscriptionState) {
+        final subscription = subscriptionState.subscription;
+        final authState = context.read<AuthBloc>().state;
+        final isAdmin = canAccessPremiumFeatures(
+          authState: authState,
+          subscription: null,
+        );
+        if (!isAdmin && subscriptionState.isLoading) {
+          return const Scaffold(
+            appBar: _MealShoppingAppBar(),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (!isAdmin &&
+            subscriptionState.status == SubscriptionStatus.failure) {
+          return Scaffold(
+            appBar: const _MealShoppingAppBar(),
+            body: Center(
+              child: Padding(
+                padding: AppResponsive.pagePadding(context),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'We couldn’t verify your subscription right now.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => context
+                          .read<SubscriptionBloc>()
+                          .add(const RefreshSubscription()),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Check again'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        if (!canAccessPremiumFeatures(
+          authState: authState,
+          subscription: subscription,
+        )) {
+          return _MealPlanningPremiumPrompt(
+            currentPlan:
+                subscription?.isActive == true ? subscription?.planType : null,
+          );
+        }
+        return _buildMealShoppingContent(context);
+      },
+    );
+  }
+
+  Widget _buildMealShoppingContent(BuildContext context) {
     return BlocConsumer<MealShoppingBloc, MealShoppingState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
@@ -114,24 +205,14 @@ class MealShoppingScreen extends StatelessWidget {
   }
 }
 
-bool _hasMealPlanningAccess(BuildContext context) {
-  final authState = context.read<AuthBloc>().state;
-  if (authState is! Authenticated) return false;
-  final user = authState.user;
-  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
-  if (isAdmin) return true;
-  final tier = user.subscriptionTier?.toLowerCase();
-  final status = user.subscriptionStatus?.toLowerCase();
-  return status == 'active' &&
-          (tier == 'premium' || tier == 'family') ||
-      status == 'trialing';
-}
-
 class _MealPlanningPremiumPrompt extends StatelessWidget {
-  const _MealPlanningPremiumPrompt();
+  const _MealPlanningPremiumPrompt({this.currentPlan});
+
+  final String? currentPlan;
 
   @override
   Widget build(BuildContext context) {
+    final hasBasicPlan = currentPlan?.toLowerCase() == 'basic';
     return Scaffold(
       appBar: AppBar(title: const Text('Meal Planning & Shopping')),
       body: Center(
@@ -158,10 +239,12 @@ class _MealPlanningPremiumPrompt extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Create personalized meal plans, manage recipes, and generate smart shopping lists. This premium feature helps you maintain a healthy diet and budget.',
+                  Text(
+                    hasBasicPlan
+                        ? 'Your Basic plan is active. Meal Planning & Shopping is included with Premium and Family plans.'
+                        : 'Create personalized meal plans, manage recipes, and generate smart shopping lists. This feature is included with Premium and Family plans.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xFF6B7280)),
+                    style: const TextStyle(color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 18),
                   FilledButton(

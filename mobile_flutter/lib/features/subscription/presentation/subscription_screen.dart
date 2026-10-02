@@ -625,6 +625,14 @@ class _ManageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subscription = state.subscription!;
+    final isBasic = subscription.isActive &&
+        subscription.planType.toLowerCase() == 'basic';
+    final actionLabel = switch (subscription.subscriptionPlatform) {
+      'google_play' => 'Manage or change plan',
+      'app_store' => 'Manage in Apple ID settings',
+      _ => 'Open subscription settings',
+    };
     return _Panel(
       color: Colors.white,
       child: Column(
@@ -636,7 +644,9 @@ class _ManageCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Renewals and cancellations are managed by ${state.subscription!.platformLabel}.',
+            isBasic
+                ? 'Your Basic plan is active. Meal Planning is included with Premium and Family. Change your plan through ${subscription.platformLabel} to upgrade without starting a second subscription.'
+                : 'Renewals and cancellations are managed by ${subscription.platformLabel}.',
             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
           const SizedBox(height: 12),
@@ -647,7 +657,7 @@ class _ManageCard extends StatelessWidget {
                   .read<SubscriptionBloc>()
                   .add(const ManageSubscriptionRequested()),
               icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('Open subscription settings'),
+              label: Text(actionLabel),
             ),
           ),
         ],

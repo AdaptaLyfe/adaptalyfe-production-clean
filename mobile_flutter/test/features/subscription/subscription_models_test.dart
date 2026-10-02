@@ -55,5 +55,39 @@ void main() {
       expect(restored.success, isTrue);
       expect(restored.planType, 'premium');
     });
+
+    test('Basic is active but does not include Premium features', () {
+      final subscription = SubscriptionModel.fromJson({
+        'id': 10,
+        'planType': 'basic',
+        'status': 'active',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'google_play',
+      });
+
+      expect(subscription.grantsAccess, isTrue);
+      expect(subscription.hasPremiumAccess, isFalse);
+    });
+
+    test('Premium and Family plans include Premium features only while active',
+        () {
+      for (final tier in ['premium', 'family']) {
+        final active = SubscriptionModel.fromJson({
+          'id': 11,
+          'planType': tier,
+          'status': 'active',
+          'billingCycle': 'monthly',
+        });
+        final expired = SubscriptionModel.fromJson({
+          'id': 12,
+          'planType': tier,
+          'status': 'expired',
+          'billingCycle': 'monthly',
+        });
+
+        expect(active.hasPremiumAccess, isTrue, reason: tier);
+        expect(expired.hasPremiumAccess, isFalse, reason: tier);
+      }
+    });
   });
 }

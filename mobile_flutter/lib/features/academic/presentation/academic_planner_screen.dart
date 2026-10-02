@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
-import '../../auth/bloc/auth_state.dart';
+import '../../subscription/presentation/premium_feature_gate.dart';
 import '../bloc/academic_bloc.dart';
 import '../bloc/academic_event.dart';
 import '../bloc/academic_state.dart';
@@ -16,7 +16,10 @@ class AcademicPlannerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AcademicBloc, AcademicState>(
+    return PremiumFeatureGate(
+      title: 'Academic Planner',
+      paywall: const _AcademicPremiumPrompt(),
+      child: BlocConsumer<AcademicBloc, AcademicState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
           context.read<AuthBloc>().add(const CheckAuthentication());
@@ -36,9 +39,6 @@ class AcademicPlannerScreen extends StatelessWidget {
           );
       },
       builder: (context, state) {
-        if (!_hasAcademicAccess(context)) {
-          return const _AcademicPremiumPrompt();
-        }
         if (state.status == AcademicStatus.initial ||
             (state.isLoading && !state.hasData)) {
           return const Scaffold(
@@ -123,21 +123,9 @@ class AcademicPlannerScreen extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
-}
-
-bool _hasAcademicAccess(BuildContext context) {
-  final authState = context.read<AuthBloc>().state;
-  if (authState is! Authenticated) return false;
-  final user = authState.user;
-  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
-  if (isAdmin) return true;
-  final tier = user.subscriptionTier?.toLowerCase();
-  final status = user.subscriptionStatus?.toLowerCase();
-  return status == 'active' &&
-          (tier == 'premium' || tier == 'family') ||
-      status == 'trialing';
 }
 
 class _AcademicPremiumPrompt extends StatelessWidget {
