@@ -74,6 +74,7 @@ void main() {
       });
 
       expect(subscription.grantsAccess, isTrue);
+      expect(subscription.hasPlanEntitlement, isTrue);
       expect(subscription.hasPremiumAccess, isFalse);
     });
 
