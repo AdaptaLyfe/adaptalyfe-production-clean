@@ -69,6 +69,31 @@ void main() {
       expect(subscription.hasPremiumAccess, isFalse);
     });
 
+    test('Basic trial grants Basic access without Premium features', () {
+      final subscription = SubscriptionModel.fromJson({
+        'id': 10,
+        'planType': 'basic',
+        'status': 'trialing',
+        'billingCycle': 'monthly',
+      });
+
+      expect(subscription.grantsAccess, isTrue);
+      expect(subscription.hasPremiumAccess, isFalse);
+    });
+
+    test('Premium and Family trials include Premium features', () {
+      for (final tier in ['premium', 'family']) {
+        final subscription = SubscriptionModel.fromJson({
+          'id': 11,
+          'planType': tier,
+          'status': 'trialing',
+          'billingCycle': 'monthly',
+        });
+
+        expect(subscription.hasPremiumAccess, isTrue, reason: tier);
+      }
+    });
+
     test('Premium and Family plans include Premium features only while active',
         () {
       for (final tier in ['premium', 'family']) {

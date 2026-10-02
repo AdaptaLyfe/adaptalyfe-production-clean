@@ -111,8 +111,7 @@ class SubscriptionModel extends Equatable {
   bool get isExpired => status == 'expired';
   bool get grantsAccess => isActive || isTrialing;
   bool get hasPremiumAccess {
-    if (isTrialing) return true;
-    if (!isActive) return false;
+    if (!isActive && !isTrialing) return false;
     final tier = planType.toLowerCase();
     return tier == 'premium' || tier == 'family';
   }

@@ -164,19 +164,12 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       _loadInFlight = false;
     }
 
-    if (restoreUserId != null) {
+    if (restoreUserId != null && !isClosed) {
       _startupGooglePlayRestoreAttemptedUserIds.add(restoreUserId);
       debugPrint(
         '[Subscription IAP] Automatic Android purchase restore requested.',
       );
-      try {
-        await purchaseService.restore();
-      } catch (error) {
-        debugPrint(
-          '[Subscription IAP] Automatic restore request failed: '
-          'errorType=${error.runtimeType}',
-        );
-      }
+      add(const RestorePurchasesRequested());
     }
   }
 

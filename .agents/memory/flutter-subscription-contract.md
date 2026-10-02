@@ -8,3 +8,10 @@ Flutter subscription purchases must never contain payment secrets. The platform 
 **Why:** The backend remains the authority for entitlement, expiry, platform ownership, and cross-platform duplicate-purchase protection. Store renewals and cancellations continue through the existing Apple and Google notification flows.
 
 **How to apply:** Keep plan product IDs aligned with the server mappings, complete each platform transaction after verification handling, suppress duplicate purchase actions for active entitlements, and validate the full flow on physical store environments before release.
+
+## Subscription change scope
+Subscription fixes should stay within the purchase, restore, entitlement, and directly related test paths; do not modify unrelated app or server behavior.
+
+**Why:** The user has repeatedly asked for subscription repairs without changes to other code.
+
+**How to apply:** Keep diffs limited to the subscription flow and its tests. Include shared server code only when required for purchase verification or entitlement persistence.
