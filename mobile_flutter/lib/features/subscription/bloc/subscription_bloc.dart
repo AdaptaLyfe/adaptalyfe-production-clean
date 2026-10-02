@@ -54,6 +54,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   List<ProductDetails> _products = [];
   bool _started = false;
   bool _loadInFlight = false;
+  final Set<int> _startupGooglePlayRestoreAttemptedUserIds = {};
   Completer<void>? _restoreEventCompleter;
   final Set<String> _processingPurchaseEventKeys = {};
   final Set<String> _handledPurchaseEventKeys = {};
@@ -101,6 +102,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     if (_loadInFlight || state.isBusy) return;
     _loadInFlight = true;
+    int? restoreUserId;
     emit(
       state.copyWith(
         status: SubscriptionStatus.loading,
@@ -112,6 +114,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
     try {
       final subscription = await repository.getSubscription();
+      if ((event is SubscriptionStarted || event is RefreshSubscription) &&
+          !subscription.grantsAccess &&
+          !kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android &&
+          !_startupGooglePlayRestoreAttemptedUserIds.contains(subscription.id)) {
+        restoreUserId = subscription.id;
+      }
       final availability = await purchaseService.initialize();
       final stripeAvailability = await stripePaymentService.initialize();
       _products = availability.products;
@@ -152,6 +161,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
     } finally {
       _loadInFlight = false;
+    }
+
+    if (restoreUserId != null) {
+      _startupGooglePlayRestoreAttemptedUserIds.add(restoreUserId);
+      debugPrint(
+        '[Subscription IAP] Automatic Android purchase restore requested.',
+      );
+      try {
+        await purchaseService.restore();
+      } catch (error) {
+        debugPrint(
+          '[Subscription IAP] Automatic restore request failed: '
+          'errorType=${error.runtimeType}',
+        );
+      }
     }
   }
 
