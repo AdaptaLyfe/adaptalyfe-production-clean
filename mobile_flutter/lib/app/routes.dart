@@ -42,6 +42,7 @@ import '../features/financial/bloc/financial_event.dart';
 import '../features/financial/data/financial_api.dart';
 import '../features/financial/data/financial_repository.dart';
 import '../features/financial/presentation/financial_screen.dart';
+import '../features/feature_catalog/presentation/features_screen.dart';
 import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_quick_actions_store.dart';
@@ -227,6 +228,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
         ),
         routes: [
+          GoRoute(
+            path: '/features',
+            builder: (context, state) => const FeaturesScreen(),
+          ),
           GoRoute(
             path: '/home',
             builder: (context, state) {

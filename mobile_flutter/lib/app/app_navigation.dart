@@ -207,6 +207,13 @@ class AppNavigationDrawer extends StatelessWidget {
 
   final String location;
 
+  static const _featuresItem = _DrawerDestination(
+    label: 'Features',
+    route: '/features',
+    icon: Icons.bolt_outlined,
+    color: Color(0xFF2563EB),
+  );
+
   static const _coreItems = [
     _DrawerDestination(
       label: 'Dashboard',
@@ -452,15 +459,11 @@ class AppNavigationDrawer extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _DrawerWideItem(
-                          item: const _DrawerDestination(
-                            label: 'Features',
-                            icon: Icons.bolt_outlined,
-                            color: Color(0xFF2563EB),
-                          ),
+                          item: _featuresItem,
                           background: const Color(0xFFEFF6FF),
                           borderColor: const Color(0xFFBFDBFE),
                           foreground: const Color(0xFF1D4ED8),
-                          onTap: () => _showUnavailableFeature(context),
+                          onTap: () => _openItem(context, _featuresItem),
                         ),
                       ),
                     ],
