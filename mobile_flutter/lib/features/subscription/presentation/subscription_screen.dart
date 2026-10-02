@@ -266,7 +266,7 @@ class _SubscriptionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = subscription?.grantsAccess == true;
+    final active = subscription?.hasPlanEntitlement == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -340,15 +340,20 @@ class _TrialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final daysLeft = subscription?.trialDaysLeft;
+    final hasPlanEntitlement = subscription?.hasPlanEntitlement == true;
     final String message;
     if (subscription?.isTrialing == true) {
       if (daysLeft != null && daysLeft > 0) {
+        final continuation = hasPlanEntitlement
+            ? 'Manage or cancel your subscription below.'
+            : 'Choose a plan below to keep access.';
         message = 'Your free trial has $daysLeft '
-            '${daysLeft == 1 ? 'day' : 'days'} remaining. Manage or cancel '
-            'your subscription below.';
+            '${daysLeft == 1 ? 'day' : 'days'} remaining. '
+            '$continuation';
       } else {
-        message =
-            'Your free trial is ending. Manage or cancel your subscription below.';
+        message = hasPlanEntitlement
+            ? 'Your free trial is ending. Manage or cancel your subscription below.'
+            : 'Your free trial is ending. Choose a plan below to keep access.';
       }
     } else if (subscription?.isExpired == true) {
       message = 'Your previous subscription has ended. Choose a plan to restart.';
@@ -398,7 +403,12 @@ class _PlanCard extends StatelessWidget {
     final stripeAvailable =
         !usesNativeStoreBilling && state.canUseStripe;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
-    final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
+    final storePrice = product?.price;
+    final price = storePrice is String && storePrice.trim().isNotEmpty
+        ? storePrice
+        : usesNativeStoreBilling
+            ? null
+            : '\$${plan.monthlyPrice.toStringAsFixed(2)}';
     final trialAvailable = state.subscription?.isTrialing == true &&
         (state.subscription?.trialDaysLeft ?? 0) > 0;
     final storeButtonLabel = trialAvailable
@@ -465,7 +475,7 @@ class _PlanCard extends StatelessWidget {
           Text(plan.description, style: const TextStyle(color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           Text(
-            '$price / month',
+            price == null ? 'Store price unavailable' : '$price / month',
             style: const TextStyle(
               color: Color(0xFF111827),
               fontSize: 22,

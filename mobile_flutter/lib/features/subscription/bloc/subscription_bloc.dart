@@ -115,7 +115,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     try {
       final subscription = await repository.getSubscription();
       if ((event is SubscriptionStarted || event is RefreshSubscription) &&
-          !subscription.grantsAccess &&
+          !subscription.hasPlanEntitlement &&
           !kIsWeb &&
           defaultTargetPlatform == TargetPlatform.android &&
           !_startupGooglePlayRestoreAttemptedUserIds
@@ -131,7 +131,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: SubscriptionStatus.ready,
           subscription: subscription,
           selectedPlanId:
-              subscription.grantsAccess ? null : state.selectedPlanId,
+              subscription.hasPlanEntitlement ? null : state.selectedPlanId,
           products: {
             for (final product in _products) product.id: product,
           },
@@ -256,7 +256,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
 
       final subscription = await repository.getSubscription();
-      if (!subscription.grantsAccess) {
+      if (!subscription.hasPlanEntitlement) {
         throw const FormatException(
           'Payment was received, but the subscription status could not be refreshed. '
           'Please refresh and try again.',
@@ -478,7 +478,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     try {
       await repository.recoverStripeSubscription();
       final subscription = await repository.getSubscription();
-      if (!subscription.grantsAccess) {
+      if (!subscription.hasPlanEntitlement) {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
@@ -770,7 +770,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       await _completePurchases(verifiablePurchases);
       final subscription = await repository.getSubscription();
-      if (!subscription.grantsAccess) {
+      if (!subscription.hasPlanEntitlement) {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
@@ -890,7 +890,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         '[Subscription IAP] Subscription refreshed: '
         'plan=${subscription.planType}, status=${subscription.status}',
       );
-      if (!subscription.grantsAccess) {
+      if (!subscription.hasPlanEntitlement) {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,

@@ -58,7 +58,7 @@ class SubscriptionState extends Equatable {
       status == SubscriptionStatus.purchasing ||
       status == SubscriptionStatus.restoring ||
       status == SubscriptionStatus.recovering;
-  bool get hasActiveSubscription => subscription?.grantsAccess == true;
+  bool get hasActiveSubscription => subscription?.hasPlanEntitlement == true;
   bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
   bool get canUseStripe =>
       stripeAvailable && !hasActiveSubscription && !isBusy;

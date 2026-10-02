@@ -26,7 +26,6 @@ const subscriptionPlans = <SubscriptionPlan>[
     popular: true,
     features: [
       'Everything in Basic',
-      '7-day free trial',
       'Unlimited tasks (up to 1,000)',
       'Advanced analytics & insights',
       'Medication management',
@@ -46,7 +45,6 @@ const subscriptionPlans = <SubscriptionPlan>[
     productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
-      '7-day free trial',
       'Up to 5 additional member accounts',
       'Unlimited caregiver connections',
       'Family dashboard & shared progress',
@@ -110,10 +108,27 @@ class SubscriptionModel extends Equatable {
   bool get isTrialing => status == 'trialing';
   bool get isExpired => status == 'expired';
   bool get grantsAccess => isActive || isTrialing;
+  bool get hasPlanEntitlement =>
+      grantsAccess && planType.toLowerCase() != 'free';
+
   bool get hasPremiumAccess {
     if (!isActive && !isTrialing) return false;
     final tier = planType.toLowerCase();
-    return tier == 'premium' || tier == 'family';
+    if (tier == 'premium' || tier == 'family') return true;
+    if (tier != 'free' || !isTrialing) return false;
+
+    // The server grants all feature flags during the account-level free trial.
+    // Basic plan trials intentionally stay limited to Basic features.
+    const premiumTrialFeatureKeys = [
+      'wearableDevices',
+      'mealPlanning',
+      'medicationManagement',
+      'advancedAnalytics',
+      'voiceCommands',
+      'academicPlanner',
+      'prioritySupport',
+    ];
+    return premiumTrialFeatureKeys.any((key) => features[key] == true);
   }
 
   String get platformLabel {

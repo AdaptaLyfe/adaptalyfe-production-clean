@@ -2955,3 +2955,17 @@ mtime_ms = 1790948279463
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/0cc2df47-0c7a-48d7-9c19-b1b17f73a459"
 storage_version_token = "1790948302612756"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "W3IXdlOmvZfgKA8iDdBsb"
+uri = "file://deliverables/flutter-subscription-flow-fix.zip"
+type = "unspecified"
+title = "Flutter subscription flow fix"
+description = "Five changed Flutter subscription files: free-trial versus paid-plan state handling, localized store pricing, matching trial plan copy, and regression tests."
+logical_id = "dde3c798-9cc3-4a3d-884e-fe0780a3d584"
+content_hash = "sha256:20c0d83e7dabbbe7d7a46b0bcb0b62468b983b51cf4381c903f5945eb730ac6a"
+size = 17713
+mtime_ms = 1790949943082
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dde3c798-9cc3-4a3d-884e-fe0780a3d584/f123794c-e3af-4f10-afa2-df67e9032f45"
+storage_version_token = "1790949952091343"
+content_type = "application/octet-stream"

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:adaptalyfe_mobile/features/subscription/bloc/subscription_state.dart';
 import 'package:adaptalyfe_mobile/features/subscription/models/subscription_models.dart';
 
 void main() {
@@ -16,6 +17,13 @@ void main() {
       expect(
         subscriptionPlans.map((plan) => plan.monthlyPrice).toList(),
         [4.99, 12.99, 24.99],
+      );
+      expect(subscriptionPlans.first.features, contains('7-day free trial'));
+      expect(
+        subscriptionPlans.skip(1).every(
+              (plan) => !plan.features.contains('7-day free trial'),
+            ),
+        isTrue,
       );
     });
 
@@ -75,9 +83,55 @@ void main() {
         'planType': 'basic',
         'status': 'trialing',
         'billingCycle': 'monthly',
+        'features': {
+          'wearableDevices': true,
+          'mealPlanning': true,
+        },
       });
 
       expect(subscription.grantsAccess, isTrue);
+      expect(subscription.hasPlanEntitlement, isTrue);
+      expect(subscription.hasPremiumAccess, isFalse);
+    });
+
+    test('free account trial allows plan purchase and uses server feature flags',
+        () {
+      final subscription = SubscriptionModel.fromJson({
+        'id': 12,
+        'planType': 'free',
+        'status': 'trialing',
+        'billingCycle': 'monthly',
+        'trialDaysLeft': 4,
+        'features': {
+          'taskManagement': true,
+          'wearableDevices': true,
+          'mealPlanning': true,
+          'advancedAnalytics': true,
+        },
+      });
+      final state = SubscriptionState(
+        subscription: subscription,
+        storeAvailable: true,
+      );
+
+      expect(subscription.grantsAccess, isTrue);
+      expect(subscription.hasPlanEntitlement, isFalse);
+      expect(subscription.hasPremiumAccess, isTrue);
+      expect(state.hasActiveSubscription, isFalse);
+      expect(state.canPurchase, isTrue);
+    });
+
+    test('expired free trial does not retain stale server feature access', () {
+      final subscription = SubscriptionModel.fromJson({
+        'id': 13,
+        'planType': 'free',
+        'status': 'expired',
+        'billingCycle': 'monthly',
+        'features': {'wearableDevices': true},
+      });
+
+      expect(subscription.grantsAccess, isFalse);
+      expect(subscription.hasPlanEntitlement, isFalse);
       expect(subscription.hasPremiumAccess, isFalse);
     });
 
