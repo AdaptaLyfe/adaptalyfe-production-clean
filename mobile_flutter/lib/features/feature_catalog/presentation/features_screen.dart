@@ -108,7 +108,7 @@ class _FeaturesScreenState extends State<FeaturesScreen> {
       title: 'Skill Challenges & Custom Task Templates',
       description:
           'Interactive challenges and personalized task templates for daily routines',
-      icon: Icons.track_changes_outlined,
+      icon: Icons.track_changes,
       category: _FeatureCategory.premium,
     ),
     _CatalogFeature(
@@ -438,8 +438,8 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.35)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -500,7 +500,7 @@ class _SummaryCard extends StatelessWidget {
                   ),
                   Text(
                     detail,
-                    style: TextStyle(color: color.withValues(alpha: 0.85)),
+                    style: TextStyle(color: color.withOpacity(0.85)),
                   ),
                 ],
               ),

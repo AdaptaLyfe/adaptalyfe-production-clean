@@ -25,6 +25,7 @@
 - [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
 - [Flutter overlay safety](flutter-overlay-safety.md) — serialize feature overlays and use shell-scoped shared BLoCs to prevent duplicate modal routes and competing listeners.
 - [Flutter responsive layout](flutter-responsive-layout.md) — use available constraints, not device width alone, for nested surfaces and keyboard-aware mobile layouts.
+- [Flutter Features catalog](flutter-features-catalog.md) — the Flutter drawer’s Features entry opens the informational wrapper catalog, not module shortcuts.
 - [Flutter Home customization](flutter-home-customization.md) — preserve React-style local customization and keep dashboard preferences user-scoped on-device.
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.

@@ -2913,3 +2913,17 @@ mtime_ms = 1790591516099
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86675b3b-ff40-4fc4-ab9b-d64b8d0a527d/4a1bae8d-1a33-47f4-b536-c2f0185a52b4"
 storage_version_token = "1790591540002562"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "AnZq2IwskThgQe4yK7HdN"
+uri = "file://exports/adaptalyfe-flutter-features-fix.zip"
+type = "unspecified"
+title = "Flutter Features catalog fix"
+description = "ZIP containing only the Flutter drawer, route, informational feature catalog screen, and widget test files."
+logical_id = "f6a988dc-1cb0-42fa-adfd-f53fb966296e"
+content_hash = "sha256:ecaa598cd98726feae2c2e0a24c2fb08f05a397f7e19ff6addf64e03b30403c8"
+size = 14149
+mtime_ms = 1790936720269
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f6a988dc-1cb0-42fa-adfd-f53fb966296e/6765b788-659e-422c-b9d7-b5ad324078af"
+storage_version_token = "1790936739674441"
+content_type = "application/octet-stream"
