@@ -4,11 +4,14 @@ enum SubscriptionStorePlatform {
 }
 
 SubscriptionStorePlatform? subscriptionStorePlatformFromSource(String source) {
-  final normalized = source.trim().toLowerCase();
-  if (normalized.contains('app_store') || normalized.contains('ios')) {
+  // The official in_app_purchase plugin reports `AppStore` and `GooglePlay`.
+  // Compact separators so those values and the API's snake_case values match.
+  final normalized =
+      source.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  if (normalized.contains('appstore') || normalized.contains('ios')) {
     return SubscriptionStorePlatform.appStore;
   }
-  if (normalized.contains('google_play') || normalized.contains('android')) {
+  if (normalized.contains('googleplay') || normalized.contains('android')) {
     return SubscriptionStorePlatform.googlePlay;
   }
   return null;

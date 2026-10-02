@@ -10,11 +10,19 @@ void main() {
         SubscriptionStorePlatform.appStore,
       );
       expect(
+        subscriptionStorePlatformFromSource('AppStore'),
+        SubscriptionStorePlatform.appStore,
+      );
+      expect(
         subscriptionStorePlatformFromSource('ios'),
         SubscriptionStorePlatform.appStore,
       );
       expect(
         subscriptionStorePlatformFromSource('google_play'),
+        SubscriptionStorePlatform.googlePlay,
+      );
+      expect(
+        subscriptionStorePlatformFromSource('GooglePlay'),
         SubscriptionStorePlatform.googlePlay,
       );
       expect(

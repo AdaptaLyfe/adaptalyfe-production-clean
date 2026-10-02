@@ -2969,3 +2969,17 @@ mtime_ms = 1790949943082
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/dde3c798-9cc3-4a3d-884e-fe0780a3d584/f123794c-e3af-4f10-afa2-df67e9032f45"
 storage_version_token = "1790949952091343"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "xkiwKBnSWEriC9QHa5Udy"
+uri = "file://flutter_iap_source_mapping_fix.zip"
+type = "unspecified"
+title = "Flutter subscription source-mapping fix"
+description = "ZIP containing the two changed Flutter source and regression-test files."
+logical_id = "a1c0eab4-0f2e-4f88-bc12-542249dd2370"
+content_hash = "sha256:8797a1cbc5f8af4a337b0332e60b572328ddabcab054bca217dc2720366e8ae3"
+size = 1737
+mtime_ms = 1790954695577
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a1c0eab4-0f2e-4f88-bc12-542249dd2370/59a3b253-c2c8-4920-bb93-0147943a4178"
+storage_version_token = "1790954728622502"
+content_type = "application/octet-stream"
