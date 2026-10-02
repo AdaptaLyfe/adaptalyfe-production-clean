@@ -1,0 +1,622 @@
+Fix the subscription flow in the existing Flutter application.
+
+## Goal
+
+The existing **Web React + React Native + Wrapper** application already has a working subscription flow.
+
+The Flutter application must follow the **same subscription business flow, screens, states, user experience, entitlement logic, and backend behavior** as the existing Web/React Native + Wrapper implementation.
+
+Flutter should use:
+
+* **Android → Google Play Billing subscriptions**
+* **iOS → Apple App Store subscriptions**
+
+Do NOT create a completely different subscription system for Flutter.
+
+---
+
+# 1. First Inspect Existing Implementations
+
+Before changing Flutter code, carefully inspect the existing:
+
+### Web React application
+
+Find and understand:
+
+* Subscription/Pricing screen
+* Subscription plans
+* Trial logic
+* Monthly/yearly plans if available
+* Subscribe button behavior
+* Existing API calls
+* Payment status handling
+* Subscription success/failure states
+* Active subscription detection
+* Cancellation/expiration handling
+* Restore subscription behavior
+* User entitlement/access logic
+* Backend subscription verification
+* Webhook/subscription status updates
+
+### React Native + Wrapper application
+
+Find and understand:
+
+* Subscription UI
+* Plan selection
+* Purchase flow
+* Android billing implementation
+* iOS purchase implementation
+* Restore purchases
+* Existing backend/API integration
+* Loading states
+* Success/error handling
+* Existing subscription status checking
+* How the app decides whether a user has premium/subscription access
+
+Treat the existing Web and React Native + Wrapper implementation as the **source of truth for business logic and user flow**.
+
+Do not assume the Flutter implementation should work differently.
+
+---
+
+# 2. Flutter Platform Billing
+
+Implement native platform subscriptions correctly.
+
+## Android
+
+Use **Google Play Billing** through the Flutter project.
+
+The Android purchase flow must be:
+
+Flutter Subscription Screen
+→ Select Plan
+→ Google Play subscription purchase sheet
+→ Google Play processes payment
+→ Flutter receives purchase result
+→ Verify purchase
+→ Send required purchase information to backend
+→ Backend verifies subscription
+→ Update user's subscription/entitlement
+→ Flutter refreshes subscription state
+→ Show the same success/access state as React Native + Wrapper
+
+Do NOT treat a successful local purchase callback alone as permanent subscription access.
+
+The backend should remain the source of truth for entitlement where the existing application already uses backend verification.
+
+---
+
+# 3. iOS
+
+Use **Apple App Store In-App Purchases / StoreKit** through the Flutter project.
+
+Flow:
+
+Flutter Subscription Screen
+→ Select Plan
+→ Apple purchase sheet
+→ Apple processes payment
+→ Flutter receives transaction
+→ Verify transaction/receipt according to the existing backend architecture
+→ Send required purchase information to backend
+→ Backend verifies subscription
+→ Update user's subscription/entitlement
+→ Flutter refreshes subscription state
+→ Show the same success/access state as React Native + Wrapper
+
+Support Apple's restore purchases flow.
+
+---
+
+# 4. Match Existing Products
+
+Do NOT invent new product IDs.
+
+Find the exact subscription product IDs used by the existing Web/React Native + Wrapper implementation and the backend configuration.
+
+Then verify:
+
+### Android
+
+* Google Play product ID
+* Subscription ID
+* Base plan ID
+* Offer/trial configuration
+* Product/package configuration
+
+### iOS
+
+* App Store product ID
+* Subscription group
+* Introductory offer/trial configuration
+
+Use the correct IDs for each platform.
+
+If an existing configuration uses different Android and iOS product IDs, keep them platform-specific.
+
+---
+
+# 5. Match Existing Subscription Plans
+
+The Flutter UI must display the same plans as the existing application.
+
+For example, if the existing app has:
+
+* Monthly
+* Yearly
+* Free trial
+* Premium
+
+then Flutter should use the same plan structure.
+
+Do not change pricing or trial duration.
+
+Do not hardcode prices if Google Play/App Store provides localized pricing.
+
+Display the localized price returned by the respective store where appropriate.
+
+---
+
+# 6. Subscription State
+
+Create/use a single reliable subscription state.
+
+The Flutter app should correctly handle:
+
+* Not subscribed
+* Loading
+* Purchase pending
+* Purchase successful
+* Active subscription
+* Purchase failed
+* Purchase cancelled
+* Purchase restored
+* Subscription expired
+* Subscription cancelled but still active
+* Billing problem
+* Verification failed
+* Network/API failure
+
+Do not show "Active Subscription" only because the purchase button returned successfully.
+
+After purchase, refresh the actual subscription status.
+
+---
+
+# 7. Restore Purchases
+
+Implement a visible **Restore Purchases** action where it exists in the current Web/React Native + Wrapper flow.
+
+For iOS:
+
+* Use Apple's restore mechanism.
+* Re-check the user's entitlement after restoration.
+
+For Android:
+
+* Query existing purchases/subscriptions.
+* Re-check the backend subscription status.
+
+Restoration must not create a duplicate subscription.
+
+---
+
+# 8. Backend Integration
+
+Find the existing subscription APIs used by Web/React Native + Wrapper.
+
+Reuse the existing APIs whenever possible.
+
+Do NOT create duplicate backend subscription logic.
+
+Check:
+
+* Authentication
+* User ID
+* Subscription status API
+* Purchase verification API
+* Subscription creation/update API
+* Entitlement API
+* Restore API
+* Webhook-driven status if applicable
+
+The Flutter app should send the correct platform-specific purchase information required by the backend.
+
+Clearly identify the platform:
+
+```text
+android
+ios
+```
+
+Make sure the backend can distinguish Google Play purchases from Apple purchases.
+
+---
+
+# 9. BLoC Architecture
+
+Use the existing Flutter architecture and BLoC pattern if BLoC is already being used.
+
+Prefer a structure similar to:
+
+```text
+SubscriptionScreen
+        ↓
+SubscriptionBloc
+        ↓
+SubscriptionRepository
+        ↓
+Platform Billing Service
+        ↓
+Google Play / Apple App Store
+        ↓
+Backend Verification API
+        ↓
+SubscriptionRepository
+        ↓
+SubscriptionBloc
+        ↓
+SubscriptionScreen
+```
+
+Do not put billing, API, and verification logic directly inside widgets.
+
+Keep the implementation easy to maintain.
+
+---
+
+# 10. Purchase Listener
+
+Make sure the Flutter billing implementation correctly listens for purchase/transaction updates.
+
+Handle all purchase states.
+
+For each purchase:
+
+```text
+pending
+purchased
+restored
+error
+cancelled
+```
+
+Do not leave purchase streams/listeners active after the relevant lifecycle ends.
+
+Avoid:
+
+* Duplicate purchase listeners
+* Multiple API calls for the same transaction
+* Multiple BLoC subscriptions
+* Memory leaks
+* Calling `setState` after dispose
+* Processing the same transaction repeatedly
+
+---
+
+# 11. Complete Purchase Lifecycle
+
+Implement this lifecycle:
+
+```text
+User opens Subscription
+        ↓
+Load subscription products
+        ↓
+Display available plans
+        ↓
+User selects plan
+        ↓
+Start platform purchase
+        ↓
+Google Play / Apple Store purchase UI
+        ↓
+Purchase result
+        ↓
+Validate purchase
+        ↓
+Send purchase to backend
+        ↓
+Backend verifies purchase
+        ↓
+Subscription status updated
+        ↓
+Refresh current user subscription
+        ↓
+Update Flutter state
+        ↓
+Show subscribed UI / unlock premium features
+```
+
+If verification fails:
+
+```text
+Purchase completed
+        ↓
+Verification failed
+        ↓
+Do NOT incorrectly show permanent premium access
+        ↓
+Show proper error/retry state
+```
+
+---
+
+# 12. Trial Handling
+
+The existing application currently has a configured subscription trial.
+
+Inspect the existing Web/React Native + Wrapper implementation and preserve the exact trial behavior.
+
+Do NOT independently change:
+
+* Trial duration
+* Trial eligibility
+* Trial pricing
+* Billing date
+* Product configuration
+
+The Flutter implementation must follow the store configuration and existing backend logic.
+
+---
+
+# 13. UI/UX Matching
+
+Flutter subscription screens should behave like the existing React Native + Wrapper version.
+
+Match:
+
+* Screen flow
+* Plan selection
+* Loading state
+* Subscribe button
+* Disabled button state
+* Purchase progress
+* Success state
+* Error state
+* Restore purchase action
+* Current subscription display
+* Navigation after successful subscription
+
+Do not redesign unrelated UI.
+
+---
+
+# 14. App Restart Test
+
+The subscription state must remain correct after:
+
+1. Purchase subscription.
+2. Close the app.
+3. Reopen the app.
+4. Login again if necessary.
+5. Check subscription screen.
+
+The app should retrieve the actual subscription status instead of assuming the previous local state is still valid.
+
+---
+
+# 15. Logout/Login Test
+
+Test:
+
+```text
+User A logs in
+→ subscribes
+→ subscription becomes active
+→ logout
+→ User B logs in
+→ User B must not incorrectly inherit User A's subscription
+```
+
+Also test:
+
+```text
+User A logs in
+→ subscription active
+→ logout
+→ login again
+→ subscription status is restored correctly
+```
+
+Use the authenticated user ID when reading/updating subscription status.
+
+---
+
+# 16. Android Testing
+
+Prepare the Flutter Android subscription implementation for Google Play testing.
+
+Verify:
+
+* App is uploaded to an appropriate Google Play testing track.
+* Tester account is configured correctly.
+* Product/subscription is active in Play Console.
+* Correct application ID/package name is used.
+* Product IDs exactly match Play Console.
+* Tester can see the subscription product.
+* Purchase sheet opens.
+* Test purchase completes.
+* Purchase information reaches backend.
+* Backend verification succeeds.
+* Subscription becomes active in Flutter.
+
+Important:
+
+Do not assume a bank/account transaction means the Flutter subscription implementation is correct.
+
+Use Google's testing configuration and verify the complete purchase → verification → entitlement flow.
+
+---
+
+# 17. iOS Testing
+
+Prepare the Flutter iOS subscription implementation for Apple's testing environment.
+
+Verify:
+
+* Bundle ID is correct.
+* App Store Connect subscription product exists.
+* Product ID exactly matches.
+* Subscription group is configured.
+* Sandbox tester is configured.
+* Product loads correctly.
+* Apple purchase sheet opens.
+* Sandbox purchase completes.
+* Transaction is received.
+* Backend verification works.
+* Subscription becomes active in Flutter.
+* Restore purchases works.
+
+---
+
+# 18. Important Debug Logging
+
+Add useful development-only logs around:
+
+```text
+Subscription products loaded
+Selected product
+Purchase started
+Purchase state
+Purchase ID / transaction ID
+Platform
+Verification started
+Backend verification response
+Subscription status
+Restore started
+Restore completed
+Purchase error
+```
+
+Do NOT log:
+
+* Passwords
+* Payment card details
+* Authentication tokens
+* Sensitive personal information
+* Complete purchase credentials
+
+Remove or disable verbose billing logs for release builds where appropriate.
+
+---
+
+# 19. Existing Flutter Code
+
+Before editing files:
+
+1. Find the current subscription implementation.
+2. Find all subscription-related files.
+3. Find current dependencies.
+4. Find the existing BLoC/state management.
+5. Find existing API/repository code.
+6. Find existing Android billing code.
+7. Find existing iOS billing code.
+8. Compare the implementation with Web and React Native + Wrapper.
+9. Identify exactly why the current Flutter flow fails.
+10. Then implement the smallest safe fix.
+
+Do not blindly rewrite the entire subscription system.
+
+---
+
+# 20. Dependency Compatibility
+
+Check the current Flutter version and Dart version before changing billing packages.
+
+Use package versions compatible with the existing Flutter/Dart version.
+
+Do not upgrade Flutter or unrelated dependencies unless required.
+
+Avoid introducing dependency conflicts with:
+
+* Firebase
+* Stripe
+* GoRouter
+* BLoC
+* Android Gradle Plugin
+* Kotlin
+* iOS deployment target
+
+---
+
+# 21. Final Acceptance Criteria
+
+The implementation is complete only when all of these work:
+
+### Android
+
+```text
+Open subscription
+→ Products load
+→ Select plan
+→ Google Play purchase sheet
+→ Complete test purchase
+→ Purchase received
+→ Backend verification
+→ Subscription active
+→ Premium access unlocked
+→ Close/reopen app
+→ Subscription still active
+```
+
+### iOS
+
+```text
+Open subscription
+→ Products load
+→ Select plan
+→ Apple purchase sheet
+→ Complete sandbox purchase
+→ Transaction received
+→ Backend verification
+→ Subscription active
+→ Premium access unlocked
+→ Restore purchase
+→ Close/reopen app
+→ Subscription still active
+```
+
+### Error cases
+
+Test:
+
+* User cancels purchase
+* Payment fails
+* Network unavailable
+* Backend verification fails
+* Product unavailable
+* Duplicate purchase callback
+* Restore with no previous purchase
+* Expired subscription
+
+The UI must show the correct state in each case.
+
+---
+
+## Very Important
+
+The goal is **NOT simply to make the Flutter Subscribe button open Google Play/App Store**.
+
+The complete subscription lifecycle must work:
+
+**Product → Purchase → Verification → Backend → Entitlement → Flutter state → Premium access**
+
+And the Flutter flow must behave consistently with the existing **Web React Native + Wrapper** application.
+
+Before finishing, provide a short report:
+
+1. Current Flutter subscription issue found.
+2. Root cause.
+3. Existing Web/RN flow discovered.
+4. Files changed.
+5. Android implementation.
+6. iOS implementation.
+7. Backend verification flow.
+8. Testing performed.
+9. Any configuration still required in Google Play Console/App Store Connect.
+10. Any remaining limitation or blocker.
+
+Do not modify unrelated application features.
