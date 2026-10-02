@@ -118,7 +118,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           !subscription.grantsAccess &&
           !kIsWeb &&
           defaultTargetPlatform == TargetPlatform.android &&
-          !_startupGooglePlayRestoreAttemptedUserIds.contains(subscription.id)) {
+          !_startupGooglePlayRestoreAttemptedUserIds
+              .contains(subscription.id)) {
         restoreUserId = subscription.id;
       }
       final availability = await purchaseService.initialize();
