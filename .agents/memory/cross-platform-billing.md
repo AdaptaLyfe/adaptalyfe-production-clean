@@ -8,3 +8,10 @@ An active subscription belongs to the Adaptalyfe account and grants access on we
 **Why:** App installation is not a subscription transfer. Offering a second purchase to an already entitled account risks duplicate recurring charges and can overwrite the displayed billing source.
 
 **How to apply:** Read the account entitlement before showing a payment action. An active subscriber should see access and their existing billing source, not another checkout. Keep backend guards so cross-platform purchase verification cannot replace an already active subscription.
+
+## Basic versus Premium feature access
+An active Basic subscription grants Basic features only. Premium- and Family-only feature gates remain closed for Basic subscribers.
+
+**Why:** The product owner confirmed that Basic should remain limited to its listed features; restoring a Basic purchase must not accidentally grant the higher-tier feature set.
+
+**How to apply:** When recovering or refreshing a Basic entitlement, mark the plan active without relaxing Premium/Family checks. Change this policy only after an explicit plan decision.
