@@ -2983,3 +2983,17 @@ mtime_ms = 1791023941855
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a1fc12a7-ccb2-4203-8868-a6e2b90afba3/bf600ded-bcf3-49e9-9f01-1972011a75a3"
 storage_version_token = "1791023948214520"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "pQpG7F7dgeo-GBSd1jlaT"
+uri = "file://artifacts/adaptalyfe-mobile-auth-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe mobile auth fix — changed files"
+description = "ZIP containing the three Flutter source files changed to fix the startup splash getting stuck after sign-out."
+logical_id = "4a5a9a37-aff5-4d85-8320-25f8ab3a5ed6"
+content_hash = "sha256:78bb4d62a1690ec021db71b743b803c8b24bbfeeb8e09b157e0d36811b561cb1"
+size = 6638
+mtime_ms = 1791028231295
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4a5a9a37-aff5-4d85-8320-25f8ab3a5ed6/c5b0c915-c884-477c-8db2-19c9b12a29e2"
+storage_version_token = "1791028235953675"
+content_type = "application/octet-stream"
