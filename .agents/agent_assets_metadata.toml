@@ -2969,3 +2969,17 @@ mtime_ms = 1791023279417
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/72611db4-32c8-44e2-a149-d96a57c09405/f16e3711-c950-423f-b3b8-05f851ee497e"
 storage_version_token = "1791023293193069"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "q-BVg7KhbaTAlD-uJXEBU"
+uri = "file://artifacts/adaptalyfe-full-project-source.zip"
+type = "unspecified"
+title = "Adaptalyfe — full project source"
+description = "Full source archive for the web app, server, shared code, Flutter app, and native Android/iOS projects. Excludes dependencies, Git history, secrets, generated builds, backups, and unreferenced attached assets."
+logical_id = "a1fc12a7-ccb2-4203-8868-a6e2b90afba3"
+content_hash = "sha256:b083c0942057fa5f77d2da46dc95d7d62ef200ed2b4bc1cd401bf6a239bf9dca"
+size = 10117614
+mtime_ms = 1791023941855
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a1fc12a7-ccb2-4203-8868-a6e2b90afba3/bf600ded-bcf3-49e9-9f01-1972011a75a3"
+storage_version_token = "1791023948214520"
+content_type = "application/octet-stream"
