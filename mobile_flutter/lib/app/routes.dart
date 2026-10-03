@@ -122,6 +122,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
             : '/splash';
       }
 
+      if (location == '/splash' && authState is Unauthenticated) {
+        return '/login';
+      }
+
       // Login and signup own their post-auth destination (including
       // invitation and subscription flows). Redirecting them to /home at the
       // same time creates competing navigation calls and can stack routes

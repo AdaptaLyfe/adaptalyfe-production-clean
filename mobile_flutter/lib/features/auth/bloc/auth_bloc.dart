@@ -66,12 +66,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthChecking());
 
-    if (!await repository.hasSessionToken()) {
-      emit(const Unauthenticated());
-      return;
-    }
-
     try {
+      if (!await repository.hasSessionToken()) {
+        emit(const Unauthenticated());
+        return;
+      }
+
       final user = await repository.getCurrentUser();
       emit(Authenticated(user));
     } on ApiException catch (error) {
