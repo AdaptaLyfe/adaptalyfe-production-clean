@@ -61,40 +61,6 @@ class SubscriptionApi {
   ) =>
       _verify('/api/google-play/restore-purchases', {'purchases': purchases});
 
-  Future<StripeSubscriptionSetup> createStripeSubscription({
-    required String planType,
-    required String billingCycle,
-  }) async {
-    final response = await client.post<dynamic>(
-      '/api/create-subscription',
-      data: {
-        'planType': planType,
-        'billingCycle': billingCycle,
-      },
-    );
-    if (response.data is! Map) {
-      throw const FormatException('Invalid subscription setup response');
-    }
-    return StripeSubscriptionSetup.fromJson(
-      Map<String, dynamic>.from(response.data as Map),
-    );
-  }
-
-  Future<PurchaseVerification> confirmStripeSubscription(
-    String subscriptionId,
-  ) =>
-      _verify(
-        '/api/confirm-subscription',
-        {'subscriptionId': subscriptionId},
-      );
-
-  Future<void> recoverStripeSubscription() async {
-    final response = await client.post<dynamic>('/api/recover-subscription');
-    if (response.data is! Map) {
-      throw const FormatException('Invalid subscription recovery response');
-    }
-  }
-
   Future<PurchaseVerification> _verify(
     String path,
     Map<String, dynamic> body,

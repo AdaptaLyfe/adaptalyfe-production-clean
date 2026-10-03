@@ -8,7 +8,6 @@ enum SubscriptionStatus {
   ready,
   purchasing,
   restoring,
-  recovering,
   cancelled,
   notAvailable,
   configurationError,
@@ -29,8 +28,6 @@ class SubscriptionState extends Equatable {
     this.busyPlanId,
     this.selectedPlanId,
     this.managementUrl,
-    this.stripeAvailable = false,
-    this.walletAvailable = false,
     this.shouldNavigateToDashboard = false,
     this.shouldRefreshAuthentication = false,
   });
@@ -47,8 +44,6 @@ class SubscriptionState extends Equatable {
   final String? busyPlanId;
   final String? selectedPlanId;
   final String? managementUrl;
-  final bool stripeAvailable;
-  final bool walletAvailable;
   final bool shouldNavigateToDashboard;
   final bool shouldRefreshAuthentication;
 
@@ -56,12 +51,9 @@ class SubscriptionState extends Equatable {
       status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
   bool get isBusy =>
       status == SubscriptionStatus.purchasing ||
-      status == SubscriptionStatus.restoring ||
-      status == SubscriptionStatus.recovering;
+      status == SubscriptionStatus.restoring;
   bool get hasActiveSubscription => subscription?.grantsAccess == true;
   bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
-  bool get canUseStripe =>
-      stripeAvailable && !hasActiveSubscription && !isBusy;
 
   SubscriptionState copyWith({
     SubscriptionStatus? status,
@@ -76,8 +68,6 @@ class SubscriptionState extends Equatable {
     Object? busyPlanId = _notSet,
     Object? selectedPlanId = _notSet,
     Object? managementUrl = _notSet,
-    bool? stripeAvailable,
-    bool? walletAvailable,
     bool? shouldNavigateToDashboard,
     bool? shouldRefreshAuthentication,
   }) {
@@ -108,8 +98,6 @@ class SubscriptionState extends Equatable {
       managementUrl: identical(managementUrl, _notSet)
           ? this.managementUrl
           : managementUrl as String?,
-      stripeAvailable: stripeAvailable ?? this.stripeAvailable,
-      walletAvailable: walletAvailable ?? this.walletAvailable,
       shouldNavigateToDashboard:
           shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
       shouldRefreshAuthentication:
@@ -129,10 +117,8 @@ class SubscriptionState extends Equatable {
         storeAvailable,
         availabilityMessage,
         busyPlanId,
-    selectedPlanId,
+        selectedPlanId,
         managementUrl,
-        stripeAvailable,
-        walletAvailable,
         shouldNavigateToDashboard,
         shouldRefreshAuthentication,
       ];

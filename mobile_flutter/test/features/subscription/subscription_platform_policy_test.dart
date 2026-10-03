@@ -25,11 +25,10 @@ void main() {
     expect(usesNativeStoreBilling, isFalse);
   });
 
-  test('subscription recovery is treated as a busy operation', () {
-    const state = SubscriptionState(status: SubscriptionStatus.recovering);
+  test('restoring purchases is treated as a busy operation', () {
+    const state = SubscriptionState(status: SubscriptionStatus.restoring);
     expect(state.isBusy, isTrue);
     expect(state.canPurchase, isFalse);
-    expect(state.canUseStripe, isFalse);
   });
 
   test('verified trialing subscriptions retain access without another checkout', () {
@@ -42,13 +41,11 @@ void main() {
     const state = SubscriptionState(
       subscription: trialing,
       storeAvailable: true,
-      stripeAvailable: true,
     );
 
     expect(trialing.grantsAccess, isTrue);
     expect(state.hasActiveSubscription, isTrue);
     expect(state.canPurchase, isFalse);
-    expect(state.canUseStripe, isFalse);
   });
 
   test('dashboard navigation signal can be cleared after routing', () {

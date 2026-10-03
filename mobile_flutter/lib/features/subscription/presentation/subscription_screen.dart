@@ -11,7 +11,6 @@ import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
-import '../data/stripe_payment_service.dart';
 import '../data/subscription_platform_policy.dart';
 import '../models/subscription_models.dart';
 
@@ -180,18 +179,6 @@ class _SubscriptionBody extends StatelessWidget {
                ),
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
-                if (!usesNativeStoreBilling &&
-                    !state.hasActiveSubscription) ...[
-                  const SizedBox(height: 14),
-                  _StripeRecoveryCard(
-                    enabled: !state.isBusy,
-                    onPressed: () {
-                      context
-                          .read<SubscriptionBloc>()
-                          .add(const RecoverSubscriptionRequested());
-                    },
-                  ),
-                ],
                 const SizedBox(height: 16),
                 if (state.subscription?.grantsAccess == true)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
@@ -199,8 +186,7 @@ class _SubscriptionBody extends StatelessWidget {
                   _TrialCard(subscription: state.subscription),
                 const SizedBox(height: 20),
                 if (state.status == SubscriptionStatus.purchasing ||
-                    state.status == SubscriptionStatus.restoring ||
-                    state.status == SubscriptionStatus.recovering)
+                    state.status == SubscriptionStatus.restoring)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
@@ -408,8 +394,6 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final storeAvailable =
         usesNativeStoreBilling && product != null && state.canPurchase;
-    final stripeAvailable =
-        !usesNativeStoreBilling && state.canUseStripe;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
     final trialAvailable = state.subscription?.isTrialing == true &&
@@ -505,20 +489,6 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
           const SizedBox(height: 10),
-          if (stripeAvailable)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                 onPressed: selectable
-                     ? () => _chooseStripePayment(context)
-                     : null,
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: Text(
-                  trialAvailable ? 'Start Free Trial' : 'Pay by card or wallet',
-                ),
-              ),
-            ),
-          if (stripeAvailable && storeAvailable) const SizedBox(height: 8),
           if (storeAvailable)
             SizedBox(
               width: double.infinity,
@@ -538,93 +508,13 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (!stripeAvailable && !storeAvailable)
+          if (!storeAvailable)
             const Padding(
               padding: EdgeInsets.only(top: 7),
                child: _StoreAvailabilityMessage(),
             ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _chooseStripePayment(BuildContext context) async {
-    onSelect();
-    final method = await showModalBottomSheet<StripePaymentMethod>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => _PaymentMethodPicker(
-        walletAvailable: state.walletAvailable,
-      ),
-    );
-    if (!context.mounted || method == null) return;
-
-    FirebaseAnalyticsService.instance.logSubscriptionEvent(
-      'upgrade',
-      '${plan.id}_${method.name}',
-    );
-    context.read<SubscriptionBloc>().add(
-          StripePaymentRequested(plan.id, method),
-        );
-  }
-}
-
-class _PaymentMethodPicker extends StatelessWidget {
-  const _PaymentMethodPicker({required this.walletAvailable});
-
-  final bool walletAvailable;
-
-  @override
-  Widget build(BuildContext context) {
-    final walletMethod = defaultTargetPlatform == TargetPlatform.android
-        ? StripePaymentMethod.googlePay
-        : defaultTargetPlatform == TargetPlatform.iOS
-            ? StripePaymentMethod.applePay
-            : null;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Payment method',
-              style: TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Choose how you want to complete this subscription.',
-              style: TextStyle(color: Color(0xFF6B7280)),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.credit_card_rounded),
-              title: const Text('Credit/Debit Card'),
-              onTap: () => Navigator.of(context).pop(StripePaymentMethod.card),
-            ),
-            if (walletAvailable && walletMethod != null)
-              ListTile(
-                leading: Icon(
-                  walletMethod == StripePaymentMethod.googlePay
-                      ? Icons.account_balance_wallet_rounded
-                      : Icons.apple,
-                ),
-                title: Text(
-                  walletMethod == StripePaymentMethod.googlePay
-                      ? 'Google Pay'
-                      : 'Apple Pay',
-                ),
-                onTap: () => Navigator.of(context).pop(walletMethod),
-              ),
-          ],
         ),
       ),
     );
@@ -683,42 +573,6 @@ class _ManageCard extends StatelessWidget {
               icon: const Icon(Icons.open_in_new_rounded),
               label: Text(actionLabel),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StripeRecoveryCard extends StatelessWidget {
-  const _StripeRecoveryCard({
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      color: const Color(0xFFFFF7ED),
-      borderColor: const Color(0xFFFDBA74),
-      child: Row(
-        children: [
-          const Icon(Icons.receipt_long_rounded, color: Color(0xFFB45309)),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Already paid on the Adaptalyfe website? Check your Stripe '
-              'subscription and restore access.',
-              style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: enabled ? onPressed : null,
-            child: const Text('Restore access'),
           ),
         ],
       ),
