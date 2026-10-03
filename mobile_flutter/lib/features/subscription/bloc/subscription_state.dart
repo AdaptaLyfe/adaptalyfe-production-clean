@@ -18,6 +18,7 @@ enum SubscriptionStatus {
 class SubscriptionState extends Equatable {
   const SubscriptionState({
     this.status = SubscriptionStatus.initial,
+    this.accountStatusLoaded = false,
     this.plans = subscriptionPlans,
     this.subscription,
     this.products = const {},
@@ -36,6 +37,7 @@ class SubscriptionState extends Equatable {
   });
 
   final SubscriptionStatus status;
+  final bool accountStatusLoaded;
   final List<SubscriptionPlan> plans;
   final SubscriptionModel? subscription;
   final Map<String, dynamic> products;
@@ -53,18 +55,32 @@ class SubscriptionState extends Equatable {
   final bool shouldRefreshAuthentication;
 
   bool get isLoading =>
-      status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
+      status == SubscriptionStatus.loading ||
+      status == SubscriptionStatus.initial;
   bool get isBusy =>
       status == SubscriptionStatus.purchasing ||
       status == SubscriptionStatus.restoring ||
       status == SubscriptionStatus.recovering;
-  bool get hasActiveSubscription => subscription?.hasPlanEntitlement == true;
-  bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
+  bool get hasActiveSubscription =>
+      accountStatusLoaded && subscription?.hasPlanEntitlement == true;
+  bool get canPurchase =>
+      accountStatusLoaded &&
+      !isLoading &&
+      !sessionInvalid &&
+      storeAvailable &&
+      !hasActiveSubscription &&
+      !isBusy;
   bool get canUseStripe =>
-      stripeAvailable && !hasActiveSubscription && !isBusy;
+      accountStatusLoaded &&
+      !isLoading &&
+      !sessionInvalid &&
+      stripeAvailable &&
+      !hasActiveSubscription &&
+      !isBusy;
 
   SubscriptionState copyWith({
     SubscriptionStatus? status,
+    bool? accountStatusLoaded,
     List<SubscriptionPlan>? plans,
     Object? subscription = _notSet,
     Map<String, dynamic>? products,
@@ -83,6 +99,7 @@ class SubscriptionState extends Equatable {
   }) {
     return SubscriptionState(
       status: status ?? this.status,
+      accountStatusLoaded: accountStatusLoaded ?? this.accountStatusLoaded,
       plans: plans ?? this.plans,
       subscription: identical(subscription, _notSet)
           ? this.subscription
@@ -120,6 +137,7 @@ class SubscriptionState extends Equatable {
   @override
   List<Object?> get props => [
         status,
+        accountStatusLoaded,
         plans,
         subscription,
         products,
@@ -129,7 +147,7 @@ class SubscriptionState extends Equatable {
         storeAvailable,
         availabilityMessage,
         busyPlanId,
-    selectedPlanId,
+        selectedPlanId,
         managementUrl,
         stripeAvailable,
         walletAvailable,

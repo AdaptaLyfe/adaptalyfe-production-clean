@@ -111,6 +111,8 @@ void main() {
         },
       });
       final state = SubscriptionState(
+        status: SubscriptionStatus.ready,
+        accountStatusLoaded: true,
         subscription: subscription,
         storeAvailable: true,
       );

@@ -2997,3 +2997,17 @@ mtime_ms = 1790955873555
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/eb03f8a4-e005-47cd-a68d-cbe44acc6f87/529055d8-a9e1-409f-80d4-21c8d8bb86f4"
 storage_version_token = "1790955880833620"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sxF7v84S6FkCUjJSsz2WG"
+uri = "file://adaptalyfe_flutter_subscription_patch.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter subscription update"
+description = "ZIP of the five changed Flutter subscription source and test files."
+logical_id = "7def3cbb-2287-40c4-8d04-244d13fc6ca0"
+content_hash = "sha256:8faa097d585a0e45a991ddd1f4f21b0f83e4552fb2322843aafd6eae03daddce"
+size = 18164
+mtime_ms = 1791003051609
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/7def3cbb-2287-40c4-8d04-244d13fc6ca0/67666ebe-b7ae-4f95-a5cd-74cbbad21549"
+storage_version_token = "1791003064069992"
+content_type = "application/octet-stream"

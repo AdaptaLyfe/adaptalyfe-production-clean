@@ -9,6 +9,13 @@ Flutter subscription purchases must never contain payment secrets. The platform 
 
 **How to apply:** Keep plan product IDs aligned with the server mappings, complete each platform transaction after verification handling, suppress duplicate purchase actions for active entitlements, and validate the full flow on physical store environments before release.
 
+## Restore when account status cannot be loaded
+A failed account-entitlement lookup must not hide Google Play/App Store restore or website-payment recovery, but new checkout must remain disabled until the server returns a verified entitlement-free state.
+
+**Why:** A valid store purchase can exist even when its backend record is incomplete or temporarily unreadable. Hiding restore traps the user; allowing checkout while status is unknown risks a duplicate subscription.
+
+**How to apply:** Keep restore/recovery actions available on subscription-load errors, verify restored purchases through the existing server routes, and gate every new purchase action on a successful server status read.
+
 ## Subscription change scope
 Subscription fixes should stay within the purchase, restore, entitlement, and directly related test paths; do not modify unrelated app or server behavior.
 

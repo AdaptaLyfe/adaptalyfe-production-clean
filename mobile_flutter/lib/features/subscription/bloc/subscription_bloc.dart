@@ -70,7 +70,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PlanSelected event,
     Emitter<SubscriptionState> emit,
   ) {
-    if (state.hasActiveSubscription || state.isBusy) return;
+    if (!state.accountStatusLoaded ||
+        state.isLoading ||
+        state.sessionInvalid ||
+        state.hasActiveSubscription ||
+        state.isBusy) {
+      return;
+    }
     final plan = _planFor(event.planId);
     if (plan == null) return;
     debugPrint(
@@ -106,6 +112,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(
       state.copyWith(
         status: SubscriptionStatus.loading,
+        accountStatusLoaded: false,
         errorMessage: null,
         actionMessage: null,
         sessionInvalid: false,
@@ -129,6 +136,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: true,
           subscription: subscription,
           selectedPlanId:
               subscription.hasPlanEntitlement ? null : state.selectedPlanId,
@@ -144,19 +152,39 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     } on ApiException catch (error) {
+      final unauthorized = error.type == ApiErrorType.unauthorized;
+      final recoveryAvailability =
+          unauthorized ? null : await _prepareNativeStoreForRecovery();
+      if (!unauthorized) _started = true;
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
-          errorMessage: error.type == ApiErrorType.unauthorized
+          accountStatusLoaded: false,
+          products: recoveryAvailability == null
               ? null
-              : _messageFor(error),
-          sessionInvalid: error.type == ApiErrorType.unauthorized,
+              : {
+                  for (final product in _products) product.id: product,
+                },
+          storeAvailable: recoveryAvailability?.available,
+          availabilityMessage: recoveryAvailability?.message,
+          errorMessage: unauthorized ? null : _messageFor(error),
+          sessionInvalid: unauthorized,
         ),
       );
     } catch (error) {
+      final recoveryAvailability = await _prepareNativeStoreForRecovery();
+      _started = true;
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
+          accountStatusLoaded: false,
+          products: recoveryAvailability == null
+              ? null
+              : {
+                  for (final product in _products) product.id: product,
+                },
+          storeAvailable: recoveryAvailability?.available,
+          availabilityMessage: recoveryAvailability?.message,
           errorMessage: _messageFor(error),
         ),
       );
@@ -173,6 +201,17 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
   }
 
+  Future<PurchaseAvailability?> _prepareNativeStoreForRecovery() async {
+    if (!usesNativeStoreBilling) return null;
+    try {
+      final availability = await purchaseService.initialize();
+      _products = availability.products;
+      return availability;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _payWithStripe(
     StripePaymentRequested event,
     Emitter<SubscriptionState> emit,
@@ -180,6 +219,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     if (!_started ||
         _loadInFlight ||
         state.isBusy ||
+        !state.accountStatusLoaded ||
+        state.isLoading ||
+        state.sessionInvalid ||
         state.hasActiveSubscription) {
       return;
     }
@@ -257,20 +299,32 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
       final subscription = await repository.getSubscription();
       if (!subscription.hasPlanEntitlement) {
-        throw const FormatException(
-          'Payment was received, but the subscription status could not be refreshed. '
-          'Please refresh and try again.',
+        emit(
+          state.copyWith(
+            status: SubscriptionStatus.ready,
+            accountStatusLoaded: false,
+            subscription: subscription,
+            busyPlanId: null,
+            errorMessage:
+                'Payment was received, but the subscription status could not '
+                'be confirmed. Check again before trying another purchase.',
+            actionMessage: null,
+            shouldNavigateToDashboard: false,
+          ),
         );
+        return;
       }
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: true,
           subscription: subscription,
           busyPlanId: null,
           selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Payment successful! Your subscription is active.',
           shouldNavigateToDashboard: true,
+          shouldRefreshAuthentication: true,
         ),
       );
     } on StripeException catch (error) {
@@ -285,6 +339,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? null
               : 'Payment could not be completed. Please try again.',
           actionMessage: cancelled ? 'Payment was cancelled.' : null,
+          accountStatusLoaded:
+              cancelled ? state.accountStatusLoaded : false,
           shouldNavigateToDashboard: false,
         ),
       );
@@ -298,6 +354,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: error.configuration
               ? 'Card and wallet payments are not configured.'
               : 'Payment could not be completed. Please try again.',
+          accountStatusLoaded: false,
         ),
       );
     } on ApiException catch (error) {
@@ -310,6 +367,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: error.type == ApiErrorType.unauthorized
               ? null
               : _messageFor(error),
+          accountStatusLoaded: false,
           sessionInvalid: error.type == ApiErrorType.unauthorized,
           shouldNavigateToDashboard: false,
         ),
@@ -320,6 +378,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: SubscriptionStatus.failure,
           busyPlanId: null,
           errorMessage: _messageFor(error),
+          accountStatusLoaded: false,
         ),
       );
     }
@@ -329,7 +388,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PlanPurchaseRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
-    if (!_started || _loadInFlight || state.isBusy || state.hasActiveSubscription) {
+    if (!_started ||
+        _loadInFlight ||
+        state.isBusy ||
+        !state.accountStatusLoaded ||
+        state.isLoading ||
+        state.sessionInvalid ||
+        state.hasActiveSubscription) {
       return;
     }
     final plan = _planFor(event.planId);
@@ -407,7 +472,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     RestorePurchasesRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
-    if (_loadInFlight || state.isBusy) return;
+    if (_loadInFlight || state.isBusy || state.sessionInvalid) return;
     if (state.hasActiveSubscription) {
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
@@ -464,6 +529,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     if (!_started ||
         _loadInFlight ||
         state.isBusy ||
+        state.sessionInvalid ||
         state.hasActiveSubscription) {
       return;
     }
@@ -482,6 +548,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
+            accountStatusLoaded: false,
             subscription: subscription,
             errorMessage:
                 'We found a payment, but could not refresh your subscription. '
@@ -496,12 +563,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: true,
           subscription: subscription,
           busyPlanId: null,
           selectedPlanId: null,
           errorMessage: null,
           actionMessage: 'Your $planName has been restored.',
           shouldNavigateToDashboard: true,
+          shouldRefreshAuthentication: true,
         ),
       );
     } on ApiException catch (error) {
@@ -512,6 +581,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: unauthorized
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
+          accountStatusLoaded:
+              noSubscription ? state.accountStatusLoaded : false,
           errorMessage: unauthorized
               ? null
               : noSubscription
@@ -526,6 +597,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: false,
           errorMessage: 'Could not check your payment. Please try again.',
           actionMessage: null,
           shouldNavigateToDashboard: false,
@@ -774,6 +846,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
+            accountStatusLoaded: false,
             subscription: subscription,
             busyPlanId: null,
             errorMessage:
@@ -787,6 +860,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: true,
           subscription: subscription,
           busyPlanId: null,
           selectedPlanId: null,
@@ -803,6 +877,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: error.type == ApiErrorType.unauthorized
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
+          accountStatusLoaded: false,
           busyPlanId: null,
           errorMessage: error.type == ApiErrorType.unauthorized
               ? null
@@ -815,6 +890,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
+          accountStatusLoaded: false,
           busyPlanId: null,
           errorMessage: _messageFor(error),
           actionMessage: null,
@@ -894,6 +970,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
+            accountStatusLoaded: false,
             subscription: subscription,
             busyPlanId: null,
             errorMessage:
@@ -907,6 +984,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
+          accountStatusLoaded: true,
           subscription: subscription,
           busyPlanId: null,
           selectedPlanId: null,
@@ -924,6 +1002,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           emit(
             state.copyWith(
               status: SubscriptionStatus.failure,
+              accountStatusLoaded: false,
               busyPlanId: null,
               errorMessage: _messageFor(completionError),
             ),
@@ -936,6 +1015,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: error.type == ApiErrorType.unauthorized
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
+          accountStatusLoaded: false,
           busyPlanId: null,
           errorMessage: error.type == ApiErrorType.unauthorized
               ? null
@@ -951,6 +1031,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
+          accountStatusLoaded: false,
           busyPlanId: null,
           errorMessage: _messageFor(error),
         ),
