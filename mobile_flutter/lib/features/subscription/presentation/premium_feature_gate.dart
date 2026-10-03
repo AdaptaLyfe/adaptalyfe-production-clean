@@ -6,6 +6,7 @@ import '../../auth/bloc/auth_bloc.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
+import '../data/subscription_platform_policy.dart';
 import '../subscription_access.dart';
 
 class PremiumFeatureGate extends StatefulWidget {
@@ -119,7 +120,7 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
-                    if (state.storeAvailable)
+                    if (usesNativeStoreBilling)
                       OutlinedButton.icon(
                         onPressed: state.isBusy
                             ? null

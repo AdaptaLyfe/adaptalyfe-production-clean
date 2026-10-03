@@ -11,6 +11,7 @@ import '../../auth/bloc/auth_event.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_event.dart';
 import '../../subscription/bloc/subscription_state.dart';
+import '../../subscription/data/subscription_platform_policy.dart';
 import '../../subscription/models/subscription_models.dart';
 import '../../subscription/subscription_access.dart';
 import '../bloc/meal_shopping_bloc.dart';
@@ -123,7 +124,7 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
-                    if (subscriptionState.storeAvailable)
+                    if (usesNativeStoreBilling)
                       OutlinedButton.icon(
                         onPressed: subscriptionState.isBusy
                             ? null

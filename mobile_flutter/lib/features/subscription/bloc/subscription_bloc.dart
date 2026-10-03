@@ -880,18 +880,25 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     } on ApiException catch (error) {
       // Restore requests can contain multiple transactions. Without a clear
       // server response, leave them pending so a later restore can retry.
+      final unauthorized = error.type == ApiErrorType.unauthorized;
+      if (kDebugMode) {
+        debugPrint(
+          '[Subscription] restored purchase verification failed: '
+          'type=${error.type.name} '
+          'status=${error.statusCode ?? 'none'}',
+        );
+      }
       emit(
         state.copyWith(
-          status: error.type == ApiErrorType.unauthorized
+          status: unauthorized
               ? SubscriptionStatus.failure
               : SubscriptionStatus.ready,
           accountStatusLoaded: false,
           busyPlanId: null,
-          errorMessage: error.type == ApiErrorType.unauthorized
-              ? null
-              : _messageFor(error),
+          errorMessage:
+              unauthorized ? null : _messageForStoreRestore(error),
           actionMessage: null,
-          sessionInvalid: error.type == ApiErrorType.unauthorized,
+          sessionInvalid: unauthorized,
         ),
       );
     } catch (error) {
@@ -1179,6 +1186,27 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     }
     return 'We could not verify your subscription. Try again or restore '
         'purchases from the store.';
+  }
+
+  String _messageForStoreRestore(ApiException error) {
+    if (error.type == ApiErrorType.network ||
+        error.type == ApiErrorType.timeout) {
+      return _messageFor(error);
+    }
+    if (error.statusCode == 400 || error.statusCode == 409) {
+      return error.message;
+    }
+    if (error.statusCode == 503) {
+      final message = error.message.trim();
+      if (message.isNotEmpty &&
+          message != 'The server could not complete the request') {
+        return message;
+      }
+      return 'The store verification service is unavailable. Please try '
+          'restoring your purchase again later.';
+    }
+    return 'The store could not verify your restored subscription. Please '
+        'try again later.';
   }
 
   bool _isNoSubscriptionError(Object? data) =>
