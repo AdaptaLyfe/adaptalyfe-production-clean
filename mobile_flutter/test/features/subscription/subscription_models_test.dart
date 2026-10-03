@@ -64,35 +64,41 @@ void main() {
       expect(restored.planType, 'premium');
     });
 
-    test('Basic is active but does not include Premium features', () {
+    test('active Basic access follows wrapper status while features stay gated',
+        () {
       final subscription = SubscriptionModel.fromJson({
         'id': 10,
         'planType': 'basic',
         'status': 'active',
         'billingCycle': 'monthly',
         'subscriptionPlatform': 'google_play',
+        'features': {'mealPlanning': false},
       });
 
       expect(subscription.grantsAccess, isTrue);
       expect(subscription.hasPlanEntitlement, isTrue);
-      expect(subscription.hasPremiumAccess, isFalse);
+      expect(subscription.hasPremiumAccess, isTrue);
+      expect(subscription.hasFeatureAccess('mealPlanning'), isFalse);
     });
 
-    test('Basic trial grants Basic access without Premium features', () {
+    test('valid Basic trial grants generic access but respects feature flags',
+        () {
       final subscription = SubscriptionModel.fromJson({
         'id': 10,
         'planType': 'basic',
         'status': 'trialing',
         'billingCycle': 'monthly',
+        'trialDaysLeft': 4,
         'features': {
           'wearableDevices': true,
-          'mealPlanning': true,
+          'mealPlanning': false,
         },
       });
 
       expect(subscription.grantsAccess, isTrue);
       expect(subscription.hasPlanEntitlement, isTrue);
-      expect(subscription.hasPremiumAccess, isFalse);
+      expect(subscription.hasPremiumAccess, isTrue);
+      expect(subscription.hasFeatureAccess('mealPlanning'), isFalse);
     });
 
     test('free account trial allows plan purchase and uses server feature flags',
@@ -145,6 +151,7 @@ void main() {
           'planType': tier,
           'status': 'trialing',
           'billingCycle': 'monthly',
+          'trialDaysLeft': 4,
         });
 
         expect(subscription.hasPremiumAccess, isTrue, reason: tier);

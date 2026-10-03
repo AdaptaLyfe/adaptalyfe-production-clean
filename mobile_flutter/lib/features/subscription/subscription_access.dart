@@ -4,9 +4,13 @@ import 'models/subscription_models.dart';
 bool canAccessPremiumFeatures({
   required AuthState authState,
   required SubscriptionModel? subscription,
+  String? featureKey,
 }) {
   if (authState is! Authenticated) return false;
   final user = authState.user;
   final isAdmin = user.accountType == 'admin' || user.username == 'admin';
-  return isAdmin || subscription?.hasPremiumAccess == true;
+  if (isAdmin) return true;
+
+  if (subscription?.hasPremiumAccess != true) return false;
+  return featureKey == null || subscription!.hasFeatureAccess(featureKey);
 }

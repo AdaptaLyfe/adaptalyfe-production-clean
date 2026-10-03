@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../bloc/subscription_bloc.dart';
@@ -12,12 +13,14 @@ class PremiumFeatureGate extends StatefulWidget {
     required this.title,
     required this.child,
     required this.paywall,
+    this.featureKey,
     super.key,
   });
 
   final String title;
   final Widget child;
   final Widget paywall;
+  final String? featureKey;
 
   @override
   State<PremiumFeatureGate> createState() => _PremiumFeatureGateState();
@@ -59,6 +62,7 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
         if (canAccessPremiumFeatures(
           authState: authState,
           subscription: null,
+          featureKey: widget.featureKey,
         )) {
           return widget.child;
         }
@@ -68,7 +72,8 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
             body: const Center(child: CircularProgressIndicator()),
           );
         }
-        if (state.status == SubscriptionStatus.failure) {
+        if (!state.accountStatusLoaded ||
+            state.status == SubscriptionStatus.failure) {
           return Scaffold(
             appBar: AppBar(title: Text(widget.title)),
             body: Center(
@@ -87,6 +92,10 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
+                    TextButton(
+                      onPressed: () => context.go('/subscription'),
+                      child: const Text('Open subscription options'),
+                    ),
                   ],
                 ),
               ),
@@ -97,6 +106,7 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
         final hasAccess = canAccessPremiumFeatures(
           authState: authState,
           subscription: state.subscription,
+          featureKey: widget.featureKey,
         );
         return hasAccess ? widget.child : widget.paywall;
       },

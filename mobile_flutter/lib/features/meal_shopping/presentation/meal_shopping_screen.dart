@@ -72,7 +72,8 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
           );
         }
         if (!isAdmin &&
-            subscriptionState.status == SubscriptionStatus.failure) {
+            (!subscriptionState.accountStatusLoaded ||
+                subscriptionState.status == SubscriptionStatus.failure)) {
           return Scaffold(
             appBar: const _MealShoppingAppBar(),
             body: Center(
@@ -93,6 +94,10 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
+                    TextButton(
+                      onPressed: () => context.go('/subscription'),
+                      child: const Text('Open subscription options'),
+                    ),
                   ],
                 ),
               ),
@@ -102,6 +107,7 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
         if (!canAccessPremiumFeatures(
           authState: authState,
           subscription: subscription,
+          featureKey: 'mealPlanning',
         )) {
           return _MealPlanningPremiumPrompt(
             currentPlan:

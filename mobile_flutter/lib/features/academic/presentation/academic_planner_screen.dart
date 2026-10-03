@@ -18,6 +18,7 @@ class AcademicPlannerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PremiumFeatureGate(
       title: 'Academic Planner',
+      featureKey: 'advancedAnalytics',
       paywall: const _AcademicPremiumPrompt(),
       child: BlocConsumer<AcademicBloc, AcademicState>(
       listener: (context, state) {

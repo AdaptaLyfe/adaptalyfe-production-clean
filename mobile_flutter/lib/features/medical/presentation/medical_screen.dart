@@ -117,6 +117,7 @@ class PharmacyScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return PremiumFeatureGate(
       title: 'Medication List',
+      featureKey: 'medicationManagement',
       paywall: const _MedicalPremiumPrompt(
         title: 'Medication List',
         description:

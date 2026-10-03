@@ -111,25 +111,16 @@ class SubscriptionModel extends Equatable {
   bool get hasPlanEntitlement =>
       grantsAccess && planType.toLowerCase() != 'free';
 
-  bool get hasPremiumAccess {
-    if (!isActive && !isTrialing) return false;
-    final tier = planType.toLowerCase();
-    if (tier == 'premium' || tier == 'family') return true;
-    if (tier != 'free' || !isTrialing) return false;
+  /// Mirrors the wrapper's general premium-route rule: server-active
+  /// subscriptions are allowed regardless of tier, and trial access is valid
+  /// only while the server reports days remaining.
+  bool get hasPremiumAccess =>
+      isActive || (isTrialing && (trialDaysLeft ?? 0) > 0);
 
-    // The server grants all feature flags during the account-level free trial.
-    // Basic plan trials intentionally stay limited to Basic features.
-    const premiumTrialFeatureKeys = [
-      'wearableDevices',
-      'mealPlanning',
-      'medicationManagement',
-      'advancedAnalytics',
-      'voiceCommands',
-      'academicPlanner',
-      'prioritySupport',
-    ];
-    return premiumTrialFeatureKeys.any((key) => features[key] == true);
-  }
+  /// Feature-specific routes must also honor the backend's verified feature
+  /// flags, just like the wrapper's `hasFeature` checks.
+  bool hasFeatureAccess(String featureKey) =>
+      hasPremiumAccess && features[featureKey] == true;
 
   String get platformLabel {
     switch (subscriptionPlatform) {
