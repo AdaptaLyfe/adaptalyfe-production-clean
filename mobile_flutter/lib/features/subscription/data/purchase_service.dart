@@ -16,8 +16,15 @@ class PurchaseService {
 
   Future<PurchaseAvailability> initialize() async {
     final storeName = _storeName;
-    final requestedProductIds =
-        subscriptionPlans.map((plan) => plan.productId).toSet();
+    final platform = _platformName;
+    final requestedProductIds = SubscriptionProducts.forPlatform(platform);
+    if (kIsWeb || requestedProductIds.isEmpty) {
+      return PurchaseAvailability(
+        available: false,
+        message: 'Subscriptions are supported only in the iOS and Android '
+            'apps.',
+      );
+    }
     debugPrint(
       '[Subscription IAP] Requested Product IDs: $requestedProductIds',
     );
@@ -72,25 +79,35 @@ class PurchaseService {
   }
 
   Future<bool> buy(ProductDetails product) {
-    // Subscriptions are non-consumable from the Flutter plugin's purchase
-    // API. StoreKit/Play still own renewal and cancellation.
     final PurchaseParam purchaseParam;
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      if (product is! GooglePlayProductDetails ||
-          product.offerToken == null ||
-          product.offerToken!.isEmpty) {
+    if (kIsWeb) {
+      throw const FormatException(
+        'Subscriptions are supported only in the iOS and Android apps.',
+      );
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        if (product is! GooglePlayProductDetails ||
+            product.offerToken == null ||
+            product.offerToken!.isEmpty) {
+          throw const FormatException(
+            'Google Play did not return a subscription offer. '
+            'Check the Play product and offer setup, then try again.',
+          );
+        }
+        purchaseParam = GooglePlayPurchaseParam(
+          productDetails: product,
+          offerToken: product.offerToken,
+        );
+        break;
+      case TargetPlatform.iOS:
+        purchaseParam = PurchaseParam(productDetails: product);
+        break;
+      default:
         throw const FormatException(
-          'Google Play did not return a subscription offer. '
-          'Check the Play product and offer setup, then try again.',
+          'Subscriptions are supported only in the iOS and Android apps.',
         );
       }
-      purchaseParam = GooglePlayPurchaseParam(
-        productDetails: product,
-        offerToken: product.offerToken,
-      );
-    } else {
-      purchaseParam = PurchaseParam(productDetails: product);
-    }
     return _store.buyNonConsumable(
       purchaseParam: purchaseParam,
     );
@@ -112,6 +129,17 @@ class PurchaseService {
         return 'The App Store';
       default:
         return 'The app store';
+    }
+  }
+
+  String get _platformName {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      default:
+        return '';
     }
   }
 }

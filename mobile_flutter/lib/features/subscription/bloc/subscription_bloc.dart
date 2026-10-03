@@ -6,7 +6,6 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../core/network/api_client.dart';
 import '../data/purchase_service.dart';
-import '../data/stripe_payment_service.dart';
 import '../data/subscription_repository.dart';
 import '../data/subscription_platform_policy.dart';
 import '../models/subscription_purchase_contract.dart';
@@ -20,7 +19,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   SubscriptionBloc(
     this.repository,
     this.purchaseService,
-    this.stripePaymentService,
   )
       : super(const SubscriptionState()) {
     on<SubscriptionStarted>(_load);
@@ -28,7 +26,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<LoadPlans>(_loadPlans);
     on<PlanSelected>(_selectPlan);
     on<PlanPurchaseRequested>(_purchase);
-    on<StripePaymentRequested>(_payWithStripe);
     on<RestorePurchasesRequested>(_restore);
     on<RecoverSubscriptionRequested>(_recover);
     on<ManageSubscriptionRequested>(_manage);
@@ -49,7 +46,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   final SubscriptionRepository repository;
   final PurchaseService purchaseService;
-  final StripePaymentService stripePaymentService;
   late final StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;
   List<ProductDetails> _products = [];
   bool _started = false;
@@ -84,8 +80,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       'product ID: ${plan.productId}',
     );
     final storeProductAvailable = _productFor(plan.productId) != null;
-    final stripeAvailableOnPlatform =
-        !usesNativeStoreBilling && state.canUseStripe;
     final unavailableMessage = state.availabilityMessage ??
         'The selected subscription was not returned by the current store. '
             'Check the store configuration and tester account.';
@@ -93,11 +87,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       state.copyWith(
         selectedPlanId: event.planId,
         errorMessage: null,
-        actionMessage: _started &&
-                !storeProductAvailable &&
-                !stripeAvailableOnPlatform
-            ? unavailableMessage
-            : null,
+        actionMessage:
+            _started && !storeProductAvailable ? unavailableMessage : null,
       ),
     );
   }
@@ -112,7 +103,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(
       state.copyWith(
         status: SubscriptionStatus.loading,
-        accountStatusLoaded: false,
+        // Keep the last verified entitlement visible during refresh. New
+        // purchases remain disabled by the loading status until this request
+        // returns, while the global route guard avoids a false access flicker.
+        accountStatusLoaded:
+            state.accountStatusLoaded && state.subscription != null,
         errorMessage: null,
         actionMessage: null,
         sessionInvalid: false,
@@ -130,7 +125,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         restoreUserId = subscription.id;
       }
       final availability = await purchaseService.initialize();
-      final stripeAvailability = await stripePaymentService.initialize();
       _products = availability.products;
       _started = true;
       emit(
@@ -145,8 +139,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           },
           storeAvailable: availability.available,
           availabilityMessage: availability.message,
-          stripeAvailable: stripeAvailability.configured,
-          walletAvailable: stripeAvailability.walletAvailable,
           errorMessage: availability.message,
           actionMessage: null,
         ),
@@ -166,7 +158,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
-          accountStatusLoaded: false,
+          accountStatusLoaded: !unauthorized && state.subscription != null,
           products: recoveryAvailability == null
               ? null
               : {
@@ -185,7 +177,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
-          accountStatusLoaded: false,
+          accountStatusLoaded: state.subscription != null,
           products: recoveryAvailability == null
               ? null
               : {
@@ -217,178 +209,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       return availability;
     } catch (_) {
       return null;
-    }
-  }
-
-  Future<void> _payWithStripe(
-    StripePaymentRequested event,
-    Emitter<SubscriptionState> emit,
-  ) async {
-    if (!_started ||
-        _loadInFlight ||
-        state.isBusy ||
-        !state.accountStatusLoaded ||
-        state.isLoading ||
-        state.sessionInvalid ||
-        state.hasActiveSubscription) {
-      return;
-    }
-    if (usesNativeStoreBilling) {
-      emit(
-        state.copyWith(
-          status: SubscriptionStatus.ready,
-          errorMessage: null,
-          actionMessage:
-              'Subscriptions on this device are billed through the App Store or Google Play.',
-        ),
-      );
-      return;
-    }
-    if (!state.stripeAvailable) {
-      emit(
-        state.copyWith(
-          status: SubscriptionStatus.notAvailable,
-          actionMessage: 'Card and wallet payments are not configured.',
-        ),
-      );
-      return;
-    }
-
-    final plan = _planFor(event.planId);
-    if (plan == null) return;
-
-    emit(
-      state.copyWith(
-        status: SubscriptionStatus.purchasing,
-        busyPlanId: plan.id,
-        errorMessage: null,
-        actionMessage: 'Preparing secure payment…',
-        shouldNavigateToDashboard: false,
-      ),
-    );
-
-    try {
-      final setup = await repository.createStripeSubscription(
-        planType: plan.id,
-        billingCycle: 'monthly',
-      );
-      if (setup.subscriptionId.isEmpty) {
-        throw const FormatException('The payment session was not created.');
-      }
-
-      if (setup.requiresPayment) {
-        final clientSecret = setup.clientSecret;
-        final intentType = setup.intentType;
-        if (clientSecret == null ||
-            clientSecret.isEmpty ||
-            (intentType != 'setup' && intentType != 'payment')) {
-          throw const StripePaymentException(
-            'Stripe did not return a valid payment session.',
-            configuration: true,
-          );
-        }
-        await stripePaymentService.presentSubscriptionPayment(
-          clientSecret: clientSecret,
-          intentType: intentType!,
-          method: event.method,
-        );
-      }
-
-      final confirmation = await repository.confirmStripeSubscription(
-        setup.subscriptionId,
-      );
-      if (!confirmation.success) {
-        throw ApiException(
-          type: ApiErrorType.unknown,
-          message: confirmation.message ??
-              'Payment could not be completed. Please try again.',
-        );
-      }
-
-      final subscription = await repository.getSubscription();
-      if (!subscription.hasPlanEntitlement) {
-        emit(
-          state.copyWith(
-            status: SubscriptionStatus.ready,
-            accountStatusLoaded: false,
-            subscription: subscription,
-            busyPlanId: null,
-            errorMessage:
-                'Payment was received, but the subscription status could not '
-                'be confirmed. Check again before trying another purchase.',
-            actionMessage: null,
-            shouldNavigateToDashboard: false,
-          ),
-        );
-        return;
-      }
-      emit(
-        state.copyWith(
-          status: SubscriptionStatus.ready,
-          accountStatusLoaded: true,
-          subscription: subscription,
-          busyPlanId: null,
-          selectedPlanId: null,
-          errorMessage: null,
-          actionMessage: 'Payment successful! Your subscription is active.',
-          shouldNavigateToDashboard: true,
-          shouldRefreshAuthentication: true,
-        ),
-      );
-    } on StripeException catch (error) {
-      final cancelled = error.error.code == FailureCode.Canceled;
-      emit(
-        state.copyWith(
-          status: cancelled
-              ? SubscriptionStatus.cancelled
-              : SubscriptionStatus.failure,
-          busyPlanId: null,
-          errorMessage: cancelled
-              ? null
-              : 'Payment could not be completed. Please try again.',
-          actionMessage: cancelled ? 'Payment was cancelled.' : null,
-          accountStatusLoaded:
-              cancelled ? state.accountStatusLoaded : false,
-          shouldNavigateToDashboard: false,
-        ),
-      );
-    } on StripePaymentException catch (error) {
-      emit(
-        state.copyWith(
-          status: error.configuration
-              ? SubscriptionStatus.configurationError
-              : SubscriptionStatus.failure,
-          busyPlanId: null,
-          errorMessage: error.configuration
-              ? 'Card and wallet payments are not configured.'
-              : 'Payment could not be completed. Please try again.',
-          accountStatusLoaded: false,
-        ),
-      );
-    } on ApiException catch (error) {
-      emit(
-        state.copyWith(
-          status: error.type == ApiErrorType.unauthorized
-              ? SubscriptionStatus.failure
-              : SubscriptionStatus.ready,
-          busyPlanId: null,
-          errorMessage: error.type == ApiErrorType.unauthorized
-              ? null
-              : _messageFor(error),
-          accountStatusLoaded: false,
-          sessionInvalid: error.type == ApiErrorType.unauthorized,
-          shouldNavigateToDashboard: false,
-        ),
-      );
-    } catch (error) {
-      emit(
-        state.copyWith(
-          status: SubscriptionStatus.failure,
-          busyPlanId: null,
-          errorMessage: _messageFor(error),
-          accountStatusLoaded: false,
-        ),
-      );
     }
   }
 
@@ -1165,11 +985,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       };
     }
     if (error is FormatException) return error.message;
-    if (error is StripePaymentException) {
-      return error.configuration
-          ? 'Card and wallet payments are not configured.'
-          : 'Payment could not be completed. Please try again.';
-    }
     return 'Unable to complete this subscription action. Please try again.';
   }
 

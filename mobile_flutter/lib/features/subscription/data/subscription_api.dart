@@ -44,42 +44,20 @@ class SubscriptionApi {
         },
       );
 
-  Future<PurchaseVerification> restoreApplePurchase({
-    required String receiptData,
-  }) =>
-      _verify('/api/apple/restore-purchases', {'receiptData': receiptData});
-
   Future<PurchaseVerification> restoreGooglePurchases(
     List<Map<String, dynamic>> purchases,
   ) =>
       _verify('/api/google-play/restore-purchases', {'purchases': purchases});
 
-  Future<StripeSubscriptionSetup> createStripeSubscription({
-    required String planType,
-    required String billingCycle,
-  }) async {
-    final response = await client.post<dynamic>(
-      '/api/create-subscription',
-      data: {
-        'planType': planType,
-        'billingCycle': billingCycle,
-      },
-    );
-    if (response.data is! Map) {
-      throw const FormatException('Invalid subscription setup response');
+  Future<bool> hasActiveOrganizationMembership() async {
+    final response = await client.get<dynamic>('/api/org-codes/my');
+    final data = response.data;
+    if (data == null) return false;
+    if (data is! Map) {
+      throw const FormatException('Invalid organization membership response');
     }
-    return StripeSubscriptionSetup.fromJson(
-      Map<String, dynamic>.from(response.data as Map),
-    );
+    return data['status'] == 'active';
   }
-
-  Future<PurchaseVerification> confirmStripeSubscription(
-    String subscriptionId,
-  ) =>
-      _verify(
-        '/api/confirm-subscription',
-        {'subscriptionId': subscriptionId},
-      );
 
   Future<void> recoverStripeSubscription() async {
     final response = await client.post<dynamic>('/api/recover-subscription');
