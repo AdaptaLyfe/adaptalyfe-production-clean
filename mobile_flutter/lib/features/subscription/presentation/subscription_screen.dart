@@ -180,7 +180,8 @@ class _SubscriptionBody extends StatelessWidget {
                ),
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
-                if (!state.hasActiveSubscription) ...[
+                if (!usesNativeStoreBilling &&
+                    !state.hasActiveSubscription) ...[
                   const SizedBox(height: 14),
                   _StripeRecoveryCard(
                     enabled: !state.isBusy,
@@ -192,7 +193,7 @@ class _SubscriptionBody extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
-                if (state.subscription?.isActive == true)
+                if (state.subscription?.grantsAccess == true)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
                 else
                   _TrialCard(subscription: state.subscription),
@@ -297,6 +298,18 @@ class _ActiveSubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = subscription.isCancelled
+        ? '${_titleCase(subscription.planType)} plan is cancelled'
+        : subscription.isInGracePeriod
+            ? '${_titleCase(subscription.planType)} plan is in a grace period'
+            : '${_titleCase(subscription.planType)} plan is active';
+    final detail = subscription.isCancelled
+        ? 'Access continues through the paid period. Manage billing through '
+            '${subscription.platformLabel}.'
+        : subscription.isInGracePeriod
+            ? 'The store is retrying payment. Access remains available during '
+                'the verified grace period.'
+            : 'Billed through ${subscription.platformLabel}.';
     return _Panel(
       color: const Color(0xFFECFDF5),
       borderColor: const Color(0xFFA7F3D0),
@@ -312,7 +325,7 @@ class _ActiveSubscriptionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_titleCase(subscription.planType)} plan is active',
+                  title,
                   style: const TextStyle(
                     color: Color(0xFF065F46),
                     fontWeight: FontWeight.w800,
@@ -320,7 +333,7 @@ class _ActiveSubscriptionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Billed through ${subscription.platformLabel}.',
+                  detail,
                   style: const TextStyle(color: Color(0xFF047857), fontSize: 13),
                 ),
               ],
@@ -626,8 +639,21 @@ class _ManageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subscription = state.subscription!;
-    final isBasic = subscription.isActive &&
+    final isBasic = subscription.grantsAccess &&
         subscription.planType.toLowerCase() == 'basic';
+    final statusMessage = subscription.isCancelled
+        ? 'Renewal is turned off. You keep access through the paid period; '
+            'manage your subscription with ${subscription.platformLabel}.'
+        : subscription.isInGracePeriod
+            ? 'The store is retrying payment. Access remains available during '
+                'the verified grace period.'
+            : isBasic
+                ? 'Your Basic plan is active. Meal Planning is included with '
+                    'Premium and Family. Change your plan through '
+                    '${subscription.platformLabel} to upgrade without starting '
+                    'a second subscription.'
+                : 'Renewals and cancellations are managed by '
+                    '${subscription.platformLabel}.';
     final actionLabel = switch (subscription.subscriptionPlatform) {
       'google_play' => 'Manage or change plan',
       'app_store' => 'Manage in Apple ID settings',
@@ -644,9 +670,7 @@ class _ManageCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            isBasic
-                ? 'Your Basic plan is active. Meal Planning is included with Premium and Family. Change your plan through ${subscription.platformLabel} to upgrade without starting a second subscription.'
-                : 'Renewals and cancellations are managed by ${subscription.platformLabel}.',
+            statusMessage,
             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
           const SizedBox(height: 12),

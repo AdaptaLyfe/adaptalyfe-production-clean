@@ -337,7 +337,7 @@ class HomeSubscriptionBanner extends StatelessWidget {
     final subscription = state.subscription;
     if (user.isAdmin ||
         subscription == null ||
-        subscription.isActive ||
+        subscription.grantsAccess ||
         (!subscription.isExpired &&
             (subscription.trialDaysLeft == null ||
                 subscription.trialDaysLeft! > 2))) {

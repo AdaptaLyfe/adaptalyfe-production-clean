@@ -30,8 +30,14 @@ class SubscriptionRepository {
         orderId: orderId,
       );
 
-  Future<PurchaseVerification> restoreApplePurchase(String receiptData) =>
-      api.restoreApplePurchase(receiptData: receiptData);
+  Future<PurchaseVerification> restoreApplePurchase({
+    required String receiptData,
+    String? transactionId,
+  }) =>
+      api.restoreApplePurchase(
+        receiptData: receiptData,
+        transactionId: transactionId,
+      );
 
   Future<PurchaseVerification> restoreGooglePurchases(
     List<Map<String, dynamic>> purchases,

@@ -2955,3 +2955,17 @@ mtime_ms = 1790948279463
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/0cc2df47-0c7a-48d7-9c19-b1b17f73a459"
 storage_version_token = "1790948302612756"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cf0lJJrQT145HdktKi0WU"
+uri = "file://artifacts/adaptalyfe-mobile-subscription-changes.zip"
+type = "unspecified"
+title = "Adaptalyfe mobile subscriptions — changed files"
+description = "ZIP of the Flutter, server, schema, migration, tests, and Apple verification certificate changes."
+logical_id = "72611db4-32c8-44e2-a149-d96a57c09405"
+content_hash = "sha256:2ee60cfd93da49b7aabc42f6db54c8b960e83f2f09e3d1b0834cf1b3e96edc9e"
+size = 374685
+mtime_ms = 1791022645357
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/72611db4-32c8-44e2-a149-d96a57c09405/d5ce1b1a-916b-45c2-ab71-c1745daf92af"
+storage_version_token = "1791022662263328"
+content_type = "application/octet-stream"

@@ -46,8 +46,15 @@ class SubscriptionApi {
 
   Future<PurchaseVerification> restoreApplePurchase({
     required String receiptData,
+    String? transactionId,
   }) =>
-      _verify('/api/apple/restore-purchases', {'receiptData': receiptData});
+      _verify(
+        '/api/apple/restore-purchases',
+        {
+          'receiptData': receiptData,
+          if (transactionId != null) 'transactionId': transactionId,
+        },
+      );
 
   Future<PurchaseVerification> restoreGooglePurchases(
     List<Map<String, dynamic>> purchases,

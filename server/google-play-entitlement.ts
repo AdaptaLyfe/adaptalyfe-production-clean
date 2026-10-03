@@ -1,34 +1,73 @@
 export interface GooglePlaySubscriptionSnapshot {
   subscriptionState?: unknown;
   lineItems?: unknown;
+  startTime?: unknown;
+  latestOrderId?: unknown;
 }
 
 export interface GooglePlayEntitlement {
-  status: "active" | "inactive";
+  status:
+    | "active"
+    | "cancelled"
+    | "in_grace_period"
+    | "pending"
+    | "on_hold"
+    | "paused"
+    | "expired"
+    | "revoked"
+    | "inactive";
   tier: "basic" | "premium" | "family" | "free";
   productId: string | null;
   expiresAt: Date | null;
+  startDate: Date | null;
+  transactionId: string | null;
+  autoRenew: boolean | null;
+  grantsAccess: boolean;
 }
 
 interface GooglePlayLineItem {
   productId?: unknown;
   expiryTime?: unknown;
+  latestSuccessfulOrderId?: unknown;
+  autoRenewingPlan?: {
+    autoRenewEnabled?: unknown;
+  } | null;
 }
 
-const GOOGLE_PLAY_PRODUCT_TIERS: Record<
-  string,
-  GooglePlayEntitlement["tier"]
-> = {
-  adaptalyfe_basic_monthly: "basic",
-  adaptalyfe_premium_monthly: "premium",
-  adaptalyfe_family_monthly: "family",
+export interface StoreSubscriptionPlan {
+  planType: "basic" | "premium" | "family";
+  billingCycle: "monthly";
+  amount: number;
+}
+
+const STORE_SUBSCRIPTION_PLANS: Record<string, StoreSubscriptionPlan> = {
+  adaptalyfe_basic_monthly: {
+    planType: "basic",
+    billingCycle: "monthly",
+    amount: 499,
+  },
+  adaptalyfe_premium_monthly: {
+    planType: "premium",
+    billingCycle: "monthly",
+    amount: 1299,
+  },
+  adaptalyfe_family_monthly: {
+    planType: "family",
+    billingCycle: "monthly",
+    amount: 2499,
+  },
 };
+
+export function subscriptionPlanForProductId(
+  productId: string | null | undefined,
+): StoreSubscriptionPlan | null {
+  return productId ? STORE_SUBSCRIPTION_PLANS[productId] ?? null : null;
+}
 
 export function googlePlayTierForProductId(
   productId: string | null | undefined,
 ): GooglePlayEntitlement["tier"] | null {
-  if (!productId) return null;
-  return GOOGLE_PLAY_PRODUCT_TIERS[productId] ?? null;
+  return subscriptionPlanForProductId(productId)?.planType ?? null;
 }
 
 export function resolveGooglePlayEntitlement(
@@ -63,18 +102,75 @@ export function resolveGooglePlayEntitlement(
     typeof snapshot.subscriptionState === "string"
       ? snapshot.subscriptionState
       : "";
-  const accessState =
-    state === "SUBSCRIPTION_STATE_ACTIVE" ||
-    state === "SUBSCRIPTION_STATE_IN_GRACE_PERIOD" ||
-    state === "SUBSCRIPTION_STATE_CANCELED";
   const hasNotExpired = expiresAt !== null && expiresAt.getTime() > now.getTime();
-  const entitled =
-    !options.forceRevoke && Boolean(tier && accessState && hasNotExpired);
+  let status: GooglePlayEntitlement["status"];
+  switch (state) {
+    case "SUBSCRIPTION_STATE_ACTIVE":
+      status = "active";
+      break;
+    case "SUBSCRIPTION_STATE_CANCELED":
+      status = "cancelled";
+      break;
+    case "SUBSCRIPTION_STATE_IN_GRACE_PERIOD":
+      status = "in_grace_period";
+      break;
+    case "SUBSCRIPTION_STATE_PENDING":
+      status = "pending";
+      break;
+    case "SUBSCRIPTION_STATE_ON_HOLD":
+      status = "on_hold";
+      break;
+    case "SUBSCRIPTION_STATE_PAUSED":
+      status = "paused";
+      break;
+    case "SUBSCRIPTION_STATE_EXPIRED":
+    case "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED":
+      status = "expired";
+      break;
+    default:
+      status = "inactive";
+  }
+
+  if (options.forceRevoke) {
+    status = "revoked";
+  } else if (
+    (status === "active" ||
+      status === "cancelled" ||
+      status === "in_grace_period") &&
+    !hasNotExpired
+  ) {
+    status = "expired";
+  }
+
+  const grantsAccess =
+    !options.forceRevoke &&
+    Boolean(
+      tier &&
+        hasNotExpired &&
+        ["active", "cancelled", "in_grace_period"].includes(status),
+    );
+  const rawStartDate = snapshot.startTime;
+  const parsedStartDate =
+    typeof rawStartDate === "string" ? new Date(rawStartDate) : null;
+  const startDate =
+    parsedStartDate && Number.isFinite(parsedStartDate.getTime())
+      ? parsedStartDate
+      : null;
+  const rawTransactionId =
+    lineItem?.latestSuccessfulOrderId ?? snapshot.latestOrderId;
+  const transactionId =
+    typeof rawTransactionId === "string" ? rawTransactionId : null;
+  const rawAutoRenew = lineItem?.autoRenewingPlan?.autoRenewEnabled;
+  const autoRenew = typeof rawAutoRenew === "boolean" ? rawAutoRenew : null;
 
   return {
-    status: entitled ? "active" : "inactive",
-    tier: entitled ? tier! : "free",
+    status,
+    tier: grantsAccess ? tier! : "free",
     productId,
     expiresAt,
+    startDate,
+    transactionId,
+    autoRenew,
+    grantsAccess,
   };
 }

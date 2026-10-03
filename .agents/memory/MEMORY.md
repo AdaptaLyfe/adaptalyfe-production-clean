@@ -3,6 +3,7 @@
 - [Railway build dependencies](railway-build-dependencies.md) — Railway builds must explicitly install dev dependencies before Vite/esbuild runs.
 - [Stripe renewal safety](stripe-renewal-safety.md) — trials require a saved card; staging Stripe credentials and webhook secrets stay test-only.
 - [Cross-platform billing](cross-platform-billing.md) — one active entitlement works everywhere; never offer a second platform purchase.
+- [Apple store verification](apple-store-verification.md) — use signed App Store Server API transaction/status data and V2 notifications; don't restore shared-secret receipt checks.
 - [Concurrent client sessions](concurrent-client-sessions.md) — browser cookies and native bearer sessions are independent credentials for one account.
 - [Validation baseline](validation-baseline.md) — the full TypeScript check has unrelated legacy failures; use focused checks plus the production build for this area.
 - [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.

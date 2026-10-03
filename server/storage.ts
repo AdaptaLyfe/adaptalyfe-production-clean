@@ -1,5 +1,5 @@
 import {
-  users, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
+  users, subscriptionNotificationEvents, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
   budgetCategories, savingsGoals, savingsTransactions, userPreferences,
   mealPlans, shoppingLists, groceryStores, emergencyResources, pharmacies, userPharmacies, medications, refillOrders,
   allergies, medicalConditions, adverseMedications, emergencyContacts, primaryCareProviders, symptomEntries,
@@ -389,6 +389,13 @@ export interface IStorage {
     timeZone?: string | number,
   ): Promise<number>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
+  applySubscriptionNotificationOnce(input: {
+    platform: "app_store" | "google_play";
+    eventId: string;
+    eventType: string;
+    userId: number;
+    subscriptionData: Partial<User>;
+  }): Promise<boolean>;
   authenticateUser(username: string, password: string): Promise<User | null>;
   invalidatePasswordResetTokens(userId: number): Promise<void>;
   createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
@@ -1008,6 +1015,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user || undefined;
+  }
+
+  async applySubscriptionNotificationOnce(input: {
+    platform: "app_store" | "google_play";
+    eventId: string;
+    eventType: string;
+    userId: number;
+    subscriptionData: Partial<User>;
+  }): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      const [event] = await tx
+        .insert(subscriptionNotificationEvents)
+        .values({
+          platform: input.platform,
+          eventId: input.eventId,
+          eventType: input.eventType,
+          userId: input.userId,
+        })
+        .onConflictDoNothing({
+          target: [
+            subscriptionNotificationEvents.platform,
+            subscriptionNotificationEvents.eventId,
+          ],
+        })
+        .returning({ id: subscriptionNotificationEvents.id });
+      if (!event) return false;
+
+      const [updatedUser] = await tx
+        .update(users)
+        .set(input.subscriptionData)
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id });
+      if (!updatedUser) {
+        throw new Error("Subscription notification user no longer exists.");
+      }
+      return true;
+    });
   }
 
   async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {

@@ -105,7 +105,9 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
         )) {
           return _MealPlanningPremiumPrompt(
             currentPlan:
-                subscription?.isActive == true ? subscription?.planType : null,
+                subscription?.grantsAccess == true
+                    ? subscription?.planType
+                    : null,
           );
         }
         return _buildMealShoppingContent(context);

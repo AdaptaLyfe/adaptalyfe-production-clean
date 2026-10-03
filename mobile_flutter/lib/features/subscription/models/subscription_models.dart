@@ -108,10 +108,21 @@ class SubscriptionModel extends Equatable {
 
   bool get isActive => status == 'active';
   bool get isTrialing => status == 'trialing';
+  bool get isCancelled => status == 'cancelled';
+  bool get isInGracePeriod => status == 'in_grace_period';
   bool get isExpired => status == 'expired';
-  bool get grantsAccess => isActive || isTrialing;
+  bool get _hasUnexpiredPeriod =>
+      currentPeriodEnd?.isAfter(DateTime.now()) == true;
+  bool get _isNativeStore =>
+      subscriptionPlatform == 'app_store' ||
+      subscriptionPlatform == 'google_play';
+  bool get grantsAccess =>
+      isActive ||
+      isTrialing ||
+      (isCancelled && _hasUnexpiredPeriod) ||
+      (isInGracePeriod && _isNativeStore && _hasUnexpiredPeriod);
   bool get hasPremiumAccess {
-    if (!isActive && !isTrialing) return false;
+    if (!grantsAccess) return false;
     final tier = planType.toLowerCase();
     return tier == 'premium' || tier == 'family';
   }
@@ -183,12 +194,14 @@ class PurchaseVerification extends Equatable {
     this.message,
     this.planType,
     this.expiresAt,
+    this.status,
   });
 
   final bool success;
   final String? message;
   final String? planType;
   final DateTime? expiresAt;
+  final String? status;
 
   factory PurchaseVerification.fromJson(Map<String, dynamic> json) {
     return PurchaseVerification(
@@ -196,11 +209,12 @@ class PurchaseVerification extends Equatable {
       message: json['message'] as String?,
       planType: (json['planType'] ?? json['plan']) as String?,
       expiresAt: SubscriptionModel._date(json['expiresAt']),
+      status: json['status'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [success, message, planType, expiresAt];
+  List<Object?> get props => [success, message, planType, expiresAt, status];
 }
 
 class StripeSubscriptionSetup extends Equatable {

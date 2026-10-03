@@ -123,7 +123,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         restoreUserId = subscription.id;
       }
       final availability = await purchaseService.initialize();
-      final stripeAvailability = await stripePaymentService.initialize();
+      final stripeAvailability = usesNativeStoreBilling
+          ? null
+          : await stripePaymentService.initialize();
       _products = availability.products;
       _started = true;
       emit(
@@ -137,8 +139,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           },
           storeAvailable: availability.available,
           availabilityMessage: availability.message,
-          stripeAvailable: stripeAvailability.configured,
-          walletAvailable: stripeAvailability.walletAvailable,
+          stripeAvailable: stripeAvailability?.configured ?? false,
+          walletAvailable: stripeAvailability?.walletAvailable ?? false,
           errorMessage: availability.message,
           actionMessage: null,
         ),
@@ -461,6 +463,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     RecoverSubscriptionRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (usesNativeStoreBilling) return;
     if (!_started ||
         _loadInFlight ||
         state.isBusy ||
@@ -608,7 +611,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       if (restoreKeys.contains(_purchaseEventKey(item))) continue;
       if (item.status == PurchaseStatus.pending) {
         emit(state.copyWith(
-          status: SubscriptionStatus.purchasing,
+          status: SubscriptionStatus.ready,
           actionMessage: 'Waiting for the store to finish…',
         ));
         continue;
@@ -709,6 +712,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       return _planFor(purchase.productID) != null &&
           purchase.verificationData.serverVerificationData.trim().isNotEmpty;
     }).toList();
+    var keepRetryable = false;
     emit(
       state.copyWith(
         status: SubscriptionStatus.purchasing,
@@ -755,6 +759,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             );
 
       if (!verification.success) {
+        if (verification.status == 'pending') {
+          keepRetryable = true;
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.ready,
+              busyPlanId: null,
+              errorMessage: null,
+              actionMessage:
+                  'The store is still processing this subscription. '
+                  'Access will update when payment completes.',
+            ),
+          );
+          return;
+        }
         await _completePurchases(verifiablePurchases);
         emit(
           state.copyWith(
@@ -822,9 +840,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
     } finally {
       for (final key in claimedKeys) {
-        // A failed network request remains unacknowledged. A new explicit
-        // restore clears this in-memory dedupe marker and can retry it.
-        _finishPurchaseEvent(key);
+        if (keepRetryable) {
+          _processingPurchaseEventKeys.remove(key);
+        } else {
+          // A failed network request remains unacknowledged. A new explicit
+          // restore clears this in-memory dedupe marker and can retry it.
+          _finishPurchaseEvent(key);
+        }
       }
     }
   }
@@ -832,33 +854,18 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<PurchaseVerification> _verifyAppleRestoredPurchases(
     List<PurchaseDetails> purchases,
   ) async {
-    PurchaseVerification? successfulVerification;
-    String? lastMessage;
-    for (final purchase in purchases) {
-      final plan = _planFor(purchase.productID);
-      if (plan == null) continue;
-      try {
-        final verification = await repository.verifyApplePurchase(
-          receiptData:
-              purchase.verificationData.serverVerificationData,
-          productId: plan.productId,
-          transactionId: purchase.purchaseID,
-        );
-        if (verification.success) {
-          successfulVerification ??= verification;
-        } else {
-          lastMessage = verification.message ?? lastMessage;
-        }
-      } on ApiException catch (error) {
-        if (!_shouldCompleteRejectedPurchase(error.type)) rethrow;
-        lastMessage = error.message;
-      }
+    try {
+      return await repository.restoreApplePurchase(
+        receiptData: purchases.first.verificationData.serverVerificationData,
+        transactionId: purchases.first.purchaseID,
+      );
+    } on ApiException catch (error) {
+      if (!_shouldCompleteRejectedPurchase(error.type)) rethrow;
+      return PurchaseVerification(
+        success: false,
+        message: error.message,
+      );
     }
-    if (successfulVerification != null) return successfulVerification;
-    return PurchaseVerification(
-      success: false,
-      message: lastMessage,
-    );
   }
 
   Future<void> _handlePurchasedItem(
@@ -867,6 +874,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     final key = _claimPurchaseEvent(item);
     if (key == null) return;
+    var keepRetryable = false;
     try {
       final plan = _planFor(item.productID);
       if (plan == null) {
@@ -875,9 +883,24 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       final verification = await _verify(item, plan, emit);
       debugPrint(
         '[Subscription IAP] Verification result: '
-        'productId=${plan.productId}, success=${verification.success}',
+        'productId=${plan.productId}, success=${verification.success}, '
+        'status=${verification.status ?? "unknown"}',
       );
       if (!verification.success) {
+        if (verification.status == 'pending') {
+          keepRetryable = true;
+          emit(
+            state.copyWith(
+              status: SubscriptionStatus.ready,
+              busyPlanId: null,
+              errorMessage: null,
+              actionMessage:
+                  'The store is still processing this subscription. '
+                  'Access will update when payment completes.',
+            ),
+          );
+          return;
+        }
         await purchaseService.complete(item);
         throw ApiException(
           type: ApiErrorType.unknown,
@@ -956,7 +979,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     } finally {
-      _finishPurchaseEvent(key);
+      if (keepRetryable) {
+        _processingPurchaseEventKeys.remove(key);
+      } else {
+        _finishPurchaseEvent(key);
+      }
     }
   }
 

@@ -81,6 +81,69 @@ void main() {
       expect(subscription.hasPremiumAccess, isFalse);
     });
 
+    test('cancelled and grace-period store plans keep access until expiry', () {
+      for (final status in ['cancelled', 'in_grace_period']) {
+        final subscription = SubscriptionModel.fromJson({
+          'id': 12,
+          'planType': 'basic',
+          'status': status,
+          'billingCycle': 'monthly',
+          'subscriptionPlatform': 'google_play',
+          'currentPeriodEnd':
+              DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+        });
+
+        expect(subscription.grantsAccess, isTrue, reason: status);
+        expect(subscription.hasPremiumAccess, isFalse, reason: status);
+      }
+    });
+
+    test('cancelled access ends with the verified period', () {
+      final expiredCancellation = SubscriptionModel.fromJson({
+        'id': 13,
+        'planType': 'premium',
+        'status': 'cancelled',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'app_store',
+        'currentPeriodEnd':
+            DateTime.now().subtract(const Duration(seconds: 1)).toIso8601String(),
+      });
+      final webGrace = SubscriptionModel.fromJson({
+        'id': 14,
+        'planType': 'premium',
+        'status': 'in_grace_period',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'web',
+        'currentPeriodEnd':
+            DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+      });
+      final cancelledWeb = SubscriptionModel.fromJson({
+        'id': 15,
+        'planType': 'premium',
+        'status': 'cancelled',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'web',
+        'currentPeriodEnd':
+            DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+      });
+
+      expect(expiredCancellation.grantsAccess, isFalse);
+      expect(webGrace.grantsAccess, isFalse);
+      expect(cancelledWeb.grantsAccess, isTrue);
+      expect(cancelledWeb.hasPremiumAccess, isTrue);
+    });
+
+    test('pending store verification is not treated as a completed purchase', () {
+      final verification = PurchaseVerification.fromJson({
+        'success': false,
+        'status': 'pending',
+        'message': 'The store is still processing this purchase.',
+      });
+
+      expect(verification.success, isFalse);
+      expect(verification.status, 'pending');
+    });
+
     test('Premium and Family trials include Premium features', () {
       for (final tier in ['premium', 'family']) {
         final subscription = SubscriptionModel.fromJson({
