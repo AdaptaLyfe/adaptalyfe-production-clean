@@ -2997,3 +2997,17 @@ mtime_ms = 1791028231295
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4a5a9a37-aff5-4d85-8320-25f8ab3a5ed6/c5b0c915-c884-477c-8db2-19c9b12a29e2"
 storage_version_token = "1791028235953675"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "NpApa0wXqnCSvhMT68Jhx"
+uri = "file://artifacts/adaptalyfe-subscription-plan-screen.zip"
+type = "unspecified"
+title = "Adaptalyfe subscription screen — changed file"
+description = "ZIP containing only the updated Flutter subscription screen. Active accounts now see the Basic, Premium, and Family plan cards, with purchase buttons disabled to prevent a second subscription."
+logical_id = "2f91db1f-b970-48fd-88f7-a04f991f49d7"
+content_hash = "sha256:a32649ac58f8d0d5648cdb2a2fd8e92d60c95d7ca2fd53c15704299de6de4817"
+size = 5851
+mtime_ms = 1791028736311
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f91db1f-b970-48fd-88f7-a04f991f49d7/f8a61f46-411a-4b5f-8ad8-aebcc10ae099"
+storage_version_token = "1791028740982457"
+content_type = "application/octet-stream"

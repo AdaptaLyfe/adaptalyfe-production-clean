@@ -191,28 +191,27 @@ class _SubscriptionBody extends StatelessWidget {
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
                   ),
-                if (state.hasActiveSubscription)
-                  _ManageCard(state: state)
-                else
-                  ...state.plans.map(
-                    (plan) => Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: _PlanCard(
-                        plan: plan,
-                        product: state.products[plan.productId],
-                        state: state,
-                        selected: state.selectedPlanId == plan.id,
-                        onSelect: () => context
-                            .read<SubscriptionBloc>()
-                            .add(PlanSelected(plan.id)),
-                        onPurchase: () => context
-                            .read<SubscriptionBloc>()
-                            .add(PlanPurchaseRequested(plan.id)),
-                      ),
+                if (state.hasActiveSubscription) _ManageCard(state: state),
+                ...state.plans.map(
+                  (plan) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _PlanCard(
+                      plan: plan,
+                      product: state.products[plan.productId],
+                      state: state,
+                      selected: state.selectedPlanId == plan.id,
+                      onSelect: () => context
+                          .read<SubscriptionBloc>()
+                          .add(PlanSelected(plan.id)),
+                      onPurchase: () => context
+                          .read<SubscriptionBloc>()
+                          .add(PlanPurchaseRequested(plan.id)),
                     ),
                   ),
+                ),
                 const SizedBox(height: 4),
-                if (usesNativeStoreBilling) ...[
+                if (usesNativeStoreBilling &&
+                    !state.hasActiveSubscription) ...[
                   _RestoreCard(
                     enabled: !state.isBusy,
                     onPressed: () {
@@ -268,7 +267,8 @@ class _SubscriptionHeader extends StatelessWidget {
         const SizedBox(height: 7),
         Text(
           active
-              ? 'Your Adaptalyfe access works across your devices.'
+              ? "You're subscribed to the ${_titleCase(subscription!.planType)} "
+                  'Plan. Review the plans below.'
               : 'Unlock the tools that help you build independence every day.',
           style: const TextStyle(color: Color(0xFF4B5563), fontSize: 15),
         ),
@@ -395,6 +395,8 @@ class _PlanCard extends StatelessWidget {
     final storeAvailable =
         usesNativeStoreBilling && product != null && state.canPurchase;
     final selectable = !state.hasActiveSubscription && !state.isBusy;
+    final isCurrentPlan =
+        state.subscription?.planType.toLowerCase() == plan.id;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
     final trialAvailable = state.subscription?.isTrialing == true &&
         (state.subscription?.trialDaysLeft ?? 0) > 0;
@@ -489,7 +491,17 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
           const SizedBox(height: 10),
-          if (storeAvailable)
+          if (state.hasActiveSubscription)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: null,
+                child: Text(
+                  isCurrentPlan ? 'Current Plan' : 'Subscription Already Active',
+                ),
+              ),
+            )
+          else if (storeAvailable)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -508,7 +520,7 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (!storeAvailable)
+          if (!state.hasActiveSubscription && !storeAvailable)
             const Padding(
               padding: EdgeInsets.only(top: 7),
                child: _StoreAvailabilityMessage(),
