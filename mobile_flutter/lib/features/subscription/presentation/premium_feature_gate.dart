@@ -72,6 +72,31 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
             body: const Center(child: CircularProgressIndicator()),
           );
         }
+        if (state.sessionInvalid) {
+          return Scaffold(
+            appBar: AppBar(title: Text(widget.title)),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Your sign-in has expired. Sign in again to verify '
+                      'your subscription.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Sign in again'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
         if (!state.accountStatusLoaded ||
             state.status == SubscriptionStatus.failure) {
           return Scaffold(
@@ -82,16 +107,32 @@ class _PremiumFeatureGateState extends State<PremiumFeatureGate>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'We couldn’t verify your subscription right now.',
+                    Text(
+                      state.errorMessage ??
+                          state.actionMessage ??
+                          'We couldn’t verify your subscription right now.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed: _refreshSubscription,
+                      onPressed: state.isBusy ? null : _refreshSubscription,
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
+                    if (state.storeAvailable)
+                      OutlinedButton.icon(
+                        onPressed: state.isBusy
+                            ? null
+                            : () => context
+                                .read<SubscriptionBloc>()
+                                .add(const RestorePurchasesRequested()),
+                        icon: const Icon(Icons.restore_rounded),
+                        label: Text(
+                          state.status == SubscriptionStatus.restoring
+                              ? 'Restoring purchases…'
+                              : 'Restore purchases',
+                        ),
+                      ),
                     TextButton(
                       onPressed: () => context.go('/subscription'),
                       child: const Text('Open subscription options'),

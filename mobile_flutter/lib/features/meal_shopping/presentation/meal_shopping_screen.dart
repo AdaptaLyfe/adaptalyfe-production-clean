@@ -71,6 +71,31 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
             body: Center(child: CircularProgressIndicator()),
           );
         }
+        if (!isAdmin && subscriptionState.sessionInvalid) {
+          return Scaffold(
+            appBar: const _MealShoppingAppBar(),
+            body: Center(
+              child: Padding(
+                padding: AppResponsive.pagePadding(context),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Your sign-in has expired. Sign in again to verify '
+                      'your subscription.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Sign in again'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
         if (!isAdmin &&
             (!subscriptionState.accountStatusLoaded ||
                 subscriptionState.status == SubscriptionStatus.failure)) {
@@ -82,18 +107,37 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'We couldn’t verify your subscription right now.',
+                    Text(
+                      subscriptionState.errorMessage ??
+                          subscriptionState.actionMessage ??
+                          'We couldn’t verify your subscription right now.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed: () => context
-                          .read<SubscriptionBloc>()
-                          .add(const RefreshSubscription()),
+                      onPressed: subscriptionState.isBusy
+                          ? null
+                          : () => context
+                              .read<SubscriptionBloc>()
+                              .add(const RefreshSubscription()),
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
                     ),
+                    if (subscriptionState.storeAvailable)
+                      OutlinedButton.icon(
+                        onPressed: subscriptionState.isBusy
+                            ? null
+                            : () => context
+                                .read<SubscriptionBloc>()
+                                .add(const RestorePurchasesRequested()),
+                        icon: const Icon(Icons.restore_rounded),
+                        label: Text(
+                          subscriptionState.status ==
+                                  SubscriptionStatus.restoring
+                              ? 'Restoring purchases…'
+                              : 'Restore purchases',
+                        ),
+                      ),
                     TextButton(
                       onPressed: () => context.go('/subscription'),
                       child: const Text('Open subscription options'),

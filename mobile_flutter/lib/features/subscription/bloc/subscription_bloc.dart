@@ -153,6 +153,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
     } on ApiException catch (error) {
       final unauthorized = error.type == ApiErrorType.unauthorized;
+      if (kDebugMode) {
+        debugPrint(
+          '[Subscription] entitlement lookup failed: '
+          'type=${error.type.name} '
+          'status=${error.statusCode ?? 'none'}',
+        );
+      }
       final recoveryAvailability =
           unauthorized ? null : await _prepareNativeStoreForRecovery();
       if (!unauthorized) _started = true;
@@ -167,7 +174,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
                 },
           storeAvailable: recoveryAvailability?.available,
           availabilityMessage: recoveryAvailability?.message,
-          errorMessage: unauthorized ? null : _messageFor(error),
+          errorMessage:
+              unauthorized ? null : _messageForEntitlementLookup(error),
           sessionInvalid: unauthorized,
         ),
       );
@@ -1156,6 +1164,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           : 'Payment could not be completed. Please try again.';
     }
     return 'Unable to complete this subscription action. Please try again.';
+  }
+
+  String _messageForEntitlementLookup(ApiException error) {
+    if (error.type == ApiErrorType.network) {
+      return 'Check your connection, then check your subscription again.';
+    }
+    if (error.type == ApiErrorType.timeout) {
+      return 'Subscription verification timed out. Please try again.';
+    }
+    if (error.statusCode == 503) {
+      return 'The store could not confirm your subscription. Restore purchases '
+          'or try again in a moment.';
+    }
+    return 'We could not verify your subscription. Try again or restore '
+        'purchases from the store.';
   }
 
   bool _isNoSubscriptionError(Object? data) =>
