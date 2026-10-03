@@ -5,7 +5,7 @@ import 'package:adaptalyfe_mobile/features/subscription/models/subscription_mode
 
 void main() {
   group('subscription product and entitlement models', () {
-    test('keeps the existing store product IDs and monthly prices', () {
+    test('centralizes the existing monthly product IDs per platform', () {
       expect(
         subscriptionPlans.map((plan) => plan.productId).toList(),
         [
@@ -14,16 +14,23 @@ void main() {
           'adaptalyfe_family_monthly',
         ],
       );
+      expect(SubscriptionProducts.android, SubscriptionProducts.ios);
       expect(
-        subscriptionPlans.map((plan) => plan.monthlyPrice).toList(),
-        [4.99, 12.99, 24.99],
+        SubscriptionProducts.forPlatform('android'),
+        SubscriptionProducts.android,
       );
-      expect(subscriptionPlans.first.features, contains('7-day free trial'));
       expect(
-        subscriptionPlans.skip(1).every(
-              (plan) => !plan.features.contains('7-day free trial'),
-            ),
-        isTrue,
+        SubscriptionProducts.forPlatform('ios'),
+        SubscriptionProducts.ios,
+      );
+      expect(SubscriptionProducts.forPlatform('web'), isEmpty);
+      expect(
+        subscriptionPlans.any(
+          (plan) => plan.features.any(
+            (feature) => feature.contains('free trial'),
+          ),
+        ),
+        isFalse,
       );
     });
 
@@ -142,6 +149,21 @@ void main() {
       expect(subscription.grantsAccess, isFalse);
       expect(subscription.hasPlanEntitlement, isFalse);
       expect(subscription.hasPremiumAccess, isFalse);
+      expect(subscription.hasApplicationAccess, isFalse);
+    });
+
+    test('active organization membership grants app and feature access', () {
+      const expiredPlan = SubscriptionModel(
+        id: 14,
+        planType: 'free',
+        status: 'expired',
+        billingCycle: 'monthly',
+        features: {'mealPlanning': false},
+      );
+      final organizationMember = expiredPlan.withOrganizationAccess(true);
+
+      expect(organizationMember.hasApplicationAccess, isTrue);
+      expect(organizationMember.hasFeatureAccess('mealPlanning'), isTrue);
     });
 
     test('Premium and Family trials include Premium features', () {
