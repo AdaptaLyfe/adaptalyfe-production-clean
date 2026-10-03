@@ -6,12 +6,7 @@ class SubscriptionRepository {
 
   final SubscriptionApi api;
 
-  Future<SubscriptionModel> getSubscription() async {
-    final subscription = await api.getSubscription();
-    final hasOrganizationAccess =
-        await api.hasActiveOrganizationMembership();
-    return subscription.withOrganizationAccess(hasOrganizationAccess);
-  }
+  Future<SubscriptionModel> getSubscription() => api.getSubscription();
 
   Future<PurchaseVerification> verifyApplePurchase({
     required String receiptData,
@@ -35,10 +30,27 @@ class SubscriptionRepository {
         orderId: orderId,
       );
 
+  Future<PurchaseVerification> restoreApplePurchase(String receiptData) =>
+      api.restoreApplePurchase(receiptData: receiptData);
+
   Future<PurchaseVerification> restoreGooglePurchases(
     List<Map<String, dynamic>> purchases,
   ) =>
       api.restoreGooglePurchases(purchases);
+
+  Future<StripeSubscriptionSetup> createStripeSubscription({
+    required String planType,
+    required String billingCycle,
+  }) =>
+      api.createStripeSubscription(
+        planType: planType,
+        billingCycle: billingCycle,
+      );
+
+  Future<PurchaseVerification> confirmStripeSubscription(
+    String subscriptionId,
+  ) =>
+      api.confirmStripeSubscription(subscriptionId);
 
   Future<void> recoverStripeSubscription() =>
       api.recoverStripeSubscription();

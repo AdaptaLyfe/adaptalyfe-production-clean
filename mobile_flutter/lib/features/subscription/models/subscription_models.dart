@@ -1,44 +1,19 @@
 import 'package:equatable/equatable.dart';
 
-class SubscriptionProducts {
-  static const basicMonthly = 'adaptalyfe_basic_monthly';
-  static const premiumMonthly = 'adaptalyfe_premium_monthly';
-  static const familyMonthly = 'adaptalyfe_family_monthly';
-
-  static const android = <String>{
-    basicMonthly,
-    premiumMonthly,
-    familyMonthly,
-  };
-  static const ios = <String>{
-    basicMonthly,
-    premiumMonthly,
-    familyMonthly,
-  };
-
-  static Set<String> forPlatform(String platform) {
-    return switch (platform) {
-      'android' => android,
-      'ios' => ios,
-      _ => const <String>{},
-    };
-  }
-
-  const SubscriptionProducts._();
-}
-
 const subscriptionPlans = <SubscriptionPlan>[
   SubscriptionPlan(
     id: 'basic',
     name: 'Basic Plan',
     description: 'Essential features for daily independence',
-    productId: SubscriptionProducts.basicMonthly,
+    monthlyPrice: 4.99,
+    productId: 'adaptalyfe_basic_monthly',
     features: [
       'Daily task management (up to 50 tasks)',
       'Basic mood tracking',
       'Financial tracking & bill reminders',
       '1 caregiver connection',
       'Basic reminders & notifications',
+      '7-day free trial',
       'Email support',
     ],
   ),
@@ -46,7 +21,8 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'premium',
     name: 'Premium Plan',
     description: 'Advanced features for enhanced independence',
-    productId: SubscriptionProducts.premiumMonthly,
+    monthlyPrice: 12.99,
+    productId: 'adaptalyfe_premium_monthly',
     popular: true,
     features: [
       'Everything in Basic',
@@ -65,7 +41,8 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'family',
     name: 'Family Plan',
     description: 'Complete solution for families and care teams',
-    productId: SubscriptionProducts.familyMonthly,
+    monthlyPrice: 24.99,
+    productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
       'Up to 5 additional member accounts',
@@ -83,6 +60,7 @@ class SubscriptionPlan extends Equatable {
     required this.id,
     required this.name,
     required this.description,
+    required this.monthlyPrice,
     required this.productId,
     required this.features,
     this.popular = false,
@@ -91,13 +69,14 @@ class SubscriptionPlan extends Equatable {
   final String id;
   final String name;
   final String description;
+  final double monthlyPrice;
   final String productId;
   final List<String> features;
   final bool popular;
 
   @override
   List<Object?> get props =>
-      [id, name, description, productId, features, popular];
+      [id, name, description, monthlyPrice, productId, features, popular];
 }
 
 class SubscriptionModel extends Equatable {
@@ -110,7 +89,6 @@ class SubscriptionModel extends Equatable {
     this.currentPeriodStart,
     this.currentPeriodEnd,
     this.trialDaysLeft,
-    this.hasOrganizationAccess = false,
     this.usageStats = const {},
     this.features = const {},
   });
@@ -123,7 +101,6 @@ class SubscriptionModel extends Equatable {
   final DateTime? currentPeriodStart;
   final DateTime? currentPeriodEnd;
   final int? trialDaysLeft;
-  final bool hasOrganizationAccess;
   final Map<String, dynamic> usageStats;
   final Map<String, dynamic> features;
 
@@ -140,30 +117,10 @@ class SubscriptionModel extends Equatable {
   bool get hasPremiumAccess =>
       isActive || (isTrialing && (trialDaysLeft ?? 0) > 0);
 
-  bool get hasApplicationAccess =>
-      hasOrganizationAccess || hasPremiumAccess;
-
   /// Feature-specific routes must also honor the backend's verified feature
   /// flags, just like the wrapper's `hasFeature` checks.
   bool hasFeatureAccess(String featureKey) =>
-      hasOrganizationAccess ||
-      (hasPremiumAccess && features[featureKey] == true);
-
-  SubscriptionModel withOrganizationAccess(bool value) {
-    return SubscriptionModel(
-      id: id,
-      planType: planType,
-      status: status,
-      billingCycle: billingCycle,
-      subscriptionPlatform: subscriptionPlatform,
-      currentPeriodStart: currentPeriodStart,
-      currentPeriodEnd: currentPeriodEnd,
-      trialDaysLeft: trialDaysLeft,
-      hasOrganizationAccess: value,
-      usageStats: usageStats,
-      features: features,
-    );
-  }
+      hasPremiumAccess && features[featureKey] == true;
 
   String get platformLabel {
     switch (subscriptionPlatform) {
@@ -190,7 +147,6 @@ class SubscriptionModel extends Equatable {
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
-      hasOrganizationAccess: json['hasOrganizationAccess'] == true,
       usageStats: _map(json['usageStats']),
       features: _map(json['features']),
     );
@@ -222,7 +178,6 @@ class SubscriptionModel extends Equatable {
         currentPeriodStart,
         currentPeriodEnd,
         trialDaysLeft,
-        hasOrganizationAccess,
         usageStats,
         features,
       ];
@@ -252,4 +207,35 @@ class PurchaseVerification extends Equatable {
 
   @override
   List<Object?> get props => [success, message, planType, expiresAt];
+}
+
+class StripeSubscriptionSetup extends Equatable {
+  const StripeSubscriptionSetup({
+    required this.subscriptionId,
+    required this.clientSecret,
+    required this.intentType,
+    this.requiresPayment = true,
+  });
+
+  final String subscriptionId;
+  final String? clientSecret;
+  final String? intentType;
+  final bool requiresPayment;
+
+  factory StripeSubscriptionSetup.fromJson(Map<String, dynamic> json) {
+    return StripeSubscriptionSetup(
+      subscriptionId: '${json['subscriptionId'] ?? ''}',
+      clientSecret: json['clientSecret'] as String?,
+      intentType: json['intentType'] as String?,
+      requiresPayment: json['requiresPayment'] != false,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        subscriptionId,
+        clientSecret,
+        intentType,
+        requiresPayment,
+      ];
 }

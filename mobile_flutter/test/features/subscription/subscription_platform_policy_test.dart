@@ -29,6 +29,7 @@ void main() {
     const state = SubscriptionState(status: SubscriptionStatus.recovering);
     expect(state.isBusy, isTrue);
     expect(state.canPurchase, isFalse);
+    expect(state.canUseStripe, isFalse);
   });
 
   test('verified trialing subscriptions retain access without another checkout', () {
@@ -43,11 +44,13 @@ void main() {
       accountStatusLoaded: true,
       subscription: trialing,
       storeAvailable: true,
+      stripeAvailable: true,
     );
 
     expect(trialing.grantsAccess, isTrue);
     expect(state.hasActiveSubscription, isTrue);
     expect(state.canPurchase, isFalse);
+    expect(state.canUseStripe, isFalse);
   });
 
   test('does not offer checkout until the server subscription status is known',
@@ -55,15 +58,19 @@ void main() {
     const unknown = SubscriptionState(
       status: SubscriptionStatus.ready,
       storeAvailable: true,
+      stripeAvailable: true,
     );
     expect(unknown.hasActiveSubscription, isFalse);
     expect(unknown.canPurchase, isFalse);
+    expect(unknown.canUseStripe, isFalse);
 
     final verifiedFreeAccount = unknown.copyWith(accountStatusLoaded: true);
     expect(verifiedFreeAccount.canPurchase, isTrue);
+    expect(verifiedFreeAccount.canUseStripe, isTrue);
 
     final expiredSession = verifiedFreeAccount.copyWith(sessionInvalid: true);
     expect(expiredSession.canPurchase, isFalse);
+    expect(expiredSession.canUseStripe, isFalse);
   });
 
   test('dashboard navigation signal can be cleared after routing', () {

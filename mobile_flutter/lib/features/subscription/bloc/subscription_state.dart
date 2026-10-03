@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../models/subscription_models.dart';
 
@@ -11,6 +10,8 @@ enum SubscriptionStatus {
   restoring,
   recovering,
   cancelled,
+  notAvailable,
+  configurationError,
   failure,
 }
 
@@ -20,7 +21,7 @@ class SubscriptionState extends Equatable {
     this.accountStatusLoaded = false,
     this.plans = subscriptionPlans,
     this.subscription,
-    this.products = const <String, ProductDetails>{},
+    this.products = const {},
     this.errorMessage,
     this.actionMessage,
     this.sessionInvalid = false,
@@ -29,6 +30,8 @@ class SubscriptionState extends Equatable {
     this.busyPlanId,
     this.selectedPlanId,
     this.managementUrl,
+    this.stripeAvailable = false,
+    this.walletAvailable = false,
     this.shouldNavigateToDashboard = false,
     this.shouldRefreshAuthentication = false,
   });
@@ -37,7 +40,7 @@ class SubscriptionState extends Equatable {
   final bool accountStatusLoaded;
   final List<SubscriptionPlan> plans;
   final SubscriptionModel? subscription;
-  final Map<String, ProductDetails> products;
+  final Map<String, dynamic> products;
   final String? errorMessage;
   final String? actionMessage;
   final bool sessionInvalid;
@@ -46,6 +49,8 @@ class SubscriptionState extends Equatable {
   final String? busyPlanId;
   final String? selectedPlanId;
   final String? managementUrl;
+  final bool stripeAvailable;
+  final bool walletAvailable;
   final bool shouldNavigateToDashboard;
   final bool shouldRefreshAuthentication;
 
@@ -65,12 +70,20 @@ class SubscriptionState extends Equatable {
       storeAvailable &&
       !hasActiveSubscription &&
       !isBusy;
+  bool get canUseStripe =>
+      accountStatusLoaded &&
+      !isLoading &&
+      !sessionInvalid &&
+      stripeAvailable &&
+      !hasActiveSubscription &&
+      !isBusy;
+
   SubscriptionState copyWith({
     SubscriptionStatus? status,
     bool? accountStatusLoaded,
     List<SubscriptionPlan>? plans,
     Object? subscription = _notSet,
-    Map<String, ProductDetails>? products,
+    Map<String, dynamic>? products,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
     bool? sessionInvalid,
@@ -79,6 +92,8 @@ class SubscriptionState extends Equatable {
     Object? busyPlanId = _notSet,
     Object? selectedPlanId = _notSet,
     Object? managementUrl = _notSet,
+    bool? stripeAvailable,
+    bool? walletAvailable,
     bool? shouldNavigateToDashboard,
     bool? shouldRefreshAuthentication,
   }) {
@@ -110,6 +125,8 @@ class SubscriptionState extends Equatable {
       managementUrl: identical(managementUrl, _notSet)
           ? this.managementUrl
           : managementUrl as String?,
+      stripeAvailable: stripeAvailable ?? this.stripeAvailable,
+      walletAvailable: walletAvailable ?? this.walletAvailable,
       shouldNavigateToDashboard:
           shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
       shouldRefreshAuthentication:
@@ -132,6 +149,8 @@ class SubscriptionState extends Equatable {
         busyPlanId,
         selectedPlanId,
         managementUrl,
+        stripeAvailable,
+        walletAvailable,
         shouldNavigateToDashboard,
         shouldRefreshAuthentication,
       ];

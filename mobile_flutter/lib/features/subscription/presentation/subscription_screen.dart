@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
@@ -12,6 +11,7 @@ import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
+import '../data/stripe_payment_service.dart';
 import '../data/subscription_platform_policy.dart';
 import '../models/subscription_models.dart';
 
@@ -535,7 +535,7 @@ class _PlanCard extends StatelessWidget {
   });
 
   final SubscriptionPlan plan;
-  final ProductDetails? product;
+  final dynamic product;
   final SubscriptionState state;
   final bool selected;
   final VoidCallback onSelect;
@@ -546,24 +546,27 @@ class _PlanCard extends StatelessWidget {
     final hasStoreProduct = usesNativeStoreBilling &&
         product != null &&
         state.storeAvailable;
+    final stripeConfigured = !usesNativeStoreBilling && state.stripeAvailable;
     final selectable = state.accountStatusLoaded &&
         !state.isLoading &&
         !state.sessionInvalid &&
         !state.hasActiveSubscription &&
         !state.isBusy;
-    final price = product?.price.trim();
-    final storeTitle = product?.title.trim();
-    final storeDescription = product?.description.trim();
-    final displayTitle =
-        storeTitle?.isNotEmpty == true ? storeTitle! : plan.name;
-    final displayDescription = storeDescription?.isNotEmpty == true
-        ? storeDescription!
-        : plan.description;
-    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
-        ? 'Continue with Google Play'
-        : defaultTargetPlatform == TargetPlatform.iOS
-            ? 'Continue with App Store'
-            : 'Continue in store';
+    final storePrice = product?.price;
+    final price = storePrice is String && storePrice.trim().isNotEmpty
+        ? storePrice
+        : usesNativeStoreBilling
+            ? null
+            : '\$${plan.monthlyPrice.toStringAsFixed(2)}';
+    final trialAvailable = state.subscription?.isTrialing == true &&
+        (state.subscription?.trialDaysLeft ?? 0) > 0;
+    final storeButtonLabel = trialAvailable
+        ? 'Start Free Trial'
+        : defaultTargetPlatform == TargetPlatform.android
+            ? 'Subscribe via Google Play'
+            : defaultTargetPlatform == TargetPlatform.iOS
+                ? 'Subscribe via App Store'
+                : 'Subscribe through store';
     return Semantics(
       selected: selected,
       child: GestureDetector(
@@ -583,7 +586,7 @@ class _PlanCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      displayTitle,
+                      plan.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -614,14 +617,12 @@ class _PlanCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                displayDescription,
+                plan.description,
                 style: const TextStyle(color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 12),
               Text(
-                price == null || price.isEmpty
-                    ? 'Store price unavailable'
-                    : '$price / month',
+                price == null ? 'Store price unavailable' : '$price / month',
                 style: const TextStyle(
                   color: Color(0xFF111827),
                   fontSize: 22,
@@ -655,6 +656,25 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              if (stripeConfigured)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: selectable && state.canUseStripe
+                        ? () => _chooseStripePayment(context)
+                        : null,
+                    icon: const Icon(Icons.account_balance_wallet_outlined),
+                    label: Text(
+                      state.busyPlanId == plan.id
+                          ? 'Processing…'
+                          : trialAvailable
+                              ? 'Start Free Trial'
+                              : 'Pay by card or wallet',
+                    ),
+                  ),
+                ),
+              if (stripeConfigured && hasStoreProduct)
+                const SizedBox(height: 8),
               if (hasStoreProduct)
                 SizedBox(
                   width: double.infinity,
@@ -674,13 +694,93 @@ class _PlanCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (!hasStoreProduct)
+              if (!stripeConfigured && !hasStoreProduct)
                 const Padding(
                   padding: EdgeInsets.only(top: 7),
                   child: _StoreAvailabilityMessage(),
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _chooseStripePayment(BuildContext context) async {
+    onSelect();
+    final method = await showModalBottomSheet<StripePaymentMethod>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => _PaymentMethodPicker(
+        walletAvailable: state.walletAvailable,
+      ),
+    );
+    if (!context.mounted || method == null) return;
+
+    FirebaseAnalyticsService.instance.logSubscriptionEvent(
+      'upgrade',
+      '${plan.id}_${method.name}',
+    );
+    context.read<SubscriptionBloc>().add(
+          StripePaymentRequested(plan.id, method),
+        );
+  }
+}
+
+class _PaymentMethodPicker extends StatelessWidget {
+  const _PaymentMethodPicker({required this.walletAvailable});
+
+  final bool walletAvailable;
+
+  @override
+  Widget build(BuildContext context) {
+    final walletMethod = defaultTargetPlatform == TargetPlatform.android
+        ? StripePaymentMethod.googlePay
+        : defaultTargetPlatform == TargetPlatform.iOS
+            ? StripePaymentMethod.applePay
+            : null;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Payment method',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Choose how you want to complete this subscription.',
+              style: TextStyle(color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.credit_card_rounded),
+              title: const Text('Credit/Debit Card'),
+              onTap: () => Navigator.of(context).pop(StripePaymentMethod.card),
+            ),
+            if (walletAvailable && walletMethod != null)
+              ListTile(
+                leading: Icon(
+                  walletMethod == StripePaymentMethod.googlePay
+                      ? Icons.account_balance_wallet_rounded
+                      : Icons.apple,
+                ),
+                title: Text(
+                  walletMethod == StripePaymentMethod.googlePay
+                      ? 'Google Pay'
+                      : 'Apple Pay',
+                ),
+                onTap: () => Navigator.of(context).pop(walletMethod),
+              ),
+          ],
         ),
       ),
     );

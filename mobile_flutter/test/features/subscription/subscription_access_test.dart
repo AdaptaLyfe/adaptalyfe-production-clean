@@ -21,13 +21,6 @@ void main() {
       );
 
       expect(
-        canAccessApplication(
-          authState: subscriber,
-          subscription: basic,
-        ),
-        isTrue,
-      );
-      expect(
         canAccessPremiumFeatures(
           authState: subscriber,
           subscription: basic,
@@ -93,13 +86,6 @@ void main() {
       );
 
       expect(
-        canAccessApplication(
-          authState: subscriber,
-          subscription: currentTrial,
-        ),
-        isTrue,
-      );
-      expect(
         canAccessPremiumFeatures(
           authState: subscriber,
           subscription: currentTrial,
@@ -113,13 +99,6 @@ void main() {
           featureKey: 'mealPlanning',
         ),
         isTrue,
-      );
-      expect(
-        canAccessApplication(
-          authState: subscriber,
-          subscription: endedTrial,
-        ),
-        isFalse,
       );
       expect(
         canAccessPremiumFeatures(
@@ -152,52 +131,11 @@ void main() {
         isTrue,
       );
       expect(
-        canAccessApplication(
-          authState: admin,
-          subscription: null,
-        ),
-        isTrue,
-      );
-      expect(
-        canAccessApplication(
-          authState: const Unauthenticated(),
-          subscription: null,
-        ),
-        isFalse,
-      );
-      expect(
         canAccessPremiumFeatures(
           authState: const Unauthenticated(),
           subscription: null,
         ),
         isFalse,
-      );
-    });
-
-    test('active organization members bypass paid feature restrictions', () {
-      const member = SubscriptionModel(
-        id: 6,
-        planType: 'free',
-        status: 'expired',
-        billingCycle: 'monthly',
-        hasOrganizationAccess: true,
-        features: {'mealPlanning': false},
-      );
-
-      expect(
-        canAccessApplication(
-          authState: subscriber,
-          subscription: member,
-        ),
-        isTrue,
-      );
-      expect(
-        canAccessPremiumFeatures(
-          authState: subscriber,
-          subscription: member,
-          featureKey: 'mealPlanning',
-        ),
-        isTrue,
       );
     });
   });
