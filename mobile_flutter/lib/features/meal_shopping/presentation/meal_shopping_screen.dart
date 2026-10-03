@@ -11,7 +11,6 @@ import '../../auth/bloc/auth_event.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_event.dart';
 import '../../subscription/bloc/subscription_state.dart';
-import '../../subscription/data/subscription_platform_policy.dart';
 import '../../subscription/models/subscription_models.dart';
 import '../../subscription/subscription_access.dart';
 import '../bloc/meal_shopping_bloc.dart';
@@ -72,7 +71,8 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (!isAdmin && subscriptionState.sessionInvalid) {
+        if (!isAdmin &&
+            subscriptionState.status == SubscriptionStatus.failure) {
           return Scaffold(
             appBar: const _MealShoppingAppBar(),
             body: Center(
@@ -82,66 +82,16 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Your sign-in has expired. Sign in again to verify '
-                      'your subscription.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () => context.go('/login'),
-                      child: const Text('Sign in again'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-        if (!isAdmin &&
-            (!subscriptionState.accountStatusLoaded ||
-                subscriptionState.status == SubscriptionStatus.failure)) {
-          return Scaffold(
-            appBar: const _MealShoppingAppBar(),
-            body: Center(
-              child: Padding(
-                padding: AppResponsive.pagePadding(context),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      subscriptionState.errorMessage ??
-                          subscriptionState.actionMessage ??
-                          'We couldn’t verify your subscription right now.',
+                      'We couldn’t verify your subscription right now.',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed: subscriptionState.isBusy
-                          ? null
-                          : () => context
-                              .read<SubscriptionBloc>()
-                              .add(const RefreshSubscription()),
+                      onPressed: () => context
+                          .read<SubscriptionBloc>()
+                          .add(const RefreshSubscription()),
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Check again'),
-                    ),
-                    if (usesNativeStoreBilling)
-                      OutlinedButton.icon(
-                        onPressed: subscriptionState.isBusy
-                            ? null
-                            : () => context
-                                .read<SubscriptionBloc>()
-                                .add(const RestorePurchasesRequested()),
-                        icon: const Icon(Icons.restore_rounded),
-                        label: Text(
-                          subscriptionState.status ==
-                                  SubscriptionStatus.restoring
-                              ? 'Restoring purchases…'
-                              : 'Restore purchases',
-                        ),
-                      ),
-                    TextButton(
-                      onPressed: () => context.go('/subscription'),
-                      child: const Text('Open subscription options'),
                     ),
                   ],
                 ),
@@ -152,7 +102,6 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
         if (!canAccessPremiumFeatures(
           authState: authState,
           subscription: subscription,
-          featureKey: 'mealPlanning',
         )) {
           return _MealPlanningPremiumPrompt(
             currentPlan:

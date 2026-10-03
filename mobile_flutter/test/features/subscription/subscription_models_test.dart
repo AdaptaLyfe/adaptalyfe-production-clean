@@ -1,11 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:adaptalyfe_mobile/features/subscription/bloc/subscription_state.dart';
 import 'package:adaptalyfe_mobile/features/subscription/models/subscription_models.dart';
 
 void main() {
   group('subscription product and entitlement models', () {
-    test('centralizes the existing monthly product IDs per platform', () {
+    test('keeps the existing store product IDs and monthly prices', () {
       expect(
         subscriptionPlans.map((plan) => plan.productId).toList(),
         [
@@ -14,23 +13,9 @@ void main() {
           'adaptalyfe_family_monthly',
         ],
       );
-      expect(SubscriptionProducts.android, SubscriptionProducts.ios);
       expect(
-        SubscriptionProducts.forPlatform('android'),
-        SubscriptionProducts.android,
-      );
-      expect(
-        SubscriptionProducts.forPlatform('ios'),
-        SubscriptionProducts.ios,
-      );
-      expect(SubscriptionProducts.forPlatform('web'), isEmpty);
-      expect(
-        subscriptionPlans.any(
-          (plan) => plan.features.any(
-            (feature) => feature.contains('free trial'),
-          ),
-        ),
-        isFalse,
+        subscriptionPlans.map((plan) => plan.monthlyPrice).toList(),
+        [4.99, 12.99, 24.99],
       );
     });
 
@@ -71,99 +56,29 @@ void main() {
       expect(restored.planType, 'premium');
     });
 
-    test('active Basic access follows wrapper status while features stay gated',
-        () {
+    test('Basic is active but does not include Premium features', () {
       final subscription = SubscriptionModel.fromJson({
         'id': 10,
         'planType': 'basic',
         'status': 'active',
         'billingCycle': 'monthly',
         'subscriptionPlatform': 'google_play',
-        'features': {'mealPlanning': false},
       });
 
       expect(subscription.grantsAccess, isTrue);
-      expect(subscription.hasPlanEntitlement, isTrue);
-      expect(subscription.hasPremiumAccess, isTrue);
-      expect(subscription.hasFeatureAccess('mealPlanning'), isFalse);
+      expect(subscription.hasPremiumAccess, isFalse);
     });
 
-    test('valid Basic trial grants generic access but respects feature flags',
-        () {
+    test('Basic trial grants Basic access without Premium features', () {
       final subscription = SubscriptionModel.fromJson({
         'id': 10,
         'planType': 'basic',
         'status': 'trialing',
         'billingCycle': 'monthly',
-        'trialDaysLeft': 4,
-        'features': {
-          'wearableDevices': true,
-          'mealPlanning': false,
-        },
       });
 
       expect(subscription.grantsAccess, isTrue);
-      expect(subscription.hasPlanEntitlement, isTrue);
-      expect(subscription.hasPremiumAccess, isTrue);
-      expect(subscription.hasFeatureAccess('mealPlanning'), isFalse);
-    });
-
-    test('free account trial allows plan purchase and uses server feature flags',
-        () {
-      final subscription = SubscriptionModel.fromJson({
-        'id': 12,
-        'planType': 'free',
-        'status': 'trialing',
-        'billingCycle': 'monthly',
-        'trialDaysLeft': 4,
-        'features': {
-          'taskManagement': true,
-          'wearableDevices': true,
-          'mealPlanning': true,
-          'advancedAnalytics': true,
-        },
-      });
-      final state = SubscriptionState(
-        status: SubscriptionStatus.ready,
-        accountStatusLoaded: true,
-        subscription: subscription,
-        storeAvailable: true,
-      );
-
-      expect(subscription.grantsAccess, isTrue);
-      expect(subscription.hasPlanEntitlement, isFalse);
-      expect(subscription.hasPremiumAccess, isTrue);
-      expect(state.hasActiveSubscription, isFalse);
-      expect(state.canPurchase, isTrue);
-    });
-
-    test('expired free trial does not retain stale server feature access', () {
-      final subscription = SubscriptionModel.fromJson({
-        'id': 13,
-        'planType': 'free',
-        'status': 'expired',
-        'billingCycle': 'monthly',
-        'features': {'wearableDevices': true},
-      });
-
-      expect(subscription.grantsAccess, isFalse);
-      expect(subscription.hasPlanEntitlement, isFalse);
       expect(subscription.hasPremiumAccess, isFalse);
-      expect(subscription.hasApplicationAccess, isFalse);
-    });
-
-    test('active organization membership grants app and feature access', () {
-      const expiredPlan = SubscriptionModel(
-        id: 14,
-        planType: 'free',
-        status: 'expired',
-        billingCycle: 'monthly',
-        features: {'mealPlanning': false},
-      );
-      final organizationMember = expiredPlan.withOrganizationAccess(true);
-
-      expect(organizationMember.hasApplicationAccess, isTrue);
-      expect(organizationMember.hasFeatureAccess('mealPlanning'), isTrue);
     });
 
     test('Premium and Family trials include Premium features', () {
@@ -173,7 +88,6 @@ void main() {
           'planType': tier,
           'status': 'trialing',
           'billingCycle': 'monthly',
-          'trialDaysLeft': 4,
         });
 
         expect(subscription.hasPremiumAccess, isTrue, reason: tier);

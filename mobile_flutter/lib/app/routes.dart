@@ -100,9 +100,9 @@ import '../features/splash/presentation/splash_screen.dart';
 import '../features/subscription/bloc/subscription_bloc.dart';
 import '../features/subscription/bloc/subscription_event.dart';
 import '../features/subscription/data/purchase_service.dart';
+import '../features/subscription/data/stripe_payment_service.dart';
 import '../features/subscription/data/subscription_api.dart';
 import '../features/subscription/data/subscription_repository.dart';
-import '../features/subscription/presentation/subscription_route_guard.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
 import 'app_route_observer.dart';
 import 'app_navigation.dart';
@@ -220,13 +220,11 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => SubscriptionBloc(
             _createSubscriptionRepository(),
             PurchaseService(),
+            StripePaymentService(),
           )..add(const SubscriptionStarted()),
-          child: SubscriptionRouteGuard(
+          child: AppNavigationShell(
             location: state.uri.path,
-            child: AppNavigationShell(
-              location: state.uri.path,
-              child: child,
-            ),
+            child: child,
           ),
         ),
         routes: [

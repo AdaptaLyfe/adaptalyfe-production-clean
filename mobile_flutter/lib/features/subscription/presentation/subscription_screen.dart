@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
@@ -12,6 +11,7 @@ import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
+import '../data/stripe_payment_service.dart';
 import '../data/subscription_platform_policy.dart';
 import '../models/subscription_models.dart';
 
@@ -149,25 +149,16 @@ class _SubscriptionBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SubscriptionBloc, SubscriptionState>(
       builder: (context, state) {
-        if (state.isLoading && !state.accountStatusLoaded) {
+        if (state.isLoading && state.subscription == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (!state.accountStatusLoaded) {
-          final bloc = context.read<SubscriptionBloc>();
-          return _SubscriptionRecoveryView(
-            message: state.errorMessage ??
-                state.actionMessage ??
-                'We could not verify your subscription. '
-                    'Your existing access has not been changed.',
-            busy: state.isBusy,
-            sessionInvalid: state.sessionInvalid,
-            onRetry: () => bloc.add(const RefreshSubscription()),
-            onRestore: () {
-              FirebaseAnalyticsService.instance
-                  .logSubscriptionEvent('restore', 'store');
-              bloc.add(const RestorePurchasesRequested());
-            },
-            onRecover: () => bloc.add(const RecoverSubscriptionRequested()),
+        if (state.status == SubscriptionStatus.failure &&
+            state.subscription == null) {
+          return _SubscriptionError(
+            message: state.errorMessage ?? 'Unable to load your subscription.',
+            onRetry: () => context
+                .read<SubscriptionBloc>()
+                .add(const RefreshSubscription()),
           );
         }
 
@@ -192,7 +183,7 @@ class _SubscriptionBody extends StatelessWidget {
                 if (!state.hasActiveSubscription) ...[
                   const SizedBox(height: 14),
                   _StripeRecoveryCard(
-                    enabled: !state.isBusy && !state.sessionInvalid,
+                    enabled: !state.isBusy,
                     onPressed: () {
                       context
                           .read<SubscriptionBloc>()
@@ -200,21 +191,8 @@ class _SubscriptionBody extends StatelessWidget {
                     },
                   ),
                 ],
-                if (usesNativeStoreBilling) ...[
-                  const SizedBox(height: 12),
-                  _RestoreCard(
-                    enabled: !state.isBusy && !state.sessionInvalid,
-                    onPressed: () {
-                      FirebaseAnalyticsService.instance
-                          .logSubscriptionEvent('restore', 'store');
-                      context
-                          .read<SubscriptionBloc>()
-                          .add(const RestorePurchasesRequested());
-                    },
-                  ),
-                ],
                 const SizedBox(height: 16),
-                if (state.hasActiveSubscription)
+                if (state.subscription?.isActive == true)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
                 else
                   _TrialCard(subscription: state.subscription),
@@ -246,7 +224,20 @@ class _SubscriptionBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 4),
+                if (usesNativeStoreBilling) ...[
+                  _RestoreCard(
+                    enabled: !state.isBusy,
+                    onPressed: () {
+                      FirebaseAnalyticsService.instance
+                          .logSubscriptionEvent('restore', 'store');
+                      context
+                          .read<SubscriptionBloc>()
+                          .add(const RestorePurchasesRequested());
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 const _TermsCard(),
               ],
             ),
@@ -275,7 +266,7 @@ class _SubscriptionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = subscription?.hasPlanEntitlement == true;
+    final active = subscription?.grantsAccess == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -306,140 +297,35 @@ class _ActiveSubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final plan = _planForTier(subscription.planType);
-    final planName = plan?.name ?? '${_titleCase(subscription.planType)} plan';
-    final periodEnd = subscription.currentPeriodEnd;
-    final includedFeatures = plan?.features
-            .where((feature) => !feature.toLowerCase().contains('trial'))
-            .toList() ??
-        const <String>[];
-
     return _Panel(
-      color: Colors.white,
-      borderColor: const Color(0xFFBBF7D0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      color: const Color(0xFFECFDF5),
+      borderColor: const Color(0xFFA7F3D0),
+      child: Row(
         children: [
-          Row(
-            children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFDCFCE7),
-                child: Icon(Icons.verified_rounded, color: Color(0xFF15803D)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      subscription.isTrialing
-                          ? '$planName trial is active'
-                          : '$planName is active',
-                      style: const TextStyle(
-                        color: Color(0xFF14532D),
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${_titleCase(subscription.billingCycle)} billing · '
-                      '${subscription.platformLabel}.',
-                      style: const TextStyle(
-                        color: Color(0xFF4B5563),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  subscription.isTrialing ? 'Trial' : 'Active',
+          const CircleAvatar(
+            backgroundColor: Color(0xFFD1FAE5),
+            child: Icon(Icons.check_rounded, color: Color(0xFF047857)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_titleCase(subscription.planType)} plan is active',
                   style: const TextStyle(
-                    color: Color(0xFF166534),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF065F46),
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  'Billed through ${subscription.platformLabel}.',
+                  style: const TextStyle(color: Color(0xFF047857), fontSize: 13),
+                ),
+              ],
+            ),
           ),
-          if (periodEnd != null) ...[
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${subscription.isTrialing ? 'Trial ends' : 'Current period ends'} '
-                '${MaterialLocalizations.of(context).formatMediumDate(periodEnd.toLocal())}',
-                style: const TextStyle(
-                  color: Color(0xFF166534),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-          if (subscription.isTrialing &&
-              (subscription.trialDaysLeft ?? 0) > 0) ...[
-            const SizedBox(height: 8),
-            Text(
-              '${subscription.trialDaysLeft} '
-              '${subscription.trialDaysLeft == 1 ? 'day' : 'days'} left in your trial.',
-              style: const TextStyle(
-                color: Color(0xFF166534),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (includedFeatures.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Included in your plan',
-              style: TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...includedFeatures.map(
-              (feature) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.check_rounded,
-                      color: Color(0xFF16A34A),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        feature,
-                        style: const TextStyle(
-                          color: Color(0xFF4B5563),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -454,68 +340,32 @@ class _TrialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final daysLeft = subscription?.trialDaysLeft;
-    final hasPlanEntitlement = subscription?.hasPlanEntitlement == true;
     final String message;
     if (subscription?.isTrialing == true) {
       if (daysLeft != null && daysLeft > 0) {
-        final continuation = hasPlanEntitlement
-            ? 'Manage or cancel your subscription below.'
-            : 'Choose a plan below to keep access.';
         message = 'Your free trial has $daysLeft '
-            '${daysLeft == 1 ? 'day' : 'days'} remaining. '
-            '$continuation';
+            '${daysLeft == 1 ? 'day' : 'days'} remaining. Manage or cancel '
+            'your subscription below.';
       } else {
-        message = hasPlanEntitlement
-            ? 'Your free trial is ending. Manage or cancel your subscription below.'
-            : 'Your free trial is ending. Choose a plan below to keep access.';
+        message =
+            'Your free trial is ending. Manage or cancel your subscription below.';
       }
     } else if (subscription?.isExpired == true) {
-      message = 'Your previous subscription has ended. '
-          'Choose a plan to restart.';
-    } else if (const {'cancelled', 'canceled'}
-        .contains(subscription?.status.toLowerCase())) {
-      message = 'Your previous subscription was cancelled. '
-          'Choose a plan to restart.';
+      message = 'Your previous subscription has ended. Choose a plan to restart.';
     } else {
       message =
           'Plans renew monthly. Choose the option that fits your support needs.';
     }
-    final trialEnd = subscription?.isTrialing == true
-        ? subscription?.currentPeriodEnd
-        : null;
     return _Panel(
       color: Colors.white,
       child: Row(
         children: [
-          const Icon(
-            Icons.access_time_rounded,
-            color: Color(0xFF2563EB),
-            size: 28,
-          ),
+          const Icon(Icons.access_time_rounded, color: Color(0xFF2563EB), size: 28),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: Color(0xFF374151),
-                    fontSize: 14,
-                  ),
-                ),
-                if (trialEnd != null) ...[
-                  const SizedBox(height: 5),
-                  Text(
-                    'Trial ends '
-                    '${MaterialLocalizations.of(context).formatMediumDate(trialEnd.toLocal())}.',
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ],
+            child: Text(
+              message,
+              style: const TextStyle(color: Color(0xFF374151), fontSize: 14),
             ),
           ),
         ],
@@ -535,7 +385,7 @@ class _PlanCard extends StatelessWidget {
   });
 
   final SubscriptionPlan plan;
-  final ProductDetails? product;
+  final dynamic product;
   final SubscriptionState state;
   final bool selected;
   final VoidCallback onSelect;
@@ -543,31 +393,30 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasStoreProduct = usesNativeStoreBilling &&
-        product != null &&
-        state.storeAvailable;
-    final selectable = state.accountStatusLoaded &&
-        !state.isLoading &&
-        !state.sessionInvalid &&
-        !state.hasActiveSubscription &&
-        !state.isBusy;
-    final price = product?.price.trim();
-    final storeTitle = product?.title.trim();
-    final storeDescription = product?.description.trim();
-    final displayTitle =
-        storeTitle?.isNotEmpty == true ? storeTitle! : plan.name;
-    final displayDescription = storeDescription?.isNotEmpty == true
-        ? storeDescription!
-        : plan.description;
-    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
-        ? 'Continue with Google Play'
-        : defaultTargetPlatform == TargetPlatform.iOS
-            ? 'Continue with App Store'
-            : 'Continue in store';
+    final storeAvailable =
+        usesNativeStoreBilling && product != null && state.canPurchase;
+    final stripeAvailable =
+        !usesNativeStoreBilling && state.canUseStripe;
+    final selectable = !state.hasActiveSubscription && !state.isBusy;
+    final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
+    final trialAvailable = state.subscription?.isTrialing == true &&
+        (state.subscription?.trialDaysLeft ?? 0) > 0;
+    final storeButtonLabel = trialAvailable
+        ? 'Start Free Trial'
+        : defaultTargetPlatform == TargetPlatform.android
+            ? 'Subscribe via Google Play'
+            : defaultTargetPlatform == TargetPlatform.iOS
+                ? 'Subscribe via App Store'
+                : 'Subscribe through store';
     return Semantics(
       selected: selected,
       child: GestureDetector(
-        onTap: selectable ? onSelect : null,
+        onTap: selectable
+            ? () {
+                onSelect();
+                if (storeAvailable) onPurchase();
+              }
+            : null,
         child: _Panel(
           color: selected ? const Color(0xFFEFF6FF) : Colors.white,
           borderColor: selected
@@ -578,109 +427,191 @@ class _PlanCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      displayTitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
+           Row(
+             crossAxisAlignment: CrossAxisAlignment.start,
+             children: [
+               Expanded(
+                 child: Text(
+                   plan.name,
+                   maxLines: 2,
+                   overflow: TextOverflow.ellipsis,
+                   style: const TextStyle(
+                     color: Color(0xFF111827),
+                     fontSize: 20,
+                     fontWeight: FontWeight.w800,
+                   ),
+                 ),
+               ),
+                if (selected)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8, top: 4),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF2563EB),
+                      size: 22,
                     ),
                   ),
-                  if (selected)
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8, top: 4),
-                      child: Icon(
-                        Icons.check_circle_rounded,
-                        color: Color(0xFF2563EB),
-                        size: 22,
-                      ),
-                    ),
-                  if (plan.popular) ...[
-                    const SizedBox(width: 8),
-                    const Chip(
-                      label: Text('Popular'),
-                      backgroundColor: Color(0xFFEDE9FE),
-                      labelStyle: TextStyle(color: Color(0xFF6D28D9)),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                displayDescription,
-                style: const TextStyle(color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                price == null || price.isEmpty
-                    ? 'Store price unavailable'
-                    : '$price / month',
-                style: const TextStyle(
-                  color: Color(0xFF111827),
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 10),
-              ...plan.features.map(
+               if (plan.popular) ...[
+                 const SizedBox(width: 8),
+                 const Chip(
+                   label: Text('Popular'),
+                   backgroundColor: Color(0xFFEDE9FE),
+                   labelStyle: TextStyle(color: Color(0xFF6D28D9)),
+                 ),
+               ],
+             ],
+           ),
+          const SizedBox(height: 4),
+          Text(plan.description, style: const TextStyle(color: Color(0xFF6B7280))),
+          const SizedBox(height: 12),
+          Text(
+            '$price / month',
+            style: const TextStyle(
+              color: Color(0xFF111827),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...plan.features.map(
                 (feature) => Padding(
                   padding: const EdgeInsets.only(bottom: 5),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
-                        Icons.check_rounded,
-                        color: Color(0xFF16A34A),
-                        size: 18,
-                      ),
+                      const Icon(Icons.check_rounded, color: Color(0xFF16A34A), size: 18),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           feature,
-                          style: const TextStyle(
-                            color: Color(0xFF4B5563),
-                            fontSize: 13,
-                          ),
+                          style: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              if (hasStoreProduct)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: selectable && state.canPurchase
-                        ? () {
-                            onSelect();
-                            FirebaseAnalyticsService.instance
-                                .logSubscriptionEvent('upgrade', plan.id);
-                            onPurchase();
-                          }
-                        : null,
-                    child: Text(
-                      state.busyPlanId == plan.id
-                          ? 'Processing…'
-                          : storeButtonLabel,
-                    ),
-                  ),
+          const SizedBox(height: 10),
+          if (stripeAvailable)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                 onPressed: selectable
+                     ? () => _chooseStripePayment(context)
+                     : null,
+                icon: const Icon(Icons.account_balance_wallet_outlined),
+                label: Text(
+                  trialAvailable ? 'Start Free Trial' : 'Pay by card or wallet',
                 ),
-              if (!hasStoreProduct)
-                const Padding(
-                  padding: EdgeInsets.only(top: 7),
-                  child: _StoreAvailabilityMessage(),
+              ),
+            ),
+          if (stripeAvailable && storeAvailable) const SizedBox(height: 8),
+          if (storeAvailable)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                 onPressed: selectable
+                     ? () {
+                          onSelect();
+                          FirebaseAnalyticsService.instance
+                              .logSubscriptionEvent('upgrade', plan.id);
+                          onPurchase();
+                        }
+                     : null,
+                child: Text(
+                  state.busyPlanId == plan.id
+                      ? 'Processing…'
+                      : storeButtonLabel,
                 ),
+              ),
+            ),
+          if (!stripeAvailable && !storeAvailable)
+            const Padding(
+              padding: EdgeInsets.only(top: 7),
+               child: _StoreAvailabilityMessage(),
+            ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _chooseStripePayment(BuildContext context) async {
+    onSelect();
+    final method = await showModalBottomSheet<StripePaymentMethod>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => _PaymentMethodPicker(
+        walletAvailable: state.walletAvailable,
+      ),
+    );
+    if (!context.mounted || method == null) return;
+
+    FirebaseAnalyticsService.instance.logSubscriptionEvent(
+      'upgrade',
+      '${plan.id}_${method.name}',
+    );
+    context.read<SubscriptionBloc>().add(
+          StripePaymentRequested(plan.id, method),
+        );
+  }
+}
+
+class _PaymentMethodPicker extends StatelessWidget {
+  const _PaymentMethodPicker({required this.walletAvailable});
+
+  final bool walletAvailable;
+
+  @override
+  Widget build(BuildContext context) {
+    final walletMethod = defaultTargetPlatform == TargetPlatform.android
+        ? StripePaymentMethod.googlePay
+        : defaultTargetPlatform == TargetPlatform.iOS
+            ? StripePaymentMethod.applePay
+            : null;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Payment method',
+              style: TextStyle(
+                color: Color(0xFF111827),
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Choose how you want to complete this subscription.',
+              style: TextStyle(color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.credit_card_rounded),
+              title: const Text('Credit/Debit Card'),
+              onTap: () => Navigator.of(context).pop(StripePaymentMethod.card),
+            ),
+            if (walletAvailable && walletMethod != null)
+              ListTile(
+                leading: Icon(
+                  walletMethod == StripePaymentMethod.googlePay
+                      ? Icons.account_balance_wallet_rounded
+                      : Icons.apple,
+                ),
+                title: Text(
+                  walletMethod == StripePaymentMethod.googlePay
+                      ? 'Google Pay'
+                      : 'Apple Pay',
+                ),
+                onTap: () => Navigator.of(context).pop(walletMethod),
+              ),
+          ],
         ),
       ),
     );
@@ -695,17 +626,8 @@ class _ManageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subscription = state.subscription!;
-    final isBasic = subscription.hasPlanEntitlement &&
+    final isBasic = subscription.isActive &&
         subscription.planType.toLowerCase() == 'basic';
-    final basicMessage = subscription.isTrialing
-        ? 'Your Basic trial is active. Meal Planning is included with '
-            'Premium and Family. Change your plan through '
-            '${subscription.platformLabel} to upgrade without starting '
-            'a second subscription.'
-        : 'Your Basic plan is active. Meal Planning is included with '
-            'Premium and Family. Change your plan through '
-            '${subscription.platformLabel} to upgrade without starting '
-            'a second subscription.';
     final actionLabel = switch (subscription.subscriptionPlatform) {
       'google_play' => 'Manage or change plan',
       'app_store' => 'Manage in Apple ID settings',
@@ -723,7 +645,7 @@ class _ManageCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             isBasic
-                ? basicMessage
+                ? 'Your Basic plan is active. Meal Planning is included with Premium and Family. Change your plan through ${subscription.platformLabel} to upgrade without starting a second subscription.'
                 : 'Renewals and cancellations are managed by ${subscription.platformLabel}.',
             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
@@ -758,29 +680,21 @@ class _StripeRecoveryCard extends StatelessWidget {
     return _Panel(
       color: const Color(0xFFFFF7ED),
       borderColor: const Color(0xFFFDBA74),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.receipt_long_rounded, color: Color(0xFFB45309)),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Already paid on the Adaptalyfe website? Check your Stripe '
-                  'subscription and restore access.',
-                  style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-                ),
-              ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: enabled ? onPressed : null,
-              child: const Text('Restore website access'),
+          const Icon(Icons.receipt_long_rounded, color: Color(0xFFB45309)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Already paid on the Adaptalyfe website? Check your Stripe '
+              'subscription and restore access.',
+              style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
             ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: enabled ? onPressed : null,
+            child: const Text('Restore access'),
           ),
         ],
       ),
@@ -816,29 +730,21 @@ class _RestoreCard extends StatelessWidget {
     return _Panel(
       color: const Color(0xFFFFFBEB),
       borderColor: const Color(0xFFFDE68A),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.restore_rounded, color: Color(0xFFB45309)),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Already subscribed? Restore purchases from this store account.',
-                  style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-                ),
-              ),
-            ],
+       child: Wrap(
+         spacing: 10,
+         runSpacing: 8,
+         crossAxisAlignment: WrapCrossAlignment.center,
+         children: [
+          const Icon(Icons.restore_rounded, color: Color(0xFFB45309)),
+          const SizedBox(width: 10),
+           const SizedBox(
+             width: 230,
+             child: Text(
+              'Already subscribed? Restore purchases from this store account.',
+              style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
+             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: enabled ? onPressed : null,
-              child: const Text('Restore purchases'),
-            ),
-          ),
+          TextButton(onPressed: enabled ? onPressed : null, child: const Text('Restore')),
         ],
       ),
     );
@@ -894,101 +800,34 @@ class _Panel extends StatelessWidget {
   }
 }
 
-class _SubscriptionRecoveryView extends StatelessWidget {
-  const _SubscriptionRecoveryView({
-    required this.message,
-    required this.busy,
-    required this.sessionInvalid,
-    required this.onRetry,
-    required this.onRestore,
-    required this.onRecover,
-  });
+class _SubscriptionError extends StatelessWidget {
+  const _SubscriptionError({required this.message, required this.onRetry});
 
   final String message;
-  final bool busy;
-  final bool sessionInvalid;
   final VoidCallback onRetry;
-  final VoidCallback onRestore;
-  final VoidCallback onRecover;
 
   @override
   Widget build(BuildContext context) {
-    final actionsEnabled = !busy && !sessionInvalid;
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFEFF6FF), Color(0xFFF5F3FF), Color(0xFFF0FDFA)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: ListView(
-        padding: AppResponsive.pagePadding(context).copyWith(
-          top: 28,
-          bottom: 32,
-        ),
-        children: [
-          const Icon(
-            Icons.cloud_off_rounded,
-            color: Color(0xFF2563EB),
-            size: 42,
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'We couldn’t verify your subscription',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF111827),
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Color(0xFF4B5563), height: 1.45),
-          ),
-          const SizedBox(height: 18),
-          OutlinedButton.icon(
-            onPressed: actionsEnabled ? onRetry : null,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Check again'),
-          ),
-          if (busy) ...[
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: Color(0xFFB91C1C), size: 42),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 14),
-            const LinearProgressIndicator(),
-          ],
-          if (usesNativeStoreBilling) ...[
-            const SizedBox(height: 18),
-            _RestoreCard(
-              enabled: actionsEnabled,
-              onPressed: onRestore,
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
             ),
           ],
-          const SizedBox(height: 14),
-          _StripeRecoveryCard(
-            enabled: actionsEnabled,
-            onPressed: onRecover,
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            'New purchases stay unavailable until your current account status '
-            'is verified, to help prevent duplicate subscriptions.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-SubscriptionPlan? _planForTier(String tier) {
-  for (final plan in subscriptionPlans) {
-    if (plan.id == tier.toLowerCase()) return plan;
-  }
-  return null;
 }
 
 String _titleCase(String value) {
