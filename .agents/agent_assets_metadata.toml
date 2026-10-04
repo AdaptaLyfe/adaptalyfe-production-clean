@@ -2933,41 +2933,41 @@ id = "Q5g4xAr-lkMvuJ7OehC0M"
 uri = "file://deliverables/google-play-subscription-flow-changes.zip"
 type = "unspecified"
 title = "Google Play subscription flow changes"
-description = "ZIP containing the 13 changed Flutter/backend source and test files, preserving their project paths. Generated build files and internal agent notes are excluded."
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "56958da1-37fb-45e3-a267-54efa659aac3"
 content_hash = "sha256:8402856c6c278118d8aa51638189d40e37302604f009bbaa4081beecba26636c"
 size = 124475
-mtime_ms = 1790943207806
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/56958da1-37fb-45e3-a267-54efa659aac3/4604c40b-684c-46ab-8de2-da819f4a95cf"
-storage_version_token = "1790943261183793"
+mtime_ms = 1791129289910
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/56958da1-37fb-45e3-a267-54efa659aac3/215512af-870b-4bcb-8a6a-198bdcb141e5"
+storage_version_token = "1791153996128051"
 content_type = "application/octet-stream"
 
 [[outputs]]
 id = "8FY2LaTp4wg2sIyByHOVr"
 uri = "file://deliverables/google-play-subscription-flow-fix.zip"
 type = "unspecified"
-title = "Google Play Basic subscription flow fix"
-description = "Contains the subscription server verification path, Flutter restore-state handling, Basic/Premium entitlement logic, and focused model tests."
+title = "Google Play subscription flow fix"
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "d3e15860-4915-48be-9511-cae3b12867bd"
 content_hash = "sha256:a8d67e8896a4b6b6aee673376669f0144ba278704141950dfa81cf94be9b3a49"
 size = 60844
-mtime_ms = 1790948279463
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/0cc2df47-0c7a-48d7-9c19-b1b17f73a459"
-storage_version_token = "1790948302612756"
+mtime_ms = 1791129289910
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/192bdb77-2859-4f10-9430-18115db9bf54"
+storage_version_token = "1791153996971011"
 content_type = "application/octet-stream"
 
 [[outputs]]
 id = "cf0lJJrQT145HdktKi0WU"
 uri = "file://artifacts/adaptalyfe-mobile-subscription-changes.zip"
 type = "unspecified"
-title = "Updated Adaptalyfe mobile subscription changes"
-description = "Refreshed ZIP: Flutter now uses only App Store and Google Play billing; website Stripe billing remains unchanged."
+title = "Adaptalyfe mobile subscription changes"
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "72611db4-32c8-44e2-a149-d96a57c09405"
 content_hash = "sha256:9c012d8ce67083daccb3bb4682d796940224ba8b5d8c072a5decaacf99f9ffad"
 size = 381386
-mtime_ms = 1791023279417
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/72611db4-32c8-44e2-a149-d96a57c09405/f16e3711-c950-423f-b3b8-05f851ee497e"
-storage_version_token = "1791023293193069"
+mtime_ms = 1791129289839
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/72611db4-32c8-44e2-a149-d96a57c09405/d6840f3b-b354-434d-b367-8f0cd87546fc"
+storage_version_token = "1791153994263432"
 content_type = "application/octet-stream"
 
 [[outputs]]
@@ -3002,42 +3002,42 @@ content_type = "application/octet-stream"
 id = "NpApa0wXqnCSvhMT68Jhx"
 uri = "file://artifacts/adaptalyfe-subscription-plan-screen.zip"
 type = "unspecified"
-title = "Adaptalyfe subscription screen — changed file"
-description = "ZIP containing only the updated Flutter subscription screen. Active accounts now see the Basic, Premium, and Family plan cards, with purchase buttons disabled to prevent a second subscription."
+title = "Adaptalyfe subscription plan screen"
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "2f91db1f-b970-48fd-88f7-a04f991f49d7"
 content_hash = "sha256:a32649ac58f8d0d5648cdb2a2fd8e92d60c95d7ca2fd53c15704299de6de4817"
 size = 5851
-mtime_ms = 1791028736311
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f91db1f-b970-48fd-88f7-a04f991f49d7/f8a61f46-411a-4b5f-8ad8-aebcc10ae099"
-storage_version_token = "1791028740982457"
+mtime_ms = 1791129289840
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f91db1f-b970-48fd-88f7-a04f991f49d7/79b06806-1ca7-47d8-8dc3-83e435b7ec7e"
+storage_version_token = "1791153995293303"
 content_type = "application/octet-stream"
 
 [[outputs]]
 id = "KrFg8ZYXTLxFHuNMcyVBy"
 uri = "file://exports/subscription-handoff/adaptalyfe-flutter-subscription-patch.zip"
 type = "unspecified"
-title = "Flutter subscription patch — matched to your latest ZIP"
-description = "Replacement and new files under adaptalyfe-flutter-main/, with a file manifest and installation steps. Preserve signing/Firebase files; edit pubspec manually as instructed."
+title = "Adaptalyfe Flutter subscription patch"
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "2ce97c07-d66c-47da-bb83-bba6d0a42f30"
 content_hash = "sha256:79eecc0cde02d339d780d2a7a4221ce1374b9ac9273e08e3a565e467832c71eb"
 size = 75296
-mtime_ms = 1791106209131
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2ce97c07-d66c-47da-bb83-bba6d0a42f30/97376aaf-9132-47fe-b2b0-e5198292988a"
-storage_version_token = "1791106217500851"
+mtime_ms = 1791129289927
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2ce97c07-d66c-47da-bb83-bba6d0a42f30/d4472e2d-6e4b-4ad9-be21-9200af45a334"
+storage_version_token = "1791153998433869"
 content_type = "application/octet-stream"
 
 [[outputs]]
 id = "sgBWz4uK4SELaix5vbBNN"
 uri = "file://exports/subscription-handoff/adaptalyfe-backend-subscription-patch.zip"
 type = "unspecified"
-title = "Backend subscription patch"
-description = "Five backend source/test files for verified entitlement persistence, restore ownership and tier enforcement. Backend fixes are applied locally; deployment to your Railway repository is separate."
+title = "Adaptalyfe backend subscription patch"
+description = "Modified: 2026-10-04 21:24 IST."
 logical_id = "05a924e4-9a34-42c1-9bf3-bdeddfcf6776"
 content_hash = "sha256:449ea5cd7c9202a1d34bb27556aeb6eae259773d66b2bab4fe81b28f8a908583"
 size = 62155
-mtime_ms = 1791106209139
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05a924e4-9a34-42c1-9bf3-bdeddfcf6776/ee0b3e5f-59b5-4c63-8a9f-d519cf3914cb"
-storage_version_token = "1791106218362942"
+mtime_ms = 1791129289927
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05a924e4-9a34-42c1-9bf3-bdeddfcf6776/fd834d90-5be2-4411-8ede-c5ea404c2ae6"
+storage_version_token = "1791153997633459"
 content_type = "application/octet-stream"
 
 [[outputs]]
@@ -3072,12 +3072,26 @@ content_type = "application/octet-stream"
 id = "261p9SnezujUolU8bj7Jl"
 uri = "file://deliverables/adaptalyfe_flutter_google_play.zip"
 type = "unspecified"
-title = "Adaptalyfe Flutter app — Google Play subscriptions"
-description = "Complete mobile_flutter project with the rebuilt store purchase flow, focused tests, and step-by-step Play Console/backend/Google Cloud/RTDN setup guide."
+title = "Latest — Adaptalyfe Flutter Google Play ZIP"
+description = "Modified: 2026-10-04 23:37 IST. Full updated Flutter project and Google Play setup guide."
 logical_id = "bf6cbc33-e7a8-49a2-9439-0f01c7779b8b"
 content_hash = "sha256:9d1ee8ab73485a19bf7e39b789f03d6865b43fba7371aa6cb43f2a0a9cf511b6"
 size = 630187
 mtime_ms = 1791137231248
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bf6cbc33-e7a8-49a2-9439-0f01c7779b8b/e530eb7d-5912-4c42-8644-ab87f1fbb282"
-storage_version_token = "1791137268108823"
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bf6cbc33-e7a8-49a2-9439-0f01c7779b8b/77304002-9546-416a-9ed3-a3c6965c8792"
+storage_version_token = "1791153993320264"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "vQl6YKC_dzxFFNAsuCiEy"
+uri = "file://attached_assets/adaptalyfe-flutter-main_1791101615561.zip"
+type = "unspecified"
+title = "Uploaded Flutter project baseline"
+description = "Modified: 2026-10-04 21:24 IST. This is the archive used for comparison."
+logical_id = "d956e8cc-c156-4f6f-9ba3-e97d13ea2d36"
+content_hash = "sha256:1adfcac7f636a4d2ed32a028220e8e39a8785cd7d2893564ecb0a9351c9689a1"
+size = 8849278
+mtime_ms = 1791129289882
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d956e8cc-c156-4f6f-9ba3-e97d13ea2d36/ec7fd312-f5e2-4f8e-94bc-2e7f35bf9a6f"
+storage_version_token = "1791153999468203"
 content_type = "application/octet-stream"
