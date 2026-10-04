@@ -3011,3 +3011,31 @@ mtime_ms = 1791028736311
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f91db1f-b970-48fd-88f7-a04f991f49d7/f8a61f46-411a-4b5f-8ad8-aebcc10ae099"
 storage_version_token = "1791028740982457"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KrFg8ZYXTLxFHuNMcyVBy"
+uri = "file://exports/subscription-handoff/adaptalyfe-flutter-subscription-patch.zip"
+type = "unspecified"
+title = "Flutter subscription patch — matched to your latest ZIP"
+description = "Replacement and new files under adaptalyfe-flutter-main/, with a file manifest and installation steps. Preserve signing/Firebase files; edit pubspec manually as instructed."
+logical_id = "2ce97c07-d66c-47da-bb83-bba6d0a42f30"
+content_hash = "sha256:79eecc0cde02d339d780d2a7a4221ce1374b9ac9273e08e3a565e467832c71eb"
+size = 75296
+mtime_ms = 1791106209131
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2ce97c07-d66c-47da-bb83-bba6d0a42f30/97376aaf-9132-47fe-b2b0-e5198292988a"
+storage_version_token = "1791106217500851"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sgBWz4uK4SELaix5vbBNN"
+uri = "file://exports/subscription-handoff/adaptalyfe-backend-subscription-patch.zip"
+type = "unspecified"
+title = "Backend subscription patch"
+description = "Five backend source/test files for verified entitlement persistence, restore ownership and tier enforcement. Backend fixes are applied locally; deployment to your Railway repository is separate."
+logical_id = "05a924e4-9a34-42c1-9bf3-bdeddfcf6776"
+content_hash = "sha256:449ea5cd7c9202a1d34bb27556aeb6eae259773d66b2bab4fe81b28f8a908583"
+size = 62155
+mtime_ms = 1791106209139
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05a924e4-9a34-42c1-9bf3-bdeddfcf6776/ee0b3e5f-59b5-4c63-8a9f-d519cf3914cb"
+storage_version_token = "1791106218362942"
+content_type = "application/octet-stream"

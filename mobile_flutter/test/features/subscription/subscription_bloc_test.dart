@@ -99,7 +99,7 @@ void main() {
     test('$tier account recovery does not depend on store lookup after reopen/reinstall', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       final store = FakeStore();
-      final bloc = SubscriptionBloc(repository: FakeRepository(account(tier)), purchaseService: store);
+      final bloc = SubscriptionBloc(FakeRepository(account(tier)), store);
       final ready = nextState(bloc, (state) => state.hasActiveSubscription);
       bloc.add(const SubscriptionStarted());
       final result = await ready;
@@ -115,7 +115,7 @@ void main() {
 
   test('selecting a plan never purchases or grants access', () async {
     final store = FakeStore();
-    final bloc = SubscriptionBloc(repository: FakeRepository(account('free', active: false)), purchaseService: store);
+    final bloc = SubscriptionBloc(FakeRepository(account('free', active: false)), store);
     final loaded = nextState(bloc, (state) => state.status == SubscriptionStatus.ready);
     bloc.add(const SubscriptionStarted());
     await loaded;
@@ -132,7 +132,7 @@ void main() {
     final repository = FakeRepository(account('free', active: false))
       ..verificationError = const ApiException(type: ApiErrorType.network, message: 'offline');
     final store = FakeStore()..restored = [transaction(PurchaseStatus.restored)];
-    final bloc = SubscriptionBloc(repository: repository, purchaseService: store);
+    final bloc = SubscriptionBloc(repository, store);
     final loaded = nextState(bloc, (state) => state.status == SubscriptionStatus.ready);
     bloc.add(const SubscriptionStarted());
     await loaded;
@@ -152,7 +152,7 @@ void main() {
   test('local completion failure cannot hide a persisted verified entitlement', () async {
     final repository = FakeRepository(account('free', active: false));
     final store = FakeStore()..failCompletion = true;
-    final bloc = SubscriptionBloc(repository: repository, purchaseService: store);
+    final bloc = SubscriptionBloc(repository, store);
     final loaded = nextState(bloc, (state) => state.status == SubscriptionStatus.ready);
     bloc.add(const SubscriptionStarted());
     await loaded;
@@ -164,7 +164,7 @@ void main() {
     await store.updates.close();
 
     final secondDeviceStore = FakeStore();
-    final secondDevice = SubscriptionBloc(repository: repository, purchaseService: secondDeviceStore);
+    final secondDevice = SubscriptionBloc(repository, secondDeviceStore);
     final recovered = nextState(secondDevice, (state) => state.hasActiveSubscription);
     secondDevice.add(const SubscriptionStarted());
     expect((await recovered).canPurchase, isFalse);
@@ -176,7 +176,7 @@ void main() {
   test('an expired restored purchase does not grant paid access', () async {
     final repository = FakeRepository(account('free', active: false))..restoreActive = false;
     final store = FakeStore()..restored = [transaction(PurchaseStatus.restored)];
-    final bloc = SubscriptionBloc(repository: repository, purchaseService: store);
+    final bloc = SubscriptionBloc(repository, store);
     final loaded = nextState(bloc, (state) => state.status == SubscriptionStatus.ready);
     bloc.add(const SubscriptionStarted());
     await loaded;

@@ -9,6 +9,12 @@ Flutter subscription purchases must never contain payment secrets. The platform 
 
 **How to apply:** Keep plan product IDs aligned with the server mappings, complete each platform transaction after verification handling, suppress duplicate purchase actions for active entitlements, and validate the full flow on physical store environments before release.
 
+Store-source normalization must accept the official plugin labels `GooglePlay` and `AppStore` as well as API-style underscore names.
+
+**Why:** Matching only `google_play` or `app_store` can reject real plugin transactions even though a mocked underscore-label transaction passes.
+
+**How to apply:** Normalize case and separators before choosing a verification endpoint, and cover the actual plugin labels in contract tests.
+
 ## Subscription change scope
 Subscription fixes should stay within the purchase, restore, entitlement, and directly related test paths; do not modify unrelated app or server behavior.
 
@@ -29,3 +35,15 @@ An account entitlement already verified and persisted by the backend remains usa
 **Why:** Store completion and account access are different operations. Failing a local plugin call after backend success must not leave someone who paid locked out or encouraged to pay again.
 
 **How to apply:** Honor the verified payload, preserve transaction retry opportunities, and leave provider renewal and revocation checks authoritative.
+
+## Android release version source
+Android release versions should come from the Flutter Gradle extension, not a
+static fallback that can ignore pubspec/build-number changes. Never guess the next
+accepted Play versionCode.
+
+**Why:** The uploaded Android project used a Gradle project-property lookup with a
+fallback, which can leave a rebuilt AAB at the old code despite changing Flutter's
+version settings. Play requires a higher unused code for the next accepted upload.
+
+**How to apply:** Preserve the existing application ID and upload signing setup;
+configure the next version only after checking the latest accepted Play code.

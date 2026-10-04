@@ -2,6 +2,20 @@
 
 Audit date: 2026-10-04.
 
+## Latest-ZIP handoff
+
+The later file handoff was checked against
+`adaptalyfe-flutter-main_1791101615561.zip`. Use
+`SUBSCRIPTION_ZIP_INSTALL.md` for the complete replacement/addition list against
+that archive, including supporting subscription changes from the earlier baseline.
+
+During that comparison, official `GooglePlay`/`AppStore` source-label support was
+restored in `lib/features/subscription/models/subscription_purchase_contract.dart`,
+and its regression test was expanded. The new BLoC tests were corrected to call
+the existing positional constructor. `android/app/build.gradle` now uses Flutter's
+configured version rather than the old versionCode fallback. These additional
+Flutter changes were inspected but not compiled here; the SDK limitation remains.
+
 ## Result and limits
 
 Focused subscription fixes are implemented locally. This is **not** a confirmation of a live Google Play charge or a successful Android release build.
