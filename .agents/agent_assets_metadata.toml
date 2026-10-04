@@ -3039,3 +3039,17 @@ mtime_ms = 1791106209139
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05a924e4-9a34-42c1-9bf3-bdeddfcf6776/ee0b3e5f-59b5-4c63-8a9f-d519cf3914cb"
 storage_version_token = "1791106218362942"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "csEyqrWEVyo7DQx_4IyVE"
+uri = "file://exports/subscription-handoff/adaptalyfe-railway-build-fix.zip"
+type = "unspecified"
+title = "Railway build fix — public package downloads"
+description = "Corrected package-lock.json, matching package.json, existing nixpacks.toml and railway.json, plus installation instructions. Local production build passed; Railway deployment and live subscription state still need confirmation."
+logical_id = "528d37a2-9e98-48dd-872b-d47cb7ca455b"
+content_hash = "sha256:322135aa4b61945ed041ccdb44bdb28536bc8c7a1d348463f798dc1a78c89faf"
+size = 221358
+mtime_ms = 1791109205455
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/528d37a2-9e98-48dd-872b-d47cb7ca455b/666adb9c-c9cd-4691-8e5c-f3755093a605"
+storage_version_token = "1791109237652171"
+content_type = "application/octet-stream"
