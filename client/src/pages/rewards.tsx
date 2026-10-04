@@ -32,7 +32,7 @@ import {
   ShoppingBag,
   MapPin,
   DollarSign,
-  Trash2
+  Archive
 } from "lucide-react";
 
 type RewardBadge = {
@@ -297,28 +297,28 @@ export default function RewardsPage() {
     },
   });
 
-  // Delete reward mutation
-  const deleteRewardMutation = useMutation({
+  // Archive reward mutation. The API preserves the reward and its redemption history.
+  const archiveRewardMutation = useMutation({
     mutationFn: async (id: number) => {
-      console.log("=== MUTATION: Deleting reward ===");
+      console.log("=== MUTATION: Archiving reward ===");
       console.log("ID:", id);
       const result = await apiRequest("DELETE", `/api/rewards/${id}`);
-      console.log("Delete result:", result);
+      console.log("Archive result:", result);
       return result;
     },
     onSuccess: () => {
-      console.log("=== DELETE SUCCESS ===");
+      console.log("=== ARCHIVE SUCCESS ===");
       queryClient.invalidateQueries({ queryKey: ["/api/rewards"] });
-      toast({ title: "Success", description: "Reward deleted successfully!" });
+      toast({
+        title: "Reward archived",
+        description: "It is no longer available to redeem. Its history has been kept.",
+      });
     },
     onError: (error: any) => {
-      console.error("=== DELETE ERROR ===", error);
-      const description = error?.code === "REWARD_ALREADY_REDEEMED"
-        ? "This reward cannot be deleted because it has already been redeemed."
-        : error?.message || "Failed to delete reward";
+      console.error("=== ARCHIVE ERROR ===", error);
       toast({ 
-        title: "Error", 
-        description,
+        title: "Error",
+        description: error?.message || "Failed to archive reward",
         variant: "destructive" 
       });
     },
@@ -436,15 +436,17 @@ export default function RewardsPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (reward: Reward) => {
-    console.log("=== DELETE CLICKED ===");
-    console.log("Reward to delete:", reward);
+  const handleArchive = (reward: Reward) => {
+    console.log("=== ARCHIVE CLICKED ===");
+    console.log("Reward to archive:", reward);
     
-    if (confirm(`Are you sure you want to delete "${reward.title}"?`)) {
-      console.log("User confirmed delete, calling mutation for ID:", reward.id);
-      deleteRewardMutation.mutate(reward.id);
+    if (confirm(
+      `Archive "${reward.title}"? It will no longer be available to redeem, and its history will be kept.`,
+    )) {
+      console.log("User confirmed archive, calling mutation for ID:", reward.id);
+      archiveRewardMutation.mutate(reward.id);
     } else {
-      console.log("User cancelled delete");
+      console.log("User cancelled archive");
     }
   };
 
@@ -677,15 +679,25 @@ export default function RewardsPage() {
 
           {/* Edit Reward Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" aria-describedby="edit-reward-description">
-              <DialogHeader>
+            <DialogContent
+              overlayClassName="z-[110]"
+              className="z-[120] w-[calc(100vw-2rem)] max-w-md flex flex-col overflow-hidden"
+              style={{
+                top: "calc((100dvh + 5rem + var(--safe-area-inset-top)) / 2)",
+                height: "min(42rem, calc(100dvh - 7rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)))",
+                maxHeight: "calc(100dvh - 7rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))",
+              }}
+              aria-describedby="edit-reward-description"
+            >
+              <DialogHeader className="shrink-0">
                 <DialogTitle>Edit Reward</DialogTitle>
                 <p id="edit-reward-description" className="text-sm text-gray-600">
                   Update reward details
                 </p>
               </DialogHeader>
               <Form {...editForm}>
-                <div className="reward-form space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="reward-form min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-4 pr-2">
                   <FormField
                     control={editForm.control}
                     name="title"
@@ -749,7 +761,7 @@ export default function RewardsPage() {
                                 <SelectValue placeholder="Select category" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="z-[130]">
                               {REWARD_CATEGORIES.map((category) => (
                                 <SelectItem key={category.value} value={category.value}>
                                   {category.label}
@@ -775,7 +787,7 @@ export default function RewardsPage() {
                               <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="z-[130]">
                             {REWARD_TYPES.map((type) => (
                               <SelectItem key={type.value} value={type.value}>
                                 {type.label}
@@ -802,18 +814,21 @@ export default function RewardsPage() {
                     )}
                   />
 
-                  <div className="flex justify-end space-x-2 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="button" 
-                      onClick={onEditSubmit}
-                      disabled={editRewardMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
-                    </Button>
+                  </div>
+                  <div className="shrink-0 border-t border-gray-200 bg-white pt-4 dark:border-gray-700 dark:bg-gray-900">
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={onEditSubmit}
+                        disabled={editRewardMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Form>
@@ -896,11 +911,13 @@ export default function RewardsPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleDelete(reward)}
-                              className="h-7 w-7 p-0 hover:bg-red-100"
+                              onClick={() => handleArchive(reward)}
+                              className="h-7 w-7 p-0 hover:bg-slate-100"
+                              aria-label={`Archive ${reward.title}`}
+                              title={`Archive ${reward.title}`}
                               data-testid={`button-delete-reward-${reward.id}`}
                             >
-                              <Trash2 className="w-4 h-4 text-red-600" />
+                              <Archive className="w-4 h-4 text-slate-600" />
                             </Button>
                           </div>
                         </div>

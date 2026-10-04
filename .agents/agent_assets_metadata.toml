@@ -2913,3 +2913,143 @@ mtime_ms = 1790591516099
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/86675b3b-ff40-4fc4-ab9b-d64b8d0a527d/4a1bae8d-1a33-47f4-b536-c2f0185a52b4"
 storage_version_token = "1790591540002562"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "AnZq2IwskThgQe4yK7HdN"
+uri = "file://exports/adaptalyfe-flutter-features-fix.zip"
+type = "unspecified"
+title = "Flutter Features catalog fix"
+description = "ZIP containing only the Flutter drawer, route, informational feature catalog screen, and widget test files."
+logical_id = "f6a988dc-1cb0-42fa-adfd-f53fb966296e"
+content_hash = "sha256:ecaa598cd98726feae2c2e0a24c2fb08f05a397f7e19ff6addf64e03b30403c8"
+size = 14149
+mtime_ms = 1790936720269
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f6a988dc-1cb0-42fa-adfd-f53fb966296e/6765b788-659e-422c-b9d7-b5ad324078af"
+storage_version_token = "1790936739674441"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "Q5g4xAr-lkMvuJ7OehC0M"
+uri = "file://deliverables/google-play-subscription-flow-changes.zip"
+type = "unspecified"
+title = "Google Play subscription flow changes"
+description = "ZIP containing the 13 changed Flutter/backend source and test files, preserving their project paths. Generated build files and internal agent notes are excluded."
+logical_id = "56958da1-37fb-45e3-a267-54efa659aac3"
+content_hash = "sha256:8402856c6c278118d8aa51638189d40e37302604f009bbaa4081beecba26636c"
+size = 124475
+mtime_ms = 1790943207806
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/56958da1-37fb-45e3-a267-54efa659aac3/4604c40b-684c-46ab-8de2-da819f4a95cf"
+storage_version_token = "1790943261183793"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "8FY2LaTp4wg2sIyByHOVr"
+uri = "file://deliverables/google-play-subscription-flow-fix.zip"
+type = "unspecified"
+title = "Google Play Basic subscription flow fix"
+description = "Contains the subscription server verification path, Flutter restore-state handling, Basic/Premium entitlement logic, and focused model tests."
+logical_id = "d3e15860-4915-48be-9511-cae3b12867bd"
+content_hash = "sha256:a8d67e8896a4b6b6aee673376669f0144ba278704141950dfa81cf94be9b3a49"
+size = 60844
+mtime_ms = 1790948279463
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d3e15860-4915-48be-9511-cae3b12867bd/0cc2df47-0c7a-48d7-9c19-b1b17f73a459"
+storage_version_token = "1790948302612756"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "cf0lJJrQT145HdktKi0WU"
+uri = "file://artifacts/adaptalyfe-mobile-subscription-changes.zip"
+type = "unspecified"
+title = "Updated Adaptalyfe mobile subscription changes"
+description = "Refreshed ZIP: Flutter now uses only App Store and Google Play billing; website Stripe billing remains unchanged."
+logical_id = "72611db4-32c8-44e2-a149-d96a57c09405"
+content_hash = "sha256:9c012d8ce67083daccb3bb4682d796940224ba8b5d8c072a5decaacf99f9ffad"
+size = 381386
+mtime_ms = 1791023279417
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/72611db4-32c8-44e2-a149-d96a57c09405/f16e3711-c950-423f-b3b8-05f851ee497e"
+storage_version_token = "1791023293193069"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "q-BVg7KhbaTAlD-uJXEBU"
+uri = "file://artifacts/adaptalyfe-full-project-source.zip"
+type = "unspecified"
+title = "Adaptalyfe — full project source"
+description = "Full source archive for the web app, server, shared code, Flutter app, and native Android/iOS projects. Excludes dependencies, Git history, secrets, generated builds, backups, and unreferenced attached assets."
+logical_id = "a1fc12a7-ccb2-4203-8868-a6e2b90afba3"
+content_hash = "sha256:b083c0942057fa5f77d2da46dc95d7d62ef200ed2b4bc1cd401bf6a239bf9dca"
+size = 10117614
+mtime_ms = 1791023941855
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a1fc12a7-ccb2-4203-8868-a6e2b90afba3/bf600ded-bcf3-49e9-9f01-1972011a75a3"
+storage_version_token = "1791023948214520"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "pQpG7F7dgeo-GBSd1jlaT"
+uri = "file://artifacts/adaptalyfe-mobile-auth-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe mobile auth fix — changed files"
+description = "ZIP containing the three Flutter source files changed to fix the startup splash getting stuck after sign-out."
+logical_id = "4a5a9a37-aff5-4d85-8320-25f8ab3a5ed6"
+content_hash = "sha256:78bb4d62a1690ec021db71b743b803c8b24bbfeeb8e09b157e0d36811b561cb1"
+size = 6638
+mtime_ms = 1791028231295
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/4a5a9a37-aff5-4d85-8320-25f8ab3a5ed6/c5b0c915-c884-477c-8db2-19c9b12a29e2"
+storage_version_token = "1791028235953675"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "NpApa0wXqnCSvhMT68Jhx"
+uri = "file://artifacts/adaptalyfe-subscription-plan-screen.zip"
+type = "unspecified"
+title = "Adaptalyfe subscription screen — changed file"
+description = "ZIP containing only the updated Flutter subscription screen. Active accounts now see the Basic, Premium, and Family plan cards, with purchase buttons disabled to prevent a second subscription."
+logical_id = "2f91db1f-b970-48fd-88f7-a04f991f49d7"
+content_hash = "sha256:a32649ac58f8d0d5648cdb2a2fd8e92d60c95d7ca2fd53c15704299de6de4817"
+size = 5851
+mtime_ms = 1791028736311
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2f91db1f-b970-48fd-88f7-a04f991f49d7/f8a61f46-411a-4b5f-8ad8-aebcc10ae099"
+storage_version_token = "1791028740982457"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KrFg8ZYXTLxFHuNMcyVBy"
+uri = "file://exports/subscription-handoff/adaptalyfe-flutter-subscription-patch.zip"
+type = "unspecified"
+title = "Flutter subscription patch — matched to your latest ZIP"
+description = "Replacement and new files under adaptalyfe-flutter-main/, with a file manifest and installation steps. Preserve signing/Firebase files; edit pubspec manually as instructed."
+logical_id = "2ce97c07-d66c-47da-bb83-bba6d0a42f30"
+content_hash = "sha256:79eecc0cde02d339d780d2a7a4221ce1374b9ac9273e08e3a565e467832c71eb"
+size = 75296
+mtime_ms = 1791106209131
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/2ce97c07-d66c-47da-bb83-bba6d0a42f30/97376aaf-9132-47fe-b2b0-e5198292988a"
+storage_version_token = "1791106217500851"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "sgBWz4uK4SELaix5vbBNN"
+uri = "file://exports/subscription-handoff/adaptalyfe-backend-subscription-patch.zip"
+type = "unspecified"
+title = "Backend subscription patch"
+description = "Five backend source/test files for verified entitlement persistence, restore ownership and tier enforcement. Backend fixes are applied locally; deployment to your Railway repository is separate."
+logical_id = "05a924e4-9a34-42c1-9bf3-bdeddfcf6776"
+content_hash = "sha256:449ea5cd7c9202a1d34bb27556aeb6eae259773d66b2bab4fe81b28f8a908583"
+size = 62155
+mtime_ms = 1791106209139
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/05a924e4-9a34-42c1-9bf3-bdeddfcf6776/ee0b3e5f-59b5-4c63-8a9f-d519cf3914cb"
+storage_version_token = "1791106218362942"
+content_type = "application/octet-stream"
+
+[[outputs]]
+id = "csEyqrWEVyo7DQx_4IyVE"
+uri = "file://exports/subscription-handoff/adaptalyfe-railway-build-fix.zip"
+type = "unspecified"
+title = "Railway build fix — public package downloads"
+description = "Corrected package-lock.json, matching package.json, existing nixpacks.toml and railway.json, plus installation instructions. Local production build passed; Railway deployment and live subscription state still need confirmation."
+logical_id = "528d37a2-9e98-48dd-872b-d47cb7ca455b"
+content_hash = "sha256:322135aa4b61945ed041ccdb44bdb28536bc8c7a1d348463f798dc1a78c89faf"
+size = 221358
+mtime_ms = 1791109205455
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/528d37a2-9e98-48dd-872b-d47cb7ca455b/666adb9c-c9cd-4691-8e5c-f3755093a605"
+storage_version_token = "1791109237652171"
+content_type = "application/octet-stream"

@@ -1,0 +1,552 @@
+Launching lib/main.dart on IV2201 (wireless) in debug mode...
+Running Gradle task 'assembleDebug'...
+✓ Built build/app/outputs/flutter-apk/app-debug.apk
+Installing build/app/outputs/flutter-apk/app-debug.apk...
+I/flutter (30659): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(61)] Using the Impeller rendering backend (Vulkan).
+I/FA      (30659): Application backgrounded at: timestamp_millis: 1791123121707
+W/FA      (30659): Failed to retrieve Firebase Instance Id
+Debug service listening on ws://127.0.0.1:62873/TUhzQaSP5QE=/ws
+Syncing files to device IV2201 (wireless)...
+D/ProfileInstaller(30659): Installing profile for com.adaptalyfe.app
+I/flutter (30659): Firebase Analytics skipped: mobile Firebase options are not configured.
+
+======== Exception caught by widgets library =======================================================
+The following assertion was thrown building _SplashView(dirty, dependencies: [MediaQuery]):
+BoxConstraints has a negative minimum height.
+
+The offending constraints were: BoxConstraints(0.0<=w<=Infinity, -48.0<=h<=Infinity; NOT NORMALIZED)
+The relevant error-causing widget was: 
+  _SplashView _SplashView:file:///Users/smartlap/Documents/adaptalyfe-flutter-main/lib/features/splash/presentation/splash_screen.dart:52:18
+When the exception was thrown, this was the stack: 
+#0      BoxConstraints.debugAssertIsValid.<anonymous closure>.throwError (package:flutter/src/rendering/box.dart:548:9)
+#1      BoxConstraints.debugAssertIsValid.<anonymous closure> (package:flutter/src/rendering/box.dart:592:9)
+#2      BoxConstraints.debugAssertIsValid (package:flutter/src/rendering/box.dart:618:6)
+#3      new ConstrainedBox (package:flutter/src/widgets/basic.dart:2701:26)
+#4      _SplashView.build (package:adaptalyfe_mobile/features/splash/presentation/splash_screen.dart:91:21)
+#5      StatelessElement.build (package:flutter/src/widgets/framework.dart:5781:49)
+#6      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5715:15)
+#7      Element.rebuild (package:flutter/src/widgets/framework.dart:5427:7)
+#8      ComponentElement._firstBuild (package:flutter/src/widgets/framework.dart:5697:5)
+#9      ComponentElement.mount (package:flutter/src/widgets/framework.dart:5691:5)
+...     Normal element mounting (9 frames)
+#18     SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (17 frames)
+#35     SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (242 frames)
+#277    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4539:16)
+#278    MultiChildRenderObjectElement.inflateWidget (package:flutter/src/widgets/framework.dart:7159:36)
+#279    MultiChildRenderObjectElement.mount (package:flutter/src/widgets/framework.dart:7175:32)
+...     Normal element mounting (495 frames)
+#774    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (17 frames)
+#791    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (9 frames)
+#800    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (7 frames)
+#807    _InheritedProviderScopeElement.mount (package:provider/src/inherited_provider.dart:424:11)
+...     Normal element mounting (7 frames)
+#814    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (7 frames)
+#821    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (7 frames)
+#828    _NestedHookElement.mount (package:nested/nested.dart:187:11)
+...     Normal element mounting (7 frames)
+#835    _InheritedProviderScopeElement.mount (package:provider/src/inherited_provider.dart:424:11)
+...     Normal element mounting (7 frames)
+#842    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (7 frames)
+#849    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (7 frames)
+#856    _NestedHookElement.mount (package:nested/nested.dart:187:11)
+...     Normal element mounting (7 frames)
+#863    SingleChildWidgetElementMixin.mount (package:nested/nested.dart:222:11)
+...     Normal element mounting (71 frames)
+#934    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4539:16)
+#935    Element.updateChild (package:flutter/src/widgets/framework.dart:4004:18)
+#936    _RawViewElement._updateChild (package:flutter/src/widgets/view.dart:481:16)
+#937    _RawViewElement.mount (package:flutter/src/widgets/view.dart:505:5)
+...     Normal element mounting (15 frames)
+#952    Element.inflateWidget (package:flutter/src/widgets/framework.dart:4539:16)
+#953    Element.updateChild (package:flutter/src/widgets/framework.dart:4004:18)
+#954    RootElement._rebuild (package:flutter/src/widgets/binding.dart:1698:16)
+#955    RootElement.mount (package:flutter/src/widgets/binding.dart:1667:5)
+#956    RootWidget.attach.<anonymous closure> (package:flutter/src/widgets/binding.dart:1620:18)
+#957    BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3046:19)
+#958    RootWidget.attach (package:flutter/src/widgets/binding.dart:1619:13)
+#959    WidgetsBinding.attachToBuildOwner (package:flutter/src/widgets/binding.dart:1357:27)
+#960    WidgetsBinding.attachRootWidget (package:flutter/src/widgets/binding.dart:1342:5)
+#961    WidgetsBinding.scheduleAttachRootWidget.<anonymous closure> (package:flutter/src/widgets/binding.dart:1328:7)
+#965    _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+(elided 3 frames from class _Timer and dart:async-patch)
+====================================================================================================
+
+======== Exception caught by widgets library =======================================================
+The following assertion was thrown building _SplashView(dependencies: [MediaQuery]):
+BoxConstraints has a negative minimum height.
+
+The offending constraints were: BoxConstraints(0.0<=w<=Infinity, -48.0<=h<=Infinity; NOT NORMALIZED)
+The relevant error-causing widget was: 
+  _SplashView _SplashView:file:///Users/smartlap/Documents/adaptalyfe-flutter-main/lib/features/splash/presentation/splash_screen.dart:52:18
+When the exception was thrown, this was the stack: 
+#0      BoxConstraints.debugAssertIsValid.<anonymous closure>.throwError (package:flutter/src/rendering/box.dart:548:9)
+#1      BoxConstraints.debugAssertIsValid.<anonymous closure> (package:flutter/src/rendering/box.dart:592:9)
+#2      BoxConstraints.debugAssertIsValid (package:flutter/src/rendering/box.dart:618:6)
+#3      new ConstrainedBox (package:flutter/src/widgets/basic.dart:2701:26)
+#4      _SplashView.build (package:adaptalyfe_mobile/features/splash/presentation/splash_screen.dart:91:21)
+#5      StatelessElement.build (package:flutter/src/widgets/framework.dart:5781:49)
+#6      ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5715:15)
+#7      Element.rebuild (package:flutter/src/widgets/framework.dart:5427:7)
+#8      StatelessElement.update (package:flutter/src/widgets/framework.dart:5787:5)
+#9      Element.updateChild (package:flutter/src/widgets/framework.dart:3982:15)
+#10     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5738:16)
+#11     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5874:11)
+#12     Element.rebuild (package:flutter/src/widgets/framework.dart:5427:7)
+#13     StatefulElement.update (package:flutter/src/widgets/framework.dart:5899:5)
+#14     Element.updateChild (package:flutter/src/widgets/framework.dart:3982:15)
+#15     ComponentElement.performRebuild (package:flutter/src/widgets/framework.dart:5738:16)
+#16     StatefulElement.performRebuild (package:flutter/src/widgets/framework.dart:5874:11)
+#17     Element.rebuild (package:flutter/src/widgets/framework.dart:5427:7)
+#18     BuildScope._tryRebuild (package:flutter/src/widgets/framework.dart:2694:15)
+#19     BuildScope._flushDirtyElements (package:flutter/src/widgets/framework.dart:2752:11)
+#20     BuildOwner.buildScope (package:flutter/src/widgets/framework.dart:3056:18)
+#21     WidgetsBinding.drawFrame (package:flutter/src/widgets/binding.dart:1240:21)
+#22     RendererBinding._handlePersistentFrameCallback (package:flutter/src/rendering/binding.dart:495:5)
+#23     SchedulerBinding._invokeFrameCallback (package:flutter/src/scheduler/binding.dart:1438:15)
+#24     SchedulerBinding.handleDrawFrame (package:flutter/src/scheduler/binding.dart:1351:9)
+#25     SchedulerBinding.scheduleWarmUpFrame.<anonymous closure> (package:flutter/src/scheduler/binding.dart:1060:9)
+#26     PlatformDispatcher.scheduleWarmUpFrame.<anonymous closure> (dart:ui/platform_dispatcher.dart:889:16)
+#30     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+(elided 3 frames from class _Timer and dart:async-patch)
+====================================================================================================
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:true
+D/VRI[MainActivity](30659): setWindowStopped stopped:false
+I/Quality (30659): Skipped: false 1 cost 18.373846 refreshRate 11160194 bit true processName com.adaptalyfe.app
+D/BufferQueueConsumer(30659): [](id:77c300000000,api:0,p:-1,c:30659) connect: controlledByApp=false
+D/ExtensionsLoader(30659): createInstance(64bit) : createExtendedFactory
+D/ExtensionsLoader(30659): Opened libSchedAssistExtImpl.so
+E/FBI     (30659): Can't load library: dlopen failed: library "libmagtsync.so" not found
+V/ZoomWindowDecorView(30659): setLastReportedMergedConfiguration mZoomDisplayHeight: 2400 getDecorView.181713169
+D/libMEOW (30659): meow new tls: 0xb4000074bff54b80
+D/libMEOW (30659): applied 1 plugins for [com.adaptalyfe.app]:
+D/libMEOW (30659):   plugin 1: [libMEOW_gift.so]: 0xb400007513f537c0
+D/libMEOW (30659): rebuild call chain: 0xb40000748a49c1c0
+D/BufferQueueConsumer(30659): [](id:77c300000001,api:0,p:-1,c:30659) connect: controlledByApp=false
+I/SurfaceView(30659): 55368545 visibleChanged -- surfaceCreated 
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+D/hw-ProcessState(30659): Binder ioctl to enable oneway spam detection failed: Invalid argument
+I/SurfaceView(30659): 55368545 surfaceChanged -- format=4 w=1080 h=2352
+I/Choreographer(30659): Skipped 79 frames!  The application may be doing too much work on its main thread.
+I/Quality (30659): Skipped: false 79 cost 887.64813 refreshRate 11160907 bit true processName com.adaptalyfe.app
+W/libc    (30659): Access denied finding property "persist.vendor.debug.gpud.enable"
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#1](f:0,a:1) acquireNextBufferLocked size=1080x2352 mFrameNumber=1 applyTransaction=true mTimestamp=148488216573542(auto) mPendingTransactions.size=0 graphicBufferId=131679402328074 transform=0
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+I/Quality (30659): Skipped: false 10 cost 173.97467 refreshRate 16734428 bit true processName com.adaptalyfe.app
+D/VRI[MainActivity](30659): registerCallbacksForSync syncBuffer=false
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=148488422414542(auto) mPendingTransactions.size=0 graphicBufferId=131679402328079 transform=0
+D/VRI[MainActivity](30659): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true syncBuffer=false
+W/Parcel  (30659): Expecting binder but got null!
+D/VRI[MainActivity](30659): draw finished.
+D/VRI[MainActivity](30659): onFocusEvent true
+D/OplusInputMethodManagerInternal(30659): get inputMethodManager extension: com.android.internal.view.IInputMethodManager$Stub$Proxy@b4399b1
+I/Quality (30659): Skipped: false 4 cost 76.04624 refreshRate 16666667 bit true processName com.adaptalyfe.app
+D/InputMethodManager(30659): showSoftInput() view=io.flutter.embedding.android.FlutterView{d7bd99c VFE...... .F....ID 0,0-1080,2352 #2 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT
+I/Quality (30659): Skipped: false 2 cost 48.708874 refreshRate 16666667 bit true processName com.adaptalyfe.app
+I/AssistStructure(30659): Flattened final assist data: 492 bytes, containing 1 windows, 3 views
+D/InputConnectionAdaptor(30659): The input method toggled cursor monitoring on
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/InsetsController(30659): show(ime(), fromIme=true)
+I/.adaptalyfe.app(30659): Background concurrent copying GC freed 6371KB AllocSpace bytes, 17(724KB) LOS objects, 57% free, 4549KB/10MB, paused 104us,39us total 274.209ms
+W/FinalizerDaemon(30659): type=1400 audit(0.0:15614): avc: denied { getopt } for path="/dev/socket/usap_pool_primary" scontext=u:r:untrusted_app:s0:c20,c257,c512,c768 tcontext=u:r:zygote:s0 tclass=unix_stream_socket permissive=0 app=com.google.android.apps.docs
+D/InputMethodManager(30659): showSoftInput() view=io.flutter.embedding.android.FlutterView{d7bd99c VFE...... .F...... 0,0-1080,2352 #2 aid=1073741824} flags=0 reason=SHOW_SOFT_INPUT
+D/InputConnectionAdaptor(30659): The input method toggled cursor monitoring on
+I/AssistStructure(30659): Flattened final assist data: 492 bytes, containing 1 windows, 3 views
+D/InputConnectionAdaptor(30659): The input method toggled cursor monitoring off
+D/InputConnectionAdaptor(30659): The input method toggled cursor monitoring on
+D/InsetsController(30659): show(ime(), fromIme=true)
+D/InputConnectionAdaptor(30659): The input method toggled cursor monitoring off
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/CompatibilityChangeReporter(30659): Compat change id reported: 194532703; UID 10276; state: ENABLED
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+I/flutter (30659): [Subscription IAP] Automatic Android purchase restore requested.
+I/flutter (30659): [Subscription IAP] Purchase update received: productId=adaptalyfe_premium_monthly, status=restored, source=google_play
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_family_monthly, adaptalyfe_premium_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+I/TRuntime.CctTransportBackend(30659): Making request to: https://firebaselogging.googleapis.com/v0cc/log/batch?format=json_proto3
+W/FeatureFlagsImplExport(30659): java.lang.NoClassDefFoundError: Class not found using the boot class loader; no stack trace available
+I/TRuntime.CctTransportBackend(30659): Status Code: 200
+D/OplusSystemUINavigationGesture(30659): [GESTURE_SIDE_BAR] swipe from 1
+D/OplusSystemUINavigationGesture(30659): [GESTURE_SIDE_BAR] Hit Side Bar Region !
+D/OplusSystemUINavigationGesture(30659): [GESTURE_SIDE_BAR] trigger!
+D/CompatibilityChangeReporter(30659): Compat change id reported: 150939131; UID 10276; state: ENABLED
+D/VRI[MainActivity](30659): onFocusEvent false
+D/VRI[MainActivity](30659): onFocusEvent true
+D/LongshotDump(30659): dumpViewRoot:null
+D/VRI[MainActivity](30659): onFocusEvent false
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_family_monthly, adaptalyfe_premium_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/LongshotDump(30659): mAttachInfo.mScrollCaptureInternal is null
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+W/InputEventReceiver(30659): Attempted to finish an input event that is not in progress.
+D/LongshotDump(30659): dumpViewRoot:[longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args: [longshot, scroll_capture=true, scroll_capture_delay=0, scroll_reset=false]
+V/LongshotDump(30659): args:: longshot
+V/LongshotDump(30659): args:: scroll_capture=true
+V/LongshotDump(30659): args:: scroll_capture_delay=0
+V/LongshotDump(30659): args:: scroll_reset=false
+D/ScrollCaptureInternalExtImpl(30659): setExtras: extras contains EXTRA_SCROLL_CAPTURE_DELAY
+D/VRI[MainActivity](30659): onFocusEvent true
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_family_monthly, adaptalyfe_premium_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/OplusSystemUINavigationGesture(30659): [GESTURE_BUTTON] swipe from 1
+D/OplusSystemUINavigationGesture(30659): [GESTURE_BUTTON] Hit Gesture Region !
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/VRI[MainActivity](30659): onFocusEvent false
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:false
+D/VRI[MainActivity](30659): setWindowStopped stopped:true
+I/SurfaceView(30659): 55368545 surfaceDestroyed
+E/FA      (30659): Missing google_app_id. Firebase Analytics disabled. See https://goo.gl/NAOOOI
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#1](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#1(BLAST Consumer)1](id:77c300000001,api:0,p:-1,c:30659) disconnect
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#0](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [VRI[MainActivity]#0(BLAST Consumer)0](id:77c300000000,api:0,p:-1,c:30659) disconnect
+I/FA      (30659): Application backgrounded at: timestamp_millis: 1791123252439
+W/FA      (30659): Failed to retrieve Firebase Instance Id
+D/ActivityThread(30659): do gfx trim 40 success
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:true
+D/VRI[MainActivity](30659): setWindowStopped stopped:false
+W/OnBackInvokedCallback(30659): OnBackInvokedCallback is not enabled for the application.
+W/OnBackInvokedCallback(30659): Set 'android:enableOnBackInvokedCallback="true"' in the application manifest.
+D/BufferQueueConsumer(30659): [](id:77c300000002,api:0,p:-1,c:30659) connect: controlledByApp=false
+E/IPCThreadState(30659): attemptIncStrongHandle(74): Not supported
+D/BufferQueueConsumer(30659): [](id:77c300000003,api:0,p:-1,c:30659) connect: controlledByApp=false
+I/SurfaceView(30659): 55368545 visibleChanged -- surfaceCreated 
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+I/SurfaceView(30659): 55368545 surfaceChanged -- format=4 w=1080 h=2352
+D/VRI[MainActivity](30659): registerCallbacksForSync syncBuffer=false
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#2](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=148869677317564(auto) mPendingTransactions.size=0 graphicBufferId=131679402328098 transform=0
+D/VRI[MainActivity](30659): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true syncBuffer=false
+D/VRI[MainActivity](30659): draw finished.
+D/VRI[MainActivity](30659): onFocusEvent true
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#3](f:0,a:1) acquireNextBufferLocked size=1080x2352 mFrameNumber=1 applyTransaction=true mTimestamp=148869717396411(auto) mPendingTransactions.size=0 graphicBufferId=131679402328093 transform=0
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_family_monthly, adaptalyfe_premium_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+E/FA      (30659): Missing google_app_id. Firebase Analytics disabled. See https://goo.gl/NAOOOI
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:false
+D/VRI[MainActivity](30659): onFocusEvent false
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:true
+I/SurfaceView(30659): 55368545 surfaceDestroyed
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#3](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#3(BLAST Consumer)3](id:77c300000003,api:0,p:-1,c:30659) disconnect
+D/SurfaceView(30659): 222337365positionLost mSurfaceControl is null return;
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#2](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [VRI[MainActivity]#2(BLAST Consumer)2](id:77c300000002,api:0,p:-1,c:30659) disconnect
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/BufferQueueConsumer(30659): [](id:77c300000004,api:0,p:-1,c:30659) connect: controlledByApp=false
+E/IPCThreadState(30659): attemptIncStrongHandle(78): Not supported
+D/BufferQueueConsumer(30659): [](id:77c300000005,api:0,p:-1,c:30659) connect: controlledByApp=false
+I/SurfaceView(30659): 55368545 visibleChanged -- surfaceCreated 
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 38
+E/gralloc4(30659): ERROR: Format allocation info not found for format: 0
+E/gralloc4(30659): Invalid base format! req_base_format = 0x0, req_format = 0x38, type = 0x0
+E/gralloc4(30659): ERROR: Unrecognized and/or unsupported format 0x38 and usage 0xb00
+E/Gralloc4(30659): isSupported(1, 1, 56, 1, ...) failed with 5
+E/GraphicBufferAllocator(30659): Failed to allocate (4 x 4) layerCount 1 format 56 usage b00: 5
+E/AHardwareBuffer(30659): GraphicBuffer(w=4, h=4, lc=1) failed (Unknown error -5), handle=0x0
+I/SurfaceView(30659): 55368545 surfaceChanged -- format=4 w=1080 h=2352
+D/VRI[MainActivity](30659): registerCallbacksForSync syncBuffer=false
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#4](f:0,a:1) acquireNextBufferLocked size=1080x2400 mFrameNumber=1 applyTransaction=true mTimestamp=148914201701875(auto) mPendingTransactions.size=0 graphicBufferId=131679402328115 transform=0
+D/VRI[MainActivity](30659): Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true syncBuffer=false
+D/VRI[MainActivity](30659): draw finished.
+D/VRI[MainActivity](30659): onFocusEvent true
+D/VRI[MainActivity](30659): onFocusEvent false
+D/VRI[MainActivity](30659): onFocusEvent true
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#5](f:0,a:1) acquireNextBufferLocked size=1080x2352 mFrameNumber=1 applyTransaction=true mTimestamp=148914281902490(auto) mPendingTransactions.size=0 graphicBufferId=131679402328110 transform=0
+I/flutter (30659): [Subscription IAP] Requested Product IDs: {adaptalyfe_basic_monthly, adaptalyfe_premium_monthly, adaptalyfe_family_monthly}
+I/flutter (30659): [Subscription IAP] Store Available: true (Google Play)
+I/flutter (30659): [Subscription IAP] Returned Product IDs: [adaptalyfe_basic_monthly, adaptalyfe_family_monthly, adaptalyfe_premium_monthly]
+I/flutter (30659): [Subscription IAP] Not Found Product IDs: []
+I/libPerfCtl(30659): fbcNotifySbeRescue ret=-1
+I/Quality (30659): Skipped: false 6 cost 110.46019 refreshRate 16666667 bit true processName com.adaptalyfe.app
+I/libPerfCtl(30659): fbcNotifySbeRescue ret=-1
+I/flutter (30659): [Subscription IAP] Purchase update received: productId=adaptalyfe_premium_monthly, status=restored, source=google_play
+D/VRI[MainActivity](30659): dispatchAppVisibility visible:false
+E/FA      (30659): Missing google_app_id. Firebase Analytics disabled. See https://goo.gl/NAOOOI
+D/VRI[MainActivity](30659): onFocusEvent false
+I/SurfaceView(30659): 55368545 surfaceDestroyed
+D/BLASTBufferQueue(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#5](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [SurfaceView[com.adaptalyfe.app/com.adaptalyfe.app.MainActivity]#5(BLAST Consumer)5](id:77c300000005,api:0,p:-1,c:30659) disconnect
+D/SurfaceView(30659): 33966119positionLost mSurfaceControl is null return;
+D/BLASTBufferQueue(30659): [VRI[MainActivity]#4](f:0,a:2) destructor()
+D/BufferQueueConsumer(30659): [VRI[MainActivity]#4(BLAST Consumer)4](id:77c300000004,api:0,p:-1,c:30659) disconnect
+D/VRI[MainActivity](30659): setWindowStopped stopped:true
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802
+I/FA      (30659): Application backgrounded at: timestamp_millis: 1791123592978
+W/FA      (30659): Failed to retrieve Firebase Instance Id
+D/ViewRootImplExtImpl(30659): onDisplayChanged 0 for VRI android.view.ViewRootImpl@5187802

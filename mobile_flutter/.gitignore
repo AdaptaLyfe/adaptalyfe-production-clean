@@ -16,6 +16,18 @@ android/local.properties
 ios/Flutter/ephemeral/
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
+.flutter-plugins-dependencies
+
+# Android build caches and release signing material
+android/.gradle/
+android/.kotlin/
+android/**/build/
+android/key.properties
+*.jks
+*.keystore
+
+# iOS generated dependencies
+ios/Pods/
 
 # Operating system files
 .DS_Store

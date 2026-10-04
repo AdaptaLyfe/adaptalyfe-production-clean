@@ -22,7 +22,7 @@ class PurchaseService {
       '[Subscription IAP] Requested Product IDs: $requestedProductIds',
     );
     try {
-      final available = await _store.isAvailable();
+      final available = await _store.isAvailable().timeout(const Duration(seconds: 15));
       debugPrint('[Subscription IAP] Store Available: $available ($storeName)');
       if (!available) {
         return PurchaseAvailability(
@@ -35,7 +35,7 @@ class PurchaseService {
 
       final response = await _store.queryProductDetails(
         requestedProductIds,
-      );
+      ).timeout(const Duration(seconds: 15));
       final products = response.productDetails;
       final returnedProductIds = products.map((product) => product.id).toList();
       debugPrint(
@@ -96,11 +96,12 @@ class PurchaseService {
     );
   }
 
-  Future<void> restore() => _store.restorePurchases();
+  Future<void> restore() =>
+      _store.restorePurchases().timeout(const Duration(seconds: 20));
 
   Future<void> complete(PurchaseDetails purchase) async {
     if (purchase.pendingCompletePurchase) {
-      await _store.completePurchase(purchase);
+      await _store.completePurchase(purchase).timeout(const Duration(seconds: 20));
     }
   }
 

@@ -28,9 +28,21 @@ For production backups, `NEON_DATABASE_URL` may be used with `pg_dump` after con
 DATABASE_URL, OPENAI_API_KEY, SESSION_SECRET, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, VITE_STRIPE_PUBLIC_KEY, APPLE_SHARED_SECRET, GOOGLE_PLAY_SERVICE_ACCOUNT_KEY, NODE_ENV
 
 ## Key decisions
-- subscriptionStatus='active' is trusted as the sole auth gate on both client and server — no stripeSubscriptionId or expiry date required.
 - Mobile bottom nav uses Wouter setLocation (not window.history.replaceState) for Android WebView compatibility.
 - Daily guide sends browser localDate/localTime/timezone in POST body so AI uses user's local time, not server UTC.
+
+## Google Play entitlement verification
+Google Play access is based on the server's current Android Publisher subscription state and verified expiry, not a stored `active` status alone. A canceled subscription retains access only through its verified expiry; expired, on-hold, paused, pending, unknown-product, and unverified states do not grant access.
+
+**Why:** A delayed or missed real-time notification can leave a stored status stale, and treating cancellation as immediate expiry removes access users already paid for.
+
+**How to apply:** Recheck Google Play from the authenticated subscription refresh path, persist the result on the existing user record, and keep purchase/restore verification server-authoritative. Preserve provider-specific handling for Apple and Stripe.
+
+Google Play RTDN revocation and voided-purchase events may force immediate revocation only when the Pub/Sub OIDC token is verified against `GOOGLE_PLAY_PUBSUB_AUDIENCE` and `GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL`. Without those settings, updates still follow the state returned by Google Play's API.
+
+**Why:** The notification endpoint is internet-reachable; trusting an unauthenticated event type could let a forged push revoke a user's entitlement.
+
+**How to apply:** Configure the audience and push service-account email to match the Pub/Sub subscription before relying on immediate revoke/refund handling.
 
 ## Production schema changes
 Replit-managed production schema changes are applied through the Publish schema-diff flow; the production database query interface is read-only for agents.
@@ -39,12 +51,12 @@ Replit-managed production schema changes are applied through the Publish schema-
 
 **How to apply:** Update the shared Drizzle schema and migration source, verify development, then publish and accept the non-destructive table/column creation prompt.
 
-## Railway staging schema migrations
-Railway staging uses an external database and is not managed by Replit's Publish schema-diff flow. Apply narrow SQL migrations explicitly in the Railway service environment using its app `DATABASE_URL`; do not run DDL automatically on every deploy or startup.
+## Railway staging database
+Railway's `ai-staging` app shares the Replit production PostgreSQL database (user-confirmed); do not assume staging has an isolated database.
 
-**Why:** Railway's build/start configuration does not apply repository SQL migrations, and the Replit development database can already be migrated while staging remains stale.
+**Why:** Staging login reported a missing production-schema column, and read-only Replit schema checks confirmed the column exists in development but not production.
 
-**How to apply:** Check the live staging schema (a dated backup is evidence, not proof of current state), verify the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
+**How to apply:** Treat any change as a production schema change. Use Replit's Publish schema-diff flow, review the entire diff because it may include unrelated pending schema additions, and never run direct SQL against the shared production database.
 
 ## Development schema drift
 The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.

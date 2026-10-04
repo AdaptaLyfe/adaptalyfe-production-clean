@@ -22,6 +22,12 @@ void main() {
         SubscriptionStorePlatform.googlePlay,
       );
       expect(subscriptionStorePlatformFromSource('unknown'), isNull);
+      expect(subscriptionStorePlatformFromSource('GooglePlay'),
+          SubscriptionStorePlatform.googlePlay);
+      expect(subscriptionStorePlatformFromSource('AppStore'),
+          SubscriptionStorePlatform.appStore);
+      expect(subscriptionStorePlatformFromSource(' google-play '),
+          SubscriptionStorePlatform.googlePlay);
     });
 
     test('deduplicates repeated store transaction updates', () {

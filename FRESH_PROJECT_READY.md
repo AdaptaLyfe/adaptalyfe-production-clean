@@ -38,7 +38,7 @@
 - Daily task management with points system
 - Medical information tracking
 - Academic planning tools
-- Financial management with Plaid integration
+- Financial management with manually managed bank-account details
 - Mood tracking and wellness features
 - Caregiver communication system
 - Safety and emergency features

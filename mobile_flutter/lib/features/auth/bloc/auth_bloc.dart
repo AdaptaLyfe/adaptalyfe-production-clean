@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../models/user_model.dart';
 import '../data/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc(this.repository) : super(const AuthInitial()) {
+  AuthBloc(
+    this.repository, {
+    this.sessionCheckTimeout = const Duration(seconds: 20),
+  }) : super(const AuthInitial()) {
     on<LoginSubmitted>(_onLoginSubmitted);
     on<SignupSubmitted>(_onSignupSubmitted);
     on<CheckAuthentication>(_onCheckAuthentication);
@@ -15,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   final AuthRepository repository;
+  final Duration sessionCheckTimeout;
 
   Future<void> _onLoginSubmitted(
     LoginSubmitted event,
@@ -66,17 +73,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthChecking());
 
-    if (!await repository.hasSessionToken()) {
-      emit(const Unauthenticated());
-      return;
-    }
-
     try {
-      final user = await repository.getCurrentUser();
+      final user = await _readSavedSessionUser().timeout(sessionCheckTimeout);
+      if (user == null) {
+        emit(const Unauthenticated());
+        return;
+      }
+
       emit(Authenticated(user));
     } on ApiException catch (error) {
       if (error.type == ApiErrorType.unauthorized) {
-        await repository.clearLocalSession();
+        try {
+          await repository.clearLocalSession().timeout(sessionCheckTimeout);
+        } catch (_) {
+          // A failed secure-storage cleanup must not leave the splash screen
+          // waiting forever after the server has rejected the session.
+        }
         emit(const Unauthenticated());
         return;
       }
@@ -85,6 +97,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (error) {
       emit(AuthError(_messageFor(error)));
     }
+  }
+
+  Future<UserModel?> _readSavedSessionUser() async {
+    if (!await repository.hasSessionToken()) return null;
+    return repository.getCurrentUser();
   }
 
   Future<void> _onRefreshAuthentication(
@@ -140,6 +157,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   String _messageFor(Object error) {
+    if (error is TimeoutException) {
+      return 'Checking your session took too long. Check your connection and '
+          'try again, or sign in again.';
+    }
+
     if (error is ApiException) {
       if (error.type == ApiErrorType.unauthorized) {
         return 'Invalid email or password. Please try again.';

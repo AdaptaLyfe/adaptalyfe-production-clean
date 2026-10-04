@@ -13,7 +13,6 @@ const subscriptionPlans = <SubscriptionPlan>[
       'Financial tracking & bill reminders',
       '1 caregiver connection',
       'Basic reminders & notifications',
-      '7-day free trial',
       'Email support',
     ],
   ),
@@ -86,6 +85,7 @@ class SubscriptionModel extends Equatable {
     required this.status,
     required this.billingCycle,
     this.subscriptionPlatform,
+    this.isAccountTrial = false,
     this.currentPeriodStart,
     this.currentPeriodEnd,
     this.trialDaysLeft,
@@ -98,6 +98,7 @@ class SubscriptionModel extends Equatable {
   final String status;
   final String billingCycle;
   final String? subscriptionPlatform;
+  final bool isAccountTrial;
   final DateTime? currentPeriodStart;
   final DateTime? currentPeriodEnd;
   final int? trialDaysLeft;
@@ -106,8 +107,28 @@ class SubscriptionModel extends Equatable {
 
   bool get isActive => status == 'active';
   bool get isTrialing => status == 'trialing';
+  bool get isCancelled => status == 'cancelled';
+  bool get isInGracePeriod => status == 'in_grace_period';
   bool get isExpired => status == 'expired';
-  bool get grantsAccess => isActive || isTrialing;
+  bool get _hasUnexpiredPeriod =>
+      currentPeriodEnd?.isAfter(DateTime.now()) == true;
+  bool get _isNativeStore =>
+      subscriptionPlatform == 'app_store' ||
+      subscriptionPlatform == 'google_play';
+  bool get grantsAccess {
+    if (_isNativeStore) {
+      return const ['basic', 'premium', 'family'].contains(planType.toLowerCase()) &&
+          _hasUnexpiredPeriod &&
+          (isActive || isCancelled || isInGracePeriod);
+    }
+    if (currentPeriodEnd != null && !_hasUnexpiredPeriod) return false;
+    return isActive || isTrialing || (isCancelled && _hasUnexpiredPeriod);
+  }
+  bool get hasPremiumAccess {
+    if (!grantsAccess) return false;
+    final tier = planType.toLowerCase();
+    return tier == 'premium' || tier == 'family';
+  }
 
   String get platformLabel {
     switch (subscriptionPlatform) {
@@ -125,18 +146,36 @@ class SubscriptionModel extends Equatable {
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
     final id = rawId is int ? rawId : int.tryParse('$rawId') ?? 0;
+    final subscriptionPlatform = json['subscriptionPlatform'] as String?;
     return SubscriptionModel(
       id: id,
       planType: '${json['planType'] ?? 'free'}',
       status: '${json['status'] ?? 'expired'}',
       billingCycle: '${json['billingCycle'] ?? 'monthly'}',
-      subscriptionPlatform: json['subscriptionPlatform'] as String?,
+      subscriptionPlatform: subscriptionPlatform,
+      isAccountTrial: _isAccountTrial(json, subscriptionPlatform),
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
       usageStats: _map(json['usageStats']),
       features: _map(json['features']),
     );
+  }
+
+  static bool _isAccountTrial(
+    Map<String, dynamic> json,
+    String? subscriptionPlatform,
+  ) {
+    final explicitValue = json['isAccountTrial'];
+    if (explicitValue is bool) return explicitValue;
+
+    // Older servers omitted isAccountTrial. Only infer the free account trial
+    // when it has no billing provider and the server reports days remaining.
+    final daysLeft = _int(json['trialDaysLeft']);
+    return json['status'] == 'trialing' &&
+        (subscriptionPlatform == null || subscriptionPlatform.trim().isEmpty) &&
+        daysLeft != null &&
+        daysLeft > 0;
   }
 
   static DateTime? _date(Object? value) {
@@ -162,6 +201,7 @@ class SubscriptionModel extends Equatable {
         status,
         billingCycle,
         subscriptionPlatform,
+        isAccountTrial,
         currentPeriodStart,
         currentPeriodEnd,
         trialDaysLeft,
@@ -176,53 +216,40 @@ class PurchaseVerification extends Equatable {
     this.message,
     this.planType,
     this.expiresAt,
+    this.status,
+    this.subscription,
   });
 
   final bool success;
   final String? message;
   final String? planType;
   final DateTime? expiresAt;
+  final String? status;
+  final SubscriptionModel? subscription;
 
   factory PurchaseVerification.fromJson(Map<String, dynamic> json) {
+    final rawSubscription = json['subscription'];
     return PurchaseVerification(
       success: json['success'] == true || json['restored'] == true,
       message: json['message'] as String?,
       planType: (json['planType'] ?? json['plan']) as String?,
       expiresAt: SubscriptionModel._date(json['expiresAt']),
-    );
-  }
-
-  @override
-  List<Object?> get props => [success, message, planType, expiresAt];
-}
-
-class StripeSubscriptionSetup extends Equatable {
-  const StripeSubscriptionSetup({
-    required this.subscriptionId,
-    required this.clientSecret,
-    required this.intentType,
-    this.requiresPayment = true,
-  });
-
-  final String subscriptionId;
-  final String? clientSecret;
-  final String? intentType;
-  final bool requiresPayment;
-
-  factory StripeSubscriptionSetup.fromJson(Map<String, dynamic> json) {
-    return StripeSubscriptionSetup(
-      subscriptionId: '${json['subscriptionId'] ?? ''}',
-      clientSecret: json['clientSecret'] as String?,
-      intentType: json['intentType'] as String?,
-      requiresPayment: json['requiresPayment'] != false,
+      status: json['status'] as String?,
+      subscription: rawSubscription is Map
+          ? SubscriptionModel.fromJson(
+              Map<String, dynamic>.from(rawSubscription),
+            )
+          : null,
     );
   }
 
   @override
   List<Object?> get props => [
-        subscriptionId,
-        clientSecret,
-        intentType,
-        requiresPayment,
+        success,
+        message,
+        planType,
+        expiresAt,
+        status,
+        subscription,
       ];
 }

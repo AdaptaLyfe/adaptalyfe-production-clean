@@ -16,6 +16,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/password_recovery_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
 import '../features/academic/bloc/academic_bloc.dart';
+import '../features/subscription/presentation/premium_feature_gate.dart';
 import '../features/academic/bloc/academic_event.dart';
 import '../features/academic/data/academic_api.dart';
 import '../features/academic/data/academic_repository.dart';
@@ -42,6 +43,7 @@ import '../features/financial/bloc/financial_event.dart';
 import '../features/financial/data/financial_api.dart';
 import '../features/financial/data/financial_repository.dart';
 import '../features/financial/presentation/financial_screen.dart';
+import '../features/feature_catalog/presentation/features_screen.dart';
 import '../features/home/bloc/home_bloc.dart';
 import '../features/home/bloc/home_event.dart';
 import '../features/home/data/home_quick_actions_store.dart';
@@ -99,7 +101,6 @@ import '../features/splash/presentation/splash_screen.dart';
 import '../features/subscription/bloc/subscription_bloc.dart';
 import '../features/subscription/bloc/subscription_event.dart';
 import '../features/subscription/data/purchase_service.dart';
-import '../features/subscription/data/stripe_payment_service.dart';
 import '../features/subscription/data/subscription_api.dart';
 import '../features/subscription/data/subscription_repository.dart';
 import '../features/subscription/presentation/subscription_screen.dart';
@@ -120,6 +121,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
         return location == '/splash' || isPasswordRecoveryRoute
             ? null
             : '/splash';
+      }
+
+      if (location == '/splash' && authState is Unauthenticated) {
+        return '/login';
       }
 
       // Login and signup own their post-auth destination (including
@@ -219,7 +224,6 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           create: (_) => SubscriptionBloc(
             _createSubscriptionRepository(),
             PurchaseService(),
-            StripePaymentService(),
           )..add(const SubscriptionStarted()),
           child: AppNavigationShell(
             location: state.uri.path,
@@ -227,6 +231,10 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
         ),
         routes: [
+          GoRoute(
+            path: '/features',
+            builder: (context, state) => const FeaturesScreen(),
+          ),
           GoRoute(
             path: '/home',
             builder: (context, state) {
@@ -339,10 +347,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
           GoRoute(
             path: '/academic-planner',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AcademicBloc(_createAcademicRepository())
-                ..add(const AcademicStarted()),
-              child: const AcademicPlannerScreen(),
+            builder: (context, state) => PremiumFeatureGate(
+              title: 'Academic planner',
+              paywall: const SubscriptionFeaturePaywall(title: 'Academic planner'),
+              child: BlocProvider(
+                create: (_) => AcademicBloc(_createAcademicRepository())
+                  ..add(const AcademicStarted()),
+                child: const AcademicPlannerScreen(),
+              ),
             ),
           ),
           GoRoute(

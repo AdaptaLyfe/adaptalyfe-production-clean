@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, jsonb, decimal, date, time, numeric, json, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import {
@@ -20,8 +21,13 @@ export const users = pgTable("users", {
   subscriptionTier: text("subscription_tier").notNull().default("free"), // "free", "premium", "family"
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  subscriptionStatus: text("subscription_status").default("inactive"), // "active", "inactive", "cancelled", "past_due"
+  subscriptionStatus: text("subscription_status").default("inactive"), // Includes active, cancelled, in_grace_period, pending, past_due, expired, revoked, and inactive.
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  subscriptionStartDate: timestamp("subscription_start_date"),
+  subscriptionProductId: text("subscription_product_id"),
+  subscriptionTransactionId: text("subscription_transaction_id"),
+  subscriptionAutoRenew: boolean("subscription_auto_renew"),
+  subscriptionVerifiedAt: timestamp("subscription_verified_at"),
   subscriptionPlatform: text("subscription_platform").default("web"), // "web", "google_play", "app_store"
   googlePlayPurchaseToken: text("google_play_purchase_token"),
   googlePlayOrderId: text("google_play_order_id"),
@@ -31,7 +37,17 @@ export const users = pgTable("users", {
   createdBy: integer("created_by"), // Caregiver who created this user account
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("users_google_play_purchase_token_uq")
+    .on(table.googlePlayPurchaseToken)
+    .where(sql`${table.googlePlayPurchaseToken} IS NOT NULL`),
+  uniqueIndex("users_apple_original_transaction_id_uq")
+    .on(table.appleOriginalTransactionId)
+    .where(sql`${table.appleOriginalTransactionId} IS NOT NULL`),
+  uniqueIndex("users_store_transaction_id_uq")
+    .on(table.subscriptionPlatform, table.subscriptionTransactionId)
+    .where(sql`${table.subscriptionTransactionId} IS NOT NULL`),
+]);
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: serial("id").primaryKey(),
@@ -1129,15 +1145,15 @@ export const userPreferences = pgTable("user_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Payment Analytics - Track payment method preferences and Plaid usage
+// Payment analytics; obsolete Plaid columns remain mapped to preserve existing database data.
 export const paymentAnalytics = pgTable("payment_analytics", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  eventType: text("event_type").notNull(), // 'method_selected', 'plaid_connection', 'payment_processed', 'link_clicked', 'api_call'
+  eventType: text("event_type").notNull(), // 'method_selected', 'payment_processed', 'link_clicked'
   paymentMethod: text("payment_method"), // 'link', 'autopay'
   billId: integer("bill_id").references(() => bills.id, { onDelete: "cascade" }),
-  plaidApiCall: text("plaid_api_call"), // 'link_token', 'account_balance', 'payment_initiate', etc.
-  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 4 }), // Cost in dollars for Plaid API calls
+  legacyApiCall: text("plaid_api_call"),
+  estimatedCost: decimal("estimated_cost", { precision: 10, scale: 4 }),
   metadata: json("metadata"), // Additional context
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -1917,6 +1933,21 @@ export const subscriptionUsage = pgTable("subscription_usage", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const subscriptionNotificationEvents = pgTable("subscription_notification_events", {
+  id: serial("id").primaryKey(),
+  platform: text("platform").notNull(),
+  eventId: text("event_id").notNull(),
+  eventType: text("event_type").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("subscription_notification_events_platform_event_uq")
+    .on(table.platform, table.eventId),
+]);
+
+export type SubscriptionNotificationEvent =
+  typeof subscriptionNotificationEvents.$inferSelect;
 
 export const paymentHistory = pgTable("payment_history", {
   id: serial("id").primaryKey(),

@@ -6,12 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
 import '../../../core/layout/responsive.dart';
-import '../../auth/bloc/auth_bloc.dart';
-import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
-import '../data/stripe_payment_service.dart';
 import '../data/subscription_platform_policy.dart';
 import '../models/subscription_models.dart';
 
@@ -61,12 +58,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         if (state.sessionInvalid) {
           if (context.mounted) context.go('/login');
           return;
-        }
-        if (state.shouldRefreshAuthentication) {
-          context.read<AuthBloc>().add(const RefreshAuthentication());
-          context
-              .read<SubscriptionBloc>()
-              .add(const SubscriptionAuthenticationRefreshHandled());
         }
         final url = state.managementUrl;
         if (url != null) {
@@ -159,6 +150,9 @@ class _SubscriptionBody extends StatelessWidget {
             onRetry: () => context
                 .read<SubscriptionBloc>()
                 .add(const RefreshSubscription()),
+            onRestore: usesNativeStoreBilling
+                ? () => context.read<SubscriptionBloc>().add(const RestorePurchasesRequested())
+                : null,
           );
         }
 
@@ -180,52 +174,48 @@ class _SubscriptionBody extends StatelessWidget {
                ),
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
-                if (!state.hasActiveSubscription) ...[
-                  const SizedBox(height: 14),
-                  _StripeRecoveryCard(
-                    enabled: !state.isBusy,
-                    onPressed: () {
-                      context
-                          .read<SubscriptionBloc>()
-                          .add(const RecoverSubscriptionRequested());
-                    },
-                  ),
-                ],
                 const SizedBox(height: 16),
-                if (state.subscription?.isActive == true)
+                if (state.hasActiveSubscription)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
                 else
                   _TrialCard(subscription: state.subscription),
                 const SizedBox(height: 20),
                 if (state.status == SubscriptionStatus.purchasing ||
-                    state.status == SubscriptionStatus.restoring ||
-                    state.status == SubscriptionStatus.recovering)
+                    state.status == SubscriptionStatus.restoring)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 16),
                     child: LinearProgressIndicator(),
                   ),
-                if (state.hasActiveSubscription)
-                  _ManageCard(state: state)
-                else
-                  ...state.plans.map(
-                    (plan) => Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: _PlanCard(
-                        plan: plan,
-                        product: state.products[plan.productId],
-                        state: state,
-                        selected: state.selectedPlanId == plan.id,
-                        onSelect: () => context
-                            .read<SubscriptionBloc>()
-                            .add(PlanSelected(plan.id)),
-                        onPurchase: () => context
-                            .read<SubscriptionBloc>()
-                            .add(PlanPurchaseRequested(plan.id)),
-                      ),
+                if (state.hasActiveSubscription) _ManageCard(state: state),
+                if (state.purchaseNeedsVerification)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'A store purchase is pending or needs verification. '
+                      'Do not buy again. Use Restore below with the same '
+                      'Google Play account and Adaptalyfe account.',
                     ),
                   ),
+                ...state.plans.map(
+                  (plan) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _PlanCard(
+                      plan: plan,
+                      product: state.products[plan.productId],
+                      state: state,
+                      selected: state.selectedPlanId == plan.id,
+                      onSelect: () => context
+                          .read<SubscriptionBloc>()
+                          .add(PlanSelected(plan.id)),
+                      onPurchase: () => context
+                          .read<SubscriptionBloc>()
+                          .add(PlanPurchaseRequested(plan.id)),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                if (usesNativeStoreBilling) ...[
+                if (usesNativeStoreBilling &&
+                    !state.hasActiveSubscription) ...[
                   _RestoreCard(
                     enabled: !state.isBusy,
                     onPressed: () {
@@ -266,7 +256,8 @@ class _SubscriptionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = subscription?.grantsAccess == true;
+    final active = subscription?.grantsAccess == true &&
+        subscription?.isAccountTrial != true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -281,7 +272,8 @@ class _SubscriptionHeader extends StatelessWidget {
         const SizedBox(height: 7),
         Text(
           active
-              ? 'Your Adaptalyfe access works across your devices.'
+              ? "You're subscribed to the ${_titleCase(subscription!.planType)} "
+                  'Plan. Review the plans below.'
               : 'Unlock the tools that help you build independence every day.',
           style: const TextStyle(color: Color(0xFF4B5563), fontSize: 15),
         ),
@@ -297,6 +289,18 @@ class _ActiveSubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = subscription.isCancelled
+        ? '${_titleCase(subscription.planType)} plan is cancelled'
+        : subscription.isInGracePeriod
+            ? '${_titleCase(subscription.planType)} plan is in a grace period'
+            : '${_titleCase(subscription.planType)} plan is active';
+    final detail = subscription.isCancelled
+        ? 'Access continues through the paid period. Manage billing through '
+            '${subscription.platformLabel}.'
+        : subscription.isInGracePeriod
+            ? 'The store is retrying payment. Access remains available during '
+                'the verified grace period.'
+            : 'Billed through ${subscription.platformLabel}.';
     return _Panel(
       color: const Color(0xFFECFDF5),
       borderColor: const Color(0xFFA7F3D0),
@@ -312,7 +316,7 @@ class _ActiveSubscriptionCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_titleCase(subscription.planType)} plan is active',
+                  title,
                   style: const TextStyle(
                     color: Color(0xFF065F46),
                     fontWeight: FontWeight.w800,
@@ -320,7 +324,7 @@ class _ActiveSubscriptionCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Billed through ${subscription.platformLabel}.',
+                  detail,
                   style: const TextStyle(color: Color(0xFF047857), fontSize: 13),
                 ),
               ],
@@ -341,7 +345,10 @@ class _TrialCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final daysLeft = subscription?.trialDaysLeft;
     final String message;
-    if (subscription?.isTrialing == true) {
+    if (subscription?.isAccountTrial == true) {
+      message = 'Your Basic account trial has ${daysLeft ?? 0} days remaining. '
+          'You can subscribe below. The store will show any eligible payment trial.';
+    } else if (subscription?.isTrialing == true) {
       if (daysLeft != null && daysLeft > 0) {
         message = 'Your free trial has $daysLeft '
             '${daysLeft == 1 ? 'day' : 'days'} remaining. Manage or cancel '
@@ -393,17 +400,15 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storeAvailable =
-        usesNativeStoreBilling && product != null && state.canPurchase;
-    final stripeAvailable =
-        !usesNativeStoreBilling && state.canUseStripe;
-    final selectable = !state.hasActiveSubscription && !state.isBusy;
+    final hasStoreProduct = usesNativeStoreBilling &&
+        state.storeAvailable &&
+        product != null;
+    final canPurchaseFromStore = hasStoreProduct && state.canStartPurchase;
+    final selectable = state.canStartPurchase;
+    final isCurrentPlan =
+        state.subscription?.planType.toLowerCase() == plan.id;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
-    final trialAvailable = state.subscription?.isTrialing == true &&
-        (state.subscription?.trialDaysLeft ?? 0) > 0;
-    final storeButtonLabel = trialAvailable
-        ? 'Start Free Trial'
-        : defaultTargetPlatform == TargetPlatform.android
+    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
             ? 'Subscribe via Google Play'
             : defaultTargetPlatform == TargetPlatform.iOS
                 ? 'Subscribe via App Store'
@@ -411,12 +416,7 @@ class _PlanCard extends StatelessWidget {
     return Semantics(
       selected: selected,
       child: GestureDetector(
-        onTap: selectable
-            ? () {
-                onSelect();
-                if (storeAvailable) onPurchase();
-              }
-            : null,
+        onTap: selectable ? onSelect : null,
         child: _Panel(
           color: selected ? const Color(0xFFEFF6FF) : Colors.white,
           borderColor: selected
@@ -465,7 +465,7 @@ class _PlanCard extends StatelessWidget {
           Text(plan.description, style: const TextStyle(color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           Text(
-            '$price / month',
+             'Store price: $price',
             style: const TextStyle(
               color: Color(0xFF111827),
               fontSize: 22,
@@ -492,21 +492,23 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
           const SizedBox(height: 10),
-          if (stripeAvailable)
+           const Text(
+             'The store shows any eligible trial, renewal price, and final '
+             'payment terms before you confirm.',
+             style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+           ),
+           const SizedBox(height: 10),
+          if (state.hasActiveSubscription)
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
-                 onPressed: selectable
-                     ? () => _chooseStripePayment(context)
-                     : null,
-                icon: const Icon(Icons.account_balance_wallet_outlined),
-                label: Text(
-                  trialAvailable ? 'Start Free Trial' : 'Pay by card or wallet',
+              child: ElevatedButton(
+                onPressed: null,
+                child: Text(
+                  isCurrentPlan ? 'Current Plan' : 'Subscription Already Active',
                 ),
               ),
-            ),
-          if (stripeAvailable && storeAvailable) const SizedBox(height: 8),
-          if (storeAvailable)
+            )
+          else if (canPurchaseFromStore)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -525,93 +527,13 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (!stripeAvailable && !storeAvailable)
+          if (!state.hasActiveSubscription && !hasStoreProduct)
             const Padding(
               padding: EdgeInsets.only(top: 7),
                child: _StoreAvailabilityMessage(),
             ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _chooseStripePayment(BuildContext context) async {
-    onSelect();
-    final method = await showModalBottomSheet<StripePaymentMethod>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => _PaymentMethodPicker(
-        walletAvailable: state.walletAvailable,
-      ),
-    );
-    if (!context.mounted || method == null) return;
-
-    FirebaseAnalyticsService.instance.logSubscriptionEvent(
-      'upgrade',
-      '${plan.id}_${method.name}',
-    );
-    context.read<SubscriptionBloc>().add(
-          StripePaymentRequested(plan.id, method),
-        );
-  }
-}
-
-class _PaymentMethodPicker extends StatelessWidget {
-  const _PaymentMethodPicker({required this.walletAvailable});
-
-  final bool walletAvailable;
-
-  @override
-  Widget build(BuildContext context) {
-    final walletMethod = defaultTargetPlatform == TargetPlatform.android
-        ? StripePaymentMethod.googlePay
-        : defaultTargetPlatform == TargetPlatform.iOS
-            ? StripePaymentMethod.applePay
-            : null;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Payment method',
-              style: TextStyle(
-                color: Color(0xFF111827),
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Choose how you want to complete this subscription.',
-              style: TextStyle(color: Color(0xFF6B7280)),
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.credit_card_rounded),
-              title: const Text('Credit/Debit Card'),
-              onTap: () => Navigator.of(context).pop(StripePaymentMethod.card),
-            ),
-            if (walletAvailable && walletMethod != null)
-              ListTile(
-                leading: Icon(
-                  walletMethod == StripePaymentMethod.googlePay
-                      ? Icons.account_balance_wallet_rounded
-                      : Icons.apple,
-                ),
-                title: Text(
-                  walletMethod == StripePaymentMethod.googlePay
-                      ? 'Google Pay'
-                      : 'Apple Pay',
-                ),
-                onTap: () => Navigator.of(context).pop(walletMethod),
-              ),
-          ],
         ),
       ),
     );
@@ -625,6 +547,27 @@ class _ManageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final subscription = state.subscription!;
+    final isBasic = subscription.grantsAccess &&
+        subscription.planType.toLowerCase() == 'basic';
+    final statusMessage = subscription.isCancelled
+        ? 'Renewal is turned off. You keep access through the paid period; '
+            'manage your subscription with ${subscription.platformLabel}.'
+        : subscription.isInGracePeriod
+            ? 'The store is retrying payment. Access remains available during '
+                'the verified grace period.'
+            : isBasic
+                ? 'Your Basic plan is active. Meal Planning is included with '
+                    'Premium and Family. Change your plan through '
+                    '${subscription.platformLabel} to upgrade without starting '
+                    'a second subscription.'
+                : 'Renewals and cancellations are managed by '
+                    '${subscription.platformLabel}.';
+    final actionLabel = switch (subscription.subscriptionPlatform) {
+      'google_play' => 'Manage or change plan',
+      'app_store' => 'Manage in Apple ID settings',
+      _ => 'Open subscription settings',
+    };
     return _Panel(
       color: Colors.white,
       child: Column(
@@ -636,7 +579,7 @@ class _ManageCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Renewals and cancellations are managed by ${state.subscription!.platformLabel}.',
+            statusMessage,
             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
           ),
           const SizedBox(height: 12),
@@ -647,44 +590,8 @@ class _ManageCard extends StatelessWidget {
                   .read<SubscriptionBloc>()
                   .add(const ManageSubscriptionRequested()),
               icon: const Icon(Icons.open_in_new_rounded),
-              label: const Text('Open subscription settings'),
+              label: Text(actionLabel),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StripeRecoveryCard extends StatelessWidget {
-  const _StripeRecoveryCard({
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Panel(
-      color: const Color(0xFFFFF7ED),
-      borderColor: const Color(0xFFFDBA74),
-      child: Row(
-        children: [
-          const Icon(Icons.receipt_long_rounded, color: Color(0xFFB45309)),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Already paid on the Adaptalyfe website? Check your Stripe '
-              'subscription and restore access.',
-              style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: enabled ? onPressed : null,
-            child: const Text('Restore access'),
           ),
         ],
       ),
@@ -730,7 +637,9 @@ class _RestoreCard extends StatelessWidget {
            const SizedBox(
              width: 230,
              child: Text(
-              'Already subscribed? Restore purchases from this store account.',
+              'Reinstalled or using another device? Sign in to the same '
+              'Adaptalyfe account. If access is missing, restore using the '
+              'Google Play account that paid.',
               style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
              ),
           ),
@@ -791,10 +700,11 @@ class _Panel extends StatelessWidget {
 }
 
 class _SubscriptionError extends StatelessWidget {
-  const _SubscriptionError({required this.message, required this.onRetry});
+  const _SubscriptionError({required this.message, required this.onRetry, this.onRestore});
 
   final String message;
   final VoidCallback onRetry;
+  final VoidCallback? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -813,6 +723,8 @@ class _SubscriptionError extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try again'),
             ),
+            if (onRestore != null)
+              TextButton(onPressed: onRestore, child: const Text('Restore store purchases')),
           ],
         ),
       ),

@@ -1,15 +1,18 @@
 # Adaptalyfe Flutter Mobile
 
-Separate Flutter client scaffold for Adaptalyfe.
+Standalone Flutter client for Adaptalyfe. The app includes authentication,
+feature modules, native navigation, persistence, notifications, and store
+subscription flows. Most features follow presentation → BLoC → repository →
+API client boundaries.
 
-This project is intentionally structure-only. Authentication, API calls, session
-restoration, persistence behavior, and Home data loading will be implemented in
-later work.
+Keep this project separate from the React web/server app and the root
+Capacitor `android/` and `ios/` projects.
 
 ## Platforms
 
 - Android project files live in `android/`.
-- iOS project files live in `ios/`.
+- `ios/` contains Runner support files, but this source does not include an
+  Xcode project or Podfile, so iOS builds are not set up yet.
 - Dart application code lives in `lib/`.
 
 ## Local setup
@@ -67,20 +70,12 @@ messages while the existing server notification API remains unchanged.
 The existing React frontend, backend, database, and top-level Capacitor
 `android/` and `ios/` projects are separate and are not used as build inputs.
 
-## Stripe card and wallet subscriptions
+## Mobile subscriptions
 
-The Flutter subscription screen keeps the existing App Store/Google Play
-purchase flow and additionally uses Stripe PaymentSheet when a publishable key
-is supplied. It supports:
-
-- Credit/debit card on both mobile platforms.
-- Google Pay on Android when Google Pay is available and configured.
-- Apple Pay on iOS when Apple Pay is available and configured.
-
-The Flutter app never receives or stores a Stripe secret key, card number, or
-wallet token. The existing backend `/api/create-subscription` and
-`/api/confirm-subscription` routes create and verify the recurring Stripe
-subscription.
+The Flutter app uses Google Play on Android and the App Store on iOS for new
+subscriptions and restores. Stripe checkout remains on the Adaptalyfe website.
+The app reads the account's server-verified entitlement so website subscribers
+can still use their existing plan on mobile.
 
 The default API host is `https://app.getadaptalyfeapp.com/`, matching the
 React/Capacitor wrapper and production API. Run against production with:
@@ -90,28 +85,9 @@ flutter pub get
 flutter run
 ```
 
-To develop against Railway staging instead, override the API host and use
-staging Stripe test configuration:
+To develop against Railway staging instead, override the API host:
 
 ```bash
 flutter run \
-  --dart-define=ADAPTALYFE_API_BASE_URL=https://staging.getadaptalyfeapp.com/ \
-  --dart-define=STRIPE_PUBLISHABLE_KEY=pk_test_... \
-  --dart-define=STRIPE_MERCHANT_IDENTIFIER=merchant.com.adaptalyfe.app \
-  --dart-define=STRIPE_MERCHANT_COUNTRY_CODE=US
+  --dart-define=ADAPTALYFE_API_BASE_URL=https://staging.getadaptalyfeapp.com/
 ```
-
-For Android, enable Google Pay in the Google Pay/Stripe account settings and
-use a physical Android device with Google Pay configured. The manifest wallet
-flag and `FlutterFragmentActivity` are already included.
-
-For iOS, register `merchant.com.adaptalyfe.app` in the Apple Developer account,
-enable Apple Pay for the app identifier, attach the merchant capability to the
-Runner target, and use a physical device with a supported card in Apple Wallet.
-The merchant entitlement is included in `ios/Runner/Runner.entitlements`; the
-Runner Xcode target must reference this file if the generated iOS project does
-not do so automatically.
-
-Use Stripe test keys and test store accounts during development. The backend
-must have its existing Stripe configuration and webhook handling enabled
-before live subscriptions are offered.

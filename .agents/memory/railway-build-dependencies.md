@@ -8,3 +8,13 @@ The Railway service is kept on its last-known-working Nixpacks configuration. Bu
 **Why:** A Railway build reached `npm run build` with production-only dependencies and failed with `vite: not found`, even though the local Nixpacks configuration requested dev dependencies. Another build failed before installation completed because a lockfile tarball URL pointed at Replit's private package proxy.
 
 **How to apply:** Keep the Railway config on Nixpacks, let `nixpacks.toml` install development dependencies, and scan the lockfile for `package-firewall.replit.local` and `package-firewall.replit.internal` before publishing. Replace any such resolved URLs with the matching public npm URL, preserving the package version and integrity. Republish after configuration changes.
+
+Rescan after every dependency addition or lockfile regeneration, even if a prior
+cleanup already removed private URLs.
+
+**Why:** Tool-generated lockfile updates can introduce private URLs again for new
+packages and their nested dependencies; a previous successful external build
+does not guarantee the next lockfile is portable.
+
+**How to apply:** Validate that the replacement tarballs exist publicly and keep
+versions/integrity hashes unchanged when only correcting registry portability.

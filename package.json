@@ -38,6 +38,7 @@
     "db:migrate:utility-portal": "node scripts/migrate-utility-portal.mjs"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "^3.1.0",
     "@capacitor/android": "^7.4.3",
     "@capacitor/app": "^7.1.0",
     "@capacitor/cli": "^7.4.3",
@@ -137,7 +138,6 @@
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pg": "^8.16.3",
-    "plaid": "^36.0.0",
     "puppeteer": "^24.12.1",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",

@@ -1,0 +1,155 @@
+Fix the **Features section** in the existing Flutter application.
+
+### Current Issue
+
+When the user clicks a feature from the **Features section** in the Flutter app, it shows:
+
+> "Feature unavailable"
+> "This feature is not available at this moment. Please check back later."
+
+However, the **React Native + Wrapper version works correctly** for the same feature.
+
+### Goal
+
+Fix the Flutter implementation so that clicking a feature behaves the same way as the working **React Native + Wrapper** application.
+
+**Do NOT simply remove or hide the "Feature unavailable" message.**
+
+Find out why Flutter is treating the feature as unavailable and fix the actual issue.
+
+### Step 1 — Investigate Both Implementations
+
+First inspect the Flutter implementation of:
+
+* Features section
+* Feature list/cards/buttons
+* Feature click/tap handler
+* Navigation
+* Routes
+* Feature availability/status logic
+* Feature IDs/types
+* API/service calls
+* Authentication/user state
+* Required parameters
+* Any permission or subscription checks
+* Any feature configuration
+* Any fallback/error handling
+
+Then inspect the corresponding implementation in the **React Native + Wrapper** project.
+
+Compare:
+
+* Feature IDs
+* Feature names
+* Feature configuration
+* Navigation routes
+* Route parameters
+* API endpoints
+* Request parameters
+* Response handling
+* Availability conditions
+* Authentication requirements
+* Subscription/access checks
+* Default values
+* Feature mapping
+* Error handling
+
+Use the React Native + Wrapper implementation as the **behavioral reference** because it is currently working correctly.
+
+### Step 2 — Find the Root Cause
+
+Determine exactly why Flutter displays:
+
+> "Feature unavailable"
+
+For example, check whether:
+
+* Flutter is using the wrong feature ID.
+* Flutter has incorrect feature-to-route mapping.
+* A route is missing.
+* A route parameter is incorrect.
+* Flutter is checking availability incorrectly.
+* Flutter is using stale configuration.
+* API response is being parsed incorrectly.
+* A nullable value is incorrectly treated as unavailable.
+* Authentication/user information is missing.
+* Subscription/access state is being checked differently.
+* The Flutter feature list differs from React Native.
+* Navigation is falling into a default "unavailable" case.
+
+Do not assume the cause. Inspect the code and identify the actual difference.
+
+### Step 3 — Implement the Fix
+
+Update the Flutter code so the feature opens and works correctly.
+
+Follow the existing Flutter architecture and state management.
+
+If the project uses BLoC:
+
+* Keep the existing BLoC architecture.
+* Fix the relevant event/state/repository/service flow.
+* Do not create a duplicate BLoC unnecessarily.
+* Make sure the correct state reaches the Features section.
+* Handle loading, success, and error states correctly.
+
+If navigation is the problem:
+
+* Add/fix the correct route.
+* Pass the same required parameters used by React Native.
+* Make sure back navigation continues to work.
+
+If an API/service is the problem:
+
+* Match the working React Native request behavior.
+* Keep existing API contracts unless the investigation proves they are incorrect.
+* Correctly parse the response.
+* Handle null/missing data safely.
+
+### Important
+
+The React Native + Wrapper version is the **reference for expected behavior**, but do not blindly copy its code.
+
+Translate the behavior correctly into the existing Flutter architecture.
+
+### Do NOT
+
+Do not:
+
+* Remove the "Feature unavailable" message globally.
+* Hardcode the feature as always available.
+* Add fake/mock data.
+* Add arbitrary delays.
+* Bypass authentication.
+* Bypass subscription/access checks.
+* Change unrelated features.
+* Rewrite the entire Features architecture.
+* Change the UI design unless required for the fix.
+
+### Test These Cases
+
+Test every relevant feature from the Features section:
+
+1. Open Dashboard.
+2. Go to Features section.
+3. Tap the feature.
+4. Verify it opens the correct screen.
+5. Verify the feature functionality works.
+6. Verify required data loads correctly.
+7. Verify back navigation works.
+8. Test multiple features, not only one.
+9. Compare the Flutter behavior with React Native + Wrapper.
+10. Confirm the "Feature unavailable" message only appears when the feature is genuinely unavailable.
+
+### Final Response
+
+After fixing, provide:
+
+1. **Root cause**
+2. **Files changed**
+3. **What was different between Flutter and React Native + Wrapper**
+4. **What was fixed**
+5. **Testing performed**
+6. Any remaining issue, if one exists.
+
+Make the **smallest safe fix** and preserve all existing Flutter functionality.

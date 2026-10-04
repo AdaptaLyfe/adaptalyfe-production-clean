@@ -1,0 +1,367 @@
+I have a Flutter application with Google Play subscriptions. Fix the subscription system properly.
+
+There are 3 main requirements:
+
+### 1. Payment completed but premium features are still locked
+
+Current issue:
+
+* User purchases a Google Play subscription.
+* Payment is completed successfully.
+* Money/payment is confirmed.
+* But the user still cannot access premium/subscription features.
+* The app continues to treat the user as a non-subscriber.
+
+Investigate the complete flow:
+
+Google Play Billing
+→ Flutter purchase result
+→ purchase verification
+→ backend/server verification
+→ database subscription status
+→ Flutter entitlement/premium state
+→ feature access
+
+Do not simply unlock the features when `purchase.status == purchased`.
+
+The subscription should be considered active only after proper purchase verification.
+
+Check the existing implementation for:
+
+* `in_app_purchase`
+* Google Play Billing
+* purchase stream/listener
+* purchase verification
+* product IDs
+* subscription IDs
+* purchase token
+* user ID
+* backend API
+* database subscription fields
+* premium feature checks
+* BLoC/state management
+
+After a successful and verified purchase, update the user's subscription/entitlement state so premium features become available immediately.
+
+Also handle:
+
+* already subscribed users
+* restored purchases
+* app restart
+* user logout/login
+* purchase pending
+* purchase cancelled
+* purchase error
+* expired subscription
+* revoked/refunded subscription
+
+Do not trust only local storage for subscription status.
+
+---
+
+### 2. Does the database/server get updated after Google subscription payment?
+
+Inspect the existing backend implementation and determine whether the Google Play subscription purchase is currently being sent to our server/database.
+
+I need a reliable flow like:
+
+Flutter
+→ Google Play purchase
+→ obtain purchase token
+→ send purchase token + product/subscription ID + authenticated user ID to backend
+→ backend verifies token with Google Play
+→ backend updates database
+→ backend returns current entitlement
+→ Flutter unlocks premium features
+
+If this server-side verification flow is missing, implement it using the existing backend architecture.
+
+IMPORTANT:
+
+Do not put Google Play service-account credentials or private keys inside the Flutter application.
+
+Google Play purchase verification must happen securely on the server.
+
+The backend should verify the purchase with Google Play before marking the subscription as active.
+
+Store only the necessary subscription information in the database.
+
+At minimum, inspect whether we have fields similar to:
+
+* userId
+* productId/subscriptionId
+* purchaseToken
+* status
+* expiryTime
+* autoRenewing
+* purchaseTime
+* platform
+* lastVerifiedAt
+
+Use the existing database schema if one already exists. Do not create duplicate subscription systems.
+
+---
+
+### 3. How should subscription status be checked every month?
+
+Do NOT implement a simple Flutter timer that checks once every 30 days.
+
+Subscription status can change because of:
+
+* expiration
+* cancellation
+* failed renewal
+* grace period
+* account hold
+* pause
+* refund
+* revoke
+* renewal
+* plan changes
+
+Therefore, design the subscription system so the backend is the source of truth.
+
+Use Google Play subscription lifecycle/server notifications where appropriate.
+
+Recommended architecture:
+
+Google Play
+↓
+Google Play subscription event
+↓
+Backend webhook / Real-time Developer Notifications
+↓
+Backend verifies latest subscription state with Google Play
+↓
+Database updated
+↓
+Flutter requests current entitlement
+↓
+Premium features allowed/blocked
+
+Also perform a server-side status verification when appropriate, such as:
+
+* app launch
+* user login
+* app resume
+* opening a premium feature
+* purchase completion
+* restore purchases
+
+Do not rely on the Flutter app alone to determine whether a subscription is still active.
+
+---
+
+## Subscription Status Rules
+
+Create a clear entitlement/status model.
+
+For example:
+
+ACTIVE
+→ premium features allowed
+
+CANCELLED BUT NOT EXPIRED
+→ premium features remain available until expiry
+
+EXPIRED
+→ premium features blocked
+
+REVOKED
+→ premium features blocked
+
+REFUNDED
+→ premium features blocked according to Google Play entitlement state
+
+PENDING
+→ premium features remain locked until purchase is verified/active
+
+GRACE PERIOD / ACCOUNT HOLD
+→ follow the current Google Play entitlement state returned by server verification and handle it explicitly.
+
+Do not assume that "cancelled" means immediately expired.
+
+---
+
+## Flutter Implementation
+
+Inspect the existing BLoC/state management and integrate subscription state into it.
+
+Create/use an existing subscription state similar to:
+
+* loading
+* active
+* inactive
+* expired
+* pending
+* error
+
+The UI should use the verified entitlement state to decide whether a feature is accessible.
+
+Example concept:
+
+`isPremium == true`
+→ allow premium feature
+
+`isPremium == false`
+→ show subscription/paywall screen
+
+Do not duplicate `isPremium` values in multiple unrelated places.
+
+There should be one reliable source of truth.
+
+---
+
+## Purchase Flow
+
+Implement/fix this flow:
+
+1. User selects subscription.
+2. Google Play Billing starts purchase.
+3. Flutter receives purchase update.
+4. Get the Google Play purchase token.
+5. Send token to backend.
+6. Backend authenticates the user.
+7. Backend verifies the token with Google Play.
+8. Backend checks the subscription status and expiry.
+9. Backend updates the database.
+10. Backend returns the verified entitlement.
+11. Flutter updates SubscriptionBloc/state.
+12. Premium features become available immediately.
+13. Complete/acknowledge the purchase correctly according to the existing billing implementation.
+
+Make sure duplicate purchase events do not create duplicate database records.
+
+---
+
+## Restore / Existing Subscription
+
+When the user:
+
+* reinstalls the app
+* changes phone
+* logs in again
+* opens the app later
+
+the app should not depend only on locally stored `isPremium`.
+
+Restore/query Google Play purchases where appropriate, send the purchase token to the backend, verify it, and retrieve the current server-side entitlement.
+
+---
+
+## Security Requirements
+
+Never:
+
+* trust a client-provided `isPremium=true`
+* unlock premium only because payment UI succeeded
+* store Google service-account credentials in Flutter
+* expose private Google Play credentials
+* make the database active solely from a Flutter boolean
+
+The backend must verify the Google Play purchase.
+
+---
+
+## Important: Inspect Before Changing
+
+Before writing code, inspect the complete existing implementation and identify:
+
+1. Flutter subscription service
+2. Subscription BLoC/state
+3. Purchase listener
+4. Product/subscription IDs
+5. Backend API used for subscription
+6. Database subscription model/table/document
+7. Authentication/user ID flow
+8. Existing Google Play integration
+9. Existing webhook/notification implementation
+10. Premium feature access checks
+
+Then make the smallest safe changes necessary.
+
+Do not rewrite the entire payment system if most of it already works.
+
+---
+
+## Testing
+
+Test these scenarios:
+
+### Test 1 — New subscription
+
+Purchase subscription → payment successful → backend verifies → DB becomes active → premium features unlock.
+
+### Test 2 — App restart
+
+Purchase subscription → close app → reopen → subscription remains active after server verification.
+
+### Test 3 — Login
+
+Purchase subscription → logout → login again → premium entitlement is restored from server.
+
+### Test 4 — Expiration
+
+Subscription expires → backend detects/receives update → DB becomes inactive/expired → premium features become locked.
+
+### Test 5 — Cancellation
+
+User cancels renewal but subscription has not expired → premium features remain available until expiry.
+
+### Test 6 — Failed renewal
+
+Simulate/handle a failed renewal according to Google Play subscription lifecycle → backend updates status appropriately.
+
+### Test 7 — Restore
+
+Existing subscriber reinstalls app → restore/query purchase → backend verifies token → premium features unlock.
+
+### Test 8 — Duplicate events
+
+The same purchase notification/event arrives multiple times → database remains consistent and does not create duplicate subscriptions.
+
+### Test 9 — Invalid token
+
+Send an invalid purchase token → backend rejects it → subscription is NOT activated.
+
+---
+
+## Very Important Final Report
+
+After making changes, do NOT just say "fixed".
+
+Give me:
+
+### A. Current Problem
+
+Explain exactly why payment was completed but premium features were locked.
+
+### B. Database
+
+Tell me whether the current implementation updates the database after Google subscription purchase.
+
+### C. Monthly/Expiry Check
+
+Explain exactly how the app/backend now knows whether a subscription is active or expired.
+
+### D. Files Changed
+
+List every changed file and what was changed.
+
+### E. Backend API
+
+Show the request/response structure used between Flutter and backend.
+
+### F. Database
+
+Show the subscription fields and possible status values.
+
+### G. Google Play
+
+Explain where Google Play subscription verification happens.
+
+### H. Testing
+
+Give me exact steps to test the complete subscription flow using Google Play Internal Testing.
+
+Do not make assumptions about the backend. If the backend is not present in this Replit project, clearly identify what backend functionality is missing instead of pretending it is implemented.

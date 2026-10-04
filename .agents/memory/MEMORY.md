@@ -1,7 +1,9 @@
 - [Adaptalyfe infra](adaptalyfe-infra.md) — staging URL, DATABASE_URL vs NEON_DATABASE_URL split, Railway vars, key auth/nav decisions.
+- [Age and tracking policy](adaptalyfe-age-tracking-policy.md) — signup and privacy copy require age 13+; request ATT only for actual cross-app tracking.
 - [Railway build dependencies](railway-build-dependencies.md) — Railway builds must explicitly install dev dependencies before Vite/esbuild runs.
 - [Stripe renewal safety](stripe-renewal-safety.md) — trials require a saved card; staging Stripe credentials and webhook secrets stay test-only.
 - [Cross-platform billing](cross-platform-billing.md) — one active entitlement works everywhere; never offer a second platform purchase.
+- [Apple store verification](apple-store-verification.md) — use signed App Store Server API transaction/status data and V2 notifications; don't restore shared-secret receipt checks.
 - [Concurrent client sessions](concurrent-client-sessions.md) — browser cookies and native bearer sessions are independent credentials for one account.
 - [Validation baseline](validation-baseline.md) — the full TypeScript check has unrelated legacy failures; use focused checks plus the production build for this area.
 - [Native report storage](native-report-storage.md) — WebView downloads need native persistence; Android uses public Downloads and iOS uses Files-visible Documents.
@@ -24,6 +26,7 @@
 - [Flutter dialog provider scope](flutter-dialog-provider-scope.md) — capture route-scoped BLoCs before showDialog; dialog builder contexts may sit above the feature provider.
 - [Flutter overlay safety](flutter-overlay-safety.md) — serialize feature overlays and use shell-scoped shared BLoCs to prevent duplicate modal routes and competing listeners.
 - [Flutter responsive layout](flutter-responsive-layout.md) — use available constraints, not device width alone, for nested surfaces and keyboard-aware mobile layouts.
+- [Flutter Features catalog](flutter-features-catalog.md) — the Flutter drawer’s Features entry opens the informational wrapper catalog, not module shortcuts.
 - [Flutter Home customization](flutter-home-customization.md) — preserve React-style local customization and keep dashboard preferences user-scoped on-device.
 - [Calendar date handling](calendar-date-handling.md) — local calendar day keys must not be derived from UTC midnight.
 - [Daily task completion dates](daily-task-completions.md) — recurring task completion belongs to a task/date record, not one global flag.
@@ -35,6 +38,8 @@
 - [Academic dialog lifecycle](academic-dialog-lifecycle.md) — stateful form dialogs must own controllers and close only after async mutation success.
 - [Sleep wake date handling](sleep-wake-date-handling.md) — wake date is carried by the existing full wake timestamp; compare wake and fell-asleep DateTimes strictly.
 - [Reward redemption limits](reward-redemption-limits.md) — pending redemptions reserve finite limits; denied records do not count and null remains unlimited.
+- [Reward archiving](reward-archiving.md) — archive removed rewards with `isActive=false`; hide them from new claims while preserving redemption and points history.
 - [Streak activity dates](streak-activity-dates.md) — keep date-only records as calendar keys and normalize timestamp sources in the user's timezone.
 - [Skill milestone priority](transition-skill-priority.md) — Medium is creation-only; saved priorities must round-trip, and schema gaps must not silently discard them.
 - [Dev preview stylesheet mismatch](dev-preview-stylesheet-mismatch.md) — Tailwind classes may exist in served/build CSS while screenshots still appear unstyled; verify assets before changing components.
+- [Deployment bundle sync](deployment-bundle-sync.md) — source changes do not update tracked server bundles, static copies, or hard-coded hashed asset URLs.

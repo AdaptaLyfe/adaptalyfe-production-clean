@@ -80,8 +80,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (!_ageVerified) {
       _showLocalError(
-        'Age Verification Required: Users under 13 must have a parent '
-        'or guardian create an account',
+        'Age Verification Required: You must be 13 or older to create an '
+        'Adaptalyfe account.',
       );
       return;
     }
@@ -529,8 +529,7 @@ class _SignupCard extends StatelessWidget {
                 value: ageVerified,
                 onChanged: isLoading ? null : onAgeChanged,
                 title: 'I confirm that I am 13 years of age or older',
-                description: 'Users under 13 must have a parent or guardian '
-                    'create an account on their behalf.',
+                description: 'Adaptalyfe is not available to children under 13.',
                 descriptionColor: const Color(0xFFB45309),
               ),
               const SizedBox(height: 20),

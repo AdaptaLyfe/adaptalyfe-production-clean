@@ -1,0 +1,293 @@
+Fix the subscription purchase state in the existing Flutter application.
+
+### Current Issue
+
+The user successfully completes a subscription purchase.
+
+Payment is completed successfully, and the amount may be charged from the test account/bank account, but after returning to the app:
+
+* The app still shows the user as **not subscribed**.
+* The subscription/premium UI is not updated.
+* The user may still see the **Subscribe** button.
+* The purchased subscription is not reflected in the user's account/app state.
+
+### Important
+
+Do NOT assume that a successful payment automatically means the app should update its subscription state.
+
+First inspect the existing subscription implementation and identify:
+
+* `in_app_purchase` implementation
+* Google Play Billing implementation
+* iOS StoreKit implementation, if present
+* Purchase stream/listener
+* Purchase status handling
+* `purchase.pending`, `purchase.purchased`, `purchase.restored`, `purchase.error`
+* `completePurchase()`
+* Product IDs
+* Subscription IDs
+* Backend/API/Firebase subscription storage
+* Current-user subscription state
+* App startup subscription check
+* Restore purchases logic
+* BLoC/state management used for subscription
+
+### Required Fix
+
+Implement a reliable subscription flow:
+
+```text
+User taps Subscribe
+        ↓
+Google Play / App Store
+        ↓
+Payment completed
+        ↓
+Purchase update received
+        ↓
+Verify purchase
+        ↓
+Save/update subscription status
+        ↓
+Update BLoC/state
+        ↓
+UI rebuilds
+        ↓
+User sees "Subscribed"/Premium immediately
+```
+
+### Purchase Listener
+
+Check that the app is listening to the purchase update stream correctly.
+
+Make sure the listener handles:
+
+* `PurchaseStatus.pending`
+* `PurchaseStatus.purchased`
+* `PurchaseStatus.restored`
+* `PurchaseStatus.error`
+* `PurchaseStatus.canceled`
+
+For successful purchases:
+
+* Validate that the purchase belongs to the expected subscription product.
+* Verify the purchase where the existing architecture supports server-side verification.
+* Update the user's subscription state.
+* Emit the updated subscription state through the existing BLoC/state-management solution.
+* Refresh the subscription UI immediately.
+
+### Do Not Only Check Product Details
+
+Do NOT treat:
+
+```dart
+queryProductDetails()
+```
+
+as proof that the user is subscribed.
+
+Product availability and user entitlement are different things.
+
+The app must determine whether the current user actually owns/has an active subscription.
+
+### Complete Purchase
+
+Check the existing implementation of:
+
+```dart
+InAppPurchase.instance.completePurchase(purchase)
+```
+
+Make sure it is called at the correct point according to the Flutter `in_app_purchase` flow and is not preventing the entitlement from being processed.
+
+Do not call it blindly before processing the purchase.
+
+### Restore Subscription
+
+Implement/fix restore functionality using the existing architecture.
+
+When the user:
+
+* reinstalls the app
+* logs in on another device
+* opens the app again
+* returns after completing a purchase
+
+the app should check existing purchases/entitlements and update the subscription state.
+
+For example:
+
+```dart
+await InAppPurchase.instance.restorePurchases();
+```
+
+Use the existing package/API version in this project and do not blindly copy code for another package version.
+
+### App Startup
+
+When the app starts or the user logs in:
+
+1. Check the current user's subscription status.
+2. Restore/query existing purchases where appropriate.
+3. Verify the entitlement.
+4. Update the subscription BLoC/state.
+5. Display the correct subscription UI.
+
+The app must not reset an already active subscription to `false` simply because the initial API/state has not loaded yet.
+
+Use an appropriate loading/unknown state instead of immediately assuming:
+
+```dart
+isSubscribed = false;
+```
+
+### Backend / Firebase
+
+If the project already has backend/Firebase subscription storage:
+
+* Check whether the successful purchase is being saved.
+* Check whether the correct user ID is used.
+* Check whether the subscription status is actually updated.
+* Check expiration date/subscription expiry if available.
+* Check whether the Dashboard/Profile reads the same subscription source.
+* Fix any mismatch between purchase state and user subscription state.
+
+Do not create a new backend system if one already exists.
+
+### BLoC / State Management
+
+Use the existing subscription BLoC/state-management architecture.
+
+Make sure there is one reliable source of truth.
+
+Example state flow:
+
+```text
+SubscriptionInitial
+        ↓
+SubscriptionLoading
+        ↓
+SubscriptionActive
+        ↓
+UI shows Premium / Subscribed
+```
+
+If the purchase fails:
+
+```text
+SubscriptionError
+```
+
+If there is no active subscription:
+
+```text
+SubscriptionInactive
+```
+
+Avoid keeping separate conflicting values such as:
+
+```dart
+purchaseCompleted
+isSubscribed
+hasSubscription
+isPremium
+```
+
+unless they have clearly different purposes.
+
+### Important Testing
+
+Test this exact scenario:
+
+#### Test 1 — New Subscription
+
+1. Login with a test account.
+2. Open subscription screen.
+3. Tap Subscribe.
+4. Complete Google Play test purchase.
+5. Return to the app.
+6. Verify the purchase callback is received.
+7. Verify subscription state becomes active.
+8. Verify UI changes immediately.
+9. Verify Subscribe button is replaced/updated appropriately.
+
+#### Test 2 — App Restart
+
+1. Complete subscription.
+2. Completely close the app.
+3. Open the app again.
+4. Login with the same account.
+5. Verify the subscription is still shown as active.
+
+#### Test 3 — Restore
+
+1. Use an account that already purchased the subscription.
+2. Open the app.
+3. Restore/check purchases.
+4. Verify the subscription becomes active.
+
+#### Test 4 — Failed/Cancelled Payment
+
+Cancel or fail the purchase.
+
+Verify the app does NOT show the user as subscribed.
+
+### Logging
+
+Add temporary useful logs around the purchase flow:
+
+```text
+[Subscription] Purchase started
+[Subscription] Purchase update received
+[Subscription] Product ID: ...
+[Subscription] Purchase status: ...
+[Subscription] Verification started
+[Subscription] Verification result: ...
+[Subscription] Subscription state updated
+```
+
+Do not log sensitive payment information, purchase tokens, or personal data.
+
+### Very Important
+
+Do not fix this by simply doing:
+
+```dart
+isSubscribed = true;
+```
+
+when the user taps the Subscribe button.
+
+The app should mark the subscription active only after receiving and successfully processing/verifying the purchase.
+
+Also do not use arbitrary delays such as:
+
+```dart
+Future.delayed(...)
+```
+
+to wait for the payment.
+
+### Final Requirements
+
+After fixing:
+
+* Payment completion must be detected.
+* Purchase updates must be handled correctly.
+* Subscription entitlement must be verified using the project's existing architecture.
+* Subscription state must be persisted/synced correctly.
+* BLoC/state must update immediately.
+* UI must rebuild immediately.
+* Subscription must remain active after reopening the app.
+* Restore purchases must work.
+* Existing Google Play/iOS subscription functionality must not be broken.
+* Do not change unrelated UI or features.
+
+Before making changes, inspect the existing subscription code and explain the root cause you found. Then implement the smallest safe fix.
+
+At the end, provide:
+
+1. Root cause.
+2. Files changed.
+3. Exact subscription flow after the fix.
+4. How to test it with Google Play Internal Testing.

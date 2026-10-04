@@ -6,13 +6,16 @@ import '../core/layout/responsive.dart';
 import '../features/auth/bloc/auth_bloc.dart';
 import '../features/auth/bloc/auth_event.dart';
 import '../features/auth/bloc/auth_state.dart';
+import '../features/subscription/bloc/subscription_bloc.dart';
+import '../features/subscription/bloc/subscription_event.dart';
+import '../features/subscription/bloc/subscription_state.dart';
 
 /// App-wide navigation chrome for authenticated screens.
 ///
 /// The route table remains the single source of truth for destinations. This
 /// shell only renders the shared drawer/bottom navigation and delegates
 /// navigation back to GoRouter.
-class AppNavigationShell extends StatelessWidget {
+class AppNavigationShell extends StatefulWidget {
   const AppNavigationShell({
     required this.location,
     required this.child,
@@ -22,16 +25,57 @@ class AppNavigationShell extends StatelessWidget {
   final String location;
   final Widget child;
 
+  @override
+  State<AppNavigationShell> createState() => _AppNavigationShellState();
+}
+
+class _AppNavigationShellState extends State<AppNavigationShell>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        mounted && context.read<AuthBloc>().state is Authenticated) {
+      context.read<SubscriptionBloc>().add(const RefreshSubscription());
+    }
+  }
+
   static const _authPaths = {'/splash', '/login', '/signup'};
 
   @override
   Widget build(BuildContext context) {
-    if (_authPaths.contains(location)) return child;
+    if (_authPaths.contains(widget.location)) return widget.child;
 
-    return Scaffold(
-      drawer: AppNavigationDrawer(location: location),
-      body: child,
-      bottomNavigationBar: AppBottomNavigation(location: location),
+    return BlocListener<SubscriptionBloc, SubscriptionState>(
+      listenWhen: (previous, current) =>
+          (!previous.shouldRefreshAuthentication && current.shouldRefreshAuthentication) ||
+          (!previous.sessionInvalid && current.sessionInvalid),
+      listener: (context, state) {
+        if (context.read<AuthBloc>().state is! Authenticated) return;
+        if (state.sessionInvalid) {
+          context.read<AuthBloc>().add(const CheckAuthentication());
+        } else if (state.shouldRefreshAuthentication) {
+          context.read<AuthBloc>().add(const RefreshAuthentication());
+          context.read<SubscriptionBloc>()
+              .add(const SubscriptionAuthenticationRefreshHandled());
+        }
+      },
+      child: Scaffold(
+        drawer: AppNavigationDrawer(location: widget.location),
+        body: widget.child,
+        bottomNavigationBar: AppBottomNavigation(location: widget.location),
+      ),
     );
   }
 }
@@ -206,6 +250,13 @@ class AppNavigationDrawer extends StatelessWidget {
   });
 
   final String location;
+
+  static const _featuresItem = _DrawerDestination(
+    label: 'Features',
+    route: '/features',
+    icon: Icons.bolt_outlined,
+    color: Color(0xFF2563EB),
+  );
 
   static const _coreItems = [
     _DrawerDestination(
@@ -452,15 +503,11 @@ class AppNavigationDrawer extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _DrawerWideItem(
-                          item: const _DrawerDestination(
-                            label: 'Features',
-                            icon: Icons.bolt_outlined,
-                            color: Color(0xFF2563EB),
-                          ),
+                          item: _featuresItem,
                           background: const Color(0xFFEFF6FF),
                           borderColor: const Color(0xFFBFDBFE),
                           foreground: const Color(0xFF1D4ED8),
-                          onTap: () => _showUnavailableFeature(context),
+                          onTap: () => _openItem(context, _featuresItem),
                         ),
                       ),
                     ],

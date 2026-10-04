@@ -1,5 +1,5 @@
 import {
-  users, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
+  users, subscriptionNotificationEvents, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
   budgetCategories, savingsGoals, savingsTransactions, userPreferences,
   mealPlans, shoppingLists, groceryStores, emergencyResources, pharmacies, userPharmacies, medications, refillOrders,
   allergies, medicalConditions, adverseMedications, emergencyContacts, primaryCareProviders, symptomEntries,
@@ -389,6 +389,13 @@ export interface IStorage {
     timeZone?: string | number,
   ): Promise<number>;
   updateUserSubscription(userId: number, subscriptionData: Partial<User>): Promise<User | undefined>;
+  applySubscriptionNotificationOnce(input: {
+    platform: "app_store" | "google_play";
+    eventId: string;
+    eventType: string;
+    userId: number;
+    subscriptionData: Partial<User>;
+  }): Promise<boolean>;
   authenticateUser(username: string, password: string): Promise<User | null>;
   invalidatePasswordResetTokens(userId: number): Promise<void>;
   createPasswordResetToken(token: InsertPasswordResetToken): Promise<PasswordResetToken>;
@@ -1008,6 +1015,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user || undefined;
+  }
+
+  async applySubscriptionNotificationOnce(input: {
+    platform: "app_store" | "google_play";
+    eventId: string;
+    eventType: string;
+    userId: number;
+    subscriptionData: Partial<User>;
+  }): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      const [event] = await tx
+        .insert(subscriptionNotificationEvents)
+        .values({
+          platform: input.platform,
+          eventId: input.eventId,
+          eventType: input.eventType,
+          userId: input.userId,
+        })
+        .onConflictDoNothing({
+          target: [
+            subscriptionNotificationEvents.platform,
+            subscriptionNotificationEvents.eventId,
+          ],
+        })
+        .returning({ id: subscriptionNotificationEvents.id });
+      if (!event) return false;
+
+      const [updatedUser] = await tx
+        .update(users)
+        .set(input.subscriptionData)
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id });
+      if (!updatedUser) {
+        throw new Error("Subscription notification user no longer exists.");
+      }
+      return true;
+    });
   }
 
   async getUserByStripeCustomerId(customerId: string): Promise<User | undefined> {
@@ -3786,7 +3830,12 @@ export class DatabaseStorage implements IStorage {
     const userRewards = await db
       .select()
       .from(rewards)
-      .where(eq(rewards.userId, userId));
+      .where(
+        and(
+          eq(rewards.userId, userId),
+          or(eq(rewards.isActive, true), isNull(rewards.isActive)),
+        ),
+      );
 
     if (userRewards.length === 0) return userRewards;
 
@@ -3878,7 +3927,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteReward(id: number): Promise<boolean> {
-    const result = await db.delete(rewards).where(eq(rewards.id, id));
+    const result = await db
+      .update(rewards)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(rewards.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -3981,7 +4033,13 @@ export class DatabaseStorage implements IStorage {
       const [reward] = await tx
         .select()
         .from(rewards)
-        .where(and(eq(rewards.id, rewardId), eq(rewards.userId, userId)))
+        .where(
+          and(
+            eq(rewards.id, rewardId),
+            eq(rewards.userId, userId),
+            or(eq(rewards.isActive, true), isNull(rewards.isActive)),
+          ),
+        )
         .for("update");
 
       if (!reward) {

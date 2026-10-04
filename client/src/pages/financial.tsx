@@ -194,15 +194,33 @@ export default function Financial() {
     }
   };
 
+  const defaultCategoryFormValues = {
+    name: "",
+    type: "expense" as const,
+    budgetedAmount: 0,
+    color: "#3b82f6",
+  };
+
   const categoryForm = useForm({
     resolver: zodResolver(categorySchema),
-    defaultValues: {
-      name: "",
-      type: "expense" as const,
-      budgetedAmount: 0,
-      color: "#3b82f6",
-    },
+    defaultValues: defaultCategoryFormValues,
   });
+
+  const resetCategoryForm = () => categoryForm.reset(defaultCategoryFormValues);
+
+  const openAddCategoryDialog = () => {
+    setEditingCategory(null);
+    resetCategoryForm();
+    setShowCategoryDialog(true);
+  };
+
+  const handleCategoryDialogOpenChange = (open: boolean) => {
+    setShowCategoryDialog(open);
+    if (!open) {
+      setEditingCategory(null);
+      resetCategoryForm();
+    }
+  };
 
   const bankForm = useForm({
     resolver: zodResolver(bankAccountSchema),
@@ -365,7 +383,7 @@ export default function Financial() {
       queryClient.refetchQueries({ queryKey: ["/api/budget-categories"] });
       setShowCategoryDialog(false);
       setEditingCategory(null);
-      categoryForm.reset();
+      resetCategoryForm();
       toast({
         title: "Success",
         description: editingCategory 
@@ -1169,15 +1187,15 @@ export default function Financial() {
                     <FolderOpen className="text-bright-blue" size={24} />
                     <span>Budget Categories</span>
                   </div>
-                  <Dialog open={showCategoryDialog} onOpenChange={(open) => {
-                    setShowCategoryDialog(open);
-                    if (!open) {
-                      setEditingCategory(null);
-                      categoryForm.reset();
-                    }
-                  }}>
+                  <Dialog
+                    open={showCategoryDialog}
+                    onOpenChange={handleCategoryDialogOpenChange}
+                  >
                     <DialogTrigger asChild>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={openAddCategoryDialog}
+                      >
                         <Plus size={16} className="mr-2" />
                         Add Category
                       </Button>
@@ -1212,7 +1230,7 @@ export default function Financial() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel required>Category Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select category type" />

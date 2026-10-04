@@ -32,9 +32,11 @@ class _SplashScreenState extends State<SplashScreen> {
       builder: (context, state) {
         final isError = state is AuthError;
         final errorMessage = isError ? state.message : null;
+        final isUnauthenticated = state is Unauthenticated;
 
         return _SplashView(
           errorMessage: errorMessage,
+          isUnauthenticated: isUnauthenticated,
           onRetry: () {
             context.read<AuthBloc>().add(const CheckAuthentication());
           },
@@ -48,11 +50,13 @@ class _SplashScreenState extends State<SplashScreen> {
 class _SplashView extends StatelessWidget {
   const _SplashView({
     required this.errorMessage,
+    required this.isUnauthenticated,
     required this.onRetry,
     required this.onContinueToLogin,
   });
 
   final String? errorMessage;
+  final bool isUnauthenticated;
   final VoidCallback onRetry;
   final VoidCallback onContinueToLogin;
 
@@ -122,6 +126,20 @@ class _SplashView extends StatelessWidget {
                       child: const Text('Try again'),
                     ),
                     TextButton(
+                      onPressed: onContinueToLogin,
+                      child: const Text('Continue to login'),
+                    ),
+                  ] else if (isUnauthenticated) ...[
+                    const Text(
+                      'You are signed out. Please sign in to continue.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF166534),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
                       onPressed: onContinueToLogin,
                       child: const Text('Continue to login'),
                     ),

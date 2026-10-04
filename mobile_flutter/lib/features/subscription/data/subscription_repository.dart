@@ -30,28 +30,17 @@ class SubscriptionRepository {
         orderId: orderId,
       );
 
-  Future<PurchaseVerification> restoreApplePurchase(String receiptData) =>
-      api.restoreApplePurchase(receiptData: receiptData);
+  Future<PurchaseVerification> restoreApplePurchase({
+    required String receiptData,
+    String? transactionId,
+  }) =>
+      api.restoreApplePurchase(
+        receiptData: receiptData,
+        transactionId: transactionId,
+      );
 
   Future<PurchaseVerification> restoreGooglePurchases(
     List<Map<String, dynamic>> purchases,
   ) =>
       api.restoreGooglePurchases(purchases);
-
-  Future<StripeSubscriptionSetup> createStripeSubscription({
-    required String planType,
-    required String billingCycle,
-  }) =>
-      api.createStripeSubscription(
-        planType: planType,
-        billingCycle: billingCycle,
-      );
-
-  Future<PurchaseVerification> confirmStripeSubscription(
-    String subscriptionId,
-  ) =>
-      api.confirmStripeSubscription(subscriptionId);
-
-  Future<void> recoverStripeSubscription() =>
-      api.recoverStripeSubscription();
 }

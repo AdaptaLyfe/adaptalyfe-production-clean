@@ -8,7 +8,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
-import '../../auth/bloc/auth_state.dart';
+import '../../subscription/presentation/premium_feature_gate.dart';
 import '../bloc/medical_bloc.dart';
 import '../bloc/medical_event.dart';
 import '../bloc/medical_state.dart';
@@ -19,11 +19,10 @@ class MedicalScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasMedicalAccess(context)) {
-      return const _MedicalPremiumPrompt();
-    }
-
-    return BlocConsumer<MedicalBloc, MedicalState>(
+    return PremiumFeatureGate(
+      title: 'Health Records',
+      paywall: const _MedicalPremiumPrompt(),
+      child: BlocConsumer<MedicalBloc, MedicalState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
           context.read<AuthBloc>().add(const CheckAuthentication());
@@ -106,6 +105,7 @@ class MedicalScreen extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
 }
@@ -115,15 +115,14 @@ class PharmacyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasMedicalAccess(context)) {
-      return const _MedicalPremiumPrompt(
+    return PremiumFeatureGate(
+      title: 'Medication List',
+      paywall: const _MedicalPremiumPrompt(
         title: 'Medication List',
         description:
             'Keep a personal list of medications for reference and reminders.',
-      );
-    }
-
-    return BlocConsumer<MedicalBloc, MedicalState>(
+      ),
+      child: BlocConsumer<MedicalBloc, MedicalState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
           context.read<AuthBloc>().add(const CheckAuthentication());
@@ -213,22 +212,9 @@ class PharmacyScreen extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
-}
-
-bool _hasMedicalAccess(BuildContext context) {
-  final authState = context.read<AuthBloc>().state;
-  if (authState is! Authenticated) return false;
-
-  final user = authState.user;
-  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
-  if (isAdmin) return true;
-
-  final tier = user.subscriptionTier?.toLowerCase();
-  final status = user.subscriptionStatus?.toLowerCase();
-  return (status == 'active' && (tier == 'premium' || tier == 'family')) ||
-      status == 'trialing';
 }
 
 class _MedicalPremiumPrompt extends StatelessWidget {

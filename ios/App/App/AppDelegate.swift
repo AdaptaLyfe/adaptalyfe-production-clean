@@ -1,13 +1,11 @@
 import UIKit
 import WebKit
 import Capacitor
-import AppTrackingTransparency
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    private var hasRequestedTracking = false
     private let storeKitBridge = StoreKitBridge()
     private var bridgeInstalled = false
 
@@ -19,18 +17,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Install StoreKit bridge into the WebView (only once)
         if !bridgeInstalled {
             installStoreKitBridge()
-        }
-
-        // Show ATT permission prompt once
-        if !hasRequestedTracking {
-            hasRequestedTracking = true
-            if #available(iOS 14, *) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    ATTrackingManager.requestTrackingAuthorization { status in
-                        print("ATT status: \(status.rawValue)")
-                    }
-                }
-            }
         }
     }
 
