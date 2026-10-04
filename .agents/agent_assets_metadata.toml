@@ -3095,3 +3095,17 @@ mtime_ms = 1791129289882
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/d956e8cc-c156-4f6f-9ba3-e97d13ea2d36/ec7fd312-f5e2-4f8e-94bc-2e7f35bf9a6f"
 storage_version_token = "1791153999468203"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "B7QwEe14il8MMVF1Sxyxr"
+uri = "file://deliverables/adaptalyfe_subscription_only_patch_20261005_043614_IST.zip"
+type = "unspecified"
+title = "Adaptalyfe subscription-only patch — 2026-10-05 04:36 IST"
+description = "17-file overlay for the uploaded Flutter project: subscription purchase/restore code, route and Android Billing wiring patches, tests, and instructions. Product IDs and server fallback are documented."
+logical_id = "89e83132-3d71-4584-9990-f260561a8f51"
+content_hash = "sha256:a0391cd0e949346c7b72c9ee8b75d2e3f9a06f2e5c97c2b9a8a09243abb17e51"
+size = 24730
+mtime_ms = 1791155175201
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/89e83132-3d71-4584-9990-f260561a8f51/e5ecdeb0-4110-4b4a-affa-97df0ee3e1e4"
+storage_version_token = "1791155203946265"
+content_type = "application/octet-stream"
