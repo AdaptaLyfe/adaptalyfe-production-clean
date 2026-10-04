@@ -29,6 +29,13 @@ After a transient Play API outage, reuse only a previously verified database ent
 
 **How to apply:** Preserve the verification-age and expiry limits, fail closed for stale, revoked, unknown-product, or mismatched-product records, and test all product tiers plus those denial cases.
 
+## Product discovery versus checkout eligibility
+Keep store product availability separate from purchase eligibility. A product can be returned with a price while checkout is intentionally blocked because a purchase still needs verification; do not label that product as missing.
+
+**Why:** Combining product presence with the purchase gate showed a false store-configuration error on Android when a pending verification was the actual blocker.
+
+**How to apply:** Show the missing-product message only when the store or selected product is unavailable. Continue to block selection and payment while purchase verification is pending, and show the verification warning instead.
+
 ## Local acknowledgement versus account access
 An account entitlement already verified and persisted by the backend remains usable if the client cannot finish its local store acknowledgement. Keep acknowledgement retryable without treating the payment as unverified again.
 
