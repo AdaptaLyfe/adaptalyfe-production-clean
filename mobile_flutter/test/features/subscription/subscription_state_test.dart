@@ -19,6 +19,8 @@ void main() {
     expect(trial.hasPremiumAccess, isFalse);
     expect(state.hasActiveSubscription, isFalse);
     expect(state.canStartPurchase, isTrue);
+    expect(state.canSelectPlan, isTrue);
+    expect(state.canPurchase, isTrue);
   });
 
   test('a pending store payment blocks starting a second purchase', () {
@@ -35,6 +37,28 @@ void main() {
     );
 
     expect(state.canStartPurchase, isFalse);
+  });
+
+  test('an account-hold subscription must be recovered, not repurchased', () {
+    final subscription = SubscriptionModel.fromJson({
+      'id': 7,
+      'planType': 'premium',
+      'status': 'on_hold',
+      'subscriptionPlatform': 'google_play',
+      'currentPeriodEnd':
+          DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+    });
+    final state = SubscriptionState(
+      status: SubscriptionStatus.ready,
+      subscription: subscription,
+      storeAvailable: true,
+    );
+
+    expect(subscription.grantsAccess, isFalse);
+    expect(subscription.isPaymentFailed, isTrue);
+    expect(state.requiresStoreRecovery, isTrue);
+    expect(state.canSelectPlan, isFalse);
+    expect(state.canPurchase, isFalse);
   });
 
   test('a store-billed trial is active and cannot start another purchase', () {

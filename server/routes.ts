@@ -54,6 +54,7 @@ import {
 } from "./google-play-entitlement";
 import type { GooglePlayEntitlement } from "./google-play-entitlement";
 import { createSubscriptionFeatureGuard, paidSubscriptionTier } from "./subscription-access";
+import { buildSubscriptionResponse } from "./subscription-response";
 import {
   AppleStoreConfigurationError,
   AppleStoreVerificationError,
@@ -180,6 +181,7 @@ function googlePlaySubscriptionResponse(
       entitlement.startDate ?? user.subscriptionStartDate ?? user.createdAt,
     currentPeriodEnd: entitlement.expiresAt,
     trialDaysLeft: null,
+    autoRenew: entitlement.autoRenew,
   };
 }
 
@@ -5389,76 +5391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Calculate trial days left for regular users
-      const trialEndDate = new Date(user.createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
-      const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
-
-      const isStoreSubscription =
-        user.subscriptionPlatform === 'google_play' ||
-        user.subscriptionPlatform === 'app_store';
-      const verifiedPaidTier = paidSubscriptionTier(user, now);
-      const isActiveSubscription =
-        verifiedPaidTier !== "free" && user.subscriptionStatus !== "trialing";
-      const hasVerifiedPaidTrial =
-        !isStoreSubscription && verifiedPaidTier !== "free" &&
-        user.subscriptionStatus === "trialing";
-      const hasTrialAccess = !isStoreSubscription &&
-        (hasVerifiedPaidTrial || trialDaysLeft > 0);
-      // Free account trials do not grant a selected higher paid tier.
-      const effectivePlan = verifiedPaidTier !== "free" ? verifiedPaidTier
-        : hasTrialAccess ? "basic" : "free";
-      const isPremiumPlan =
-        effectivePlan === 'premium' || effectivePlan === 'family';
-      const isFamilyPlan = effectivePlan === 'family';
-
-      const subscription = {
-        id: user.id,
-        planType: effectivePlan,
-        status: isActiveSubscription
-          ? user.subscriptionStatus ?? "active"
-          : hasTrialAccess
-            ? "trialing"
-            : "expired",
-        billingCycle: "monthly",
-        subscriptionPlatform: user.subscriptionPlatform || null,
-        isAccountTrial: hasTrialAccess && verifiedPaidTier === "free",
-        currentPeriodStart:
-          user.subscriptionStartDate ?? user.createdAt,
-        currentPeriodEnd:
-          verifiedPaidTier !== "free" ? user.subscriptionExpiresAt ?? null
-            : hasTrialAccess ? trialEndDate.toISOString() : null,
-        trialDaysLeft: hasTrialAccess && trialDaysLeft > 0 ? trialDaysLeft : null,
-        usageStats: {
-          tasks: { count: 0, limit: isFamilyPlan ? null : (effectivePlan === 'premium' ? 1000 : 50) },
-          caregivers: { count: 0, limit: isFamilyPlan ? null : (effectivePlan === 'premium' ? 5 : 1) },
-          dataExports: { count: 0, limit: effectivePlan === 'free' ? 0 : null }
-        },
-        features: {
-          // Basic+ features
-          taskManagement: effectivePlan !== 'free' || hasTrialAccess,
-          moodTracking: effectivePlan !== 'free' || hasTrialAccess,
-          financialTracking: effectivePlan !== 'free' || hasTrialAccess,
-          basicReminders: effectivePlan !== 'free' || hasTrialAccess,
-          // Premium+ features
-          wearableDevices: isPremiumPlan,
-          mealPlanning: isPremiumPlan,
-          medicationManagement: isPremiumPlan,
-          advancedAnalytics: isPremiumPlan,
-          voiceCommands: isPremiumPlan,
-          academicPlanner: isPremiumPlan,
-          prioritySupport: isPremiumPlan,
-          // Family-only features
-          locationSafety: isFamilyPlan,
-          familyDashboard: isFamilyPlan,
-          multiUserAccounts: isFamilyPlan,
-          emergencyProtocols: isFamilyPlan,
-          customReporting: isFamilyPlan,
-          unlimitedCaregivers: isFamilyPlan,
-        }
-      };
-      
-      res.json(subscription);
+      res.json(buildSubscriptionResponse(user, now));
     } catch (error) {
       console.error("Error fetching subscription:", error);
       res.status(500).json({ message: "Failed to fetch subscription" });

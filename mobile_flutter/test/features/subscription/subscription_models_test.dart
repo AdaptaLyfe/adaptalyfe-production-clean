@@ -47,5 +47,24 @@ void main() {
       expect(model.grantsAccess, isFalse);
       expect(model.hasPremiumAccess, isFalse);
     });
+
+    test('retains lifecycle status and auto-renew details from the server', () {
+      final model = SubscriptionModel.fromJson({
+        'id': 42,
+        'planType': 'premium',
+        'status': 'on_hold',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'google_play',
+        'currentPeriodEnd':
+            DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+        'autoRenew': false,
+      });
+
+      expect(model.isOnHold, isTrue);
+      expect(model.isPaymentFailed, isTrue);
+      expect(model.requiresStoreRecovery, isTrue);
+      expect(model.autoRenew, isFalse);
+      expect(model.grantsAccess, isFalse);
+    });
   });
 }

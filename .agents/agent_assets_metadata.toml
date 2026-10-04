@@ -3109,3 +3109,17 @@ mtime_ms = 1791155175201
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/89e83132-3d71-4584-9990-f260561a8f51/e5ecdeb0-4110-4b4a-affa-97df0ee3e1e4"
 storage_version_token = "1791155203946265"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "I-d4VOs4W_rKhLHBAhWvj"
+uri = "file://artifacts/adaptalyfe-flutter-subscription-fix-overlay.zip"
+type = "unspecified"
+title = "Flutter subscription fix files"
+description = "Six Flutter-only subscription source and test files, packaged as an overlay. Extract from the Flutter project root; no backend or unrelated project files are included."
+logical_id = "a4726a18-3e66-4e32-81b4-c0b64c6f1be6"
+content_hash = "sha256:ae294e0a6b654fde0e56d9f45526e09beab4ad4dce1f79fe2327600c7d2d1f79"
+size = 13721
+mtime_ms = 1791156730198
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a4726a18-3e66-4e32-81b4-c0b64c6f1be6/2ff572c0-d94c-4872-8207-23b4282361c8"
+storage_version_token = "1791156745176586"
+content_type = "application/octet-stream"

@@ -47,6 +47,39 @@ test("active and grace-period purchases grant access through their verified expi
   }
 });
 
+test("renewal and recovery restore active access with the latest expiry", () => {
+  const beforeRenewal = resolveGooglePlayEntitlement(
+    snapshot("SUBSCRIPTION_STATE_ACTIVE", "2026-11-02T00:00:00.000Z"),
+    { now },
+  );
+  const renewed = resolveGooglePlayEntitlement(
+    {
+      ...snapshot("SUBSCRIPTION_STATE_ACTIVE", "2026-12-02T00:00:00.000Z"),
+      lineItems: [
+        {
+          productId: "adaptalyfe_basic_monthly",
+          expiryTime: "2026-12-02T00:00:00.000Z",
+          latestSuccessfulOrderId: "GPA.renewed-order",
+          autoRenewingPlan: { autoRenewEnabled: true },
+        },
+      ],
+    },
+    { now },
+  );
+  const recovered = resolveGooglePlayEntitlement(
+    snapshot("SUBSCRIPTION_STATE_ACTIVE", "2026-12-02T00:00:00.000Z"),
+    { now },
+  );
+
+  assert.equal(beforeRenewal.grantsAccess, true);
+  assert.equal(renewed.status, "active");
+  assert.equal(renewed.grantsAccess, true);
+  assert.equal(renewed.expiresAt?.toISOString(), "2026-12-02T00:00:00.000Z");
+  assert.equal(renewed.transactionId, "GPA.renewed-order");
+  assert.equal(recovered.status, "active");
+  assert.equal(recovered.grantsAccess, true);
+});
+
 test("only transient Play errors allow outage fallback, never invalid tokens or permissions", () => {
   for (const status of [400, 401, 403, 404, 410]) {
     assert.equal(isTransientGooglePlayError({ response: { status } }), false);

@@ -11,8 +11,15 @@ import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
 import '../models/subscription_models.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> {
+  String? _selectedPlanId = subscriptionPlans.first.id;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +67,11 @@ class SubscriptionScreen extends StatelessWidget {
             }
 
             final subscription = state.subscription;
+            final selectedPlan = state.plans.firstWhere(
+              (plan) => plan.id == _selectedPlanId,
+              orElse: () => state.plans.first,
+            );
+            final selectedProduct = state.products[selectedPlan.productId];
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               children: [
@@ -100,14 +112,64 @@ class SubscriptionScreen extends StatelessWidget {
                     plan: plan,
                     product: state.products[plan.productId],
                     state: state,
-                    onPurchase: () => context
-                        .read<SubscriptionBloc>()
-                        .add(PlanPurchaseRequested(plan.id)),
-                    onManage: () => context
-                        .read<SubscriptionBloc>()
-                        .add(const ManageSubscriptionRequested()),
+                    selectedPlanId: _selectedPlanId ?? '',
+                    selected: _selectedPlanId == plan.id,
+                    onSelect: () => setState(() => _selectedPlanId = plan.id),
                   ),
                   const SizedBox(height: 14),
+                ],
+                if (state.subscription?.isAccountTrial == true) ...[
+                  const SizedBox(height: 2),
+                  const _MessageCard(
+                    icon: Icons.info_outline_rounded,
+                    message:
+                        'Your free 7-day Adaptalyfe account trial provides Basic access. Starting a store subscription is separate and begins at the price shown above.',
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (!state.hasActiveSubscription &&
+                    !state.requiresStoreRecovery) ...[
+                  if (selectedProduct != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        '${selectedPlan.name}: ${selectedProduct.price} per month',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: state.canPurchase &&
+                              !state.isBusy &&
+                              selectedProduct != null
+                          ? () => context.read<SubscriptionBloc>().add(
+                                PlanPurchaseRequested(
+                                  _selectedPlanId ?? subscriptionPlans.first.id,
+                                ),
+                              )
+                          : null,
+                      child: Text(
+                        state.status == SubscriptionStatus.purchasing
+                            ? 'Opening store…'
+                            : state.storeAvailable
+                                ? 'Continue to checkout'
+                                : 'Subscriptions unavailable',
+                      ),
+                    ),
+                  ),
+                  if (state.storeAvailable &&
+                      selectedProduct == null &&
+                      state.status != SubscriptionStatus.loading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        'This plan is not currently available from the app store.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const SizedBox(height: 12),
                 ],
                 if (state.purchaseNeedsVerification) ...[
                   const SizedBox(height: 4),
@@ -196,17 +258,15 @@ class _CurrentPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = subscription.isAccountTrial
-        ? 'Account trial'
+        ? 'Free 7-day Basic trial'
         : '${_titleCase(subscription.planType)} plan';
-    final status = subscription.isAccountTrial
-        ? 'Your Adaptalyfe account trial is active.'
-        : subscription.isCancelled
-            ? 'Cancelled — access remains until the current period ends.'
-            : subscription.isInGracePeriod
-                ? 'Payment is in a grace period.'
-                : subscription.grantsAccess
-                    ? 'Active through ${_formatDate(subscription.currentPeriodEnd)}.'
-                    : 'No active paid plan.';
+    final status = _subscriptionStatusMessage(subscription);
+    final canManage =
+        !subscription.isAccountTrial &&
+        (subscription.grantsAccess ||
+            (subscription.usesStoreBilling &&
+                !subscription.isExpired &&
+                !subscription.isRevoked));
 
     return Card(
       child: Padding(
@@ -236,12 +296,12 @@ class _CurrentPlanCard extends StatelessWidget {
                   '${subscription.trialDaysLeft} trial days remaining.',
                 ),
               ),
-            if (subscription.subscriptionPlatform != null) ...[
+            if (!subscription.isAccountTrial &&
+                subscription.subscriptionPlatform != null) ...[
               const SizedBox(height: 4),
               Text('Billed through ${subscription.platformLabel}.'),
             ],
-            if (subscription.grantsAccess &&
-                !subscription.isAccountTrial) ...[
+            if (canManage) ...[
               const SizedBox(height: 14),
               OutlinedButton.icon(
                 onPressed: () => context
@@ -263,112 +323,109 @@ class _PlanCard extends StatelessWidget {
     required this.plan,
     required this.product,
     required this.state,
-    required this.onPurchase,
-    required this.onManage,
+    required this.selectedPlanId,
+    required this.selected,
+    required this.onSelect,
   });
 
   final SubscriptionPlan plan;
   final ProductDetails? product;
   final SubscriptionState state;
-  final VoidCallback onPurchase;
-  final VoidCallback onManage;
+  final String selectedPlanId;
+  final bool selected;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
     final active = state.hasActiveSubscription;
     final isCurrent = active &&
         state.subscription?.planType.toLowerCase() == plan.id.toLowerCase();
-    final isBusy = state.status == SubscriptionStatus.purchasing &&
-        state.busyPlanId == plan.id;
     final priceLabel =
         product == null ? 'Store price unavailable' : '${product.price} / month';
 
     return Card(
+      color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
+      child: InkWell(
+        onTap: state.canSelectPlan ? onSelect : null,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Radio<String>(
+                    value: plan.id,
+                    groupValue: selectedPlanId,
+                    onChanged:
+                        state.canSelectPlan ? (_) => onSelect() : null,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                plan.name,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                            ),
+                            if (plan.popular) ...[
+                              const SizedBox(width: 8),
+                              const Chip(
+                                label: Text('Popular'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                            if (isCurrent) ...[
+                              const SizedBox(width: 8),
+                              const Chip(
+                                label: Text('Current'),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(plan.description),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(priceLabel, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              for (final feature in plan.features)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              plan.name,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                          ),
-                          if (plan.popular) ...[
-                            const SizedBox(width: 8),
-                            const Chip(
-                              label: Text('Popular'),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(plan.description),
+                      const Icon(Icons.check_rounded, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(feature)),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(priceLabel, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            for (final feature in plan.features)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_rounded, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(feature)),
-                  ],
-                ),
+              const SizedBox(height: 10),
+              Text(
+                state.canSelectPlan
+                    ? selected
+                        ? 'Selected'
+                        : 'Tap to select this plan'
+                    : active && !isCurrent
+                        ? 'Manage your active plan through its billing provider to change tiers.'
+                        : '',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-            const SizedBox(height: 16),
-            if (active)
-              SizedBox(
-                width: double.infinity,
-                child: isCurrent
-                    ? OutlinedButton(
-                        onPressed: onManage,
-                        child: const Text('Current plan · manage'),
-                      )
-                    : OutlinedButton(
-                        onPressed: onManage,
-                        child: const Text('Manage current plan to change'),
-                      ),
-              )
-            else
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: product != null &&
-                          state.canPurchase &&
-                          !state.isBusy
-                      ? onPurchase
-                      : null,
-                  child: isBusy
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(product == null ? 'Not available' : 'Subscribe'),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -424,6 +481,54 @@ class _MessageCard extends StatelessWidget {
 String _titleCase(String value) {
   if (value.isEmpty) return value;
   return '${value[0].toUpperCase()}${value.substring(1).toLowerCase()}';
+}
+
+String _subscriptionStatusMessage(SubscriptionModel subscription) {
+  if (subscription.isAccountTrial) {
+    return 'Your account trial includes Basic access.';
+  }
+  if (subscription.isCancelled) {
+    return 'Cancelled — access remains until '
+        '${_formatDate(subscription.currentPeriodEnd)}.';
+  }
+  if (subscription.isInGracePeriod) {
+    return 'Payment failed. Google Play grace-period access continues until '
+        '${_formatDate(subscription.currentPeriodEnd)}.';
+  }
+  if (subscription.isOnHold) {
+    return 'Payment failed and the account is on hold. Access resumes after '
+        'you fix billing with the app store.';
+  }
+  if (subscription.isPaymentFailed) {
+    return 'Payment failed. Update your payment method with '
+        '${subscription.platformLabel} to restore access.';
+  }
+  if (subscription.isPaused) {
+    return 'The subscription is paused. Resume it in the app store to '
+        'restore paid access.';
+  }
+  if (subscription.isPending) {
+    return 'The store is still processing this subscription. Access starts '
+        'after confirmation.';
+  }
+  if (subscription.isRevoked) {
+    return 'This subscription was revoked and no longer grants paid access.';
+  }
+  if (subscription.isExpired) {
+    return 'This subscription has expired. Choose a plan below to subscribe again.';
+  }
+  if (subscription.isTrialing && subscription.usesStoreBilling) {
+    return 'Your store trial is active through '
+        '${_formatDate(subscription.currentPeriodEnd)}.';
+  }
+  if (subscription.grantsAccess && subscription.autoRenew == true) {
+    return 'Active and set to renew on '
+        '${_formatDate(subscription.currentPeriodEnd)}.';
+  }
+  if (subscription.grantsAccess) {
+    return 'Active through ${_formatDate(subscription.currentPeriodEnd)}.';
+  }
+  return 'No active paid plan.';
 }
 
 String _formatDate(DateTime? value) {

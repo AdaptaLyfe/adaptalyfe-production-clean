@@ -62,11 +62,25 @@ class SubscriptionState extends Equatable {
       subscription?.grantsAccess == true &&
       subscription?.isAccountTrial != true;
 
+  bool get requiresStoreRecovery =>
+      subscription?.requiresStoreRecovery == true;
+
+  bool get canSelectPlan =>
+      subscription != null &&
+      (status == SubscriptionStatus.ready ||
+          status == SubscriptionStatus.notAvailable) &&
+      !sessionInvalid &&
+      !hasActiveSubscription &&
+      !requiresStoreRecovery &&
+      !purchaseNeedsVerification &&
+      !purchasePending;
+
   bool get canStartPurchase =>
       subscription != null &&
       status == SubscriptionStatus.ready &&
       !sessionInvalid &&
       !hasActiveSubscription &&
+      !requiresStoreRecovery &&
       !purchaseNeedsVerification &&
       !purchasePending;
 

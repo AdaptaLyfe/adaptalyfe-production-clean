@@ -309,24 +309,28 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         return;
       }
 
-      _verifiedPurchaseKeys.add(purchaseKey);
       SubscriptionModel? entitlement = verification.subscription;
-      if (entitlement == null) {
-        try {
-          entitlement = await repository.getSubscription();
-        } on ApiException catch (error) {
-          if (error.type == ApiErrorType.unauthorized) rethrow;
-        } catch (_) {
-          // The successful verification response remains authoritative. A
-          // later refresh will retrieve the same persisted entitlement.
-        }
+      if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+        entitlement = await repository.getSubscription();
+      }
+      if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+        emit(state.copyWith(
+          status: SubscriptionStatus.ready,
+          busyPlanId: null,
+          purchaseNeedsVerification: true,
+          purchasePending: false,
+          actionMessage:
+              'Payment was received, but the matching plan is not active on your account yet. Retry verification; you will not be charged again.',
+        ));
+        return;
       }
 
       await _completeStoreTransaction(purchase);
+      _verifiedPurchaseKeys.add(purchaseKey);
 
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
-        subscription: entitlement ?? state.subscription,
+        subscription: entitlement,
         busyPlanId: null,
         purchaseNeedsVerification: false,
         purchasePending: false,
@@ -343,7 +347,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         purchasePending: false,
         sessionInvalid: error.type == ApiErrorType.unauthorized,
         actionMessage:
-            'The store purchase could not be verified yet. Restore purchases to retry.',
+            'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
         errorMessage: error.message,
       ));
     } catch (_) {
@@ -353,9 +357,49 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         purchaseNeedsVerification: true,
         purchasePending: false,
         actionMessage:
-            'The store purchase could not be verified yet. Restore purchases to retry.',
+            'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
       ));
     }
+  }
+
+  bool _matchesVerifiedPurchase(
+    SubscriptionModel? entitlement,
+    PurchaseDetails purchase,
+  ) {
+    if (entitlement == null ||
+        !entitlement.grantsAccess ||
+        entitlement.isAccountTrial ||
+        !entitlement.usesStoreBilling) {
+      return false;
+    }
+
+    SubscriptionPlan? plan;
+    for (final candidate in subscriptionPlans) {
+      if (candidate.productId == purchase.productID) {
+        plan = candidate;
+        break;
+      }
+    }
+    if (plan == null ||
+        entitlement.planType.toLowerCase() != plan.id.toLowerCase()) {
+      return false;
+    }
+
+    final source = purchase.verificationData.source
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+    final expectedPlatform = source.contains('apple') ||
+            source.contains('appstore') ||
+            source == 'ios'
+        ? 'app_store'
+        : source.contains('googleplay') ||
+                source == 'playstore' ||
+                source == 'android'
+            ? 'google_play'
+            : null;
+    return expectedPlatform == null ||
+        entitlement.subscriptionPlatform == expectedPlatform;
   }
 
   String _purchaseKey(PurchaseDetails purchase) {

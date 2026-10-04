@@ -86,6 +86,7 @@ class SubscriptionModel extends Equatable {
     this.currentPeriodStart,
     this.currentPeriodEnd,
     this.trialDaysLeft,
+    this.autoRenew,
     this.usageStats = const {},
     this.features = const {},
   });
@@ -99,6 +100,7 @@ class SubscriptionModel extends Equatable {
   final DateTime? currentPeriodStart;
   final DateTime? currentPeriodEnd;
   final int? trialDaysLeft;
+  final bool? autoRenew;
   final Map<String, dynamic> usageStats;
   final Map<String, dynamic> features;
 
@@ -107,6 +109,19 @@ class SubscriptionModel extends Equatable {
   bool get isCancelled => status == 'cancelled';
   bool get isInGracePeriod => status == 'in_grace_period';
   bool get isExpired => status == 'expired';
+  bool get isOnHold => status == 'on_hold' || status == 'account_hold';
+  bool get isPaused => status == 'paused';
+  bool get isPending => status == 'pending';
+  bool get isRevoked => status == 'revoked';
+  bool get isPaymentFailed =>
+      isOnHold || status == 'past_due' || status == 'payment_failed';
+
+  bool get usesStoreBilling =>
+      subscriptionPlatform == 'google_play' ||
+      subscriptionPlatform == 'app_store';
+
+  bool get requiresStoreRecovery =>
+      usesStoreBilling && (isOnHold || isPaused || isPending);
 
   bool get _hasUnexpiredPeriod =>
       currentPeriodEnd?.isAfter(DateTime.now()) == true;
@@ -159,6 +174,11 @@ class SubscriptionModel extends Equatable {
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
+      autoRenew: json['autoRenew'] is bool
+          ? json['autoRenew'] as bool
+          : json['subscriptionAutoRenew'] is bool
+              ? json['subscriptionAutoRenew'] as bool
+              : null,
       usageStats: _map(json['usageStats']),
       features: _map(json['features']),
     );
@@ -204,6 +224,7 @@ class SubscriptionModel extends Equatable {
         currentPeriodStart,
         currentPeriodEnd,
         trialDaysLeft,
+        autoRenew,
         usageStats,
         features,
       ];
