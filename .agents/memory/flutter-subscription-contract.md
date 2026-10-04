@@ -43,6 +43,13 @@ Keep store product availability separate from purchase eligibility. A product ca
 
 **How to apply:** Show the missing-product message only when the store or selected product is unavailable. Continue to block selection and payment while purchase verification is pending, and show the verification warning instead.
 
+## Account trial versus store subscription
+The free 7-day Adaptalyfe Basic account trial is separate from paid store subscriptions. It grants Basic access without hiding paid plan choices, and it does not promise that a new store subscription starts billing only after the account trial ends.
+
+**Why:** Account trials and store-offered trials have different eligibility and billing rules; conflating them can hide plan choices or misstate when billing begins.
+
+**How to apply:** Use the API's `isAccountTrial` marker, keep it distinct from paid-plan entitlement, and tell users to review the provider's price and start date before confirming a purchase.
+
 ## Local acknowledgement versus account access
 An account entitlement already verified and persisted by the backend remains usable if the client cannot finish its local store acknowledgement. Keep acknowledgement retryable without treating the payment as unverified again.
 

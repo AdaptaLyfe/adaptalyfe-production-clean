@@ -15,7 +15,7 @@
 - [Proactive guidance safety](proactive-guidance.md) — one best user-scoped candidate per worker pass, explicit preferences, and stable occurrence deduplication prevent notification floods.
 - [Shared chatbot surface](shared-chatbot-surface.md) — mount the single chatbot instance in the app shell so route changes preserve its conversation state.
 - [Flutter scaffold verification](flutter-scaffold.md) — Flutter files can be scaffolded here, but SDK-side pub get and platform builds need a Flutter-enabled environment.
-- [Flutter subscription contract](flutter-subscription-contract.md) — forward platform receipt/token data to existing verification routes; backend remains the entitlement authority.
+- [Flutter subscription contract](flutter-subscription-contract.md) — store purchases remain server-verified, while the free account trial is separate from store billing.
 - [Flutter settings contract](flutter-settings-contract.md) — use the five supported preference columns; keep dashboard and explicitly local web preferences on-device.
 - [Flutter analytics](flutter-analytics.md) — native Firebase uses Dart-defined public options and best-effort centralized event logging.
 - [Flutter native notifications](flutter-native-notifications.md) — platform delivery stays separate from server notification list/read state; no device-token route currently exists.
