@@ -400,8 +400,10 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storeAvailable =
-        usesNativeStoreBilling && product != null && state.canPurchase;
+    final hasStoreProduct = usesNativeStoreBilling &&
+        state.storeAvailable &&
+        product != null;
+    final canPurchaseFromStore = hasStoreProduct && state.canStartPurchase;
     final selectable = state.canStartPurchase;
     final isCurrentPlan =
         state.subscription?.planType.toLowerCase() == plan.id;
@@ -506,7 +508,7 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
             )
-          else if (storeAvailable)
+          else if (canPurchaseFromStore)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -525,7 +527,7 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
             ),
-          if (!state.hasActiveSubscription && !storeAvailable)
+          if (!state.hasActiveSubscription && !hasStoreProduct)
             const Padding(
               padding: EdgeInsets.only(top: 7),
                child: _StoreAvailabilityMessage(),
