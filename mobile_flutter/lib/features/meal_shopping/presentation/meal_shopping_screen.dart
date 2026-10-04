@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -8,11 +8,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
-import '../../subscription/bloc/subscription_bloc.dart';
-import '../../subscription/bloc/subscription_event.dart';
-import '../../subscription/bloc/subscription_state.dart';
-import '../../subscription/models/subscription_models.dart';
-import '../../subscription/subscription_access.dart';
+import '../../auth/bloc/auth_state.dart';
 import '../bloc/meal_shopping_bloc.dart';
 import '../bloc/meal_shopping_event.dart';
 import '../bloc/meal_shopping_state.dart';
@@ -20,102 +16,14 @@ import '../models/meal_shopping_models.dart';
 
 final Set<String> _openMealShoppingOverlays = <String>{};
 
-class MealShoppingScreen extends StatefulWidget {
+class MealShoppingScreen extends StatelessWidget {
   const MealShoppingScreen({super.key});
 
   @override
-  State<MealShoppingScreen> createState() => _MealShoppingScreenState();
-}
-
-class _MealShoppingScreenState extends State<MealShoppingScreen>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refreshEntitlement();
-    });
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      _refreshEntitlement();
-    }
-  }
-
-  void _refreshEntitlement() {
-    context.read<SubscriptionBloc>().add(const RefreshSubscription());
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SubscriptionBloc, SubscriptionState>(
-      builder: (context, subscriptionState) {
-        final subscription = subscriptionState.subscription;
-        final authState = context.read<AuthBloc>().state;
-        final isAdmin = canAccessPremiumFeatures(
-          authState: authState,
-          subscription: null,
-        );
-        if (!isAdmin && subscriptionState.isLoading) {
-          return const Scaffold(
-            appBar: _MealShoppingAppBar(),
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (!isAdmin &&
-            subscriptionState.status == SubscriptionStatus.failure) {
-          return Scaffold(
-            appBar: const _MealShoppingAppBar(),
-            body: Center(
-              child: Padding(
-                padding: AppResponsive.pagePadding(context),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'We couldn’t verify your subscription right now.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => context
-                          .read<SubscriptionBloc>()
-                          .add(const RefreshSubscription()),
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Check again'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-        if (!canAccessPremiumFeatures(
-          authState: authState,
-          subscription: subscription,
-        )) {
-          return _MealPlanningPremiumPrompt(
-            currentPlan:
-                subscription?.grantsAccess == true
-                    ? subscription?.planType
-                    : null,
-          );
-        }
-        return _buildMealShoppingContent(context);
-      },
-    );
-  }
-
-  Widget _buildMealShoppingContent(BuildContext context) {
+    if (!_hasMealPlanningAccess(context)) {
+      return const _MealPlanningPremiumPrompt();
+    }
     return BlocConsumer<MealShoppingBloc, MealShoppingState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
@@ -129,9 +37,8 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
           ..showSnackBar(
             SnackBar(
               content: Text(message),
-              backgroundColor: state.errorMessage == null
-                  ? null
-                  : const Color(0xFFB91C1C),
+              backgroundColor:
+                  state.errorMessage == null ? null : const Color(0xFFB91C1C),
             ),
           );
       },
@@ -189,7 +96,8 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
             ),
             body: Column(
               children: [
-                if (state.isLoading) const LinearProgressIndicator(minHeight: 2),
+                if (state.isLoading)
+                  const LinearProgressIndicator(minHeight: 2),
                 Expanded(
                   child: TabBarView(
                     children: [
@@ -207,14 +115,23 @@ class _MealShoppingScreenState extends State<MealShoppingScreen>
   }
 }
 
-class _MealPlanningPremiumPrompt extends StatelessWidget {
-  const _MealPlanningPremiumPrompt({this.currentPlan});
+bool _hasMealPlanningAccess(BuildContext context) {
+  final authState = context.read<AuthBloc>().state;
+  if (authState is! Authenticated) return false;
+  final user = authState.user;
+  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
+  if (isAdmin) return true;
+  final tier = user.subscriptionTier?.toLowerCase();
+  final status = user.subscriptionStatus?.toLowerCase();
+  return status == 'active' && (tier == 'premium' || tier == 'family') ||
+      status == 'trialing';
+}
 
-  final String? currentPlan;
+class _MealPlanningPremiumPrompt extends StatelessWidget {
+  const _MealPlanningPremiumPrompt();
 
   @override
   Widget build(BuildContext context) {
-    final hasBasicPlan = currentPlan?.toLowerCase() == 'basic';
     return Scaffold(
       appBar: AppBar(title: const Text('Meal Planning & Shopping')),
       body: Center(
@@ -241,12 +158,10 @@ class _MealPlanningPremiumPrompt extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    hasBasicPlan
-                        ? 'Your Basic plan is active. Meal Planning & Shopping is included with Premium and Family plans.'
-                        : 'Create personalized meal plans, manage recipes, and generate smart shopping lists. This feature is included with Premium and Family plans.',
+                  const Text(
+                    'Create personalized meal plans, manage recipes, and generate smart shopping lists. This premium feature helps you maintain a healthy diet and budget.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFF6B7280)),
+                    style: TextStyle(color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 18),
                   FilledButton(
@@ -300,9 +215,9 @@ class _MealPlansTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-         padding: AppResponsive.pagePadding(context).add(
-           const EdgeInsets.only(top: 16, bottom: 32),
-         ),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
         children: [
           _IntroCard(
             icon: Icons.restaurant_menu_rounded,
@@ -409,111 +324,111 @@ class _MealPlanCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            Checkbox(
-              value: meal.isCompleted,
-              onChanged: isBusy
-                  ? null
-                  : (value) {
-                      context.read<MealShoppingBloc>().add(
-                            ToggleMealCompletion(
-                              meal.id,
-                              value ?? false,
-                            ),
-                          );
-                    },
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 5,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          meal.mealName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            decoration: meal.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                            color: meal.isCompleted
-                                ? const Color(0xFF6B7280)
-                                : const Color(0xFF111827),
-                          ),
-                        ),
-                        _ColorBadge(
-                          label: _titleCase(meal.mealType),
-                          color: color,
-                        ),
-                      ],
-                    ),
-                    if (meal.cookingTime != null && meal.cookingTime! > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.schedule_rounded,
-                              size: 15,
-                              color: Color(0xFF6B7280),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${meal.cookingTime} minutes',
-                              style: const TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 13,
+              Checkbox(
+                value: meal.isCompleted,
+                onChanged: isBusy
+                    ? null
+                    : (value) {
+                        context.read<MealShoppingBloc>().add(
+                              ToggleMealCompletion(
+                                meal.id,
+                                value ?? false,
                               ),
+                            );
+                      },
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 5,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            meal.mealName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              decoration: meal.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: meal.isCompleted
+                                  ? const Color(0xFF6B7280)
+                                  : const Color(0xFF111827),
                             ),
-                          ],
-                        ),
+                          ),
+                          _ColorBadge(
+                            label: _titleCase(meal.mealType),
+                            color: color,
+                          ),
+                        ],
                       ),
-                    if (_hasText(meal.recipe))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 7),
-                        child: Text(
-                          meal.recipe!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF4B5563),
-                            fontSize: 13,
+                      if (meal.cookingTime != null && meal.cookingTime! > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.schedule_rounded,
+                                size: 15,
+                                color: Color(0xFF6B7280),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${meal.cookingTime} minutes',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                  ],
+                      if (_hasText(meal.recipe))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 7),
+                          child: Text(
+                            meal.recipe!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF4B5563),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (isBusy)
-              const Padding(
-                padding: EdgeInsets.only(top: 6, left: 8),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+              if (isBusy)
+                const Padding(
+                  padding: EdgeInsets.only(top: 6, left: 8),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              else if (meal.isCompleted)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4, left: 8),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF16A34A),
+                  ),
                 ),
-              )
-            else if (meal.isCompleted)
-              const Padding(
-                padding: EdgeInsets.only(top: 4, left: 8),
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: Color(0xFF16A34A),
-                ),
+              IconButton(
+                tooltip: 'Delete meal plan',
+                onPressed: isBusy ? null : onDelete,
+                icon: const Icon(Icons.delete_outline_rounded),
               ),
-            IconButton(
-              tooltip: 'Delete meal plan',
-              onPressed: isBusy ? null : onDelete,
-              icon: const Icon(Icons.delete_outline_rounded),
-            ),
             ],
           ),
         ),
@@ -589,9 +504,9 @@ class _ShoppingListTab extends StatelessWidget {
       onRefresh: () => _refresh(context),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-         padding: AppResponsive.pagePadding(context).add(
-           const EdgeInsets.only(top: 16, bottom: 32),
-         ),
+        padding: AppResponsive.pagePadding(context).add(
+          const EdgeInsets.only(top: 16, bottom: 32),
+        ),
         children: [
           _ShoppingStats(
             activeCount: state.activeShoppingItems.length,
@@ -669,30 +584,30 @@ class _ShoppingStats extends StatelessWidget {
             SizedBox(
               width: cardWidth,
               child: _StatCard(
-            icon: Icons.inventory_2_outlined,
-            label: 'Active Items',
-            value: '$activeCount',
-            color: const Color(0xFFF97316),
-          ),
-        ),
+                icon: Icons.inventory_2_outlined,
+                label: 'Active Items',
+                value: '$activeCount',
+                color: const Color(0xFFF97316),
+              ),
+            ),
             SizedBox(
               width: cardWidth,
               child: _StatCard(
-            icon: Icons.attach_money_rounded,
-            label: 'Estimated Total',
-            value: _currency(estimatedTotal),
-            color: const Color(0xFF16A34A),
-          ),
-        ),
+                icon: Icons.attach_money_rounded,
+                label: 'Estimated Total',
+                value: _currency(estimatedTotal),
+                color: const Color(0xFF16A34A),
+              ),
+            ),
             SizedBox(
               width: cardWidth,
               child: _StatCard(
-            icon: Icons.check_circle_outline_rounded,
-            label: 'Spent',
-            value: _currency(actualTotal),
-            color: const Color(0xFF2563EB),
-          ),
-        ),
+                icon: Icons.check_circle_outline_rounded,
+                label: 'Spent',
+                value: _currency(actualTotal),
+                color: const Color(0xFF2563EB),
+              ),
+            ),
           ],
         );
       },
@@ -739,7 +654,8 @@ class _GroceryStoresSection extends StatelessWidget {
               const _EmptyState(
                 icon: Icons.store_outlined,
                 title: 'No grocery stores added yet',
-                subtitle: 'Add favourite stores for online ordering and pickup.',
+                subtitle:
+                    'Add favourite stores for online ordering and pickup.',
               )
             else
               LayoutBuilder(
@@ -855,9 +771,8 @@ class _GroceryStoreCard extends StatelessWidget {
                   ),
                 if (store.website != null)
                   TextButton.icon(
-                    onPressed: isBusy
-                        ? null
-                        : () => _openStoreUrl(store.website!),
+                    onPressed:
+                        isBusy ? null : () => _openStoreUrl(store.website!),
                     icon: const Icon(Icons.language, size: 16),
                     label: const Text('Website'),
                   ),
@@ -909,9 +824,7 @@ class _StoreBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: outlined ? Colors.transparent : const Color(0xFFDBEAFE),
-        border: outlined
-            ? Border.all(color: const Color(0xFF93C5FD))
-            : null,
+        border: outlined ? Border.all(color: const Color(0xFF93C5FD)) : null,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -1438,8 +1351,7 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
           mealName: _nameController.text,
           plannedDate: _plannedDate,
           recipe: _recipeController.text,
-          cookingTime:
-              int.tryParse(_cookingTimeController.text.trim()) ?? 0,
+          cookingTime: int.tryParse(_cookingTimeController.text.trim()) ?? 0,
         ),
       ),
     );
@@ -1497,63 +1409,65 @@ class _AddMealPlanDialogState extends State<_AddMealPlanDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                    TextFormField(
-                      controller: _nameController,
-                      enabled: !isBusy,
-                      decoration: const InputDecoration(
-                        labelText: 'Meal Name',
-                        hintText: 'e.g., Scrambled eggs and toast',
+                      TextFormField(
+                        controller: _nameController,
+                        enabled: !isBusy,
+                        decoration: const InputDecoration(
+                          labelText: 'Meal Name',
+                          hintText: 'e.g., Scrambled eggs and toast',
+                        ),
+                        validator: _requiredValidator,
                       ),
-                      validator: _requiredValidator,
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: _mealType,
-                      decoration: const InputDecoration(labelText: 'Meal Type'),
-                      items: _mealTypes
-                          .map(
-                            (value) => DropdownMenuItem(
-                              value: value,
-                              child: Text(_titleCase(value)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: isBusy
-                          ? null
-                          : (value) => setState(
-                                () => _mealType = value ?? _mealType,
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _mealType,
+                        decoration:
+                            const InputDecoration(labelText: 'Meal Type'),
+                        items: _mealTypes
+                            .map(
+                              (value) => DropdownMenuItem(
+                                value: value,
+                                child: Text(_titleCase(value)),
                               ),
-                      validator: (value) =>
-                          value == null ? 'Meal type is required' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    _DatePickerField(
-                      label: 'Planned Date',
-                      value: _plannedDate,
-                      onTap: isBusy ? () {} : _selectDate,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _cookingTimeController,
-                      enabled: !isBusy,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Cooking Time (minutes)',
-                        hintText: '30',
+                            )
+                            .toList(),
+                        onChanged: isBusy
+                            ? null
+                            : (value) => setState(
+                                  () => _mealType = value ?? _mealType,
+                                ),
+                        validator: (value) =>
+                            value == null ? 'Meal type is required' : null,
                       ),
-                      validator: _positiveIntValidator,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _recipeController,
-                      enabled: !isBusy,
-                      minLines: 3,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: 'Recipe/Instructions (Optional)',
-                        hintText: 'Write simple cooking instructions or notes...',
+                      const SizedBox(height: 12),
+                      _DatePickerField(
+                        label: 'Planned Date',
+                        value: _plannedDate,
+                        onTap: isBusy ? () {} : _selectDate,
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _cookingTimeController,
+                        enabled: !isBusy,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Cooking Time (minutes)',
+                          hintText: '30',
+                        ),
+                        validator: _positiveIntValidator,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _recipeController,
+                        enabled: !isBusy,
+                        minLines: 3,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          labelText: 'Recipe/Instructions (Optional)',
+                          hintText:
+                              'Write simple cooking instructions or notes...',
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1688,58 +1602,59 @@ class _AddShoppingItemDialogState extends State<_AddShoppingItemDialog> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                    TextFormField(
-                      controller: _nameController,
-                      enabled: !isBusy,
-                      decoration: const InputDecoration(
-                        labelText: 'Item Name',
-                        hintText: 'e.g., Bananas',
+                      TextFormField(
+                        controller: _nameController,
+                        enabled: !isBusy,
+                        decoration: const InputDecoration(
+                          labelText: 'Item Name',
+                          hintText: 'e.g., Bananas',
+                        ),
+                        validator: _requiredValidator,
                       ),
-                      validator: _requiredValidator,
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: const InputDecoration(labelText: 'Category'),
-                      items: _shoppingCategories
-                          .map(
-                            (value) => DropdownMenuItem(
-                              value: value,
-                              child: Text(_categoryLabel(value)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: isBusy
-                          ? null
-                          : (value) => setState(
-                                () => _category = value ?? _category,
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: _category,
+                        decoration:
+                            const InputDecoration(labelText: 'Category'),
+                        items: _shoppingCategories
+                            .map(
+                              (value) => DropdownMenuItem(
+                                value: value,
+                                child: Text(_categoryLabel(value)),
                               ),
-                      validator: (value) =>
-                          value == null ? 'Category is required' : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _quantityController,
-                      enabled: !isBusy,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantity',
-                        hintText: 'e.g., 2 lbs, 1 gallon',
+                            )
+                            .toList(),
+                        onChanged: isBusy
+                            ? null
+                            : (value) => setState(
+                                  () => _category = value ?? _category,
+                                ),
+                        validator: (value) =>
+                            value == null ? 'Category is required' : null,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _estimatedCostController,
-                      enabled: !isBusy,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _quantityController,
+                        enabled: !isBusy,
+                        decoration: const InputDecoration(
+                          labelText: 'Quantity',
+                          hintText: 'e.g., 2 lbs, 1 gallon',
+                        ),
                       ),
-                      inputFormatters: [_nonNegativeMoneyFormatter],
-                      decoration: const InputDecoration(
-                        labelText: 'Estimated Cost (\$)',
-                        hintText: '5.99',
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _estimatedCostController,
+                        enabled: !isBusy,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [_nonNegativeMoneyFormatter],
+                        decoration: const InputDecoration(
+                          labelText: 'Estimated Cost (\$)',
+                          hintText: '5.99',
+                        ),
+                        validator: _optionalMoneyValidator,
                       ),
-                      validator: _optionalMoneyValidator,
-                    ),
                     ],
                   ),
                 ),
@@ -1775,106 +1690,105 @@ Future<void> _showStoreManagementDialog(BuildContext context) async {
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-      title: const Text('Manage Grocery Stores'),
-       content: SizedBox(
-         width: AppResponsive.dialogWidth(context, maxWidth: 620),
-         child: ConstrainedBox(
-           constraints: BoxConstraints(
-             maxHeight: AppResponsive.dialogMaxHeight(
-               context,
-               fraction: .8,
-             ),
-           ),
-          child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
-            bloc: bloc,
-            builder: (context, state) {
-              final busy = state.isBusy;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Add favourite stores for easy online ordering and shopping list management.',
+        title: const Text('Manage Grocery Stores'),
+        content: SizedBox(
+          width: AppResponsive.dialogWidth(context, maxWidth: 620),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: AppResponsive.dialogMaxHeight(
+                context,
+                fraction: .8,
+              ),
+            ),
+            child: BlocBuilder<MealShoppingBloc, MealShoppingState>(
+              bloc: bloc,
+              builder: (context, state) {
+                final busy = state.isBusy;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Add favourite stores for easy online ordering and shopping list management.',
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Your Stores',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Your Stores',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ),
-                      FilledButton.icon(
-                        onPressed: busy
-                            ? null
-                            : () async {
-                                await _showStoreFormDialog(
-                                  dialogContext,
-                                  bloc: bloc,
-                                );
-                              },
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Add New Store'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Flexible(
-                    child: state.groceryStores.isEmpty
-                        ? const _EmptyState(
-                            icon: Icons.store_outlined,
-                            title: 'No stores added yet',
-                            subtitle: 'Add a store to get started.',
-                          )
-                        : ListView.separated(
-                            shrinkWrap: true,
-                            itemCount: state.groceryStores.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final store = state.groceryStores[index];
-                              final isBusy = state.activeId == store.id &&
-                                  (state.action ==
-                                          MealShoppingAction
-                                              .deletingGroceryStore ||
-                                      state.action ==
-                                          MealShoppingAction
-                                              .updatingGroceryStore);
-                              return _StoreManagementRow(
-                                store: store,
-                                isBusy: isBusy,
-                                onEdit: () async {
+                        FilledButton.icon(
+                          onPressed: busy
+                              ? null
+                              : () async {
                                   await _showStoreFormDialog(
-                                    context,
+                                    dialogContext,
                                     bloc: bloc,
-                                    store: store,
                                   );
                                 },
-                                onDelete: () =>
-                                    _confirmDeleteStore(
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('Add New Store'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: state.groceryStores.isEmpty
+                          ? const _EmptyState(
+                              icon: Icons.store_outlined,
+                              title: 'No stores added yet',
+                              subtitle: 'Add a store to get started.',
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: state.groceryStores.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final store = state.groceryStores[index];
+                                final isBusy = state.activeId == store.id &&
+                                    (state.action ==
+                                            MealShoppingAction
+                                                .deletingGroceryStore ||
+                                        state.action ==
+                                            MealShoppingAction
+                                                .updatingGroceryStore);
+                                return _StoreManagementRow(
+                                  store: store,
+                                  isBusy: isBusy,
+                                  onEdit: () async {
+                                    await _showStoreFormDialog(
                                       context,
                                       bloc: bloc,
                                       store: store,
-                                    ),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              );
-            },
+                                    );
+                                  },
+                                  onDelete: () => _confirmDeleteStore(
+                                    context,
+                                    bloc: bloc,
+                                    store: store,
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Close'),
-        ),
-      ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   } finally {
@@ -2061,9 +1975,9 @@ class _StoreFormDialogState extends State<_StoreFormDialog> {
         bloc: widget.bloc,
         builder: (context, state) {
           final isBusy = state.isBusy;
-          final isSaving = state.action ==
-                  MealShoppingAction.addingGroceryStore ||
-              state.action == MealShoppingAction.updatingGroceryStore;
+          final isSaving =
+              state.action == MealShoppingAction.addingGroceryStore ||
+                  state.action == MealShoppingAction.updatingGroceryStore;
           final store = widget.store;
           return AlertDialog(
             title: Text(store == null ? 'Add New Store' : 'Edit Store'),
@@ -2184,8 +2098,7 @@ class _StoreFormDialogState extends State<_StoreFormDialog> {
 }
 
 Future<void> _confirmDeleteStore(
-  BuildContext context,
-  {
+  BuildContext context, {
   required MealShoppingBloc bloc,
   required GroceryStoreModel store,
 }) async {
@@ -2294,8 +2207,7 @@ class _PurchaseCostDialogState extends State<_PurchaseCostDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () =>
-              Navigator.of(context).pop(_purchaseCancelled),
+          onPressed: () => Navigator.of(context).pop(_purchaseCancelled),
           child: const Text('Cancel'),
         ),
         TextButton(

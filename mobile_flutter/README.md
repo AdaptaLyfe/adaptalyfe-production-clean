@@ -1,15 +1,18 @@
 # Adaptalyfe Flutter Mobile
 
-Separate Flutter client scaffold for Adaptalyfe.
+Standalone Flutter client for Adaptalyfe. The app includes authentication,
+feature modules, native navigation, persistence, notifications, and store
+subscription flows. Most features follow presentation → BLoC → repository →
+API client boundaries.
 
-This project is intentionally structure-only. Authentication, API calls, session
-restoration, persistence behavior, and Home data loading will be implemented in
-later work.
+Keep this project separate from the React web/server app and the root
+Capacitor `android/` and `ios/` projects.
 
 ## Platforms
 
 - Android project files live in `android/`.
-- iOS project files live in `ios/`.
+- `ios/` contains Runner support files, but this source does not include an
+  Xcode project or Podfile, so iOS builds are not set up yet.
 - Dart application code lives in `lib/`.
 
 ## Local setup
