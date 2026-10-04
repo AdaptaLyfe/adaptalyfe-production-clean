@@ -75,6 +75,50 @@ void main() {
     expect(state.canPurchase, isTrue);
   });
 
+  test('recognizes a legacy free account trial response without its marker', () {
+    final trial = SubscriptionModel.fromJson({
+      'id': 7,
+      'planType': 'basic',
+      'status': 'trialing',
+      'billingCycle': 'monthly',
+      'trialDaysLeft': 7,
+      'currentPeriodEnd':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+    });
+    const state = SubscriptionState(
+      status: SubscriptionStatus.ready,
+      storeAvailable: true,
+    );
+    final checked = state.copyWith(subscription: trial);
+
+    expect(trial.isAccountTrial, isTrue);
+    expect(trial.grantsAccess, isTrue);
+    expect(checked.hasActiveSubscription, isFalse);
+    expect(checked.canPurchase, isTrue);
+  });
+
+  test('does not infer a free account trial for a web-billed provider trial', () {
+    final trial = SubscriptionModel.fromJson({
+      'id': 8,
+      'planType': 'basic',
+      'status': 'trialing',
+      'billingCycle': 'monthly',
+      'subscriptionPlatform': 'web',
+      'trialDaysLeft': 7,
+      'currentPeriodEnd':
+          DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+    });
+    final state = SubscriptionState(
+      status: SubscriptionStatus.ready,
+      subscription: trial,
+      storeAvailable: true,
+    );
+
+    expect(trial.isAccountTrial, isFalse);
+    expect(state.hasActiveSubscription, isTrue);
+    expect(state.canPurchase, isFalse);
+  });
+
   test('dashboard navigation signal can be cleared after routing', () {
     const completed = SubscriptionState(shouldNavigateToDashboard: true);
     expect(

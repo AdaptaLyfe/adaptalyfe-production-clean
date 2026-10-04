@@ -175,7 +175,7 @@ class _SubscriptionBody extends StatelessWidget {
               children: [
                 _SubscriptionHeader(subscription: state.subscription),
                 const SizedBox(height: 16),
-                if (state.subscription?.grantsAccess == true)
+                if (state.hasActiveSubscription)
                   _ActiveSubscriptionCard(subscription: state.subscription!)
                 else
                   _TrialCard(subscription: state.subscription),
@@ -256,7 +256,8 @@ class _SubscriptionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final active = subscription?.grantsAccess == true;
+    final active = subscription?.grantsAccess == true &&
+        subscription?.isAccountTrial != true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

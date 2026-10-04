@@ -146,19 +146,36 @@ class SubscriptionModel extends Equatable {
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
     final id = rawId is int ? rawId : int.tryParse('$rawId') ?? 0;
+    final subscriptionPlatform = json['subscriptionPlatform'] as String?;
     return SubscriptionModel(
       id: id,
       planType: '${json['planType'] ?? 'free'}',
       status: '${json['status'] ?? 'expired'}',
       billingCycle: '${json['billingCycle'] ?? 'monthly'}',
-      subscriptionPlatform: json['subscriptionPlatform'] as String?,
-      isAccountTrial: json['isAccountTrial'] == true,
+      subscriptionPlatform: subscriptionPlatform,
+      isAccountTrial: _isAccountTrial(json, subscriptionPlatform),
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
       usageStats: _map(json['usageStats']),
       features: _map(json['features']),
     );
+  }
+
+  static bool _isAccountTrial(
+    Map<String, dynamic> json,
+    String? subscriptionPlatform,
+  ) {
+    final explicitValue = json['isAccountTrial'];
+    if (explicitValue is bool) return explicitValue;
+
+    // Older servers omitted isAccountTrial. Only infer the free account trial
+    // when it has no billing provider and the server reports days remaining.
+    final daysLeft = _int(json['trialDaysLeft']);
+    return json['status'] == 'trialing' &&
+        (subscriptionPlatform == null || subscriptionPlatform.trim().isEmpty) &&
+        daysLeft != null &&
+        daysLeft > 0;
   }
 
   static DateTime? _date(Object? value) {

@@ -27,4 +27,4 @@ A free account trial provides Basic access and does not prevent native checkout.
 
 **Why:** Selecting a plan alone must not grant paid-tier features. Conversely, treating the free account trial as a purchased subscription can prevent a new Android user from subscribing at all.
 
-**How to apply:** Distinguish these trial types in the entitlement contract. Store eligibility and payment terms, not account age, determine whether a native purchase includes a store trial.
+**How to apply:** Prefer the server's `isAccountTrial` marker. For legacy responses that omit it, infer a free account trial only when status is trialing, no billing platform is set, and the server reports positive trial days. Keep web- and store-billed trials as active subscriptions. Store eligibility and payment terms, not account age, determine whether a native purchase includes a store trial.
