@@ -13,7 +13,6 @@ const subscriptionPlans = <SubscriptionPlan>[
       'Financial tracking & bill reminders',
       '1 caregiver connection',
       'Basic reminders & notifications',
-      '7-day free trial',
       'Email support',
     ],
   ),
@@ -26,7 +25,6 @@ const subscriptionPlans = <SubscriptionPlan>[
     popular: true,
     features: [
       'Everything in Basic',
-      '7-day free trial',
       'Unlimited tasks (up to 1,000)',
       'Advanced analytics & insights',
       'Medication management',
@@ -46,7 +44,6 @@ const subscriptionPlans = <SubscriptionPlan>[
     productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
-      '7-day free trial',
       'Up to 5 additional member accounts',
       'Unlimited caregiver connections',
       'Family dashboard & shared progress',
@@ -88,6 +85,7 @@ class SubscriptionModel extends Equatable {
     required this.status,
     required this.billingCycle,
     this.subscriptionPlatform,
+    this.isAccountTrial = false,
     this.currentPeriodStart,
     this.currentPeriodEnd,
     this.trialDaysLeft,
@@ -100,6 +98,7 @@ class SubscriptionModel extends Equatable {
   final String status;
   final String billingCycle;
   final String? subscriptionPlatform;
+  final bool isAccountTrial;
   final DateTime? currentPeriodStart;
   final DateTime? currentPeriodEnd;
   final int? trialDaysLeft;
@@ -116,11 +115,15 @@ class SubscriptionModel extends Equatable {
   bool get _isNativeStore =>
       subscriptionPlatform == 'app_store' ||
       subscriptionPlatform == 'google_play';
-  bool get grantsAccess =>
-      isActive ||
-      isTrialing ||
-      (isCancelled && _hasUnexpiredPeriod) ||
-      (isInGracePeriod && _isNativeStore && _hasUnexpiredPeriod);
+  bool get grantsAccess {
+    if (_isNativeStore) {
+      return const ['basic', 'premium', 'family'].contains(planType.toLowerCase()) &&
+          _hasUnexpiredPeriod &&
+          (isActive || isCancelled || isInGracePeriod);
+    }
+    if (currentPeriodEnd != null && !_hasUnexpiredPeriod) return false;
+    return isActive || isTrialing || (isCancelled && _hasUnexpiredPeriod);
+  }
   bool get hasPremiumAccess {
     if (!grantsAccess) return false;
     final tier = planType.toLowerCase();
@@ -149,6 +152,7 @@ class SubscriptionModel extends Equatable {
       status: '${json['status'] ?? 'expired'}',
       billingCycle: '${json['billingCycle'] ?? 'monthly'}',
       subscriptionPlatform: json['subscriptionPlatform'] as String?,
+      isAccountTrial: json['isAccountTrial'] == true,
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
@@ -180,6 +184,7 @@ class SubscriptionModel extends Equatable {
         status,
         billingCycle,
         subscriptionPlatform,
+        isAccountTrial,
         currentPeriodStart,
         currentPeriodEnd,
         trialDaysLeft,

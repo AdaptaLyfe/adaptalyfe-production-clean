@@ -43,6 +43,7 @@ void main() {
         'status': 'active',
         'billingCycle': 'monthly',
         'subscriptionPlatform': 'google_play',
+        'currentPeriodEnd': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
       });
       final restored = PurchaseVerification.fromJson({
         'restored': true,
@@ -100,6 +101,7 @@ void main() {
         'status': 'active',
         'billingCycle': 'monthly',
         'subscriptionPlatform': 'google_play',
+        'currentPeriodEnd': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
       });
 
       expect(subscription.grantsAccess, isTrue);
@@ -116,6 +118,25 @@ void main() {
 
       expect(subscription.grantsAccess, isTrue);
       expect(subscription.hasPremiumAccess, isFalse);
+    });
+
+    test('native active subscriptions need a known tier and verified future expiry', () {
+      for (final tier in ['basic', 'premium', 'family']) {
+        for (final expiry in [null, DateTime.now().subtract(const Duration(seconds: 1)).toIso8601String()]) {
+          final subscription = SubscriptionModel.fromJson({
+            'id': 7, 'planType': tier, 'status': 'active',
+            'billingCycle': 'monthly', 'subscriptionPlatform': 'google_play',
+            'currentPeriodEnd': expiry,
+          });
+          expect(subscription.grantsAccess, isFalse, reason: '$tier / $expiry');
+        }
+      }
+      final unknown = SubscriptionModel.fromJson({
+        'id': 7, 'planType': 'unknown', 'status': 'active',
+        'billingCycle': 'monthly', 'subscriptionPlatform': 'google_play',
+        'currentPeriodEnd': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+      });
+      expect(unknown.grantsAccess, isFalse);
     });
 
     test('cancelled and grace-period store plans keep access until expiry', () {

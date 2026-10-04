@@ -31,6 +31,18 @@ void main() {
     expect(state.canPurchase, isFalse);
   });
 
+  test('purchase is disabled until account status is checked and while verification is pending', () {
+    const unchecked = SubscriptionState(storeAvailable: true);
+    expect(unchecked.canPurchase, isFalse);
+    const expired = SubscriptionModel(id: 7, planType: 'free', status: 'expired', billingCycle: 'monthly');
+    const checked = SubscriptionState(status: SubscriptionStatus.ready, storeAvailable: true, subscription: expired);
+    expect(checked.canPurchase, isTrue);
+    expect(checked.copyWith(purchaseNeedsVerification: true).canPurchase, isFalse);
+    expect(checked.copyWith(status: SubscriptionStatus.loading).canPurchase, isFalse);
+    expect(checked.copyWith(status: SubscriptionStatus.failure).canPurchase, isFalse);
+    expect(checked.copyWith(selectedPlanId: 'family').hasActiveSubscription, isFalse);
+  });
+
   test('verified trialing subscriptions retain access without another checkout', () {
     const trialing = SubscriptionModel(
       id: 1,
@@ -46,6 +58,21 @@ void main() {
     expect(trialing.grantsAccess, isTrue);
     expect(state.hasActiveSubscription, isTrue);
     expect(state.canPurchase, isFalse);
+  });
+
+  test('a free account trial grants Basic tools but still permits native checkout', () {
+    final trial = SubscriptionModel.fromJson({
+      'id': 7, 'planType': 'basic', 'status': 'trialing',
+      'billingCycle': 'monthly', 'subscriptionPlatform': 'web',
+      'isAccountTrial': true,
+      'currentPeriodEnd': DateTime.now().add(const Duration(days: 7)).toIso8601String(),
+    });
+    final state = SubscriptionState(status: SubscriptionStatus.ready,
+        subscription: trial, storeAvailable: true);
+    expect(trial.grantsAccess, isTrue);
+    expect(trial.hasPremiumAccess, isFalse);
+    expect(state.hasActiveSubscription, isFalse);
+    expect(state.canPurchase, isTrue);
   });
 
   test('dashboard navigation signal can be cleared after routing', () {

@@ -72,6 +72,19 @@ export function googlePlayTierForProductId(
 
 const GOOGLE_PLAY_CACHED_ENTITLEMENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
+export function googlePlayErrorStatus(error: unknown): number | null {
+  const value = error as { response?: { status?: unknown }; code?: unknown } | null;
+  const status = Number(value?.response?.status ?? value?.code);
+  return Number.isFinite(status) && status >= 100 && status <= 599 ? status : null;
+}
+
+export function isTransientGooglePlayError(error: unknown): boolean {
+  const status = googlePlayErrorStatus(error);
+  if (status !== null) return status === 408 || status === 429 || status >= 500;
+  const code = (error as { code?: string } | null)?.code;
+  return ["ETIMEDOUT", "ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"].includes(code ?? "");
+}
+
 export function canUseCachedGooglePlayEntitlement(
   cached: {
     subscriptionStatus?: string | null;

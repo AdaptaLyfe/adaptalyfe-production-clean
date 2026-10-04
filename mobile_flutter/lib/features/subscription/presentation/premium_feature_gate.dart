@@ -1,11 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
 import '../subscription_access.dart';
+
+class SubscriptionFeaturePaywall extends StatelessWidget {
+  const SubscriptionFeaturePaywall({required this.title, super.key});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(title)),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$title requires an active Premium or Family plan.',
+                textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => context.go('/subscription'),
+              child: const Text('View plans or restore'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
 class PremiumFeatureGate extends StatefulWidget {
   const PremiumFeatureGate({

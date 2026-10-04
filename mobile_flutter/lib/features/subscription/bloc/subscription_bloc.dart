@@ -49,6 +49,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   List<ProductDetails> _products = [];
   bool _started = false;
   bool _loadInFlight = false;
+  int _purchaseRevision = 0;
   final Set<int> _startupGooglePlayRestoreAttemptedUserIds = {};
   Completer<void>? _restoreEventCompleter;
   final Set<String> _processingPurchaseEventKeys = {};
@@ -95,6 +96,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     if (_loadInFlight || state.isBusy) return;
     _loadInFlight = true;
+    final loadRevision = _purchaseRevision;
     int? restoreUserId;
     emit(
       state.copyWith(
@@ -106,9 +108,26 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     );
 
     try {
-      final subscription = await repository.getSubscription();
+      final subscription = await repository.getSubscription()
+          .timeout(const Duration(seconds: 25));
+      if (loadRevision != _purchaseRevision || state.isBusy) return;
+      // Account access survives reinstall and another device; store product
+      // discovery must not delay an entitlement the server has verified.
+      if (subscription.grantsAccess && !subscription.isAccountTrial) {
+        _started = true;
+        emit(state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: subscription,
+          selectedPlanId: null,
+          purchaseNeedsVerification: false,
+          errorMessage: null,
+          actionMessage: null,
+          shouldRefreshAuthentication: true,
+        ));
+        return;
+      }
       if ((event is SubscriptionStarted || event is RefreshSubscription) &&
-          !subscription.grantsAccess &&
+          (!subscription.grantsAccess || subscription.isAccountTrial) &&
           !kIsWeb &&
           defaultTargetPlatform == TargetPlatform.android &&
           !_startupGooglePlayRestoreAttemptedUserIds
@@ -116,6 +135,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         restoreUserId = subscription.id;
       }
       final availability = await purchaseService.initialize();
+      if (loadRevision != _purchaseRevision || state.isBusy) return;
       _products = availability.products;
       _started = true;
       emit(
@@ -123,7 +143,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: SubscriptionStatus.ready,
           subscription: subscription,
           selectedPlanId:
-              subscription.grantsAccess ? null : state.selectedPlanId,
+              subscription.grantsAccess && !subscription.isAccountTrial
+                  ? null : state.selectedPlanId,
           products: {
             for (final product in _products) product.id: product,
           },
@@ -131,9 +152,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           availabilityMessage: availability.message,
           errorMessage: availability.message,
           actionMessage: null,
+          shouldRefreshAuthentication: true,
         ),
       );
     } on ApiException catch (error) {
+      if (loadRevision != _purchaseRevision) return;
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
@@ -144,6 +167,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     } catch (error) {
+      if (loadRevision != _purchaseRevision) return;
       emit(
         state.copyWith(
           status: SubscriptionStatus.failure,
@@ -167,7 +191,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PlanPurchaseRequested event,
     Emitter<SubscriptionState> emit,
   ) async {
-    if (!_started || _loadInFlight || state.isBusy || state.hasActiveSubscription) {
+    if (!_started || _loadInFlight || !state.canStartPurchase) {
       return;
     }
     final plan = _planFor(event.planId);
@@ -176,6 +200,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     debugPrint(
       '[Subscription IAP] Purchase requested: plan=${plan.id}, '
       'product ID=${plan.productId}',
+    );
+    final buyRevision = _purchaseRevision;
+    emit(
+      state.copyWith(
+        status: SubscriptionStatus.purchasing,
+        busyPlanId: plan.id,
+        errorMessage: null,
+        actionMessage: 'Complete your purchase in the store.',
+        shouldNavigateToDashboard: false,
+      ),
     );
     var product = _productFor(plan.productId);
     if (product == null) {
@@ -196,6 +230,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     }
+    if (buyRevision != _purchaseRevision) return;
     if (product == null) {
       debugPrint(
         '[Subscription IAP] Selected product ${plan.productId} is still '
@@ -203,6 +238,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       );
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
+        busyPlanId: null,
         errorMessage: state.availabilityMessage ??
             'The selected subscription was not returned by the current store. '
                 'Check the store configuration and tester account.',
@@ -210,22 +246,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       return;
     }
 
-    emit(
-      state.copyWith(
-        status: SubscriptionStatus.purchasing,
-        busyPlanId: plan.id,
-        errorMessage: null,
-        actionMessage: 'Complete your purchase in the store.',
-        shouldNavigateToDashboard: false,
-      ),
-    );
+    emit(state.copyWith(purchaseNeedsVerification: true));
     try {
-      final started = await purchaseService.buy(product);
+      final started = await purchaseService.buy(product)
+          .timeout(const Duration(seconds: 20));
       if (!started) {
         emit(
           state.copyWith(
             status: SubscriptionStatus.ready,
             busyPlanId: null,
+            purchaseNeedsVerification: false,
             errorMessage: 'The store could not start this purchase.',
           ),
         );
@@ -235,6 +265,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         state.copyWith(
           status: SubscriptionStatus.failure,
           busyPlanId: null,
+          purchaseNeedsVerification: error is TimeoutException,
           errorMessage: _messageFor(error),
         ),
       );
@@ -345,6 +376,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     Emitter<SubscriptionState> emit,
   ) async {
     final purchases = event.purchases.whereType<PurchaseDetails>().toList();
+    _purchaseRevision++;
+    if (purchases.isEmpty && _restoreEventCompleter != null) {
+      _signalRestoreEvent();
+      emit(state.copyWith(
+        status: SubscriptionStatus.ready,
+        purchaseNeedsVerification: false,
+        actionMessage: 'No previous subscription was found on this store account.',
+      ));
+      return;
+    }
     for (final purchase in purchases) {
       debugPrint(
         '[Subscription IAP] Purchase update received: '
@@ -370,6 +411,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       if (item.status == PurchaseStatus.pending) {
         emit(state.copyWith(
           status: SubscriptionStatus.ready,
+          purchaseNeedsVerification: true,
           actionMessage: 'Waiting for the store to finish…',
         ));
         continue;
@@ -394,6 +436,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
                   : 'The store could not complete your purchase. '
                       'Check your store account and try again.',
               actionMessage: cancelled ? 'Payment was cancelled.' : null,
+              purchaseNeedsVerification: false,
               shouldNavigateToDashboard: false,
             ),
           );
@@ -421,6 +464,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             state.copyWith(
               status: SubscriptionStatus.cancelled,
               busyPlanId: null,
+              purchaseNeedsVerification: false,
               errorMessage: null,
               actionMessage: 'Payment was cancelled.',
               shouldNavigateToDashboard: false,
@@ -477,6 +521,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         busyPlanId: null,
         errorMessage: null,
         actionMessage: 'Verifying your restored subscription securely…',
+        purchaseNeedsVerification: true,
       ),
     );
     try {
@@ -539,12 +584,12 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
             errorMessage:
                 "No active store subscription was found to restore.",
             actionMessage: null,
+            purchaseNeedsVerification: false,
           ),
         );
         return;
       }
 
-      await _completePurchases(verifiablePurchases);
       final subscription = await _loadVerifiedSubscription(verification);
       if (!subscription.grantsAccess) {
         emit(
@@ -560,6 +605,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         );
         return;
       }
+      keepRetryable = !await _completeVerifiedPurchases(verifiablePurchases);
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
@@ -569,11 +615,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           errorMessage: null,
           actionMessage: 'Your previous subscription was restored.',
           shouldRefreshAuthentication: true,
+          purchaseNeedsVerification: false,
         ),
       );
     } on ApiException catch (error) {
       // Restore requests can contain multiple transactions. Without a clear
       // server response, leave them pending so a later restore can retry.
+      keepRetryable = error.statusCode != 409 && _shouldKeepPurchaseRetryable(error.type);
       emit(
         state.copyWith(
           status: error.type == ApiErrorType.unauthorized
@@ -585,6 +633,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               : _messageFor(error),
           actionMessage: null,
           sessionInvalid: error.type == ApiErrorType.unauthorized,
+          purchaseNeedsVerification: keepRetryable || error.statusCode == 409,
         ),
       );
     } catch (error) {
@@ -594,8 +643,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           busyPlanId: null,
           errorMessage: _messageFor(error),
           actionMessage: null,
+          purchaseNeedsVerification: true,
         ),
       );
+      keepRetryable = true;
     } finally {
       for (final key in claimedKeys) {
         if (keepRetryable) {
@@ -661,11 +712,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         }
         await purchaseService.complete(item);
         throw ApiException(
-          type: ApiErrorType.unknown,
+          type: ApiErrorType.badRequest,
           message: verification.message ?? 'The purchase could not be verified.',
         );
       }
-      await purchaseService.complete(item);
       final subscription = await _loadVerifiedSubscription(verification);
       debugPrint(
         '[Subscription IAP] Subscription refreshed: '
@@ -685,6 +735,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         );
         return;
       }
+      keepRetryable = !await _completeVerifiedPurchases([item]);
       emit(
         state.copyWith(
           status: SubscriptionStatus.ready,
@@ -695,10 +746,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           actionMessage: 'Your subscription is now active.',
           shouldNavigateToDashboard: true,
           shouldRefreshAuthentication: true,
+          purchaseNeedsVerification: false,
         ),
       );
     } on ApiException catch (error) {
-      keepRetryable = _shouldKeepPurchaseRetryable(error.type);
+      keepRetryable = error.statusCode != 409 && _shouldKeepPurchaseRetryable(error.type);
       if (_shouldCompleteRejectedPurchase(error.type)) {
         try {
           await purchaseService.complete(item);
@@ -725,6 +777,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
                   ? _purchaseVerificationRetryMessage
                   : _messageFor(error),
           sessionInvalid: error.type == ApiErrorType.unauthorized,
+          purchaseNeedsVerification: keepRetryable || error.statusCode == 409,
         ),
       );
     } catch (error) {
@@ -738,6 +791,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           status: SubscriptionStatus.failure,
           busyPlanId: null,
           errorMessage: _purchaseVerificationRetryMessage,
+          purchaseNeedsVerification: true,
         ),
       );
     } finally {
@@ -753,6 +807,21 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     for (final purchase in purchases) {
       await purchaseService.complete(purchase);
     }
+  }
+
+  Future<bool> _completeVerifiedPurchases(List<PurchaseDetails> purchases) async {
+    var completed = true;
+    for (final purchase in purchases) {
+      try {
+        await purchaseService.complete(purchase);
+      } catch (_) {
+        completed = false;
+        // The backend has already persisted and acknowledged the entitlement.
+        // A local acknowledgement retry must not hide that verified access.
+        debugPrint('[Subscription IAP] Local completion needs retry: ${purchase.productID}');
+      }
+    }
+    return completed;
   }
 
   String? _claimPurchaseEvent(PurchaseDetails purchase) {
@@ -808,6 +877,10 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   Future<SubscriptionModel> _loadVerifiedSubscription(
     PurchaseVerification verification,
   ) async {
+    final directSubscription = verification.subscription;
+    if (verification.success && directSubscription?.grantsAccess == true) {
+      return directSubscription!;
+    }
     try {
       return await repository.getSubscription();
     } on ApiException catch (error) {
@@ -843,6 +916,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) {
     emit(state.copyWith(
       status: SubscriptionStatus.purchasing,
+      purchaseNeedsVerification: true,
       actionMessage: 'Verifying your purchase securely…',
     ));
     final serverData = purchase.verificationData.serverVerificationData;
@@ -893,6 +967,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   String _messageFor(Object error) {
     if (error is ApiException) {
+      if (error.statusCode == 409 || error.type == ApiErrorType.forbidden ||
+          error.type == ApiErrorType.badRequest) return error.message;
       return switch (error.type) {
         ApiErrorType.network => 'Check your connection and try again.',
         ApiErrorType.timeout => 'The request took too long. Please try again.',

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   canUseCachedGooglePlayEntitlement,
+  isTransientGooglePlayError,
   resolveGooglePlayEntitlement,
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
@@ -44,6 +45,18 @@ test("active and grace-period purchases grant access through their verified expi
     assert.equal(result.tier, "basic");
     assert.equal(result.grantsAccess, true);
   }
+});
+
+test("only transient Play errors allow outage fallback, never invalid tokens or permissions", () => {
+  for (const status of [400, 401, 403, 404, 410]) {
+    assert.equal(isTransientGooglePlayError({ response: { status } }), false);
+  }
+  for (const status of [408, 429, 500, 502, 503, 504]) {
+    assert.equal(isTransientGooglePlayError({ response: { status } }), true);
+  }
+  assert.equal(isTransientGooglePlayError({ code: "ETIMEDOUT" }), true);
+  assert.equal(isTransientGooglePlayError(new Error("database write failed")), false);
+  assert.equal(isTransientGooglePlayError(new Error("not configured")), false);
 });
 
 test("cancellation keeps access until the verified expiry", () => {

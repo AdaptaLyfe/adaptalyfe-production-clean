@@ -17,8 +17,15 @@ Subscription fixes should stay within the purchase, restore, entitlement, and di
 **How to apply:** Keep diffs limited to the subscription flow and its tests. Include shared server code only when required for purchase verification or entitlement persistence.
 
 ## Bounded Google Play outage fallback
-After a Play API failure, reuse only a previously verified database entitlement with a known token/product, an access-granting status, a future expiry, and a verification timestamp no older than 24 hours. Return the normalized verified entitlement in purchase/restore responses so the client can avoid relying on a second immediate store check.
+After a transient Play API outage, reuse only a previously verified database entitlement with a known token/product, an access-granting status, a future expiry, and a verification timestamp no older than 24 hours. Invalid-token responses, authorization/configuration errors, and database persistence failures must never use this fallback. Return the normalized verified entitlement in purchase/restore responses so the client can avoid relying on a second immediate store check.
 
 **Why:** A successful, persisted purchase followed by a transient refresh failure should not deny paid access, while a bounded snapshot prevents selected-plan or indefinitely stale data from granting access.
 
 **How to apply:** Preserve the verification-age and expiry limits, fail closed for stale, revoked, unknown-product, or mismatched-product records, and test all product tiers plus those denial cases.
+
+## Local acknowledgement versus account access
+An account entitlement already verified and persisted by the backend remains usable if the client cannot finish its local store acknowledgement. Keep acknowledgement retryable without treating the payment as unverified again.
+
+**Why:** Store completion and account access are different operations. Failing a local plugin call after backend success must not leave someone who paid locked out or encouraged to pay again.
+
+**How to apply:** Honor the verified payload, preserve transaction retry opportunities, and leave provider renewal and revocation checks authoritative.

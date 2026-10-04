@@ -6,8 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/analytics/firebase_analytics_service.dart';
 import '../../../core/layout/responsive.dart';
-import '../../auth/bloc/auth_bloc.dart';
-import '../../auth/bloc/auth_event.dart';
 import '../bloc/subscription_bloc.dart';
 import '../bloc/subscription_event.dart';
 import '../bloc/subscription_state.dart';
@@ -60,12 +58,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen>
         if (state.sessionInvalid) {
           if (context.mounted) context.go('/login');
           return;
-        }
-        if (state.shouldRefreshAuthentication) {
-          context.read<AuthBloc>().add(const RefreshAuthentication());
-          context
-              .read<SubscriptionBloc>()
-              .add(const SubscriptionAuthenticationRefreshHandled());
         }
         final url = state.managementUrl;
         if (url != null) {
@@ -158,6 +150,9 @@ class _SubscriptionBody extends StatelessWidget {
             onRetry: () => context
                 .read<SubscriptionBloc>()
                 .add(const RefreshSubscription()),
+            onRestore: usesNativeStoreBilling
+                ? () => context.read<SubscriptionBloc>().add(const RestorePurchasesRequested())
+                : null,
           );
         }
 
@@ -192,6 +187,15 @@ class _SubscriptionBody extends StatelessWidget {
                     child: LinearProgressIndicator(),
                   ),
                 if (state.hasActiveSubscription) _ManageCard(state: state),
+                if (state.purchaseNeedsVerification)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'A store purchase is pending or needs verification. '
+                      'Do not buy again. Use Restore below with the same '
+                      'Google Play account and Adaptalyfe account.',
+                    ),
+                  ),
                 ...state.plans.map(
                   (plan) => Padding(
                     padding: const EdgeInsets.only(bottom: 14),
@@ -340,7 +344,10 @@ class _TrialCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final daysLeft = subscription?.trialDaysLeft;
     final String message;
-    if (subscription?.isTrialing == true) {
+    if (subscription?.isAccountTrial == true) {
+      message = 'Your Basic account trial has ${daysLeft ?? 0} days remaining. '
+          'You can subscribe below. The store will show any eligible payment trial.';
+    } else if (subscription?.isTrialing == true) {
       if (daysLeft != null && daysLeft > 0) {
         message = 'Your free trial has $daysLeft '
             '${daysLeft == 1 ? 'day' : 'days'} remaining. Manage or cancel '
@@ -394,15 +401,11 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final storeAvailable =
         usesNativeStoreBilling && product != null && state.canPurchase;
-    final selectable = !state.hasActiveSubscription && !state.isBusy;
+    final selectable = state.canStartPurchase;
     final isCurrentPlan =
         state.subscription?.planType.toLowerCase() == plan.id;
     final price = product?.price ?? '\$${plan.monthlyPrice.toStringAsFixed(2)}';
-    final trialAvailable = state.subscription?.isTrialing == true &&
-        (state.subscription?.trialDaysLeft ?? 0) > 0;
-    final storeButtonLabel = trialAvailable
-        ? 'Start Free Trial'
-        : defaultTargetPlatform == TargetPlatform.android
+    final storeButtonLabel = defaultTargetPlatform == TargetPlatform.android
             ? 'Subscribe via Google Play'
             : defaultTargetPlatform == TargetPlatform.iOS
                 ? 'Subscribe via App Store'
@@ -410,12 +413,7 @@ class _PlanCard extends StatelessWidget {
     return Semantics(
       selected: selected,
       child: GestureDetector(
-        onTap: selectable
-            ? () {
-                onSelect();
-                if (storeAvailable) onPurchase();
-              }
-            : null,
+        onTap: selectable ? onSelect : null,
         child: _Panel(
           color: selected ? const Color(0xFFEFF6FF) : Colors.white,
           borderColor: selected
@@ -464,7 +462,7 @@ class _PlanCard extends StatelessWidget {
           Text(plan.description, style: const TextStyle(color: Color(0xFF6B7280))),
           const SizedBox(height: 12),
           Text(
-            '$price / month',
+             'Store price: $price',
             style: const TextStyle(
               color: Color(0xFF111827),
               fontSize: 22,
@@ -491,6 +489,12 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
           const SizedBox(height: 10),
+           const Text(
+             'The store shows any eligible trial, renewal price, and final '
+             'payment terms before you confirm.',
+             style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+           ),
+           const SizedBox(height: 10),
           if (state.hasActiveSubscription)
             SizedBox(
               width: double.infinity,
@@ -630,7 +634,9 @@ class _RestoreCard extends StatelessWidget {
            const SizedBox(
              width: 230,
              child: Text(
-              'Already subscribed? Restore purchases from this store account.',
+              'Reinstalled or using another device? Sign in to the same '
+              'Adaptalyfe account. If access is missing, restore using the '
+              'Google Play account that paid.',
               style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
              ),
           ),
@@ -691,10 +697,11 @@ class _Panel extends StatelessWidget {
 }
 
 class _SubscriptionError extends StatelessWidget {
-  const _SubscriptionError({required this.message, required this.onRetry});
+  const _SubscriptionError({required this.message, required this.onRetry, this.onRestore});
 
   final String message;
   final VoidCallback onRetry;
+  final VoidCallback? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -713,6 +720,8 @@ class _SubscriptionError extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Try again'),
             ),
+            if (onRestore != null)
+              TextButton(onPressed: onRestore, child: const Text('Restore store purchases')),
           ],
         ),
       ),

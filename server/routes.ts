@@ -47,10 +47,13 @@ import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
   canUseCachedGooglePlayEntitlement,
+  googlePlayErrorStatus,
+  isTransientGooglePlayError,
   resolveGooglePlayEntitlement,
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
 import type { GooglePlayEntitlement } from "./google-play-entitlement";
+import { createSubscriptionFeatureGuard, paidSubscriptionTier } from "./subscription-access";
 import {
   AppleStoreConfigurationError,
   AppleStoreVerificationError,
@@ -637,6 +640,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Middleware to ensure user is logged in for protected routes
+  app.use("/api", createSubscriptionFeatureGuard((id) => storage.getUserById(id)));
+
   // Supports both cookie-based (desktop) and header-based (mobile) auth
   const requireAuth = async (req: any, res: any, next: any) => {
     if (req.auth?.userId && req.auth?.user) {
@@ -5226,21 +5231,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Always read fresh user from DB so a recent purchase is reflected immediately,
       // even if req.session.user is momentarily stale (e.g. right after IAP verify).
-      let user: any = req.session.user;
-      try {
-        const freshUser = await storage.getUserById(req.session.userId);
-        if (freshUser) {
-          user = freshUser;
-          req.session.user = publicUser(freshUser);
-        }
-      } catch (e) {
-        console.error("Failed to refresh user for /api/subscription, falling back to session:", e);
-      }
+      let user: any = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
+      req.session.user = publicUser(user);
       
       const now = new Date();
       
       // Admin accounts get full access without payment requirements
-      const isAdmin = user.accountType === 'admin' || user.username === 'admin' || user.name?.toLowerCase().includes('admin');
+      const isAdmin = user.accountType === 'admin';
       
       if (isAdmin) {
         const adminSubscription = {
@@ -5275,12 +5273,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             message: "Google Play subscription cannot be verified.",
           });
         }
+        let storeResponseReceived = false;
         try {
           const androidPublisher = await createGooglePlayPublisher();
           const result = await androidPublisher.purchases.subscriptionsv2.get({
             packageName: 'com.adaptalyfe.app',
             token: user.googlePlayPurchaseToken,
           });
+          storeResponseReceived = true;
           const entitlement = resolveGooglePlayEntitlement(result.data, {
             expectedProductId: user.googlePlayProductId ?? undefined,
           });
@@ -5324,16 +5324,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Google Play subscription refresh failed:",
             error?.message ?? "Unknown error",
           );
-          if (!canUseCachedGooglePlayEntitlement(user, now)) {
+          const storeStatus = googlePlayErrorStatus(error);
+          if (!storeResponseReceived && [400, 404, 410].includes(storeStatus ?? 0)) {
+            const expiredUser = await storage.updateUserSubscription(user.id, {
+              subscriptionTier: "free",
+              subscriptionStatus: "expired",
+              subscriptionVerifiedAt: now,
+            });
+            if (!expiredUser) throw new Error("Unable to persist invalid Play subscription status.");
+            user = expiredUser;
+            req.session.user = publicUser(user);
+          } else if (
+            storeResponseReceived ||
+            !isTransientGooglePlayError(error) ||
+            !canUseCachedGooglePlayEntitlement(user, now)
+          ) {
             return res.status(503).json({
               message:
                 "Google Play subscription status could not be verified. Please try again.",
             });
-          }
-          console.warn(
+          } else {
+            console.warn(
             "[Google Play] Using a recently verified database entitlement " +
               `during a store refresh failure: product=${user.googlePlayProductId}.`,
-          );
+            );
+          }
         }
       }
 
@@ -5382,37 +5397,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isStoreSubscription =
         user.subscriptionPlatform === 'google_play' ||
         user.subscriptionPlatform === 'app_store';
-      const subscriptionExpiry = user.subscriptionExpiresAt
-        ? new Date(user.subscriptionExpiresAt)
-        : null;
-      const hasFutureExpiry =
-        subscriptionExpiry !== null &&
-        Number.isFinite(subscriptionExpiry.getTime()) &&
-        subscriptionExpiry.getTime() > now.getTime();
-      const activeStoreTier = isStoreSubscription
-        ? subscriptionPlanForProductId(
-            user.subscriptionProductId ??
-              (user.subscriptionPlatform === 'google_play'
-                ? user.googlePlayProductId
-                : null),
-          )?.planType ?? null
-        : null;
-      const storeStatusGrantsAccess =
-        isStoreSubscription &&
-        ['active', 'cancelled', 'in_grace_period'].includes(
-          user.subscriptionStatus ?? '',
-        ) &&
-        hasFutureExpiry;
-      const isActiveSubscription = isStoreSubscription
-        ? storeStatusGrantsAccess
-        : user.subscriptionStatus === 'active' ||
-          (user.subscriptionStatus === 'cancelled' && hasFutureExpiry);
-      const hasTrialAccess = !isStoreSubscription && trialDaysLeft > 0;
-      const effectivePlan = isActiveSubscription
-        ? activeStoreTier ?? user.subscriptionTier ?? 'free'
-        : hasTrialAccess
-          ? user.subscriptionTier ?? 'free'
-          : 'free';
+      const verifiedPaidTier = paidSubscriptionTier(user, now);
+      const isActiveSubscription =
+        verifiedPaidTier !== "free" && user.subscriptionStatus !== "trialing";
+      const hasVerifiedPaidTrial =
+        !isStoreSubscription && verifiedPaidTier !== "free" &&
+        user.subscriptionStatus === "trialing";
+      const hasTrialAccess = !isStoreSubscription &&
+        (hasVerifiedPaidTrial || trialDaysLeft > 0);
+      // Free account trials do not grant a selected higher paid tier.
+      const effectivePlan = verifiedPaidTier !== "free" ? verifiedPaidTier
+        : hasTrialAccess ? "basic" : "free";
       const isPremiumPlan =
         effectivePlan === 'premium' || effectivePlan === 'family';
       const isFamilyPlan = effectivePlan === 'family';
@@ -5427,11 +5422,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : "expired",
         billingCycle: "monthly",
         subscriptionPlatform: user.subscriptionPlatform || null,
+        isAccountTrial: hasTrialAccess && verifiedPaidTier === "free",
         currentPeriodStart:
           user.subscriptionStartDate ?? user.createdAt,
         currentPeriodEnd:
-          user.subscriptionExpiresAt ||
-          (isStoreSubscription ? null : trialEndDate.toISOString()),
+          verifiedPaidTier !== "free" ? user.subscriptionExpiresAt ?? null
+            : hasTrialAccess ? trialEndDate.toISOString() : null,
         trialDaysLeft: hasTrialAccess && trialDaysLeft > 0 ? trialDaysLeft : null,
         usageStats: {
           tasks: { count: 0, limit: isFamilyPlan ? null : (effectivePlan === 'premium' ? 1000 : 50) },
@@ -5470,55 +5466,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/subscription/upgrade", async (req: any, res) => {
-    try {
-      if (!req.session?.userId || !req.session?.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-
-      const { planType, billingCycle } = req.body;
-      const user = req.session.user;
-      
-      // Calculate the new trial end date from the configured free-trial duration.
-      const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
-      
-      // Update user subscription information in session (in production this would update database)
-      req.session.user = {
-        ...user,
-        subscriptionTier: planType,
-        subscriptionStatus: 'trialing',
-        subscriptionExpiresAt: trialEndDate.toISOString()
-      };
-
-      const upgradedSubscription = {
-        id: user.id,
-        planType,
-        status: "trialing",
-        billingCycle,
-        currentPeriodStart: new Date().toISOString(),
-        currentPeriodEnd: trialEndDate.toISOString(),
-        trialDaysLeft: FREE_TRIAL_DAYS,
-        usageStats: {
-          tasks: { count: 0, limit: planType === "family" ? null : 1000 },
-          caregivers: { count: 0, limit: planType === "family" ? null : 10 },
-          dataExports: { count: 0, limit: null }
-        },
-        features: {
-          wearableDevices: true,
-          mealPlanning: true,
-          medicationManagement: true,
-          locationSafety: planType === "family",
-          advancedAnalytics: planType === "family",
-          prioritySupport: true,
-          familyAccounts: planType === "family" ? 5 : 1
-        }
-      };
-
-      res.json(upgradedSubscription);
-    } catch (error) {
-      console.error("Error upgrading subscription:", error);
-      res.status(500).json({ message: "Failed to upgrade subscription" });
-    }
+    if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+    // Plan selection is not a purchase. The former mock route only changed
+    // the session and could claim an unverified trial/upgrade.
+    return res.status(409).json({
+      message: "Complete a verified Google Play, App Store, or website checkout to change your subscription.",
+      requiresVerifiedPurchase: true,
+    });
   });
 
   // Real Stripe Payment Routes
@@ -6165,8 +6119,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user =
-        (await storage.getUserById(req.session.userId)) ?? req.session.user;
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
       const { purchaseToken, productId } = req.body;
 
       if (!purchaseToken || !productId) {
@@ -6203,6 +6157,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       const linkedPurchaseToken =
         purchaseResult.data?.linkedPurchaseToken;
+      if (linkedPurchaseToken) {
+        const linkedOwner = await storage.getUserByGooglePlayToken(linkedPurchaseToken);
+        if (linkedOwner && linkedOwner.id !== user.id) {
+          return res.status(409).json({ message: "This Google Play subscription belongs to another Adaptalyfe account. Sign in to that account to restore it." });
+        }
+      }
       if (
         user.subscriptionPlatform === "google_play" &&
         hasCurrentSubscriptionAccess(user) &&
@@ -6273,8 +6233,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         persistedUser.subscriptionPlatform !== 'google_play' ||
         persistedUser.googlePlayPurchaseToken !== purchaseToken ||
         persistedUser.googlePlayProductId !== productId ||
+        persistedUser.subscriptionProductId !== productId ||
         persistedUser.subscriptionTransactionId !== entitlement.transactionId ||
-        !persistedUser.subscriptionExpiresAt
+        !persistedUser.subscriptionVerifiedAt ||
+        !persistedUser.subscriptionExpiresAt ||
+        new Date(persistedUser.subscriptionExpiresAt).getTime() !== expiryTime.getTime()
       ) {
         throw new Error("Google Play entitlement was not persisted.");
       }
@@ -6339,6 +6302,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error?.code === "23505" ||
         error?.constraint?.includes("purchase_token") ||
         error?.constraint?.includes("transaction_id");
+      const invalidStorePurchase = verificationPhase === "Google Play verification" &&
+        [400, 404, 410].includes(googlePlayErrorStatus(error) ?? 0);
       console.error(
         `[Google Play] Verification failed: phase=${verificationPhase}, ` +
           `product=${productIdForLog}, error=${error?.name ?? "Unknown"}, ` +
@@ -6346,9 +6311,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `serviceAccountMissing=${notConfigured}, ` +
           `errorCode=${error?.code ?? "unknown"}.`,
       );
-      res.status(duplicateOwnership ? 409 : notConfigured ? 503 : 500).json({
+      res.status(duplicateOwnership ? 409 : invalidStorePurchase ? 400 : notConfigured ? 503 : 500).json({
         message: duplicateOwnership
           ? "This store transaction is already linked to another account."
+          : invalidStorePurchase
+            ? "Google Play reports that this purchase is invalid or expired."
           : notConfigured
             ? "Google Play verification not configured"
             : "Failed to verify purchase",
@@ -6894,8 +6861,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user =
-        (await storage.getUserById(req.session.userId)) ?? req.session.user;
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
       const { purchases } = req.body;
 
       if (!purchases || !Array.isArray(purchases) || purchases.length === 0) {
@@ -6912,6 +6879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let restored = false;
+      let hasPendingPurchase = false;
       let restoredSubscription:
         | ReturnType<typeof googlePlaySubscriptionResponse>
         | null = null;
@@ -6951,6 +6919,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const linkedPurchaseToken =
           purchaseResult.data?.linkedPurchaseToken;
+        if (linkedPurchaseToken) {
+          const linkedOwner = await storage.getUserByGooglePlayToken(linkedPurchaseToken);
+          if (linkedOwner && linkedOwner.id !== user.id) {
+            return res.status(409).json({ message: "This Google Play subscription belongs to another Adaptalyfe account. Sign in to that account to restore it." });
+          }
+        }
         if (
           user.subscriptionPlatform === "google_play" &&
           hasCurrentSubscriptionAccess(user) &&
@@ -6966,6 +6940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const entitlement = resolveGooglePlayEntitlement(purchaseResult.data, {
           expectedProductId: purchase.productId,
         });
+        if (entitlement.status === "pending") hasPendingPurchase = true;
         if (
           !entitlement.grantsAccess ||
           entitlement.productId !== purchase.productId ||
@@ -6997,8 +6972,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           persistedUser.subscriptionPlatform !== 'google_play' ||
           persistedUser.googlePlayPurchaseToken !== purchase.purchaseToken ||
           persistedUser.googlePlayProductId !== entitlement.productId ||
+          persistedUser.subscriptionProductId !== entitlement.productId ||
           persistedUser.subscriptionTransactionId !== entitlement.transactionId ||
-          !persistedUser.subscriptionExpiresAt
+          !persistedUser.subscriptionVerifiedAt ||
+          !persistedUser.subscriptionExpiresAt ||
+          new Date(persistedUser.subscriptionExpiresAt).getTime() !== entitlement.expiresAt.getTime()
         ) {
           throw new Error("Restored Google Play entitlement was not persisted.");
         }
@@ -7051,6 +7029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         restored,
+        ...(!restored && hasPendingPurchase ? { status: "pending" } : {}),
         message: restored
           ? "Subscription restored successfully"
           : "No valid purchases found",
@@ -7065,8 +7044,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `serviceAccountMissing=${notConfigured}, ` +
           `errorCode=${error?.code ?? "unknown"}.`,
       );
-      res.status(notConfigured ? 503 : 500).json({
-        message: notConfigured
+      const duplicateOwnership = error?.code === "23505";
+      res.status(duplicateOwnership ? 409 : notConfigured ? 503 : 500).json({
+        message: duplicateOwnership
+          ? "This store transaction is already linked to another account."
+          : notConfigured
           ? "Google Play verification not configured"
           : "Failed to restore purchases",
       });

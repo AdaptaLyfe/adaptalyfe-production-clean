@@ -21,3 +21,10 @@ An active Basic subscription grants Basic features only. Premium- and Family-onl
 **Why:** The product owner confirmed that Basic should remain limited to its listed features; restoring a Basic purchase must not accidentally grant the higher-tier feature set.
 
 **How to apply:** When recovering or refreshing a Basic entitlement, mark the plan active without relaxing Premium/Family checks. Change this policy only after an explicit plan decision.
+
+## Free account trials versus provider trials
+A free account trial provides Basic access and does not prevent native checkout. A verified billing-provider trial is an existing subscription, so another purchase must remain unavailable.
+
+**Why:** Selecting a plan alone must not grant paid-tier features. Conversely, treating the free account trial as a purchased subscription can prevent a new Android user from subscribing at all.
+
+**How to apply:** Distinguish these trial types in the entitlement contract. Store eligibility and payment terms, not account age, determine whether a native purchase includes a store trial.

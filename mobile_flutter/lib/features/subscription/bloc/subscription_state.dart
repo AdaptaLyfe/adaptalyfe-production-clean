@@ -30,6 +30,7 @@ class SubscriptionState extends Equatable {
     this.managementUrl,
     this.shouldNavigateToDashboard = false,
     this.shouldRefreshAuthentication = false,
+    this.purchaseNeedsVerification = false,
   });
 
   final SubscriptionStatus status;
@@ -46,14 +47,20 @@ class SubscriptionState extends Equatable {
   final String? managementUrl;
   final bool shouldNavigateToDashboard;
   final bool shouldRefreshAuthentication;
+  final bool purchaseNeedsVerification;
 
   bool get isLoading =>
       status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
   bool get isBusy =>
       status == SubscriptionStatus.purchasing ||
       status == SubscriptionStatus.restoring;
-  bool get hasActiveSubscription => subscription?.grantsAccess == true;
-  bool get canPurchase => storeAvailable && !hasActiveSubscription && !isBusy;
+  bool get hasActiveSubscription =>
+      subscription?.grantsAccess == true && subscription?.isAccountTrial != true;
+  bool get canStartPurchase =>
+      subscription != null &&
+      (status == SubscriptionStatus.ready || status == SubscriptionStatus.cancelled) &&
+      !sessionInvalid && !hasActiveSubscription && !purchaseNeedsVerification;
+  bool get canPurchase => storeAvailable && canStartPurchase;
 
   SubscriptionState copyWith({
     SubscriptionStatus? status,
@@ -70,6 +77,7 @@ class SubscriptionState extends Equatable {
     Object? managementUrl = _notSet,
     bool? shouldNavigateToDashboard,
     bool? shouldRefreshAuthentication,
+    bool? purchaseNeedsVerification,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
@@ -102,6 +110,7 @@ class SubscriptionState extends Equatable {
           shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
       shouldRefreshAuthentication:
           shouldRefreshAuthentication ?? this.shouldRefreshAuthentication,
+      purchaseNeedsVerification: purchaseNeedsVerification ?? this.purchaseNeedsVerification,
     );
   }
 
@@ -121,6 +130,7 @@ class SubscriptionState extends Equatable {
         managementUrl,
         shouldNavigateToDashboard,
         shouldRefreshAuthentication,
+        purchaseNeedsVerification,
       ];
 }
 

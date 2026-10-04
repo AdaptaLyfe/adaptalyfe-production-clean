@@ -16,6 +16,7 @@ import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/password_recovery_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
 import '../features/academic/bloc/academic_bloc.dart';
+import '../features/subscription/presentation/premium_feature_gate.dart';
 import '../features/academic/bloc/academic_event.dart';
 import '../features/academic/data/academic_api.dart';
 import '../features/academic/data/academic_repository.dart';
@@ -346,10 +347,14 @@ GoRouter createAppRouter(AuthBloc authBloc) {
           ),
           GoRoute(
             path: '/academic-planner',
-            builder: (context, state) => BlocProvider(
-              create: (_) => AcademicBloc(_createAcademicRepository())
-                ..add(const AcademicStarted()),
-              child: const AcademicPlannerScreen(),
+            builder: (context, state) => PremiumFeatureGate(
+              title: 'Academic planner',
+              paywall: const SubscriptionFeaturePaywall(title: 'Academic planner'),
+              child: BlocProvider(
+                create: (_) => AcademicBloc(_createAcademicRepository())
+                  ..add(const AcademicStarted()),
+                child: const AcademicPlannerScreen(),
+              ),
             ),
           ),
           GoRoute(

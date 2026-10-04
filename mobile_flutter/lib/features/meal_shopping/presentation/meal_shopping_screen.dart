@@ -8,7 +8,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
-import '../../auth/bloc/auth_state.dart';
+import '../../subscription/presentation/premium_feature_gate.dart';
 import '../bloc/meal_shopping_bloc.dart';
 import '../bloc/meal_shopping_event.dart';
 import '../bloc/meal_shopping_state.dart';
@@ -21,9 +21,19 @@ class MealShoppingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasMealPlanningAccess(context)) {
-      return const _MealPlanningPremiumPrompt();
-    }
+    return const PremiumFeatureGate(
+      title: 'Meal planning',
+      paywall: _MealPlanningPremiumPrompt(),
+      child: _MealShoppingContent(),
+    );
+  }
+}
+
+class _MealShoppingContent extends StatelessWidget {
+  const _MealShoppingContent();
+
+  @override
+  Widget build(BuildContext context) {
     return BlocConsumer<MealShoppingBloc, MealShoppingState>(
       listener: (context, state) {
         if (state.sessionInvalid) {
@@ -113,18 +123,6 @@ class MealShoppingScreen extends StatelessWidget {
       },
     );
   }
-}
-
-bool _hasMealPlanningAccess(BuildContext context) {
-  final authState = context.read<AuthBloc>().state;
-  if (authState is! Authenticated) return false;
-  final user = authState.user;
-  final isAdmin = user.accountType == 'admin' || user.username == 'admin';
-  if (isAdmin) return true;
-  final tier = user.subscriptionTier?.toLowerCase();
-  final status = user.subscriptionStatus?.toLowerCase();
-  return status == 'active' && (tier == 'premium' || tier == 'family') ||
-      status == 'trialing';
 }
 
 class _MealPlanningPremiumPrompt extends StatelessWidget {
