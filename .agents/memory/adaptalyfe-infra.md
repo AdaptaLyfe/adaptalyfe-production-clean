@@ -51,18 +51,12 @@ Replit-managed production schema changes are applied through the Publish schema-
 
 **How to apply:** Update the shared Drizzle schema and migration source, verify development, then publish and accept the non-destructive table/column creation prompt.
 
-## Railway staging schema migrations
-Railway staging uses an external database and is not managed by Replit's Publish schema-diff flow. Apply narrow SQL migrations explicitly in the Railway service environment using its app `DATABASE_URL`; do not run DDL automatically on every deploy or startup.
+## Railway staging database
+Railway's `ai-staging` app shares the Replit production PostgreSQL database (user-confirmed); do not assume staging has an isolated database.
 
-**Why:** Railway's build/start configuration does not apply repository SQL migrations, and the Replit development database can already be migrated while staging remains stale.
+**Why:** Staging login reported a missing production-schema column, and read-only Replit schema checks confirmed the column exists in development but not production.
 
-**How to apply:** Check the live staging schema (a dated backup is evidence, not proof of current state), verify the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
-
-Before deploying ORM code that reads newly added user columns on staging, apply the matching committed migration to the staging database. The users-table login lookup selects the current mapped row shape, so one missing subscription column can make `/api/login` return HTTP 500 even though the build and health check pass.
-
-**Why:** Staging returned PostgreSQL `column "subscription_start_date" does not exist` from the login lookup while `/api/health` returned HTTP 200; the existing store-subscription migration had not been applied to that database.
-
-**How to apply:** Run the complete, idempotent store-subscription lifecycle migration against the Railway `ai-staging` app's actual database, not Replit development/production. Check `information_schema.columns` afterward, then test login and `/api/user`.
+**How to apply:** Treat any change as a production schema change. Use Replit's Publish schema-diff flow, review the entire diff because it may include unrelated pending schema additions, and never run direct SQL against the shared production database.
 
 ## Development schema drift
 The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.
