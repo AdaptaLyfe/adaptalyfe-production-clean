@@ -1,6 +1,7 @@
 import '../../../core/network/api_client.dart';
 import '../models/subscription_models.dart';
 
+/// Calls only the existing authenticated Adaptalyfe subscription endpoints.
 class SubscriptionApi {
   const SubscriptionApi(this.client);
 
@@ -9,65 +10,49 @@ class SubscriptionApi {
   Future<SubscriptionModel> getSubscription() async {
     final response = await client.get<dynamic>('/api/subscription');
     if (response.data is! Map) {
-      throw const FormatException('Invalid subscription response');
+      throw const FormatException('Invalid subscription response.');
     }
     return SubscriptionModel.fromJson(
       Map<String, dynamic>.from(response.data as Map),
     );
   }
 
-  Future<PurchaseVerification> verifyApplePurchase({
-    required String receiptData,
-    required String productId,
-    String? transactionId,
-  }) =>
-      _verify(
-        '/api/apple/verify-purchase',
-        {
-          'receiptData': receiptData,
-          'productId': productId,
-          if (transactionId != null) 'transactionId': transactionId,
-        },
-      );
-
   Future<PurchaseVerification> verifyGooglePurchase({
     required String purchaseToken,
     required String productId,
     String? orderId,
   }) =>
-      _verify(
+      _postVerification(
         '/api/google-play/verify-purchase',
         {
           'purchaseToken': purchaseToken,
           'productId': productId,
-          if (orderId != null) 'orderId': orderId,
+          if (orderId != null && orderId.isNotEmpty) 'orderId': orderId,
         },
       );
 
-  Future<PurchaseVerification> restoreApplePurchase({
+  Future<PurchaseVerification> verifyApplePurchase({
     required String receiptData,
+    required String productId,
     String? transactionId,
   }) =>
-      _verify(
-        '/api/apple/restore-purchases',
+      _postVerification(
+        '/api/apple/verify-purchase',
         {
           'receiptData': receiptData,
-          if (transactionId != null) 'transactionId': transactionId,
+          'productId': productId,
+          if (transactionId != null && transactionId.isNotEmpty)
+            'transactionId': transactionId,
         },
       );
 
-  Future<PurchaseVerification> restoreGooglePurchases(
-    List<Map<String, dynamic>> purchases,
-  ) =>
-      _verify('/api/google-play/restore-purchases', {'purchases': purchases});
-
-  Future<PurchaseVerification> _verify(
+  Future<PurchaseVerification> _postVerification(
     String path,
     Map<String, dynamic> body,
   ) async {
     final response = await client.post<dynamic>(path, data: body);
     if (response.data is! Map) {
-      throw const FormatException('Invalid subscription action response');
+      throw const FormatException('Invalid purchase verification response.');
     }
     return PurchaseVerification.fromJson(
       Map<String, dynamic>.from(response.data as Map),

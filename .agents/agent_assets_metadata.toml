@@ -3067,3 +3067,17 @@ mtime_ms = 1791132689766
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/45b69ed8-40f0-4577-9690-1d7c30bbdd7e/9dd8173d-3950-4651-bda0-dc179ec69746"
 storage_version_token = "1791132701490737"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "261p9SnezujUolU8bj7Jl"
+uri = "file://deliverables/adaptalyfe_flutter_google_play.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter app — Google Play subscriptions"
+description = "Complete mobile_flutter project with the rebuilt store purchase flow, focused tests, and step-by-step Play Console/backend/Google Cloud/RTDN setup guide."
+logical_id = "bf6cbc33-e7a8-49a2-9439-0f01c7779b8b"
+content_hash = "sha256:9d1ee8ab73485a19bf7e39b789f03d6865b43fba7371aa6cb43f2a0a9cf511b6"
+size = 630187
+mtime_ms = 1791137231248
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/bf6cbc33-e7a8-49a2-9439-0f01c7779b8b/e530eb7d-5912-4c42-8644-ab87f1fbb282"
+storage_version_token = "1791137268108823"
+content_type = "application/octet-stream"

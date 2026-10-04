@@ -72,10 +72,12 @@ The existing React frontend, backend, database, and top-level Capacitor
 
 ## Mobile subscriptions
 
-The Flutter app uses Google Play on Android and the App Store on iOS for new
-subscriptions and restores. Stripe checkout remains on the Adaptalyfe website.
-The app reads the account's server-verified entitlement so website subscribers
-can still use their existing plan on mobile.
+The rebuilt Flutter purchase flow uses the native store catalog and purchase
+stream. On Android it passes Google Play's eligible offer token to the store,
+then sends the purchase token to the existing authenticated backend verifier.
+The app never grants paid access from a local purchase callback. The backend's
+shared account entitlement remains authoritative, including subscriptions
+started on the website or another supported platform.
 
 The default API host is `https://app.getadaptalyfeapp.com/`, matching the
 React/Capacitor wrapper and production API. Run against production with:
@@ -91,3 +93,9 @@ To develop against Railway staging instead, override the API host:
 flutter run \
   --dart-define=ADAPTALYFE_API_BASE_URL=https://staging.getadaptalyfeapp.com/
 ```
+
+For Play Console products, Google Cloud service-account setup, backend
+configuration, RTDN, and test-purchase steps, follow
+[`GOOGLE_PLAY_SUBSCRIPTIONS_SETUP.md`](GOOGLE_PLAY_SUBSCRIPTIONS_SETUP.md).
+Do not put the Google service-account JSON or any backend secret in this
+Flutter project.

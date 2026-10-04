@@ -15,6 +15,13 @@ Store-source normalization must accept the official plugin labels `GooglePlay` a
 
 **How to apply:** Normalize case and separators before choosing a verification endpoint, and cover the actual plugin labels in contract tests.
 
+## Google Play license testing
+Compatible sideloaded Android builds can use Play Billing test purchases when the package matches the Play Console app and the device's Play account is enrolled as a license tester. Installing from an internal test track is still the recommended first path.
+
+**Why:** A billing “item unavailable” error can come from tester, account, package, track, or product setup rather than the Flutter purchase code.
+
+**How to apply:** Check the device's Play account, exact application ID, tester enrollment, and published active product/base plan before changing client code.
+
 ## Subscription change scope
 Subscription fixes should stay within the purchase, restore, entitlement, and directly related test paths; do not modify unrelated app or server behavior.
 

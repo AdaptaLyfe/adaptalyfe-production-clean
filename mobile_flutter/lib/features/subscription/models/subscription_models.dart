@@ -5,14 +5,13 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'basic',
     name: 'Basic Plan',
     description: 'Essential features for daily independence',
-    monthlyPrice: 4.99,
     productId: 'adaptalyfe_basic_monthly',
     features: [
       'Daily task management (up to 50 tasks)',
       'Basic mood tracking',
-      'Financial tracking & bill reminders',
+      'Financial tracking and bill reminders',
       '1 caregiver connection',
-      'Basic reminders & notifications',
+      'Basic reminders and notifications',
       'Email support',
     ],
   ),
@@ -20,18 +19,16 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'premium',
     name: 'Premium Plan',
     description: 'Advanced features for enhanced independence',
-    monthlyPrice: 12.99,
     productId: 'adaptalyfe_premium_monthly',
     popular: true,
     features: [
       'Everything in Basic',
       'Unlimited tasks (up to 1,000)',
-      'Advanced analytics & insights',
+      'Advanced analytics and insights',
       'Medication management',
       'Up to 5 caregiver connections',
-      'Voice commands',
-      'Smart notifications',
-      'Meal planning & grocery lists',
+      'Voice commands and smart notifications',
+      'Meal planning and grocery lists',
       'Academic planner',
       'Priority support',
     ],
@@ -40,14 +37,13 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'family',
     name: 'Family Plan',
     description: 'Complete solution for families and care teams',
-    monthlyPrice: 24.99,
     productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
       'Up to 5 additional member accounts',
       'Unlimited caregiver connections',
-      'Family dashboard & shared progress',
-      'Emergency protocols & alerts',
+      'Family dashboard and shared progress',
+      'Emergency protocols and alerts',
       'Custom reporting',
       'Phone support',
     ],
@@ -59,7 +55,6 @@ class SubscriptionPlan extends Equatable {
     required this.id,
     required this.name,
     required this.description,
-    required this.monthlyPrice,
     required this.productId,
     required this.features,
     this.popular = false,
@@ -68,16 +63,18 @@ class SubscriptionPlan extends Equatable {
   final String id;
   final String name;
   final String description;
-  final double monthlyPrice;
   final String productId;
   final List<String> features;
   final bool popular;
 
   @override
-  List<Object?> get props =>
-      [id, name, description, monthlyPrice, productId, features, popular];
+  List<Object?> get props => [id, name, description, productId, features, popular];
 }
 
+/// The account entitlement returned by the existing Adaptalyfe API.
+///
+/// The same model is used by Home and Settings, so these fields intentionally
+/// preserve the app-wide entitlement contract.
 class SubscriptionModel extends Equatable {
   const SubscriptionModel({
     required this.id,
@@ -110,22 +107,27 @@ class SubscriptionModel extends Equatable {
   bool get isCancelled => status == 'cancelled';
   bool get isInGracePeriod => status == 'in_grace_period';
   bool get isExpired => status == 'expired';
+
   bool get _hasUnexpiredPeriod =>
       currentPeriodEnd?.isAfter(DateTime.now()) == true;
+
   bool get _isNativeStore =>
       subscriptionPlatform == 'app_store' ||
       subscriptionPlatform == 'google_play';
+
   bool get grantsAccess {
     if (_isNativeStore) {
-      return const ['basic', 'premium', 'family'].contains(planType.toLowerCase()) &&
+      return const ['basic', 'premium', 'family']
+              .contains(planType.toLowerCase()) &&
           _hasUnexpiredPeriod &&
-          (isActive || isCancelled || isInGracePeriod);
+          (isActive || isTrialing || isCancelled || isInGracePeriod);
     }
     if (currentPeriodEnd != null && !_hasUnexpiredPeriod) return false;
     return isActive || isTrialing || (isCancelled && _hasUnexpiredPeriod);
   }
+
   bool get hasPremiumAccess {
-    if (!grantsAccess) return false;
+    if (!grantsAccess || isAccountTrial) return false;
     final tier = planType.toLowerCase();
     return tier == 'premium' || tier == 'family';
   }
@@ -146,14 +148,14 @@ class SubscriptionModel extends Equatable {
   factory SubscriptionModel.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
     final id = rawId is int ? rawId : int.tryParse('$rawId') ?? 0;
-    final subscriptionPlatform = json['subscriptionPlatform'] as String?;
+    final platform = json['subscriptionPlatform'] as String?;
     return SubscriptionModel(
       id: id,
       planType: '${json['planType'] ?? 'free'}',
       status: '${json['status'] ?? 'expired'}',
       billingCycle: '${json['billingCycle'] ?? 'monthly'}',
-      subscriptionPlatform: subscriptionPlatform,
-      isAccountTrial: _isAccountTrial(json, subscriptionPlatform),
+      subscriptionPlatform: platform,
+      isAccountTrial: _isAccountTrial(json, platform),
       currentPeriodStart: _date(json['currentPeriodStart']),
       currentPeriodEnd: _date(json['currentPeriodEnd']),
       trialDaysLeft: _int(json['trialDaysLeft']),
@@ -164,16 +166,13 @@ class SubscriptionModel extends Equatable {
 
   static bool _isAccountTrial(
     Map<String, dynamic> json,
-    String? subscriptionPlatform,
+    String? platform,
   ) {
-    final explicitValue = json['isAccountTrial'];
-    if (explicitValue is bool) return explicitValue;
-
-    // Older servers omitted isAccountTrial. Only infer the free account trial
-    // when it has no billing provider and the server reports days remaining.
+    final explicit = json['isAccountTrial'];
+    if (explicit is bool) return explicit;
     final daysLeft = _int(json['trialDaysLeft']);
     return json['status'] == 'trialing' &&
-        (subscriptionPlatform == null || subscriptionPlatform.trim().isEmpty) &&
+        (platform == null || platform.trim().isEmpty) &&
         daysLeft != null &&
         daysLeft > 0;
   }

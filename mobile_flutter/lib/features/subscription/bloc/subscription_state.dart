@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../models/subscription_models.dart';
 
@@ -26,58 +27,67 @@ class SubscriptionState extends Equatable {
     this.storeAvailable = false,
     this.availabilityMessage,
     this.busyPlanId,
-    this.selectedPlanId,
     this.managementUrl,
     this.shouldNavigateToDashboard = false,
     this.shouldRefreshAuthentication = false,
     this.purchaseNeedsVerification = false,
+    this.purchasePending = false,
   });
 
   final SubscriptionStatus status;
   final List<SubscriptionPlan> plans;
   final SubscriptionModel? subscription;
-  final Map<String, dynamic> products;
+  final Map<String, ProductDetails> products;
   final String? errorMessage;
   final String? actionMessage;
   final bool sessionInvalid;
   final bool storeAvailable;
   final String? availabilityMessage;
   final String? busyPlanId;
-  final String? selectedPlanId;
   final String? managementUrl;
   final bool shouldNavigateToDashboard;
   final bool shouldRefreshAuthentication;
   final bool purchaseNeedsVerification;
+  final bool purchasePending;
 
   bool get isLoading =>
-      status == SubscriptionStatus.loading || status == SubscriptionStatus.initial;
+      status == SubscriptionStatus.loading ||
+      status == SubscriptionStatus.initial;
+
   bool get isBusy =>
       status == SubscriptionStatus.purchasing ||
       status == SubscriptionStatus.restoring;
+
   bool get hasActiveSubscription =>
-      subscription?.grantsAccess == true && subscription?.isAccountTrial != true;
+      subscription?.grantsAccess == true &&
+      subscription?.isAccountTrial != true;
+
   bool get canStartPurchase =>
       subscription != null &&
-      (status == SubscriptionStatus.ready || status == SubscriptionStatus.cancelled) &&
-      !sessionInvalid && !hasActiveSubscription && !purchaseNeedsVerification;
+      status == SubscriptionStatus.ready &&
+      !sessionInvalid &&
+      !hasActiveSubscription &&
+      !purchaseNeedsVerification &&
+      !purchasePending;
+
   bool get canPurchase => storeAvailable && canStartPurchase;
 
   SubscriptionState copyWith({
     SubscriptionStatus? status,
     List<SubscriptionPlan>? plans,
     Object? subscription = _notSet,
-    Map<String, dynamic>? products,
+    Map<String, ProductDetails>? products,
     Object? errorMessage = _notSet,
     Object? actionMessage = _notSet,
     bool? sessionInvalid,
     bool? storeAvailable,
     Object? availabilityMessage = _notSet,
     Object? busyPlanId = _notSet,
-    Object? selectedPlanId = _notSet,
     Object? managementUrl = _notSet,
     bool? shouldNavigateToDashboard,
     bool? shouldRefreshAuthentication,
     bool? purchaseNeedsVerification,
+    bool? purchasePending,
   }) {
     return SubscriptionState(
       status: status ?? this.status,
@@ -100,9 +110,6 @@ class SubscriptionState extends Equatable {
       busyPlanId: identical(busyPlanId, _notSet)
           ? this.busyPlanId
           : busyPlanId as String?,
-      selectedPlanId: identical(selectedPlanId, _notSet)
-          ? this.selectedPlanId
-          : selectedPlanId as String?,
       managementUrl: identical(managementUrl, _notSet)
           ? this.managementUrl
           : managementUrl as String?,
@@ -110,7 +117,9 @@ class SubscriptionState extends Equatable {
           shouldNavigateToDashboard ?? this.shouldNavigateToDashboard,
       shouldRefreshAuthentication:
           shouldRefreshAuthentication ?? this.shouldRefreshAuthentication,
-      purchaseNeedsVerification: purchaseNeedsVerification ?? this.purchaseNeedsVerification,
+      purchaseNeedsVerification:
+          purchaseNeedsVerification ?? this.purchaseNeedsVerification,
+      purchasePending: purchasePending ?? this.purchasePending,
     );
   }
 
@@ -126,11 +135,11 @@ class SubscriptionState extends Equatable {
         storeAvailable,
         availabilityMessage,
         busyPlanId,
-        selectedPlanId,
         managementUrl,
         shouldNavigateToDashboard,
         shouldRefreshAuthentication,
         purchaseNeedsVerification,
+        purchasePending,
       ];
 }
 
