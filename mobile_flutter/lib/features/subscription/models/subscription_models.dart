@@ -195,6 +195,7 @@ class PurchaseVerification extends Equatable {
     this.planType,
     this.expiresAt,
     this.status,
+    this.subscription,
   });
 
   final bool success;
@@ -202,17 +203,31 @@ class PurchaseVerification extends Equatable {
   final String? planType;
   final DateTime? expiresAt;
   final String? status;
+  final SubscriptionModel? subscription;
 
   factory PurchaseVerification.fromJson(Map<String, dynamic> json) {
+    final rawSubscription = json['subscription'];
     return PurchaseVerification(
       success: json['success'] == true || json['restored'] == true,
       message: json['message'] as String?,
       planType: (json['planType'] ?? json['plan']) as String?,
       expiresAt: SubscriptionModel._date(json['expiresAt']),
       status: json['status'] as String?,
+      subscription: rawSubscription is Map
+          ? SubscriptionModel.fromJson(
+              Map<String, dynamic>.from(rawSubscription),
+            )
+          : null,
     );
   }
 
   @override
-  List<Object?> get props => [success, message, planType, expiresAt, status];
+  List<Object?> get props => [
+        success,
+        message,
+        planType,
+        expiresAt,
+        status,
+        subscription,
+      ];
 }

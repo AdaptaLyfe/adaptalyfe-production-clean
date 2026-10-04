@@ -56,6 +56,43 @@ void main() {
       expect(restored.planType, 'premium');
     });
 
+    test('uses the server-verified plan payload for all three Play products',
+        () {
+      final expectedTiers = {
+        'adaptalyfe_basic_monthly': 'basic',
+        'adaptalyfe_premium_monthly': 'premium',
+        'adaptalyfe_family_monthly': 'family',
+      };
+
+      for (final plan in subscriptionPlans) {
+        final verification = PurchaseVerification.fromJson({
+          'success': true,
+          'planType': expectedTiers[plan.productId],
+          'status': 'active',
+          'subscription': {
+            'id': 24,
+            'planType': expectedTiers[plan.productId],
+            'status': 'active',
+            'billingCycle': 'monthly',
+            'subscriptionPlatform': 'google_play',
+            'currentPeriodEnd': '2027-01-15T12:00:00.000Z',
+          },
+        });
+
+        expect(verification.success, isTrue, reason: plan.productId);
+        expect(
+          verification.subscription?.planType,
+          expectedTiers[plan.productId],
+          reason: plan.productId,
+        );
+        expect(
+          verification.subscription?.hasPremiumAccess,
+          plan.id != 'basic',
+          reason: plan.productId,
+        );
+      }
+    });
+
     test('Basic is active but does not include Premium features', () {
       final subscription = SubscriptionModel.fromJson({
         'id': 10,

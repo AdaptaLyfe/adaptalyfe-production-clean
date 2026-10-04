@@ -2,18 +2,23 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  canUseCachedGooglePlayEntitlement,
   resolveGooglePlayEntitlement,
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
 
 const now = new Date("2026-10-02T00:00:00.000Z");
 
-function snapshot(subscriptionState: string, expiryTime: string) {
+function snapshot(
+  subscriptionState: string,
+  expiryTime: string,
+  productId = "adaptalyfe_basic_monthly",
+) {
   return {
     subscriptionState,
     lineItems: [
       {
-        productId: "adaptalyfe_basic_monthly",
+        productId,
         expiryTime,
         latestSuccessfulOrderId: "GPA.1234-5678-9012-34567",
         autoRenewingPlan: { autoRenewEnabled: true },
@@ -122,4 +127,82 @@ test("all mobile store product IDs resolve to one canonical plan map", () => {
   assert.equal(subscriptionPlanForProductId("adaptalyfe_premium_monthly")?.planType, "premium");
   assert.equal(subscriptionPlanForProductId("adaptalyfe_family_monthly")?.planType, "family");
   assert.equal(subscriptionPlanForProductId("not-a-product"), null);
+});
+
+test("verified active Play products grant only their mapped plan tier", () => {
+  const plans = [
+    ["adaptalyfe_basic_monthly", "basic"],
+    ["adaptalyfe_premium_monthly", "premium"],
+    ["adaptalyfe_family_monthly", "family"],
+  ] as const;
+
+  for (const [productId, expectedTier] of plans) {
+    const result = resolveGooglePlayEntitlement(
+      snapshot(
+        "SUBSCRIPTION_STATE_ACTIVE",
+        "2026-11-02T00:00:00.000Z",
+        productId,
+      ),
+      { expectedProductId: productId, now },
+    );
+
+    assert.equal(result.productId, productId);
+    assert.equal(result.tier, expectedTier);
+    assert.equal(result.grantsAccess, true);
+  }
+});
+
+test("cached store access is a short outage fallback for a verified purchase", () => {
+  const verifiedAt = new Date("2026-10-01T23:30:00.000Z");
+  const now = new Date("2026-10-02T00:00:00.000Z");
+  const cached = {
+    subscriptionStatus: "active",
+    subscriptionExpiresAt: new Date("2026-11-02T00:00:00.000Z"),
+    subscriptionVerifiedAt: verifiedAt,
+    subscriptionProductId: "adaptalyfe_premium_monthly",
+    googlePlayProductId: "adaptalyfe_premium_monthly",
+    googlePlayPurchaseToken: "verified-token",
+  };
+
+  assert.equal(canUseCachedGooglePlayEntitlement(cached, now), true);
+  assert.equal(
+    canUseCachedGooglePlayEntitlement(
+      {
+        ...cached,
+        subscriptionVerifiedAt: new Date("2026-09-30T00:00:00.000Z"),
+      },
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    canUseCachedGooglePlayEntitlement(
+      {
+        ...cached,
+        subscriptionStatus: "revoked",
+      },
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    canUseCachedGooglePlayEntitlement(
+      {
+        ...cached,
+        subscriptionExpiresAt: new Date("2026-10-01T00:00:00.000Z"),
+      },
+      now,
+    ),
+    false,
+  );
+  assert.equal(
+    canUseCachedGooglePlayEntitlement(
+      {
+        ...cached,
+        subscriptionProductId: "adaptalyfe_basic_monthly",
+      },
+      now,
+    ),
+    false,
+  );
 });

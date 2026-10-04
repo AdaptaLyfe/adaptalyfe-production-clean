@@ -545,7 +545,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       }
 
       await _completePurchases(verifiablePurchases);
-      final subscription = await repository.getSubscription();
+      final subscription = await _loadVerifiedSubscription(verification);
       if (!subscription.grantsAccess) {
         emit(
           state.copyWith(
@@ -666,7 +666,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         );
       }
       await purchaseService.complete(item);
-      final subscription = await repository.getSubscription();
+      final subscription = await _loadVerifiedSubscription(verification);
       debugPrint(
         '[Subscription IAP] Subscription refreshed: '
         'plan=${subscription.planType}, status=${subscription.status}',
@@ -698,6 +698,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         ),
       );
     } on ApiException catch (error) {
+      keepRetryable = _shouldKeepPurchaseRetryable(error.type);
       if (_shouldCompleteRejectedPurchase(error.type)) {
         try {
           await purchaseService.complete(item);
@@ -720,11 +721,14 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
           busyPlanId: null,
           errorMessage: error.type == ApiErrorType.unauthorized
               ? null
-              : _messageFor(error),
+              : keepRetryable
+                  ? _purchaseVerificationRetryMessage
+                  : _messageFor(error),
           sessionInvalid: error.type == ApiErrorType.unauthorized,
         ),
       );
     } catch (error) {
+      keepRetryable = true;
       debugPrint(
         '[Subscription IAP] Purchase processing failed: '
         'productId=${item.productID}, errorType=${error.runtimeType}',
@@ -733,7 +737,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         state.copyWith(
           status: SubscriptionStatus.failure,
           busyPlanId: null,
-          errorMessage: _messageFor(error),
+          errorMessage: _purchaseVerificationRetryMessage,
         ),
       );
     } finally {
@@ -787,6 +791,49 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     return type == ApiErrorType.badRequest ||
         type == ApiErrorType.forbidden ||
         type == ApiErrorType.notFound;
+  }
+
+  bool _shouldKeepPurchaseRetryable(ApiErrorType type) {
+    return type == ApiErrorType.unauthorized ||
+        type == ApiErrorType.server ||
+        type == ApiErrorType.network ||
+        type == ApiErrorType.timeout ||
+        type == ApiErrorType.unknown;
+  }
+
+  static const _purchaseVerificationRetryMessage =
+      'The store reported a purchase, but secure verification did not finish. '
+      'Do not buy again; tap Restore purchases to retry verification.';
+
+  Future<SubscriptionModel> _loadVerifiedSubscription(
+    PurchaseVerification verification,
+  ) async {
+    try {
+      return await repository.getSubscription();
+    } on ApiException catch (error) {
+      final verifiedSubscription = verification.subscription;
+      if (error.type != ApiErrorType.unauthorized &&
+          verifiedSubscription?.grantsAccess == true) {
+        debugPrint(
+          '[Subscription IAP] Using the just-verified entitlement after '
+          'the subscription refresh failed: '
+          'plan=${verifiedSubscription!.planType}.',
+        );
+        return verifiedSubscription;
+      }
+      rethrow;
+    } catch (error) {
+      final verifiedSubscription = verification.subscription;
+      if (verifiedSubscription?.grantsAccess == true) {
+        debugPrint(
+          '[Subscription IAP] Using the just-verified entitlement after '
+          'the subscription refresh failed: '
+          'plan=${verifiedSubscription!.planType}.',
+        );
+        return verifiedSubscription;
+      }
+      rethrow;
+    }
   }
 
   Future<PurchaseVerification> _verify(

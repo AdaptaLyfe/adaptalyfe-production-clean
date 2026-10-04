@@ -70,6 +70,63 @@ export function googlePlayTierForProductId(
   return subscriptionPlanForProductId(productId)?.planType ?? null;
 }
 
+const GOOGLE_PLAY_CACHED_ENTITLEMENT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+export function canUseCachedGooglePlayEntitlement(
+  cached: {
+    subscriptionStatus?: string | null;
+    subscriptionExpiresAt?: Date | string | null;
+    subscriptionVerifiedAt?: Date | string | null;
+    subscriptionProductId?: string | null;
+    googlePlayPurchaseToken?: string | null;
+    googlePlayProductId?: string | null;
+  },
+  now = new Date(),
+): boolean {
+  const productId = cached.googlePlayProductId ?? cached.subscriptionProductId;
+  if (
+    !cached.googlePlayPurchaseToken?.trim() ||
+    !productId ||
+    !subscriptionPlanForProductId(productId) ||
+    (cached.googlePlayProductId &&
+      cached.subscriptionProductId &&
+      cached.googlePlayProductId !== cached.subscriptionProductId) ||
+    !["active", "cancelled", "in_grace_period"].includes(
+      cached.subscriptionStatus ?? "",
+    )
+  ) {
+    return false;
+  }
+
+  const expiresAt =
+    cached.subscriptionExpiresAt instanceof Date
+      ? cached.subscriptionExpiresAt
+      : cached.subscriptionExpiresAt
+        ? new Date(cached.subscriptionExpiresAt)
+        : null;
+  const verifiedAt =
+    cached.subscriptionVerifiedAt instanceof Date
+      ? cached.subscriptionVerifiedAt
+      : cached.subscriptionVerifiedAt
+        ? new Date(cached.subscriptionVerifiedAt)
+        : null;
+  if (
+    !expiresAt ||
+    !Number.isFinite(expiresAt.getTime()) ||
+    expiresAt.getTime() <= now.getTime() ||
+    !verifiedAt ||
+    !Number.isFinite(verifiedAt.getTime())
+  ) {
+    return false;
+  }
+
+  const verificationAge = now.getTime() - verifiedAt.getTime();
+  return (
+    verificationAge >= -5 * 60 * 1000 &&
+    verificationAge <= GOOGLE_PLAY_CACHED_ENTITLEMENT_MAX_AGE_MS
+  );
+}
+
 export function resolveGooglePlayEntitlement(
   snapshot: GooglePlaySubscriptionSnapshot,
   options: {

@@ -46,6 +46,7 @@ import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validatio
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import {
+  canUseCachedGooglePlayEntitlement,
   resolveGooglePlayEntitlement,
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
@@ -158,6 +159,24 @@ function storeSubscriptionUpdate(
     subscriptionVerifiedAt: new Date(),
     subscriptionPlatform: platform,
     ...providerFields,
+  };
+}
+
+function googlePlaySubscriptionResponse(
+  user: User,
+  entitlement: GooglePlayEntitlement,
+  billingCycle: string,
+) {
+  return {
+    id: user.id,
+    planType: entitlement.tier,
+    status: entitlement.status,
+    billingCycle,
+    subscriptionPlatform: "google_play",
+    currentPeriodStart:
+      entitlement.startDate ?? user.subscriptionStartDate ?? user.createdAt,
+    currentPeriodEnd: entitlement.expiresAt,
+    trialDaysLeft: null,
   };
 }
 
@@ -5305,10 +5324,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             "Google Play subscription refresh failed:",
             error?.message ?? "Unknown error",
           );
-          return res.status(503).json({
-            message:
-              "Google Play subscription status could not be verified. Please try again.",
-          });
+          if (!canUseCachedGooglePlayEntitlement(user, now)) {
+            return res.status(503).json({
+              message:
+                "Google Play subscription status could not be verified. Please try again.",
+            });
+          }
+          console.warn(
+            "[Google Play] Using a recently verified database entitlement " +
+              `during a store refresh failure: product=${user.googlePlayProductId}.`,
+          );
         }
       }
 
@@ -6302,6 +6327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt: expiryTime.toISOString(),
         status: entitlement.status,
         platform: 'google_play',
+        subscription: googlePlaySubscriptionResponse(
+          persistedUser,
+          entitlement,
+          planInfo.billingCycle,
+        ),
       });
     } catch (error: any) {
       const notConfigured = error?.message?.includes('not configured');
@@ -6882,10 +6912,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       let restored = false;
+      let restoredSubscription:
+        | ReturnType<typeof googlePlaySubscriptionResponse>
+        | null = null;
       const androidPublisher = await createGooglePlayPublisher();
       for (const purchase of purchases) {
         if (!purchase.purchaseToken || !purchase.productId) continue;
-        if (!subscriptionPlanForProductId(purchase.productId)) continue;
+        const planInfo = subscriptionPlanForProductId(purchase.productId);
+        if (!planInfo) continue;
         productIdForLog = purchase.productId;
 
         const tokenOwner = await storage.getUserByGooglePlayToken(
@@ -6972,6 +7006,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `[Google Play] Restored entitlement persisted: ` +
             `product=${entitlement.productId}, tier=${entitlement.tier}.`,
         );
+        restoredSubscription = googlePlaySubscriptionResponse(
+          persistedUser,
+          entitlement,
+          planInfo.billingCycle,
+        );
         req.session.user = publicUser(persistedUser);
         restorePhase = "session persistence";
         await new Promise<void>((resolve) => {
@@ -7010,7 +7049,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         break;
       }
 
-      res.json({ restored, message: restored ? "Subscription restored successfully" : "No valid purchases found" });
+      res.json({
+        restored,
+        message: restored
+          ? "Subscription restored successfully"
+          : "No valid purchases found",
+        ...(restoredSubscription ? { subscription: restoredSubscription } : {}),
+      });
     } catch (error: any) {
       const notConfigured = error?.message?.includes('not configured');
       console.error(
