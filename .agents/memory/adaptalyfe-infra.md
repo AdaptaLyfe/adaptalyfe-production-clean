@@ -58,6 +58,12 @@ Railway staging uses an external database and is not managed by Replit's Publish
 
 **How to apply:** Check the live staging schema (a dated backup is evidence, not proof of current state), verify the target column type, run only the needed migration through the Railway service's app connection, and verify afterward. `NEON_DATABASE_URL` remains read-only.
 
+Before deploying ORM code that reads newly added user columns on staging, apply the matching committed migration to the staging database. The users-table login lookup selects the current mapped row shape, so one missing subscription column can make `/api/login` return HTTP 500 even though the build and health check pass.
+
+**Why:** Staging returned PostgreSQL `column "subscription_start_date" does not exist` from the login lookup while `/api/health` returned HTTP 200; the existing store-subscription migration had not been applied to that database.
+
+**How to apply:** Run the complete, idempotent store-subscription lifecycle migration against the Railway `ai-staging` app's actual database, not Replit development/production. Check `information_schema.columns` afterward, then test login and `/api/user`.
+
 ## Development schema drift
 The development database can lag behind `shared/schema.ts`; a declared table may be missing even while the app starts normally.
 
