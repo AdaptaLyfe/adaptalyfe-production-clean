@@ -1,0 +1,240 @@
+
+
+AdaptaLyfe
+
+staging
+
+
+
+Agent
+
+@level:error
+@level:error
+
+
+2026-10-05 14:24 GMT+5:30 - 2026-10-05 18:17 GMT+5:30
+
+
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526104873Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526120908Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526126232Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526133152Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526139382Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526146272Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526153941Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526160069Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526166495Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526172602Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526178018Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526183188Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526189015Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526194921Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526200853Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526206442Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526213034Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526217820Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526221893Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526226402Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526230834Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526234732Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526239252Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:40:22.526243514Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611304106Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611315850Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611316781Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611323485Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611330266Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611331843Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611339303Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611345891Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611351446Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611356757Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611363909Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611368381Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611372922Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611378862Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611383688Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611388730Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611393386Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611398788Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611404000Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611409753Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611416003Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611420833Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611425809Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:45.611431819Z"}
+{"message":"[ai-service] AI response failed schema validation: { formErrors: [], fieldErrors: { nextAction: [ 'Required' ] } }","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:43:47.618809006Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195516369Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195523900Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195530449Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195535882Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195542138Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195547138Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195552416Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195558157Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195563625Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195570233Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195575556Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195580702Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195585747Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195591140Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195597829Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195602684Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195611701Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195616776Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195623584Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195629803Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195635054Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195640488Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.195645620Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:17.196362917Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198027718Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198032411Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198037031Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198041545Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198046918Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198051262Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198055330Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198059710Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198064655Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198070058Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198074826Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198079498Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.198083863Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200168474Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200177151Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200181185Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200184893Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200188782Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200192786Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200199531Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200205368Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200209402Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200215655Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.200219134Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417325928Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417325931Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417337617Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417338415Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417345584Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417347892Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417352339Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417354954Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417359960Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417361358Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417367610Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417369528Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417374295Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417375842Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417381174Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417381203Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417387538Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417394236Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417400142Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417406469Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417413145Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417418178Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417424271Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:18.417429957Z"}
+{"message":"[ai-service] AI response failed schema validation: { formErrors: [], fieldErrors: { nextAction: [ 'Required' ] } }","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:20.321701960Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252930594Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252940805Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252946533Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252951944Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252957098Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252962381Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252967565Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252973826Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252978960Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252984026Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.252996795Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253002141Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253007342Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253011901Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253018684Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253023717Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253028436Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253033961Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253039360Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253044287Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253049794Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253055076Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253060257Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:28.253065175Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290843350Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290861368Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290863874Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290872494Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290874651Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290880824Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290884630Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290889322Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290902006Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290909522Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290915740Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290921565Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290929203Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290935145Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290940597Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290946092Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290951794Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290957555Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290962888Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290969117Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.290974912Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.291602090Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.291610759Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:40.291620732Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761274911Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761279297Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761282495Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761285970Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761289274Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761292287Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761295871Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761298860Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761301542Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761304225Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761307373Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761310531Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761313548Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761316259Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761318919Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761321892Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761325216Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761328286Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761331255Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761334168Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761337118Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761340048Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761343060Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:44:46.761345955Z"}
+{"message":"Could not synchronize supplemental activity streak tracking: error: relation \"streak_tracking\" does not exist","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433154856Z"}
+{"message":"    at file:///app/node_modules/@neondatabase/serverless/index.mjs:1345:74","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433159161Z"}
+{"message":"    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433164072Z"}
+{"message":"    at async NeonPreparedQuery.execute (file:///app/node_modules/drizzle-orm/neon-serverless/session.js:76:20)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433169073Z"}
+{"message":"    at async DatabaseStorage.refreshUserActivityStreak (file:///app/dist/production.js:3120:27)","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433175764Z"}
+{"message":"    at async file:///app/dist/production.js:11660:28 {","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433179818Z"}
+{"message":"  length: 115,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433183835Z"}
+{"message":"  severity: 'ERROR',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433187885Z"}
+{"message":"  code: '42P01',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433192345Z"}
+{"message":"  detail: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433196300Z"}
+{"message":"  hint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433200467Z"}
+{"message":"  position: '129',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433205573Z"}
+{"message":"  internalPosition: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433209837Z"}
+{"message":"  internalQuery: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433213912Z"}
+{"message":"  where: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433217572Z"}
+{"message":"  schema: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433221513Z"}
+{"message":"  table: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433224776Z"}
+{"message":"  column: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433228347Z"}
+{"message":"  dataType: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433234435Z"}
+{"message":"  constraint: undefined,","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433238184Z"}
+{"message":"  file: 'parse_relation.c',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433245517Z"}
+{"message":"  line: '1449',","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433249284Z"}
+{"message":"  routine: 'parserOpenTable'","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433259779Z"}
+{"message":"}","severity":"error","attributes":{"level":"error"},"timestamp":"2026-10-05T12:45:26.433263575Z"}
+
+Load more
+
+
+18:14
