@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -20,6 +21,15 @@ class SubscriptionScreen extends StatefulWidget {
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
   String? _selectedPlanId = subscriptionPlans.first.id;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SubscriptionBloc>().add(const SubscriptionStarted());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,171 +65,307 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               tooltip: 'Refresh subscription',
               onPressed: () => context
                   .read<SubscriptionBloc>()
-                  .add(const RefreshSubscription()),
+                  .add(const SubscriptionStarted()),
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
         ),
         body: BlocBuilder<SubscriptionBloc, SubscriptionState>(
           builder: (context, state) {
-            if (state.isLoading && state.subscription == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
             final subscription = state.subscription;
-            final selectedPlan = state.plans.firstWhere(
-              (plan) => plan.id == _selectedPlanId,
-              orElse: () => state.plans.first,
-            );
-            final selectedProduct = state.products[selectedPlan.productId];
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-              children: [
-                Text(
-                  'Choose the support that fits your routine.',
-                  style: Theme.of(context).textTheme.headlineSmall,
+            final hasActiveSubscription = state.hasActiveSubscription;
+            final trialDaysLeft = subscription?.trialDaysLeft ?? 0;
+            final trialStatusText = state.isLoading && subscription == null
+                ? 'Checking trial status…'
+                : state.errorMessage != null && subscription == null
+                    ? 'Trial status unavailable'
+                    : subscription?.requiresStoreRecovery == true
+                        ? 'Billing needs attention'
+                        : trialDaysLeft > 0
+                            ? 'Free trial: $trialDaysLeft ${trialDaysLeft == 1 ? 'day' : 'days'} remaining'
+                            : 'Trial expired — Subscribe to continue';
+            final trialIsPositive = trialDaysLeft > 0 &&
+                subscription?.requiresStoreRecovery != true;
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFFCFFAFE),
+                    Color(0xFFF0FDFA),
+                    Color(0xFFDBEAFE),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Plans are billed monthly through the app store. The store shows the exact price and terms before you confirm.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                if (state.errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _MessageCard(
-                    icon: Icons.info_outline_rounded,
-                    message: state.errorMessage!,
-                    actionLabel: 'Try again',
-                    onAction: () => context
-                        .read<SubscriptionBloc>()
-                        .add(const RefreshSubscription()),
-                  ),
-                ],
-                if (subscription != null) ...[
-                  const SizedBox(height: 20),
-                  _CurrentPlanCard(subscription: subscription),
-                ],
-                if (state.availabilityMessage != null) ...[
-                  const SizedBox(height: 16),
-                  _MessageCard(
-                    icon: Icons.storefront_outlined,
-                    message: state.availabilityMessage!,
-                  ),
-                ],
-                const SizedBox(height: 22),
-                for (final plan in state.plans) ...[
-                  _PlanCard(
-                    plan: plan,
-                    product: state.products[plan.productId],
-                    state: state,
-                    selectedPlanId: _selectedPlanId ?? '',
-                    selected: _selectedPlanId == plan.id,
-                    onSelect: () => setState(() => _selectedPlanId = plan.id),
-                  ),
-                  const SizedBox(height: 14),
-                ],
-                if (state.subscription?.isAccountTrial == true) ...[
-                  const SizedBox(height: 2),
-                  const _MessageCard(
-                    icon: Icons.info_outline_rounded,
-                    message:
-                        'Your free 7-day Adaptalyfe account trial provides Basic access. Starting a store subscription is separate and begins at the price shown above.',
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                if (!state.hasActiveSubscription &&
-                    !state.requiresStoreRecovery) ...[
-                  if (selectedProduct != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        '${selectedPlan.name}: ${selectedProduct.price} per month',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                    ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: state.canPurchase &&
-                              !state.isBusy &&
-                              selectedProduct != null
-                          ? () => context.read<SubscriptionBloc>().add(
-                                PlanPurchaseRequested(
-                                  _selectedPlanId ?? subscriptionPlans.first.id,
+              ),
+              child: RefreshIndicator(
+                onRefresh: _refreshSubscription,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+                  children: [
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1160),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                hasActiveSubscription
+                                    ? 'Manage Your Subscription'
+                                    : 'Choose Your Plan',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF111827),
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                              )
-                          : null,
-                      child: Text(
-                        state.status == SubscriptionStatus.purchasing
-                            ? 'Opening store…'
-                            : state.storeAvailable
-                                ? 'Continue to checkout'
-                                : 'Subscriptions unavailable',
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                hasActiveSubscription
+                                    ? "You're subscribed to the ${_titleCase(subscription!.planType)} Plan. You can return to your dashboard."
+                                    : "Unlock your full potential with Adaptalyfe's comprehensive features.",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF4B5563),
+                                  fontSize: 17,
+                                ),
+                              ),
+                              if (hasActiveSubscription) ...[
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: FilledButton(
+                                    onPressed: () => context.go('/home'),
+                                    child: const Text('Go to Dashboard'),
+                                  ),
+                                ),
+                              ],
+                              if (!hasActiveSubscription) ...[
+                                const SizedBox(height: 22),
+                                const _ExplanationCard(),
+                                const SizedBox(height: 16),
+                                Center(
+                                  child: _StatusBadge(
+                                    text: trialStatusText,
+                                    color: trialIsPositive
+                                        ? const Color(0xFFDBEAFE)
+                                        : const Color(0xFFFEE2E2),
+                                    textColor: trialIsPositive
+                                        ? const Color(0xFF1E40AF)
+                                        : const Color(0xFF991B1B),
+                                  ),
+                                ),
+                              ] else ...[
+                                const SizedBox(height: 18),
+                                Center(
+                                  child: _StatusBadge(
+                                    text:
+                                        'Active ${_titleCase(subscription!.planType)} subscription',
+                                    color: const Color(0xFFDCFCE7),
+                                    textColor: const Color(0xFF166534),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              const Center(
+                                child: _StatusBadge(
+                                  text:
+                                      'Monthly Subscription — auto-renewable, cancel anytime',
+                                  color: Color(0xFFE5E7EB),
+                                  textColor: Color(0xFF374151),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                'Some features require an active subscription. All plans are auto-renewing monthly subscriptions.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xFF4B5563),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              if (state.isLoading) ...[
+                                const SizedBox(height: 18),
+                                const LinearProgressIndicator(),
+                              ],
+                              if (state.errorMessage != null) ...[
+                                const SizedBox(height: 16),
+                                _MessageCard(
+                                  icon: Icons.error_outline_rounded,
+                                  message: state.errorMessage!,
+                                  actionLabel: 'Try again',
+                                  onAction: () => context
+                                      .read<SubscriptionBloc>()
+                                      .add(const SubscriptionStarted()),
+                                ),
+                              ],
+                              if (subscription != null) ...[
+                                const SizedBox(height: 18),
+                                _CurrentPlanCard(subscription: subscription),
+                              ],
+                              if (state.availabilityMessage != null) ...[
+                                const SizedBox(height: 16),
+                                _MessageCard(
+                                  icon: Icons.storefront_outlined,
+                                  message: state.availabilityMessage!,
+                                ),
+                              ],
+                              if (subscription?.isAccountTrial == true) ...[
+                                const SizedBox(height: 12),
+                                const _MessageCard(
+                                  icon: Icons.info_outline_rounded,
+                                  message:
+                                      'Your free 7-day Adaptalyfe account trial provides Basic access. Starting a store subscription is separate and follows the price and terms shown by the store.',
+                                ),
+                              ],
+                              if (state.purchaseNeedsVerification) ...[
+                                const SizedBox(height: 12),
+                                _MessageCard(
+                                  icon: Icons.sync_rounded,
+                                  message:
+                                      'A store purchase still needs server verification. Retry the store restore to finish linking it to this account.',
+                                  actionLabel: 'Retry verification',
+                                  onAction: state.isBusy
+                                      ? null
+                                      : () => context
+                                          .read<SubscriptionBloc>()
+                                          .add(
+                                            const RetryPurchaseVerificationRequested(),
+                                          ),
+                                ),
+                              ],
+                              if (state.purchasePending) ...[
+                                const SizedBox(height: 12),
+                                const _MessageCard(
+                                  icon: Icons.hourglass_top_rounded,
+                                  message:
+                                      'Payment is still pending in the store. Adaptalyfe will update access after the store confirms it.',
+                                ),
+                              ],
+                              if (state.availabilityMessage != null ||
+                                  state.errorMessage != null ||
+                                  state.actionMessage != null) ...[
+                                const SizedBox(height: 18),
+                              ] else
+                                const SizedBox(height: 22),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final columns = constraints.maxWidth >= 768
+                                      ? 3
+                                      : constraints.maxWidth >= 600
+                                          ? 2
+                                          : 1;
+                                  const gap = 16.0;
+                                  final cardWidth =
+                                      (constraints.maxWidth -
+                                              (columns - 1) * gap) /
+                                          columns;
+                                  return Wrap(
+                                    spacing: gap,
+                                    runSpacing: gap,
+                                    children: [
+                                      for (final plan in state.plans)
+                                        SizedBox(
+                                          width: cardWidth,
+                                          child: _PlanCard(
+                                            plan: plan,
+                                            product:
+                                                state.products[plan.productId],
+                                            state: state,
+                                            selectedPlanId:
+                                                _selectedPlanId ?? '',
+                                            selected:
+                                                _selectedPlanId == plan.id,
+                                            onSelect: () => setState(
+                                              () => _selectedPlanId = plan.id,
+                                            ),
+                                            onPurchase: () => context
+                                                .read<SubscriptionBloc>()
+                                                .add(PlanPurchaseRequested(
+                                                  plan.id,
+                                                )),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              if (!hasActiveSubscription) ...[
+                                const SizedBox(height: 20),
+                                Center(
+                                  child: OutlinedButton.icon(
+                                    onPressed: !state.storeAvailable ||
+                                            state.isBusy ||
+                                            state.isLoading
+                                        ? null
+                                        : () => context
+                                            .read<SubscriptionBloc>()
+                                            .add(
+                                              const RestorePurchasesRequested(),
+                                            ),
+                                    icon: state.status ==
+                                            SubscriptionStatus.restoring
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(Icons.restore_rounded),
+                                    label: Text(
+                                      state.status ==
+                                              SubscriptionStatus.restoring
+                                          ? 'Restoring…'
+                                          : 'Restore Previous Purchase',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Already subscribed? Restore your ${defaultTargetPlatform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} subscription here.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 22),
+                              Text(
+                                'Subscriptions renew automatically until cancelled. Manage or cancel them from the store account used to subscribe. An active plan from another platform works here too; you will not be asked to buy it again.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  if (state.storeAvailable &&
-                      selectedProduct == null &&
-                      state.status != SubscriptionStatus.loading)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
-                      child: Text(
-                        'This plan is not currently available from the app store.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(height: 12),
-                ],
-                if (state.purchaseNeedsVerification) ...[
-                  const SizedBox(height: 4),
-                  _MessageCard(
-                    icon: Icons.sync_rounded,
-                    message:
-                        'A store purchase still needs server verification. Retry the store restore to finish linking it to this account.',
-                    actionLabel: 'Retry verification',
-                    onAction: state.isBusy
-                        ? null
-                        : () => context.read<SubscriptionBloc>().add(
-                              const RetryPurchaseVerificationRequested(),
-                            ),
-                  ),
-                ],
-                if (state.purchasePending) ...[
-                  const SizedBox(height: 4),
-                  const _MessageCard(
-                    icon: Icons.hourglass_top_rounded,
-                    message:
-                        'Payment is still pending in the store. Adaptalyfe will update access after the store confirms it.',
-                  ),
-                ],
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: !state.storeAvailable || state.isBusy
-                      ? null
-                      : () => context
-                          .read<SubscriptionBloc>()
-                          .add(const RestorePurchasesRequested()),
-                  icon: state.status == SubscriptionStatus.restoring
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.restore_rounded),
-                  label: const Text('Restore purchases'),
+                  ],
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  'Subscriptions renew automatically until cancelled. You can manage or cancel them from the store account used to subscribe. A plan already active on another platform works here too; you will not be asked to buy it again.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             );
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _refreshSubscription() async {
+    final bloc = context.read<SubscriptionBloc>();
+    bloc.add(const SubscriptionStarted());
+    await bloc.stream.firstWhere(
+      (state) =>
+          (state.status == SubscriptionStatus.ready ||
+              state.status == SubscriptionStatus.notAvailable ||
+              state.status == SubscriptionStatus.failure ||
+              state.status == SubscriptionStatus.configurationError) &&
+          !state.isBusy,
     );
   }
 
@@ -326,6 +472,7 @@ class _PlanCard extends StatelessWidget {
     required this.selectedPlanId,
     required this.selected,
     required this.onSelect,
+    required this.onPurchase,
   });
 
   final SubscriptionPlan plan;
@@ -334,98 +481,287 @@ class _PlanCard extends StatelessWidget {
   final String selectedPlanId;
   final bool selected;
   final VoidCallback onSelect;
+  final VoidCallback onPurchase;
 
   @override
   Widget build(BuildContext context) {
     final active = state.hasActiveSubscription;
     final isCurrent = active &&
         state.subscription?.planType.toLowerCase() == plan.id.toLowerCase();
-    final priceLabel =
-        product == null ? 'Store price unavailable' : '${product.price} / month';
+    final selectable = !active &&
+        !state.requiresStoreRecovery &&
+        !state.purchaseNeedsVerification &&
+        !state.purchasePending &&
+        !state.isBusy;
+    final priceLabel = product != null
+        ? '${product!.price} / month'
+        : state.isLoading
+            ? 'Loading store price…'
+            : 'Store price unavailable';
+    final purchaseEnabled =
+        state.canPurchase && product != null && !state.isBusy;
+    final purchaseLabel = active
+        ? isCurrent
+            ? 'Current Plan'
+            : 'Subscription Already Active'
+        : state.requiresStoreRecovery
+            ? 'Fix billing with ${state.subscription?.subscriptionPlatform == 'app_store' ? 'Apple' : 'Google Play'}'
+            : state.purchaseNeedsVerification
+                ? 'Verifying purchase…'
+                : state.purchasePending
+                    ? 'Store payment pending'
+                    : state.isBusy && state.busyPlanId == plan.id
+                        ? 'Setting up…'
+                        : state.isLoading && product == null
+                            ? 'Loading price…'
+                            : !state.storeAvailable
+                                ? state.isLoading
+                                    ? 'Checking store…'
+                                    : 'Subscriptions unavailable'
+                                : product == null
+                                    ? 'Unavailable in store'
+                                    : defaultTargetPlatform ==
+                                            TargetPlatform.iOS
+                                        ? 'Subscribe via App Store'
+                                        : defaultTargetPlatform ==
+                                                TargetPlatform.android
+                                            ? 'Subscribe via Google Play'
+                                            : 'Subscribe';
 
     return Card(
-      color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
+      key: ValueKey('subscription-plan-${plan.id}'),
+      color: selected
+          ? const Color(0xFFEFF6FF)
+          : active && isCurrent
+              ? const Color(0xFFF0FDF4)
+              : Colors.white,
+      elevation: plan.popular ? 4 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: selected
+              ? const Color(0xFF2563EB)
+              : plan.popular
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFFE5E7EB),
+          width: selected || plan.popular ? 2 : 1,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: state.canSelectPlan ? onSelect : null,
+        onTap: selectable ? onSelect : null,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Radio<String>(
-                    value: plan.id,
-                    groupValue: selectedPlanId,
-                    onChanged:
-                        state.canSelectPlan ? (_) => onSelect() : null,
+              if (plan.popular)
+                const Align(
+                  alignment: Alignment.topCenter,
+                  child: _StatusBadge(
+                    text: '★ Most Popular',
+                    color: Color(0xFF3B82F6),
+                    textColor: Colors.white,
                   ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                plan.name,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ),
-                            if (plan.popular) ...[
-                              const SizedBox(width: 8),
-                              const Chip(
-                                label: Text('Popular'),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
-                            if (isCurrent) ...[
-                              const SizedBox(width: 8),
-                              const Chip(
-                                label: Text('Current'),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(plan.description),
-                      ],
+                ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    switch (plan.id) {
+                      'basic' => Icons.bolt_rounded,
+                      'premium' => Icons.star_rounded,
+                      'family' => Icons.groups_rounded,
+                      _ => Icons.check_circle_outline_rounded,
+                    },
+                    color: const Color(0xFF2563EB),
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      plan.name,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF111827),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(priceLabel, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
+              Text(
+                plan.description,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                priceLabel,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF111827),
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
               for (final feature in plan.features)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.check_rounded, size: 18),
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF22C55E),
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: Text(feature)),
+                      Expanded(
+                        child: Text(
+                          feature,
+                          style: const TextStyle(
+                            color: Color(0xFF4B5563),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 10),
-              Text(
-                state.canSelectPlan
-                    ? selected
-                        ? 'Selected'
-                        : 'Tap to select this plan'
-                    : active && !isCurrent
-                        ? 'Manage your active plan through its billing provider to change tiers.'
-                        : '',
-                style: Theme.of(context).textTheme.bodySmall,
+              const SizedBox(height: 14),
+              if (selectable)
+                RadioListTile<String>(
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  title: Text(selected ? 'Selected' : 'Select this plan'),
+                  value: plan.id,
+                  groupValue: selectedPlanId,
+                  onChanged: (_) => onSelect(),
+                )
+              else if (active && !isCurrent)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Manage your active plan through its billing provider to change tiers.',
+                    style: TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: plan.popular
+                    ? FilledButton(
+                        onPressed: purchaseEnabled
+                            ? () {
+                                onSelect();
+                                onPurchase();
+                              }
+                            : null,
+                        child: Text(purchaseLabel),
+                      )
+                    : OutlinedButton(
+                        onPressed: purchaseEnabled
+                            ? () {
+                                onSelect();
+                                onPurchase();
+                              }
+                            : null,
+                        child: Text(purchaseLabel),
+                      ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExplanationCard extends StatelessWidget {
+  const _ExplanationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.white,
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFCCFBF1)),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.all(18),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: Color(0xFFCCFBF1),
+              child: Icon(Icons.info_outline_rounded, color: Color(0xFF0F766E)),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Get full access to Adaptalyfe',
+                    style: TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Adaptalyfe helps with daily tasks, finances, mood tracking, appointments, and connecting with your support network. Choose a plan to unlock its features. Subscriptions are billed monthly through your app store and can be cancelled in your device settings.',
+                    style: TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.text,
+    required this.color,
+    required this.textColor,
+  });
+
+  final String text;
+  final Color color;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: textColor.withValues(alpha: 0.12)),
+      ),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

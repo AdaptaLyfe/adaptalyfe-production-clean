@@ -14,7 +14,10 @@ import 'subscription_state.dart';
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   SubscriptionBloc(this.repository, this.purchaseService)
       : super(const SubscriptionState()) {
-    on<SubscriptionStarted>(_load);
+    on<SubscriptionStarted>(
+      _load,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
     on<RefreshSubscription>(_refresh);
     on<PlanPurchaseRequested>(_purchase);
     on<RestorePurchasesRequested>(_restore);
@@ -52,12 +55,15 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
   ) async {
     emit(state.copyWith(
       status: SubscriptionStatus.loading,
+      products: const {},
+      storeAvailable: false,
+      availabilityMessage: null,
       errorMessage: null,
       actionMessage: null,
     ));
 
     var storeAvailable = false;
-    var products = state.products;
+    var products = <String, ProductDetails>{};
     String? availabilityMessage;
     try {
       storeAvailable = await purchaseService.isAvailable();
@@ -73,6 +79,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       availabilityMessage =
           'The store could not load subscription prices. Check your connection and try again.';
     }
+
+    emit(state.copyWith(
+      status: SubscriptionStatus.loading,
+      products: products,
+      storeAvailable: storeAvailable,
+      availabilityMessage: availabilityMessage,
+    ));
 
     try {
       final subscription = await repository.getSubscription();

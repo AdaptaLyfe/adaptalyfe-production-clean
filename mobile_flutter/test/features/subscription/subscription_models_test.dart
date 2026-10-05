@@ -2,6 +2,32 @@ import 'package:adaptalyfe_mobile/features/subscription/models/subscription_mode
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('subscription plan catalog', () {
+    test('matches the wrapper plan names, features, and store product IDs', () {
+      expect(
+        subscriptionPlans.map((plan) => plan.name).toList(),
+        ['Basic Plan', 'Premium Plan', 'Family Plan'],
+      );
+      expect(
+        subscriptionPlans.map((plan) => plan.productId).toList(),
+        [
+          'adaptalyfe_basic_monthly',
+          'adaptalyfe_premium_monthly',
+          'adaptalyfe_family_monthly',
+        ],
+      );
+      expect(subscriptionPlans.first.features, contains('7-day free trial'));
+      expect(
+        subscriptionPlans[1].features,
+        containsAll([
+          'Voice commands',
+          'Smart notifications',
+          'Meal planning & grocery lists',
+        ]),
+      );
+    });
+  });
+
   group('SubscriptionModel', () {
     test('keeps a verified, unexpired Google Play plan active', () {
       final model = SubscriptionModel.fromJson({
