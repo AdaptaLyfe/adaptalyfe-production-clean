@@ -493,14 +493,14 @@ class _PlanCard extends StatelessWidget {
         !state.purchaseNeedsVerification &&
         !state.purchasePending &&
         !state.isBusy;
-    final priceLabel = '${plan.websiteMonthlyPrice} / month';
+    final priceLabel = '${plan.websiteMonthlyPrice}/month';
     final storePriceLabel = product == null
         ? state.isLoading
             ? 'Loading store price…'
             : 'Store price unavailable'
         : product!.price == plan.websiteMonthlyPrice
             ? null
-            : '${defaultTargetPlatform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} checkout price: ${product!.price} / month';
+            : '${defaultTargetPlatform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} checkout price: ${product!.price}/month';
     final purchaseEnabled =
         state.canPurchase && product != null && !state.isBusy;
     final purchaseLabel = active

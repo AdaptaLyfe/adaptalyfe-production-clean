@@ -3165,3 +3165,17 @@ mtime_ms = 1791197478126
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/140d8993-9130-44c5-87f7-383e4fa85c55/d54b2881-e2de-40e5-bc8b-db67b36e851f"
 storage_version_token = "1791197493282436"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rhBVmdSq6D5cBbgP5DZ2g"
+uri = "file://deliverables/adaptalyfe-flutter-plan-display-fix.zip"
+type = "unspecified"
+title = "Adaptalyfe Flutter plan display fix"
+description = "ZIP of the four Flutter subscription screen/model files and tests changed for web-matching USD prices, store-price clarity, and the no-free-fallback behavior."
+logical_id = "b4d87f5a-78be-42d4-9898-8e8f0e4b43c0"
+content_hash = "sha256:fa3415eb47f13c002ca9c17bf1e00612a9138249ebdb440ad1df7dc54e3c9989"
+size = 15008
+mtime_ms = 1791200815642
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b4d87f5a-78be-42d4-9898-8e8f0e4b43c0/cc8053f9-445a-43b6-bd80-2ba76d814dd3"
+storage_version_token = "1791200821737156"
+content_type = "application/octet-stream"

@@ -69,6 +69,7 @@ class SubscriptionPlan extends Equatable {
   final String id;
   final String name;
   final String description;
+  /// Published website reference price; checkout still uses the store product.
   final String websiteMonthlyPrice;
   final String productId;
   final List<String> features;

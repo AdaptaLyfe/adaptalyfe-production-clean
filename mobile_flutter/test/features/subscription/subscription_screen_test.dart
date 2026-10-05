@@ -54,9 +54,9 @@ void main() {
       find.byKey(const ValueKey('subscription-plan-family')),
       findsOneWidget,
     );
-    expect(find.text('\$4.99 / month'), findsOneWidget);
-    expect(find.text('\$12.99 / month'), findsOneWidget);
-    expect(find.text('\$24.99 / month'), findsOneWidget);
+    expect(find.text('\$4.99/month'), findsOneWidget);
+    expect(find.text('\$12.99/month'), findsOneWidget);
+    expect(find.text('\$24.99/month'), findsOneWidget);
     expect(find.text('Checking trial status…'), findsOneWidget);
     expect(service.catalogQueries, 1);
     final basicCard = find.byKey(const ValueKey('subscription-plan-basic'));
@@ -108,7 +108,7 @@ void main() {
       of: premiumCard,
       matching: find.text('Subscribe via Google Play'),
     );
-    expect(find.text('\$12.99 / month'), findsOneWidget);
+    expect(find.text('\$12.99/month'), findsOneWidget);
     await tester.ensureVisible(purchaseButton);
     await tester.tap(purchaseButton);
     await tester.pump();
@@ -142,16 +142,30 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    expect(find.text('\$4.99 / month'), findsOneWidget);
+    expect(find.text('\$4.99/month'), findsOneWidget);
     expect(
-      find.text('Google Play checkout price: ₹550.00 / month'),
+      find.text('Google Play checkout price: ₹550.00/month'),
       findsOneWidget,
     );
-    expect(find.text('\$12.99 / month'), findsOneWidget);
-    expect(find.text('\$24.99 / month'), findsOneWidget);
+    expect(find.text('\$12.99/month'), findsOneWidget);
+    expect(find.text('\$24.99/month'), findsOneWidget);
     expect(find.text('Store price unavailable'), findsNWidgets(2));
     expect(find.text('Free / month'), findsNothing);
     expect(find.text('Unavailable in store'), findsNWidgets(2));
+    final premiumButton = tester.widget<FilledButton>(
+      find.descendant(
+        of: find.byKey(const ValueKey('subscription-plan-premium')),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    final familyButton = tester.widget<OutlinedButton>(
+      find.descendant(
+        of: find.byKey(const ValueKey('subscription-plan-family')),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    expect(premiumButton.onPressed, isNull);
+    expect(familyButton.onPressed, isNull);
   });
 
   testWidgets('restore button requests a store restore', (tester) async {
@@ -412,7 +426,7 @@ void main() {
       find.byKey(const ValueKey('subscription-plan-family')),
       findsOneWidget,
     );
-    expect(find.text('\$4.99 / month'), findsOneWidget);
+    expect(find.text('\$4.99/month'), findsOneWidget);
   });
 }
 
