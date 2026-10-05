@@ -120,6 +120,40 @@ void main() {
     );
   });
 
+  testWidgets(
+      'shows web USD prices and never labels missing store products as free',
+      (tester) async {
+    final service = _FakePurchaseService()
+      ..productPrices['adaptalyfe_basic_monthly'] = '₹550.00'
+      ..unavailableProductIds.addAll({
+        'adaptalyfe_premium_monthly',
+        'adaptalyfe_family_monthly',
+      });
+    final bloc = _createBloc(
+      service,
+      _FakeSubscriptionRepository(),
+    );
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    await tester.pumpWidget(_subscriptionApp(bloc));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(find.text('\$4.99 / month'), findsOneWidget);
+    expect(
+      find.text('Google Play checkout price: ₹550.00 / month'),
+      findsOneWidget,
+    );
+    expect(find.text('\$12.99 / month'), findsOneWidget);
+    expect(find.text('\$24.99 / month'), findsOneWidget);
+    expect(find.text('Store price unavailable'), findsNWidgets(2));
+    expect(find.text('Free / month'), findsNothing);
+    expect(find.text('Unavailable in store'), findsNWidgets(2));
+  });
+
   testWidgets('restore button requests a store restore', (tester) async {
     final service = _FakePurchaseService();
     final bloc = _createBloc(
@@ -489,6 +523,12 @@ class _FakeSubscriptionRepository extends SubscriptionRepository {
 class _FakePurchaseService extends PurchaseService {
   _FakePurchaseService() : super();
 
+  final Map<String, String> productPrices = {
+    'adaptalyfe_basic_monthly': '\$4.99',
+    'adaptalyfe_premium_monthly': '\$12.99',
+    'adaptalyfe_family_monthly': '\$24.99',
+  };
+  final Set<String> unavailableProductIds = {};
   final List<String> purchasedProductIds = [];
   final StreamController<List<PurchaseDetails>> _purchaseController =
       StreamController<List<PurchaseDetails>>.broadcast();
@@ -506,16 +546,15 @@ class _FakePurchaseService extends PurchaseService {
   @override
   Future<StoreProductCatalog> loadSubscriptionProducts() async {
     catalogQueries++;
+    final products = <String, ProductDetails>{};
+    for (final entry in productPrices.entries) {
+      if (!unavailableProductIds.contains(entry.key)) {
+        products[entry.key] = _product(entry.key, entry.value);
+      }
+    }
     return StoreProductCatalog(
-      products: {
-        'adaptalyfe_basic_monthly':
-            _product('adaptalyfe_basic_monthly', '\$4.99'),
-        'adaptalyfe_premium_monthly':
-            _product('adaptalyfe_premium_monthly', '\$12.99'),
-        'adaptalyfe_family_monthly':
-            _product('adaptalyfe_family_monthly', '\$24.99'),
-      },
-      notFoundProductIds: const {},
+      products: products,
+      notFoundProductIds: unavailableProductIds,
     );
   }
 

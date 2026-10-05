@@ -5,6 +5,7 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'basic',
     name: 'Basic Plan',
     description: 'Essential features for daily independence',
+    websiteMonthlyPrice: '\$4.99',
     productId: 'adaptalyfe_basic_monthly',
     features: [
       'Daily task management (up to 50 tasks)',
@@ -20,6 +21,7 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'premium',
     name: 'Premium Plan',
     description: 'Advanced features for enhanced independence',
+    websiteMonthlyPrice: '\$12.99',
     productId: 'adaptalyfe_premium_monthly',
     popular: true,
     features: [
@@ -39,6 +41,7 @@ const subscriptionPlans = <SubscriptionPlan>[
     id: 'family',
     name: 'Family Plan',
     description: 'Complete solution for families and care teams',
+    websiteMonthlyPrice: '\$24.99',
     productId: 'adaptalyfe_family_monthly',
     features: [
       'Everything in Premium',
@@ -57,6 +60,7 @@ class SubscriptionPlan extends Equatable {
     required this.id,
     required this.name,
     required this.description,
+    required this.websiteMonthlyPrice,
     required this.productId,
     required this.features,
     this.popular = false,
@@ -65,12 +69,21 @@ class SubscriptionPlan extends Equatable {
   final String id;
   final String name;
   final String description;
+  final String websiteMonthlyPrice;
   final String productId;
   final List<String> features;
   final bool popular;
 
   @override
-  List<Object?> get props => [id, name, description, productId, features, popular];
+  List<Object?> get props => [
+        id,
+        name,
+        description,
+        websiteMonthlyPrice,
+        productId,
+        features,
+        popular,
+      ];
 }
 
 /// The account entitlement returned by the existing Adaptalyfe API.

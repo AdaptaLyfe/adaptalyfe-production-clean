@@ -493,11 +493,14 @@ class _PlanCard extends StatelessWidget {
         !state.purchaseNeedsVerification &&
         !state.purchasePending &&
         !state.isBusy;
-    final priceLabel = product != null
-        ? '${product!.price} / month'
-        : state.isLoading
+    final priceLabel = '${plan.websiteMonthlyPrice} / month';
+    final storePriceLabel = product == null
+        ? state.isLoading
             ? 'Loading store price…'
-            : 'Store price unavailable';
+            : 'Store price unavailable'
+        : product!.price == plan.websiteMonthlyPrice
+            ? null
+            : '${defaultTargetPlatform == TargetPlatform.iOS ? 'App Store' : 'Google Play'} checkout price: ${product!.price} / month';
     final purchaseEnabled =
         state.canPurchase && product != null && !state.isBusy;
     final purchaseLabel = active
@@ -611,6 +614,17 @@ class _PlanCard extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              if (storePriceLabel != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  storePriceLabel,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
               for (final feature in plan.features)
                 Padding(

@@ -25,6 +25,12 @@ void main() {
         ],
       );
       expect(
+        subscriptionPlans
+            .map((plan) => plan.websiteMonthlyPrice)
+            .toList(),
+        ['\$4.99', '\$12.99', '\$24.99'],
+      );
+      expect(
         subscriptionPlans.map((plan) => plan.features).toList(),
         [
           [
