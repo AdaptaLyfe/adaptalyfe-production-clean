@@ -68,3 +68,11 @@ version settings. Play requires a higher unused code for the next accepted uploa
 
 **How to apply:** Preserve the existing application ID and upload signing setup;
 configure the next version only after checking the latest accepted Play code.
+
+## Native restore and paid-through access
+
+Android restore verifies a returned purchase list through the server restore flow. The server acknowledges the active purchase but does not echo its token, so the client must not locally complete every item in that batch. Apple restore verifies transactions individually. A cancelled subscription retains access only through its verified paid-through expiry; expired and revoked records do not grant access.
+
+**Why:** Bulk restore can contain multiple transactions while its response identifies only the entitlement, not the exact token. Acknowledging the whole batch could finish purchases the server did not verify; revoking access at cancellation would also discard an already-paid period.
+
+**How to apply:** Keep Google restore acknowledgement server-side unless the response identifies the exact verified transaction. Complete Apple transactions only after individual verification, and always evaluate store access against lifecycle status and expiry.

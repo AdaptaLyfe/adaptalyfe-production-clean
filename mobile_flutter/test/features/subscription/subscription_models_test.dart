@@ -9,6 +9,14 @@ void main() {
         ['Basic Plan', 'Premium Plan', 'Family Plan'],
       );
       expect(
+        subscriptionPlans.map((plan) => plan.description).toList(),
+        [
+          'Essential features for daily independence',
+          'Advanced features for enhanced independence',
+          'Complete solution for families and care teams',
+        ],
+      );
+      expect(
         subscriptionPlans.map((plan) => plan.productId).toList(),
         [
           'adaptalyfe_basic_monthly',
@@ -16,15 +24,42 @@ void main() {
           'adaptalyfe_family_monthly',
         ],
       );
-      expect(subscriptionPlans.first.features, contains('7-day free trial'));
       expect(
-        subscriptionPlans[1].features,
-        containsAll([
-          'Voice commands',
-          'Smart notifications',
-          'Meal planning & grocery lists',
-        ]),
+        subscriptionPlans.map((plan) => plan.features).toList(),
+        [
+          [
+            'Daily task management (up to 50 tasks)',
+            'Basic mood tracking',
+            'Financial tracking & bill reminders',
+            '1 caregiver connection',
+            'Basic reminders & notifications',
+            '7-day free trial',
+            'Email support',
+          ],
+          [
+            'Everything in Basic',
+            'Unlimited tasks (up to 1,000)',
+            'Advanced analytics & insights',
+            'Medication management',
+            'Up to 5 caregiver connections',
+            'Voice commands',
+            'Smart notifications',
+            'Meal planning & grocery lists',
+            'Academic planner',
+            'Priority support',
+          ],
+          [
+            'Everything in Premium',
+            'Up to 5 additional member accounts',
+            'Unlimited caregiver connections',
+            'Family dashboard & shared progress',
+            'Emergency protocols & alerts',
+            'Custom reporting',
+            'Phone support',
+          ],
+        ],
       );
+      expect(subscriptionPlans[1].popular, isTrue);
     });
   });
 
@@ -72,6 +107,21 @@ void main() {
 
       expect(model.grantsAccess, isFalse);
       expect(model.hasPremiumAccess, isFalse);
+    });
+
+    test('keeps cancelled store access only through the paid period', () {
+      final model = SubscriptionModel.fromJson({
+        'id': 42,
+        'planType': 'premium',
+        'status': 'cancelled',
+        'billingCycle': 'monthly',
+        'subscriptionPlatform': 'app_store',
+        'currentPeriodEnd':
+            DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+      });
+
+      expect(model.grantsAccess, isTrue);
+      expect(model.hasPremiumAccess, isTrue);
     });
 
     test('retains lifecycle status and auto-renew details from the server', () {

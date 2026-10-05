@@ -8,17 +8,25 @@ import '../../../core/network/api_client.dart';
 import '../data/purchase_service.dart';
 import '../data/subscription_repository.dart';
 import '../models/subscription_models.dart';
+import '../models/subscription_purchase_contract.dart';
 import 'subscription_event.dart';
 import 'subscription_state.dart';
 
 class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
-  SubscriptionBloc(this.repository, this.purchaseService)
+  SubscriptionBloc(
+    this.repository,
+    this.purchaseService, {
+    this.restoreTimeout = const Duration(seconds: 10),
+  })
       : super(const SubscriptionState()) {
     on<SubscriptionStarted>(
       _load,
       transformer: (events, mapper) => events.asyncExpand(mapper),
     );
-    on<RefreshSubscription>(_refresh);
+    on<RefreshSubscription>(
+      _refresh,
+      transformer: (events, mapper) => events.asyncExpand(mapper),
+    );
     on<PlanPurchaseRequested>(_purchase);
     on<RestorePurchasesRequested>(_restore);
     on<RetryPurchaseVerificationRequested>(_restore);
@@ -46,13 +54,19 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   final SubscriptionRepository repository;
   final PurchaseService purchaseService;
+  final Duration restoreTimeout;
   late final StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;
   final Set<String> _verifiedPurchaseKeys = {};
+  Completer<bool>? _restoreCompletion;
+  Timer? _restoreTimeoutTimer;
+  int _entitlementRevision = 0;
+  bool _purchaseVerificationInProgress = false;
 
   Future<void> _load(
     SubscriptionStarted event,
     Emitter<SubscriptionState> emit,
   ) async {
+    final entitlementRevisionAtStart = _entitlementRevision;
     emit(state.copyWith(
       status: SubscriptionStatus.loading,
       products: const {},
@@ -89,6 +103,19 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
     try {
       final subscription = await repository.getSubscription();
+      if (entitlementRevisionAtStart != _entitlementRevision) {
+        emit(state.copyWith(
+          status: storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          products: products,
+          storeAvailable: storeAvailable,
+          availabilityMessage: availabilityMessage,
+          sessionInvalid: false,
+          errorMessage: null,
+        ));
+        return;
+      }
       emit(state.copyWith(
         status: storeAvailable
             ? SubscriptionStatus.ready
@@ -101,6 +128,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         errorMessage: null,
       ));
     } on ApiException catch (error) {
+      if (entitlementRevisionAtStart != _entitlementRevision) {
+        emit(state.copyWith(
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          sessionInvalid: false,
+          errorMessage: null,
+        ));
+        return;
+      }
       emit(state.copyWith(
         status: SubscriptionStatus.failure,
         products: products,
@@ -124,11 +161,23 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     RefreshSubscription event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (state.isBusy || _purchaseVerificationInProgress) return;
+    final entitlementRevisionAtStart = _entitlementRevision;
     if (state.subscription == null) {
       emit(state.copyWith(status: SubscriptionStatus.loading));
     }
     try {
       final subscription = await repository.getSubscription();
+      if (entitlementRevisionAtStart != _entitlementRevision) {
+        emit(state.copyWith(
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          sessionInvalid: false,
+          errorMessage: null,
+        ));
+        return;
+      }
       emit(state.copyWith(
         status: state.storeAvailable
             ? SubscriptionStatus.ready
@@ -138,6 +187,16 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         errorMessage: null,
       ));
     } on ApiException catch (error) {
+      if (entitlementRevisionAtStart != _entitlementRevision) {
+        emit(state.copyWith(
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          sessionInvalid: false,
+          errorMessage: null,
+        ));
+        return;
+      }
       emit(state.copyWith(
         status: SubscriptionStatus.failure,
         sessionInvalid: error.type == ApiErrorType.unauthorized,
@@ -162,7 +221,11 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         break;
       }
     }
-    if (plan == null || !state.canPurchase) return;
+    if (plan == null ||
+        !state.canPurchase ||
+        _purchaseVerificationInProgress) {
+      return;
+    }
 
     final product = state.products[plan.productId];
     if (product == null) {
@@ -201,30 +264,56 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     SubscriptionEvent event,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (state.isBusy || _purchaseVerificationInProgress) return;
     if (!state.storeAvailable) {
       emit(state.copyWith(
         actionMessage: 'The app store is not available on this device.',
       ));
       return;
     }
+    final completion = Completer<bool>();
+    _restoreTimeoutTimer?.cancel();
+    _restoreCompletion = completion;
+    _restoreTimeoutTimer = Timer(
+      restoreTimeout,
+      () => _completeRestoreWait(false),
+    );
     emit(state.copyWith(
       status: SubscriptionStatus.restoring,
       actionMessage: null,
     ));
     try {
-      await purchaseService.restorePurchases();
+      await Future.any<void>([
+        purchaseService.restorePurchases(),
+        completion.future.then<void>((_) {}),
+      ]);
+      final foundPurchase = await completion.future;
+      if (isClosed) return;
       if (state.status == SubscriptionStatus.restoring) {
         emit(state.copyWith(
-          status: SubscriptionStatus.ready,
-          actionMessage:
-              'Restore requested. Any purchase found by the store will be verified with your Adaptalyfe account.',
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          actionMessage: foundPurchase
+              ? 'The store returned a purchase, but it could not be linked to this account.'
+              : 'The store has not returned a previous purchase yet. If you still have an active subscription, retry restore when the store is available.',
         ));
       }
     } catch (_) {
-      emit(state.copyWith(
-        status: SubscriptionStatus.ready,
-        actionMessage: 'The store could not restore purchases. Try again.',
-      ));
+      if (!isClosed) {
+        emit(state.copyWith(
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
+          actionMessage: 'The store could not restore purchases. Try again.',
+        ));
+      }
+    } finally {
+      _restoreTimeoutTimer?.cancel();
+      _restoreTimeoutTimer = null;
+      if (identical(_restoreCompletion, completion)) {
+        _restoreCompletion = null;
+      }
     }
   }
 
@@ -232,26 +321,58 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     PurchaseUpdatesReceived event,
     Emitter<SubscriptionState> emit,
   ) async {
-    for (final purchase in event.purchases) {
+    final restoredPurchases = event.purchases
+        .where((purchase) => purchase.status == PurchaseStatus.restored)
+        .toList();
+    final googleRestoredPurchases = restoredPurchases
+        .where((purchase) =>
+            _purchaseStore(purchase) == SubscriptionStore.googlePlay)
+        .toList();
+    if (googleRestoredPurchases.isNotEmpty) {
+      await _restoreGooglePurchases(googleRestoredPurchases, emit);
+    }
+    for (final purchase in restoredPurchases) {
+      if (isClosed) return;
+      if (_purchaseStore(purchase) == SubscriptionStore.googlePlay) continue;
+      await _handlePurchase(purchase, emit);
+    }
+    for (final purchase in event.purchases.where(
+      (purchase) => purchase.status != PurchaseStatus.restored,
+    )) {
       if (isClosed) return;
       await _handlePurchase(purchase, emit);
     }
+    if (event.purchases.isEmpty) _completeRestoreWait(false);
   }
 
   Future<void> _handlePurchase(
     PurchaseDetails purchase,
     Emitter<SubscriptionState> emit,
   ) async {
+    if (!subscriptionProductIds.contains(purchase.productID)) {
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        busyPlanId: null,
+        purchaseNeedsVerification: true,
+        purchasePending: false,
+        actionMessage:
+            'The store returned a product that is not in Adaptalyfe’s plan catalog. No access was granted; contact support before purchasing again.',
+      ));
+      _completeRestoreWait(true);
+      return;
+    }
     switch (purchase.status) {
       case PurchaseStatus.pending:
         emit(state.copyWith(
-          status: SubscriptionStatus.ready,
+          status: state.storeAvailable
+              ? SubscriptionStatus.ready
+              : SubscriptionStatus.notAvailable,
           busyPlanId: null,
-          purchaseNeedsVerification: false,
           purchasePending: true,
           actionMessage:
               'The store is still processing payment. Access begins after it confirms the purchase.',
         ));
+        _completeRestoreWait(true);
         return;
       case PurchaseStatus.canceled:
         emit(state.copyWith(
@@ -259,10 +380,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.ready
               : SubscriptionStatus.notAvailable,
           busyPlanId: null,
-          purchaseNeedsVerification: false,
-          purchasePending: false,
           actionMessage: 'Purchase cancelled.',
         ));
+        _completeRestoreWait(false);
         return;
       case PurchaseStatus.error:
         emit(state.copyWith(
@@ -270,77 +390,103 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
               ? SubscriptionStatus.ready
               : SubscriptionStatus.notAvailable,
           busyPlanId: null,
-          purchaseNeedsVerification: false,
-          purchasePending: false,
           actionMessage:
               'The store could not complete this purchase. Check your Play account and try again.',
         ));
+        _completeRestoreWait(false);
         return;
       case PurchaseStatus.purchased:
       case PurchaseStatus.restored:
         await _verifyPurchase(purchase, emit);
+        _completeRestoreWait(true);
         return;
     }
   }
 
-  Future<void> _verifyPurchase(
-    PurchaseDetails purchase,
+  Future<void> _restoreGooglePurchases(
+    List<PurchaseDetails> purchases,
     Emitter<SubscriptionState> emit,
   ) async {
-    final purchaseKey = _purchaseKey(purchase);
-    if (_verifiedPurchaseKeys.contains(purchaseKey)) {
-      await _completeStoreTransaction(purchase);
+    final knownPurchases = purchases
+        .where((purchase) => subscriptionProductIds.contains(purchase.productID))
+        .toList();
+    if (knownPurchases.isEmpty) {
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        purchaseNeedsVerification: true,
+        actionMessage:
+            'Google Play returned no recognized Adaptalyfe plan. No access was granted; contact support before purchasing again.',
+      ));
+      _completeRestoreWait(true);
       return;
     }
+    if (_purchaseVerificationInProgress) return;
 
-    SubscriptionPlan? plan;
-    for (final candidate in subscriptionPlans) {
-      if (candidate.productId == purchase.productID) {
-        plan = candidate;
-        break;
-      }
-    }
+    _purchaseVerificationInProgress = true;
     emit(state.copyWith(
-      status: SubscriptionStatus.purchasing,
-      busyPlanId: plan?.id,
-      purchaseNeedsVerification: true,
-      purchasePending: false,
+      status: SubscriptionStatus.restoring,
+      busyPlanId: null,
       actionMessage: null,
     ));
-
     try {
-      final verification = await repository.verifyPurchase(purchase);
+      final verification =
+          await repository.restoreGooglePurchases(knownPurchases);
       if (!verification.success) {
-        emit(state.copyWith(
-          status: SubscriptionStatus.ready,
-          busyPlanId: null,
-          purchaseNeedsVerification: true,
-          purchasePending: false,
-          actionMessage: verification.message ??
-              'The store purchase is not active yet. Restore purchases to check again.',
-        ));
+        final verificationStatus = verification.status?.toLowerCase();
+        if (verificationStatus == 'pending') {
+          emit(state.copyWith(
+            status: state.storeAvailable
+                ? SubscriptionStatus.ready
+                : SubscriptionStatus.notAvailable,
+            busyPlanId: null,
+            purchaseNeedsVerification: false,
+            purchasePending: true,
+            actionMessage: verification.message ??
+                'Google Play is still processing this subscription.',
+          ));
+          return;
+        }
+        if (verificationStatus == 'missing_purchase_data') {
+          emit(state.copyWith(
+            status: SubscriptionStatus.failure,
+            busyPlanId: null,
+            purchaseNeedsVerification: true,
+            purchasePending: false,
+            actionMessage: verification.message ??
+                'Google Play did not return enough information to verify this purchase. Retry restore.',
+          ));
+          return;
+        }
+        await _finishInactivePurchases(
+          knownPurchases,
+          verification.message ??
+              'No active Google Play subscription was found.',
+          emit,
+          completeTransactions: false,
+        );
         return;
       }
 
-      SubscriptionModel? entitlement = verification.subscription;
-      if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+      var entitlement = verification.subscription;
+      if (!_matchesAnyVerifiedPurchase(entitlement, knownPurchases)) {
         entitlement = await repository.getSubscription();
       }
-      if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+      if (!_matchesAnyVerifiedPurchase(entitlement, knownPurchases)) {
         emit(state.copyWith(
-          status: SubscriptionStatus.ready,
+          status: SubscriptionStatus.failure,
           busyPlanId: null,
           purchaseNeedsVerification: true,
           purchasePending: false,
           actionMessage:
-              'Payment was received, but the matching plan is not active on your account yet. Retry verification; you will not be charged again.',
+              'Google Play returned a purchase, but its active plan could not be confirmed on this account. Retry restore; do not purchase again.',
         ));
         return;
       }
 
-      await _completeStoreTransaction(purchase);
-      _verifiedPurchaseKeys.add(purchaseKey);
-
+      // The bulk restore endpoint acknowledges its verified active purchase.
+      // Its response omits the matching token, so do not locally acknowledge
+      // every transaction returned by the store.
+      _entitlementRevision++;
       emit(state.copyWith(
         status: SubscriptionStatus.ready,
         subscription: entitlement,
@@ -351,8 +497,13 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         shouldRefreshAuthentication: true,
         actionMessage: 'Your subscription is verified and active.',
         errorMessage: null,
+        sessionInvalid: false,
       ));
     } on ApiException catch (error) {
+      if (error.statusCode == 409) {
+        await _refreshAfterPurchaseConflict(error, emit);
+        return;
+      }
       emit(state.copyWith(
         status: SubscriptionStatus.failure,
         busyPlanId: null,
@@ -360,20 +511,272 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
         purchasePending: false,
         sessionInvalid: error.type == ApiErrorType.unauthorized,
         actionMessage:
-            'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
+            'Google Play could not link this purchase to your account. Retry restore; do not purchase again.',
         errorMessage: error.message,
       ));
     } catch (_) {
       emit(state.copyWith(
-        status: SubscriptionStatus.ready,
+        status: SubscriptionStatus.failure,
         busyPlanId: null,
         purchaseNeedsVerification: true,
         purchasePending: false,
         actionMessage:
-            'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
+            'Google Play could not link this purchase to your account. Retry restore; do not purchase again.',
+      ));
+    } finally {
+      _purchaseVerificationInProgress = false;
+      _completeRestoreWait(true);
+    }
+  }
+
+  Future<void> _verifyPurchase(
+    PurchaseDetails purchase,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    if (_purchaseVerificationInProgress) return;
+    _purchaseVerificationInProgress = true;
+    try {
+      final purchaseKey = _purchaseKey(purchase);
+      if (_verifiedPurchaseKeys.contains(purchaseKey)) {
+        await _completeStoreTransaction(purchase);
+        return;
+      }
+
+      SubscriptionPlan? plan;
+      for (final candidate in subscriptionPlans) {
+        if (candidate.productId == purchase.productID) {
+          plan = candidate;
+          break;
+        }
+      }
+      emit(state.copyWith(
+        status: SubscriptionStatus.purchasing,
+        busyPlanId: plan?.id,
+        purchaseNeedsVerification: true,
+        purchasePending: false,
+        actionMessage: null,
+      ));
+
+      try {
+        final verification = await repository.verifyPurchase(purchase);
+        if (!verification.success) {
+          final verificationStatus = verification.status?.toLowerCase();
+          if (verificationStatus == 'pending') {
+            emit(state.copyWith(
+              status: state.storeAvailable
+                  ? SubscriptionStatus.ready
+                  : SubscriptionStatus.notAvailable,
+              busyPlanId: null,
+              purchaseNeedsVerification: false,
+              purchasePending: true,
+              actionMessage: verification.message ??
+                  'The store is still processing this purchase.',
+            ));
+            return;
+          }
+          if (_isTerminalStoreStatus(verificationStatus)) {
+            await _finishInactivePurchases(
+              [purchase],
+              verification.message ??
+                  'The store reports that this subscription is not active. No paid access was granted.',
+              emit,
+            );
+          } else {
+            emit(state.copyWith(
+              status: SubscriptionStatus.failure,
+              busyPlanId: null,
+              purchaseNeedsVerification: true,
+              purchasePending: false,
+              actionMessage: verification.message ??
+                  'The store purchase could not be verified yet. Retry verification; do not purchase again.',
+            ));
+          }
+          return;
+        }
+
+        SubscriptionModel? entitlement = verification.subscription;
+        if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+          entitlement = await repository.getSubscription();
+        }
+        if (!_matchesVerifiedPurchase(entitlement, purchase)) {
+          emit(state.copyWith(
+            status: SubscriptionStatus.failure,
+            busyPlanId: null,
+            purchaseNeedsVerification: true,
+            purchasePending: false,
+            actionMessage:
+                'Payment was received, but the matching plan is not active on your account yet. Retry verification; you will not be charged again.',
+          ));
+          return;
+        }
+
+        await _completeStoreTransaction(purchase);
+        _verifiedPurchaseKeys.add(purchaseKey);
+        _entitlementRevision++;
+
+        emit(state.copyWith(
+          status: SubscriptionStatus.ready,
+          subscription: entitlement,
+          busyPlanId: null,
+          purchaseNeedsVerification: false,
+          purchasePending: false,
+          shouldNavigateToDashboard: true,
+          shouldRefreshAuthentication: true,
+          actionMessage: 'Your subscription is verified and active.',
+          errorMessage: null,
+        ));
+      } on ApiException catch (error) {
+        if (error.statusCode == 409) {
+          await _refreshAfterPurchaseConflict(error, emit);
+          return;
+        }
+        if (error.statusCode == 400) {
+          await _finishInactivePurchases(
+            [purchase],
+            error.message.isNotEmpty
+                ? error.message
+                : 'The store reports that this subscription is not active. No paid access was granted.',
+            emit,
+          );
+          return;
+        }
+        emit(state.copyWith(
+          status: SubscriptionStatus.failure,
+          busyPlanId: null,
+          purchaseNeedsVerification: true,
+          purchasePending: false,
+          sessionInvalid: error.type == ApiErrorType.unauthorized,
+          actionMessage:
+              'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
+          errorMessage: error.message,
+        ));
+      } catch (_) {
+        emit(state.copyWith(
+          status: SubscriptionStatus.ready,
+          busyPlanId: null,
+          purchaseNeedsVerification: true,
+          purchasePending: false,
+          actionMessage:
+              'The store payment could not be linked to your account yet. Retry verification; do not purchase again.',
+        ));
+      }
+    } finally {
+      _purchaseVerificationInProgress = false;
+    }
+  }
+
+  Future<void> _refreshAfterPurchaseConflict(
+    ApiException error,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    try {
+      final currentSubscription = await repository.getSubscription();
+      _entitlementRevision++;
+      emit(state.copyWith(
+        status: state.storeAvailable
+            ? SubscriptionStatus.ready
+            : SubscriptionStatus.notAvailable,
+        subscription: currentSubscription,
+        busyPlanId: null,
+        purchaseNeedsVerification: !currentSubscription.grantsAccess,
+        purchasePending: false,
+        sessionInvalid: false,
+        errorMessage: null,
+        actionMessage: error.message,
+      ));
+    } on ApiException catch (refreshError) {
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        subscription: null,
+        busyPlanId: null,
+        purchaseNeedsVerification: true,
+        purchasePending: false,
+        sessionInvalid: refreshError.type == ApiErrorType.unauthorized,
+        errorMessage: refreshError.message,
+        actionMessage: error.message,
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        subscription: null,
+        busyPlanId: null,
+        purchaseNeedsVerification: true,
+        purchasePending: false,
+        errorMessage: 'Could not refresh your subscription status.',
+        actionMessage: error.message,
       ));
     }
   }
+
+  Future<void> _finishInactivePurchases(
+    List<PurchaseDetails> purchases,
+    String message,
+    Emitter<SubscriptionState> emit, {
+    bool completeTransactions = true,
+  }) async {
+    if (completeTransactions) {
+      for (final purchase in purchases) {
+        await _completeStoreTransaction(purchase);
+      }
+    }
+    try {
+      final currentSubscription = await repository.getSubscription();
+      _entitlementRevision++;
+      emit(state.copyWith(
+        status: state.storeAvailable
+            ? SubscriptionStatus.ready
+            : SubscriptionStatus.notAvailable,
+        subscription: currentSubscription,
+        busyPlanId: null,
+        purchaseNeedsVerification: false,
+        purchasePending: false,
+        sessionInvalid: false,
+        errorMessage: null,
+        actionMessage: message,
+      ));
+    } on ApiException catch (error) {
+      _entitlementRevision++;
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        subscription: null,
+        busyPlanId: null,
+        purchaseNeedsVerification: false,
+        purchasePending: false,
+        sessionInvalid: error.type == ApiErrorType.unauthorized,
+        errorMessage: error.message,
+        actionMessage: message,
+      ));
+    } catch (_) {
+      _entitlementRevision++;
+      emit(state.copyWith(
+        status: SubscriptionStatus.failure,
+        subscription: null,
+        busyPlanId: null,
+        purchaseNeedsVerification: false,
+        purchasePending: false,
+        errorMessage: 'Could not refresh your subscription status.',
+        actionMessage: message,
+      ));
+    }
+  }
+
+  bool _matchesAnyVerifiedPurchase(
+    SubscriptionModel? entitlement,
+    List<PurchaseDetails> purchases,
+  ) =>
+      purchases.any(
+        (purchase) => _matchesVerifiedPurchase(entitlement, purchase),
+      );
+
+  bool _isTerminalStoreStatus(String? status) => const {
+        'cancelled',
+        'canceled',
+        'expired',
+        'inactive',
+        'invalid',
+        'not_active',
+        'revoked',
+      }.contains(status);
 
   bool _matchesVerifiedPurchase(
     SubscriptionModel? entitlement,
@@ -398,21 +801,28 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       return false;
     }
 
-    final source = purchase.verificationData.source
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
-    final expectedPlatform = source.contains('apple') ||
-            source.contains('appstore') ||
-            source == 'ios'
-        ? 'app_store'
-        : source.contains('googleplay') ||
-                source == 'playstore' ||
-                source == 'android'
-            ? 'google_play'
-            : null;
+    final expectedPlatform = switch (_purchaseStore(purchase)) {
+      SubscriptionStore.googlePlay => 'google_play',
+      SubscriptionStore.appStore => 'app_store',
+      null => null,
+    };
     return expectedPlatform == null ||
         entitlement.subscriptionPlatform == expectedPlatform;
+  }
+
+  SubscriptionStore? _purchaseStore(PurchaseDetails purchase) =>
+      subscriptionStoreFromSource(purchase.verificationData.source) ??
+      switch (defaultTargetPlatform) {
+        TargetPlatform.android => SubscriptionStore.googlePlay,
+        TargetPlatform.iOS => SubscriptionStore.appStore,
+        _ => null,
+      };
+
+  void _completeRestoreWait(bool foundPurchase) {
+    final completion = _restoreCompletion;
+    if (completion != null && !completion.isCompleted) {
+      completion.complete(foundPurchase);
+    }
   }
 
   String _purchaseKey(PurchaseDetails purchase) {
@@ -496,6 +906,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
 
   @override
   Future<void> close() async {
+    _restoreTimeoutTimer?.cancel();
+    _completeRestoreWait(false);
     await _purchaseSubscription.cancel();
     await super.close();
   }

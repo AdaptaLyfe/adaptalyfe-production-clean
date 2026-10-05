@@ -46,6 +46,14 @@ class SubscriptionApi {
         },
       );
 
+  Future<PurchaseVerification> restoreGooglePurchases({
+    required List<Map<String, dynamic>> purchases,
+  }) =>
+      _postVerification(
+        '/api/google-play/restore-purchases',
+        {'purchases': purchases},
+      );
+
   Future<PurchaseVerification> _postVerification(
     String path,
     Map<String, dynamic> body,

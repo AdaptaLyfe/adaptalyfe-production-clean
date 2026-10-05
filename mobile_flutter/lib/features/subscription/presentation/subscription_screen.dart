@@ -84,7 +84,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         : trialDaysLeft > 0
                             ? 'Free trial: $trialDaysLeft ${trialDaysLeft == 1 ? 'day' : 'days'} remaining'
                             : 'Trial expired — Subscribe to continue';
-            final trialIsPositive = trialDaysLeft > 0 &&
+            final trialIsPositive = trialDaysLeft > 2 &&
                 subscription?.requiresStoreRecovery != true;
             return Container(
               decoration: const BoxDecoration(

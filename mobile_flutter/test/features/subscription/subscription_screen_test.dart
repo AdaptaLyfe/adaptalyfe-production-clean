@@ -33,7 +33,10 @@ void main() {
         subscriptionLoader: () => subscriptionRequest.future,
       ),
     );
-    addTearDown(bloc.close);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
 
     await tester.pumpWidget(_subscriptionApp(bloc));
     await tester.pump();
@@ -83,7 +86,10 @@ void main() {
       service,
       _FakeSubscriptionRepository(),
     );
-    addTearDown(bloc.close);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
 
     bloc.add(const SubscriptionStarted());
     await bloc.stream.firstWhere(
@@ -120,7 +126,10 @@ void main() {
       service,
       _FakeSubscriptionRepository(),
     );
-    addTearDown(bloc.close);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
 
     await tester.pumpWidget(_subscriptionApp(bloc));
     await tester.pump();
@@ -134,6 +143,212 @@ void main() {
     expect(service.restoreRequests, 1);
   });
 
+  test('Google Play restore verifies the batch and applies its entitlement',
+      () async {
+    final service = _FakePurchaseService()
+      ..restoredPurchases = [
+        _purchase(
+          status: PurchaseStatus.restored,
+          source: 'GooglePlay',
+          productId: 'adaptalyfe_premium_monthly',
+          token: 'google-purchase-token',
+        ),
+      ];
+    final repository = _FakeSubscriptionRepository(
+      googleRestoreVerification: PurchaseVerification(
+        success: true,
+        subscription: _activeGooglePremium,
+      ),
+    );
+    final bloc = _createBloc(service, repository);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    final ready = bloc.stream.firstWhere(
+      (state) => state.status == SubscriptionStatus.ready,
+    );
+    bloc.add(const SubscriptionStarted());
+    await ready;
+
+    final restored = bloc.stream.firstWhere(
+      (state) => state.shouldNavigateToDashboard,
+    );
+    bloc.add(const RestorePurchasesRequested());
+    final state = await restored.timeout(const Duration(seconds: 2));
+
+    expect(repository.googleRestoreCalls, 1);
+    expect(repository.verifiedPurchaseCalls, 0);
+    expect(state.subscription?.planType, 'premium');
+    expect(state.hasActiveSubscription, isTrue);
+    expect(state.shouldRefreshAuthentication, isTrue);
+  });
+
+  test('restore finishes with a no-purchases result when the store is empty',
+      () async {
+    final service = _FakePurchaseService();
+    final bloc = _createBloc(
+      service,
+      _FakeSubscriptionRepository(),
+      restoreTimeout: const Duration(milliseconds: 5),
+    );
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    final ready = bloc.stream.firstWhere(
+      (state) => state.status == SubscriptionStatus.ready,
+    );
+    bloc.add(const SubscriptionStarted());
+    await ready;
+
+    final noPurchases = bloc.stream.firstWhere(
+      (state) =>
+          state.actionMessage ==
+          'The store has not returned a previous purchase yet. If you still have an active subscription, retry restore when the store is available.',
+    );
+    bloc.add(const RestorePurchasesRequested());
+    final state = await noPurchases.timeout(const Duration(seconds: 2));
+
+    expect(state.status, SubscriptionStatus.ready);
+    expect(state.purchaseNeedsVerification, isFalse);
+    expect(state.purchasePending, isFalse);
+  });
+
+  test('a late store restore is still verified after the response timeout',
+      () async {
+    final service = _FakePurchaseService();
+    final repository = _FakeSubscriptionRepository(
+      googleRestoreVerification: PurchaseVerification(
+        success: true,
+        subscription: _activeGooglePremium,
+      ),
+    );
+    final bloc = _createBloc(
+      service,
+      repository,
+      restoreTimeout: const Duration(milliseconds: 5),
+    );
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    final ready = bloc.stream.firstWhere(
+      (state) => state.status == SubscriptionStatus.ready,
+    );
+    bloc.add(const SubscriptionStarted());
+    await ready;
+
+    final noResponse = bloc.stream.firstWhere(
+      (state) =>
+          state.actionMessage ==
+          'The store has not returned a previous purchase yet. If you still have an active subscription, retry restore when the store is available.',
+    );
+    bloc.add(const RestorePurchasesRequested());
+    await noResponse.timeout(const Duration(seconds: 2));
+
+    final restored = bloc.stream.firstWhere(
+      (state) => state.shouldNavigateToDashboard,
+    );
+    service.emitPurchases([
+      _purchase(
+        status: PurchaseStatus.restored,
+        source: 'GooglePlay',
+        productId: 'adaptalyfe_premium_monthly',
+        token: 'late-google-purchase-token',
+      ),
+    ]);
+    final state = await restored.timeout(const Duration(seconds: 2));
+
+    expect(repository.googleRestoreCalls, 1);
+    expect(state.hasActiveSubscription, isTrue);
+  });
+
+  test('an expired store purchase does not keep new purchases locked',
+      () async {
+    final service = _FakePurchaseService();
+    final repository = _FakeSubscriptionRepository(
+      subscriptionLoader: () async => _expiredGoogleSubscription,
+      purchaseVerificationError: const ApiException(
+        type: ApiErrorType.network,
+        statusCode: 400,
+        message: 'Google Play reports that this subscription is not active.',
+      ),
+    );
+    final bloc = _createBloc(service, repository);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    final ready = bloc.stream.firstWhere(
+      (state) => state.status == SubscriptionStatus.ready,
+    );
+    bloc.add(const SubscriptionStarted());
+    await ready;
+
+    final settled = bloc.stream.firstWhere(
+      (state) =>
+          state.actionMessage ==
+              'Google Play reports that this subscription is not active.' &&
+          !state.purchaseNeedsVerification,
+    );
+    service.emitPurchases([
+      _purchase(
+        status: PurchaseStatus.purchased,
+        source: 'GooglePlay',
+        productId: 'adaptalyfe_basic_monthly',
+        token: 'expired-google-token',
+      ),
+    ]);
+    final state = await settled.timeout(const Duration(seconds: 2));
+
+    expect(state.subscription?.grantsAccess, isFalse);
+    expect(state.purchasePending, isFalse);
+    expect(state.canPurchase, isTrue);
+  });
+
+  test('an unclassified verification failure keeps purchase actions blocked',
+      () async {
+    final service = _FakePurchaseService();
+    final bloc = _createBloc(
+      service,
+      _FakeSubscriptionRepository(),
+    );
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
+
+    final ready = bloc.stream.firstWhere(
+      (state) => state.status == SubscriptionStatus.ready,
+    );
+    bloc.add(const SubscriptionStarted());
+    await ready;
+
+    final verificationFailed = bloc.stream.firstWhere(
+      (state) =>
+          state.status == SubscriptionStatus.failure &&
+          state.purchaseNeedsVerification,
+    );
+    service.emitPurchases([
+      _purchase(
+        status: PurchaseStatus.purchased,
+        source: 'GooglePlay',
+        productId: 'adaptalyfe_basic_monthly',
+        token: 'unverified-google-token',
+      ),
+    ]);
+    final state = await verificationFailed.timeout(const Duration(seconds: 2));
+
+    expect(state.hasActiveSubscription, isFalse);
+    expect(state.purchaseNeedsVerification, isTrue);
+    expect(state.canPurchase, isFalse);
+  });
+
   testWidgets('shows the account error without hiding plan cards',
       (tester) async {
     final service = _FakePurchaseService();
@@ -141,7 +356,10 @@ void main() {
       service,
       _FakeSubscriptionRepository(failSubscriptionLoad: true),
     );
-    addTearDown(bloc.close);
+    addTearDown(() async {
+      await bloc.close();
+      await service.closeStream();
+    });
 
     await tester.pumpWidget(_subscriptionApp(bloc));
     await tester.pump();
@@ -166,9 +384,14 @@ void main() {
 
 SubscriptionBloc _createBloc(
   _FakePurchaseService service,
-  _FakeSubscriptionRepository repository,
-) {
-  return SubscriptionBloc(repository, service);
+  _FakeSubscriptionRepository repository, {
+  Duration restoreTimeout = const Duration(seconds: 10),
+}) {
+  return SubscriptionBloc(
+    repository,
+    service,
+    restoreTimeout: restoreTimeout,
+  );
 }
 
 Widget _subscriptionApp(SubscriptionBloc bloc) {
@@ -189,14 +412,40 @@ const _accountTrial = SubscriptionModel(
   trialDaysLeft: 4,
 );
 
+final _activeGooglePremium = SubscriptionModel(
+  id: 2,
+  planType: 'premium',
+  status: 'active',
+  billingCycle: 'monthly',
+  subscriptionPlatform: 'google_play',
+  currentPeriodEnd: DateTime.now().add(const Duration(days: 30)),
+);
+
+final _expiredGoogleSubscription = SubscriptionModel(
+  id: 3,
+  planType: 'basic',
+  status: 'expired',
+  billingCycle: 'monthly',
+  subscriptionPlatform: 'google_play',
+  currentPeriodEnd: DateTime.utc(2020),
+);
+
 class _FakeSubscriptionRepository extends SubscriptionRepository {
   _FakeSubscriptionRepository({
     this.subscriptionLoader,
     this.failSubscriptionLoad = false,
+    this.purchaseVerification,
+    this.purchaseVerificationError,
+    this.googleRestoreVerification,
   }) : super(SubscriptionApi(ApiClient()));
 
   final Future<SubscriptionModel> Function()? subscriptionLoader;
   final bool failSubscriptionLoad;
+  final PurchaseVerification? purchaseVerification;
+  final ApiException? purchaseVerificationError;
+  final PurchaseVerification? googleRestoreVerification;
+  int verifiedPurchaseCalls = 0;
+  int googleRestoreCalls = 0;
 
   @override
   Future<SubscriptionModel> getSubscription() async {
@@ -213,10 +462,27 @@ class _FakeSubscriptionRepository extends SubscriptionRepository {
 
   @override
   Future<PurchaseVerification> verifyPurchase(PurchaseDetails purchase) async {
-    return const PurchaseVerification(
-      success: false,
-      message: 'Verification is not used by this screen test.',
-    );
+    verifiedPurchaseCalls++;
+    if (purchaseVerificationError != null) {
+      throw purchaseVerificationError!;
+    }
+    return purchaseVerification ??
+        const PurchaseVerification(
+          success: false,
+          message: 'Verification is not used by this screen test.',
+        );
+  }
+
+  @override
+  Future<PurchaseVerification> restoreGooglePurchases(
+    List<PurchaseDetails> purchases,
+  ) async {
+    googleRestoreCalls++;
+    return googleRestoreVerification ??
+        const PurchaseVerification(
+          success: false,
+          message: 'No purchase to restore.',
+        );
   }
 }
 
@@ -224,12 +490,15 @@ class _FakePurchaseService extends PurchaseService {
   _FakePurchaseService() : super();
 
   final List<String> purchasedProductIds = [];
+  final StreamController<List<PurchaseDetails>> _purchaseController =
+      StreamController<List<PurchaseDetails>>.broadcast();
   int restoreRequests = 0;
   int catalogQueries = 0;
+  List<PurchaseDetails> restoredPurchases = const [];
 
   @override
   Stream<List<PurchaseDetails>> get purchaseStream =>
-      Stream<List<PurchaseDetails>>.empty();
+      _purchaseController.stream;
 
   @override
   Future<bool> isAvailable() async => true;
@@ -239,7 +508,8 @@ class _FakePurchaseService extends PurchaseService {
     catalogQueries++;
     return StoreProductCatalog(
       products: {
-        'adaptalyfe_basic_monthly': _product('adaptalyfe_basic_monthly', '\$4.99'),
+        'adaptalyfe_basic_monthly':
+            _product('adaptalyfe_basic_monthly', '\$4.99'),
         'adaptalyfe_premium_monthly':
             _product('adaptalyfe_premium_monthly', '\$12.99'),
         'adaptalyfe_family_monthly':
@@ -258,7 +528,38 @@ class _FakePurchaseService extends PurchaseService {
   @override
   Future<void> restorePurchases() async {
     restoreRequests++;
+    if (restoredPurchases.isNotEmpty) {
+      _purchaseController.add(restoredPurchases);
+    }
   }
+
+  @override
+  Future<void> completePurchase(PurchaseDetails purchase) async {}
+
+  void emitPurchases(List<PurchaseDetails> purchases) {
+    _purchaseController.add(purchases);
+  }
+
+  Future<void> closeStream() => _purchaseController.close();
+}
+
+PurchaseDetails _purchase({
+  required PurchaseStatus status,
+  required String source,
+  required String productId,
+  required String token,
+}) {
+  return PurchaseDetails(
+    purchaseID: 'store-order-123',
+    productID: productId,
+    verificationData: PurchaseVerificationData(
+      localVerificationData: token,
+      serverVerificationData: token,
+      source: source,
+    ),
+    transactionDate: DateTime.now().millisecondsSinceEpoch.toString(),
+    status: status,
+  );
 }
 
 ProductDetails _product(String id, String price) {

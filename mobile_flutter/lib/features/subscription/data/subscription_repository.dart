@@ -60,6 +60,40 @@ class SubscriptionRepository {
     }
   }
 
+  Future<PurchaseVerification> restoreGooglePurchases(
+    List<PurchaseDetails> purchases,
+  ) async {
+    final googlePurchases = <Map<String, dynamic>>[];
+    for (final purchase in purchases) {
+      final store = subscriptionStoreFromSource(
+            purchase.verificationData.source,
+          ) ??
+          _defaultStore();
+      final token = purchase.verificationData.serverVerificationData.trim();
+      if (store != SubscriptionStore.googlePlay ||
+          !subscriptionProductIds.contains(purchase.productID) ||
+          token.isEmpty) {
+        continue;
+      }
+
+      googlePurchases.add({
+        'purchaseToken': token,
+        'productId': purchase.productID,
+        if (purchase.purchaseID?.trim().isNotEmpty == true)
+          'orderId': purchase.purchaseID!.trim(),
+      });
+    }
+
+    if (googlePurchases.isEmpty) {
+      return const PurchaseVerification(
+        success: false,
+        status: 'missing_purchase_data',
+        message: 'No previous Google Play subscription was found.',
+      );
+    }
+    return api.restoreGooglePurchases(purchases: googlePurchases);
+  }
+
   static SubscriptionStore? _defaultStore() {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
