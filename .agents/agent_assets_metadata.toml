@@ -3137,3 +3137,17 @@ mtime_ms = 1791184093271
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c7fe3546-fa9f-4024-aab6-d4a549d2f236/adbac0a0-b594-4334-bf3e-ea5160f931c7"
 storage_version_token = "1791184101723581"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "S0ysdI95Mbqsl_Zj7xDOf"
+uri = "file://mobile_flutter_subscription_complete_bundle.zip"
+type = "unspecified"
+title = "Complete Flutter subscription sync bundle"
+description = "Verified archive of the current subscription module, its tests, app route integration, and pubspec. Includes companion event/state/service/repository definitions omitted from the earlier ZIP."
+logical_id = "a4d7a227-bfda-46ce-a0db-9edaa2a46131"
+content_hash = "sha256:35a6a8c65d83a48e655ff4ee707ad5c4ac50744a368e5ce5efa5512c736bf476"
+size = 29967
+mtime_ms = 1791186118231
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a4d7a227-bfda-46ce-a0db-9edaa2a46131/4cf5b068-4215-4c65-84ed-7f1abbd1d731"
+storage_version_token = "1791186126475815"
+content_type = "application/octet-stream"
