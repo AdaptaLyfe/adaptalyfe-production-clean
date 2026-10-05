@@ -3123,3 +3123,17 @@ mtime_ms = 1791156730198
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/a4726a18-3e66-4e32-81b4-c0b64c6f1be6/2ff572c0-d94c-4872-8207-23b4282361c8"
 storage_version_token = "1791156745176586"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "bIWEmfJ31CwH2_wbfV_I3"
+uri = "file://mobile_flutter_subscription_changed_files.zip"
+type = "unspecified"
+title = "Changed Flutter files (ZIP)"
+description = "The verified ZIP contains only the six changed Flutter source and test files."
+logical_id = "c7fe3546-fa9f-4024-aab6-d4a549d2f236"
+content_hash = "sha256:fcf1289f941d9d0b3f3aa24a4e2e09fd6e95015e8f704426fb6b40c552544806"
+size = 17434
+mtime_ms = 1791182503567
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/c7fe3546-fa9f-4024-aab6-d4a549d2f236/9b57c274-179f-472b-96e6-29a307b5b131"
+storage_version_token = "1791182589981778"
+content_type = "application/octet-stream"
