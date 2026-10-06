@@ -1,0 +1,143 @@
+I need you to audit and fix AdaptAI's OpenAI data retention and sensitive-data logging for production, because this is a healthcare application and our attorney is reviewing privacy/data retention.
+
+IMPORTANT: Do not make changes immediately. First inspect the code and give me a detailed report of what you found, including exact file names and relevant code sections. Then propose the changes. I will approve the changes before you modify anything.
+
+Please investigate ALL of the following:
+
+1. FIND THE OPENAI INTEGRATION
+Search the entire project for:
+- openai
+- responses.create
+- chat.completions.create
+- OPENAI_API_KEY
+- OpenAI client initialization
+- /api/chat
+- AdaptAI
+
+Identify exactly which OpenAI API endpoint AdaptAI uses:
+- Responses API
+- Chat Completions API
+- another OpenAI endpoint
+
+Show me the exact file and function responsible for sending AdaptAI user messages/data to OpenAI.
+
+2. CHECK RESPONSE STORAGE
+Determine whether the OpenAI request currently uses:
+- store: true
+- store: false
+- no store parameter
+
+If the application uses the Responses API, verify whether store:false can and should be explicitly added to production requests.
+
+If it uses Chat Completions, verify the applicable storage/logging behavior and whether store:false should be explicitly specified.
+
+DO NOT assume. Base the answer on the actual code.
+
+3. CHECK WHAT DATA IS SENT TO OPENAI
+Identify exactly what AdaptAI sends to OpenAI.
+
+Specifically check whether the request can contain:
+- symptoms
+- medications
+- diagnoses
+- health information
+- mood information
+- sleep information
+- appointments
+- goals
+- caregiver notes
+- emergency information
+- any other sensitive/PHI-like information
+
+Do NOT print actual user health data or secrets in the report. Describe the fields/types of information instead.
+
+4. AUDIT OUR OWN SERVER LOGGING
+Search for:
+- console.log
+- console.error
+- logger
+- request logging middleware
+- response logging middleware
+- JSON response logging
+- req.body logging
+- response body logging
+
+Pay particular attention to:
+- server/index.ts
+- server/production.ts
+- server/routes.ts
+- /api/chat
+- symptom create/update routes
+- any AdaptAI-related routes
+
+Determine whether server logs can contain:
+- AI response text
+- user prompts
+- symptoms
+- health information
+- request bodies
+- database records containing health information
+
+Identify every location where this can happen.
+
+5. RESPONSE-LOGGING MIDDLEWARE
+We previously identified that production/development server middleware may intercept JSON API responses and log them.
+
+Verify whether /api/chat's response containing the AI answer in a "message" field can currently be written to server logs.
+
+If yes, recommend changing the middleware so sensitive routes such as /api/chat do NOT log response bodies.
+
+6. SENSITIVE HEALTH-DATA LOGGING
+Check symptom create/update endpoints and any other health-related endpoints for code that logs request bodies, saved database records, or response objects.
+
+Recommend removing sensitive payload logging while keeping safe operational logs such as:
+"AdaptAI request completed"
+"Symptom record updated"
+without including the actual health data.
+
+7. PRIVACY POLICY CONSISTENCY
+Based ONLY on the actual code, tell me whether the current implementation supports saying:
+
+"Adaptalyfe does not save AdaptAI conversations."
+
+If that statement is not completely accurate because OpenAI or server logs may retain data, explain exactly what wording should be used instead.
+
+Do not rewrite the entire privacy policy yet. Just provide recommended wording for the AI/data-retention section.
+
+8. OPENAI DATA RETENTION
+Explain what our application controls versus what OpenAI controls.
+
+Specifically distinguish:
+A. Adaptalyfe database storage
+B. Adaptalyfe/Replit server logs
+C. OpenAI response/application storage
+D. OpenAI abuse-monitoring logs
+
+Do not claim that OpenAI has Zero Data Retention unless the code/configuration actually proves that.
+
+9. SECURITY
+Do NOT expose or print:
+- OPENAI_API_KEY
+- API keys
+- tokens
+- passwords
+- secrets
+- real user health information
+
+Mask any secrets if encountered.
+
+10. FINAL REPORT
+Before making any changes, give me:
+
+A. OpenAI endpoint currently used
+B. Exact file/function where OpenAI is called
+C. Whether store:false is currently used
+D. What categories of data are sent to OpenAI
+E. Every location where sensitive data can enter server logs
+F. Whether /api/chat response text can enter logs
+G. Whether symptom/health data can enter logs
+H. Recommended code changes
+I. Recommended privacy-policy wording
+J. Any OpenAI configuration/settings that we still need to verify manually
+
+Do not modify production behavior yet. First provide the audit report and wait for my approval.
