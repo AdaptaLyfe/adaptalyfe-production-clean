@@ -4447,23 +4447,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/symptom-entries", requireAuth, async (req: any, res) => {
     try {
-      console.log("Creating symptom entry for user:", req.user.id);
-      console.log("Request body:", req.body);
-      
       const entryData = { 
         ...req.body, 
         userId: req.user.id,
         startTime: new Date(req.body.startTime),
         endTime: req.body.endTime ? new Date(req.body.endTime) : null
       };
-      
-      console.log("Entry data to save:", entryData);
-      
+
       const entry = await storage.createSymptomEntry(entryData);
-      console.log("Created symptom entry:", entry);
       res.status(201).json(entry);
-    } catch (error) {
-      console.error("Error creating symptom entry:", error);
+    } catch {
+      console.error("Failed to create symptom entry");
       res.status(500).json({ message: "Failed to create symptom entry" });
     }
   });
@@ -4471,27 +4465,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/symptom-entries/:id", requireAuth, async (req: any, res) => {
     try {
       const entryId = parseInt(req.params.id);
-      console.log("PATCH symptom - Original body:", JSON.stringify(req.body, null, 2));
-      
       const updates = { ...req.body };
       
       // Convert date strings to Date objects
       if (updates.startTime && typeof updates.startTime === 'string') {
         updates.startTime = new Date(updates.startTime);
-        console.log("Converted startTime to Date:", updates.startTime);
       }
       if (updates.endTime && typeof updates.endTime === 'string') {
         updates.endTime = new Date(updates.endTime);
-        console.log("Converted endTime to Date:", updates.endTime);
       }
       
       // Remove createdAt if it exists (it's auto-generated)
       delete updates.createdAt;
       delete updates.id;
       delete updates.userId;
-      
-      console.log("PATCH symptom - Final updates:", JSON.stringify(updates, null, 2));
-      
+
       const updated = await storage.updateSymptomEntry(entryId, updates);
       
       if (!updated) {
@@ -4499,8 +4487,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(updated);
-    } catch (error) {
-      console.error("Error updating symptom entry:", error);
+    } catch {
+      console.error("Failed to update symptom entry");
       res.status(500).json({ message: "Failed to update symptom entry" });
     }
   });
