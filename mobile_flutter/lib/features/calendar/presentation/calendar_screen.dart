@@ -7,6 +7,7 @@ import '../../../core/utils/display_labels.dart' as display_labels;
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import '../../daily_tasks/utils/daily_task_schedule.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../bloc/calendar_bloc.dart';
 import '../bloc/calendar_event.dart';
 import '../bloc/calendar_state.dart';
@@ -441,14 +442,16 @@ class _MiniCalendarItem extends StatelessWidget {
           left: BorderSide(color: item.accentColor, width: 2),
         ),
       ),
-      child: Text(
-        item.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 9,
-          color: item.textColor,
-          fontWeight: FontWeight.w600,
+      child: PrivacySensitive(
+        child: Text(
+          item.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 9,
+            color: item.textColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -818,30 +821,36 @@ class _CalendarItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                PrivacySensitive(
+                  child: Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 if (item.timeLabel != null)
-                  Text(
-                    item.timeLabel!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: item.textColor,
-                      fontWeight: FontWeight.w600,
+                  PrivacySensitive(
+                    child: Text(
+                      item.timeLabel!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: item.textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 if (item.location != null)
-                  Text(
-                    item.location!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF4B5563),
+                  PrivacySensitive(
+                    child: Text(
+                      item.location!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF4B5563),
+                      ),
                     ),
                   ),
                 Text(
@@ -1029,11 +1038,13 @@ class _AppointmentCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          appointment.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
+                        child: PrivacySensitive(
+                          child: Text(
+                            appointment.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -1041,31 +1052,41 @@ class _AppointmentCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${_relativeDay(appointment.appointmentDate)} • '
-                    '${_formatMonthDay(appointment.appointmentDate)}',
-                    style: const TextStyle(color: Color(0xFF4B5563)),
-                  ),
-                  Text(
-                    _formatTime(context, appointment.appointmentDate),
-                    style: const TextStyle(color: Color(0xFF4B5563)),
-                  ),
-                  if (_hasText(appointment.provider))
-                    Text(
-                      _capitalize(appointment.provider!),
+                  PrivacySensitive(
+                    child: Text(
+                      '${_relativeDay(appointment.appointmentDate)} • '
+                      '${_formatMonthDay(appointment.appointmentDate)}',
                       style: const TextStyle(color: Color(0xFF4B5563)),
                     ),
-                  if (_hasText(appointment.location))
-                    Text(
-                      appointment.location!,
+                  ),
+                  PrivacySensitive(
+                    child: Text(
+                      _formatTime(context, appointment.appointmentDate),
                       style: const TextStyle(color: Color(0xFF4B5563)),
+                    ),
+                  ),
+                  if (_hasText(appointment.provider))
+                    PrivacySensitive(
+                      child: Text(
+                        _capitalize(appointment.provider!),
+                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      ),
+                    ),
+                  if (_hasText(appointment.location))
+                    PrivacySensitive(
+                      child: Text(
+                        appointment.location!,
+                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      ),
                     ),
                   if (_hasText(appointment.description))
                     Padding(
                       padding: const EdgeInsets.only(top: 5),
-                      child: Text(
-                        appointment.description!,
-                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      child: PrivacySensitive(
+                        child: Text(
+                          appointment.description!,
+                          style: const TextStyle(color: Color(0xFF4B5563)),
+                        ),
                       ),
                     ),
                 ],

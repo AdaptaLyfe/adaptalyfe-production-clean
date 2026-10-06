@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/platform/text_to_speech_service.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
@@ -759,7 +761,9 @@ class _ReactPrivacySecurityCard extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(top: 4, bottom: 10),
               child: Text(
-                'Privacy mode hides sensitive information in screenshots and when screen sharing.',
+                'Blurs marked personal, health, and financial details in the app '
+                'while enabled. This visual aid does not block screenshots or '
+                'change stored data or sharing permissions.',
                 style: TextStyle(color: Color(0xFF4B5563), fontSize: 12),
               ),
             ),
@@ -767,7 +771,7 @@ class _ReactPrivacySecurityCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => context.push('/resources'),
+              onPressed: () => _openPrivacyPolicy(context),
               icon: const Icon(Icons.shield_outlined, size: 17),
               label: const Text('View Privacy Policy'),
             ),
@@ -1397,7 +1401,7 @@ class _OtherPreferencesCard extends StatelessWidget {
           ),
           _SettingSwitch(
             label: 'Privacy mode',
-            description: 'Use the privacy preference already supported by the web settings.',
+            description: 'Blur marked private details while using the app.',
             value: local.privacyMode,
             onChanged: (value) => _updateLocal(context, 'privacyMode', value),
           ),
@@ -2188,6 +2192,35 @@ void _updateLocal(BuildContext context, String key, bool value) {
   context.read<SettingsBloc>().add(
         UpdateLocalSetting(key: key, value: value),
       );
+}
+
+Future<void> _openPrivacyPolicy(BuildContext context) async {
+  final baseUri = Uri.tryParse(AppConstants.apiBaseUrl);
+  if (baseUri == null || !baseUri.hasScheme || !baseUri.hasAuthority) {
+    _showPrivacyPolicyError(context);
+    return;
+  }
+
+  final policyUri = baseUri.resolve('/privacy-policy');
+  try {
+    final opened = await launchUrl(
+      policyUri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (opened || !context.mounted) return;
+  } catch (_) {
+    if (!context.mounted) return;
+  }
+
+  _showPrivacyPolicyError(context);
+}
+
+void _showPrivacyPolicyError(BuildContext context) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(content: Text('Unable to open the Privacy Policy link.')),
+    );
 }
 
 bool _isLocalSettingLocked(SettingsState state, String key) {

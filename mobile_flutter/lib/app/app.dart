@@ -14,6 +14,7 @@ import '../features/auth/bloc/auth_state.dart';
 import '../features/settings/bloc/settings_bloc.dart';
 import '../features/settings/bloc/settings_event.dart';
 import '../features/settings/bloc/settings_state.dart';
+import '../features/settings/presentation/privacy_sensitive.dart';
 import 'routes.dart';
 
 class AdaptalyfeApp extends StatefulWidget {
@@ -229,6 +230,9 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
                   final platformTextScale = media.textScaler.scale(16) / 16;
                   final preferenceTextScale =
                       AppTheme.textScaleForPreference(appearance['fontSize']);
+                  final privacyMode = authState is Authenticated &&
+                      (!settingsBelongToCurrentUser ||
+                          settingsState.localSettings.privacyMode);
                   return MediaQuery(
                     data: media.copyWith(
                       textScaler: TextScaler.linear(
@@ -237,7 +241,10 @@ class _AdaptalyfeAppState extends State<AdaptalyfeApp>
                       disableAnimations: media.disableAnimations ||
                           appearance['reducedMotion'] == true,
                     ),
-                    child: child ?? const SizedBox.shrink(),
+                    child: PrivacyModeScope(
+                      enabled: privacyMode,
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   );
                 },
               );

@@ -6,6 +6,7 @@ import '../../../core/utils/display_labels.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../bloc/daily_tasks_bloc.dart';
 import '../bloc/daily_tasks_event.dart';
 import '../bloc/daily_tasks_state.dart';
@@ -615,24 +616,28 @@ class _TaskTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  task.title,
-                  style: TextStyle(
-                    color: const Color(0xFF111827),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
+                PrivacySensitive(
+                  child: Text(
+                    task.title,
+                    style: TextStyle(
+                      color: const Color(0xFF111827),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      decoration: task.isCompleted
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
                   ),
                 ),
                 if (task.description.trim().isNotEmpty) ...[
                   const SizedBox(height: 3),
-                  Text(
-                    task.description,
-                    style: const TextStyle(
-                      color: Color(0xFF4B5563),
-                      fontSize: 13,
+                  PrivacySensitive(
+                    child: Text(
+                      task.description,
+                      style: const TextStyle(
+                        color: Color(0xFF4B5563),
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],
@@ -726,7 +731,9 @@ class _TaskTile extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete task?'),
-        content: Text('Are you sure you want to delete "${task.title}"?'),
+        content: PrivacySensitive(
+          child: Text('Are you sure you want to delete "${task.title}"?'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),

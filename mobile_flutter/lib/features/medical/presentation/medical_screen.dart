@@ -8,6 +8,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../../subscription/presentation/premium_feature_gate.dart';
 import '../bloc/medical_bloc.dart';
 import '../bloc/medical_event.dart';
@@ -1022,18 +1023,22 @@ class _SymptomCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    entry.symptomName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                  child: PrivacySensitive(
+                    child: Text(
+                      entry.symptomName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-                _StatusBadge(
-                  data: _BadgeData(
-                    'Level ${entry.severity}',
-                    _symptomSeverityColor(entry.severity),
+                PrivacySensitive(
+                  child: _StatusBadge(
+                    data: _BadgeData(
+                      'Level ${entry.severity}',
+                      _symptomSeverityColor(entry.severity),
+                    ),
                   ),
                 ),
                 PopupMenuButton<String>(
@@ -1049,31 +1054,42 @@ class _SymptomCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              _formatDateTime(entry.startTime),
-              style: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+            PrivacySensitive(
+              child: Text(
+                _formatDateTime(entry.startTime),
+                style: const TextStyle(color: Color(0xFF4B5563), fontSize: 13),
+              ),
             ),
             if (entry.endTime != null)
-              Text(
-                'Ended: ${_formatDateTime(entry.endTime!)}',
-                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              PrivacySensitive(
+                child: Text(
+                  'Ended: ${_formatDateTime(entry.endTime!)}',
+                  style:
+                      const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                ),
               ),
             if (_hasText(entry.location))
-              Text(
-                'Location: ${entry.location}',
-                style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              PrivacySensitive(
+                child: Text(
+                  'Location: ${entry.location}',
+                  style:
+                      const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                ),
               ),
             if (_hasText(entry.description) ||
                 _hasText(entry.triggers) ||
                 _hasText(entry.notes)) ...[
               const Divider(height: 20),
-              if (_hasText(entry.description)) Text(entry.description!),
+              if (_hasText(entry.description))
+                PrivacySensitive(child: Text(entry.description!)),
               if (_hasText(entry.triggers))
-                Text('Triggers: ${entry.triggers!}'),
+                PrivacySensitive(child: Text('Triggers: ${entry.triggers!}')),
               if (_hasText(entry.notes))
-                Text(
-                  entry.notes!,
-                  style: const TextStyle(color: Color(0xFF6B7280)),
+                PrivacySensitive(
+                  child: Text(
+                    entry.notes!,
+                    style: const TextStyle(color: Color(0xFF6B7280)),
+                  ),
                 ),
             ],
           ],
@@ -1124,13 +1140,15 @@ class _MedicalCard extends StatelessWidget {
                     runSpacing: 5,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                      PrivacySensitive(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                       if (badge != null) _StatusBadge(data: badge!),
@@ -1139,11 +1157,13 @@ class _MedicalCard extends StatelessWidget {
                   ...details.map(
                     (detail) => Padding(
                       padding: const EdgeInsets.only(top: 5),
-                      child: Text(
-                        detail,
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 13,
+                      child: PrivacySensitive(
+                        child: Text(
+                          detail,
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ),
@@ -1210,21 +1230,25 @@ class _MedicationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    medication.medicationName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                  PrivacySensitive(
+                    child: Text(
+                      medication.medicationName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                   if (_hasText(medication.dosage))
-                    Text(
-                      medication.dosage!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFF6B7280)),
+                    PrivacySensitive(
+                      child: Text(
+                        medication.dosage!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Color(0xFF6B7280)),
+                      ),
                     ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -1467,7 +1491,7 @@ class _QuickDial extends StatelessWidget {
                     (contact) => OutlinedButton.icon(
                       onPressed: () => _showPhone(context, contact),
                       icon: const Icon(Icons.phone, size: 16),
-                      label: Text(contact.name),
+                      label: PrivacySensitive(child: Text(contact.name)),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFFB91C1C),
                         side: const BorderSide(color: Color(0xFFFCA5A5)),
@@ -3874,8 +3898,10 @@ Future<void> _showPhone(
   await _showMedicalDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: Text(contact.name),
-      content: Text('Phone: ${contact.phoneNumber}'),
+      title: PrivacySensitive(child: Text(contact.name)),
+      content: PrivacySensitive(
+        child: Text('Phone: ${contact.phoneNumber}'),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext),

@@ -26,6 +26,7 @@ import '../../mood/bloc/mood_state.dart';
 import '../../rewards/bloc/rewards_bloc.dart';
 import '../../rewards/bloc/rewards_state.dart';
 import '../../settings/models/settings_models.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
@@ -1084,16 +1085,20 @@ class _TodayAppointmentCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  appointment.title,
-                  style: const TextStyle(
-                    color: Color(0xFF1F2937),
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                child: PrivacySensitive(
+                  child: Text(
+                    appointment.title,
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-              _TodayPill(label: _timeLabel(appointment.appointmentDate)),
+              PrivacySensitive(
+                child: _TodayPill(label: _timeLabel(appointment.appointmentDate)),
+              ),
             ],
           ),
           const SizedBox(height: 5),
@@ -1127,9 +1132,11 @@ class _TodayAppointmentCard extends StatelessWidget {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 value: task.isCompleted,
-                title: Text(
-                  task.title,
-                  style: const TextStyle(fontSize: 13),
+                title: PrivacySensitive(
+                  child: Text(
+                    task.title,
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ),
                 subtitle: task.estimatedMinutes > 0
                     ? Text('${task.estimatedMinutes} min')

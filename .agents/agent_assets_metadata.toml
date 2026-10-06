@@ -3179,3 +3179,17 @@ mtime_ms = 1791200815642
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/b4d87f5a-78be-42d4-9898-8e8f0e4b43c0/cc8053f9-445a-43b6-bd80-2ba76d814dd3"
 storage_version_token = "1791200821737156"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "rDfykd5jMUO_0Lfj3_q6m"
+uri = "file://artifacts/flutter-privacy-policy-changes.zip"
+type = "unspecified"
+title = "Flutter Privacy & Policy Changes"
+description = "ZIP of the nine changed Flutter source files. It contains only the mobile Flutter changes for Privacy Mode and the Privacy Policy link."
+logical_id = "07c3c016-e812-462b-8380-74fd612556ea"
+content_hash = "sha256:0686713c4cde360535bba64046592a3dddeea1549c30f03eca4cb80b13c37255"
+size = 101600
+mtime_ms = 1791268770007
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/07c3c016-e812-462b-8380-74fd612556ea/0e16c213-7f21-49c8-8413-5681d6fd12fb"
+storage_version_token = "1791268776129221"
+content_type = "application/octet-stream"

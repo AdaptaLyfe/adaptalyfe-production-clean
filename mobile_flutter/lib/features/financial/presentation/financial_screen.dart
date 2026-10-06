@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/layout/responsive.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../bloc/financial_bloc.dart';
 import '../bloc/financial_event.dart';
 import '../bloc/financial_state.dart';
@@ -456,14 +457,16 @@ class _SummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                PrivacySensitive(
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -526,16 +529,23 @@ class _BudgetUsageCard extends StatelessWidget {
              alignment: WrapAlignment.spaceBetween,
              runSpacing: 4,
              children: [
-               Text('${_currency(state.totalExpenses)} spent'),
-               Text('${_currency(state.totalIncome)} budget'),
+               PrivacySensitive(
+                 child: Text('${_currency(state.totalExpenses)} spent'),
+               ),
+               PrivacySensitive(
+                 child: Text('${_currency(state.totalIncome)} budget'),
+               ),
              ],
            ),
           const SizedBox(height: 8),
           Center(
-            child: _Pill(
-              label:
-                  '${state.budgetUsed.round()}% Used • ${_currency(state.remaining)} Remaining',
-              color: color,
+            child: PrivacySensitive(
+              child: _Pill(
+                label:
+                    '${state.budgetUsed.round()}% Used • '
+                    '${_currency(state.remaining)} Remaining',
+                color: color,
+              ),
             ),
           ),
         ],
@@ -598,12 +608,14 @@ class _MiniTotal extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: Color(0xFF6B7280))),
           const SizedBox(height: 5),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+          PrivacySensitive(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
@@ -641,17 +653,21 @@ class _UpcomingBillsCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  bill.name,
-                  style: const TextStyle(
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.w700,
+                PrivacySensitive(
+                  child: Text(
+                    bill.name,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  '${_currency(bill.amount)} • ${_dueLabel(days)}',
-                  style: const TextStyle(color: Color(0xFF6B7280)),
+                PrivacySensitive(
+                  child: Text(
+                    '${_currency(bill.amount)} • ${_dueLabel(days)}',
+                    style: const TextStyle(color: Color(0xFF6B7280)),
+                  ),
                 ),
               ],
             ),
@@ -780,32 +796,38 @@ class _TransactionRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  entry.category,
-                  style: const TextStyle(
-                    color: Color(0xFF111827),
-                    fontWeight: FontWeight.w600,
+                PrivacySensitive(
+                  child: Text(
+                    entry.category,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                Text(
-                  entry.description?.isNotEmpty == true
-                      ? entry.description!
-                      : 'No description',
-                  style: const TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 12,
+                PrivacySensitive(
+                  child: Text(
+                    entry.description?.isNotEmpty == true
+                        ? entry.description!
+                        : 'No description',
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            '${isIncome ? '+' : '-'}${_currency(entry.amount)}',
-            style: TextStyle(
-              color: isIncome
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFFDC2626),
-              fontWeight: FontWeight.w700,
+          PrivacySensitive(
+            child: Text(
+              '${isIncome ? '+' : '-'}${_currency(entry.amount)}',
+              style: TextStyle(
+                color: isIncome
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFDC2626),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           IconButton(
@@ -865,18 +887,22 @@ class _BillCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        bill.name,
-                        style: const TextStyle(
-                          color: Color(0xFF111827),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      PrivacySensitive(
+                        child: Text(
+                          bill.name,
+                          style: const TextStyle(
+                            color: Color(0xFF111827),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Text(
-                        bill.category,
-                        style: const TextStyle(color: Color(0xFF6B7280)),
+                      PrivacySensitive(
+                        child: Text(
+                          bill.category,
+                          style: const TextStyle(color: Color(0xFF6B7280)),
+                        ),
                       ),
                     ],
                   ),
@@ -884,12 +910,14 @@ class _BillCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      _currency(bill.amount),
-                      style: const TextStyle(
-                        color: Color(0xFF111827),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    PrivacySensitive(
+                      child: Text(
+                        _currency(bill.amount),
+                        style: const TextStyle(
+                          color: Color(0xFF111827),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -976,23 +1004,29 @@ class _BudgetEntryCard extends StatelessWidget {
                 : const Color(0xFFDC2626),
           ),
         ),
-        title: Text(
-          entry.category,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+        title: PrivacySensitive(
+          child: Text(
+            entry.category,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
-        subtitle: Text(entry.description?.isNotEmpty == true
-            ? entry.description!
-            : 'No description'),
+        subtitle: PrivacySensitive(
+          child: Text(entry.description?.isNotEmpty == true
+              ? entry.description!
+              : 'No description'),
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${isIncome ? '+' : '-'}${_currency(entry.amount)}',
-              style: TextStyle(
-                color: isIncome
-                    ? const Color(0xFF16A34A)
-                    : const Color(0xFFDC2626),
-                fontWeight: FontWeight.w700,
+            PrivacySensitive(
+              child: Text(
+                '${isIncome ? '+' : '-'}${_currency(entry.amount)}',
+                style: TextStyle(
+                  color: isIncome
+                      ? const Color(0xFF16A34A)
+                      : const Color(0xFFDC2626),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             IconButton(
@@ -1536,8 +1570,10 @@ Future<void> _confirmDeleteEntry(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: const Text('Delete this record?'),
-      content: Text(
-        'Delete the ${entry.type} record for ${entry.category}?',
+      content: PrivacySensitive(
+        child: Text(
+          'Delete the ${entry.type} record for ${entry.category}?',
+        ),
       ),
       actions: [
         TextButton(

@@ -18,6 +18,7 @@ import '../../mood/models/mood_entry_model.dart';
 import '../../mood/bloc/mood_state.dart';
 import '../../settings/bloc/settings_bloc.dart';
 import '../../settings/bloc/settings_state.dart';
+import '../../settings/presentation/privacy_sensitive.dart';
 import '../../subscription/bloc/subscription_bloc.dart';
 import '../../subscription/bloc/subscription_state.dart';
 import '../bloc/home_state.dart';
@@ -591,6 +592,9 @@ class HomeTodayFlow extends StatelessWidget {
             final nextAppointment =
                 todayAppointments.isEmpty ? null : todayAppointments.first;
             final nextEvent = todayEvents.isEmpty ? null : todayEvents.first;
+            final greetingName = user.name?.trim().isNotEmpty == true
+                ? user.name!.trim()
+                : user.username;
             final hasSchedule =
                 nextTask != null || nextAppointment != null || nextEvent != null;
             final title =
@@ -633,12 +637,14 @@ class HomeTodayFlow extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    "Let's look at today, ${user.name?.trim().isNotEmpty == true ? user.name!.trim() : user.username}",
-                    style: const TextStyle(
-                      color: Color(0xFF0F172A),
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                  PrivacySensitive(
+                    child: Text(
+                      "Let's look at today, $greetingName",
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -797,13 +803,15 @@ class _GuideGroup extends StatelessWidget {
                 ...tasks.map(
                   (task) => Padding(
                     padding: const EdgeInsets.only(top: 3),
-                    child: Text(
-                      task.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF334155),
-                        fontSize: 13,
+                    child: PrivacySensitive(
+                      child: Text(
+                        task.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF334155),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
@@ -1357,26 +1365,30 @@ class _TaskRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  task.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF1F2937),
-                    fontWeight: FontWeight.w600,
-                  ).copyWith(
-                    decoration:
-                        completed ? TextDecoration.lineThrough : null,
+                PrivacySensitive(
+                  child: Text(
+                    task.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF1F2937),
+                      fontWeight: FontWeight.w600,
+                    ).copyWith(
+                      decoration:
+                          completed ? TextDecoration.lineThrough : null,
+                    ),
                   ),
                 ),
                 if (task.description.isNotEmpty)
-                  Text(
-                    task.description,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 12,
+                  PrivacySensitive(
+                    child: Text(
+                      task.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 12,
+                      ),
                     ),
                   ),
               ],
