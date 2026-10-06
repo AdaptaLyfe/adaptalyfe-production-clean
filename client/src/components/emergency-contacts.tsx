@@ -593,18 +593,20 @@ export default function EmergencyContacts() {
                     {getRelationshipIcon(contact.relationship)}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold">{contact.name}</h3>
+                         <h3 className="font-semibold privacy-sensitive">{contact.name}</h3>
                         {contact.isPrimary && <Badge variant="secondary">Primary</Badge>}
                         {contact.isEmergencyContact && <Badge variant="destructive">Emergency</Badge>}
                       </div>
                       <p className="text-sm text-gray-600 truncate">
-                        {contact.relationship} • {contact.phoneNumber}
+                         <span className="privacy-sensitive">{contact.relationship}</span>
+                         <span> • </span>
+                         <span className="privacy-sensitive">{contact.phoneNumber}</span>
                       </p>
                       {contact.email && (
-                        <p className="text-sm text-gray-500 truncate">{contact.email}</p>
+                        <p className="text-sm text-gray-500 truncate privacy-sensitive">{contact.email}</p>
                       )}
                       {contact.notes && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{contact.notes}</p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 privacy-sensitive">{contact.notes}</p>
                       )}
                     </div>
                   </div>

@@ -76,7 +76,8 @@ export default function FinancialModule() {
             ></div>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            {formatCurrency(totalExpenses)} of {formatCurrency(totalIncome)} used this month
+            <span className="privacy-sensitive">{formatCurrency(totalExpenses)}</span> of{" "}
+            <span className="privacy-sensitive">{formatCurrency(totalIncome)}</span> used this month
           </p>
         </div>
         
@@ -89,7 +90,8 @@ export default function FinancialModule() {
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900">Upcoming Bills</h4>
                 <p className="text-sm text-gray-600">
-                  {upcomingBills[0].name} due in {getDaysUntilDue(upcomingBills[0].dueDate)} days - {formatCurrency(upcomingBills[0].amount)}
+                  <span className="privacy-sensitive">{upcomingBills[0].name}</span> due in {getDaysUntilDue(upcomingBills[0].dueDate)} days -{" "}
+                  <span className="privacy-sensitive">{formatCurrency(upcomingBills[0].amount)}</span>
                 </p>
               </div>
               <Link href="/financial">

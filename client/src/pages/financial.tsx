@@ -493,7 +493,7 @@ export default function Financial() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Income</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalIncome)}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white privacy-sensitive">{formatCurrency(totalIncome)}</p>
                 </div>
               </div>
             </CardContent>
@@ -507,7 +507,7 @@ export default function Financial() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Total Expenses</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totalExpenses)}</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white privacy-sensitive">{formatCurrency(totalExpenses)}</p>
                 </div>
               </div>
             </CardContent>
@@ -697,10 +697,10 @@ export default function Financial() {
                     </div>
                     <div className="flex justify-between items-center mt-3">
                       <p className="text-sm text-gray-600">
-                        <span className="font-semibold text-red-600">{formatCurrency(totalExpenses)}</span> spent
+                        <span className="font-semibold text-red-600 privacy-sensitive">{formatCurrency(totalExpenses)}</span> spent
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-semibold text-green-600">{formatCurrency(totalIncome)}</span> budget
+                        <span className="font-semibold text-green-600 privacy-sensitive">{formatCurrency(totalIncome)}</span> budget
                       </p>
                     </div>
                     <div className="text-center mt-2">
@@ -709,7 +709,7 @@ export default function Financial() {
                         budgetUsed < 100 ? "bg-yellow-100 text-yellow-800" : 
                         "bg-red-100 text-red-800"
                       }`}>
-                        {Math.round(budgetUsed)}% Used • {formatCurrency(totalIncome - totalExpenses)} Remaining
+                        {Math.round(budgetUsed)}% Used • <span className="privacy-sensitive">{formatCurrency(totalIncome - totalExpenses)}</span> Remaining
                       </span>
                     </div>
                   </div>
@@ -726,15 +726,15 @@ export default function Financial() {
                                 entry.type === 'income' ? 'bg-green-500' : 'bg-red-500'
                               }`}></div>
                               <div>
-                                <p className="font-medium text-gray-900">{entry.category}</p>
-                                <p className="text-sm text-gray-600">{entry.description || 'No description'}</p>
+                                <p className="font-medium text-gray-900 privacy-sensitive">{entry.category}</p>
+                                <p className="text-sm text-gray-600 privacy-sensitive">{entry.description || 'No description'}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
                               <span className={`font-semibold ${
                                 entry.type === 'income' ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount)}
+                                <span className="privacy-sensitive">{entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount)}</span>
                               </span>
                               <Button
                                 variant="ghost"
@@ -777,7 +777,7 @@ export default function Financial() {
                           {Object.entries(categoryTotals).map(([category, amount]) => (
                             <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                               <span className="font-medium text-gray-900">{category}</span>
-                              <span className="font-semibold text-red-600">{formatCurrency(amount)}</span>
+                              <span className="font-semibold text-red-600 privacy-sensitive">{formatCurrency(amount)}</span>
                             </div>
                           ))}
                         </div>
@@ -929,11 +929,11 @@ export default function Financial() {
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between mb-2">
                                 <div>
-                                  <h3 className="font-semibold">{bill.name}</h3>
+                                  <h3 className="font-semibold privacy-sensitive">{bill.name}</h3>
                                   <p className="text-sm text-gray-600">{bill.category}</p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="font-bold">{formatCurrency(bill.amount)}</p>
+                                  <p className="font-bold privacy-sensitive">{formatCurrency(bill.amount)}</p>
                                   <p className={`text-sm ${
                                     isOverdue ? "text-red-600" : 
                                     isDueSoon ? "text-sunny-orange" : 
@@ -1134,7 +1134,7 @@ export default function Financial() {
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold text-gray-900">{goal.title}</h3>
                             <div className="flex items-center gap-3">
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-gray-600 privacy-sensitive">
                                 {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                               </span>
                               <EditButton
@@ -1303,12 +1303,12 @@ export default function Financial() {
                               style={{ backgroundColor: category.color }}
                             />
                             <div>
-                              <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                                <h3 className="font-semibold text-gray-900 privacy-sensitive">{category.name}</h3>
                               <p className="text-sm text-gray-600 capitalize">{category.type}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-semibold text-gray-900 privacy-sensitive">
                               {formatCurrency(category.budgetedAmount)}
                             </span>
                             <EditButton

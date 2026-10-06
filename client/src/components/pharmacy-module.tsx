@@ -451,9 +451,9 @@ export default function PharmacyModule() {
                     <CardContent className="pt-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
-                          <h4 className="font-medium">{medication.medicationName}</h4>
+                          <h4 className="font-medium privacy-sensitive">{medication.medicationName}</h4>
                           {medication.dosage && (
-                            <p className="text-sm text-gray-600">{medication.dosage}</p>
+                            <p className="text-sm text-gray-600 privacy-sensitive">{medication.dosage}</p>
                           )}
                           {medication.prescribedBy && (
                             <p className="text-xs text-gray-500">Added by user</p>
@@ -464,24 +464,24 @@ export default function PharmacyModule() {
                             <div className="mt-2 p-2 bg-blue-50 rounded-md">
                               <p className="text-xs font-medium text-blue-800 mb-1">Pill Appearance:</p>
                               <div className="flex flex-wrap gap-1 text-xs text-blue-700">
-                                {medication.pillColor && <span className="bg-blue-100 px-2 py-0.5 rounded">{medication.pillColor}</span>}
-                                {medication.pillShape && <span className="bg-blue-100 px-2 py-0.5 rounded">{medication.pillShape}</span>}
-                                {medication.pillSize && <span className="bg-blue-100 px-2 py-0.5 rounded">{medication.pillSize}</span>}
-                                {medication.pillMarkings && <span className="bg-blue-100 px-2 py-0.5 rounded">"{medication.pillMarkings}"</span>}
+                                {medication.pillColor && <span className="bg-blue-100 px-2 py-0.5 rounded privacy-sensitive">{medication.pillColor}</span>}
+                                {medication.pillShape && <span className="bg-blue-100 px-2 py-0.5 rounded privacy-sensitive">{medication.pillShape}</span>}
+                                {medication.pillSize && <span className="bg-blue-100 px-2 py-0.5 rounded privacy-sensitive">{medication.pillSize}</span>}
+                                {medication.pillMarkings && <span className="bg-blue-100 px-2 py-0.5 rounded privacy-sensitive">"{medication.pillMarkings}"</span>}
                               </div>
                               {medication.pillDescription && (
-                                <p className="text-xs text-blue-600 mt-1">{medication.pillDescription}</p>
+                                <p className="text-xs text-blue-600 mt-1 privacy-sensitive">{medication.pillDescription}</p>
                               )}
                             </div>
                           )}
                           
                           <div className="flex gap-2 mt-2">
                             <Badge variant="outline">
-                              {medication.refillsRemaining} refills left
+                            <span className="privacy-sensitive">{medication.refillsRemaining} refills left</span>
                             </Badge>
                             {medication.nextRefillDate && (
                               <Badge variant="outline">
-                                Next: {new Date(medication.nextRefillDate).toLocaleDateString()}
+                                <span className="privacy-sensitive">Next: {new Date(medication.nextRefillDate).toLocaleDateString()}</span>
                               </Badge>
                             )}
                           </div>
@@ -533,12 +533,12 @@ export default function PharmacyModule() {
                     <CardContent className="pt-4">
                       <div className="flex justify-between items-start">
                         <div className="space-y-1">
-                          <h4 className="font-medium">{medication.medicationName}</h4>
+                          <h4 className="font-medium privacy-sensitive">{medication.medicationName}</h4>
                           <p className="text-sm text-orange-600">
-                            Due: {medication.nextRefillDate ? new Date(medication.nextRefillDate).toLocaleDateString() : 'Soon'}
+                            Due: <span className="privacy-sensitive">{medication.nextRefillDate ? new Date(medication.nextRefillDate).toLocaleDateString() : 'Soon'}</span>
                           </p>
                           <Badge variant="outline" className="text-orange-600 border-orange-600">
-                            {medication.refillsRemaining} refills left
+                            <span className="privacy-sensitive">{medication.refillsRemaining} refills left</span>
                           </Badge>
                         </div>
                         <Button 

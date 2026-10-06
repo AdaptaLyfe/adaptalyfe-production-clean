@@ -106,7 +106,7 @@ export default function Navigation() {
             {/* User info for larger screens */}
             <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
               <UserIcon size={16} />
-              <span className="hidden lg:block">{user?.name || "User"}</span>
+              <span className="hidden lg:block privacy-sensitive">{user?.name || "User"}</span>
             </div>
             
             {/* Hamburger Menu Button - Top Right Corner */}
@@ -346,10 +346,10 @@ export default function Navigation() {
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-800">
-                    {user?.name || "Loading..."}
+                    <span className="privacy-sensitive">{user?.name || "Loading..."}</span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {user?.email || ""}
+                    <span className="privacy-sensitive">{user?.email || ""}</span>
                   </div>
                 </div>
               </div>

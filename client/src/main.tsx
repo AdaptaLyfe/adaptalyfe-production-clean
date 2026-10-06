@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
+import {
+  PrivacyModeProvider,
+  primePrivacyModeAttribute,
+} from "@/components/privacy-mode-provider";
 import { queryClient } from "@/lib/queryClient";
 import App from "./App";
 import "./index.css";
@@ -150,6 +154,7 @@ if (!container) {
 // Check for mobile browser compatibility issues
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 console.log("Mobile device detected:", isMobile);
+const initialPrivacyMode = primePrivacyModeAttribute();
 
 // Polyfills for mobile compatibility
 if (!window.URLSearchParams && (window as any).URL) {
@@ -184,10 +189,12 @@ try {
   
   root.render(
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <App />
-        <Toaster />
-      </TooltipProvider>
+      <PrivacyModeProvider initialEnabled={initialPrivacyMode}>
+        <TooltipProvider>
+          <App />
+          <Toaster />
+        </TooltipProvider>
+      </PrivacyModeProvider>
     </QueryClientProvider>
   );
   console.log("App rendered successfully");

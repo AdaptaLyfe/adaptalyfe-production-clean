@@ -17,6 +17,7 @@ import { ApiError, apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { FieldLabel } from "@/components/ui/field-label";
 import { getSubscriptionManagementMessage } from "@/lib/subscription-management";
+import { usePrivacyMode } from "@/components/privacy-mode-provider";
 
 const INVALID_INVITATION_CODE_MESSAGE =
   "Invalid invitation code. Please check and try again.";
@@ -39,6 +40,7 @@ function getInvitationCodeErrorMessage(error: unknown): string {
 
 export default function SettingsPage() {
   const { toast } = useToast();
+  const { enabled: privacyMode, setEnabled: setPrivacyMode } = usePrivacyMode();
   const [, setLocation] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -103,7 +105,10 @@ export default function SettingsPage() {
   };
 
   const handleSave = () => {
-    localStorage.setItem('user-settings', JSON.stringify(settings));
+    localStorage.setItem(
+      'user-settings',
+      JSON.stringify({ ...settings, privacyMode }),
+    );
     toast({
       title: "Settings Saved",
       description: "Your preferences have been saved successfully.",
@@ -111,6 +116,7 @@ export default function SettingsPage() {
   };
 
   const handleReset = () => {
+    setPrivacyMode(false);
     setSettings({
       theme: 'light',
       fontSize: 16,
@@ -648,14 +654,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.privacyMode 
+              privacyMode
                 ? 'bg-red-100 border-red-300 shadow-md' 
                 : 'bg-white border-gray-300 opacity-75'
             }`}>
               <Label htmlFor="privacy-mode" className="flex items-center gap-2">
-                <Shield className={`w-4 h-4 ${settings.privacyMode ? 'text-red-600' : 'text-gray-400'}`} />
+                <Shield className={`w-4 h-4 ${privacyMode ? 'text-red-600' : 'text-gray-400'}`} />
                 Privacy Mode
-                {settings.privacyMode && (
+                {privacyMode && (
                   <Badge variant="secondary" className="bg-red-200 text-red-900 text-xs font-bold px-2 py-1">
                     ACTIVE
                   </Badge>
@@ -663,10 +669,20 @@ export default function SettingsPage() {
               </Label>
               <Switch
                 id="privacy-mode"
-                checked={settings.privacyMode}
-                onCheckedChange={(checked) => updateSetting('privacyMode', checked)}
+                checked={privacyMode}
+                onCheckedChange={(checked) => {
+                  updateSetting('privacyMode', checked);
+                  if (!setPrivacyMode(checked)) {
+                    toast({
+                      title: `Privacy Mode is ${checked ? "on" : "off"} for this session`,
+                      description:
+                        "This browser could not save the setting. It may reset when you reload.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
                 className={`scale-125 ${
-                  settings.privacyMode 
+                  privacyMode
                     ? 'data-[state=checked]:bg-red-600 shadow-lg shadow-red-200' 
                     : 'bg-gray-300 opacity-60'
                 }`}
@@ -674,10 +690,16 @@ export default function SettingsPage() {
             </div>
 
             <div className="text-sm text-gray-600">
-              Privacy mode hides sensitive information in screenshots and when screen sharing.
+              Masks supported personal, health, and financial details on this
+              browser for screenshots and screen sharing. It does not change
+              stored data, sharing permissions, or what the service can access.
             </div>
 
-            <Button variant="outline" className="w-full">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setLocation("/privacy-policy")}
+            >
               <Shield className="w-4 h-4 mr-2" />
               View Privacy Policy
             </Button>

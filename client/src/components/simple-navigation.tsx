@@ -92,7 +92,7 @@ export default function SimpleNavigation() {
           <div className="flex items-center space-x-3">
             {/* User info for larger screens */}
             <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
-              <span className="hidden lg:block">{user?.name || "User"}</span>
+              <span className="hidden lg:block privacy-sensitive">{user?.name || "User"}</span>
             </div>
             
             {/* Menu button - ALWAYS show this */}
@@ -369,10 +369,10 @@ export default function SimpleNavigation() {
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-800">
-                    {user?.name || "Loading..."}
+                    <span className="privacy-sensitive">{user?.name || "Loading..."}</span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {user?.email || ""}
+                    <span className="privacy-sensitive">{user?.email || ""}</span>
                   </div>
                 </div>
                 <div className="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">

@@ -120,7 +120,7 @@ export default function DailySummary() {
             <div className="space-y-2">
               {todayDailyTasks.slice(0, 3).map((task) => (
                 <div key={task.id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-700">{task.title}</span>
+                  <span className="text-gray-700 privacy-sensitive">{task.title}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       {formatCategoryLabel(task.category)}
@@ -153,7 +153,7 @@ export default function DailySummary() {
             <div className="space-y-2">
               {weeklyTasksDueSoon.map((task) => (
                 <div key={`task-${task.id}`} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-700">{task.title}</span>
+                  <span className="text-gray-700 privacy-sensitive">{task.title}</span>
                   <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
                     {formatDaysUntil(task.dueDate!)}
                   </Badge>
@@ -163,10 +163,10 @@ export default function DailySummary() {
                 <div key={`bill-${bill.id}`} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-3 h-3 text-green-600" />
-                    <span className="text-gray-700">{bill.name}</span>
+                    <span className="text-gray-700 privacy-sensitive">{bill.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-600">${bill.amount}</span>
+                    <span className="text-gray-600 privacy-sensitive">${bill.amount}</span>
                     <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs">
                       {formatDaysUntil(bill.dueDate.toString())}
                     </Badge>

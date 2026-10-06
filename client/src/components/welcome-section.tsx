@@ -58,17 +58,17 @@ export default function WelcomeSection() {
               </div>
             </div>
             <h2 className="text-2xl font-bold mb-2 text-white flex items-center gap-2">
-              {getGreeting()}, {user?.name}!
+              {getGreeting()}, <span className="privacy-sensitive">{user?.name}</span>!
               <span className="text-teal-400 text-2xl">★</span>
             </h2>
             <div className="flex items-center space-x-3">
               <div className="bg-gray-800/50 border border-teal-400/40 rounded-lg px-3 py-2">
                 <span className="text-xs text-white/90 font-medium">Today's Progress</span>
-                <div className="text-xl font-bold text-teal-400">{progressPercentage}%</div>
+                <div className="text-xl font-bold text-teal-400 privacy-sensitive">{progressPercentage}%</div>
               </div>
               <div className="bg-gray-800/50 border border-teal-400/40 rounded-lg px-3 py-2">
                 <span className="text-xs text-white/90 font-medium">Current Streak</span>
-                <div className="text-xl font-bold text-teal-400">{user?.streakDays || 0} days</div>
+                <div className="text-xl font-bold text-teal-400 privacy-sensitive">{user?.streakDays || 0} days</div>
               </div>
             </div>
           </div>

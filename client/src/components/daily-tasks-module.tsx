@@ -138,8 +138,8 @@ export default function DailyTasksModule() {
                         <Circle className="w-4 h-4" />
                       </button>
                       <div className="flex-1">
-                        <h5 className="font-medium text-gray-800 text-sm">{task.title}</h5>
-                        <p className="text-xs text-gray-600 mt-1">{task.description}</p>
+                        <h5 className="font-medium text-gray-800 text-sm privacy-sensitive">{task.title}</h5>
+                        <p className="text-xs text-gray-600 mt-1 privacy-sensitive">{task.description}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <Badge variant="secondary" className={`text-xs px-2 py-0 ${getFrequencyBadgeColor(task.frequency || 'daily')}`}>
                             {task.frequency || 'daily'}
@@ -189,7 +189,7 @@ export default function DailyTasksModule() {
                       <CheckCircle className="w-4 h-4" />
                     </button>
                     <div>
-                      <h5 className="font-medium text-gray-800 line-through text-sm">{task.title}</h5>
+                      <h5 className="font-medium text-gray-800 line-through text-sm privacy-sensitive">{task.title}</h5>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className={`text-xs px-2 py-0 ${getFrequencyBadgeColor(task.frequency || 'daily')}`}>
                           {task.frequency || 'daily'}

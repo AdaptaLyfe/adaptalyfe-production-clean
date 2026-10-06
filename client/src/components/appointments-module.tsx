@@ -323,7 +323,7 @@ export default function AppointmentsModule() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
-                          <h4 className="font-medium text-gray-900">{appointment.title}</h4>
+                          <h4 className="font-medium text-gray-900 privacy-sensitive">{appointment.title}</h4>
                           <Badge className={getStatusColor(status)}>
                             {getStatusLabel(status)}
                           </Badge>
@@ -333,30 +333,30 @@ export default function AppointmentsModule() {
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span className="flex items-center space-x-1">
                               <Calendar className="w-3 h-3" />
-                              <span>{dayLabel} • {dateStr}</span>
+                              <span className="privacy-sensitive">{dayLabel} • {dateStr}</span>
                             </span>
                             <span className="flex items-center space-x-1">
                               <Clock className="w-3 h-3" />
-                              <span>{timeStr}</span>
+                              <span className="privacy-sensitive">{timeStr}</span>
                             </span>
                           </div>
                           
                           {appointment.provider && (
                             <div className="flex items-center space-x-1 text-sm text-gray-600">
                               <User className="w-3 h-3" />
-                              <span className="capitalize">{appointment.provider}</span>
+                              <span className="capitalize privacy-sensitive">{appointment.provider}</span>
                             </div>
                           )}
                           
                           {appointment.location && (
                             <div className="flex items-center space-x-1 text-sm text-gray-600">
                               <MapPin className="w-3 h-3" />
-                              <span>{appointment.location}</span>
+                              <span className="privacy-sensitive">{appointment.location}</span>
                             </div>
                           )}
                           
                           {appointment.description && (
-                            <p className="text-sm text-gray-600 mt-1">{appointment.description}</p>
+                            <p className="text-sm text-gray-600 mt-1 privacy-sensitive">{appointment.description}</p>
                           )}
                         </div>
                       </div>

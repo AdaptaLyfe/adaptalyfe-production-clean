@@ -32,6 +32,40 @@ html, body {
   min-height: 100vh;
 }
 
+html[data-privacy-mode="true"] input[type="email"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[type="tel"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[type="date"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[type="datetime-local"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[type="number"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[autocomplete="name"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[autocomplete="email"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[autocomplete="tel"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[autocomplete="street-address"]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="name" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="address" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="phone" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="email" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="amount" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="income" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="expense" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="budget" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="medication" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="allerg" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="condition" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] input[name*="diagnos" i]:not(:placeholder-shown),
+html[data-privacy-mode="true"] textarea:not(:placeholder-shown) {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: 0 0 8px rgb(15 23 42 / 85%) !important;
+  caret-color: transparent !important;
+  user-select: none;
+}
+
+html[data-privacy-mode="true"] .privacy-sensitive {
+  filter: blur(7px);
+  user-select: none;
+}
+
 /* Keep modal form controls inside the scroll viewport so their borders are not clipped. */
 .academic-planner-form,
 .reward-form {

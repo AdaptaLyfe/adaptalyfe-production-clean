@@ -47,13 +47,13 @@ export default function CaregiverModule() {
             {caregivers.map((caregiver) => (
               <div key={caregiver.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                 <div className="w-10 h-10 bg-calm-teal rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">
+                  <span className="text-white font-medium text-sm privacy-sensitive">
                     {caregiver.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <h5 className="font-medium text-gray-900">{caregiver.name}</h5>
-                  <p className="text-sm text-gray-600">
+                  <h5 className="font-medium text-gray-900 privacy-sensitive">{caregiver.name}</h5>
+                  <p className="text-sm text-gray-600 privacy-sensitive">
                     {caregiver.relationship === "therapist" 
                       ? "Next session: Tomorrow 2 PM" 
                       : "Last active: 2 hours ago"

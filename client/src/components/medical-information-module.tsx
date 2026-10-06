@@ -387,16 +387,16 @@ export default function MedicalInformationModule() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{allergy.allergen}</h4>
+                          <h4 className="font-medium privacy-sensitive">{allergy.allergen}</h4>
                           <Badge className={severityColors[allergy.severity as keyof typeof severityColors]}>
-                            {allergy.severity}
+                            <span className="privacy-sensitive">{allergy.severity}</span>
                           </Badge>
                         </div>
                         {allergy.reaction && (
-                          <p className="text-sm text-gray-600">Reaction: {allergy.reaction}</p>
+                          <p className="text-sm text-gray-600">Reaction: <span className="privacy-sensitive">{allergy.reaction}</span></p>
                         )}
                         {allergy.notes && (
-                          <p className="text-sm text-gray-500">{allergy.notes}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{allergy.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -445,18 +445,18 @@ export default function MedicalInformationModule() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{condition.condition}</h4>
+                          <h4 className="font-medium privacy-sensitive">{condition.condition}</h4>
                           <Badge className={statusColors[condition.status as keyof typeof statusColors]}>
-                            {condition.status}
+                            <span className="privacy-sensitive">{condition.status}</span>
                           </Badge>
                         </div>
                         {condition.diagnosedDate && (
                           <p className="text-sm text-gray-600">
-                            Diagnosed: {new Date(condition.diagnosedDate).toLocaleDateString()}
+                            Diagnosed: <span className="privacy-sensitive">{new Date(condition.diagnosedDate).toLocaleDateString()}</span>
                           </p>
                         )}
                         {condition.notes && (
-                          <p className="text-sm text-gray-500">{condition.notes}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{condition.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -502,19 +502,19 @@ export default function MedicalInformationModule() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{adverseMed.medicationName}</h4>
+                          <h4 className="font-medium privacy-sensitive">{adverseMed.medicationName}</h4>
                           <Badge className={severityColors[adverseMed.severity as keyof typeof severityColors]}>
-                            {adverseMed.severity}
+                            <span className="privacy-sensitive">{adverseMed.severity}</span>
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600">Reaction: {adverseMed.reaction}</p>
+                        <p className="text-sm text-gray-600">Reaction: <span className="privacy-sensitive">{adverseMed.reaction}</span></p>
                         {adverseMed.reactionDate && (
                           <p className="text-sm text-gray-600">
-                            Date: {new Date(adverseMed.reactionDate).toLocaleDateString()}
+                            Date: <span className="privacy-sensitive">{new Date(adverseMed.reactionDate).toLocaleDateString()}</span>
                           </p>
                         )}
                         {adverseMed.notes && (
-                          <p className="text-sm text-gray-500">{adverseMed.notes}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{adverseMed.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -563,23 +563,23 @@ export default function MedicalInformationModule() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{contact.name}</h4>
+                          <h4 className="font-medium privacy-sensitive">{contact.name}</h4>
                           {contact.isPrimary && (
                             <Badge className="bg-blue-100 text-blue-800">Primary</Badge>
                           )}
                         </div>
                         {contact.relationship && (
-                          <p className="text-sm text-gray-600">{contact.relationship}</p>
+                          <p className="text-sm text-gray-600 privacy-sensitive">{contact.relationship}</p>
                         )}
-                        <p className="text-sm text-gray-600">Phone: {contact.phoneNumber}</p>
+                        <p className="text-sm text-gray-600">Phone: <span className="privacy-sensitive">{contact.phoneNumber}</span></p>
                         {contact.email && (
-                          <p className="text-sm text-gray-600">Email: {contact.email}</p>
+                          <p className="text-sm text-gray-600">Email: <span className="privacy-sensitive">{contact.email}</span></p>
                         )}
                         {contact.address && (
-                          <p className="text-sm text-gray-500">{contact.address}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{contact.address}</p>
                         )}
                         {contact.notes && (
-                          <p className="text-sm text-gray-500">{contact.notes}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{contact.notes}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -628,21 +628,21 @@ export default function MedicalInformationModule() {
                     <div className="flex justify-between items-start">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{provider.name}</h4>
+                          <h4 className="font-medium privacy-sensitive">{provider.name}</h4>
                           {provider.isPrimary && (
                             <Badge className="bg-green-100 text-green-800">Primary</Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600">{provider.specialty}</p>
+                        <p className="text-sm text-gray-600 privacy-sensitive">{provider.specialty}</p>
                         {provider.practiceName && (
-                          <p className="text-sm text-gray-600">{provider.practiceName}</p>
+                          <p className="text-sm text-gray-600 privacy-sensitive">{provider.practiceName}</p>
                         )}
-                        <p className="text-sm text-gray-600">Phone: {provider.phoneNumber}</p>
+                        <p className="text-sm text-gray-600">Phone: <span className="privacy-sensitive">{provider.phoneNumber}</span></p>
                         {provider.email && (
-                          <p className="text-sm text-gray-600">Email: {provider.email}</p>
+                          <p className="text-sm text-gray-600">Email: <span className="privacy-sensitive">{provider.email}</span></p>
                         )}
                         {provider.address && (
-                          <p className="text-sm text-gray-500">{provider.address}</p>
+                          <p className="text-sm text-gray-500 privacy-sensitive">{provider.address}</p>
                         )}
                         {provider.notes && (
                           <p className="text-sm text-gray-500">{provider.notes}</p>
