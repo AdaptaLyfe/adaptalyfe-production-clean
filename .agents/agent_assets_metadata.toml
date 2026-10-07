@@ -3193,3 +3193,17 @@ mtime_ms = 1791268770007
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/07c3c016-e812-462b-8380-74fd612556ea/0e16c213-7f21-49c8-8413-5681d6fd12fb"
 storage_version_token = "1791268776129221"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "KY5YZolVUljGk04uty9vm"
+uri = "file://deliverables/adaptalyfe-capacitor-ios-source-20261007.zip"
+type = "unspecified"
+title = "Adaptalyfe Capacitor iOS source ZIP"
+description = "iOS Xcode project, synced Capacitor resources, web app source, and build configuration. Excludes credentials and signing profiles."
+logical_id = "1aeb2418-a957-4efe-a5a2-8e5433f643d9"
+content_hash = "sha256:99abc1948b74ac36a880d1c9956128e64c6a75fe7273fb5e306a1e25bb2c0f65"
+size = 10435272
+mtime_ms = 1791371431914
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1aeb2418-a957-4efe-a5a2-8e5433f643d9/d0e3aadb-8e2f-45f5-862f-1da209f4fbaa"
+storage_version_token = "1791371437669660"
+content_type = "application/octet-stream"
