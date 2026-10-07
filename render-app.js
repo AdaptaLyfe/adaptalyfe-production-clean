@@ -110,11 +110,11 @@ __export(objectStorage_exports, {
 });
 import { Storage } from "@google-cloud/storage";
 import { randomUUID } from "crypto";
-function parseObjectPath(path3) {
-  if (!path3.startsWith("/")) {
-    path3 = `/${path3}`;
+function parseObjectPath(path4) {
+  if (!path4.startsWith("/")) {
+    path4 = `/${path4}`;
   }
-  const pathParts = path3.split("/");
+  const pathParts = path4.split("/");
   if (pathParts.length < 3) {
     throw new Error("Invalid path: must contain at least a bucket name");
   }
@@ -193,7 +193,7 @@ var init_objectStorage = __esm({
         const pathsStr = process.env.PUBLIC_OBJECT_SEARCH_PATHS || "";
         const paths = Array.from(
           new Set(
-            pathsStr.split(",").map((path3) => path3.trim()).filter((path3) => path3.length > 0)
+            pathsStr.split(",").map((path4) => path4.trim()).filter((path4) => path4.length > 0)
           )
         );
         if (paths.length === 0) {
@@ -380,7 +380,7 @@ import cors from "cors";
 
 // server/routes.ts
 import { createServer } from "http";
-import path from "path";
+import path2 from "path";
 
 // shared/schema.ts
 var schema_exports = {};
@@ -544,6 +544,7 @@ __export(schema_exports, {
   streakTracking: () => streakTracking,
   studyGroups: () => studyGroups,
   studySessions: () => studySessions,
+  subscriptionNotificationEvents: () => subscriptionNotificationEvents,
   subscriptionUsage: () => subscriptionUsage,
   subscriptions: () => subscriptions,
   symptomEntries: () => symptomEntries,
@@ -569,6 +570,7 @@ __export(schema_exports, {
   wearableSettings: () => wearableSettings
 });
 import { pgTable as pgTable2, text as text2, serial, integer as integer2, boolean as boolean2, timestamp as timestamp2, real, varchar as varchar2, jsonb, decimal as decimal2, date, time, json as json2, uniqueIndex } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema as createInsertSchema2 } from "drizzle-zod";
 import { z } from "zod";
 
@@ -727,8 +729,13 @@ var users = pgTable2("users", {
   stripeCustomerId: text2("stripe_customer_id"),
   stripeSubscriptionId: text2("stripe_subscription_id"),
   subscriptionStatus: text2("subscription_status").default("inactive"),
-  // "active", "inactive", "cancelled", "past_due"
+  // Includes active, cancelled, in_grace_period, pending, past_due, expired, revoked, and inactive.
   subscriptionExpiresAt: timestamp2("subscription_expires_at"),
+  subscriptionStartDate: timestamp2("subscription_start_date"),
+  subscriptionProductId: text2("subscription_product_id"),
+  subscriptionTransactionId: text2("subscription_transaction_id"),
+  subscriptionAutoRenew: boolean2("subscription_auto_renew"),
+  subscriptionVerifiedAt: timestamp2("subscription_verified_at"),
   subscriptionPlatform: text2("subscription_platform").default("web"),
   // "web", "google_play", "app_store"
   googlePlayPurchaseToken: text2("google_play_purchase_token"),
@@ -740,7 +747,11 @@ var users = pgTable2("users", {
   // Caregiver who created this user account
   isActive: boolean2("is_active").default(true),
   createdAt: timestamp2("created_at").defaultNow()
-});
+}, (table) => [
+  uniqueIndex("users_google_play_purchase_token_uq").on(table.googlePlayPurchaseToken).where(sql`${table.googlePlayPurchaseToken} IS NOT NULL`),
+  uniqueIndex("users_apple_original_transaction_id_uq").on(table.appleOriginalTransactionId).where(sql`${table.appleOriginalTransactionId} IS NOT NULL`),
+  uniqueIndex("users_store_transaction_id_uq").on(table.subscriptionPlatform, table.subscriptionTransactionId).where(sql`${table.subscriptionTransactionId} IS NOT NULL`)
+]);
 var passwordResetTokens = pgTable2("password_reset_tokens", {
   id: serial("id").primaryKey(),
   userId: integer2("user_id").notNull().references(() => users.id),
@@ -2434,6 +2445,16 @@ var subscriptionUsage = pgTable2("subscription_usage", {
   createdAt: timestamp2("created_at").defaultNow(),
   updatedAt: timestamp2("updated_at").defaultNow()
 });
+var subscriptionNotificationEvents = pgTable2("subscription_notification_events", {
+  id: serial("id").primaryKey(),
+  platform: text2("platform").notNull(),
+  eventId: text2("event_id").notNull(),
+  eventType: text2("event_type").notNull(),
+  userId: integer2("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp2("created_at").defaultNow().notNull()
+}, (table) => [
+  uniqueIndex("subscription_notification_events_platform_event_uq").on(table.platform, table.eventId)
+]);
 var paymentHistory = pgTable2("payment_history", {
   id: serial("id").primaryKey(),
   subscriptionId: integer2("subscription_id").notNull().references(() => subscriptions.id),
@@ -2509,7 +2530,7 @@ var pool = new Pool({ connectionString: process.env.DATABASE_URL });
 var db = drizzle({ client: pool, schema: schema_exports });
 
 // server/storage.ts
-import { eq, and, gte, lte, desc, asc, gt, sql, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, gt, sql as sql2, isNull, isNotNull, or, lt, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 // server/reward-badges.ts
@@ -2786,7 +2807,7 @@ var emergencyResourceBaseColumns = {
   updatedAt: emergencyResources.updatedAt
 };
 async function getEmergencyResourceColumns() {
-  const result = await db.execute(sql`
+  const result = await db.execute(sql2`
     SELECT column_name
     FROM information_schema.columns
     WHERE table_schema = 'public'
@@ -2841,7 +2862,7 @@ async function getTransitionSkillSchemaCapabilities() {
   if (!capabilitiesPromise) {
     capabilitiesPromise = (async () => {
       try {
-        const result = await db.execute(sql`
+        const result = await db.execute(sql2`
           SELECT
             EXISTS (
               SELECT 1
@@ -2905,7 +2926,7 @@ async function getDailyTaskSchemaCapabilities() {
   if (!dailyTaskSchemaCapabilitiesPromise) {
     dailyTaskSchemaCapabilitiesPromise = (async () => {
       try {
-        const result = await db.execute(sql`
+        const result = await db.execute(sql2`
           SELECT
             EXISTS (
               SELECT 1
@@ -3030,7 +3051,7 @@ var DatabaseStorage = class {
     return user || void 0;
   }
   async getUserByEmail(email) {
-    const [user] = await db.select().from(users).where(sql`LOWER(${users.email}) = LOWER(${email})`);
+    const [user] = await db.select().from(users).where(sql2`LOWER(${users.email}) = LOWER(${email})`);
     return user || void 0;
   }
   async createUser(insertUser) {
@@ -3128,6 +3149,27 @@ var DatabaseStorage = class {
   async updateUserSubscription(userId, subscriptionData) {
     const [user] = await db.update(users).set(subscriptionData).where(eq(users.id, userId)).returning();
     return user || void 0;
+  }
+  async applySubscriptionNotificationOnce(input) {
+    return db.transaction(async (tx) => {
+      const [event] = await tx.insert(subscriptionNotificationEvents).values({
+        platform: input.platform,
+        eventId: input.eventId,
+        eventType: input.eventType,
+        userId: input.userId
+      }).onConflictDoNothing({
+        target: [
+          subscriptionNotificationEvents.platform,
+          subscriptionNotificationEvents.eventId
+        ]
+      }).returning({ id: subscriptionNotificationEvents.id });
+      if (!event) return false;
+      const [updatedUser] = await tx.update(users).set(input.subscriptionData).where(eq(users.id, input.userId)).returning({ id: users.id });
+      if (!updatedUser) {
+        throw new Error("Subscription notification user no longer exists.");
+      }
+      return true;
+    });
   }
   async getUserByStripeCustomerId(customerId) {
     const [user] = await db.select().from(users).where(eq(users.stripeCustomerId, customerId));
@@ -3313,15 +3355,15 @@ var DatabaseStorage = class {
       ["last_reminder_sent", insertTask.lastReminderSent],
       ["last_overdue_reminder", insertTask.lastOverdueReminder]
     ].filter(([, value]) => value !== void 0);
-    const columns = sql.join(
-      legacyFields.map(([column]) => sql.raw(`"${column}"`)),
-      sql`, `
+    const columns = sql2.join(
+      legacyFields.map(([column]) => sql2.raw(`"${column}"`)),
+      sql2`, `
     );
-    const values = sql.join(
-      legacyFields.map(([, value]) => sql`${value}`),
-      sql`, `
+    const values = sql2.join(
+      legacyFields.map(([, value]) => sql2`${value}`),
+      sql2`, `
     );
-    const result = await db.execute(sql`
+    const result = await db.execute(sql2`
       INSERT INTO daily_tasks (${columns})
       VALUES (${values})
       RETURNING id
@@ -3489,7 +3531,6 @@ var DatabaseStorage = class {
       ...insertEntry,
       entryDate: insertEntry.entryDate || /* @__PURE__ */ new Date()
     };
-    console.log(`Creating mood entry for user ${entryWithDate.userId} at ${entryWithDate.entryDate?.toISOString()}`);
     const [entry] = await db.insert(moodEntries).values(entryWithDate).returning();
     return entry;
   }
@@ -3497,7 +3538,6 @@ var DatabaseStorage = class {
     const now = /* @__PURE__ */ new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    console.log(`Checking mood entry for user ${userId} between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
     const [entry] = await db.select().from(moodEntries).where(
       and(
         eq(moodEntries.userId, userId),
@@ -3689,7 +3729,7 @@ var DatabaseStorage = class {
     return await db.select().from(appointments).where(
       and(
         eq(appointments.userId, userId),
-        sql`${appointments.appointmentDate} LIKE ${`${date2}%`}`
+        sql2`${appointments.appointmentDate} LIKE ${`${date2}%`}`
       )
     ).orderBy(appointments.appointmentDate);
   }
@@ -4228,7 +4268,7 @@ var DatabaseStorage = class {
       badgePersistenceSchema
     ] = await Promise.all([
       this.getExistingUserPointsBalance(userId),
-      db.select({ count: sql`count(*)::int` }).from(rewardRedemptions).where(
+      db.select({ count: sql2`count(*)::int` }).from(rewardRedemptions).where(
         and(
           eq(rewardRedemptions.userId, userId),
           inArray(rewardRedemptions.status, [
@@ -4239,7 +4279,7 @@ var DatabaseStorage = class {
         )
       ),
       db.select({
-        lifetimeEarned: sql`
+        lifetimeEarned: sql2`
             COALESCE(
               SUM(
                 CASE
@@ -4258,7 +4298,7 @@ var DatabaseStorage = class {
         targetLevel: transitionSkills.targetLevel
       }).from(transitionSkills).where(eq(transitionSkills.userId, userId)),
       db.select().from(achievements).where(eq(achievements.userId, userId)).orderBy(desc(achievements.earnedAt)),
-      db.execute(sql`
+      db.execute(sql2`
         SELECT
           EXISTS (
             SELECT 1
@@ -4301,7 +4341,7 @@ var DatabaseStorage = class {
     if (canPersistBadges) {
       await db.transaction(async (tx) => {
         await tx.execute(
-          sql`SELECT pg_advisory_xact_lock(
+          sql2`SELECT pg_advisory_xact_lock(
             ${userId},
             hashtext('adaptalyfe_reward_badge_awards')
           )`
@@ -4580,7 +4620,7 @@ var DatabaseStorage = class {
     return await db.select().from(caregiverInvitations).where(
       and(
         eq(caregiverInvitations.caregiverId, caregiverId),
-        sql`lower(trim(${caregiverInvitations.status})) = 'pending'`,
+        sql2`lower(trim(${caregiverInvitations.status})) = 'pending'`,
         gt(caregiverInvitations.expiresAt, /* @__PURE__ */ new Date())
       )
     ).orderBy(desc(caregiverInvitations.createdAt));
@@ -4661,7 +4701,7 @@ var DatabaseStorage = class {
       const acceptedInvitations = await tx.select().from(caregiverInvitations).where(
         and(
           eq(caregiverInvitations.caregiverId, userId),
-          sql`lower(trim(${caregiverInvitations.status})) = 'accepted'`,
+          sql2`lower(trim(${caregiverInvitations.status})) = 'accepted'`,
           isNotNull(caregiverInvitations.acceptedBy)
         )
       ).orderBy(asc(caregiverInvitations.id)).for("update");
@@ -4960,7 +5000,7 @@ var DatabaseStorage = class {
     if (userRewards.length === 0) return userRewards;
     const redemptionCounts = await db.select({
       rewardId: rewardRedemptions.rewardId,
-      count: sql`count(*)::int`
+      count: sql2`count(*)::int`
     }).from(rewardRedemptions).where(
       and(
         eq(rewardRedemptions.userId, userId),
@@ -4987,7 +5027,7 @@ var DatabaseStorage = class {
     if (activeRewards.length === 0) return activeRewards;
     const redemptionCounts = await db.select({
       rewardId: rewardRedemptions.rewardId,
-      count: sql`count(*)::int`
+      count: sql2`count(*)::int`
     }).from(rewardRedemptions).where(
       and(
         eq(rewardRedemptions.userId, userId),
@@ -5093,7 +5133,7 @@ var DatabaseStorage = class {
           "This reward is no longer available."
         );
       }
-      const [redemptionCount] = await tx.select({ count: sql`count(*)::int` }).from(rewardRedemptions).where(
+      const [redemptionCount] = await tx.select({ count: sql2`count(*)::int` }).from(rewardRedemptions).where(
         and(
           eq(rewardRedemptions.userId, userId),
           eq(rewardRedemptions.rewardId, rewardId),
@@ -5769,6 +5809,35 @@ function normalizeCalendarEventWriteInput(value, partial = false) {
   return normalized;
 }
 
+// server/safe-logging.ts
+var SAFE_LOG_TOKEN = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/;
+function safeToken(value) {
+  if (typeof value !== "string" && typeof value !== "number") return void 0;
+  const token = String(value);
+  return SAFE_LOG_TOKEN.test(token) ? token : void 0;
+}
+function safeStatus(value) {
+  const status = typeof value === "number" ? value : typeof value === "string" && /^\d{3}$/.test(value) ? Number(value) : void 0;
+  return Number.isInteger(status) && status >= 100 && status <= 599 ? status : void 0;
+}
+function sanitizeErrorMetadata(error) {
+  const fields = error !== null && typeof error === "object" ? error : void 0;
+  const metadata = {
+    errorType: safeToken(fields?.name) ?? (error instanceof Error ? "Error" : "UnknownError")
+  };
+  const code = safeToken(fields?.code);
+  const providerType = safeToken(fields?.type);
+  const status = safeStatus(fields?.statusCode ?? fields?.status);
+  if (code) metadata.code = code;
+  if (providerType) metadata.providerType = providerType;
+  if (status !== void 0) metadata.status = status;
+  return metadata;
+}
+function logSanitizedError(event, error) {
+  const safeEvent = SAFE_LOG_TOKEN.test(event) ? event : "server.error";
+  console.error(`[${safeEvent}]`, sanitizeErrorMetadata(error));
+}
+
 // server/ai-context.ts
 var MAX_DISPLAY_NAME_LENGTH = 80;
 function extractFirstName(fullName) {
@@ -6261,7 +6330,7 @@ function mapPointsActivityToContext(transactions, userId) {
 }
 async function buildDailyGuideContext(userId, sessionUser, clientTime) {
   if (!userId || typeof userId !== "number" || userId < 1) {
-    console.warn("[ai-context] Invalid userId received:", userId);
+    console.warn("[ai-context] Invalid user identity received");
     const { date: date3, time: time3, timezone: timezone2 } = getCurrentTimeContext();
     return {
       userName: "there",
@@ -6275,7 +6344,7 @@ async function buildDailyGuideContext(userId, sessionUser, clientTime) {
     };
   }
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
-    console.warn("[ai-context] Missing or invalid session name for userId:", userId);
+    console.warn("[ai-context] Missing or invalid session identity");
     const { date: date3, time: time3, timezone: timezone2 } = getCurrentTimeContext();
     return {
       userName: "there",
@@ -6300,12 +6369,7 @@ async function buildDailyGuideContext(userId, sessionUser, clientTime) {
     const rawTasks = await storage.getDailyTasksByUser(userId);
     tasks = mapTasksToContext(rawTasks, date2);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch tasks for userId",
-      userId,
-      "\u2014",
-      err instanceof Error ? err.message : String(err)
-    );
+    logSanitizedError("ai.context.tasks", err);
     tasks = [];
   }
   let appointments2 = [];
@@ -6313,12 +6377,7 @@ async function buildDailyGuideContext(userId, sessionUser, clientTime) {
     const rawAppointments = await storage.getUpcomingAppointments(userId);
     appointments2 = mapAppointmentsToContext(rawAppointments);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch appointments for userId",
-      userId,
-      "\u2014",
-      err instanceof Error ? err.message : String(err)
-    );
+    logSanitizedError("ai.context.appointments", err);
     appointments2 = [];
   }
   let calendarEvents2 = [];
@@ -6326,12 +6385,7 @@ async function buildDailyGuideContext(userId, sessionUser, clientTime) {
     const rawEvents = await storage.getCalendarEventsByUser(userId);
     calendarEvents2 = mapCalendarEventsToContext(rawEvents, date2);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch calendar events for userId",
-      userId,
-      "\u2014",
-      err instanceof Error ? err.message : String(err)
-    );
+    logSanitizedError("ai.context.calendar-events", err);
     calendarEvents2 = [];
   }
   let preferences;
@@ -6341,12 +6395,7 @@ async function buildDailyGuideContext(userId, sessionUser, clientTime) {
     preferences = mapPreferencesToContext(rawPrefs);
     communicationProfile = mapCommunicationProfile(rawPrefs, userName);
   } catch (err) {
-    console.warn(
-      "[ai-context] Failed to fetch preferences for userId",
-      userId,
-      "\u2014",
-      err instanceof Error ? err.message : String(err)
-    );
+    logSanitizedError("ai.context.preferences", err);
     preferences = void 0;
   }
   const context = {
@@ -6441,14 +6490,11 @@ async function resolveAdaptAIAccess(viewerUserId, subjectUserId, contextStorage)
     )
   };
 }
-async function loadContextSection(label, loader, onUnavailable) {
+async function loadContextSection(_label, loader, onUnavailable) {
   try {
     return await loader();
   } catch (error) {
-    console.warn(
-      `[ai-context] Unable to load ${label}:`,
-      error instanceof Error ? error.message : String(error)
-    );
+    logSanitizedError("ai.context.optional-section", error);
     onUnavailable?.();
     return void 0;
   }
@@ -6997,6 +7043,7 @@ async function generateDailyGuide(context) {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: buildUserPrompt(context) }
         ],
+        store: false,
         response_format: { type: "json_object" },
         max_tokens: AI_MAX_TOKENS,
         temperature: AI_TEMPERATURE
@@ -7017,10 +7064,7 @@ async function generateDailyGuide(context) {
     }
     const validated = DailyGuideResponseSchema.safeParse(parsed);
     if (!validated.success) {
-      console.warn(
-        "[ai-service] AI response failed schema validation:",
-        validated.error.flatten()
-      );
+      console.warn("[ai-service] AI response failed schema validation");
       return FALLBACK_RESPONSE;
     }
     return validated.data;
@@ -7029,10 +7073,7 @@ async function generateDailyGuide(context) {
     if (isAbort) {
       console.warn("[ai-service] AI request timed out after", AI_TIMEOUT_MS, "ms");
     } else {
-      console.error(
-        "[ai-service] AI provider error:",
-        err instanceof Error ? err.message : String(err)
-      );
+      logSanitizedError("ai.daily-guide.provider", err);
     }
     return FALLBACK_RESPONSE;
   } finally {
@@ -7163,6 +7204,7 @@ Controlled application actions are unavailable for this conversation. Do not req
           },
           { role: "user", content: message.trim().slice(0, 4e3) }
         ],
+        store: false,
         ...canProposeActions ? {
           tools: ADAPTAI_ACTION_TOOLS,
           tool_choice: "auto"
@@ -7191,7 +7233,7 @@ Controlled application actions are unavailable for this conversation. Do not req
           action
         };
       } catch (error) {
-        console.warn("AdaptAI returned an invalid action proposal:", error);
+        logSanitizedError("ai.action.validation", error);
         return {
           message: "I can help with that, but I need a little more detail before I make any change."
         };
@@ -7201,10 +7243,7 @@ Controlled application actions are unavailable for this conversation. Do not req
       message: assistantMessage?.content || "I'm here to help! Could you ask me again?"
     };
   } catch (error) {
-    console.warn(
-      "[ai-service] Chat provider unavailable:",
-      error instanceof Error ? error.message : String(error)
-    );
+    logSanitizedError("ai.chat.provider", error);
     return {
       message: getAdaptAIChatFallbackResponse(message),
       fallback: true
@@ -8152,6 +8191,637 @@ function buildNextAction(context) {
   return finish(`You don't have anything urgent right now. Your next planned item is ${described}.`);
 }
 
+// server/google-play-entitlement.ts
+var STORE_SUBSCRIPTION_PLANS = {
+  adaptalyfe_basic_monthly: {
+    planType: "basic",
+    billingCycle: "monthly",
+    amount: 499
+  },
+  adaptalyfe_premium_monthly: {
+    planType: "premium",
+    billingCycle: "monthly",
+    amount: 1299
+  },
+  adaptalyfe_family_monthly: {
+    planType: "family",
+    billingCycle: "monthly",
+    amount: 2499
+  }
+};
+function subscriptionPlanForProductId(productId) {
+  return productId ? STORE_SUBSCRIPTION_PLANS[productId] ?? null : null;
+}
+function googlePlayTierForProductId(productId) {
+  return subscriptionPlanForProductId(productId)?.planType ?? null;
+}
+var GOOGLE_PLAY_CACHED_ENTITLEMENT_MAX_AGE_MS = 24 * 60 * 60 * 1e3;
+function googlePlayErrorStatus(error) {
+  const value = error;
+  const status = Number(value?.response?.status ?? value?.code);
+  return Number.isFinite(status) && status >= 100 && status <= 599 ? status : null;
+}
+function isTransientGooglePlayError(error) {
+  const status = googlePlayErrorStatus(error);
+  if (status !== null) return status === 408 || status === 429 || status >= 500;
+  const code = error?.code;
+  return ["ETIMEDOUT", "ECONNRESET", "ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"].includes(code ?? "");
+}
+function canUseCachedGooglePlayEntitlement(cached, now = /* @__PURE__ */ new Date()) {
+  const productId = cached.googlePlayProductId ?? cached.subscriptionProductId;
+  if (!cached.googlePlayPurchaseToken?.trim() || !productId || !subscriptionPlanForProductId(productId) || cached.googlePlayProductId && cached.subscriptionProductId && cached.googlePlayProductId !== cached.subscriptionProductId || !["active", "cancelled", "in_grace_period"].includes(
+    cached.subscriptionStatus ?? ""
+  )) {
+    return false;
+  }
+  const expiresAt = cached.subscriptionExpiresAt instanceof Date ? cached.subscriptionExpiresAt : cached.subscriptionExpiresAt ? new Date(cached.subscriptionExpiresAt) : null;
+  const verifiedAt = cached.subscriptionVerifiedAt instanceof Date ? cached.subscriptionVerifiedAt : cached.subscriptionVerifiedAt ? new Date(cached.subscriptionVerifiedAt) : null;
+  if (!expiresAt || !Number.isFinite(expiresAt.getTime()) || expiresAt.getTime() <= now.getTime() || !verifiedAt || !Number.isFinite(verifiedAt.getTime())) {
+    return false;
+  }
+  const verificationAge = now.getTime() - verifiedAt.getTime();
+  return verificationAge >= -5 * 60 * 1e3 && verificationAge <= GOOGLE_PLAY_CACHED_ENTITLEMENT_MAX_AGE_MS;
+}
+function resolveGooglePlayEntitlement(snapshot, options = {}) {
+  const lineItems = Array.isArray(snapshot.lineItems) ? snapshot.lineItems : [];
+  const matchingItem = options.expectedProductId ? lineItems.find((item) => item.productId === options.expectedProductId) : void 0;
+  const lineItem = matchingItem ?? lineItems[0];
+  const productId = typeof lineItem?.productId === "string" ? lineItem.productId : options.expectedProductId ?? null;
+  const tier = googlePlayTierForProductId(productId);
+  const rawExpiry = lineItem?.expiryTime;
+  const parsedExpiry = typeof rawExpiry === "string" ? new Date(rawExpiry) : null;
+  const expiresAt = parsedExpiry && Number.isFinite(parsedExpiry.getTime()) ? parsedExpiry : null;
+  const now = options.now ?? /* @__PURE__ */ new Date();
+  const state = typeof snapshot.subscriptionState === "string" ? snapshot.subscriptionState : "";
+  const hasNotExpired = expiresAt !== null && expiresAt.getTime() > now.getTime();
+  let status;
+  switch (state) {
+    case "SUBSCRIPTION_STATE_ACTIVE":
+      status = "active";
+      break;
+    case "SUBSCRIPTION_STATE_CANCELED":
+      status = "cancelled";
+      break;
+    case "SUBSCRIPTION_STATE_IN_GRACE_PERIOD":
+      status = "in_grace_period";
+      break;
+    case "SUBSCRIPTION_STATE_PENDING":
+      status = "pending";
+      break;
+    case "SUBSCRIPTION_STATE_ON_HOLD":
+      status = "on_hold";
+      break;
+    case "SUBSCRIPTION_STATE_PAUSED":
+      status = "paused";
+      break;
+    case "SUBSCRIPTION_STATE_EXPIRED":
+    case "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED":
+      status = "expired";
+      break;
+    default:
+      status = "inactive";
+  }
+  if (options.forceRevoke) {
+    status = "revoked";
+  } else if ((status === "active" || status === "cancelled" || status === "in_grace_period") && !hasNotExpired) {
+    status = "expired";
+  }
+  const grantsAccess = !options.forceRevoke && Boolean(
+    tier && hasNotExpired && ["active", "cancelled", "in_grace_period"].includes(status)
+  );
+  const rawStartDate = snapshot.startTime;
+  const parsedStartDate = typeof rawStartDate === "string" ? new Date(rawStartDate) : null;
+  const startDate = parsedStartDate && Number.isFinite(parsedStartDate.getTime()) ? parsedStartDate : null;
+  const rawTransactionId = lineItem?.latestSuccessfulOrderId ?? snapshot.latestOrderId;
+  const transactionId = typeof rawTransactionId === "string" ? rawTransactionId : null;
+  const rawAutoRenew = lineItem?.autoRenewingPlan?.autoRenewEnabled;
+  const autoRenew = typeof rawAutoRenew === "boolean" ? rawAutoRenew : null;
+  return {
+    status,
+    tier: grantsAccess ? tier : "free",
+    productId,
+    expiresAt,
+    startDate,
+    transactionId,
+    autoRenew,
+    grantsAccess
+  };
+}
+
+// server/subscription-access.ts
+function paidSubscriptionTier(user, now = /* @__PURE__ */ new Date()) {
+  if (user.accountType === "admin") return "admin";
+  const expiry = user.subscriptionExpiresAt instanceof Date ? user.subscriptionExpiresAt : user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+  const unexpired = expiry !== null && Number.isFinite(expiry.getTime()) && expiry > now;
+  const status = user.subscriptionStatus ?? "";
+  if (user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store") {
+    const plan = subscriptionPlanForProductId(user.subscriptionProductId ?? user.googlePlayProductId);
+    if (!plan || !unexpired || !["active", "cancelled", "in_grace_period"].includes(status)) return "free";
+    if (user.subscriptionPlatform === "google_play") {
+      if (!canUseCachedGooglePlayEntitlement(user, now)) return "free";
+    } else if (!user.appleOriginalTransactionId || !user.subscriptionVerifiedAt) {
+      return "free";
+    }
+    return plan.planType;
+  }
+  if (!user.stripeSubscriptionId || expiry && !unexpired) return "free";
+  if (status === "trialing" && !unexpired) return "free";
+  if (status !== "active" && status !== "trialing" && !(status === "cancelled" && unexpired)) return "free";
+  return ["basic", "premium", "family"].includes(user.subscriptionTier ?? "") ? user.subscriptionTier : "free";
+}
+function requiredSubscriptionTierForPath(path4) {
+  if (/^\/family-members(?:\/|$)/.test(path4)) return "family";
+  if (/^\/(?:meal-plans|shopping-lists|grocery-stores|medications|refill-orders|academic-classes|assignments|study-sessions|study-groups|campus-locations|campus-transport|class-schedules)(?:\/|$)/.test(path4)) return "premium";
+  return null;
+}
+function createSubscriptionFeatureGuard(getUser) {
+  return async (req, res, next) => {
+    const required = requiredSubscriptionTierForPath(req.path);
+    if (!required) return next();
+    if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+    try {
+      const user = await getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
+      const tier = paidSubscriptionTier(user);
+      if (tier === "admin" || tier === "family" || required === "premium" && tier === "premium") {
+        req.session.user = {
+          ...req.session.user,
+          subscriptionTier: user.subscriptionTier,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionExpiresAt: user.subscriptionExpiresAt
+        };
+        return next();
+      }
+      return res.status(403).json({
+        message: `An active ${required === "family" ? "Family" : "Premium or Family"} subscription is required.`,
+        requiredPlan: required,
+        subscriptionRequired: true
+      });
+    } catch {
+      return res.status(503).json({ message: "Subscription access could not be checked. Please try again." });
+    }
+  };
+}
+
+// server/subscription-response.ts
+function validDate(value) {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null;
+  }
+  if (typeof value !== "string") return null;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : null;
+}
+function buildSubscriptionResponse(user, now = /* @__PURE__ */ new Date()) {
+  const createdAt = validDate(user.createdAt);
+  const trialEndDate = createdAt ? new Date(createdAt) : null;
+  trialEndDate?.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
+  const trialDaysLeft = trialEndDate && trialEndDate.getTime() > now.getTime() ? Math.ceil(
+    (trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1e3)
+  ) : 0;
+  const isStoreSubscription = user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store";
+  const verifiedPaidTier = paidSubscriptionTier(user, now);
+  const isActiveSubscription = verifiedPaidTier !== "free" && user.subscriptionStatus !== "trialing";
+  const hasVerifiedPaidTrial = !isStoreSubscription && verifiedPaidTier !== "free" && user.subscriptionStatus === "trialing";
+  const hasTrialAccess = !isStoreSubscription && (hasVerifiedPaidTrial || trialDaysLeft > 0);
+  const isAccountTrial = hasTrialAccess && verifiedPaidTier === "free";
+  const storeProduct = isStoreSubscription ? subscriptionPlanForProductId(
+    user.googlePlayProductId ?? user.subscriptionProductId
+  ) : null;
+  const displayPlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : storeProduct?.planType ?? "free";
+  const featurePlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : "free";
+  const isPremiumPlan = featurePlan === "premium" || featurePlan === "family";
+  const isFamilyPlan = featurePlan === "family";
+  const status = isStoreSubscription ? user.subscriptionStatus ?? "inactive" : isActiveSubscription ? user.subscriptionStatus ?? "active" : hasTrialAccess ? "trialing" : "expired";
+  const paidExpiry = validDate(user.subscriptionExpiresAt);
+  const paidStart = validDate(user.subscriptionStartDate);
+  return {
+    id: user.id,
+    planType: displayPlan,
+    status,
+    billingCycle: "monthly",
+    subscriptionPlatform: user.subscriptionPlatform || null,
+    isAccountTrial,
+    currentPeriodStart: paidStart ?? createdAt,
+    currentPeriodEnd: isStoreSubscription ? paidExpiry : verifiedPaidTier !== "free" ? paidExpiry : isAccountTrial ? trialEndDate : null,
+    trialDaysLeft: isAccountTrial && trialDaysLeft > 0 ? trialDaysLeft : null,
+    autoRenew: user.subscriptionAutoRenew ?? null,
+    usageStats: {
+      tasks: {
+        count: 0,
+        limit: isFamilyPlan ? null : featurePlan === "premium" ? 1e3 : 50
+      },
+      caregivers: {
+        count: 0,
+        limit: isFamilyPlan || featurePlan === "premium" ? 5 : 1
+      },
+      dataExports: { count: 0, limit: featurePlan === "free" ? 0 : null }
+    },
+    features: {
+      taskManagement: featurePlan !== "free" || hasTrialAccess,
+      moodTracking: featurePlan !== "free" || hasTrialAccess,
+      financialTracking: featurePlan !== "free" || hasTrialAccess,
+      basicReminders: featurePlan !== "free" || hasTrialAccess,
+      wearableDevices: isPremiumPlan,
+      mealPlanning: isPremiumPlan,
+      medicationManagement: isPremiumPlan,
+      advancedAnalytics: isPremiumPlan,
+      voiceCommands: isPremiumPlan,
+      academicPlanner: isPremiumPlan,
+      prioritySupport: isPremiumPlan,
+      locationSafety: isFamilyPlan,
+      familyDashboard: isFamilyPlan,
+      multiUserAccounts: isFamilyPlan,
+      emergencyProtocols: isFamilyPlan,
+      customReporting: isFamilyPlan,
+      unlimitedCaregivers: isFamilyPlan
+    }
+  };
+}
+
+// server/apple-store-server.ts
+import {
+  AppStoreServerAPIClient,
+  Environment,
+  ReceiptUtility,
+  SignedDataVerifier
+} from "@apple/app-store-server-library";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
+// server/apple-subscription-entitlement.ts
+import {
+  Status
+} from "@apple/app-store-server-library";
+function dateFromMilliseconds(value) {
+  const milliseconds = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
+  if (!Number.isFinite(milliseconds) || milliseconds <= 0) return null;
+  const date2 = new Date(milliseconds);
+  return Number.isFinite(date2.getTime()) ? date2 : null;
+}
+function autoRenewValue(value) {
+  if (value === 1 || value === "1") return true;
+  if (value === 0 || value === "0") return false;
+  return null;
+}
+function resolveCandidate(candidate2, now) {
+  const transaction = candidate2.transaction;
+  const productId = typeof transaction.productId === "string" ? transaction.productId : null;
+  const plan = subscriptionPlanForProductId(productId);
+  if (!plan || !productId) return null;
+  const renewalInfo = candidate2.renewalInfo;
+  const transactionExpiry = dateFromMilliseconds(transaction.expiresDate);
+  const graceExpiry = dateFromMilliseconds(renewalInfo?.gracePeriodExpiresDate);
+  const statusCode = Number(candidate2.status);
+  const autoRenew = autoRenewValue(renewalInfo?.autoRenewStatus);
+  const isRevoked = statusCode === Status.REVOKED || transaction.revocationDate != null;
+  let status;
+  switch (statusCode) {
+    case Status.ACTIVE:
+      status = autoRenew === false ? "cancelled" : "active";
+      break;
+    case Status.EXPIRED:
+      status = "expired";
+      break;
+    case Status.BILLING_RETRY:
+      status = "past_due";
+      break;
+    case Status.BILLING_GRACE_PERIOD:
+      status = "in_grace_period";
+      break;
+    case Status.REVOKED:
+      status = "revoked";
+      break;
+    default:
+      status = "inactive";
+  }
+  if (isRevoked) {
+    status = "revoked";
+  } else if ((status === "active" || status === "cancelled") && (!transactionExpiry || transactionExpiry.getTime() <= now.getTime())) {
+    status = "expired";
+  } else if (status === "in_grace_period" && (!graceExpiry || graceExpiry.getTime() <= now.getTime())) {
+    status = "past_due";
+  }
+  const expiresAt = status === "in_grace_period" && graceExpiry && (!transactionExpiry || graceExpiry.getTime() > transactionExpiry.getTime()) ? graceExpiry : transactionExpiry;
+  const grantsAccess = !isRevoked && ((status === "active" || status === "cancelled") && Boolean(transactionExpiry && transactionExpiry.getTime() > now.getTime()) || status === "in_grace_period" && Boolean(expiresAt && expiresAt.getTime() > now.getTime()));
+  return {
+    status,
+    tier: grantsAccess ? plan.planType : "free",
+    productId,
+    transactionId: typeof transaction.transactionId === "string" ? transaction.transactionId : null,
+    originalTransactionId: typeof transaction.originalTransactionId === "string" ? transaction.originalTransactionId : null,
+    startDate: dateFromMilliseconds(transaction.originalPurchaseDate) ?? dateFromMilliseconds(transaction.purchaseDate),
+    expiresAt,
+    autoRenew,
+    grantsAccess
+  };
+}
+function resolveAppleSubscriptionEntitlement(candidates, now = /* @__PURE__ */ new Date()) {
+  const resolved = candidates.map((candidate2) => resolveCandidate(candidate2, now)).filter(
+    (candidate2) => Boolean(candidate2)
+  );
+  resolved.sort((left, right) => {
+    if (left.grantsAccess !== right.grantsAccess) {
+      return left.grantsAccess ? -1 : 1;
+    }
+    return (right.expiresAt?.getTime() ?? 0) - (left.expiresAt?.getTime() ?? 0);
+  });
+  return resolved[0] ?? {
+    status: "inactive",
+    tier: "free",
+    productId: null,
+    transactionId: null,
+    originalTransactionId: null,
+    startDate: null,
+    expiresAt: null,
+    autoRenew: null,
+    grantsAccess: false
+  };
+}
+
+// server/apple-store-server.ts
+var AppleStoreConfigurationError = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "AppleStoreConfigurationError";
+  }
+};
+var AppleStoreVerificationError = class extends Error {
+  constructor(message, invalidPurchase = false) {
+    super(message);
+    this.invalidPurchase = invalidPurchase;
+    this.name = "AppleStoreVerificationError";
+  }
+};
+var environments = [Environment.PRODUCTION, Environment.SANDBOX];
+var rootCertificates;
+function appleStoreConfig() {
+  const issuerId = process.env.APP_STORE_CONNECT_ISSUER_ID?.trim();
+  const keyId = process.env.APP_STORE_CONNECT_KEY_ID?.trim();
+  const privateKey = process.env.APP_STORE_CONNECT_PRIVATE_KEY?.replace(
+    /\\n/g,
+    "\n"
+  );
+  const bundleId = process.env.APPLE_BUNDLE_ID?.trim();
+  const appleAppId = Number(process.env.APPLE_APP_ID);
+  const required = [
+    ["APP_STORE_CONNECT_ISSUER_ID", issuerId],
+    ["APP_STORE_CONNECT_KEY_ID", keyId],
+    ["APP_STORE_CONNECT_PRIVATE_KEY", privateKey],
+    ["APPLE_BUNDLE_ID", bundleId],
+    ["APPLE_APP_ID", Number.isSafeInteger(appleAppId) && appleAppId > 0]
+  ];
+  const missing = required.filter(([, value]) => !value).map(([name]) => name);
+  if (missing.length > 0) {
+    throw new AppleStoreConfigurationError(
+      `Apple App Store Server API is not configured: ${missing.join(", ")}`
+    );
+  }
+  return {
+    issuerId,
+    keyId,
+    privateKey,
+    bundleId,
+    appleAppId
+  };
+}
+function appleRootCertificates() {
+  if (rootCertificates) return rootCertificates;
+  const certDirectory = process.env.APPLE_ROOT_CERTIFICATES_DIR ?? path.resolve(process.cwd(), "server", "certs");
+  rootCertificates = [
+    readFileSync(path.join(certDirectory, "AppleRootCA-G2.cer")),
+    readFileSync(path.join(certDirectory, "AppleRootCA-G3.cer"))
+  ];
+  return rootCertificates;
+}
+function apiClient(config, environment) {
+  return new AppStoreServerAPIClient(
+    config.privateKey,
+    config.keyId,
+    config.issuerId,
+    config.bundleId,
+    environment
+  );
+}
+function verifier(config, environment) {
+  return new SignedDataVerifier(
+    appleRootCertificates(),
+    true,
+    environment,
+    config.bundleId,
+    environment === Environment.SANDBOX ? void 0 : config.appleAppId
+  );
+}
+async function verifiedTransaction(transactionId, preferredEnvironment) {
+  const config = appleStoreConfig();
+  const targets = preferredEnvironment ? [
+    preferredEnvironment,
+    ...environments.filter((item) => item !== preferredEnvironment)
+  ] : [...environments];
+  const errors = [];
+  for (const environment of targets) {
+    try {
+      const response = await apiClient(config, environment).getTransactionInfo(
+        transactionId
+      );
+      if (!response.signedTransactionInfo) {
+        throw new AppleStoreVerificationError(
+          "Apple did not return a signed transaction.",
+          true
+        );
+      }
+      const transaction = await verifier(
+        config,
+        environment
+      ).verifyAndDecodeTransaction(response.signedTransactionInfo);
+      if (transaction.bundleId !== config.bundleId || transaction.transactionId !== transactionId) {
+        throw new AppleStoreVerificationError(
+          "The transaction does not belong to this app.",
+          true
+        );
+      }
+      return { transaction, environment };
+    } catch (error) {
+      errors.push(error);
+      if (error instanceof AppleStoreVerificationError && error.invalidPurchase) {
+        throw error;
+      }
+    }
+  }
+  const invalid = errors.find(
+    (error) => error instanceof AppleStoreVerificationError && error.invalidPurchase
+  );
+  if (invalid instanceof AppleStoreVerificationError) throw invalid;
+  const upstreamStatus = errors.map((error) => {
+    if (typeof error !== "object" || error === null) return null;
+    const fields = error;
+    const value = fields.httpStatusCode ?? fields.statusCode ?? fields.status;
+    const parsed = typeof value === "number" ? value : Number(value);
+    return Number.isInteger(parsed) ? parsed : null;
+  }).filter((status) => status !== null);
+  const notFoundOnly = upstreamStatus.length > 0 && upstreamStatus.every((status) => status === 400 || status === 404);
+  throw new AppleStoreVerificationError(
+    "Apple could not find or verify the transaction.",
+    notFoundOnly
+  );
+}
+async function subscriptionEntitlementForTransaction(anyTransactionId, environment, now = /* @__PURE__ */ new Date()) {
+  const config = appleStoreConfig();
+  const appleVerifier = verifier(config, environment);
+  const response = await apiClient(config, environment).getAllSubscriptionStatuses(
+    anyTransactionId
+  );
+  if (response.bundleId && response.bundleId !== config.bundleId) {
+    throw new AppleStoreVerificationError(
+      "Apple returned subscription data for a different app.",
+      true
+    );
+  }
+  const candidates = [];
+  for (const group of response.data ?? []) {
+    for (const item of group.lastTransactions ?? []) {
+      if (!item.signedTransactionInfo) continue;
+      const transaction = await appleVerifier.verifyAndDecodeTransaction(
+        item.signedTransactionInfo
+      );
+      const renewalInfo = item.signedRenewalInfo ? await appleVerifier.verifyAndDecodeRenewalInfo(
+        item.signedRenewalInfo
+      ) : null;
+      candidates.push({
+        status: item.status,
+        transaction,
+        renewalInfo
+      });
+    }
+  }
+  return resolveAppleSubscriptionEntitlement(candidates, now);
+}
+async function verifyAppleStorePurchase(options) {
+  const transactionId = options.transactionId?.trim() || new ReceiptUtility().extractTransactionIdFromAppReceipt(options.receiptData);
+  if (!transactionId) {
+    throw new AppleStoreVerificationError(
+      "The App Store receipt did not contain a transaction ID.",
+      true
+    );
+  }
+  const verified = await verifiedTransaction(transactionId);
+  if (verified.transaction.productId !== options.expectedProductId) {
+    throw new AppleStoreVerificationError(
+      "The transaction product does not match the selected subscription.",
+      true
+    );
+  }
+  const originalTransactionId = verified.transaction.originalTransactionId ?? transactionId;
+  const entitlement = await subscriptionEntitlementForTransaction(
+    originalTransactionId,
+    verified.environment
+  );
+  if (!entitlement.originalTransactionId) {
+    return {
+      ...entitlement,
+      originalTransactionId,
+      transactionId: verified.transaction.transactionId ?? transactionId
+    };
+  }
+  return entitlement;
+}
+async function refreshAppleStoreSubscription(anyTransactionId) {
+  const verified = await verifiedTransaction(anyTransactionId);
+  const originalTransactionId = verified.transaction.originalTransactionId ?? anyTransactionId;
+  const entitlement = await subscriptionEntitlementForTransaction(
+    originalTransactionId,
+    verified.environment
+  );
+  return entitlement.originalTransactionId ? entitlement : { ...entitlement, originalTransactionId };
+}
+async function restoreAppleStoreSubscription(receiptData, transactionIdHint) {
+  const transactionId = transactionIdHint?.trim() || new ReceiptUtility().extractTransactionIdFromAppReceipt(receiptData);
+  if (!transactionId) {
+    throw new AppleStoreVerificationError(
+      "The App Store receipt did not contain a transaction ID.",
+      true
+    );
+  }
+  return refreshAppleStoreSubscription(transactionId);
+}
+async function verifyAppleServerNotification(signedPayload) {
+  const config = appleStoreConfig();
+  const errors = [];
+  for (const environment of environments) {
+    try {
+      const appleVerifier = verifier(config, environment);
+      const notification = await appleVerifier.verifyAndDecodeNotification(signedPayload);
+      const notificationEnvironment = notification.data?.environment;
+      if (notificationEnvironment && notificationEnvironment !== environment) {
+        throw new AppleStoreVerificationError(
+          "Apple notification environment did not match its signature.",
+          true
+        );
+      }
+      const transaction = notification.data?.signedTransactionInfo ? await appleVerifier.verifyAndDecodeTransaction(
+        notification.data.signedTransactionInfo
+      ) : null;
+      const renewalInfo = notification.data?.signedRenewalInfo ? await appleVerifier.verifyAndDecodeRenewalInfo(
+        notification.data.signedRenewalInfo
+      ) : null;
+      return { notification, environment, transaction, renewalInfo };
+    } catch (error) {
+      errors.push(error);
+      if (error instanceof AppleStoreVerificationError && error.invalidPurchase) {
+        throw error;
+      }
+    }
+  }
+  const invalid = errors.find(
+    (error) => error instanceof AppleStoreVerificationError
+  );
+  if (invalid instanceof AppleStoreVerificationError) throw invalid;
+  throw new AppleStoreVerificationError(
+    "Apple notification signature could not be verified.",
+    true
+  );
+}
+async function refreshAppleSubscriptionFromNotification(originalTransactionId, environment) {
+  const entitlement = await subscriptionEntitlementForTransaction(
+    originalTransactionId,
+    environment
+  );
+  return entitlement.originalTransactionId ? entitlement : { ...entitlement, originalTransactionId };
+}
+
+// server/google-play-client.ts
+async function createGooglePlayPublisher() {
+  const serviceAccountJson = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountJson) {
+    throw new Error("Google Play server verification is not configured.");
+  }
+  const serviceAccount = JSON.parse(serviceAccountJson);
+  const { google } = await import("googleapis");
+  const auth = new google.auth.GoogleAuth({
+    credentials: serviceAccount,
+    scopes: ["https://www.googleapis.com/auth/androidpublisher"]
+  });
+  return google.androidpublisher({ version: "v3", auth });
+}
+async function isAuthenticatedGooglePlayPush(request) {
+  const authorization = request.headers?.authorization;
+  const audience = process.env.GOOGLE_PLAY_PUBSUB_AUDIENCE;
+  const expectedEmail = process.env.GOOGLE_PLAY_PUBSUB_SERVICE_ACCOUNT_EMAIL;
+  if (typeof authorization !== "string" || !authorization.startsWith("Bearer ") || !audience || !expectedEmail) {
+    return false;
+  }
+  try {
+    const idToken = authorization.slice("Bearer ".length).trim();
+    const { google } = await import("googleapis");
+    const oauthClient = new google.auth.OAuth2();
+    const ticket = await oauthClient.verifyIdToken({ idToken, audience });
+    const payload = ticket.getPayload();
+    return payload?.email_verified === true && payload.email === expectedEmail;
+  } catch {
+    return false;
+  }
+}
+
 // server/tasks-routines.ts
 function timeMinutes3(time2) {
   if (!time2 || !/^\d{2}:\d{2}$/.test(time2)) return void 0;
@@ -8853,7 +9523,7 @@ router.get("/accounts", async (req, res) => {
     }));
     res.json(safeAccounts);
   } catch (error) {
-    console.error("Error fetching bank accounts:", error);
+    logSanitizedError("bank.accounts.list", error);
     res.status(500).json({ message: "Failed to fetch bank accounts" });
   }
 });
@@ -8869,7 +9539,7 @@ router.get("/bank-accounts", requireAuth, async (req, res) => {
     }));
     res.json(safeAccounts);
   } catch (error) {
-    console.error("Error fetching bank accounts:", error);
+    logSanitizedError("bank.accounts.list", error);
     res.status(500).json({ message: "Failed to fetch bank accounts" });
   }
 });
@@ -8899,7 +9569,7 @@ router.get("/bill-payments", async (req, res) => {
     }));
     res.json(safePayments);
   } catch (error) {
-    console.error("Error fetching bill payments:", error);
+    logSanitizedError("bank.bill-payments.list", error);
     res.status(500).json({ message: "Failed to fetch bill payments" });
   }
 });
@@ -8940,7 +9610,7 @@ router.post("/bill-payments", requireAuth, async (req, res) => {
     });
     res.json({ message: "Bill payment setup successfully" });
   } catch (error) {
-    console.error("Error setting up bill payment:", error);
+    logSanitizedError("bank.bill-payment.setup", error);
     res.status(500).json({ message: "Failed to setup bill payment" });
   }
 });
@@ -8958,7 +9628,7 @@ router.patch("/bill-payments/:id/toggle", requireAuth, async (req, res) => {
     ));
     res.json({ message: "Auto pay setting updated" });
   } catch (error) {
-    console.error("Error toggling auto pay:", error);
+    logSanitizedError("bank.auto-pay.toggle", error);
     res.status(500).json({ message: "Failed to update auto pay setting" });
   }
 });
@@ -8967,7 +9637,7 @@ router.get("/payment-limits", requireAuth, async (req, res) => {
     const limits = await db.select().from(paymentLimits).where(eq2(paymentLimits.userId, req.user.id));
     res.json(limits);
   } catch (error) {
-    console.error("Error fetching payment limits:", error);
+    logSanitizedError("bank.payment-limits.list", error);
     res.status(500).json({ message: "Failed to fetch payment limits" });
   }
 });
@@ -8993,7 +9663,7 @@ router.post("/payment-limits", requireAuth, async (req, res) => {
     }
     res.json({ message: "Payment limit updated" });
   } catch (error) {
-    console.error("Error setting payment limit:", error);
+    logSanitizedError("bank.payment-limits.update", error);
     res.status(500).json({ message: "Failed to set payment limit" });
   }
 });
@@ -9002,7 +9672,7 @@ router.get("/payment-transactions", requireAuth, async (req, res) => {
     const transactions = await db.select().from(paymentTransactions).where(eq2(paymentTransactions.userId, req.user.id)).orderBy(paymentTransactions.initiatedAt);
     res.json(transactions);
   } catch (error) {
-    console.error("Error fetching payment transactions:", error);
+    logSanitizedError("bank.payment-transactions.list", error);
     res.status(500).json({ message: "Failed to fetch payment transactions" });
   }
 });
@@ -9052,7 +9722,7 @@ router.post("/bill-payments/:id/process", requireAuth, async (req, res) => {
       transactionId: transaction.id
     });
   } catch (error) {
-    console.error("Error processing bill payment:", error);
+    logSanitizedError("bank.payment.process", error);
     res.status(500).json({ message: "Failed to process payment" });
   }
 });
@@ -9091,7 +9761,7 @@ router.post("/connect-account", async (req, res) => {
       isActive: true
     };
     const bankAccount = await db.insert(bankAccounts).values(accountData).returning();
-    console.log("Bank account created successfully:", bankAccount[0]?.id);
+    console.log("Bank account created successfully");
     res.json({
       message: "Bank account connected successfully",
       account: {
@@ -9101,7 +9771,7 @@ router.post("/connect-account", async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error connecting bank account:", error);
+    logSanitizedError("bank.accounts.connect", error);
     res.status(500).json({ message: "Failed to connect bank account" });
   }
 });
@@ -9137,20 +9807,20 @@ router.post("/setup-autopay", async (req, res) => {
       isActive: true
     };
     const billPayment = await db.insert(billPayments).values(billPaymentData).returning();
-    console.log("Bill payment setup successfully:", billPayment[0]?.id);
+    console.log("Bill payment setup successfully");
     res.json({
       message: "Automatic bill payment setup successfully",
       payment: billPayment[0]
     });
   } catch (error) {
-    console.error("Error setting up bill payment:", error);
+    logSanitizedError("bank.bill-payment.setup", error);
     res.status(500).json({ message: "Failed to setup bill payment" });
   }
 });
 var banking_routes_default = router;
 
 // server/analytics.ts
-import { eq as eq3, sql as sql2, and as and3, gte as gte3, lte as lte3 } from "drizzle-orm";
+import { eq as eq3, sql as sql3, and as and3, gte as gte3, lte as lte3 } from "drizzle-orm";
 var PaymentAnalytics = class {
   // Track payment method selection
   static async trackMethodSelection(userId, billId, paymentMethod) {
@@ -9197,7 +9867,7 @@ var PaymentAnalytics = class {
     const report = await db.select({
       eventType: paymentAnalytics.eventType,
       paymentMethod: paymentAnalytics.paymentMethod,
-      totalEvents: sql2`count(*)`
+      totalEvents: sql3`count(*)`
     }).from(paymentAnalytics).where(conditions.length ? and3(...conditions) : void 0).groupBy(
       paymentAnalytics.eventType,
       paymentAnalytics.paymentMethod
@@ -9208,7 +9878,7 @@ var PaymentAnalytics = class {
   static async getUserPaymentPreferences(userId) {
     const preferences = await db.select({
       paymentMethod: paymentAnalytics.paymentMethod,
-      count: sql2`count(*)`
+      count: sql3`count(*)`
     }).from(paymentAnalytics).where(and3(
       eq3(paymentAnalytics.userId, userId),
       eq3(paymentAnalytics.eventType, "method_selected")
@@ -9353,7 +10023,7 @@ function registerBillPaymentRoutes(app2) {
       });
       res.json(updatedBill);
     } catch (error) {
-      console.error("Error updating payment link:", error);
+      logSanitizedError("bills.payment-link.update", error);
       res.status(400).json({
         message: "Failed to save payment link",
         error: error.message
@@ -9565,7 +10235,7 @@ function registerUtilityPortalRoutes(app2, pool2) {
       authenticated.utilityConsumerId = Number(sessionResult.rows[0].consumer_id);
       return next();
     } catch (error) {
-      console.error("Utility portal session check failed.", error);
+      logSanitizedError("utility.session.check", error);
       return response.status(500).json({ message: "The utility portal is temporarily unavailable." });
     }
   };
@@ -9619,7 +10289,7 @@ function registerUtilityPortalRoutes(app2, pool2) {
       });
       return response.json({ success: true });
     } catch (error) {
-      console.error("Utility portal sign-in failed.", error);
+      logSanitizedError("utility.sign-in", error);
       return response.status(500).json({ message: "The utility portal is temporarily unavailable." });
     }
   });
@@ -9632,7 +10302,7 @@ function registerUtilityPortalRoutes(app2, pool2) {
       response.clearCookie(COOKIE_NAME, { path: COOKIE_PATH, sameSite: "lax" });
       return response.json({ success: true });
     } catch (error) {
-      console.error("Utility portal sign-out failed.", error);
+      logSanitizedError("utility.sign-out", error);
       return response.status(500).json({ message: "Unable to sign out right now." });
     }
   });
@@ -9645,7 +10315,7 @@ function registerUtilityPortalRoutes(app2, pool2) {
       }
       return response.json(dashboard);
     } catch (error) {
-      console.error("Utility portal dashboard load failed.", error);
+      logSanitizedError("utility.dashboard.load", error);
       return response.status(500).json({ message: "Unable to load utility account details." });
     }
   });
@@ -9668,7 +10338,7 @@ async function initializeComprehensiveDemo() {
         name: "Demo Administrator",
         email: "admin@skillbridge.com"
       });
-      console.log("\u{1F511} Created admin user: Demo Administrator (username: admin, password: demo2025)");
+      console.log("Demo administrator account initialized");
     }
     if (existingUser) {
       console.log("\u{1F4DD} Demo data already exists, skipping initialization");
@@ -9688,8 +10358,7 @@ async function initializeComprehensiveDemo() {
       name: "Demo Administrator",
       email: "admin@skillbridge.com"
     });
-    console.log("\u{1F464} Created demo user: Alex Chen");
-    console.log("\u{1F511} Created admin user: Demo Administrator (username: admin, password: demo2025)");
+    console.log("Demo account data initialized");
     await createDemoTasks(user.id);
     await createDemoFinances(user.id);
     await createDemoMoodEntries(user.id);
@@ -10299,27 +10968,51 @@ function configureForProduction() {
 }
 
 // server/routes.ts
-function logApiRouteError(route, error) {
-  const errorFields = typeof error === "object" && error !== null ? error : void 0;
-  const causeFields = typeof errorFields?.cause === "object" && errorFields.cause !== null ? errorFields.cause : void 0;
-  const readString = (fields, key) => typeof fields?.[key] === "string" ? fields[key] : void 0;
-  const rawMessage = readString(errorFields, "message");
-  const causeMessage = readString(causeFields, "message");
-  const message = causeMessage || (rawMessage && !/failed query:|params:/i.test(rawMessage) ? rawMessage : "Database/API request failed");
-  const details = {
-    name: readString(errorFields, "name"),
-    message,
-    databaseCode: readString(errorFields, "code") || readString(causeFields, "code"),
-    table: readString(errorFields, "table") || readString(causeFields, "table"),
-    column: readString(errorFields, "column") || readString(causeFields, "column"),
-    constraint: readString(errorFields, "constraint") || readString(causeFields, "constraint"),
-    cause: causeFields ? {
-      name: readString(causeFields, "name"),
-      databaseCode: readString(causeFields, "code")
-    } : void 0,
-    stack: error instanceof Error ? error.stack : readString(errorFields, "stack")
+function hasCurrentSubscriptionAccess(user, now = /* @__PURE__ */ new Date()) {
+  if (!user) return false;
+  const status = user.subscriptionStatus ?? "inactive";
+  const expiresAt = user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+  const hasFutureExpiry = expiresAt !== null && Number.isFinite(expiresAt.getTime()) && expiresAt.getTime() > now.getTime();
+  if (user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store") {
+    return ["active", "cancelled", "in_grace_period"].includes(status) && hasFutureExpiry;
+  }
+  if (status === "active") {
+    return !expiresAt || hasFutureExpiry;
+  }
+  if (status === "trialing") {
+    return Boolean(user.stripeSubscriptionId) && (!expiresAt || hasFutureExpiry);
+  }
+  return status === "cancelled" && hasFutureExpiry;
+}
+function storeSubscriptionUpdate(platform, entitlement, providerFields = {}) {
+  return {
+    subscriptionTier: entitlement.grantsAccess ? entitlement.tier : "free",
+    subscriptionStatus: entitlement.status,
+    subscriptionExpiresAt: entitlement.expiresAt,
+    subscriptionStartDate: entitlement.startDate,
+    subscriptionProductId: entitlement.productId,
+    subscriptionTransactionId: entitlement.transactionId,
+    subscriptionAutoRenew: entitlement.autoRenew,
+    subscriptionVerifiedAt: /* @__PURE__ */ new Date(),
+    subscriptionPlatform: platform,
+    ...providerFields
   };
-  console.error(`[${route}] ${JSON.stringify(details)}`);
+}
+function googlePlaySubscriptionResponse(user, entitlement, billingCycle) {
+  return {
+    id: user.id,
+    planType: entitlement.tier,
+    status: entitlement.status,
+    billingCycle,
+    subscriptionPlatform: "google_play",
+    currentPeriodStart: entitlement.startDate ?? user.subscriptionStartDate ?? user.createdAt,
+    currentPeriodEnd: entitlement.expiresAt,
+    trialDaysLeft: null,
+    autoRenew: entitlement.autoRenew
+  };
+}
+function logApiRouteError(_route, error) {
+  logSanitizedError("api.route", error);
 }
 function isValidCalendarDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -10525,7 +11218,7 @@ async function registerRoutes(app2) {
   `).then(() => {
     console.log("\u2705 PostgreSQL session table ready");
   }).catch((err) => {
-    console.error("\u26A0\uFE0F Session table setup error:", err.message);
+    logSanitizedError("auth.session-table.setup", err);
   });
   const sessionStore = new PgSession({
     pool: pgPool,
@@ -10573,11 +11266,11 @@ async function registerRoutes(app2) {
     const authHeader = req.get("Authorization");
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const sessionToken = authHeader.substring(7);
-      console.log("\u{1F511} Authorization header found, attempting token auth with:", sessionToken.substring(0, 10) + "...");
+      console.log("Authorization bearer session received");
       await new Promise((resolve) => {
         sessionStore.get(sessionToken, (err, sessionData) => {
           if (err) {
-            console.log("\u274C Session store error:", err);
+            logSanitizedError("auth.session-store.read", err);
             return resolve();
           }
           if (!sessionData || !sessionData.userId) {
@@ -10603,13 +11296,14 @@ async function registerRoutes(app2) {
               writable: true
             }
           });
-          console.log("\u2705 Session restored from Authorization token for user:", sessionData.user?.username);
+          console.log("Authorization session restored");
           resolve();
         });
       });
     }
     next();
   });
+  app2.use("/api", createSubscriptionFeatureGuard((id) => storage.getUserById(id)));
   const requireAuth2 = async (req, res, next) => {
     if (req.auth?.userId && req.auth?.user) {
       req.user = req.auth.user;
@@ -10632,7 +11326,7 @@ async function registerRoutes(app2) {
           req.session.userId = sessionData.userId;
           req.session.user = sessionData.user;
           req.user = sessionData.user;
-          console.log("\u2705 Authenticated via header token:", sessionData.user.username);
+          console.log("Authenticated via authorization header");
           next();
           resolve();
         });
@@ -10707,7 +11401,7 @@ async function registerRoutes(app2) {
       }
       return res.json({ message: "Password reset successfully. You can now sign in." });
     } catch (error) {
-      console.error("Password reset failed:", error);
+      logSanitizedError("auth.password-reset", error);
       return res.status(500).json({ message: "Unable to reset your password right now. Please request a new link." });
     }
   });
@@ -10750,7 +11444,7 @@ async function registerRoutes(app2) {
         ...sessionToken ? { sessionToken } : {}
       });
     } catch (error) {
-      console.error("Registration error:", error);
+      logSanitizedError("auth.registration", error);
       res.status(500).json({ message: "Registration failed" });
     }
   });
@@ -10763,9 +11457,9 @@ async function registerRoutes(app2) {
         return res.status(400).json({ message: "Username and password are required" });
       }
       const user = await storage.getUserByUsername(username);
-      console.log("\u{1F464} User lookup result:", user ? `Found: ${user.username}` : "Not found");
+      console.log("Login account lookup completed");
       if (!user || !await verifyAndUpgradePassword(user, password)) {
-        console.log("\u274C Invalid credentials for:", username);
+        console.log("Login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       if (!nativeClient) {
@@ -10774,7 +11468,7 @@ async function registerRoutes(app2) {
         await new Promise((resolve, reject) => {
           req.session.save((err) => {
             if (err) {
-              console.log("\u274C Session save error:", err);
+              logSanitizedError("auth.session-save", err);
               reject(err);
             } else {
               console.log("\u2705 Session saved successfully");
@@ -10784,7 +11478,7 @@ async function registerRoutes(app2) {
         });
       }
       const sessionToken = nativeClient ? await createMobileSessionToken(user, req.session.cookie) : void 0;
-      console.log(`\u2705 User ${user.username} logged in successfully`);
+      console.log("Login succeeded");
       const response = {
         message: "Login successful",
         user: {
@@ -10798,7 +11492,7 @@ async function registerRoutes(app2) {
       };
       res.json(response);
     } catch (error) {
-      console.error("\u274C Login error:", error);
+      logSanitizedError("auth.login", error);
       res.status(500).json({ message: "Login failed", error: error.message });
     }
   });
@@ -10806,15 +11500,15 @@ async function registerRoutes(app2) {
     try {
       const { username, password } = req.body;
       const nativeClient = isNativeClientRequest(req);
-      console.log("Demo login attempt:", { username });
+      console.log("Demo login attempt");
       const user = await storage.getUserByUsername(username);
-      console.log("User found:", user ? { id: user.id, username: user.username } : "No user found");
+      console.log("Demo login account lookup completed");
       if (!user) {
-        console.log("No user found for username:", username);
+        console.log("Demo login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       if (!await verifyAndUpgradePassword(user, password)) {
-        console.log("Password mismatch for user:", username);
+        console.log("Demo login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       if (!nativeClient) {
@@ -10842,7 +11536,7 @@ async function registerRoutes(app2) {
         ...sessionToken ? { sessionToken } : {}
       });
     } catch (error) {
-      console.error("Demo login error:", error);
+      logSanitizedError("auth.demo-login", error);
       res.status(500).json({ message: "Login failed" });
     }
   });
@@ -10853,7 +11547,7 @@ async function registerRoutes(app2) {
       if (mobileSessionToken) {
         return sessionStore.destroy(mobileSessionToken, (error) => {
           if (error) {
-            console.error("Mobile session destruction error:", error);
+            logSanitizedError("auth.mobile-session.destroy", error);
             return res.status(500).json({ message: "Logout failed" });
           }
           res.json({ message: "Logout successful" });
@@ -10861,13 +11555,13 @@ async function registerRoutes(app2) {
       }
       req.session.destroy((err) => {
         if (err) {
-          console.error("Session destruction error:", err);
+          logSanitizedError("auth.session.destroy", err);
           return res.status(500).json({ message: "Logout failed" });
         }
         res.json({ message: "Logout successful" });
       });
     } catch (error) {
-      console.error("Logout error:", error);
+      logSanitizedError("auth.logout", error);
       res.status(500).json({ message: "Logout failed" });
     }
   });
@@ -10877,32 +11571,25 @@ async function registerRoutes(app2) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       const userId = req.session.userId;
-      console.log(`\u{1F5D1}\uFE0F Deleting account for user ID: ${userId}`);
+      console.log("Account deletion started");
       await storage.deleteUserAccount(userId);
       req.session.destroy((err) => {
         if (err) {
-          console.error("Session destruction error after account deletion:", err);
+          logSanitizedError("auth.session.destroy-after-account-deletion", err);
         }
       });
-      console.log(`\u2705 Account deleted successfully for user ID: ${userId}`);
+      console.log("Account deletion completed");
       res.json({ message: "Account deleted successfully" });
     } catch (error) {
-      console.error("Account deletion error:", error);
+      logSanitizedError("auth.account-deletion", error);
       res.status(500).json({ message: "Failed to delete account" });
     }
   });
   app2.get("/api/user", async (req, res) => {
-    console.log("\u{1F50D} Checking session for user authentication");
-    console.log("Session ID:", req.sessionID);
-    console.log("User-Agent:", req.headers["user-agent"]?.substring(0, 100));
-    console.log("Cookies:", req.headers.cookie);
-    console.log("Session user ID:", req.session.userId);
     if (!req.session.userId || !req.session.user) {
-      console.log("\u274C No authenticated user found in session");
       const isMobile = /Mobile|Android|iPhone|iPad/.test(req.headers["user-agent"] || "");
-      console.log("\u{1F4F1} Mobile device detected:", isMobile);
       if (req.session.userId && !req.session.user) {
-        console.log("\u{1F527} Attempting to rebuild user session from userId:", req.session.userId);
+        console.log("Attempting to restore authenticated session");
         try {
           const user = await storage.getUserById(req.session.userId);
           if (user) {
@@ -10910,7 +11597,7 @@ async function registerRoutes(app2) {
             await new Promise((resolve, reject) => {
               req.session.save((err) => {
                 if (err) {
-                  console.error("Session save error:", err);
+                  logSanitizedError("auth.session-save", err);
                   reject(err);
                 } else {
                   console.log("\u2705 Session rebuilt successfully");
@@ -10930,13 +11617,12 @@ async function registerRoutes(app2) {
             return res.json(refreshedResponse);
           }
         } catch (error) {
-          console.error("Error rebuilding session:", error);
+          logSanitizedError("auth.session-rebuild", error);
         }
       }
       return res.status(401).json({ message: "Authentication required", mobile: isMobile });
     }
     const sessionUser = req.session.user;
-    console.log("\u2705 Authenticated user found:", sessionUser.username);
     try {
       const freshUser = await storage.getUserById(sessionUser.id);
       if (freshUser) {
@@ -10952,7 +11638,7 @@ async function registerRoutes(app2) {
         return res.json(userResponse2);
       }
     } catch (error) {
-      console.error("Error refreshing current user data and activity streak:", error);
+      logSanitizedError("auth.current-user.refresh", error);
       return res.status(503).json({
         message: "Unable to refresh current user data. Please try again."
       });
@@ -11203,12 +11889,7 @@ async function registerRoutes(app2) {
       }
       res.json(task);
     } catch (error) {
-      console.error("Error updating task completion:", {
-        taskId: req.params.id,
-        userId: req.session.userId,
-        completionDate: req.body?.date,
-        error
-      });
+      logSanitizedError("tasks.completion.update", error);
       res.status(500).json({ message: "Failed to update task" });
     }
   });
@@ -11234,7 +11915,7 @@ async function registerRoutes(app2) {
       const bill = await storage.createBill(data);
       res.json(bill);
     } catch (error) {
-      console.error("Failed to create bill:", error);
+      logSanitizedError("finance.bills.create", error);
       res.status(400).json({ message: "Invalid bill data" });
     }
   });
@@ -11249,7 +11930,7 @@ async function registerRoutes(app2) {
       const bill = await storage.updateBill(billId, data);
       res.json(bill);
     } catch (error) {
-      console.error("Failed to update bill:", error);
+      logSanitizedError("finance.bills.update", error);
       res.status(400).json({ message: "Invalid bill data" });
     }
   });
@@ -11275,7 +11956,7 @@ async function registerRoutes(app2) {
       }
       res.json(bill);
     } catch (error) {
-      console.error("Failed to update payment link:", error);
+      logSanitizedError("finance.bills.payment-link.update", error);
       res.status(500).json({ message: "Failed to update payment link" });
     }
   });
@@ -11288,7 +11969,7 @@ async function registerRoutes(app2) {
       const accounts = await storage.getBankAccountsByUser(user.id);
       res.json(accounts);
     } catch (error) {
-      console.error("Failed to fetch bank accounts:", error);
+      logSanitizedError("bank.accounts.list", error);
       res.status(500).json({ message: "Failed to fetch bank accounts" });
     }
   });
@@ -11310,7 +11991,7 @@ async function registerRoutes(app2) {
       const account = await storage.createBankAccount(data);
       res.json(account);
     } catch (error) {
-      console.error("Failed to create bank account:", error);
+      logSanitizedError("bank.accounts.create", error);
       res.status(400).json({ message: "Invalid bank account data" });
     }
   });
@@ -11334,7 +12015,7 @@ async function registerRoutes(app2) {
       }
       res.json(account);
     } catch (error) {
-      console.error("Failed to update bank account:", error);
+      logSanitizedError("bank.accounts.update", error);
       res.status(500).json({ message: "Failed to update bank account" });
     }
   });
@@ -11347,7 +12028,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Bank account deleted successfully" });
     } catch (error) {
-      console.error("Failed to delete bank account:", error);
+      logSanitizedError("bank.accounts.delete", error);
       res.status(500).json({ message: "Failed to delete bank account" });
     }
   });
@@ -11392,7 +12073,7 @@ async function registerRoutes(app2) {
       const entry = await storage.createMoodEntry(data);
       res.json(entry);
     } catch (error) {
-      console.error("Failed to create mood entry:", error);
+      logSanitizedError("health.mood.create", error);
       res.status(400).json({ message: "Invalid mood entry data" });
     }
   });
@@ -11441,7 +12122,7 @@ async function registerRoutes(app2) {
       const legacyCaregivers = await storage.getCaregiversByUser(userId);
       res.json(legacyCaregivers);
     } catch (error) {
-      console.error("Error fetching caregivers:", error);
+      logSanitizedError("caregivers.list", error);
       res.status(500).json({ message: "Failed to fetch caregivers" });
     }
   });
@@ -11495,7 +12176,7 @@ async function registerRoutes(app2) {
         isActive: true
       });
     } catch (error) {
-      console.error("Error adding caregiver:", error);
+      logSanitizedError("caregivers.add", error);
       res.status(400).json({ message: "Invalid caregiver data" });
     }
   });
@@ -11504,7 +12185,7 @@ async function registerRoutes(app2) {
       const messages2 = await storage.getMessagesByUser(req.user.id);
       res.json(messages2);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      logSanitizedError("messages.list", error);
       res.status(500).json({ message: "Failed to fetch messages" });
     }
   });
@@ -11533,7 +12214,7 @@ async function registerRoutes(app2) {
       const message = await storage.createMessage(data);
       res.json(message);
     } catch (error) {
-      console.error("Error creating message:", error);
+      logSanitizedError("messages.create", error);
       res.status(400).json({ message: "Invalid message data" });
     }
   });
@@ -11556,7 +12237,7 @@ async function registerRoutes(app2) {
       );
       res.json(messages2);
     } catch (error) {
-      console.error("Error fetching caregiver messages:", error);
+      logSanitizedError("caregivers.messages.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver messages" });
     }
   });
@@ -12487,7 +13168,7 @@ async function registerRoutes(app2) {
       const resources = await storage.getEmergencyResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
-      console.error("Error fetching emergency resources:", error);
+      logSanitizedError("health.emergency-resources.list", error);
       res.status(500).json({ message: "Failed to fetch emergency resources" });
     }
   });
@@ -12498,7 +13179,7 @@ async function registerRoutes(app2) {
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
-      console.error("Error creating emergency resource:", error);
+      logSanitizedError("health.emergency-resources.create", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
       }
@@ -12534,7 +13215,7 @@ async function registerRoutes(app2) {
       }
       res.json(resource);
     } catch (error) {
-      console.error("Error updating emergency resource:", error);
+      logSanitizedError("health.emergency-resources.update", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
       }
@@ -12562,20 +13243,17 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Emergency resource deleted successfully" });
     } catch (error) {
-      console.error("Error deleting emergency resource:", error);
+      logSanitizedError("health.emergency-resources.delete", error);
       res.status(500).json({ message: "Failed to delete emergency resource" });
     }
   });
   app2.get("/api/caregiver-access", async (req, res) => {
     try {
-      console.log("\u{1F50D} Checking caregiver access for session:", req.session?.userId);
-      console.log("\u{1F50D} Session user:", req.session?.user?.username);
       if (!req.session?.userId || !req.session?.user) {
         console.log("\u274C No valid session found");
         return res.status(401).json({ message: "User not authenticated" });
       }
       const currentUser = req.session.user;
-      console.log("\u2705 Caregiver access check for user:", currentUser.username);
       const isCaregiver = true;
       res.json({
         isCaregiver,
@@ -12586,7 +13264,7 @@ async function registerRoutes(app2) {
         message: "Soft launch testing mode - caregiver dashboard access granted for demo purposes"
       });
     } catch (error) {
-      console.error("Error checking caregiver access:", error);
+      logSanitizedError("care.access.check", error);
       res.status(500).json({ message: "Failed to verify caregiver access" });
     }
   });
@@ -12706,7 +13384,7 @@ async function registerRoutes(app2) {
         } : {}
       });
     } catch (error) {
-      console.error("Error in chat endpoint:", error);
+      logSanitizedError("ai.chat.route", error);
       if (error?.message === "AdaptAI caregiver access denied") {
         return res.status(403).json({
           error: "AdaptAI is not authorized to access that care recipient.",
@@ -12749,7 +13427,7 @@ async function registerRoutes(app2) {
             getActivityDateTimeZone(req)
           );
         } catch (streakError) {
-          console.error("Error updating activity streak after AI task completion:", streakError);
+          logSanitizedError("ai.action.streak-refresh", streakError);
         }
       }
       return res.json(result);
@@ -12760,7 +13438,7 @@ async function registerRoutes(app2) {
           code: error.code
         });
       }
-      console.error("Error executing AdaptAI action:", error);
+      logSanitizedError("ai.action.execute", error);
       return res.status(500).json({
         error: "I couldn't complete that task action right now.",
         code: "action_execution_failed"
@@ -12833,7 +13511,7 @@ async function registerRoutes(app2) {
       ];
       res.json(suggestions);
     } catch (error) {
-      console.error("Error getting chat suggestions:", error);
+      logSanitizedError("ai.chat.suggestions", error);
       res.status(500).json({ error: "Failed to get suggestions" });
     }
   });
@@ -12844,7 +13522,7 @@ async function registerRoutes(app2) {
       const permissions = await storage.getCaregiverPermissions(userId, caregiverId);
       res.json(permissions);
     } catch (error) {
-      console.error("Error fetching caregiver permissions:", error);
+      logSanitizedError("care.permissions.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver permissions" });
     }
   });
@@ -12853,7 +13531,7 @@ async function registerRoutes(app2) {
       const permission = await storage.setCaregiverPermission(req.body);
       res.json(permission);
     } catch (error) {
-      console.error("Error setting caregiver permission:", error);
+      logSanitizedError("care.permissions.set", error);
       res.status(400).json({ message: "Failed to set caregiver permission" });
     }
   });
@@ -12868,7 +13546,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Permission removed successfully" });
     } catch (error) {
-      console.error("Error removing caregiver permission:", error);
+      logSanitizedError("care.permissions.remove", error);
       res.status(500).json({ message: "Failed to remove caregiver permission" });
     }
   });
@@ -12878,7 +13556,7 @@ async function registerRoutes(app2) {
       const settings = await storage.getLockedUserSettings(userId);
       res.json(settings);
     } catch (error) {
-      console.error("Error fetching locked settings:", error);
+      logSanitizedError("care.settings.list", error);
       res.status(500).json({ message: "Failed to fetch locked settings" });
     }
   });
@@ -12898,7 +13576,7 @@ async function registerRoutes(app2) {
       console.log("Invitation created successfully:", invitation);
       res.json(invitation);
     } catch (error) {
-      console.error("Error creating caregiver invitation:", error);
+      logSanitizedError("care.invitations.create", error);
       res.status(400).json({ message: "Failed to create caregiver invitation", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
@@ -12915,7 +13593,7 @@ async function registerRoutes(app2) {
       const invitations = req.query?.pendingOnly === "true" ? await storage.getPendingCaregiverInvitationsByCaregiver(caregiverId) : await storage.getCaregiverInvitationsByCaregiver(caregiverId);
       res.json(invitations);
     } catch (error) {
-      console.error("Error fetching caregiver invitations:", error);
+      logSanitizedError("care.invitations.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver invitations" });
     }
   });
@@ -12935,7 +13613,7 @@ async function registerRoutes(app2) {
       }
       res.json(invitation);
     } catch (error) {
-      console.error("Error fetching invitation:", error);
+      logSanitizedError("care.invitations.lookup", error);
       res.status(500).json({ message: "Failed to fetch invitation" });
     }
   });
@@ -12956,7 +13634,7 @@ async function registerRoutes(app2) {
       await storage.deleteCaregiverInvitation(invitationId);
       res.json({ message: "Invitation deleted successfully" });
     } catch (error) {
-      console.error("Error deleting caregiver invitation:", error);
+      logSanitizedError("care.invitations.delete", error);
       res.status(500).json({ message: "Failed to delete caregiver invitation" });
     }
   });
@@ -12982,7 +13660,7 @@ async function registerRoutes(app2) {
         invitation: acceptedInvitation
       });
     } catch (error) {
-      console.error("Error accepting invitation:", error);
+      logSanitizedError("care.invitations.accept", error);
       res.status(500).json({ message: "Failed to accept invitation" });
     }
   });
@@ -13008,7 +13686,7 @@ async function registerRoutes(app2) {
       );
       res.json(relationshipsWithNames);
     } catch (error) {
-      console.error("Error fetching care relationships:", error);
+      logSanitizedError("care.relationships.list", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
     }
   });
@@ -13025,7 +13703,7 @@ async function registerRoutes(app2) {
       const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
       res.json(relationships);
     } catch (error) {
-      console.error("Error fetching care relationships:", error);
+      logSanitizedError("care.relationships.list", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
     }
   });
@@ -13042,7 +13720,7 @@ async function registerRoutes(app2) {
       if (!success) return res.status(404).json({ message: "Relationship not found" });
       res.json({ message: "Caregiver access removed successfully" });
     } catch (error) {
-      console.error("Error removing care relationship:", error);
+      logSanitizedError("care.relationships.remove", error);
       res.status(500).json({ message: "Failed to remove care relationship" });
     }
   });
@@ -13067,7 +13745,7 @@ async function registerRoutes(app2) {
       );
       res.json(recipients.filter(Boolean));
     } catch (error) {
-      console.error("Error fetching care recipients:", error);
+      logSanitizedError("care.recipients.list", error);
       res.status(500).json({ message: "Failed to fetch care recipients" });
     }
   });
@@ -13081,7 +13759,7 @@ async function registerRoutes(app2) {
       }
       res.json(setting);
     } catch (error) {
-      console.error("Error fetching locked setting:", error);
+      logSanitizedError("care.settings.get", error);
       res.status(500).json({ message: "Failed to fetch locked setting" });
     }
   });
@@ -13090,7 +13768,7 @@ async function registerRoutes(app2) {
       const setting = await storage.lockUserSetting(req.body);
       res.json(setting);
     } catch (error) {
-      console.error("Error locking user setting:", error);
+      logSanitizedError("care.settings.lock", error);
       res.status(400).json({ message: "Failed to lock user setting" });
     }
   });
@@ -13108,7 +13786,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Setting unlocked successfully" });
     } catch (error) {
-      console.error("Error unlocking user setting:", error);
+      logSanitizedError("care.settings.unlock", error);
       res.status(500).json({ message: "Failed to unlock user setting" });
     }
   });
@@ -13119,7 +13797,7 @@ async function registerRoutes(app2) {
       const isLocked = await storage.isSettingLocked(userId, settingKey);
       res.json({ isLocked });
     } catch (error) {
-      console.error("Error checking if setting is locked:", error);
+      logSanitizedError("care.settings.lock-status", error);
       res.status(500).json({ message: "Failed to check setting lock status" });
     }
   });
@@ -13130,7 +13808,7 @@ async function registerRoutes(app2) {
       const canModify = await storage.canUserModifySetting(userId, settingKey);
       res.json({ canModify });
     } catch (error) {
-      console.error("Error checking if user can modify setting:", error);
+      logSanitizedError("care.settings.modifiable", error);
       res.status(500).json({ message: "Failed to check setting modification permissions" });
     }
   });
@@ -13139,7 +13817,7 @@ async function registerRoutes(app2) {
       const pharmacies2 = await storage.getPharmacies();
       res.json(pharmacies2);
     } catch (error) {
-      console.error("Error fetching pharmacies:", error);
+      logSanitizedError("health.pharmacies.list", error);
       res.status(500).json({ message: "Failed to fetch pharmacies" });
     }
   });
@@ -13159,7 +13837,7 @@ async function registerRoutes(app2) {
       const pharmacy = await storage.createPharmacy(validatedData);
       res.status(201).json(pharmacy);
     } catch (error) {
-      console.error("Error creating custom pharmacy:", error);
+      logSanitizedError("health.pharmacies.create", error);
       res.status(500).json({ message: "Failed to create pharmacy" });
     }
   });
@@ -13179,7 +13857,7 @@ async function registerRoutes(app2) {
       const userPharmacy = await storage.addUserPharmacy(validatedData);
       res.status(201).json(userPharmacy);
     } catch (error) {
-      console.error("Error adding user pharmacy:", error);
+      logSanitizedError("health.pharmacies.create", error);
       res.status(500).json({ message: "Failed to add pharmacy" });
     }
   });
@@ -13192,7 +13870,7 @@ async function registerRoutes(app2) {
       const userPharmacies2 = await storage.getUserPharmacies(user.id);
       res.json(userPharmacies2);
     } catch (error) {
-      console.error("Error fetching user pharmacies:", error);
+      logSanitizedError("health.pharmacies.list", error);
       res.status(500).json({ message: "Failed to fetch user pharmacies" });
     }
   });
@@ -13205,7 +13883,7 @@ async function registerRoutes(app2) {
       const medications2 = await storage.getMedicationsByUser(user.id);
       res.json(medications2);
     } catch (error) {
-      console.error("Error fetching medications:", error);
+      logSanitizedError("health.medications.list", error);
       res.status(500).json({ message: "Failed to fetch medications" });
     }
   });
@@ -13226,7 +13904,7 @@ async function registerRoutes(app2) {
       const medication = await storage.createMedication(validatedData);
       res.status(201).json(medication);
     } catch (error) {
-      console.error("Error creating medication:", error);
+      logSanitizedError("health.medications.create", error);
       res.status(500).json({ message: "Failed to create medication" });
     }
   });
@@ -13252,7 +13930,7 @@ async function registerRoutes(app2) {
       }
       res.json(medication);
     } catch (error) {
-      console.error("Error updating medication:", error);
+      logSanitizedError("health.medications.update", error);
       res.status(500).json({ message: "Failed to update medication" });
     }
   });
@@ -13271,7 +13949,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting medication:", error);
+      logSanitizedError("health.medications.delete", error);
       res.status(500).json({ message: "Failed to delete medication" });
     }
   });
@@ -13284,7 +13962,7 @@ async function registerRoutes(app2) {
       const medications2 = await storage.getMedicationsDueForRefill(user.id);
       res.json(medications2);
     } catch (error) {
-      console.error("Error fetching medications due for refill:", error);
+      logSanitizedError("health.medications.due-for-refill", error);
       res.status(500).json({ message: "Failed to fetch medications due for refill" });
     }
   });
@@ -13297,7 +13975,7 @@ async function registerRoutes(app2) {
       const refillOrders2 = await storage.getRefillOrdersByUser(user.id);
       res.json(refillOrders2);
     } catch (error) {
-      console.error("Error fetching refill orders:", error);
+      logSanitizedError("health.refill-orders.list", error);
       res.status(500).json({ message: "Failed to fetch refill orders" });
     }
   });
@@ -13314,7 +13992,7 @@ async function registerRoutes(app2) {
       const refillOrder = await storage.createRefillOrder(validatedData);
       res.status(201).json(refillOrder);
     } catch (error) {
-      console.error("Error creating refill order:", error);
+      logSanitizedError("health.refill-orders.create", error);
       res.status(500).json({ message: "Failed to create refill order" });
     }
   });
@@ -13325,7 +14003,7 @@ async function registerRoutes(app2) {
       const refillOrder = await storage.updateRefillOrderStatus(orderId, status);
       res.json(refillOrder);
     } catch (error) {
-      console.error("Error updating refill order status:", error);
+      logSanitizedError("health.refill-orders.update", error);
       res.status(500).json({ message: "Failed to update refill order status" });
     }
   });
@@ -13335,7 +14013,7 @@ async function registerRoutes(app2) {
       const allergies2 = await storage.getAllergiesByUser(userId);
       res.json(allergies2);
     } catch (error) {
-      console.error("Error fetching allergies:", error);
+      logSanitizedError("health.allergies.list", error);
       res.status(500).json({ message: "Failed to fetch allergies" });
     }
   });
@@ -13346,7 +14024,7 @@ async function registerRoutes(app2) {
       const allergy = await storage.createAllergy(allergyData);
       res.status(201).json(allergy);
     } catch (error) {
-      console.error("Error creating allergy:", error);
+      logSanitizedError("health.allergies.create", error);
       res.status(500).json({ message: "Failed to create allergy" });
     }
   });
@@ -13356,7 +14034,7 @@ async function registerRoutes(app2) {
       const allergy = await storage.updateAllergy(allergyId, req.body);
       res.json(allergy);
     } catch (error) {
-      console.error("Error updating allergy:", error);
+      logSanitizedError("health.allergies.update", error);
       res.status(500).json({ message: "Failed to update allergy" });
     }
   });
@@ -13369,7 +14047,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting allergy:", error);
+      logSanitizedError("health.allergies.delete", error);
       res.status(500).json({ message: "Failed to delete allergy" });
     }
   });
@@ -13382,7 +14060,7 @@ async function registerRoutes(app2) {
       const conditions = await storage.getMedicalConditionsByUser(user.id);
       res.json(conditions);
     } catch (error) {
-      console.error("Error fetching medical conditions:", error);
+      logSanitizedError("health.conditions.list", error);
       res.status(500).json({ message: "Failed to fetch medical conditions" });
     }
   });
@@ -13399,7 +14077,7 @@ async function registerRoutes(app2) {
       const condition = await storage.createMedicalCondition(conditionData);
       res.status(201).json(condition);
     } catch (error) {
-      console.error("Error creating medical condition:", error);
+      logSanitizedError("health.conditions.create", error);
       res.status(500).json({ message: "Failed to create medical condition" });
     }
   });
@@ -13416,7 +14094,7 @@ async function registerRoutes(app2) {
       }
       res.json(condition);
     } catch (error) {
-      console.error("Error updating medical condition:", error);
+      logSanitizedError("health.conditions.update", error);
       res.status(500).json({ message: "Failed to update medical condition" });
     }
   });
@@ -13429,7 +14107,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting medical condition:", error);
+      logSanitizedError("health.conditions.delete", error);
       res.status(500).json({ message: "Failed to delete medical condition" });
     }
   });
@@ -13442,7 +14120,7 @@ async function registerRoutes(app2) {
       const adverseMeds = await storage.getAdverseMedicationsByUser(user.id);
       res.json(adverseMeds);
     } catch (error) {
-      console.error("Error fetching adverse medications:", error);
+      logSanitizedError("health.adverse-medications.list", error);
       res.status(500).json({ message: "Failed to fetch adverse medications" });
     }
   });
@@ -13459,7 +14137,7 @@ async function registerRoutes(app2) {
       const adverseMed = await storage.createAdverseMedication(adverseMedData);
       res.status(201).json(adverseMed);
     } catch (error) {
-      console.error("Error creating adverse medication:", error);
+      logSanitizedError("health.adverse-medications.create", error);
       res.status(500).json({ message: "Failed to create adverse medication" });
     }
   });
@@ -13473,7 +14151,7 @@ async function registerRoutes(app2) {
       const adverseMed = await storage.updateAdverseMedication(adverseMedId, adverseMedData);
       res.json(adverseMed);
     } catch (error) {
-      console.error("Error updating adverse medication:", error);
+      logSanitizedError("health.adverse-medications.update", error);
       res.status(500).json({ message: "Failed to update adverse medication" });
     }
   });
@@ -13486,7 +14164,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting adverse medication:", error);
+      logSanitizedError("health.adverse-medications.delete", error);
       res.status(500).json({ message: "Failed to delete adverse medication" });
     }
   });
@@ -13524,7 +14202,7 @@ async function registerRoutes(app2) {
       const sessions = await storage.getSleepSessionsByUser(req.session.user.id);
       res.json(sessions.map(withSleepMetrics));
     } catch (error) {
-      console.error("Error fetching sleep sessions:", error);
+      logSanitizedError("health.sleep-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
     }
   });
@@ -13564,7 +14242,7 @@ async function registerRoutes(app2) {
       const session2 = await storage.createSleepSession(sessionData);
       res.status(201).json(withSleepMetrics(session2));
     } catch (error) {
-      console.error("Error creating sleep session:", error);
+      logSanitizedError("health.sleep-sessions.create", error);
       res.status(500).json({ message: "Failed to create sleep session" });
     }
   });
@@ -13599,7 +14277,7 @@ async function registerRoutes(app2) {
       }
       res.json(withSleepMetrics(session2));
     } catch (error) {
-      console.error("Error updating sleep session:", error);
+      logSanitizedError("health.sleep-sessions.update", error);
       res.status(500).json({ message: "Failed to update sleep session" });
     }
   });
@@ -13615,7 +14293,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting sleep session:", error);
+      logSanitizedError("health.sleep-sessions.delete", error);
       res.status(500).json({ message: "Failed to delete sleep session" });
     }
   });
@@ -13630,7 +14308,7 @@ async function registerRoutes(app2) {
       }
       res.json(withSleepMetrics(session2));
     } catch (error) {
-      console.error("Error fetching sleep session by date:", error);
+      logSanitizedError("health.sleep-sessions.by-date", error);
       res.status(500).json({ message: "Failed to fetch sleep session" });
     }
   });
@@ -13648,7 +14326,7 @@ async function registerRoutes(app2) {
       );
       res.json(metrics);
     } catch (error) {
-      console.error("Error fetching health metrics:", error);
+      logSanitizedError("health.metrics.list", error);
       res.status(500).json({ message: "Failed to fetch health metrics" });
     }
   });
@@ -13664,7 +14342,7 @@ async function registerRoutes(app2) {
       const metric = await storage.createHealthMetric(metricData);
       res.status(201).json(metric);
     } catch (error) {
-      console.error("Error creating health metric:", error);
+      logSanitizedError("health.metrics.create", error);
       res.status(500).json({ message: "Failed to create health metric" });
     }
   });
@@ -13674,7 +14352,7 @@ async function registerRoutes(app2) {
       const contacts = await storage.getEmergencyContactsByUser(userId);
       res.json(contacts);
     } catch (error) {
-      console.error("Error fetching emergency contacts:", error);
+      logSanitizedError("health.emergency-contacts.list", error);
       res.status(500).json({ message: "Failed to fetch emergency contacts" });
     }
   });
@@ -13685,7 +14363,7 @@ async function registerRoutes(app2) {
       const contact = await storage.createEmergencyContact(contactData);
       res.status(201).json(contact);
     } catch (error) {
-      console.error("Error creating emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.create", error);
       if (error instanceof z8.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
       }
@@ -13699,7 +14377,7 @@ async function registerRoutes(app2) {
       const contact = await storage.updateEmergencyContact(contactId, updates);
       res.json(contact);
     } catch (error) {
-      console.error("Error updating emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.update", error);
       if (error instanceof z8.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
       }
@@ -13715,7 +14393,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.delete", error);
       res.status(500).json({ message: "Failed to delete emergency contact" });
     }
   });
@@ -13725,7 +14403,7 @@ async function registerRoutes(app2) {
       const providers = await storage.getPrimaryCareProvidersByUser(userId);
       res.json(providers);
     } catch (error) {
-      console.error("Error fetching primary care providers:", error);
+      logSanitizedError("health.providers.list", error);
       res.status(500).json({ message: "Failed to fetch primary care providers" });
     }
   });
@@ -13736,7 +14414,7 @@ async function registerRoutes(app2) {
       const provider = await storage.createPrimaryCareProvider(providerData);
       res.status(201).json(provider);
     } catch (error) {
-      console.error("Error creating primary care provider:", error);
+      logSanitizedError("health.providers.create", error);
       if (error instanceof z8.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
       }
@@ -13750,7 +14428,7 @@ async function registerRoutes(app2) {
       const provider = await storage.updatePrimaryCareProvider(providerId, updates);
       res.json(provider);
     } catch (error) {
-      console.error("Error updating primary care provider:", error);
+      logSanitizedError("health.providers.update", error);
       if (error instanceof z8.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
       }
@@ -13766,7 +14444,7 @@ async function registerRoutes(app2) {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting primary care provider:", error);
+      logSanitizedError("health.providers.delete", error);
       res.status(500).json({ message: "Failed to delete primary care provider" });
     }
   });
@@ -13778,7 +14456,7 @@ async function registerRoutes(app2) {
       const entries = await storage.getSymptomEntriesByUser(req.session.userId);
       res.json(entries);
     } catch (error) {
-      console.error("Error fetching symptom entries:", error);
+      logSanitizedError("health.symptoms.list", error);
       res.status(500).json({ message: "Failed to fetch symptom entries" });
     }
   });
@@ -13798,53 +14476,45 @@ async function registerRoutes(app2) {
       );
       res.json(entries);
     } catch (error) {
-      console.error("Error fetching symptom entries by date range:", error);
+      logSanitizedError("health.symptoms.by-date-range", error);
       res.status(500).json({ message: "Failed to fetch symptom entries" });
     }
   });
   app2.post("/api/symptom-entries", requireAuth2, async (req, res) => {
     try {
-      console.log("Creating symptom entry for user:", req.user.id);
-      console.log("Request body:", req.body);
       const entryData = {
         ...req.body,
         userId: req.user.id,
         startTime: new Date(req.body.startTime),
         endTime: req.body.endTime ? new Date(req.body.endTime) : null
       };
-      console.log("Entry data to save:", entryData);
       const entry = await storage.createSymptomEntry(entryData);
-      console.log("Created symptom entry:", entry);
       res.status(201).json(entry);
     } catch (error) {
-      console.error("Error creating symptom entry:", error);
+      logSanitizedError("health.symptoms.create", error);
       res.status(500).json({ message: "Failed to create symptom entry" });
     }
   });
   app2.patch("/api/symptom-entries/:id", requireAuth2, async (req, res) => {
     try {
       const entryId = parseInt(req.params.id);
-      console.log("PATCH symptom - Original body:", JSON.stringify(req.body, null, 2));
       const updates = { ...req.body };
       if (updates.startTime && typeof updates.startTime === "string") {
         updates.startTime = new Date(updates.startTime);
-        console.log("Converted startTime to Date:", updates.startTime);
       }
       if (updates.endTime && typeof updates.endTime === "string") {
         updates.endTime = new Date(updates.endTime);
-        console.log("Converted endTime to Date:", updates.endTime);
       }
       delete updates.createdAt;
       delete updates.id;
       delete updates.userId;
-      console.log("PATCH symptom - Final updates:", JSON.stringify(updates, null, 2));
       const updated = await storage.updateSymptomEntry(entryId, updates);
       if (!updated) {
         return res.status(404).json({ message: "Symptom entry not found" });
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating symptom entry:", error);
+      logSanitizedError("health.symptoms.update", error);
       res.status(500).json({ message: "Failed to update symptom entry" });
     }
   });
@@ -13857,7 +14527,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Symptom entry deleted successfully" });
     } catch (error) {
-      console.error("Error deleting symptom entry:", error);
+      logSanitizedError("health.symptoms.delete", error);
       res.status(500).json({ message: "Failed to delete symptom entry" });
     }
   });
@@ -13873,7 +14543,7 @@ async function registerRoutes(app2) {
       }
       res.json(resources);
     } catch (error) {
-      console.error("Error fetching personal resources:", error);
+      logSanitizedError("health.personal-resources.list", error);
       res.status(500).json({ message: "Failed to fetch personal resources" });
     }
   });
@@ -13884,7 +14554,7 @@ async function registerRoutes(app2) {
       const resource = await storage.createPersonalResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
-      console.error("Error creating personal resource:", error);
+      logSanitizedError("health.personal-resources.create", error);
       if (error instanceof z8.ZodError) {
         return res.status(400).json({
           message: "Please provide a title, valid URL, and category.",
@@ -13911,7 +14581,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating personal resource:", error);
+      logSanitizedError("health.personal-resources.update", error);
       res.status(500).json({ message: "Failed to update personal resource" });
     }
   });
@@ -13930,7 +14600,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Personal resource deleted successfully" });
     } catch (error) {
-      console.error("Error deleting personal resource:", error);
+      logSanitizedError("health.personal-resources.delete", error);
       res.status(500).json({ message: "Failed to delete personal resource" });
     }
   });
@@ -13949,7 +14619,7 @@ async function registerRoutes(app2) {
       }
       res.json(updated);
     } catch (error) {
-      console.error("Error updating resource access:", error);
+      logSanitizedError("health.personal-resources.access", error);
       res.status(500).json({ message: "Failed to update resource access" });
     }
   });
@@ -14028,7 +14698,7 @@ async function registerRoutes(app2) {
       const plans = await storage.getEmergencyTreatmentPlansByUser(userId);
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching emergency treatment plans:", error);
+      logSanitizedError("health.emergency-treatment-plans.list", error);
       res.status(500).json({ message: "Failed to fetch emergency treatment plans" });
     }
   });
@@ -14038,7 +14708,7 @@ async function registerRoutes(app2) {
       const plans = await storage.getActiveEmergencyTreatmentPlans(userId);
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching active emergency treatment plans:", error);
+      logSanitizedError("health.emergency-treatment-plans.active", error);
       res.status(500).json({ message: "Failed to fetch active emergency treatment plans" });
     }
   });
@@ -14049,7 +14719,7 @@ async function registerRoutes(app2) {
       const plan = await storage.createEmergencyTreatmentPlan(data);
       res.json(plan);
     } catch (error) {
-      console.error("Error creating emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.create", error);
       res.status(500).json({ message: "Failed to create emergency treatment plan" });
     }
   });
@@ -14063,7 +14733,7 @@ async function registerRoutes(app2) {
       }
       res.json(plan);
     } catch (error) {
-      console.error("Error updating emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.update", error);
       res.status(500).json({ message: "Failed to update emergency treatment plan" });
     }
   });
@@ -14076,7 +14746,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Emergency treatment plan deleted successfully" });
     } catch (error) {
-      console.error("Error deleting emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.delete", error);
       res.status(500).json({ message: "Failed to delete emergency treatment plan" });
     }
   });
@@ -14085,7 +14755,7 @@ async function registerRoutes(app2) {
       const geofences2 = await storage.getGeofencesByUser(1);
       res.json(geofences2);
     } catch (error) {
-      console.error("Error fetching geofences:", error);
+      logSanitizedError("health.geofences.list", error);
       res.status(500).json({ message: "Failed to fetch geofences" });
     }
   });
@@ -14094,7 +14764,7 @@ async function registerRoutes(app2) {
       const geofences2 = await storage.getActiveGeofencesByUser(1);
       res.json(geofences2);
     } catch (error) {
-      console.error("Error fetching active geofences:", error);
+      logSanitizedError("health.geofences.active", error);
       res.status(500).json({ message: "Failed to fetch active geofences" });
     }
   });
@@ -14104,7 +14774,7 @@ async function registerRoutes(app2) {
       const geofence = await storage.createGeofence(geofenceData);
       res.json(geofence);
     } catch (error) {
-      console.error("Error creating geofence:", error);
+      logSanitizedError("health.geofences.create", error);
       res.status(500).json({ message: "Failed to create geofence" });
     }
   });
@@ -14118,7 +14788,7 @@ async function registerRoutes(app2) {
       }
       res.json(geofence);
     } catch (error) {
-      console.error("Error updating geofence:", error);
+      logSanitizedError("health.geofences.update", error);
       res.status(500).json({ message: "Failed to update geofence" });
     }
   });
@@ -14131,7 +14801,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Geofence deleted successfully" });
     } catch (error) {
-      console.error("Error deleting geofence:", error);
+      logSanitizedError("health.geofences.delete", error);
       res.status(500).json({ message: "Failed to delete geofence" });
     }
   });
@@ -14141,7 +14811,7 @@ async function registerRoutes(app2) {
       const events = await storage.getGeofenceEventsByUser(1, limit);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching geofence events:", error);
+      logSanitizedError("health.geofence-events.list", error);
       res.status(500).json({ message: "Failed to fetch geofence events" });
     }
   });
@@ -14152,7 +14822,7 @@ async function registerRoutes(app2) {
       const events = await storage.getGeofenceEventsByGeofence(geofenceId, limit);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching geofence events:", error);
+      logSanitizedError("health.geofence-events.by-geofence", error);
       res.status(500).json({ message: "Failed to fetch geofence events" });
     }
   });
@@ -14162,7 +14832,7 @@ async function registerRoutes(app2) {
       const event = await storage.createGeofenceEvent(eventData);
       res.json(event);
     } catch (error) {
-      console.error("Error creating geofence event:", error);
+      logSanitizedError("health.geofence-events.create", error);
       res.status(500).json({ message: "Failed to create geofence event" });
     }
   });
@@ -14175,7 +14845,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Geofence event marked as notified" });
     } catch (error) {
-      console.error("Error marking geofence event as notified:", error);
+      logSanitizedError("health.geofence-events.notify", error);
       res.status(500).json({ message: "Failed to mark geofence event as notified" });
     }
   });
@@ -14255,7 +14925,7 @@ async function registerRoutes(app2) {
       ];
       res.json(demoDevices);
     } catch (error) {
-      console.error("Error fetching wearable devices:", error);
+      logSanitizedError("health.wearable-devices.list", error);
       res.status(500).json({ message: "Failed to fetch wearable devices" });
     }
   });
@@ -14325,7 +14995,7 @@ async function registerRoutes(app2) {
       ];
       res.json(demoMetrics);
     } catch (error) {
-      console.error("Error fetching health metrics:", error);
+      logSanitizedError("health.metrics.list", error);
       res.status(500).json({ message: "Failed to fetch health metrics" });
     }
   });
@@ -14390,7 +15060,7 @@ async function registerRoutes(app2) {
       ];
       res.json(demoActivities);
     } catch (error) {
-      console.error("Error fetching activity sessions:", error);
+      logSanitizedError("health.activity-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch activity sessions" });
     }
   });
@@ -14427,7 +15097,7 @@ async function registerRoutes(app2) {
       ];
       res.json(demoSleep);
     } catch (error) {
-      console.error("Error fetching sleep sessions:", error);
+      logSanitizedError("health.sleep-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
     }
   });
@@ -14442,7 +15112,7 @@ async function registerRoutes(app2) {
         });
       }, 1e3);
     } catch (error) {
-      console.error("Error syncing device:", error);
+      logSanitizedError("health.wearable-device.sync", error);
       res.status(500).json({ message: "Failed to sync device" });
     }
   });
@@ -14458,7 +15128,7 @@ async function registerRoutes(app2) {
       const members = await storage.getFamilyMembers(user.id);
       res.json(members);
     } catch (error) {
-      console.error("Error fetching family members:", error);
+      logSanitizedError("family.members.list", error);
       res.status(500).json({ message: "Failed to fetch family members" });
     }
   });
@@ -14487,7 +15157,7 @@ async function registerRoutes(app2) {
       });
       res.json(member);
     } catch (error) {
-      console.error("Error inviting family member:", error);
+      logSanitizedError("family.members.invite", error);
       res.status(500).json({ message: "Failed to send invite" });
     }
   });
@@ -14504,7 +15174,7 @@ async function registerRoutes(app2) {
       }
       res.json({ message: "Family member removed" });
     } catch (error) {
-      console.error("Error removing family member:", error);
+      logSanitizedError("family.members.remove", error);
       res.status(500).json({ message: "Failed to remove member" });
     }
   });
@@ -14513,18 +15183,11 @@ async function registerRoutes(app2) {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      let user = req.session.user;
-      try {
-        const freshUser = await storage.getUserById(req.session.userId);
-        if (freshUser) {
-          user = freshUser;
-          req.session.user = freshUser;
-        }
-      } catch (e) {
-        console.error("Failed to refresh user for /api/subscription, falling back to session:", e);
-      }
+      let user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
+      req.session.user = publicUser(user);
       const now = /* @__PURE__ */ new Date();
-      const isAdmin = user.accountType === "admin" || user.username === "admin" || user.name?.toLowerCase().includes("admin");
+      const isAdmin = user.accountType === "admin";
       if (isAdmin) {
         const adminSubscription = {
           id: user.id,
@@ -14551,96 +15214,112 @@ async function registerRoutes(app2) {
         };
         return res.json(adminSubscription);
       }
-      const trialEndDate = new Date(user.createdAt);
-      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
-      const trialDaysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1e3)));
-      const isActiveSubscription = user.subscriptionStatus === "active";
-      const subscription = {
-        id: user.id,
-        planType: user.subscriptionTier || "free",
-        status: isActiveSubscription ? "active" : trialDaysLeft > 0 ? "trialing" : "expired",
-        billingCycle: "monthly",
-        subscriptionPlatform: user.subscriptionPlatform || null,
-        currentPeriodStart: user.createdAt,
-        currentPeriodEnd: user.subscriptionExpiresAt || trialEndDate.toISOString(),
-        trialDaysLeft: trialDaysLeft > 0 ? trialDaysLeft : null,
-        usageStats: {
-          tasks: { count: 0, limit: user.subscriptionTier === "family" ? null : user.subscriptionTier === "premium" ? 1e3 : 50 },
-          caregivers: { count: 0, limit: user.subscriptionTier === "family" ? null : user.subscriptionTier === "premium" ? 5 : 1 },
-          dataExports: { count: 0, limit: user.subscriptionTier === "free" ? 0 : null }
-        },
-        features: {
-          // Basic+ features
-          taskManagement: user.subscriptionTier !== "free" || trialDaysLeft > 0,
-          moodTracking: user.subscriptionTier !== "free" || trialDaysLeft > 0,
-          financialTracking: user.subscriptionTier !== "free" || trialDaysLeft > 0,
-          basicReminders: user.subscriptionTier !== "free" || trialDaysLeft > 0,
-          // Premium+ features
-          wearableDevices: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          mealPlanning: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          medicationManagement: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          advancedAnalytics: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          voiceCommands: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          academicPlanner: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          prioritySupport: user.subscriptionTier === "premium" || user.subscriptionTier === "family" || trialDaysLeft > 0,
-          // Family-only features
-          locationSafety: user.subscriptionTier === "family" || trialDaysLeft > 0,
-          familyDashboard: user.subscriptionTier === "family",
-          multiUserAccounts: user.subscriptionTier === "family",
-          emergencyProtocols: user.subscriptionTier === "family",
-          customReporting: user.subscriptionTier === "family",
-          unlimitedCaregivers: user.subscriptionTier === "family"
+      if (user.subscriptionPlatform === "google_play") {
+        if (!user.googlePlayPurchaseToken) {
+          return res.status(503).json({
+            message: "Google Play subscription cannot be verified."
+          });
         }
-      };
-      res.json(subscription);
+        let storeResponseReceived = false;
+        try {
+          const androidPublisher = await createGooglePlayPublisher();
+          const result = await androidPublisher.purchases.subscriptionsv2.get({
+            packageName: "com.adaptalyfe.app",
+            token: user.googlePlayPurchaseToken
+          });
+          storeResponseReceived = true;
+          const entitlement = resolveGooglePlayEntitlement(result.data, {
+            expectedProductId: user.googlePlayProductId ?? void 0
+          });
+          if (entitlement.grantsAccess && result.data.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
+            try {
+              await androidPublisher.purchases.subscriptions.acknowledge({
+                packageName: "com.adaptalyfe.app",
+                subscriptionId: entitlement.productId ?? user.googlePlayProductId,
+                token: user.googlePlayPurchaseToken
+              });
+            } catch (ackError) {
+              console.error(
+                "[Google Play] Refresh acknowledgement failed:",
+                ackError?.response?.status ?? "unknown"
+              );
+            }
+          }
+          const update = storeSubscriptionUpdate(
+            "google_play",
+            entitlement,
+            {
+              googlePlayPurchaseToken: user.googlePlayPurchaseToken,
+              googlePlayOrderId: entitlement.transactionId,
+              googlePlayProductId: entitlement.productId ?? user.googlePlayProductId
+            }
+          );
+          await storage.updateUserSubscription(user.id, update);
+          const refreshedUser = await storage.getUserById(user.id);
+          if (!refreshedUser) {
+            throw new Error("User record disappeared after verification.");
+          }
+          user = refreshedUser;
+          req.session.user = publicUser(user);
+        } catch (error) {
+          logSanitizedError("subscriptions.google-play.refresh", error);
+          const storeStatus = googlePlayErrorStatus(error);
+          if (!storeResponseReceived && [400, 404, 410].includes(storeStatus ?? 0)) {
+            const expiredUser = await storage.updateUserSubscription(user.id, {
+              subscriptionTier: "free",
+              subscriptionStatus: "expired",
+              subscriptionVerifiedAt: now
+            });
+            if (!expiredUser) throw new Error("Unable to persist invalid Play subscription status.");
+            user = expiredUser;
+            req.session.user = publicUser(user);
+          } else if (storeResponseReceived || !isTransientGooglePlayError(error) || !canUseCachedGooglePlayEntitlement(user, now)) {
+            return res.status(503).json({
+              message: "Google Play subscription status could not be verified. Please try again."
+            });
+          } else {
+            console.warn("Google Play using recently verified subscription data after refresh failure");
+          }
+        }
+      }
+      if (user.subscriptionPlatform === "app_store") {
+        const anyTransactionId = user.appleOriginalTransactionId ?? user.subscriptionTransactionId;
+        if (!anyTransactionId) {
+          return res.status(503).json({
+            message: "Apple subscription cannot be refreshed until its verified transaction is linked."
+          });
+        }
+        try {
+          const entitlement = await refreshAppleStoreSubscription(anyTransactionId);
+          const update = storeSubscriptionUpdate("app_store", entitlement, {
+            appleOriginalTransactionId: entitlement.originalTransactionId ?? user.appleOriginalTransactionId
+          });
+          await storage.updateUserSubscription(user.id, update);
+          const refreshedUser = await storage.getUserById(user.id);
+          if (!refreshedUser) {
+            throw new Error("User record disappeared after Apple refresh.");
+          }
+          user = refreshedUser;
+          req.session.user = publicUser(user);
+        } catch (error) {
+          logSanitizedError("subscriptions.app-store.refresh", error);
+          return res.status(503).json({
+            message: "Apple subscription status could not be verified. Please try again."
+          });
+        }
+      }
+      res.json(buildSubscriptionResponse(user, now));
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      logSanitizedError("subscriptions.status", error);
       res.status(500).json({ message: "Failed to fetch subscription" });
     }
   });
   app2.post("/api/subscription/upgrade", async (req, res) => {
-    try {
-      if (!req.session?.userId || !req.session?.user) {
-        return res.status(401).json({ message: "Authentication required" });
-      }
-      const { planType, billingCycle } = req.body;
-      const user = req.session.user;
-      const trialEndDate = /* @__PURE__ */ new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
-      req.session.user = {
-        ...user,
-        subscriptionTier: planType,
-        subscriptionStatus: "trialing",
-        subscriptionExpiresAt: trialEndDate.toISOString()
-      };
-      const upgradedSubscription = {
-        id: user.id,
-        planType,
-        status: "trialing",
-        billingCycle,
-        currentPeriodStart: (/* @__PURE__ */ new Date()).toISOString(),
-        currentPeriodEnd: trialEndDate.toISOString(),
-        trialDaysLeft: FREE_TRIAL_DAYS,
-        usageStats: {
-          tasks: { count: 0, limit: planType === "family" ? null : 1e3 },
-          caregivers: { count: 0, limit: planType === "family" ? null : 10 },
-          dataExports: { count: 0, limit: null }
-        },
-        features: {
-          wearableDevices: true,
-          mealPlanning: true,
-          medicationManagement: true,
-          locationSafety: planType === "family",
-          advancedAnalytics: planType === "family",
-          prioritySupport: true,
-          familyAccounts: planType === "family" ? 5 : 1
-        }
-      };
-      res.json(upgradedSubscription);
-    } catch (error) {
-      console.error("Error upgrading subscription:", error);
-      res.status(500).json({ message: "Failed to upgrade subscription" });
-    }
+    if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+    return res.status(409).json({
+      message: "Complete a verified Google Play, App Store, or website checkout to change your subscription.",
+      requiresVerifiedPurchase: true
+    });
   });
   app2.post("/api/create-payment-intent", async (req, res) => {
     try {
@@ -14679,7 +15358,7 @@ async function registerRoutes(app2) {
         message: "Live payment processing enabled"
       });
     } catch (error) {
-      console.error("Error creating payment intent:", error);
+      logSanitizedError("subscriptions.stripe.payment-intent", error);
       if (error.type === "StripeAuthenticationError") {
         console.log("Stripe authentication failed - falling back to demo mode");
         return res.status(200).json({
@@ -14719,7 +15398,7 @@ async function registerRoutes(app2) {
       }
       const stripeCustomer = await currentStripe.customers.retrieve(user.stripeCustomerId);
       if (stripeCustomer.deleted || stripeCustomer.metadata?.userId !== String(userId)) {
-        console.warn(`Stripe subscription recovery rejected for user ${userId}: customer ownership mismatch`);
+        console.warn("Stripe subscription recovery rejected: customer ownership mismatch");
         return res.status(403).json({ message: "The linked Stripe customer does not belong to this account." });
       }
       let subscriptionTier = "basic";
@@ -14763,7 +15442,7 @@ async function registerRoutes(app2) {
       if (updatedUser && req.session) {
         req.session.user = updatedUser;
       }
-      console.log(`\u2705 Subscription recovered for user ${userId}: ${subscriptionTier} plan`);
+      console.log("Stripe subscription recovery completed");
       res.json({
         message: "Subscription recovered successfully",
         plan: subscriptionTier,
@@ -14771,7 +15450,7 @@ async function registerRoutes(app2) {
         expiresAt: expiresAt.toISOString()
       });
     } catch (error) {
-      console.error("Error recovering subscription:", error);
+      logSanitizedError("subscriptions.recover", error);
       res.status(500).json({ message: "Failed to recover subscription", error: error.message });
     }
   });
@@ -14815,7 +15494,7 @@ async function registerRoutes(app2) {
     try {
       event = currentStripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err) {
-      console.error("Stripe webhook signature verification failed:", err.message);
+      logSanitizedError("subscriptions.stripe.webhook-signature", err);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
     try {
@@ -14836,7 +15515,7 @@ async function registerRoutes(app2) {
       const extendSubscription = async (stripeSubId, periodEnd, stripeStatus, tier) => {
         const user = await storage.getUserByStripeSubscriptionId(stripeSubId);
         if (!user) {
-          console.warn(`Stripe webhook: ignoring event for unknown or replaced subscription ${stripeSubId}`);
+          console.warn("Stripe webhook: ignoring unknown or replaced subscription");
           return;
         }
         const statusMap = {
@@ -14853,7 +15532,7 @@ async function registerRoutes(app2) {
           subscriptionExpiresAt: expiresAt,
           ...(stripeStatus === "active" || stripeStatus === "trialing") && tier ? { subscriptionTier: tier } : {}
         });
-        console.log(`\u2705 Stripe webhook: synchronized user ${user.id} (${user.username}) to ${stripeStatus} until ${expiresAt.toISOString()}`);
+        console.log("Stripe webhook: subscription state synchronized");
       };
       switch (event.type) {
         case "invoice.payment_succeeded": {
@@ -14894,7 +15573,7 @@ async function registerRoutes(app2) {
               subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
               subscriptionExpiresAt: new Date(periodEnd * 1e3)
             });
-            console.log(`\u2705 Stripe webhook: updated user ${user.id} status=${sub.status}`);
+            console.log("Stripe webhook: subscription status synchronized");
           }
           break;
         }
@@ -14906,7 +15585,7 @@ async function registerRoutes(app2) {
               subscriptionStatus: "cancelled",
               subscriptionTier: "free"
             });
-            console.log(`\u2705 Stripe webhook: cancelled user ${user.id}`);
+            console.log("Stripe webhook: subscription cancelled");
           }
           break;
         }
@@ -14916,7 +15595,7 @@ async function registerRoutes(app2) {
           const user = subId ? await storage.getUserByStripeSubscriptionId(subId) : null;
           if (user) {
             await storage.updateUserSubscription(user.id, { subscriptionStatus: "past_due" });
-            console.log(`\u26A0\uFE0F  Stripe webhook: payment failed for user ${user.id}`);
+            console.log("Stripe webhook: subscription payment failed");
           }
           break;
         }
@@ -14925,7 +15604,7 @@ async function registerRoutes(app2) {
       }
       return res.status(200).json({ received: true });
     } catch (err) {
-      console.error("Stripe webhook processing error:", err.message);
+      logSanitizedError("subscriptions.stripe.webhook", err);
       return res.status(500).send("Webhook processing failed");
     }
   });
@@ -14980,10 +15659,10 @@ async function registerRoutes(app2) {
           const existing2 = await currentStripe.subscriptions.retrieve(currentUser.stripeSubscriptionId);
           if (existing2.status !== "canceled" && existing2.status !== "incomplete_expired") {
             await currentStripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
-            console.log(`Cancelled previous Stripe subscription ${currentUser.stripeSubscriptionId} before creating new one`);
+            console.log("Previous Stripe subscription cancelled before creating a new one");
           }
         } catch (e) {
-          console.warn("Could not cancel previous subscription:", e.message);
+          logSanitizedError("subscriptions.stripe.cancel-previous", e);
         }
       }
       const planLabel = `adaptalyfe_${planType}_${billingCycle}`;
@@ -15073,7 +15752,7 @@ async function registerRoutes(app2) {
         requiresPayment: !!clientSecret
       });
     } catch (error) {
-      console.error("Error creating subscription:", error);
+      logSanitizedError("subscriptions.create", error);
       res.status(500).json({
         message: "Failed to create subscription",
         error: error.message
@@ -15100,7 +15779,7 @@ async function registerRoutes(app2) {
       const subscriptionCustomerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
       const subscriptionUserId = subscription.metadata?.userId;
       if (subscriptionUserId !== String(user.id) || user.stripeCustomerId && subscriptionCustomerId !== user.stripeCustomerId) {
-        console.warn(`Stripe subscription confirmation rejected for user ${user.id}`);
+        console.warn("Stripe subscription confirmation rejected: ownership check failed");
         return res.status(403).json({ message: "Subscription does not belong to this account" });
       }
       const pendingSetupIntent = subscription.pending_setup_intent;
@@ -15137,7 +15816,7 @@ async function registerRoutes(app2) {
         });
       }
     } catch (error) {
-      console.error("Error confirming subscription:", error);
+      logSanitizedError("subscriptions.confirm", error);
       res.status(500).json({
         message: "Failed to confirm subscription",
         error: error.message
@@ -15145,128 +15824,145 @@ async function registerRoutes(app2) {
     }
   });
   app2.post("/api/google-play/verify-purchase", async (req, res) => {
+    let productIdForLog = "unknown";
+    let verificationPhase = "request validation";
     try {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const user = req.session.user;
-      const { purchaseToken, productId, orderId } = req.body;
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
+      const { purchaseToken, productId } = req.body;
       if (!purchaseToken || !productId) {
         return res.status(400).json({ message: "Missing purchaseToken or productId" });
       }
-      const freshUser = await storage.getUserById(req.session.userId);
-      if (freshUser?.subscriptionStatus === "active" && freshUser.subscriptionPlatform && freshUser.subscriptionPlatform !== "google_play") {
+      if (user.subscriptionPlatform !== "google_play" && hasCurrentSubscriptionAccess(user)) {
         return res.status(409).json({
           message: "This account already has an active subscription. It works on Android without another Google Play purchase."
         });
       }
-      const productToPlan = {
-        adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly", amount: 499 },
-        adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly", amount: 1299 },
-        adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly", amount: 2499 }
-      };
-      const planInfo = productToPlan[productId];
+      const planInfo = subscriptionPlanForProductId(productId);
       if (!planInfo) {
         return res.status(400).json({ message: "Invalid product ID" });
       }
-      let verified = false;
-      let expiryTime = null;
-      if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-        try {
-          const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-          const { google } = await import("googleapis");
-          const auth = new google.auth.GoogleAuth({
-            credentials: serviceAccount,
-            scopes: ["https://www.googleapis.com/auth/androidpublisher"]
-          });
-          const androidPublisher = google.androidpublisher({ version: "v3", auth });
-          const packageName = "com.adaptalyfe.app";
-          const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
-            packageName,
-            token: purchaseToken
-          });
-          const subscriptionState = purchaseResult.data.subscriptionState;
-          if (subscriptionState === "SUBSCRIPTION_STATE_ACTIVE" || subscriptionState === "SUBSCRIPTION_STATE_IN_GRACE_PERIOD") {
-            const lineItems = purchaseResult.data.lineItems;
-            if (lineItems && lineItems.length > 0) {
-              const matchingItem = lineItems.find((item) => item.productId === productId);
-              if (!matchingItem) {
-                console.error(`Product ID mismatch: expected ${productId}, got ${lineItems.map((i) => i.productId).join(",")}`);
-                return res.status(400).json({ message: "Product ID mismatch in purchase verification" });
-              }
-              verified = true;
-              const expiryStr = matchingItem.expiryTime;
-              if (expiryStr) {
-                expiryTime = new Date(expiryStr);
-              }
-            } else {
-              verified = true;
-            }
-            if (verified && purchaseResult.data.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
-              try {
-                await androidPublisher.purchases.subscriptions.acknowledge({
-                  packageName,
-                  subscriptionId: productId,
-                  token: purchaseToken
-                });
-                console.log(`Acknowledged purchase for ${productId}`);
-              } catch (ackError) {
-                console.error("Purchase acknowledgement error:", ackError.message);
-              }
-            }
-          } else {
-            console.error(`Subscription not active: state=${subscriptionState}`);
-            return res.status(400).json({ message: "Subscription is not active" });
-          }
-        } catch (apiError) {
-          console.error("Google Play API verification error:", apiError.message);
-          return res.status(500).json({ message: "Purchase verification failed - API error" });
+      productIdForLog = productId;
+      const tokenOwner = await storage.getUserByGooglePlayToken(purchaseToken);
+      if (tokenOwner && tokenOwner.id !== user.id) {
+        return res.status(409).json({
+          message: "This Google Play purchase is already linked to another account."
+        });
+      }
+      verificationPhase = "Google Play verification";
+      const androidPublisher = await createGooglePlayPublisher();
+      const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
+        packageName: "com.adaptalyfe.app",
+        token: purchaseToken
+      });
+      const linkedPurchaseToken = purchaseResult.data?.linkedPurchaseToken;
+      if (linkedPurchaseToken) {
+        const linkedOwner = await storage.getUserByGooglePlayToken(linkedPurchaseToken);
+        if (linkedOwner && linkedOwner.id !== user.id) {
+          return res.status(409).json({ message: "This Google Play subscription belongs to another Adaptalyfe account. Sign in to that account to restore it." });
         }
-      } else {
-        console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
-        return res.status(503).json({ message: "Google Play verification not configured" });
       }
-      if (!verified) {
-        return res.status(400).json({ message: "Purchase verification failed" });
+      if (user.subscriptionPlatform === "google_play" && hasCurrentSubscriptionAccess(user) && user.googlePlayPurchaseToken !== purchaseToken && linkedPurchaseToken !== user.googlePlayPurchaseToken) {
+        return res.status(409).json({
+          message: "A different active Google Play subscription is already linked to this account."
+        });
       }
+      const entitlement = resolveGooglePlayEntitlement(purchaseResult.data, {
+        expectedProductId: productId
+      });
+      if (entitlement.productId !== productId) {
+        console.warn(
+          `[Google Play] Verification rejected: product=${productId}, reason=product-mismatch.`
+        );
+        return res.status(400).json({
+          message: "Product ID mismatch in purchase verification"
+        });
+      }
+      if (!entitlement.grantsAccess && entitlement.status === "pending") {
+        return res.json({
+          success: false,
+          status: entitlement.status,
+          message: "Google Play is still processing this purchase. Access will update after payment completes."
+        });
+      }
+      if (!entitlement.grantsAccess) {
+        console.info(
+          `[Google Play] Verification found no active entitlement: product=${productId}, storeState=${purchaseResult.data.subscriptionState ?? "unknown"}.`
+        );
+        return res.status(400).json({
+          message: "Google Play reports that this subscription is not active."
+        });
+      }
+      const expiryTime = entitlement.expiresAt;
       if (!expiryTime) {
+        console.warn(
+          `[Google Play] Verification rejected: product=${productId}, reason=missing-expiry.`
+        );
         return res.status(502).json({
           message: "Google Play verification did not return an expiration time"
         });
       }
-      await storage.updateUser(user.id, {
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: "active",
-        subscriptionExpiresAt: expiryTime,
-        subscriptionPlatform: "google_play",
-        googlePlayPurchaseToken: purchaseToken,
-        googlePlayOrderId: orderId || null,
-        googlePlayProductId: productId
-      });
-      req.session.user = {
-        ...req.session.user,
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: "active",
-        subscriptionExpiresAt: expiryTime,
-        subscriptionPlatform: "google_play"
-      };
+      verificationPhase = "database persistence";
+      const update = storeSubscriptionUpdate(
+        "google_play",
+        entitlement,
+        {
+          googlePlayPurchaseToken: purchaseToken,
+          googlePlayOrderId: entitlement.transactionId,
+          googlePlayProductId: productId
+        }
+      );
+      const persistedUser = await storage.updateUser(user.id, update);
+      if (!persistedUser || persistedUser.subscriptionTier !== entitlement.tier || persistedUser.subscriptionStatus !== entitlement.status || persistedUser.subscriptionPlatform !== "google_play" || persistedUser.googlePlayPurchaseToken !== purchaseToken || persistedUser.googlePlayProductId !== productId || persistedUser.subscriptionProductId !== productId || persistedUser.subscriptionTransactionId !== entitlement.transactionId || !persistedUser.subscriptionVerifiedAt || !persistedUser.subscriptionExpiresAt || new Date(persistedUser.subscriptionExpiresAt).getTime() !== expiryTime.getTime()) {
+        throw new Error("Google Play entitlement was not persisted.");
+      }
+      console.info("[Google Play] Entitlement persisted");
+      req.session.user = publicUser(persistedUser);
+      verificationPhase = "session persistence";
       await new Promise((resolve) => {
         req.session.save((err) => {
-          if (err) console.error("Session save error after Google Play verify:", err);
+          if (err) {
+            logSanitizedError("subscriptions.google-play.session-save", err);
+          }
           resolve();
         });
       });
-      console.log(`Google Play subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType} (${planInfo.billingCycle})`);
+      if (purchaseResult.data.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
+        verificationPhase = "Google Play acknowledgement";
+        try {
+          await androidPublisher.purchases.subscriptions.acknowledge({
+            packageName: "com.adaptalyfe.app",
+            subscriptionId: productId,
+            token: purchaseToken
+          });
+        } catch (ackError) {
+          logSanitizedError("subscriptions.google-play.acknowledge", ackError);
+        }
+      }
       res.json({
         success: true,
-        planType: planInfo.planType,
+        planType: entitlement.tier,
         billingCycle: planInfo.billingCycle,
         expiresAt: expiryTime.toISOString(),
-        platform: "google_play"
+        status: entitlement.status,
+        platform: "google_play",
+        subscription: googlePlaySubscriptionResponse(
+          persistedUser,
+          entitlement,
+          planInfo.billingCycle
+        )
       });
     } catch (error) {
-      console.error("Google Play verification error:", error);
-      res.status(500).json({ message: "Failed to verify purchase", error: error.message });
+      const notConfigured = error?.message?.includes("not configured");
+      const duplicateOwnership = error?.code === "23505" || error?.constraint?.includes("purchase_token") || error?.constraint?.includes("transaction_id");
+      const invalidStorePurchase = verificationPhase === "Google Play verification" && [400, 404, 410].includes(googlePlayErrorStatus(error) ?? 0);
+      logSanitizedError("subscriptions.google-play.verify", error);
+      res.status(duplicateOwnership ? 409 : invalidStorePurchase ? 400 : notConfigured ? 503 : 500).json({
+        message: duplicateOwnership ? "This store transaction is already linked to another account." : invalidStorePurchase ? "Google Play reports that this purchase is invalid or expired." : notConfigured ? "Google Play verification not configured" : "Failed to verify purchase"
+      });
     }
   });
   app2.post("/api/apple/verify-purchase", async (req, res) => {
@@ -15274,135 +15970,96 @@ async function registerRoutes(app2) {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const user = req.session.user;
+      const user = await storage.getUserById(req.session.userId) ?? req.session.user;
       const { receiptData, productId, transactionId } = req.body;
-      if (!receiptData || !productId) {
-        return res.status(400).json({ message: "Missing receiptData or productId" });
+      if (typeof receiptData !== "string" || receiptData.trim().length === 0 || typeof productId !== "string") {
+        return res.status(400).json({
+          message: "Missing receiptData or productId"
+        });
       }
-      const freshUser = await storage.getUserById(req.session.userId);
-      if (freshUser?.subscriptionStatus === "active" && freshUser.subscriptionPlatform && freshUser.subscriptionPlatform !== "app_store") {
+      const planInfo = subscriptionPlanForProductId(productId);
+      if (!planInfo) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      if (user.subscriptionPlatform !== "app_store" && hasCurrentSubscriptionAccess(user)) {
         return res.status(409).json({
           message: "This account already has an active subscription. It works on iPhone without another App Store purchase."
         });
       }
-      const productToPlan = {
-        adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly", amount: 499 },
-        adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly", amount: 1299 },
-        adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly", amount: 2499 }
-      };
-      const planInfo = productToPlan[productId];
-      if (!planInfo) {
-        return res.status(400).json({ message: "Invalid product ID" });
+      let entitlement;
+      try {
+        entitlement = await verifyAppleStorePurchase({
+          receiptData,
+          productId,
+          transactionId: typeof transactionId === "string" ? transactionId : null
+        });
+      } catch (error) {
+        const notConfigured = error instanceof AppleStoreConfigurationError;
+        const invalidPurchase = error instanceof AppleStoreVerificationError && error.invalidPurchase;
+        console.warn(
+          `[Apple App Store] Purchase verification rejected: product=${productId}, reason=${notConfigured ? "not_configured" : invalidPurchase ? "invalid" : "upstream"}.`
+        );
+        return res.status(invalidPurchase ? 400 : 503).json({
+          message: notConfigured ? "Apple App Store Server API is not configured." : invalidPurchase ? "Apple could not verify this purchase." : "Apple purchase status could not be verified. Please try again."
+        });
       }
-      let verified = false;
-      let expiryTime = null;
-      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
-      if (APPLE_SHARED_SECRET) {
-        try {
-          const verifyReceipt = async (url) => {
-            const response = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                "receipt-data": receiptData,
-                "password": APPLE_SHARED_SECRET,
-                "exclude-old-transactions": true
-              })
-            });
-            return response.json();
-          };
-          let appleResponse = await verifyReceipt("https://buy.itunes.apple.com/verifyReceipt");
-          if (appleResponse.status === 21007) {
-            appleResponse = await verifyReceipt("https://sandbox.itunes.apple.com/verifyReceipt");
-          }
-          if (appleResponse.status !== 0) {
-            console.error(`Apple receipt validation failed: status ${appleResponse.status}`);
-            return res.status(400).json({ message: `Apple receipt invalid (status ${appleResponse.status})` });
-          }
-          const latestReceipts = appleResponse.latest_receipt_info || appleResponse.receipt?.in_app || [];
-          const matchingReceipts = latestReceipts.filter((r) => r.product_id === productId);
-          if (matchingReceipts.length === 0) {
-            return res.status(400).json({ message: "No matching subscription found in receipt" });
-          }
-          matchingReceipts.sort((a, b) => Number(b.expires_date_ms || 0) - Number(a.expires_date_ms || 0));
-          const latest = matchingReceipts[0];
-          const expiresMs = Number(latest.expires_date_ms);
-          if (!expiresMs || expiresMs < Date.now()) {
-            return res.status(400).json({ message: "Subscription has expired" });
-          }
-          verified = true;
-          expiryTime = new Date(expiresMs);
-        } catch (appleError) {
-          console.error("Apple receipt verification error:", appleError.message);
-          return res.status(500).json({ message: "Apple receipt verification failed" });
-        }
-      } else {
-        console.warn("APPLE_SHARED_SECRET not configured \u2014 accepting Apple purchase in dev mode only");
-        if (process.env.NODE_ENV === "production") {
-          return res.status(503).json({ message: "Apple receipt verification not configured" });
-        }
-        verified = true;
+      if (!entitlement.grantsAccess || !entitlement.expiresAt) {
+        return res.status(400).json({
+          success: false,
+          status: entitlement.status,
+          message: "Apple does not report an active subscription for this purchase."
+        });
       }
-      if (!verified) {
-        return res.status(400).json({ message: "Apple purchase verification failed" });
+      const originalTransactionId = entitlement.originalTransactionId;
+      if (!originalTransactionId) {
+        return res.status(502).json({
+          message: "Apple did not return an original transaction identifier."
+        });
       }
-      if (!expiryTime) {
-        expiryTime = /* @__PURE__ */ new Date();
-        expiryTime.setMonth(expiryTime.getMonth() + 1);
+      const transactionOwner = await storage.getUserByAppleTransactionId(
+        originalTransactionId
+      );
+      if (transactionOwner && transactionOwner.id !== user.id) {
+        return res.status(409).json({
+          message: "This App Store subscription is already linked to another account."
+        });
       }
-      let originalTransactionId;
-      if (APPLE_SHARED_SECRET) {
-        try {
-          const verifyForTxId = async (url) => {
-            const r = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ "receipt-data": receiptData, "password": APPLE_SHARED_SECRET, "exclude-old-transactions": true })
-            });
-            return r.json();
-          };
-          let resp = await verifyForTxId("https://buy.itunes.apple.com/verifyReceipt");
-          if (resp.status === 21007) resp = await verifyForTxId("https://sandbox.itunes.apple.com/verifyReceipt");
-          if (resp.status === 0) {
-            const receipts = resp.latest_receipt_info || resp.receipt?.in_app || [];
-            const match = receipts.filter((r) => r.product_id === productId).sort((a, b) => Number(b.expires_date_ms || 0) - Number(a.expires_date_ms || 0))[0];
-            if (match) originalTransactionId = match.original_transaction_id;
-          }
-        } catch (_) {
-        }
+      if (user.subscriptionPlatform === "app_store" && hasCurrentSubscriptionAccess(user) && user.appleOriginalTransactionId && user.appleOriginalTransactionId !== originalTransactionId) {
+        return res.status(409).json({
+          message: "A different active App Store subscription is already linked to this account."
+        });
       }
-      if (!originalTransactionId && transactionId) originalTransactionId = transactionId;
-      await storage.updateUser(user.id, {
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: "active",
-        subscriptionExpiresAt: expiryTime,
-        subscriptionPlatform: "app_store",
-        ...originalTransactionId ? { appleOriginalTransactionId: originalTransactionId } : {}
+      const update = storeSubscriptionUpdate("app_store", entitlement, {
+        appleOriginalTransactionId: originalTransactionId
       });
-      req.session.user = {
-        ...req.session.user,
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: "active",
-        subscriptionExpiresAt: expiryTime,
-        subscriptionPlatform: "app_store"
-      };
+      const persistedUser = await storage.updateUser(user.id, update);
+      if (!persistedUser || persistedUser.subscriptionPlatform !== "app_store" || persistedUser.appleOriginalTransactionId !== originalTransactionId || persistedUser.subscriptionStatus !== entitlement.status || !persistedUser.subscriptionExpiresAt) {
+        throw new Error("Apple App Store entitlement was not persisted.");
+      }
+      req.session.user = publicUser(persistedUser);
       await new Promise((resolve) => {
         req.session.save((err) => {
-          if (err) console.error("Session save error after Apple verify:", err);
+          if (err) {
+            logSanitizedError("subscriptions.app-store.session-save", err);
+          }
           resolve();
         });
       });
-      console.log(`Apple subscription verified for user ${user.id}: ${productId} -> ${planInfo.planType}`);
-      res.json({
+      console.info("[Apple App Store] Entitlement verified");
+      return res.json({
         success: true,
-        planType: planInfo.planType,
+        planType: entitlement.tier,
         billingCycle: planInfo.billingCycle,
-        expiresAt: expiryTime.toISOString(),
+        expiresAt: entitlement.expiresAt.toISOString(),
+        status: entitlement.status,
         platform: "app_store"
       });
     } catch (error) {
-      console.error("Apple verification error:", error);
-      res.status(500).json({ message: "Failed to verify Apple purchase", error: error.message });
+      const duplicateOwnership = error?.code === "23505" || error?.constraint?.includes("apple_original_transaction_id") || error?.constraint?.includes("transaction_id");
+      logSanitizedError("subscriptions.app-store.verify", error);
+      return res.status(duplicateOwnership ? 409 : 500).json({
+        message: duplicateOwnership ? "This App Store transaction is already linked to another account." : "Failed to verify Apple purchase."
+      });
     }
   });
   app2.post("/api/apple/restore-purchases", async (req, res) => {
@@ -15410,288 +16067,417 @@ async function registerRoutes(app2) {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const user = req.session.user;
-      const { receiptData } = req.body;
-      if (!receiptData) {
-        return res.json({ restored: false, message: "No receipt data provided" });
-      }
-      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
-      if (!APPLE_SHARED_SECRET) {
-        if (process.env.NODE_ENV !== "production") {
-          return res.json({ restored: false, message: "Apple not configured (dev mode)" });
-        }
-        return res.status(503).json({ message: "Apple receipt verification not configured" });
-      }
-      const productToPlan = {
-        adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly" },
-        adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly" },
-        adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly" }
-      };
-      const verifyUrl = async (url) => {
-        const r = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ "receipt-data": receiptData, "password": APPLE_SHARED_SECRET, "exclude-old-transactions": true })
+      const user = await storage.getUserById(req.session.userId) ?? req.session.user;
+      const { receiptData, transactionId } = req.body;
+      if (typeof receiptData !== "string" || receiptData.trim().length === 0) {
+        return res.json({
+          restored: false,
+          message: "No App Store receipt data was provided."
         });
-        return r.json();
-      };
-      let appleResponse = await verifyUrl("https://buy.itunes.apple.com/verifyReceipt");
-      if (appleResponse.status === 21007) {
-        appleResponse = await verifyUrl("https://sandbox.itunes.apple.com/verifyReceipt");
       }
-      if (appleResponse.status !== 0) {
-        return res.json({ restored: false, message: `Apple receipt invalid (status ${appleResponse.status})` });
+      if (user.subscriptionPlatform !== "app_store" && hasCurrentSubscriptionAccess(user)) {
+        return res.status(409).json({
+          message: "This account already has an active subscription on another platform."
+        });
       }
-      const receipts = appleResponse.latest_receipt_info || [];
-      const now = Date.now();
-      const active = receipts.filter((r) => productToPlan[r.product_id] && Number(r.expires_date_ms) > now).sort((a, b) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
-      if (!active) {
-        return res.json({ restored: false, message: "No active Apple subscription found" });
+      let entitlement;
+      try {
+        entitlement = await restoreAppleStoreSubscription(
+          receiptData,
+          typeof transactionId === "string" ? transactionId : void 0
+        );
+      } catch (error) {
+        if (error instanceof AppleStoreConfigurationError) {
+          return res.status(503).json({
+            message: "Apple App Store Server API is not configured."
+          });
+        }
+        if (error instanceof AppleStoreVerificationError && error.invalidPurchase) {
+          return res.json({
+            restored: false,
+            message: "No verified App Store subscription was found."
+          });
+        }
+        throw error;
       }
-      const planInfo = productToPlan[active.product_id];
-      const expiresAt = new Date(Number(active.expires_date_ms));
-      await storage.updateUser(user.id, {
-        subscriptionTier: planInfo.planType,
-        subscriptionStatus: "active",
-        subscriptionExpiresAt: expiresAt,
-        subscriptionPlatform: "app_store"
+      if (!entitlement.grantsAccess || !entitlement.expiresAt) {
+        return res.json({
+          restored: false,
+          status: entitlement.status,
+          message: "No active App Store subscription was found."
+        });
+      }
+      const originalTransactionId = entitlement.originalTransactionId;
+      if (!originalTransactionId) {
+        return res.status(502).json({
+          message: "Apple did not return an original transaction identifier."
+        });
+      }
+      const transactionOwner = await storage.getUserByAppleTransactionId(
+        originalTransactionId
+      );
+      if (transactionOwner && transactionOwner.id !== user.id) {
+        return res.status(409).json({
+          message: "This App Store subscription is already linked to another account."
+        });
+      }
+      if (user.subscriptionPlatform === "app_store" && hasCurrentSubscriptionAccess(user) && user.appleOriginalTransactionId && user.appleOriginalTransactionId !== originalTransactionId) {
+        return res.status(409).json({
+          message: "A different active App Store subscription is already linked to this account."
+        });
+      }
+      const update = storeSubscriptionUpdate("app_store", entitlement, {
+        appleOriginalTransactionId: originalTransactionId
       });
-      req.session.user = { ...req.session.user, subscriptionTier: planInfo.planType, subscriptionStatus: "active", subscriptionExpiresAt: expiresAt, subscriptionPlatform: "app_store" };
+      const persistedUser = await storage.updateUser(user.id, update);
+      if (!persistedUser || persistedUser.subscriptionPlatform !== "app_store" || persistedUser.appleOriginalTransactionId !== originalTransactionId) {
+        throw new Error("Restored Apple App Store entitlement was not persisted.");
+      }
+      req.session.user = publicUser(persistedUser);
       await new Promise((resolve) => {
         req.session.save((err) => {
-          if (err) console.error("Session save error after Apple restore:", err);
+          if (err) {
+            logSanitizedError("subscriptions.app-store.session-save", err);
+          }
           resolve();
         });
       });
-      console.log(`Apple subscription restored for user ${user.id}: ${active.product_id} -> ${planInfo.planType}`);
-      res.json({ restored: true, planType: planInfo.planType, expiresAt: expiresAt.toISOString() });
+      console.info("[Apple App Store] Entitlement restored");
+      return res.json({
+        restored: true,
+        planType: entitlement.tier,
+        status: entitlement.status,
+        expiresAt: entitlement.expiresAt.toISOString()
+      });
     } catch (error) {
-      console.error("Apple restore error:", error);
-      res.status(500).json({ message: "Failed to restore Apple purchases" });
+      const duplicateOwnership = error?.code === "23505" || error?.constraint?.includes("apple_original_transaction_id") || error?.constraint?.includes("transaction_id");
+      logSanitizedError("subscriptions.app-store.restore", error);
+      return res.status(duplicateOwnership ? 409 : 503).json({
+        message: duplicateOwnership ? "This App Store subscription is already linked to another account." : "Apple subscription status could not be verified. Please try again."
+      });
     }
   });
   app2.post("/api/apple/notifications", async (req, res) => {
-    res.status(200).json({ received: true });
     try {
-      const { signedPayload, unified_receipt, notification_type } = req.body;
-      const APPLE_SHARED_SECRET = process.env.APPLE_SHARED_SECRET;
-      if (!APPLE_SHARED_SECRET) {
-        console.warn("Apple notification received but APPLE_SHARED_SECRET not set");
-        return;
+      const signedPayload = req.body?.signedPayload;
+      if (typeof signedPayload !== "string" || signedPayload.length === 0) {
+        return res.status(400).json({
+          message: "A signed App Store Server Notifications V2 payload is required."
+        });
       }
-      const productToPlan = {
-        adaptalyfe_basic_monthly: "basic",
-        adaptalyfe_premium_monthly: "premium",
-        adaptalyfe_family_monthly: "family"
-      };
-      if (unified_receipt) {
-        const latestInfo = unified_receipt.latest_receipt_info || [];
-        const type = notification_type || "";
-        const latestReceipt = latestInfo.sort((a, b) => Number(b.expires_date_ms) - Number(a.expires_date_ms))[0];
-        if (!latestReceipt) {
-          console.warn("Apple notif: no receipt in payload");
-          return;
-        }
-        const originalTransactionId = latestReceipt.original_transaction_id;
-        const productId = latestReceipt.product_id;
-        const planType = productToPlan[productId];
-        const expiresAt = new Date(Number(latestReceipt.expires_date_ms));
-        console.log(`Apple notification [${type}] product=${productId} originalTxId=${originalTransactionId} expires=${expiresAt.toISOString()}`);
-        const user = originalTransactionId ? await storage.getUserByAppleTransactionId(originalTransactionId) : void 0;
-        if (!user) {
-          console.warn(`Apple notif: no user found for originalTxId=${originalTransactionId}`);
-          return;
-        }
-        const isRenewal = ["DID_RENEW", "INITIAL_BUY", "DID_RECOVER", "INTERACTIVE_RENEWAL"].includes(type);
-        const isCancel = ["CANCEL", "REFUND", "REVOKE"].includes(type);
-        const isExpired = type === "DID_FAIL_TO_RENEW" || type === "EXPIRED";
-        if (isRenewal && planType) {
-          await storage.updateUserSubscription(user.id, {
-            subscriptionStatus: "active",
-            subscriptionTier: planType,
-            subscriptionExpiresAt: expiresAt,
-            subscriptionPlatform: "app_store"
+      let verified;
+      try {
+        verified = await verifyAppleServerNotification(signedPayload);
+      } catch (error) {
+        if (error instanceof AppleStoreConfigurationError) {
+          return res.status(503).json({
+            message: "Apple notification verification is not configured."
           });
-          console.log(`\u2705 Apple renewal: updated user ${user.id} (${user.username}) \u2192 ${planType} until ${expiresAt.toISOString()}`);
-        } else if (isCancel) {
-          await storage.updateUserSubscription(user.id, {
-            subscriptionStatus: "cancelled",
-            subscriptionTier: "free"
-          });
-          console.log(`\u2705 Apple cancel: user ${user.id} (${user.username}) subscription cancelled`);
-        } else if (isExpired) {
-          await storage.updateUserSubscription(user.id, {
-            subscriptionStatus: "inactive",
-            subscriptionTier: "free"
-          });
-          console.log(`\u2705 Apple expired: user ${user.id} (${user.username}) subscription expired`);
         }
+        const invalidSignature = error instanceof AppleStoreVerificationError && error.invalidPurchase;
+        console.warn(
+          `[Apple App Store] Notification rejected: reason=${invalidSignature ? "invalid_signature" : "verification_unavailable"}.`
+        );
+        return res.status(invalidSignature ? 400 : 503).json({
+          message: invalidSignature ? "The App Store notification signature is invalid." : "App Store notification verification is temporarily unavailable."
+        });
       }
-      if (signedPayload) {
-        console.log("Apple V2 signed notification received \u2014 JWT payload length:", signedPayload.length);
+      const notification = verified.notification;
+      if (notification.notificationType === "TEST") {
+        return res.status(200).json({ received: true, test: true });
       }
+      const eventId = notification.notificationUUID;
+      if (!eventId) {
+        return res.status(400).json({
+          message: "The signed notification did not include its event ID."
+        });
+      }
+      const originalTransactionId = verified.transaction?.originalTransactionId ?? verified.renewalInfo?.originalTransactionId;
+      if (!originalTransactionId) {
+        return res.status(200).json({
+          received: true,
+          ignored: "no_subscription_transaction"
+        });
+      }
+      const user = await storage.getUserByAppleTransactionId(
+        originalTransactionId
+      );
+      if (!user || user.subscriptionPlatform !== "app_store") {
+        return res.status(200).json({
+          received: true,
+          ignored: user ? "subscription_moved_to_another_platform" : "unlinked"
+        });
+      }
+      const entitlement = await refreshAppleSubscriptionFromNotification(
+        originalTransactionId,
+        verified.environment
+      );
+      if (!entitlement.productId) {
+        return res.status(200).json({
+          received: true,
+          ignored: "unrecognized_subscription_product"
+        });
+      }
+      const applied = await storage.applySubscriptionNotificationOnce({
+        platform: "app_store",
+        eventId,
+        eventType: [
+          notification.notificationType ?? "UNKNOWN",
+          notification.subtype
+        ].filter(Boolean).join(":"),
+        userId: user.id,
+        subscriptionData: storeSubscriptionUpdate(
+          "app_store",
+          entitlement,
+          {
+            appleOriginalTransactionId: entitlement.originalTransactionId ?? originalTransactionId
+          }
+        )
+      });
+      return res.status(200).json({
+        received: true,
+        duplicate: !applied
+      });
     } catch (error) {
-      console.error("Apple notification processing error:", error);
+      console.error(
+        "Apple App Store notification processing failed:",
+        error?.name ?? "Unknown error"
+      );
+      return res.status(500).json({
+        message: "Apple notification processing failed."
+      });
     }
   });
   app2.post("/api/google-play/notifications", async (req, res) => {
-    res.status(200).json({ received: true });
     try {
+      const authenticatedPush = await isAuthenticatedGooglePlayPush(req);
+      if (!authenticatedPush) {
+        return res.status(401).json({
+          message: "Authenticated Google Play Pub/Sub delivery is required."
+        });
+      }
       const pubsubMessage = req.body?.message;
-      if (!pubsubMessage?.data) {
-        console.warn("Google Play notification: no Pub/Sub message data");
-        return;
+      if (typeof pubsubMessage?.data !== "string" || typeof pubsubMessage?.messageId !== "string" || pubsubMessage.messageId.length === 0) {
+        return res.status(400).json({
+          message: "A Pub/Sub message ID and payload are required."
+        });
       }
       const decoded = Buffer.from(pubsubMessage.data, "base64").toString("utf8");
       const notification = JSON.parse(decoded);
-      console.log("Google Play notification:", JSON.stringify(notification));
       const { subscriptionNotification, voidedPurchaseNotification } = notification;
-      if (!subscriptionNotification) return;
-      const { notificationType, purchaseToken, subscriptionId } = subscriptionNotification;
-      const RENEWED = [1, 2, 4, 7];
-      const CANCELLED = [3, 12];
-      const EXPIRED = [13];
-      const productToPlan = {
-        adaptalyfe_basic_monthly: { tier: "basic" },
-        adaptalyfe_premium_monthly: { tier: "premium" },
-        adaptalyfe_family_monthly: { tier: "family" }
-      };
-      const user = purchaseToken ? await storage.getUserByGooglePlayToken(purchaseToken) : void 0;
+      if (notification.testNotification) {
+        return res.status(200).json({ received: true });
+      }
+      if (!subscriptionNotification && !voidedPurchaseNotification) {
+        return res.status(200).json({ received: true });
+      }
+      const notificationType = Number(
+        subscriptionNotification?.notificationType ?? 0
+      );
+      const isRevocationNotification = notificationType === 12;
+      const purchaseToken = subscriptionNotification?.purchaseToken ?? voidedPurchaseNotification?.purchaseToken;
+      const subscriptionId = subscriptionNotification?.subscriptionId;
+      if (typeof purchaseToken !== "string" || purchaseToken.length === 0) {
+        return res.status(400).json({ message: "Purchase token is required" });
+      }
+      const androidPublisher = await createGooglePlayPublisher();
+      const result = await androidPublisher.purchases.subscriptionsv2.get({
+        packageName: "com.adaptalyfe.app",
+        token: purchaseToken
+      });
+      let user = await storage.getUserByGooglePlayToken(purchaseToken);
+      if (!user && typeof result.data?.linkedPurchaseToken === "string") {
+        user = await storage.getUserByGooglePlayToken(
+          result.data.linkedPurchaseToken
+        );
+      }
       if (!user) {
-        console.warn(`Google Play notif: no user found for purchaseToken=${purchaseToken?.slice(0, 20)}...`);
-        return;
+        console.warn("Google Play notification has no matching account.");
+        return res.status(200).json({ received: true });
       }
-      const planInfo = productToPlan[subscriptionId];
-      if (RENEWED.includes(notificationType) && planInfo) {
-        let expiresAt = /* @__PURE__ */ new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + 1);
-        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-          try {
-            const { google } = await import("googleapis");
-            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-            const auth = new google.auth.GoogleAuth({
-              credentials: serviceAccount,
-              scopes: ["https://www.googleapis.com/auth/androidpublisher"]
-            });
-            const androidPublisher = google.androidpublisher({ version: "v3", auth });
-            const result = await androidPublisher.purchases.subscriptionsv2.get({
-              packageName: "com.adaptalyfe.app",
-              token: purchaseToken
-            });
-            const lineItems = result.data?.lineItems;
-            if (lineItems && lineItems.length > 0) {
-              const item = lineItems.find((li) => li.productId === subscriptionId) || lineItems[0];
-              if (item?.expiryTime) {
-                expiresAt = new Date(item.expiryTime);
-              }
-            }
-          } catch (gpErr) {
-            console.warn("Google Play API verification failed, using +1 month fallback:", gpErr.message);
+      if (user.subscriptionPlatform !== "google_play") {
+        return res.status(200).json({
+          received: true,
+          ignored: "subscription_moved_to_another_platform"
+        });
+      }
+      if (user.googlePlayPurchaseToken && user.googlePlayPurchaseToken !== purchaseToken && result.data?.linkedPurchaseToken !== user.googlePlayPurchaseToken) {
+        return res.status(200).json({
+          received: true,
+          ignored: "unlinked_purchase_token"
+        });
+      }
+      const entitlement = resolveGooglePlayEntitlement(result.data, {
+        expectedProductId: subscriptionId || user.googlePlayProductId || void 0,
+        forceRevoke: isRevocationNotification
+      });
+      if (!subscriptionPlanForProductId(entitlement.productId)) {
+        console.warn("Google Play notification returned an unconfigured product.");
+        return res.status(200).json({ received: true });
+      }
+      const applied = await storage.applySubscriptionNotificationOnce({
+        platform: "google_play",
+        eventId: pubsubMessage.messageId,
+        eventType: voidedPurchaseNotification ? "voided_purchase" : `subscription:${notificationType}`,
+        userId: user.id,
+        subscriptionData: storeSubscriptionUpdate(
+          "google_play",
+          entitlement,
+          {
+            googlePlayPurchaseToken: purchaseToken,
+            googlePlayOrderId: entitlement.transactionId,
+            googlePlayProductId: entitlement.productId
           }
-        }
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: "active",
-          subscriptionTier: planInfo.tier,
-          subscriptionExpiresAt: expiresAt,
-          subscriptionPlatform: "google_play"
-        });
-        console.log(`\u2705 Google Play renewal: user ${user.id} (${user.username}) \u2192 ${planInfo.tier} until ${expiresAt.toISOString()}`);
-      } else if (CANCELLED.includes(notificationType)) {
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: "cancelled",
-          subscriptionTier: "free"
-        });
-        console.log(`\u2705 Google Play cancel: user ${user.id} (${user.username}) subscription cancelled`);
-      } else if (EXPIRED.includes(notificationType)) {
-        await storage.updateUserSubscription(user.id, {
-          subscriptionStatus: "inactive",
-          subscriptionTier: "free"
-        });
-        console.log(`\u2705 Google Play expired: user ${user.id} (${user.username}) subscription expired`);
-      } else {
-        console.log(`Google Play notif type ${notificationType} for user ${user.id} \u2014 no action needed`);
-      }
+        )
+      });
+      console.info("Google Play notification applied.", {
+        messageId: pubsubMessage.messageId ?? null,
+        notificationType,
+        state: result.data?.subscriptionState ?? null,
+        entitlement: entitlement.status,
+        tier: entitlement.tier
+      });
+      return res.status(200).json({
+        received: true,
+        duplicate: !applied
+      });
     } catch (error) {
-      console.error("Google Play notification processing error:", error);
+      logSanitizedError("subscriptions.google-play.notification", error);
+      return res.status(500).json({ message: "Google Play notification processing failed" });
     }
   });
   app2.post("/api/google-play/restore-purchases", async (req, res) => {
+    let productIdForLog = "unknown";
+    let restorePhase = "request validation";
     try {
       if (!req.session?.userId || !req.session?.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      const user = req.session.user;
+      const user = await storage.getUserById(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
       const { purchases } = req.body;
       if (!purchases || !Array.isArray(purchases) || purchases.length === 0) {
         return res.json({ restored: false, message: "No purchases to restore" });
       }
-      const productToPlan = {
-        adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly" },
-        adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly" },
-        adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly" }
-      };
+      if (user.subscriptionPlatform !== "google_play" && hasCurrentSubscriptionAccess(user)) {
+        return res.status(409).json({
+          message: "This account already has an active subscription. It works on Android without another Google Play purchase."
+        });
+      }
       let restored = false;
+      let hasPendingPurchase = false;
+      let restoredSubscription = null;
+      const androidPublisher = await createGooglePlayPublisher();
       for (const purchase of purchases) {
         if (!purchase.purchaseToken || !purchase.productId) continue;
-        const planInfo = productToPlan[purchase.productId];
+        const planInfo = subscriptionPlanForProductId(purchase.productId);
         if (!planInfo) continue;
-        let expiresAt = null;
-        if (process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY) {
-          try {
-            const serviceAccount = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY);
-            const { google } = await import("googleapis");
-            const auth = new google.auth.GoogleAuth({
-              credentials: serviceAccount,
-              scopes: ["https://www.googleapis.com/auth/androidpublisher"]
-            });
-            const androidPublisher = google.androidpublisher({ version: "v3", auth });
-            const purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
-              packageName: "com.adaptalyfe.app",
-              token: purchase.purchaseToken
-            });
-            const state = purchaseResult.data.subscriptionState;
-            if (state !== "SUBSCRIPTION_STATE_ACTIVE" && state !== "SUBSCRIPTION_STATE_IN_GRACE_PERIOD") {
-              continue;
-            }
-            const lineItems = purchaseResult.data.lineItems;
-            if (lineItems && lineItems.length > 0 && lineItems[0].expiryTime) {
-              expiresAt = new Date(lineItems[0].expiryTime);
-            }
-          } catch (verifyError) {
-            console.error("Restore verification error:", verifyError.message);
+        productIdForLog = purchase.productId;
+        const tokenOwner = await storage.getUserByGooglePlayToken(
+          purchase.purchaseToken
+        );
+        if (tokenOwner && tokenOwner.id !== user.id) {
+          return res.status(409).json({
+            message: "A Google Play purchase is already linked to another account."
+          });
+        }
+        let purchaseResult;
+        try {
+          restorePhase = "Google Play verification";
+          purchaseResult = await androidPublisher.purchases.subscriptionsv2.get({
+            packageName: "com.adaptalyfe.app",
+            token: purchase.purchaseToken
+          });
+        } catch (verifyError) {
+          const status = verifyError?.response?.status ?? verifyError?.code;
+          if (status === 400 || status === 404 || status === 410) {
             continue;
           }
-        } else {
-          console.error("GOOGLE_PLAY_SERVICE_ACCOUNT_KEY is not configured");
-          return res.status(503).json({ message: "Google Play verification not configured" });
+          throw verifyError;
         }
-        if (!expiresAt) {
+        const linkedPurchaseToken = purchaseResult.data?.linkedPurchaseToken;
+        if (linkedPurchaseToken) {
+          const linkedOwner = await storage.getUserByGooglePlayToken(linkedPurchaseToken);
+          if (linkedOwner && linkedOwner.id !== user.id) {
+            return res.status(409).json({ message: "This Google Play subscription belongs to another Adaptalyfe account. Sign in to that account to restore it." });
+          }
+        }
+        if (user.subscriptionPlatform === "google_play" && hasCurrentSubscriptionAccess(user) && user.googlePlayPurchaseToken !== purchase.purchaseToken && linkedPurchaseToken !== user.googlePlayPurchaseToken) {
+          return res.status(409).json({
+            message: "A different active Google Play subscription is already linked to this account."
+          });
+        }
+        const entitlement = resolveGooglePlayEntitlement(purchaseResult.data, {
+          expectedProductId: purchase.productId
+        });
+        if (entitlement.status === "pending") hasPendingPurchase = true;
+        if (!entitlement.grantsAccess || entitlement.productId !== purchase.productId || !entitlement.expiresAt) {
+          console.info(
+            `[Google Play] Restore candidate not eligible: product=${purchase.productId}, storeState=${purchaseResult.data.subscriptionState ?? "unknown"}.`
+          );
           continue;
         }
-        await storage.updateUser(user.id, {
-          subscriptionTier: planInfo.planType,
-          subscriptionStatus: "active",
-          subscriptionExpiresAt: expiresAt,
-          subscriptionPlatform: "google_play",
-          googlePlayPurchaseToken: purchase.purchaseToken,
-          googlePlayOrderId: purchase.orderId || null,
-          googlePlayProductId: purchase.productId
+        restorePhase = "database persistence";
+        const update = storeSubscriptionUpdate(
+          "google_play",
+          entitlement,
+          {
+            googlePlayPurchaseToken: purchase.purchaseToken,
+            googlePlayOrderId: entitlement.transactionId,
+            googlePlayProductId: entitlement.productId
+          }
+        );
+        const persistedUser = await storage.updateUser(user.id, update);
+        if (!persistedUser || persistedUser.subscriptionTier !== entitlement.tier || persistedUser.subscriptionStatus !== entitlement.status || persistedUser.subscriptionPlatform !== "google_play" || persistedUser.googlePlayPurchaseToken !== purchase.purchaseToken || persistedUser.googlePlayProductId !== entitlement.productId || persistedUser.subscriptionProductId !== entitlement.productId || persistedUser.subscriptionTransactionId !== entitlement.transactionId || !persistedUser.subscriptionVerifiedAt || !persistedUser.subscriptionExpiresAt || new Date(persistedUser.subscriptionExpiresAt).getTime() !== entitlement.expiresAt.getTime()) {
+          throw new Error("Restored Google Play entitlement was not persisted.");
+        }
+        console.info(
+          `[Google Play] Restored entitlement persisted: product=${entitlement.productId}, tier=${entitlement.tier}.`
+        );
+        restoredSubscription = googlePlaySubscriptionResponse(
+          persistedUser,
+          entitlement,
+          planInfo.billingCycle
+        );
+        req.session.user = publicUser(persistedUser);
+        restorePhase = "session persistence";
+        await new Promise((resolve) => {
+          req.session.save((err) => {
+            if (err) {
+              logSanitizedError("subscriptions.google-play.session-save", err);
+            }
+            resolve();
+          });
         });
-        req.session.user = {
-          ...req.session.user,
-          subscriptionTier: planInfo.planType,
-          subscriptionStatus: "active",
-          subscriptionExpiresAt: expiresAt,
-          subscriptionPlatform: "google_play"
-        };
-        console.log(`Restored Google Play subscription for user ${user.id}: ${purchase.productId}`);
+        if (purchaseResult.data.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING") {
+          restorePhase = "Google Play acknowledgement";
+          try {
+            await androidPublisher.purchases.subscriptions.acknowledge({
+              packageName: "com.adaptalyfe.app",
+              subscriptionId: purchase.productId,
+              token: purchase.purchaseToken
+            });
+          } catch (ackError) {
+            logSanitizedError("subscriptions.google-play.acknowledge", ackError);
+          }
+        }
+        restorePhase = "complete";
         restored = true;
         break;
       }
-      res.json({ restored, message: restored ? "Subscription restored successfully" : "No valid purchases found" });
+      res.json({
+        restored,
+        ...!restored && hasPendingPurchase ? { status: "pending" } : {},
+        message: restored ? "Subscription restored successfully" : "No valid purchases found",
+        ...restoredSubscription ? { subscription: restoredSubscription } : {}
+      });
     } catch (error) {
-      console.error("Restore purchases error:", error);
-      res.status(500).json({ message: "Failed to restore purchases", error: error.message });
+      const notConfigured = error?.message?.includes("not configured");
+      logSanitizedError("subscriptions.google-play.restore", error);
+      const duplicateOwnership = error?.code === "23505";
+      res.status(duplicateOwnership ? 409 : notConfigured ? 503 : 500).json({
+        message: duplicateOwnership ? "This store transaction is already linked to another account." : notConfigured ? "Google Play verification not configured" : "Failed to restore purchases"
+      });
     }
   });
   app2.get("/api/subscription/payment-history", async (req, res) => {
@@ -15716,7 +16502,7 @@ async function registerRoutes(app2) {
       }));
       res.json(formattedPayments);
     } catch (error) {
-      console.error("Error fetching payment history:", error);
+      logSanitizedError("subscriptions.payment-history", error);
       res.status(500).json({ message: "Failed to fetch payment history" });
     }
   });
@@ -15734,7 +16520,7 @@ async function registerRoutes(app2) {
       }));
       res.json(userProgress);
     } catch (error) {
-      console.error("Error fetching caregiver users:", error);
+      logSanitizedError("caregivers.users.list", error);
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
@@ -15826,7 +16612,7 @@ async function registerRoutes(app2) {
       };
       res.json(newPayment);
     } catch (error) {
-      console.error("Error creating bill payment:", error);
+      logSanitizedError("bank.bill-payment.create", error);
       res.status(400).json({ message: "Failed to create bill payment" });
     }
   });
@@ -15870,18 +16656,16 @@ async function registerRoutes(app2) {
     });
   });
   app2.get("/screenshot-capture", (_req, res) => {
-    res.sendFile(path.resolve("screenshot-capture.html"));
+    res.sendFile(path2.resolve("screenshot-capture.html"));
   });
   app2.get("/screenshots", (_req, res) => {
-    res.sendFile(path.resolve("public/screenshot-capture.html"));
+    res.sendFile(path2.resolve("public/screenshot-capture.html"));
   });
   app2.get("/screenshots-simple", (_req, res) => {
-    res.sendFile(path.resolve("screenshot-simple.html"));
+    res.sendFile(path2.resolve("screenshot-simple.html"));
   });
   app2.get("/api/rewards", async (req, res) => {
     try {
-      console.log("=== REWARDS: GET /api/rewards ===");
-      console.log("Session data:", req.session);
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -15890,16 +16674,13 @@ async function registerRoutes(app2) {
         user = await storage.getUser(req.session.userId);
         req.session.user = user;
       }
-      console.log("Final user:", user?.id, user?.username);
       if (!user) {
-        console.log("No user found after all attempts, returning 401");
         return res.status(401).json({ message: "Not authenticated" });
       }
       const rewards2 = await storage.getRewardsByUser(user.id);
-      console.log("Found rewards count:", rewards2.length);
       res.json(rewards2);
     } catch (error) {
-      console.error("Error fetching rewards:", error);
+      logSanitizedError("rewards.list", error);
       res.status(500).json({ message: "Failed to fetch rewards" });
     }
   });
@@ -15936,17 +16717,13 @@ async function registerRoutes(app2) {
       const rewards2 = await storage.getRewardsByCaregiver(user.id);
       res.json(rewards2);
     } catch (error) {
-      console.error("Error fetching caregiver rewards:", error);
+      logSanitizedError("rewards.caregiver.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver rewards" });
     }
   });
   app2.post("/api/rewards", async (req, res) => {
     try {
-      console.log("=== REWARDS: POST /api/rewards ===");
-      console.log("Session data:", req.session);
-      console.log("Request body:", req.body);
       if (!req.session.userId || !req.session.user) {
-        console.log("No authenticated user found, returning 401");
         return res.status(401).json({ message: "Authentication required" });
       }
       let user = req.session.user;
@@ -15954,9 +16731,7 @@ async function registerRoutes(app2) {
         user = await storage.getUser(req.session.userId);
         req.session.user = user;
       }
-      console.log("Final user:", user?.id, user?.username);
       if (!user) {
-        console.log("No user found after all attempts, returning 401");
         return res.status(401).json({ message: "Not authenticated" });
       }
       const rewardData = {
@@ -15966,36 +16741,28 @@ async function registerRoutes(app2) {
         caregiverId: user.id
         // Caregiver creating the reward
       };
-      console.log("Creating reward with data:", rewardData);
       const reward = await storage.createReward(rewardData);
-      console.log("Created reward:", reward);
       res.json(reward);
     } catch (error) {
-      console.error("Error creating reward:", error);
+      logSanitizedError("rewards.create", error);
       res.status(500).json({ message: "Failed to create reward", error: error.message });
     }
   });
   app2.patch("/api/rewards/:id", async (req, res) => {
     try {
-      console.log("=== REWARDS: PATCH /api/rewards/:id ===");
-      console.log("Session data:", req.session);
-      console.log("Request body:", req.body);
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
       const rewardId = parseInt(req.params.id);
       const updatedReward = await storage.updateReward(rewardId, req.body);
-      console.log("Updated reward:", updatedReward);
       res.json(updatedReward);
     } catch (error) {
-      console.error("Error updating reward:", error);
+      logSanitizedError("rewards.update", error);
       res.status(500).json({ message: "Failed to update reward", error: error.message });
     }
   });
   app2.delete("/api/rewards/:id", async (req, res) => {
     try {
-      console.log("=== REWARDS: DELETE /api/rewards/:id ===");
-      console.log("Session data:", req.session);
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -16004,14 +16771,13 @@ async function registerRoutes(app2) {
       if (!archived) {
         return res.status(404).json({ message: "Reward not found" });
       }
-      console.log("Archived reward:", rewardId);
       res.json({
         success: true,
         isActive: false,
         message: "Reward archived successfully"
       });
     } catch (error) {
-      console.error("Error archiving reward:", error);
+      logSanitizedError("rewards.archive", error);
       res.status(500).json({ message: "Failed to archive reward", error: error.message });
     }
   });
@@ -16271,7 +17037,7 @@ async function registerRoutes(app2) {
       }));
       res.json(subscriptionUsers);
     } catch (error) {
-      console.error("Error fetching subscription users:", error);
+      logSanitizedError("admin.subscriptions.users", error);
       res.status(500).json({ message: "Failed to fetch subscription users" });
     }
   });
@@ -16302,7 +17068,7 @@ async function registerRoutes(app2) {
         isActive: false,
         subscriptionStatus: "cancelled"
       });
-      console.log(`\u{1F7E0} Super admin ${currentUser.username} soft-deleted user ${target.username} (id=${targetId})`);
+      console.log("Super admin soft-deleted an account");
       res.json({
         success: true,
         type: "soft",
@@ -16344,7 +17110,7 @@ async function registerRoutes(app2) {
         });
       }
       await storage.deleteUserAccount(targetId);
-      console.log(`\u{1F534} Super admin ${currentUser.username} PERMANENTLY DELETED user ${target.username} (id=${targetId})`);
+      console.log("Super admin permanently deleted an account");
       res.json({
         success: true,
         type: "hard",
@@ -16556,7 +17322,7 @@ async function registerRoutes(app2) {
 }
 
 // server/production.ts
-import path2 from "path";
+import path3 from "path";
 import fs from "fs";
 
 // server/proactive-guidance.ts
@@ -16929,9 +17695,13 @@ var TaskReminderService = class {
     this.isRunning = true;
     console.log("\u{1F514} Proactive Guidance Service started");
     this.intervalId = setInterval(() => {
-      this.checkDueTasks().catch(console.error);
+      this.checkDueTasks().catch(
+        (error) => logSanitizedError("proactive-guidance.worker", error)
+      );
     }, 6e4);
-    this.checkDueTasks().catch(console.error);
+    this.checkDueTasks().catch(
+      (error) => logSanitizedError("proactive-guidance.worker", error)
+    );
   }
   stop() {
     if (this.intervalId) {
@@ -16949,16 +17719,14 @@ var TaskReminderService = class {
         try {
           const result = await evaluateAndSurfaceProactiveGuidance(user.id, now);
           if (result.notification) {
-            console.log(
-              `\u{1F514} Proactive guidance sent: ${result.notification.title} for user ${user.id}`
-            );
+            console.log("Proactive guidance notification created");
           }
         } catch (error) {
-          console.error(`Error evaluating proactive guidance for user ${user.id}:`, error);
+          logSanitizedError("proactive-guidance.evaluate", error);
         }
       }
     } catch (error) {
-      console.error("Error checking proactive guidance:", error);
+      logSanitizedError("proactive-guidance.check", error);
     }
   }
   // Method to manually trigger a guidance check (useful for testing).
@@ -16974,7 +17742,7 @@ var TaskReminderService = class {
       });
       console.log("\u{1F504} Daily reminder state reset");
     } catch (error) {
-      console.error("Error resetting daily reminders:", error);
+      logSanitizedError("proactive-guidance.reset", error);
     }
   }
 };
@@ -17052,7 +17820,7 @@ var apiLimiter = rateLimit2({
   legacyHeaders: false,
   skip: (req) => {
     const skipPaths = ["/assets/", ".css", ".js", ".png", ".ico", ".json", ".html"];
-    return skipPaths.some((path3) => req.path.includes(path3));
+    return skipPaths.some((path4) => req.path.includes(path4));
   }
 });
 var authLimiter = rateLimit2({
@@ -17084,20 +17852,11 @@ app.use((req, res, next) => {
 });
 app.use((req, res, next) => {
   const start = Date.now();
-  const path3 = req.path;
-  let capturedJsonResponse = void 0;
-  const originalResJson = res.json;
-  res.json = function(bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
+  const path4 = req.path;
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path3.startsWith("/api")) {
-      let logLine = `${req.method} ${path3} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
+    if (path4.startsWith("/api")) {
+      let logLine = `${req.method} ${path4} ${res.statusCode} in ${duration}ms`;
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "\u2026";
       }
@@ -17116,11 +17875,11 @@ app.use((req, res, next) => {
     throw err;
   });
   console.log("Setting up production static file serving");
-  const distPath = path2.resolve(import.meta.dirname, "public");
+  const distPath = path3.resolve(import.meta.dirname, "public");
   if (!fs.existsSync(distPath)) {
     throw new Error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
   }
-  app.use("/assets", express.static(path2.join(distPath, "assets"), {
+  app.use("/assets", express.static(path3.join(distPath, "assets"), {
     maxAge: "365d",
     immutable: true,
     etag: true
@@ -17151,7 +17910,7 @@ app.use((req, res, next) => {
     res.set("Cache-Control", "no-store, no-cache, must-revalidate");
     res.set("Pragma", "no-cache");
     res.set("Expires", "0");
-    res.sendFile(path2.resolve(distPath, "index.html"));
+    res.sendFile(path3.resolve(distPath, "index.html"));
   });
   const port = process.env.PORT || 5e3;
   server.listen({

@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { initializeComprehensiveDemo } from "./demo-data";
 import { taskReminderService } from "./task-reminder-service";
+import { logSanitizedError } from "./safe-logging";
 
 // Simple log function 
 function log(message: string, source = "express") {
@@ -185,7 +186,7 @@ app.use((req, res, next) => {
       const viteModule = await import("./vite.js");
       await viteModule.setupVite(app, server);
     } catch (error) {
-      console.error("Failed to load Vite in development:", error);
+      logSanitizedError("server.vite-startup", error);
       // Fallback to static serving even in development
       const distPath = path.resolve(import.meta.dirname, "public");
       if (fs.existsSync(distPath)) {

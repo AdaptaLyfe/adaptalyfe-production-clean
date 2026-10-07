@@ -47,6 +47,7 @@ import type {
   UserPointsBalance,
 } from "../shared/schema.js";
 import type { DailyGuideContext } from "./ai-service.js";
+import { logSanitizedError } from "./safe-logging.js";
 
 const MAX_DISPLAY_NAME_LENGTH = 80;
 
@@ -1191,7 +1192,7 @@ export async function buildDailyGuideContext(
 ): Promise<DailyGuideContext> {
   // ── Input validation ───────────────────────────────────────────────────────
   if (!userId || typeof userId !== "number" || userId < 1) {
-    console.warn("[ai-context] Invalid userId received:", userId);
+    console.warn("[ai-context] Invalid user identity received");
     const { date, time, timezone } = getCurrentTimeContext();
     return {
       userName: "there",
@@ -1206,7 +1207,7 @@ export async function buildDailyGuideContext(
   }
 
   if (!sessionUser?.name || typeof sessionUser.name !== "string") {
-    console.warn("[ai-context] Missing or invalid session name for userId:", userId);
+    console.warn("[ai-context] Missing or invalid session identity");
     const { date, time, timezone } = getCurrentTimeContext();
     return {
       userName: "there",
@@ -1240,8 +1241,7 @@ export async function buildDailyGuideContext(
     const rawTasks = await storage.getDailyTasksByUser(userId);
     tasks = mapTasksToContext(rawTasks, date);
   } catch (err) {
-    console.warn("[ai-context] Failed to fetch tasks for userId", userId, "—",
-      err instanceof Error ? err.message : String(err));
+    logSanitizedError("ai.context.tasks", err);
     tasks = [];
   }
 
@@ -1251,8 +1251,7 @@ export async function buildDailyGuideContext(
     const rawAppointments = await storage.getUpcomingAppointments(userId);
     appointments = mapAppointmentsToContext(rawAppointments);
   } catch (err) {
-    console.warn("[ai-context] Failed to fetch appointments for userId", userId, "—",
-      err instanceof Error ? err.message : String(err));
+    logSanitizedError("ai.context.appointments", err);
     appointments = [];
   }
 
@@ -1262,8 +1261,7 @@ export async function buildDailyGuideContext(
     const rawEvents = await storage.getCalendarEventsByUser(userId);
     calendarEvents = mapCalendarEventsToContext(rawEvents, date);
   } catch (err) {
-    console.warn("[ai-context] Failed to fetch calendar events for userId", userId, "—",
-      err instanceof Error ? err.message : String(err));
+    logSanitizedError("ai.context.calendar-events", err);
     calendarEvents = [];
   }
 
@@ -1277,8 +1275,7 @@ export async function buildDailyGuideContext(
     preferences = mapPreferencesToContext(rawPrefs);
     communicationProfile = mapCommunicationProfile(rawPrefs, userName);
   } catch (err) {
-    console.warn("[ai-context] Failed to fetch preferences for userId", userId, "—",
-      err instanceof Error ? err.message : String(err));
+    logSanitizedError("ai.context.preferences", err);
     preferences = undefined;
   }
 
@@ -1443,7 +1440,7 @@ export async function resolveAdaptAIAccess(
 }
 
 async function loadContextSection<T>(
-  label: string,
+  _label: string,
   loader: () => Promise<T>,
   onUnavailable?: () => void,
 ): Promise<T | undefined> {
@@ -1452,10 +1449,7 @@ async function loadContextSection<T>(
   } catch (error) {
     // A missing optional data source should not prevent chat from working.
     // Do not log returned records or user-entered values.
-    console.warn(
-      `[ai-context] Unable to load ${label}:`,
-      error instanceof Error ? error.message : String(error)
-    );
+    logSanitizedError("ai.context.optional-section", error);
     onUnavailable?.();
     return undefined;
   }

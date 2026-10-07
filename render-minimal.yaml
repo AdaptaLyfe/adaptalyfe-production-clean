@@ -3,7 +3,7 @@ services:
     name: adaptalyfe-minimal
     env: node
     plan: starter
-    buildCommand: npm ci && vite build && node -e "console.log('Build verification:', require('fs').existsSync('dist/public/index.html'))" && cp dist/production.js main.js 2>/dev/null || esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=main.js
+    buildCommand: npm ci && npm run build && cp dist/production.js main.js && node scripts/check-sensitive-logging.mjs --bundles main.js
     startCommand: node main.js
     envVars:
       - key: NODE_ENV

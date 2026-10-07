@@ -11,6 +11,7 @@ services:
       cp production-index-cache-bust.html dist/public/index.html
       echo "📦 Building ultra-minimal server (absolute minimum dependencies)"
       esbuild server/ultra-minimal.ts --platform=node --packages=external --bundle --format=esm --outfile=ultra-app.js
+      node scripts/check-sensitive-logging.mjs --bundles ultra-app.js
       echo "✅ Ultra-minimal build complete - testing basic functionality"
     startCommand: node ultra-app.js
     envVars:

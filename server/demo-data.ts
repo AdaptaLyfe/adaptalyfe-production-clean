@@ -16,7 +16,7 @@ export async function initializeComprehensiveDemo() {
         name: "Demo Administrator", 
         email: "admin@skillbridge.com"
       });
-      console.log("🔑 Created admin user: Demo Administrator (username: admin, password: demo2025)");
+    console.log("Demo administrator account initialized");
     }
     
     if (existingUser) {
@@ -40,8 +40,7 @@ export async function initializeComprehensiveDemo() {
       email: "admin@skillbridge.com"
     });
 
-    console.log("👤 Created demo user: Alex Chen");
-    console.log("🔑 Created admin user: Demo Administrator (username: admin, password: demo2025)");
+  console.log("Demo account data initialized");
 
     // Initialize core demo data modules
     await createDemoTasks(user.id);

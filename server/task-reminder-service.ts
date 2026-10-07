@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { dailyTasks, users } from "@shared/schema";
 import { evaluateAndSurfaceProactiveGuidance } from "./proactive-guidance.js";
+import { logSanitizedError } from "./safe-logging.js";
 
 /**
  * The existing minute-based worker is intentionally kept as the scheduling
@@ -18,10 +19,14 @@ class TaskReminderService {
     console.log("🔔 Proactive Guidance Service started");
 
     this.intervalId = setInterval(() => {
-      this.checkDueTasks().catch(console.error);
+      this.checkDueTasks().catch((error) =>
+        logSanitizedError("proactive-guidance.worker", error),
+      );
     }, 60000);
 
-    this.checkDueTasks().catch(console.error);
+    this.checkDueTasks().catch((error) =>
+      logSanitizedError("proactive-guidance.worker", error),
+    );
   }
 
   stop() {
@@ -42,17 +47,15 @@ class TaskReminderService {
         try {
           const result = await evaluateAndSurfaceProactiveGuidance(user.id, now);
           if (result.notification) {
-            console.log(
-              `🔔 Proactive guidance sent: ${result.notification.title} for user ${user.id}`,
-            );
+            console.log("Proactive guidance notification created");
           }
         } catch (error) {
           // One malformed user's data should not stop guidance for everyone else.
-          console.error(`Error evaluating proactive guidance for user ${user.id}:`, error);
+          logSanitizedError("proactive-guidance.evaluate", error);
         }
       }
     } catch (error) {
-      console.error("Error checking proactive guidance:", error);
+      logSanitizedError("proactive-guidance.check", error);
     }
   }
 
@@ -73,7 +76,7 @@ class TaskReminderService {
 
       console.log("🔄 Daily reminder state reset");
     } catch (error) {
-      console.error("Error resetting daily reminders:", error);
+      logSanitizedError("proactive-guidance.reset", error);
     }
   }
 }

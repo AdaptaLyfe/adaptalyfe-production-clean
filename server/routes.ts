@@ -45,6 +45,7 @@ import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import { buildNextAction, isNextActionRequest } from "./next-action";
+import { logSanitizedError } from "./safe-logging";
 import {
   canUseCachedGooglePlayEntitlement,
   googlePlayErrorStatus,
@@ -185,50 +186,8 @@ function googlePlaySubscriptionResponse(
   };
 }
 
-function logApiRouteError(route: string, error: unknown): void {
-  const errorFields =
-    typeof error === "object" && error !== null
-      ? (error as Record<string, unknown>)
-      : undefined;
-  const causeFields =
-    typeof errorFields?.cause === "object" && errorFields.cause !== null
-      ? (errorFields.cause as Record<string, unknown>)
-      : undefined;
-  const readString = (
-    fields: Record<string, unknown> | undefined,
-    key: string,
-  ): string | undefined =>
-    typeof fields?.[key] === "string" ? (fields[key] as string) : undefined;
-  const rawMessage = readString(errorFields, "message");
-  const causeMessage = readString(causeFields, "message");
-  const message =
-    causeMessage ||
-    (rawMessage && !/failed query:|params:/i.test(rawMessage)
-      ? rawMessage
-      : "Database/API request failed");
-
-  const details = {
-    name: readString(errorFields, "name"),
-    message,
-    databaseCode:
-      readString(errorFields, "code") || readString(causeFields, "code"),
-    table: readString(errorFields, "table") || readString(causeFields, "table"),
-    column:
-      readString(errorFields, "column") || readString(causeFields, "column"),
-    constraint:
-      readString(errorFields, "constraint") ||
-      readString(causeFields, "constraint"),
-    cause: causeFields
-      ? {
-          name: readString(causeFields, "name"),
-          databaseCode: readString(causeFields, "code"),
-        }
-      : undefined,
-    stack: error instanceof Error ? error.stack : readString(errorFields, "stack"),
-  };
-
-  // Deliberately omit request headers, session tokens, user data, and SQL values.
-  console.error(`[${route}] ${JSON.stringify(details)}`);
+function logApiRouteError(_route: string, error: unknown): void {
+  logSanitizedError("api.route", error);
 }
 
 function isValidCalendarDate(value: unknown): value is string {
@@ -536,7 +495,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   `).then(() => {
     console.log("✅ PostgreSQL session table ready");
   }).catch((err) => {
-    console.error("⚠️ Session table setup error:", err.message);
+    logSanitizedError("auth.session-table.setup", err);
   });
   
   const sessionStore = new PgSession({
@@ -595,13 +554,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const sessionToken = authHeader.substring(7);
-      console.log("🔑 Authorization header found, attempting token auth with:", sessionToken.substring(0, 10) + "...");
+      console.log("Authorization bearer session received");
       
       // Try to load session from store using the token
       await new Promise<void>((resolve) => {
         sessionStore.get(sessionToken, (err, sessionData) => {
           if (err) {
-            console.log("❌ Session store error:", err);
+            logSanitizedError("auth.session-store.read", err);
             return resolve();
           }
           
@@ -632,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               writable: true,
             },
           });
-          console.log("✅ Session restored from Authorization token for user:", sessionData.user?.username);
+          console.log("Authorization session restored");
           resolve();
         });
       });
@@ -675,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.session.userId = sessionData.userId;
           req.session.user = sessionData.user;
           req.user = sessionData.user;
-          console.log("✅ Authenticated via header token:", sessionData.user.username);
+          console.log("Authenticated via authorization header");
           next();
           resolve();
         });
@@ -763,7 +722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       return res.json({ message: "Password reset successfully. You can now sign in." });
     } catch (error) {
-      console.error("Password reset failed:", error);
+      logSanitizedError("auth.password-reset", error);
       return res.status(500).json({ message: "Unable to reset your password right now. Please request a new link." });
     }
   });
@@ -820,7 +779,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(sessionToken ? { sessionToken } : {}),
       });
     } catch (error) {
-      console.error("Registration error:", error);
+      logSanitizedError("auth.registration", error);
       res.status(500).json({ message: "Registration failed" });
     }
   });
@@ -837,10 +796,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.getUserByUsername(username);
-      console.log("👤 User lookup result:", user ? `Found: ${user.username}` : "Not found");
+      console.log("Login account lookup completed");
       
       if (!user || !(await verifyAndUpgradePassword(user, password))) {
-        console.log("❌ Invalid credentials for:", username);
+        console.log("Login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -851,7 +810,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await new Promise<void>((resolve, reject) => {
           req.session.save((err: any) => {
             if (err) {
-              console.log("❌ Session save error:", err);
+              logSanitizedError("auth.session-save", err);
               reject(err);
             } else {
               console.log("✅ Session saved successfully");
@@ -865,7 +824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? await createMobileSessionToken(user, req.session.cookie)
         : undefined;
 
-      console.log(`✅ User ${user.username} logged in successfully`);
+      console.log("Login succeeded");
       const response = { 
         message: "Login successful",
         user: { 
@@ -879,7 +838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       res.json(response);
     } catch (error) {
-      console.error("❌ Login error:", error);
+      logSanitizedError("auth.login", error);
       res.status(500).json({ message: "Login failed", error: error.message });
     }
   });
@@ -889,19 +848,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       const nativeClient = isNativeClientRequest(req);
-      console.log("Demo login attempt:", { username });
+      console.log("Demo login attempt");
       
       const user = await storage.getUserByUsername(username);
-      console.log("User found:", user ? { id: user.id, username: user.username } : "No user found");
+      console.log("Demo login account lookup completed");
       
       if (!user) {
-        console.log("No user found for username:", username);
+        console.log("Demo login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
       // Simple password check for demo (in production, use proper hashing)
       if (!(await verifyAndUpgradePassword(user, password))) {
-        console.log("Password mismatch for user:", username);
+        console.log("Demo login rejected");
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
@@ -934,7 +893,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...(sessionToken ? { sessionToken } : {})
       });
     } catch (error) {
-      console.error("Demo login error:", error);
+      logSanitizedError("auth.demo-login", error);
       res.status(500).json({ message: "Login failed" });
     }
   });
@@ -953,7 +912,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (mobileSessionToken) {
         return sessionStore.destroy(mobileSessionToken, (error: any) => {
           if (error) {
-            console.error("Mobile session destruction error:", error);
+            logSanitizedError("auth.mobile-session.destroy", error);
             return res.status(500).json({ message: "Logout failed" });
           }
 
@@ -963,13 +922,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       req.session.destroy((err: any) => {
         if (err) {
-          console.error("Session destruction error:", err);
+          logSanitizedError("auth.session.destroy", err);
           return res.status(500).json({ message: "Logout failed" });
         }
         res.json({ message: "Logout successful" });
       });
     } catch (error) {
-      console.error("Logout error:", error);
+      logSanitizedError("auth.logout", error);
       res.status(500).json({ message: "Logout failed" });
     }
   });
@@ -982,7 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.session.userId;
-      console.log(`🗑️ Deleting account for user ID: ${userId}`);
+      console.log("Account deletion started");
 
       // Delete all user data from various tables
       // Order matters due to foreign key constraints
@@ -991,37 +950,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Destroy the session
       req.session.destroy((err: any) => {
         if (err) {
-          console.error("Session destruction error after account deletion:", err);
+          logSanitizedError("auth.session.destroy-after-account-deletion", err);
         }
       });
 
-      console.log(`✅ Account deleted successfully for user ID: ${userId}`);
+      console.log("Account deletion completed");
       res.json({ message: "Account deleted successfully" });
     } catch (error) {
-      console.error("Account deletion error:", error);
+      logSanitizedError("auth.account-deletion", error);
       res.status(500).json({ message: "Failed to delete account" });
     }
   });
 
   // Get current user - mobile-optimized session handling
   app.get("/api/user", async (req: any, res) => {
-    console.log("🔍 Checking session for user authentication");
-    console.log("Session ID:", req.sessionID);
-    console.log("User-Agent:", req.headers['user-agent']?.substring(0, 100));
-    console.log("Cookies:", req.headers.cookie);
-    console.log("Session user ID:", req.session.userId);
-    
     // Check session validity and attempt recovery
     if (!req.session.userId || !req.session.user) {
-      console.log("❌ No authenticated user found in session");
-      
       // For mobile devices, try extra recovery attempts
       const isMobile = /Mobile|Android|iPhone|iPad/.test(req.headers['user-agent'] || '');
-      console.log("📱 Mobile device detected:", isMobile);
       
       // Check if session exists but is corrupted - try to rebuild from userId
       if (req.session.userId && !req.session.user) {
-        console.log("🔧 Attempting to rebuild user session from userId:", req.session.userId);
+        console.log("Attempting to restore authenticated session");
         try {
           const user = await storage.getUserById(req.session.userId);
           if (user) {
@@ -1029,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await new Promise<void>((resolve, reject) => {
               req.session.save((err: any) => {
                 if (err) {
-                  console.error("Session save error:", err);
+                  logSanitizedError("auth.session-save", err);
                   reject(err);
                 } else {
                   console.log("✅ Session rebuilt successfully");
@@ -1049,7 +999,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.json(refreshedResponse);
           }
         } catch (error) {
-          console.error("Error rebuilding session:", error);
+          logSanitizedError("auth.session-rebuild", error);
         }
       }
       
@@ -1057,7 +1007,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     const sessionUser = req.session.user;
-    console.log("✅ Authenticated user found:", sessionUser.username);
     
     // Fetch fresh user data from database to ensure account_type and other fields are current
     try {
@@ -1075,7 +1024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(userResponse);
       }
     } catch (error) {
-      console.error("Error refreshing current user data and activity streak:", error);
+      logSanitizedError("auth.current-user.refresh", error);
       return res.status(503).json({
         message: "Unable to refresh current user data. Please try again.",
       });
@@ -1392,12 +1341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(task);
     } catch (error) {
-      console.error("Error updating task completion:", {
-        taskId: req.params.id,
-        userId: req.session.userId,
-        completionDate: req.body?.date,
-        error,
-      });
+      logSanitizedError("tasks.completion.update", error);
       res.status(500).json({ message: "Failed to update task" });
     }
   });
@@ -1428,7 +1372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bill = await storage.createBill(data);
       res.json(bill);
     } catch (error) {
-      console.error("Failed to create bill:", error);
+      logSanitizedError("finance.bills.create", error);
       res.status(400).json({ message: "Invalid bill data" });
     }
   });
@@ -1445,7 +1389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const bill = await storage.updateBill(billId, data);
       res.json(bill);
     } catch (error) {
-      console.error("Failed to update bill:", error);
+      logSanitizedError("finance.bills.update", error);
       res.status(400).json({ message: "Invalid bill data" });
     }
   });
@@ -1476,7 +1420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(bill);
     } catch (error) {
-      console.error("Failed to update payment link:", error);
+      logSanitizedError("finance.bills.payment-link.update", error);
       res.status(500).json({ message: "Failed to update payment link" });
     }
   });
@@ -1492,7 +1436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const accounts = await storage.getBankAccountsByUser(user.id);
       res.json(accounts);
     } catch (error) {
-      console.error("Failed to fetch bank accounts:", error);
+      logSanitizedError("bank.accounts.list", error);
       res.status(500).json({ message: "Failed to fetch bank accounts" });
     }
   });
@@ -1517,7 +1461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const account = await storage.createBankAccount(data);
       res.json(account);
     } catch (error) {
-      console.error("Failed to create bank account:", error);
+      logSanitizedError("bank.accounts.create", error);
       res.status(400).json({ message: "Invalid bank account data" });
     }
   });
@@ -1543,7 +1487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(account);
     } catch (error) {
-      console.error("Failed to update bank account:", error);
+      logSanitizedError("bank.accounts.update", error);
       res.status(500).json({ message: "Failed to update bank account" });
     }
   });
@@ -1557,7 +1501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ message: "Bank account deleted successfully" });
     } catch (error) {
-      console.error("Failed to delete bank account:", error);
+      logSanitizedError("bank.accounts.delete", error);
       res.status(500).json({ message: "Failed to delete bank account" });
     }
   });
@@ -1612,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const entry = await storage.createMoodEntry(data);
       res.json(entry);
     } catch (error) {
-      console.error("Failed to create mood entry:", error);
+      logSanitizedError("health.mood.create", error);
       res.status(400).json({ message: "Invalid mood entry data" });
     }
   });
@@ -1671,7 +1615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const legacyCaregivers = await storage.getCaregiversByUser(userId);
       res.json(legacyCaregivers);
     } catch (error) {
-      console.error("Error fetching caregivers:", error);
+      logSanitizedError("caregivers.list", error);
       res.status(500).json({ message: "Failed to fetch caregivers" });
     }
   });
@@ -1736,7 +1680,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: true,
       });
     } catch (error) {
-      console.error("Error adding caregiver:", error);
+      logSanitizedError("caregivers.add", error);
       res.status(400).json({ message: "Invalid caregiver data" });
     }
   });
@@ -1747,7 +1691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messages = await storage.getMessagesByUser(req.user.id);
       res.json(messages);
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      logSanitizedError("messages.list", error);
       res.status(500).json({ message: "Failed to fetch messages" });
     }
   });
@@ -1781,7 +1725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createMessage(data);
       res.json(message);
     } catch (error) {
-      console.error("Error creating message:", error);
+      logSanitizedError("messages.create", error);
       res.status(400).json({ message: "Invalid message data" });
     }
   });
@@ -1819,7 +1763,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(messages);
     } catch (error) {
-      console.error("Error fetching caregiver messages:", error);
+      logSanitizedError("caregivers.messages.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver messages" });
     }
   });
@@ -2888,7 +2832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resources = await storage.getEmergencyResourcesByUser(userId);
       res.json(resources);
     } catch (error) {
-      console.error("Error fetching emergency resources:", error);
+      logSanitizedError("health.emergency-resources.list", error);
       res.status(500).json({ message: "Failed to fetch emergency resources" });
     }
   });
@@ -2900,7 +2844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resource = await storage.createEmergencyResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
-      console.error("Error creating emergency resource:", error);
+      logSanitizedError("health.emergency-resources.create", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
       }
@@ -2940,7 +2884,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(resource);
     } catch (error) {
-      console.error("Error updating emergency resource:", error);
+      logSanitizedError("health.emergency-resources.update", error);
       if (error instanceof EmergencyResourceSchemaUnavailableError) {
         return res.status(409).json({ message: error.message, code: "RESOURCE_SCHEMA_UPDATE_REQUIRED" });
       }
@@ -2972,7 +2916,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Emergency resource deleted successfully" });
     } catch (error) {
-      console.error("Error deleting emergency resource:", error);
+      logSanitizedError("health.emergency-resources.delete", error);
       res.status(500).json({ message: "Failed to delete emergency resource" });
     }
   });
@@ -2980,9 +2924,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Caregiver access control endpoint
   app.get("/api/caregiver-access", async (req: any, res) => {
     try {
-      console.log('🔍 Checking caregiver access for session:', req.session?.userId);
-      console.log('🔍 Session user:', req.session?.user?.username);
-      
       // Check if user has valid session
       if (!req.session?.userId || !req.session?.user) {
         console.log('❌ No valid session found');
@@ -2990,8 +2931,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const currentUser = req.session.user;
-      console.log('✅ Caregiver access check for user:', currentUser.username);
-
       // SOFT LAUNCH MODE: Allow all authenticated users to access caregiver dashboard for testing
       // This enables testers to experience both user and caregiver functionality
       // In full production, this would check proper caregiver credentials
@@ -3005,7 +2944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Soft launch testing mode - caregiver dashboard access granted for demo purposes"
       });
     } catch (error) {
-      console.error("Error checking caregiver access:", error);
+      logSanitizedError("care.access.check", error);
       res.status(500).json({ message: "Failed to verify caregiver access" });
     }
   });
@@ -3166,7 +3105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : {}),
       });
     } catch (error: any) {
-      console.error("Error in chat endpoint:", error);
+      logSanitizedError("ai.chat.route", error);
       
       // Handle OpenAI quota exceeded or rate limiting
       if (error?.message === "AdaptAI caregiver access denied") {
@@ -3215,7 +3154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             getActivityDateTimeZone(req),
           );
         } catch (streakError) {
-          console.error("Error updating activity streak after AI task completion:", streakError);
+          logSanitizedError("ai.action.streak-refresh", streakError);
         }
       }
       return res.json(result);
@@ -3226,7 +3165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           code: error.code,
         });
       }
-      console.error("Error executing AdaptAI action:", error);
+      logSanitizedError("ai.action.execute", error);
       return res.status(500).json({
         error: "I couldn't complete that task action right now.",
         code: "action_execution_failed",
@@ -3302,7 +3241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(suggestions);
     } catch (error) {
-      console.error("Error getting chat suggestions:", error);
+      logSanitizedError("ai.chat.suggestions", error);
       res.status(500).json({ error: "Failed to get suggestions" });
     }
   });
@@ -3317,7 +3256,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const permissions = await storage.getCaregiverPermissions(userId, caregiverId);
       res.json(permissions);
     } catch (error) {
-      console.error("Error fetching caregiver permissions:", error);
+      logSanitizedError("care.permissions.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver permissions" });
     }
   });
@@ -3327,7 +3266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const permission = await storage.setCaregiverPermission(req.body);
       res.json(permission);
     } catch (error) {
-      console.error("Error setting caregiver permission:", error);
+      logSanitizedError("care.permissions.set", error);
       res.status(400).json({ message: "Failed to set caregiver permission" });
     }
   });
@@ -3345,7 +3284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Permission removed successfully" });
     } catch (error) {
-      console.error("Error removing caregiver permission:", error);
+      logSanitizedError("care.permissions.remove", error);
       res.status(500).json({ message: "Failed to remove caregiver permission" });
     }
   });
@@ -3357,7 +3296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.getLockedUserSettings(userId);
       res.json(settings);
     } catch (error) {
-      console.error("Error fetching locked settings:", error);
+      logSanitizedError("care.settings.list", error);
       res.status(500).json({ message: "Failed to fetch locked settings" });
     }
   });
@@ -3383,7 +3322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Invitation created successfully:", invitation);
       res.json(invitation);
     } catch (error) {
-      console.error("Error creating caregiver invitation:", error);
+      logSanitizedError("care.invitations.create", error);
       res.status(400).json({ message: "Failed to create caregiver invitation", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
@@ -3408,7 +3347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : await storage.getCaregiverInvitationsByCaregiver(caregiverId);
       res.json(invitations);
     } catch (error) {
-      console.error("Error fetching caregiver invitations:", error);
+      logSanitizedError("care.invitations.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver invitations" });
     }
   });
@@ -3434,7 +3373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(invitation);
     } catch (error) {
-      console.error("Error fetching invitation:", error);
+      logSanitizedError("care.invitations.lookup", error);
       res.status(500).json({ message: "Failed to fetch invitation" });
     }
   });
@@ -3464,7 +3403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteCaregiverInvitation(invitationId);
       res.json({ message: "Invitation deleted successfully" });
     } catch (error) {
-      console.error("Error deleting caregiver invitation:", error);
+      logSanitizedError("care.invitations.delete", error);
       res.status(500).json({ message: "Failed to delete caregiver invitation" });
     }
   });
@@ -3496,7 +3435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invitation: acceptedInvitation
       });
     } catch (error) {
-      console.error("Error accepting invitation:", error);
+      logSanitizedError("care.invitations.accept", error);
       res.status(500).json({ message: "Failed to accept invitation" });
     }
   });
@@ -3526,7 +3465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(relationshipsWithNames);
     } catch (error) {
-      console.error("Error fetching care relationships:", error);
+      logSanitizedError("care.relationships.list", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
     }
   });
@@ -3546,7 +3485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const relationships = await storage.getCareRelationshipsByCaregiver(caregiverId);
       res.json(relationships);
     } catch (error) {
-      console.error("Error fetching care relationships:", error);
+      logSanitizedError("care.relationships.list", error);
       res.status(500).json({ message: "Failed to fetch care relationships" });
     }
   });
@@ -3568,7 +3507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Caregiver access removed successfully" });
     } catch (error) {
-      console.error("Error removing care relationship:", error);
+      logSanitizedError("care.relationships.remove", error);
       res.status(500).json({ message: "Failed to remove care relationship" });
     }
   });
@@ -3599,7 +3538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(recipients.filter(Boolean));
     } catch (error) {
-      console.error("Error fetching care recipients:", error);
+      logSanitizedError("care.recipients.list", error);
       res.status(500).json({ message: "Failed to fetch care recipients" });
     }
   });
@@ -3614,7 +3553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(setting);
     } catch (error) {
-      console.error("Error fetching locked setting:", error);
+      logSanitizedError("care.settings.get", error);
       res.status(500).json({ message: "Failed to fetch locked setting" });
     }
   });
@@ -3624,7 +3563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const setting = await storage.lockUserSetting(req.body);
       res.json(setting);
     } catch (error) {
-      console.error("Error locking user setting:", error);
+      logSanitizedError("care.settings.lock", error);
       res.status(400).json({ message: "Failed to lock user setting" });
     }
   });
@@ -3647,7 +3586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Setting unlocked successfully" });
     } catch (error) {
-      console.error("Error unlocking user setting:", error);
+      logSanitizedError("care.settings.unlock", error);
       res.status(500).json({ message: "Failed to unlock user setting" });
     }
   });
@@ -3659,7 +3598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isLocked = await storage.isSettingLocked(userId, settingKey);
       res.json({ isLocked });
     } catch (error) {
-      console.error("Error checking if setting is locked:", error);
+      logSanitizedError("care.settings.lock-status", error);
       res.status(500).json({ message: "Failed to check setting lock status" });
     }
   });
@@ -3671,7 +3610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const canModify = await storage.canUserModifySetting(userId, settingKey);
       res.json({ canModify });
     } catch (error) {
-      console.error("Error checking if user can modify setting:", error);
+      logSanitizedError("care.settings.modifiable", error);
       res.status(500).json({ message: "Failed to check setting modification permissions" });
     }
   });
@@ -3682,7 +3621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pharmacies = await storage.getPharmacies();
       res.json(pharmacies);
     } catch (error) {
-      console.error("Error fetching pharmacies:", error);
+      logSanitizedError("health.pharmacies.list", error);
       res.status(500).json({ message: "Failed to fetch pharmacies" });
     }
   });
@@ -3706,7 +3645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pharmacy = await storage.createPharmacy(validatedData);
       res.status(201).json(pharmacy);
     } catch (error) {
-      console.error("Error creating custom pharmacy:", error);
+      logSanitizedError("health.pharmacies.create", error);
       res.status(500).json({ message: "Failed to create pharmacy" });
     }
   });
@@ -3728,7 +3667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userPharmacy = await storage.addUserPharmacy(validatedData);
       res.status(201).json(userPharmacy);
     } catch (error) {
-      console.error("Error adding user pharmacy:", error);
+      logSanitizedError("health.pharmacies.create", error);
       res.status(500).json({ message: "Failed to add pharmacy" });
     }
   });
@@ -3743,7 +3682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userPharmacies = await storage.getUserPharmacies(user.id);
       res.json(userPharmacies);
     } catch (error) {
-      console.error("Error fetching user pharmacies:", error);
+      logSanitizedError("health.pharmacies.list", error);
       res.status(500).json({ message: "Failed to fetch user pharmacies" });
     }
   });
@@ -3758,7 +3697,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const medications = await storage.getMedicationsByUser(user.id);
       res.json(medications);
     } catch (error) {
-      console.error("Error fetching medications:", error);
+      logSanitizedError("health.medications.list", error);
       res.status(500).json({ message: "Failed to fetch medications" });
     }
   });
@@ -3783,7 +3722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const medication = await storage.createMedication(validatedData);
       res.status(201).json(medication);
     } catch (error) {
-      console.error("Error creating medication:", error);
+      logSanitizedError("health.medications.create", error);
       res.status(500).json({ message: "Failed to create medication" });
     }
   });
@@ -3815,7 +3754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(medication);
     } catch (error) {
-      console.error("Error updating medication:", error);
+      logSanitizedError("health.medications.update", error);
       res.status(500).json({ message: "Failed to update medication" });
     }
   });
@@ -3836,7 +3775,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting medication:", error);
+      logSanitizedError("health.medications.delete", error);
       res.status(500).json({ message: "Failed to delete medication" });
     }
   });
@@ -3850,7 +3789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const medications = await storage.getMedicationsDueForRefill(user.id);
       res.json(medications);
     } catch (error) {
-      console.error("Error fetching medications due for refill:", error);
+      logSanitizedError("health.medications.due-for-refill", error);
       res.status(500).json({ message: "Failed to fetch medications due for refill" });
     }
   });
@@ -3865,7 +3804,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const refillOrders = await storage.getRefillOrdersByUser(user.id);
       res.json(refillOrders);
     } catch (error) {
-      console.error("Error fetching refill orders:", error);
+      logSanitizedError("health.refill-orders.list", error);
       res.status(500).json({ message: "Failed to fetch refill orders" });
     }
   });
@@ -3883,7 +3822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const refillOrder = await storage.createRefillOrder(validatedData);
       res.status(201).json(refillOrder);
     } catch (error) {
-      console.error("Error creating refill order:", error);
+      logSanitizedError("health.refill-orders.create", error);
       res.status(500).json({ message: "Failed to create refill order" });
     }
   });
@@ -3895,7 +3834,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const refillOrder = await storage.updateRefillOrderStatus(orderId, status);
       res.json(refillOrder);
     } catch (error) {
-      console.error("Error updating refill order status:", error);
+      logSanitizedError("health.refill-orders.update", error);
       res.status(500).json({ message: "Failed to update refill order status" });
     }
   });
@@ -3909,7 +3848,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allergies = await storage.getAllergiesByUser(userId);
       res.json(allergies);
     } catch (error) {
-      console.error("Error fetching allergies:", error);
+      logSanitizedError("health.allergies.list", error);
       res.status(500).json({ message: "Failed to fetch allergies" });
     }
   });
@@ -3921,7 +3860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allergy = await storage.createAllergy(allergyData);
       res.status(201).json(allergy);
     } catch (error) {
-      console.error("Error creating allergy:", error);
+      logSanitizedError("health.allergies.create", error);
       res.status(500).json({ message: "Failed to create allergy" });
     }
   });
@@ -3932,7 +3871,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allergy = await storage.updateAllergy(allergyId, req.body);
       res.json(allergy);
     } catch (error) {
-      console.error("Error updating allergy:", error);
+      logSanitizedError("health.allergies.update", error);
       res.status(500).json({ message: "Failed to update allergy" });
     }
   });
@@ -3946,7 +3885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting allergy:", error);
+      logSanitizedError("health.allergies.delete", error);
       res.status(500).json({ message: "Failed to delete allergy" });
     }
   });
@@ -3962,7 +3901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const conditions = await storage.getMedicalConditionsByUser(user.id);
       res.json(conditions);
     } catch (error) {
-      console.error("Error fetching medical conditions:", error);
+      logSanitizedError("health.conditions.list", error);
       res.status(500).json({ message: "Failed to fetch medical conditions" });
     }
   });
@@ -3982,7 +3921,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const condition = await storage.createMedicalCondition(conditionData);
       res.status(201).json(condition);
     } catch (error) {
-      console.error("Error creating medical condition:", error);
+      logSanitizedError("health.conditions.create", error);
       res.status(500).json({ message: "Failed to create medical condition" });
     }
   });
@@ -4000,7 +3939,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(condition);
     } catch (error) {
-      console.error("Error updating medical condition:", error);
+      logSanitizedError("health.conditions.update", error);
       res.status(500).json({ message: "Failed to update medical condition" });
     }
   });
@@ -4014,7 +3953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting medical condition:", error);
+      logSanitizedError("health.conditions.delete", error);
       res.status(500).json({ message: "Failed to delete medical condition" });
     }
   });
@@ -4030,7 +3969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adverseMeds = await storage.getAdverseMedicationsByUser(user.id);
       res.json(adverseMeds);
     } catch (error) {
-      console.error("Error fetching adverse medications:", error);
+      logSanitizedError("health.adverse-medications.list", error);
       res.status(500).json({ message: "Failed to fetch adverse medications" });
     }
   });
@@ -4050,7 +3989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adverseMed = await storage.createAdverseMedication(adverseMedData);
       res.status(201).json(adverseMed);
     } catch (error) {
-      console.error("Error creating adverse medication:", error);
+      logSanitizedError("health.adverse-medications.create", error);
       res.status(500).json({ message: "Failed to create adverse medication" });
     }
   });
@@ -4065,7 +4004,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adverseMed = await storage.updateAdverseMedication(adverseMedId, adverseMedData);
       res.json(adverseMed);
     } catch (error) {
-      console.error("Error updating adverse medication:", error);
+      logSanitizedError("health.adverse-medications.update", error);
       res.status(500).json({ message: "Failed to update adverse medication" });
     }
   });
@@ -4079,7 +4018,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting adverse medication:", error);
+      logSanitizedError("health.adverse-medications.delete", error);
       res.status(500).json({ message: "Failed to delete adverse medication" });
     }
   });
@@ -4126,7 +4065,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sessions = await storage.getSleepSessionsByUser(req.session.user.id);
       res.json(sessions.map(withSleepMetrics));
     } catch (error) {
-      console.error("Error fetching sleep sessions:", error);
+      logSanitizedError("health.sleep-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
     }
   });
@@ -4173,7 +4112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const session = await storage.createSleepSession(sessionData);
       res.status(201).json(withSleepMetrics(session));
     } catch (error) {
-      console.error("Error creating sleep session:", error);
+      logSanitizedError("health.sleep-sessions.create", error);
       res.status(500).json({ message: "Failed to create sleep session" });
     }
   });
@@ -4214,7 +4153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(withSleepMetrics(session));
     } catch (error) {
-      console.error("Error updating sleep session:", error);
+      logSanitizedError("health.sleep-sessions.update", error);
       res.status(500).json({ message: "Failed to update sleep session" });
     }
   });
@@ -4232,7 +4171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting sleep session:", error);
+      logSanitizedError("health.sleep-sessions.delete", error);
       res.status(500).json({ message: "Failed to delete sleep session" });
     }
   });
@@ -4249,7 +4188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(withSleepMetrics(session));
     } catch (error) {
-      console.error("Error fetching sleep session by date:", error);
+      logSanitizedError("health.sleep-sessions.by-date", error);
       res.status(500).json({ message: "Failed to fetch sleep session" });
     }
   });
@@ -4270,7 +4209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(metrics);
     } catch (error) {
-      console.error("Error fetching health metrics:", error);
+      logSanitizedError("health.metrics.list", error);
       res.status(500).json({ message: "Failed to fetch health metrics" });
     }
   });
@@ -4291,7 +4230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const metric = await storage.createHealthMetric(metricData);
       res.status(201).json(metric);
     } catch (error) {
-      console.error("Error creating health metric:", error);
+      logSanitizedError("health.metrics.create", error);
       res.status(500).json({ message: "Failed to create health metric" });
     }
   });
@@ -4303,7 +4242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contacts = await storage.getEmergencyContactsByUser(userId);
       res.json(contacts);
     } catch (error) {
-      console.error("Error fetching emergency contacts:", error);
+      logSanitizedError("health.emergency-contacts.list", error);
       res.status(500).json({ message: "Failed to fetch emergency contacts" });
     }
   });
@@ -4315,7 +4254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contact = await storage.createEmergencyContact(contactData);
       res.status(201).json(contact);
     } catch (error) {
-      console.error("Error creating emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.create", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
       }
@@ -4330,7 +4269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contact = await storage.updateEmergencyContact(contactId, updates);
       res.json(contact);
     } catch (error) {
-      console.error("Error updating emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.update", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid emergency contact data" });
       }
@@ -4347,7 +4286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting emergency contact:", error);
+      logSanitizedError("health.emergency-contacts.delete", error);
       res.status(500).json({ message: "Failed to delete emergency contact" });
     }
   });
@@ -4359,7 +4298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const providers = await storage.getPrimaryCareProvidersByUser(userId);
       res.json(providers);
     } catch (error) {
-      console.error("Error fetching primary care providers:", error);
+      logSanitizedError("health.providers.list", error);
       res.status(500).json({ message: "Failed to fetch primary care providers" });
     }
   });
@@ -4371,7 +4310,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const provider = await storage.createPrimaryCareProvider(providerData);
       res.status(201).json(provider);
     } catch (error) {
-      console.error("Error creating primary care provider:", error);
+      logSanitizedError("health.providers.create", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
       }
@@ -4386,7 +4325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const provider = await storage.updatePrimaryCareProvider(providerId, updates);
       res.json(provider);
     } catch (error) {
-      console.error("Error updating primary care provider:", error);
+      logSanitizedError("health.providers.update", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.issues[0]?.message ?? "Invalid healthcare contact data" });
       }
@@ -4403,7 +4342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting primary care provider:", error);
+      logSanitizedError("health.providers.delete", error);
       res.status(500).json({ message: "Failed to delete primary care provider" });
     }
   });
@@ -4417,7 +4356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const entries = await storage.getSymptomEntriesByUser(req.session.userId);
       res.json(entries);
     } catch (error) {
-      console.error("Error fetching symptom entries:", error);
+      logSanitizedError("health.symptoms.list", error);
       res.status(500).json({ message: "Failed to fetch symptom entries" });
     }
   });
@@ -4440,7 +4379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(entries);
     } catch (error) {
-      console.error("Error fetching symptom entries by date range:", error);
+      logSanitizedError("health.symptoms.by-date-range", error);
       res.status(500).json({ message: "Failed to fetch symptom entries" });
     }
   });
@@ -4456,8 +4395,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const entry = await storage.createSymptomEntry(entryData);
       res.status(201).json(entry);
-    } catch {
-      console.error("Failed to create symptom entry");
+  } catch (error) {
+    logSanitizedError("health.symptoms.create", error);
       res.status(500).json({ message: "Failed to create symptom entry" });
     }
   });
@@ -4487,8 +4426,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json(updated);
-    } catch {
-      console.error("Failed to update symptom entry");
+  } catch (error) {
+    logSanitizedError("health.symptoms.update", error);
       res.status(500).json({ message: "Failed to update symptom entry" });
     }
   });
@@ -4504,7 +4443,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Symptom entry deleted successfully" });
     } catch (error) {
-      console.error("Error deleting symptom entry:", error);
+      logSanitizedError("health.symptoms.delete", error);
       res.status(500).json({ message: "Failed to delete symptom entry" });
     }
   });
@@ -4524,7 +4463,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(resources);
     } catch (error) {
-      console.error("Error fetching personal resources:", error);
+      logSanitizedError("health.personal-resources.list", error);
       res.status(500).json({ message: "Failed to fetch personal resources" });
     }
   });
@@ -4537,7 +4476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resource = await storage.createPersonalResource(resourceData);
       res.status(201).json(resource);
     } catch (error) {
-      console.error("Error creating personal resource:", error);
+      logSanitizedError("health.personal-resources.create", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Please provide a title, valid URL, and category.",
@@ -4569,7 +4508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updated);
     } catch (error) {
-      console.error("Error updating personal resource:", error);
+      logSanitizedError("health.personal-resources.update", error);
       res.status(500).json({ message: "Failed to update personal resource" });
     }
   });
@@ -4592,7 +4531,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Personal resource deleted successfully" });
     } catch (error) {
-      console.error("Error deleting personal resource:", error);
+      logSanitizedError("health.personal-resources.delete", error);
       res.status(500).json({ message: "Failed to delete personal resource" });
     }
   });
@@ -4615,7 +4554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updated);
     } catch (error) {
-      console.error("Error updating resource access:", error);
+      logSanitizedError("health.personal-resources.access", error);
       res.status(500).json({ message: "Failed to update resource access" });
     }
   });
@@ -4707,7 +4646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plans = await storage.getEmergencyTreatmentPlansByUser(userId);
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching emergency treatment plans:", error);
+      logSanitizedError("health.emergency-treatment-plans.list", error);
       res.status(500).json({ message: "Failed to fetch emergency treatment plans" });
     }
   });
@@ -4718,7 +4657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plans = await storage.getActiveEmergencyTreatmentPlans(userId);
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching active emergency treatment plans:", error);
+      logSanitizedError("health.emergency-treatment-plans.active", error);
       res.status(500).json({ message: "Failed to fetch active emergency treatment plans" });
     }
   });
@@ -4730,7 +4669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const plan = await storage.createEmergencyTreatmentPlan(data);
       res.json(plan);
     } catch (error) {
-      console.error("Error creating emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.create", error);
       res.status(500).json({ message: "Failed to create emergency treatment plan" });
     }
   });
@@ -4747,7 +4686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(plan);
     } catch (error) {
-      console.error("Error updating emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.update", error);
       res.status(500).json({ message: "Failed to update emergency treatment plan" });
     }
   });
@@ -4763,7 +4702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Emergency treatment plan deleted successfully" });
     } catch (error) {
-      console.error("Error deleting emergency treatment plan:", error);
+      logSanitizedError("health.emergency-treatment-plans.delete", error);
       res.status(500).json({ message: "Failed to delete emergency treatment plan" });
     }
   });
@@ -4774,7 +4713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const geofences = await storage.getGeofencesByUser(1);
       res.json(geofences);
     } catch (error) {
-      console.error("Error fetching geofences:", error);
+      logSanitizedError("health.geofences.list", error);
       res.status(500).json({ message: "Failed to fetch geofences" });
     }
   });
@@ -4784,7 +4723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const geofences = await storage.getActiveGeofencesByUser(1);
       res.json(geofences);
     } catch (error) {
-      console.error("Error fetching active geofences:", error);
+      logSanitizedError("health.geofences.active", error);
       res.status(500).json({ message: "Failed to fetch active geofences" });
     }
   });
@@ -4795,7 +4734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const geofence = await storage.createGeofence(geofenceData);
       res.json(geofence);
     } catch (error) {
-      console.error("Error creating geofence:", error);
+      logSanitizedError("health.geofences.create", error);
       res.status(500).json({ message: "Failed to create geofence" });
     }
   });
@@ -4812,7 +4751,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(geofence);
     } catch (error) {
-      console.error("Error updating geofence:", error);
+      logSanitizedError("health.geofences.update", error);
       res.status(500).json({ message: "Failed to update geofence" });
     }
   });
@@ -4828,7 +4767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Geofence deleted successfully" });
     } catch (error) {
-      console.error("Error deleting geofence:", error);
+      logSanitizedError("health.geofences.delete", error);
       res.status(500).json({ message: "Failed to delete geofence" });
     }
   });
@@ -4841,7 +4780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const events = await storage.getGeofenceEventsByUser(1, limit);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching geofence events:", error);
+      logSanitizedError("health.geofence-events.list", error);
       res.status(500).json({ message: "Failed to fetch geofence events" });
     }
   });
@@ -4853,7 +4792,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const events = await storage.getGeofenceEventsByGeofence(geofenceId, limit);
       res.json(events);
     } catch (error) {
-      console.error("Error fetching geofence events:", error);
+      logSanitizedError("health.geofence-events.by-geofence", error);
       res.status(500).json({ message: "Failed to fetch geofence events" });
     }
   });
@@ -4868,7 +4807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(event);
     } catch (error) {
-      console.error("Error creating geofence event:", error);
+      logSanitizedError("health.geofence-events.create", error);
       res.status(500).json({ message: "Failed to create geofence event" });
     }
   });
@@ -4884,7 +4823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ message: "Geofence event marked as notified" });
     } catch (error) {
-      console.error("Error marking geofence event as notified:", error);
+      logSanitizedError("health.geofence-events.notify", error);
       res.status(500).json({ message: "Failed to mark geofence event as notified" });
     }
   });
@@ -4969,7 +4908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       res.json(demoDevices);
     } catch (error) {
-      console.error("Error fetching wearable devices:", error);
+      logSanitizedError("health.wearable-devices.list", error);
       res.status(500).json({ message: "Failed to fetch wearable devices" });
     }
   });
@@ -5034,7 +4973,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       res.json(demoMetrics);
     } catch (error) {
-      console.error("Error fetching health metrics:", error);
+      logSanitizedError("health.metrics.list", error);
       res.status(500).json({ message: "Failed to fetch health metrics" });
     }
   });
@@ -5090,7 +5029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       res.json(demoActivities);
     } catch (error) {
-      console.error("Error fetching activity sessions:", error);
+      logSanitizedError("health.activity-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch activity sessions" });
     }
   });
@@ -5122,7 +5061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       res.json(demoSleep);
     } catch (error) {
-      console.error("Error fetching sleep sessions:", error);
+      logSanitizedError("health.sleep-sessions.list", error);
       res.status(500).json({ message: "Failed to fetch sleep sessions" });
     }
   });
@@ -5139,7 +5078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }, 1000);
     } catch (error) {
-      console.error("Error syncing device:", error);
+      logSanitizedError("health.wearable-device.sync", error);
       res.status(500).json({ message: "Failed to sync device" });
     }
   });
@@ -5158,7 +5097,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const members = await storage.getFamilyMembers(user.id);
       res.json(members);
     } catch (error) {
-      console.error("Error fetching family members:", error);
+      logSanitizedError("family.members.list", error);
       res.status(500).json({ message: "Failed to fetch family members" });
     }
   });
@@ -5189,7 +5128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.json(member);
     } catch (error) {
-      console.error("Error inviting family member:", error);
+      logSanitizedError("family.members.invite", error);
       res.status(500).json({ message: "Failed to send invite" });
     }
   });
@@ -5207,7 +5146,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json({ message: "Family member removed" });
     } catch (error) {
-      console.error("Error removing family member:", error);
+      logSanitizedError("family.members.remove", error);
       res.status(500).json({ message: "Failed to remove member" });
     }
   });
@@ -5310,10 +5249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user = refreshedUser;
           req.session.user = publicUser(user);
         } catch (error: any) {
-          console.error(
-            "Google Play subscription refresh failed:",
-            error?.message ?? "Unknown error",
-          );
+        logSanitizedError("subscriptions.google-play.refresh", error);
           const storeStatus = googlePlayErrorStatus(error);
           if (!storeResponseReceived && [400, 404, 410].includes(storeStatus ?? 0)) {
             const expiredUser = await storage.updateUserSubscription(user.id, {
@@ -5334,10 +5270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 "Google Play subscription status could not be verified. Please try again.",
             });
           } else {
-            console.warn(
-            "[Google Play] Using a recently verified database entitlement " +
-              `during a store refresh failure: product=${user.googlePlayProductId}.`,
-            );
+            console.warn("Google Play using recently verified subscription data after refresh failure");
           }
         }
       }
@@ -5368,10 +5301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           user = refreshedUser;
           req.session.user = publicUser(user);
         } catch (error: any) {
-          console.error(
-            "Apple App Store subscription refresh failed:",
-            error?.message ?? "Unknown error",
-          );
+        logSanitizedError("subscriptions.app-store.refresh", error);
           return res.status(503).json({
             message:
               "Apple subscription status could not be verified. Please try again.",
@@ -5381,7 +5311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(buildSubscriptionResponse(user, now));
     } catch (error) {
-      console.error("Error fetching subscription:", error);
+      logSanitizedError("subscriptions.status", error);
       res.status(500).json({ message: "Failed to fetch subscription" });
     }
   });
@@ -5437,7 +5367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Live payment processing enabled"
       });
     } catch (error: any) {
-      console.error("Error creating payment intent:", error);
+      logSanitizedError("subscriptions.stripe.payment-intent", error);
       
       // Handle specific Stripe authentication errors
       if (error.type === 'StripeAuthenticationError') {
@@ -5494,7 +5424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stripeCustomer.deleted ||
         stripeCustomer.metadata?.userId !== String(userId)
       ) {
-        console.warn(`Stripe subscription recovery rejected for user ${userId}: customer ownership mismatch`);
+        console.warn("Stripe subscription recovery rejected: customer ownership mismatch");
         return res.status(403).json({ message: "The linked Stripe customer does not belong to this account." });
       }
 
@@ -5548,7 +5478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.user = updatedUser;
       }
 
-      console.log(`✅ Subscription recovered for user ${userId}: ${subscriptionTier} plan`);
+      console.log("Stripe subscription recovery completed");
 
       res.json({
         message: "Subscription recovered successfully",
@@ -5557,7 +5487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt: expiresAt.toISOString()
       });
     } catch (error: any) {
-      console.error("Error recovering subscription:", error);
+      logSanitizedError("subscriptions.recover", error);
       res.status(500).json({ message: "Failed to recover subscription", error: error.message });
     }
   });
@@ -5623,7 +5553,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify the event signature (req.body is raw Buffer via express.raw).
       event = currentStripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err: any) {
-      console.error("Stripe webhook signature verification failed:", err.message);
+      logSanitizedError("subscriptions.stripe.webhook-signature", err);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -5653,7 +5583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // customer-only fallback would let delayed old events overwrite the new state.
         const user = await storage.getUserByStripeSubscriptionId(stripeSubId);
         if (!user) {
-          console.warn(`Stripe webhook: ignoring event for unknown or replaced subscription ${stripeSubId}`);
+          console.warn("Stripe webhook: ignoring unknown or replaced subscription");
           return;
         }
 
@@ -5667,7 +5597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subscriptionExpiresAt: expiresAt,
           ...((stripeStatus === 'active' || stripeStatus === 'trialing') && tier ? { subscriptionTier: tier } : {}),
         });
-        console.log(`✅ Stripe webhook: synchronized user ${user.id} (${user.username}) to ${stripeStatus} until ${expiresAt.toISOString()}`);
+        console.log("Stripe webhook: subscription state synchronized");
       };
 
       switch (event.type) {
@@ -5706,7 +5636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
               subscriptionExpiresAt: new Date(periodEnd * 1000),
             });
-            console.log(`✅ Stripe webhook: updated user ${user.id} status=${sub.status}`);
+            console.log("Stripe webhook: subscription status synchronized");
           }
           break;
         }
@@ -5718,7 +5648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               subscriptionStatus: 'cancelled',
               subscriptionTier: 'free',
             });
-            console.log(`✅ Stripe webhook: cancelled user ${user.id}`);
+            console.log("Stripe webhook: subscription cancelled");
           }
           break;
         }
@@ -5730,7 +5660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : null;
           if (user) {
             await storage.updateUserSubscription(user.id, { subscriptionStatus: 'past_due' });
-            console.log(`⚠️  Stripe webhook: payment failed for user ${user.id}`);
+            console.log("Stripe webhook: subscription payment failed");
           }
           break;
         }
@@ -5742,7 +5672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // tells Stripe to retry if a transient API or database failure occurs.
       return res.status(200).json({ received: true });
     } catch (err: any) {
-      console.error("Stripe webhook processing error:", err.message);
+      logSanitizedError("subscriptions.stripe.webhook", err);
       return res.status(500).send("Webhook processing failed");
     }
   });
@@ -5823,11 +5753,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const existing = await currentStripe.subscriptions.retrieve(currentUser.stripeSubscriptionId);
           if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
             await currentStripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
-            console.log(`Cancelled previous Stripe subscription ${currentUser.stripeSubscriptionId} before creating new one`);
+            console.log("Previous Stripe subscription cancelled before creating a new one");
           }
         } catch (e: any) {
           // Subscription may already be gone on Stripe's side — that's fine
-          console.warn('Could not cancel previous subscription:', e.message);
+          logSanitizedError("subscriptions.stripe.cancel-previous", e);
         }
       }
 
@@ -5934,7 +5864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
     } catch (error: any) {
-      console.error("Error creating subscription:", error);
+      logSanitizedError("subscriptions.create", error);
       res.status(500).json({ 
         message: "Failed to create subscription",
         error: error.message 
@@ -5974,7 +5904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionUserId !== String(user.id) ||
         (user.stripeCustomerId && subscriptionCustomerId !== user.stripeCustomerId)
       ) {
-        console.warn(`Stripe subscription confirmation rejected for user ${user.id}`);
+        console.warn("Stripe subscription confirmation rejected: ownership check failed");
         return res.status(403).json({ message: "Subscription does not belong to this account" });
       }
 
@@ -6023,7 +5953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
     } catch (error: any) {
-      console.error("Error confirming subscription:", error);
+      logSanitizedError("subscriptions.confirm", error);
       res.status(500).json({ 
         message: "Failed to confirm subscription",
         error: error.message 
@@ -6162,10 +6092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ) {
         throw new Error("Google Play entitlement was not persisted.");
       }
-      console.info(
-        `[Google Play] Entitlement persisted: product=${productId}, ` +
-          `tier=${entitlement.tier}, status=${entitlement.status}.`,
-      );
+      console.info("[Google Play] Entitlement persisted");
 
       req.session.user = publicUser(persistedUser);
 
@@ -6175,10 +6102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await new Promise<void>((resolve) => {
         req.session.save((err: any) => {
           if (err) {
-            console.error(
-              "Session save failed after Google Play verification:",
-              err?.name ?? "Unknown error",
-            );
+            logSanitizedError("subscriptions.google-play.session-save", err);
           }
           resolve();
         });
@@ -6196,11 +6120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             token: purchaseToken,
           });
         } catch (ackError: any) {
-          console.error(
-            `[Google Play] Acknowledgement failed after persistence: ` +
-              `product=${productId}, ` +
-              `httpStatus=${ackError?.response?.status ?? "unknown"}.`,
-          );
+          logSanitizedError("subscriptions.google-play.acknowledge", ackError);
         }
       }
 
@@ -6225,13 +6145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error?.constraint?.includes("transaction_id");
       const invalidStorePurchase = verificationPhase === "Google Play verification" &&
         [400, 404, 410].includes(googlePlayErrorStatus(error) ?? 0);
-      console.error(
-        `[Google Play] Verification failed: phase=${verificationPhase}, ` +
-          `product=${productIdForLog}, error=${error?.name ?? "Unknown"}, ` +
-          `httpStatus=${error?.response?.status ?? "unknown"}, ` +
-          `serviceAccountMissing=${notConfigured}, ` +
-          `errorCode=${error?.code ?? "unknown"}.`,
-      );
+      logSanitizedError("subscriptions.google-play.verify", error);
       res.status(duplicateOwnership ? 409 : invalidStorePurchase ? 400 : notConfigured ? 503 : 500).json({
         message: duplicateOwnership
           ? "This store transaction is already linked to another account."
@@ -6362,19 +6276,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await new Promise<void>((resolve) => {
         req.session.save((err: any) => {
           if (err) {
-            console.error(
-              "Session save failed after Apple verification:",
-              err?.name ?? "Unknown error",
-            );
+            logSanitizedError("subscriptions.app-store.session-save", err);
           }
           resolve();
         });
       });
 
-      console.info(
-        `[Apple App Store] Entitlement verified: product=${productId}, ` +
-          `status=${entitlement.status}, tier=${entitlement.tier}.`,
-      );
+      console.info("[Apple App Store] Entitlement verified");
       return res.json({
         success: true,
         planType: entitlement.tier,
@@ -6388,10 +6296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error?.code === "23505" ||
         error?.constraint?.includes("apple_original_transaction_id") ||
         error?.constraint?.includes("transaction_id");
-      console.error(
-        "Apple App Store verification failed:",
-        error?.name ?? "Unknown error",
-      );
+      logSanitizedError("subscriptions.app-store.verify", error);
       return res.status(duplicateOwnership ? 409 : 500).json({
         message: duplicateOwnership
           ? "This App Store transaction is already linked to another account."
@@ -6501,19 +6406,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await new Promise<void>((resolve) => {
         req.session.save((err: any) => {
           if (err) {
-            console.error(
-              "Session save failed after Apple restore:",
-              err?.name ?? "Unknown error",
-            );
+            logSanitizedError("subscriptions.app-store.session-save", err);
           }
           resolve();
         });
       });
 
-      console.info(
-        `[Apple App Store] Entitlement restored: tier=${entitlement.tier}, ` +
-          `status=${entitlement.status}.`,
-      );
+      console.info("[Apple App Store] Entitlement restored");
       return res.json({
         restored: true,
         planType: entitlement.tier,
@@ -6525,10 +6424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error?.code === "23505" ||
         error?.constraint?.includes("apple_original_transaction_id") ||
         error?.constraint?.includes("transaction_id");
-      console.error(
-        "Apple App Store restore failed:",
-        error?.name ?? "Unknown error",
-      );
+      logSanitizedError("subscriptions.app-store.restore", error);
       return res.status(duplicateOwnership ? 409 : 503).json({
         message: duplicateOwnership
           ? "This App Store subscription is already linked to another account."
@@ -6764,10 +6660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duplicate: !applied,
       });
     } catch (error: any) {
-      console.error(
-        "Google Play notification verification failed:",
-        error?.message ?? "Unknown error",
-      );
+      logSanitizedError("subscriptions.google-play.notification", error);
       return res
         .status(500)
         .json({ message: "Google Play notification processing failed" });
@@ -6915,10 +6808,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await new Promise<void>((resolve) => {
           req.session.save((err: any) => {
             if (err) {
-              console.error(
-                "Session save failed after Google Play restore:",
-                err?.name ?? "Unknown error",
-              );
+            logSanitizedError("subscriptions.google-play.session-save", err);
             }
             resolve();
           });
@@ -6936,11 +6826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               token: purchase.purchaseToken,
             });
           } catch (ackError: any) {
-            console.error(
-              `[Google Play] Restore acknowledgement failed after persistence: ` +
-                `product=${purchase.productId}, ` +
-                `httpStatus=${ackError?.response?.status ?? "unknown"}.`,
-            );
+          logSanitizedError("subscriptions.google-play.acknowledge", ackError);
           }
         }
         restorePhase = "complete";
@@ -6958,13 +6844,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       const notConfigured = error?.message?.includes('not configured');
-      console.error(
-        `[Google Play] Restore failed: phase=${restorePhase}, ` +
-          `product=${productIdForLog}, error=${error?.name ?? "Unknown"}, ` +
-          `httpStatus=${error?.response?.status ?? "unknown"}, ` +
-          `serviceAccountMissing=${notConfigured}, ` +
-          `errorCode=${error?.code ?? "unknown"}.`,
-      );
+      logSanitizedError("subscriptions.google-play.restore", error);
       const duplicateOwnership = error?.code === "23505";
       res.status(duplicateOwnership ? 409 : notConfigured ? 503 : 500).json({
         message: duplicateOwnership
@@ -7000,7 +6880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(formattedPayments);
     } catch (error) {
-      console.error("Error fetching payment history:", error);
+      logSanitizedError("subscriptions.payment-history", error);
       res.status(500).json({ message: "Failed to fetch payment history" });
     }
   });
@@ -7023,7 +6903,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
       res.json(userProgress);
     } catch (error) {
-      console.error("Error fetching caregiver users:", error);
+      logSanitizedError("caregivers.users.list", error);
       res.status(500).json({ message: "Failed to fetch users" });
     }
   });
@@ -7122,7 +7002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(newPayment);
     } catch (error) {
-      console.error('Error creating bill payment:', error);
+      logSanitizedError("bank.bill-payment.create", error);
       res.status(400).json({ message: 'Failed to create bill payment' });
     }
   });
@@ -7190,9 +7070,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rewards Program routes
   app.get("/api/rewards", async (req: any, res) => {
     try {
-      console.log("=== REWARDS: GET /api/rewards ===");
-      console.log("Session data:", req.session);
-      
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -7206,18 +7083,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.user = user;
       }
 
-      console.log("Final user:", user?.id, user?.username);
-      
       if (!user) {
-        console.log("No user found after all attempts, returning 401");
         return res.status(401).json({ message: "Not authenticated" });
       }
       
       const rewards = await storage.getRewardsByUser(user.id);
-      console.log("Found rewards count:", rewards.length);
       res.json(rewards);
     } catch (error) {
-      console.error("Error fetching rewards:", error);
+      logSanitizedError("rewards.list", error);
       res.status(500).json({ message: "Failed to fetch rewards" });
     }
   });
@@ -7260,19 +7133,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const rewards = await storage.getRewardsByCaregiver(user.id);
       res.json(rewards);
     } catch (error) {
-      console.error("Error fetching caregiver rewards:", error);
+      logSanitizedError("rewards.caregiver.list", error);
       res.status(500).json({ message: "Failed to fetch caregiver rewards" });
     }
   });
 
   app.post("/api/rewards", async (req: any, res) => {
     try {
-      console.log("=== REWARDS: POST /api/rewards ===");
-      console.log("Session data:", req.session);
-      console.log("Request body:", req.body);
-
       if (!req.session.userId || !req.session.user) {
-        console.log("No authenticated user found, returning 401");
         return res.status(401).json({ message: "Authentication required" });
       }
 
@@ -7285,10 +7153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.user = user;
       }
 
-      console.log("Final user:", user?.id, user?.username);
-      
       if (!user) {
-        console.log("No user found after all attempts, returning 401");
         return res.status(401).json({ message: "Not authenticated" });
       }
 
@@ -7298,41 +7163,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         caregiverId: user.id // Caregiver creating the reward
       };
 
-      console.log("Creating reward with data:", rewardData);
       const reward = await storage.createReward(rewardData);
-      console.log("Created reward:", reward);
       res.json(reward);
     } catch (error) {
-      console.error("Error creating reward:", error);
+      logSanitizedError("rewards.create", error);
       res.status(500).json({ message: "Failed to create reward", error: error.message });
     }
   });
 
   app.patch("/api/rewards/:id", async (req: any, res) => {
     try {
-      console.log("=== REWARDS: PATCH /api/rewards/:id ===");
-      console.log("Session data:", req.session);
-      console.log("Request body:", req.body);
-
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
 
       const rewardId = parseInt(req.params.id);
       const updatedReward = await storage.updateReward(rewardId, req.body);
-      console.log("Updated reward:", updatedReward);
       res.json(updatedReward);
     } catch (error) {
-      console.error("Error updating reward:", error);
+      logSanitizedError("rewards.update", error);
       res.status(500).json({ message: "Failed to update reward", error: error.message });
     }
   });
 
   app.delete("/api/rewards/:id", async (req: any, res) => {
     try {
-      console.log("=== REWARDS: DELETE /api/rewards/:id ===");
-      console.log("Session data:", req.session);
-
       if (!req.session.userId || !req.session.user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -7343,14 +7198,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Reward not found" });
       }
 
-      console.log("Archived reward:", rewardId);
       res.json({
         success: true,
         isActive: false,
         message: "Reward archived successfully",
       });
     } catch (error) {
-      console.error("Error archiving reward:", error);
+      logSanitizedError("rewards.archive", error);
       res.status(500).json({ message: "Failed to archive reward", error: error.message });
     }
   });
@@ -7671,7 +7525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(subscriptionUsers);
     } catch (error) {
-      console.error("Error fetching subscription users:", error);
+      logSanitizedError("admin.subscriptions.users", error);
       res.status(500).json({ message: "Failed to fetch subscription users" });
     }
   });
@@ -7708,7 +7562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'cancelled',
       } as any);
 
-      console.log(`🟠 Super admin ${currentUser.username} soft-deleted user ${target.username} (id=${targetId})`);
+      console.log("Super admin soft-deleted an account");
       res.json({
         success: true,
         type: 'soft',
@@ -7758,7 +7612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.deleteUserAccount(targetId);
 
-      console.log(`🔴 Super admin ${currentUser.username} PERMANENTLY DELETED user ${target.username} (id=${targetId})`);
+      console.log("Super admin permanently deleted an account");
       res.json({
         success: true,
         type: 'hard',

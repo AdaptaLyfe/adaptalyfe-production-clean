@@ -3,7 +3,7 @@ services:
     name: adaptalyfe-standalone
     env: node
     plan: starter
-    buildCommand: npm run build && cp standalone-server.js server.js
+    buildCommand: npm run build && cp standalone-server.js server.js && node scripts/check-sensitive-logging.mjs --bundles server.js standalone-server.js
     startCommand: node server.js
     envVars:
       - key: NODE_ENV

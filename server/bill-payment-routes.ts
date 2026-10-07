@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { z } from "zod";
 import { storage } from "./storage";
+import { logSanitizedError } from "./safe-logging";
 
 const updatePaymentLinkSchema = z.object({
   payeeWebsite: z.string().url("Please enter a valid website URL").optional(),
@@ -33,7 +34,7 @@ export function registerBillPaymentRoutes(app: Express) {
 
       res.json(updatedBill);
     } catch (error: any) {
-      console.error("Error updating payment link:", error);
+      logSanitizedError("bills.payment-link.update", error);
       res.status(400).json({ 
         message: "Failed to save payment link",
         error: error.message 

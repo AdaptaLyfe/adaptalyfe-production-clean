@@ -10,9 +10,8 @@ services:
       npm install
       npm run build
       echo "📦 Copying production server"
-      cp server/production.ts server-temp.ts
-      esbuild server-temp.ts --platform=node --packages=external --bundle --format=esm --outfile=app-server.js
-      rm server-temp.ts
+      esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=app-server.js
+      node scripts/check-sensitive-logging.mjs --bundles app-server.js
       echo "✅ Fresh build complete"
     startCommand: node app-server.js
     envVars:

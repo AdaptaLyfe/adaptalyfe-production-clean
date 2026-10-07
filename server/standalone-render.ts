@@ -9,6 +9,7 @@ import fs from "fs";
 import { registerRoutes } from "./routes.js";
 import { initializeComprehensiveDemo } from "./demo-data.js";
 import { taskReminderService } from "./task-reminder-service.js";
+import { logSanitizedError } from "./safe-logging.js";
 
 const log = console.log;
 
@@ -99,7 +100,7 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
     res.status(status).json({ message });
-    console.error('Server error:', err);
+    logSanitizedError("server.request", err);
   });
 
   // Static file serving with cache-busting headers
@@ -153,4 +154,4 @@ app.use((req, res, next) => {
     taskReminderService.start();
     console.log("🔔 Task reminder service initialized");
   });
-})().catch(console.error);
+})().catch((error) => logSanitizedError("server.startup", error));

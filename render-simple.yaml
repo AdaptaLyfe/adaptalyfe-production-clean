@@ -3,7 +3,7 @@ services:
     name: adaptalyfe-simple
     env: node
     plan: starter
-    buildCommand: cp package-render.json package.json && npm install && vite build && esbuild server/production.ts --platform=node --packages=external --bundle --format=esm --outfile=server.js
+    buildCommand: npm ci && npm run build && cp dist/production.js server.js && node scripts/check-sensitive-logging.mjs --bundles server.js
     startCommand: node server.js
     envVars:
       - key: NODE_ENV

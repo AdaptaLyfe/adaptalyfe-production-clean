@@ -5,6 +5,7 @@ import type { Pool } from "pg";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { logSanitizedError } from "./safe-logging.js";
 
 // Keep utility portal sessions separate from Adaptalyfe sessions.
 const COOKIE_NAME = "utility.sid";
@@ -156,7 +157,7 @@ export function registerUtilityPortalRoutes(app: Express, pool: Pool) {
       authenticated.utilityConsumerId = Number(sessionResult.rows[0].consumer_id);
       return next();
     } catch (error) {
-      console.error("Utility portal session check failed.", error);
+      logSanitizedError("utility.session.check", error);
       return response.status(500).json({ message: "The utility portal is temporarily unavailable." });
     }
   };
@@ -221,7 +222,7 @@ export function registerUtilityPortalRoutes(app: Express, pool: Pool) {
       });
       return response.json({ success: true });
     } catch (error) {
-      console.error("Utility portal sign-in failed.", error);
+      logSanitizedError("utility.sign-in", error);
       return response.status(500).json({ message: "The utility portal is temporarily unavailable." });
     }
   });
@@ -235,7 +236,7 @@ export function registerUtilityPortalRoutes(app: Express, pool: Pool) {
       response.clearCookie(COOKIE_NAME, { path: COOKIE_PATH, sameSite: "lax" });
       return response.json({ success: true });
     } catch (error) {
-      console.error("Utility portal sign-out failed.", error);
+      logSanitizedError("utility.sign-out", error);
       return response.status(500).json({ message: "Unable to sign out right now." });
     }
   });
@@ -249,7 +250,7 @@ export function registerUtilityPortalRoutes(app: Express, pool: Pool) {
       }
       return response.json(dashboard);
     } catch (error) {
-      console.error("Utility portal dashboard load failed.", error);
+      logSanitizedError("utility.dashboard.load", error);
       return response.status(500).json({ message: "Unable to load utility account details." });
     }
   });

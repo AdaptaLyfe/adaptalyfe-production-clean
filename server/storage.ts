@@ -1598,8 +1598,6 @@ export class DatabaseStorage implements IStorage {
       entryDate: insertEntry.entryDate || new Date()
     };
     
-    console.log(`Creating mood entry for user ${entryWithDate.userId} at ${entryWithDate.entryDate?.toISOString()}`);
-    
     const [entry] = await db
       .insert(moodEntries)
       .values(entryWithDate)
@@ -1612,8 +1610,6 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    
-    console.log(`Checking mood entry for user ${userId} between ${startOfDay.toISOString()} and ${endOfDay.toISOString()}`);
     
     const [entry] = await db
       .select()

@@ -22,6 +22,7 @@ import {
   type AdaptAIActionContext,
   type AdaptAIActionRequest,
 } from "./ai-actions.js";
+import { logSanitizedError } from "./safe-logging.js";
 
 // ─── Response schema ──────────────────────────────────────────────────────────
 
@@ -240,6 +241,7 @@ export async function generateDailyGuide(
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: buildUserPrompt(context) },
         ],
+        store: false,
         response_format: { type: "json_object" },
         max_tokens: AI_MAX_TOKENS,
         temperature: AI_TEMPERATURE,
@@ -264,10 +266,7 @@ export async function generateDailyGuide(
 
     const validated = DailyGuideResponseSchema.safeParse(parsed);
     if (!validated.success) {
-      console.warn(
-        "[ai-service] AI response failed schema validation:",
-        validated.error.flatten()
-      );
+      console.warn("[ai-service] AI response failed schema validation");
       return FALLBACK_RESPONSE;
     }
 
@@ -280,10 +279,7 @@ export async function generateDailyGuide(
     if (isAbort) {
       console.warn("[ai-service] AI request timed out after", AI_TIMEOUT_MS, "ms");
     } else {
-      console.error(
-        "[ai-service] AI provider error:",
-        err instanceof Error ? err.message : String(err)
-      );
+      logSanitizedError("ai.daily-guide.provider", err);
     }
     return FALLBACK_RESPONSE;
   } finally {
@@ -351,6 +347,7 @@ export async function generateAdaptAIChatResponse(
           },
           { role: "user", content: message.trim().slice(0, 4000) },
         ],
+        store: false,
         max_tokens: 400,
         temperature: 0.7,
         top_p: 0.9,
@@ -369,10 +366,7 @@ export async function generateAdaptAIChatResponse(
     }
     return { message: assistantContent };
   } catch (error) {
-    console.warn(
-      "[ai-service] Legacy chat provider unavailable:",
-      error instanceof Error ? error.message : String(error),
-    );
+    logSanitizedError("ai.legacy-chat.provider", error);
     return getAdaptAIChatFallbackResponse(message);
   } finally {
     clearTimeout(timeoutHandle);
@@ -492,6 +486,7 @@ ${JSON.stringify(actionContext)}`
           },
           { role: "user", content: message.trim().slice(0, 4000) },
         ],
+        store: false,
         ...(canProposeActions
           ? {
               tools: ADAPTAI_ACTION_TOOLS,
@@ -524,7 +519,7 @@ ${JSON.stringify(actionContext)}`
           action,
         };
       } catch (error) {
-        console.warn("AdaptAI returned an invalid action proposal:", error);
+        logSanitizedError("ai.action.validation", error);
         return {
           message:
             "I can help with that, but I need a little more detail before I make any change.",
@@ -538,10 +533,7 @@ ${JSON.stringify(actionContext)}`
         "I'm here to help! Could you ask me again?",
     };
   } catch (error) {
-    console.warn(
-      "[ai-service] Chat provider unavailable:",
-      error instanceof Error ? error.message : String(error),
-    );
+    logSanitizedError("ai.chat.provider", error);
     return {
       message: getAdaptAIChatFallbackResponse(message),
       fallback: true,

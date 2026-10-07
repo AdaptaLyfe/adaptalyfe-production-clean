@@ -11,6 +11,7 @@ import {
 } from '@shared/banking-schema';
 import { eq, and, gte, lte } from 'drizzle-orm';
 import { storage } from './storage';
+import { logSanitizedError } from "./safe-logging";
 
 const router = Router();
 
@@ -75,7 +76,7 @@ router.get('/accounts', async (req: any, res) => {
 
     res.json(safeAccounts);
   } catch (error) {
-    console.error('Error fetching bank accounts:', error);
+    logSanitizedError("bank.accounts.list", error);
     res.status(500).json({ message: 'Failed to fetch bank accounts' });
   }
 });
@@ -98,7 +99,7 @@ router.get('/bank-accounts', requireAuth, async (req: any, res) => {
 
     res.json(safeAccounts);
   } catch (error) {
-    console.error('Error fetching bank accounts:', error);
+    logSanitizedError("bank.accounts.list", error);
     res.status(500).json({ message: 'Failed to fetch bank accounts' });
   }
 });
@@ -137,7 +138,7 @@ router.get('/bill-payments', async (req: any, res) => {
 
     res.json(safePayments);
   } catch (error) {
-    console.error('Error fetching bill payments:', error);
+    logSanitizedError("bank.bill-payments.list", error);
     res.status(500).json({ message: 'Failed to fetch bill payments' });
   }
 });
@@ -191,7 +192,7 @@ router.post('/bill-payments', requireAuth, async (req: any, res) => {
 
     res.json({ message: 'Bill payment setup successfully' });
   } catch (error) {
-    console.error('Error setting up bill payment:', error);
+    logSanitizedError("bank.bill-payment.setup", error);
     res.status(500).json({ message: 'Failed to setup bill payment' });
   }
 });
@@ -216,7 +217,7 @@ router.patch('/bill-payments/:id/toggle', requireAuth, async (req: any, res) => 
 
     res.json({ message: 'Auto pay setting updated' });
   } catch (error) {
-    console.error('Error toggling auto pay:', error);
+    logSanitizedError("bank.auto-pay.toggle", error);
     res.status(500).json({ message: 'Failed to update auto pay setting' });
   }
 });
@@ -231,7 +232,7 @@ router.get('/payment-limits', requireAuth, async (req: any, res) => {
 
     res.json(limits);
   } catch (error) {
-    console.error('Error fetching payment limits:', error);
+    logSanitizedError("bank.payment-limits.list", error);
     res.status(500).json({ message: 'Failed to fetch payment limits' });
   }
 });
@@ -271,7 +272,7 @@ router.post('/payment-limits', requireAuth, async (req: any, res) => {
 
     res.json({ message: 'Payment limit updated' });
   } catch (error) {
-    console.error('Error setting payment limit:', error);
+    logSanitizedError("bank.payment-limits.update", error);
     res.status(500).json({ message: 'Failed to set payment limit' });
   }
 });
@@ -287,7 +288,7 @@ router.get('/payment-transactions', requireAuth, async (req: any, res) => {
 
     res.json(transactions);
   } catch (error) {
-    console.error('Error fetching payment transactions:', error);
+    logSanitizedError("bank.payment-transactions.list", error);
     res.status(500).json({ message: 'Failed to fetch payment transactions' });
   }
 });
@@ -366,7 +367,7 @@ router.post('/bill-payments/:id/process', requireAuth, async (req: any, res) => 
       transactionId: transaction.id,
     });
   } catch (error) {
-    console.error('Error processing bill payment:', error);
+    logSanitizedError("bank.payment.process", error);
     res.status(500).json({ message: 'Failed to process payment' });
   }
 });
@@ -414,7 +415,7 @@ router.post('/connect-account', async (req: any, res) => {
 
     const bankAccount = await db.insert(bankAccounts).values(accountData).returning();
     
-    console.log('Bank account created successfully:', bankAccount[0]?.id);
+    console.log("Bank account created successfully");
     
     res.json({ 
       message: 'Bank account connected successfully', 
@@ -425,7 +426,7 @@ router.post('/connect-account', async (req: any, res) => {
       }
     });
   } catch (error) {
-    console.error('Error connecting bank account:', error);
+    logSanitizedError("bank.accounts.connect", error);
     res.status(500).json({ message: 'Failed to connect bank account' });
   }
 });
@@ -467,14 +468,14 @@ router.post('/setup-autopay', async (req: any, res) => {
 
     const billPayment = await db.insert(billPayments).values(billPaymentData).returning();
     
-    console.log('Bill payment setup successfully:', billPayment[0]?.id);
+    console.log("Bill payment setup successfully");
     
     res.json({ 
       message: 'Automatic bill payment setup successfully', 
       payment: billPayment[0]
     });
   } catch (error) {
-    console.error('Error setting up bill payment:', error);
+    logSanitizedError("bank.bill-payment.setup", error);
     res.status(500).json({ message: 'Failed to setup bill payment' });
   }
 });
