@@ -3207,3 +3207,17 @@ mtime_ms = 1791371431914
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1aeb2418-a957-4efe-a5a2-8e5433f643d9/d0e3aadb-8e2f-45f5-862f-1da209f4fbaa"
 storage_version_token = "1791371437669660"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "6q6-DSunoj10NJY8t-2cv"
+uri = "file://deliverables/adaptalyfe-capacitor-ios-existing-code-20261007.zip"
+type = "unspecified"
+title = "Existing Capacitor iOS project ZIP"
+description = "The current ios/ project folder and capacitor.config.ts only; excludes web client source, generated sync output, and signing credentials."
+logical_id = "f0c38613-96cf-4ec9-af00-0c36a89c4583"
+content_hash = "sha256:da35c5ca647e2a5c0f4a1aa9aaf397d4e5e7566db34109b15f8b194903269c0a"
+size = 6518194
+mtime_ms = 1791373412394
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f0c38613-96cf-4ec9-af00-0c36a89c4583/cb63e934-1863-435f-a4fd-12bb233ace51"
+storage_version_token = "1791373422391787"
+content_type = "application/octet-stream"
