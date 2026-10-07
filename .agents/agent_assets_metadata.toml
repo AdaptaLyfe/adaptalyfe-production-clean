@@ -3198,14 +3198,14 @@ content_type = "application/octet-stream"
 id = "KY5YZolVUljGk04uty9vm"
 uri = "file://deliverables/adaptalyfe-capacitor-ios-source-20261007.zip"
 type = "unspecified"
-title = "Adaptalyfe Capacitor iOS source ZIP"
-description = "iOS Xcode project, synced Capacitor resources, web app source, and build configuration. Excludes credentials and signing profiles."
+title = "React client + Capacitor iOS wrapper source ZIP"
+description = "Combined React web app source, Capacitor iOS Xcode project, synced iOS assets, and build configuration. This repository does not contain a React Native app."
 logical_id = "1aeb2418-a957-4efe-a5a2-8e5433f643d9"
 content_hash = "sha256:99abc1948b74ac36a880d1c9956128e64c6a75fe7273fb5e306a1e25bb2c0f65"
 size = 10435272
 mtime_ms = 1791371431914
-storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1aeb2418-a957-4efe-a5a2-8e5433f643d9/d0e3aadb-8e2f-45f5-862f-1da209f4fbaa"
-storage_version_token = "1791371437669660"
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/1aeb2418-a957-4efe-a5a2-8e5433f643d9/bb19dfda-11bc-456e-8827-414c5f9b875b"
+storage_version_token = "1791373572405711"
 content_type = "application/octet-stream"
 
 [[outputs]]
