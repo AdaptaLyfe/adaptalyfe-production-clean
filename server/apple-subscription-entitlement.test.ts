@@ -52,6 +52,16 @@ test("verified active Apple status grants the mapped plan until expiry", () => {
   assert.equal(entitlement.autoRenew, true);
 });
 
+test("verified annual Apple product grants the mapped tier", () => {
+  const entitlement = resolveAppleSubscriptionEntitlement(
+    [candidate(Status.ACTIVE, { productId: "adaptalyfe_premium_annual" })],
+    now,
+  );
+  assert.equal(entitlement.tier, "premium");
+  assert.equal(entitlement.grantsAccess, true);
+  assert.equal(entitlement.productId, "adaptalyfe_premium_annual");
+});
+
 test("turning off renewal retains access until the paid period ends", () => {
   const entitlement = resolveAppleSubscriptionEntitlement(
     [candidate(Status.ACTIVE, { autoRenewStatus: 0 })],

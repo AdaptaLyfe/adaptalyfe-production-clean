@@ -2,7 +2,26 @@ import {
   Status,
 } from "@apple/app-store-server-library";
 
-import { subscriptionPlanForProductId } from "./google-play-entitlement";
+export interface AppleSubscriptionPlan {
+  planType: "basic" | "premium" | "family";
+  billingCycle: "monthly" | "annual";
+  amount: number;
+}
+
+const APPLE_SUBSCRIPTION_PLANS: Record<string, AppleSubscriptionPlan> = {
+  adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly", amount: 499 },
+  adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly", amount: 1299 },
+  adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly", amount: 2499 },
+  adaptalyfe_basic_annual: { planType: "basic", billingCycle: "annual", amount: 4999 },
+  adaptalyfe_premium_annual: { planType: "premium", billingCycle: "annual", amount: 12999 },
+  adaptalyfe_family_annual: { planType: "family", billingCycle: "annual", amount: 24999 },
+};
+
+export function appleSubscriptionPlanForProductId(
+  productId: string | null | undefined,
+): AppleSubscriptionPlan | null {
+  return productId ? APPLE_SUBSCRIPTION_PLANS[productId] ?? null : null;
+}
 
 export type AppleEntitlementStatus =
   | "active"
@@ -67,7 +86,7 @@ function resolveCandidate(
   const transaction = candidate.transaction;
   const productId =
     typeof transaction.productId === "string" ? transaction.productId : null;
-  const plan = subscriptionPlanForProductId(productId);
+  const plan = appleSubscriptionPlanForProductId(productId);
   if (!plan || !productId) return null;
 
   const renewalInfo = candidate.renewalInfo;

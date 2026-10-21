@@ -8308,151 +8308,21 @@ function resolveGooglePlayEntitlement(snapshot, options = {}) {
   };
 }
 
-// server/subscription-access.ts
-function paidSubscriptionTier(user, now = /* @__PURE__ */ new Date()) {
-  if (user.accountType === "admin") return "admin";
-  const expiry = user.subscriptionExpiresAt instanceof Date ? user.subscriptionExpiresAt : user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
-  const unexpired = expiry !== null && Number.isFinite(expiry.getTime()) && expiry > now;
-  const status = user.subscriptionStatus ?? "";
-  if (user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store") {
-    const plan = subscriptionPlanForProductId(user.subscriptionProductId ?? user.googlePlayProductId);
-    if (!plan || !unexpired || !["active", "cancelled", "in_grace_period"].includes(status)) return "free";
-    if (user.subscriptionPlatform === "google_play") {
-      if (!canUseCachedGooglePlayEntitlement(user, now)) return "free";
-    } else if (!user.appleOriginalTransactionId || !user.subscriptionVerifiedAt) {
-      return "free";
-    }
-    return plan.planType;
-  }
-  if (!user.stripeSubscriptionId || expiry && !unexpired) return "free";
-  if (status === "trialing" && !unexpired) return "free";
-  if (status !== "active" && status !== "trialing" && !(status === "cancelled" && unexpired)) return "free";
-  return ["basic", "premium", "family"].includes(user.subscriptionTier ?? "") ? user.subscriptionTier : "free";
-}
-function requiredSubscriptionTierForPath(path4) {
-  if (/^\/family-members(?:\/|$)/.test(path4)) return "family";
-  if (/^\/(?:meal-plans|shopping-lists|grocery-stores|medications|refill-orders|academic-classes|assignments|study-sessions|study-groups|campus-locations|campus-transport|class-schedules)(?:\/|$)/.test(path4)) return "premium";
-  return null;
-}
-function createSubscriptionFeatureGuard(getUser) {
-  return async (req, res, next) => {
-    const required = requiredSubscriptionTierForPath(req.path);
-    if (!required) return next();
-    if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
-    try {
-      const user = await getUser(req.session.userId);
-      if (!user) return res.status(401).json({ message: "Please sign in again." });
-      const tier = paidSubscriptionTier(user);
-      if (tier === "admin" || tier === "family" || required === "premium" && tier === "premium") {
-        req.session.user = {
-          ...req.session.user,
-          subscriptionTier: user.subscriptionTier,
-          subscriptionStatus: user.subscriptionStatus,
-          subscriptionExpiresAt: user.subscriptionExpiresAt
-        };
-        return next();
-      }
-      return res.status(403).json({
-        message: `An active ${required === "family" ? "Family" : "Premium or Family"} subscription is required.`,
-        requiredPlan: required,
-        subscriptionRequired: true
-      });
-    } catch {
-      return res.status(503).json({ message: "Subscription access could not be checked. Please try again." });
-    }
-  };
-}
-
-// server/subscription-response.ts
-function validDate(value) {
-  if (value instanceof Date) {
-    return Number.isFinite(value.getTime()) ? value : null;
-  }
-  if (typeof value !== "string") return null;
-  const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed : null;
-}
-function buildSubscriptionResponse(user, now = /* @__PURE__ */ new Date()) {
-  const createdAt = validDate(user.createdAt);
-  const trialEndDate = createdAt ? new Date(createdAt) : null;
-  trialEndDate?.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
-  const trialDaysLeft = trialEndDate && trialEndDate.getTime() > now.getTime() ? Math.ceil(
-    (trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1e3)
-  ) : 0;
-  const isStoreSubscription = user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store";
-  const verifiedPaidTier = paidSubscriptionTier(user, now);
-  const isActiveSubscription = verifiedPaidTier !== "free" && user.subscriptionStatus !== "trialing";
-  const hasVerifiedPaidTrial = !isStoreSubscription && verifiedPaidTier !== "free" && user.subscriptionStatus === "trialing";
-  const hasTrialAccess = !isStoreSubscription && (hasVerifiedPaidTrial || trialDaysLeft > 0);
-  const isAccountTrial = hasTrialAccess && verifiedPaidTier === "free";
-  const storeProduct = isStoreSubscription ? subscriptionPlanForProductId(
-    user.googlePlayProductId ?? user.subscriptionProductId
-  ) : null;
-  const displayPlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : storeProduct?.planType ?? "free";
-  const featurePlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : "free";
-  const isPremiumPlan = featurePlan === "premium" || featurePlan === "family";
-  const isFamilyPlan = featurePlan === "family";
-  const status = isStoreSubscription ? user.subscriptionStatus ?? "inactive" : isActiveSubscription ? user.subscriptionStatus ?? "active" : hasTrialAccess ? "trialing" : "expired";
-  const paidExpiry = validDate(user.subscriptionExpiresAt);
-  const paidStart = validDate(user.subscriptionStartDate);
-  return {
-    id: user.id,
-    planType: displayPlan,
-    status,
-    billingCycle: "monthly",
-    subscriptionPlatform: user.subscriptionPlatform || null,
-    isAccountTrial,
-    currentPeriodStart: paidStart ?? createdAt,
-    currentPeriodEnd: isStoreSubscription ? paidExpiry : verifiedPaidTier !== "free" ? paidExpiry : isAccountTrial ? trialEndDate : null,
-    trialDaysLeft: isAccountTrial && trialDaysLeft > 0 ? trialDaysLeft : null,
-    autoRenew: user.subscriptionAutoRenew ?? null,
-    usageStats: {
-      tasks: {
-        count: 0,
-        limit: isFamilyPlan ? null : featurePlan === "premium" ? 1e3 : 50
-      },
-      caregivers: {
-        count: 0,
-        limit: isFamilyPlan || featurePlan === "premium" ? 5 : 1
-      },
-      dataExports: { count: 0, limit: featurePlan === "free" ? 0 : null }
-    },
-    features: {
-      taskManagement: featurePlan !== "free" || hasTrialAccess,
-      moodTracking: featurePlan !== "free" || hasTrialAccess,
-      financialTracking: featurePlan !== "free" || hasTrialAccess,
-      basicReminders: featurePlan !== "free" || hasTrialAccess,
-      wearableDevices: isPremiumPlan,
-      mealPlanning: isPremiumPlan,
-      medicationManagement: isPremiumPlan,
-      advancedAnalytics: isPremiumPlan,
-      voiceCommands: isPremiumPlan,
-      academicPlanner: isPremiumPlan,
-      prioritySupport: isPremiumPlan,
-      locationSafety: isFamilyPlan,
-      familyDashboard: isFamilyPlan,
-      multiUserAccounts: isFamilyPlan,
-      emergencyProtocols: isFamilyPlan,
-      customReporting: isFamilyPlan,
-      unlimitedCaregivers: isFamilyPlan
-    }
-  };
-}
-
-// server/apple-store-server.ts
-import {
-  AppStoreServerAPIClient,
-  Environment,
-  ReceiptUtility,
-  SignedDataVerifier
-} from "@apple/app-store-server-library";
-import { readFileSync } from "node:fs";
-import path from "node:path";
-
 // server/apple-subscription-entitlement.ts
 import {
   Status
 } from "@apple/app-store-server-library";
+var APPLE_SUBSCRIPTION_PLANS = {
+  adaptalyfe_basic_monthly: { planType: "basic", billingCycle: "monthly", amount: 499 },
+  adaptalyfe_premium_monthly: { planType: "premium", billingCycle: "monthly", amount: 1299 },
+  adaptalyfe_family_monthly: { planType: "family", billingCycle: "monthly", amount: 2499 },
+  adaptalyfe_basic_annual: { planType: "basic", billingCycle: "annual", amount: 4999 },
+  adaptalyfe_premium_annual: { planType: "premium", billingCycle: "annual", amount: 12999 },
+  adaptalyfe_family_annual: { planType: "family", billingCycle: "annual", amount: 24999 }
+};
+function appleSubscriptionPlanForProductId(productId) {
+  return productId ? APPLE_SUBSCRIPTION_PLANS[productId] ?? null : null;
+}
 function dateFromMilliseconds(value) {
   const milliseconds = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
   if (!Number.isFinite(milliseconds) || milliseconds <= 0) return null;
@@ -8467,7 +8337,7 @@ function autoRenewValue(value) {
 function resolveCandidate(candidate2, now) {
   const transaction = candidate2.transaction;
   const productId = typeof transaction.productId === "string" ? transaction.productId : null;
-  const plan = subscriptionPlanForProductId(productId);
+  const plan = appleSubscriptionPlanForProductId(productId);
   if (!plan || !productId) return null;
   const renewalInfo = candidate2.renewalInfo;
   const transactionExpiry = dateFromMilliseconds(transaction.expiresDate);
@@ -8539,7 +8409,147 @@ function resolveAppleSubscriptionEntitlement(candidates, now = /* @__PURE__ */ n
   };
 }
 
+// server/subscription-access.ts
+function paidSubscriptionTier(user, now = /* @__PURE__ */ new Date()) {
+  if (user.accountType === "admin") return "admin";
+  const expiry = user.subscriptionExpiresAt instanceof Date ? user.subscriptionExpiresAt : user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt) : null;
+  const unexpired = expiry !== null && Number.isFinite(expiry.getTime()) && expiry > now;
+  const status = user.subscriptionStatus ?? "";
+  if (user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store") {
+    const productId = user.subscriptionProductId ?? user.googlePlayProductId;
+    const plan = user.subscriptionPlatform === "app_store" ? appleSubscriptionPlanForProductId(productId) : subscriptionPlanForProductId(productId);
+    if (!plan || !unexpired || !["active", "cancelled", "in_grace_period"].includes(status)) return "free";
+    if (user.subscriptionPlatform === "google_play") {
+      if (!canUseCachedGooglePlayEntitlement(user, now)) return "free";
+    } else if (!user.appleOriginalTransactionId || !user.subscriptionVerifiedAt) {
+      return "free";
+    }
+    return plan.planType;
+  }
+  if (!user.stripeSubscriptionId || expiry && !unexpired) return "free";
+  if (status === "trialing" && !unexpired) return "free";
+  if (status !== "active" && status !== "trialing" && !(status === "cancelled" && unexpired)) return "free";
+  return ["basic", "premium", "family"].includes(user.subscriptionTier ?? "") ? user.subscriptionTier : "free";
+}
+function requiredSubscriptionTierForPath(path4) {
+  if (/^\/family-members(?:\/|$)/.test(path4)) return "family";
+  if (/^\/(?:meal-plans|shopping-lists|grocery-stores|medications|refill-orders|academic-classes|assignments|study-sessions|study-groups|campus-locations|campus-transport|class-schedules)(?:\/|$)/.test(path4)) return "premium";
+  return null;
+}
+function createSubscriptionFeatureGuard(getUser) {
+  return async (req, res, next) => {
+    const required = requiredSubscriptionTierForPath(req.path);
+    if (!required) return next();
+    if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+    try {
+      const user = await getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Please sign in again." });
+      const tier = paidSubscriptionTier(user);
+      if (tier === "admin" || tier === "family" || required === "premium" && tier === "premium") {
+        req.session.user = {
+          ...req.session.user,
+          subscriptionTier: user.subscriptionTier,
+          subscriptionStatus: user.subscriptionStatus,
+          subscriptionExpiresAt: user.subscriptionExpiresAt
+        };
+        return next();
+      }
+      return res.status(403).json({
+        message: `An active ${required === "family" ? "Family" : "Premium or Family"} subscription is required.`,
+        requiredPlan: required,
+        subscriptionRequired: true
+      });
+    } catch {
+      return res.status(503).json({ message: "Subscription access could not be checked. Please try again." });
+    }
+  };
+}
+
+// server/subscription-response.ts
+function validDate(value) {
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null;
+  }
+  if (typeof value !== "string") return null;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : null;
+}
+function buildSubscriptionResponse(user, now = /* @__PURE__ */ new Date()) {
+  const createdAt = validDate(user.createdAt);
+  const trialEndDate = createdAt ? new Date(createdAt) : null;
+  trialEndDate?.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
+  const trialDaysLeft = trialEndDate && trialEndDate.getTime() > now.getTime() ? Math.ceil(
+    (trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1e3)
+  ) : 0;
+  const isStoreSubscription = user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store";
+  const verifiedPaidTier = paidSubscriptionTier(user, now);
+  const isActiveSubscription = verifiedPaidTier !== "free" && user.subscriptionStatus !== "trialing";
+  const hasVerifiedPaidTrial = !isStoreSubscription && verifiedPaidTier !== "free" && user.subscriptionStatus === "trialing";
+  const hasTrialAccess = !isStoreSubscription && (hasVerifiedPaidTrial || trialDaysLeft > 0);
+  const isAccountTrial = hasTrialAccess && verifiedPaidTier === "free";
+  const storeProduct = isStoreSubscription ? user.subscriptionPlatform === "app_store" ? appleSubscriptionPlanForProductId(user.subscriptionProductId) : subscriptionPlanForProductId(
+    user.googlePlayProductId ?? user.subscriptionProductId
+  ) : null;
+  const displayPlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : storeProduct?.planType ?? "free";
+  const featurePlan = verifiedPaidTier !== "free" ? verifiedPaidTier : isAccountTrial ? "basic" : "free";
+  const isPremiumPlan = featurePlan === "premium" || featurePlan === "family";
+  const isFamilyPlan = featurePlan === "family";
+  const status = isStoreSubscription ? user.subscriptionStatus ?? "inactive" : isActiveSubscription ? user.subscriptionStatus ?? "active" : hasTrialAccess ? "trialing" : "expired";
+  const paidExpiry = validDate(user.subscriptionExpiresAt);
+  const paidStart = validDate(user.subscriptionStartDate);
+  return {
+    id: user.id,
+    planType: displayPlan,
+    status,
+    billingCycle: storeProduct?.billingCycle ?? "monthly",
+    subscriptionPlatform: user.subscriptionPlatform || null,
+    isAccountTrial,
+    currentPeriodStart: paidStart ?? createdAt,
+    currentPeriodEnd: isStoreSubscription ? paidExpiry : verifiedPaidTier !== "free" ? paidExpiry : isAccountTrial ? trialEndDate : null,
+    trialDaysLeft: isAccountTrial && trialDaysLeft > 0 ? trialDaysLeft : null,
+    autoRenew: user.subscriptionAutoRenew ?? null,
+    usageStats: {
+      tasks: {
+        count: 0,
+        limit: isFamilyPlan ? null : featurePlan === "premium" ? 1e3 : 50
+      },
+      caregivers: {
+        count: 0,
+        limit: isFamilyPlan || featurePlan === "premium" ? 5 : 1
+      },
+      dataExports: { count: 0, limit: featurePlan === "free" ? 0 : null }
+    },
+    features: {
+      taskManagement: featurePlan !== "free" || hasTrialAccess,
+      moodTracking: featurePlan !== "free" || hasTrialAccess,
+      financialTracking: featurePlan !== "free" || hasTrialAccess,
+      basicReminders: featurePlan !== "free" || hasTrialAccess,
+      wearableDevices: isPremiumPlan,
+      mealPlanning: isPremiumPlan,
+      medicationManagement: isPremiumPlan,
+      advancedAnalytics: isPremiumPlan,
+      voiceCommands: isPremiumPlan,
+      academicPlanner: isPremiumPlan,
+      prioritySupport: isPremiumPlan,
+      locationSafety: isFamilyPlan,
+      familyDashboard: isFamilyPlan,
+      multiUserAccounts: isFamilyPlan,
+      emergencyProtocols: isFamilyPlan,
+      customReporting: isFamilyPlan,
+      unlimitedCaregivers: isFamilyPlan
+    }
+  };
+}
+
 // server/apple-store-server.ts
+import {
+  AppStoreServerAPIClient,
+  Environment,
+  ReceiptUtility,
+  SignedDataVerifier
+} from "@apple/app-store-server-library";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 var AppleStoreConfigurationError = class extends Error {
   constructor(message) {
     super(message);
@@ -15841,7 +15851,7 @@ async function registerRoutes(app2) {
           message: "This account already has an active subscription. It works on Android without another Google Play purchase."
         });
       }
-      const planInfo = subscriptionPlanForProductId(productId);
+      const planInfo = appleSubscriptionPlanForProductId(productId);
       if (!planInfo) {
         return res.status(400).json({ message: "Invalid product ID" });
       }

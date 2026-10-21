@@ -3,6 +3,7 @@ import { FREE_TRIAL_DAYS } from "@shared/subscription";
 import {
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
+import { appleSubscriptionPlanForProductId } from "./apple-subscription-entitlement";
 import { paidSubscriptionTier, type SubscriptionAccount } from "./subscription-access";
 
 type DateInput = Date | string | null | undefined;
@@ -57,9 +58,11 @@ export function buildSubscriptionResponse(
   const isAccountTrial = hasTrialAccess && verifiedPaidTier === "free";
 
   const storeProduct = isStoreSubscription
-    ? subscriptionPlanForProductId(
-        user.googlePlayProductId ?? user.subscriptionProductId,
-      )
+    ? user.subscriptionPlatform === "app_store"
+      ? appleSubscriptionPlanForProductId(user.subscriptionProductId)
+      : subscriptionPlanForProductId(
+          user.googlePlayProductId ?? user.subscriptionProductId,
+        )
     : null;
   const displayPlan =
     verifiedPaidTier !== "free"
@@ -88,7 +91,7 @@ export function buildSubscriptionResponse(
     id: user.id,
     planType: displayPlan,
     status,
-    billingCycle: "monthly",
+    billingCycle: storeProduct?.billingCycle ?? "monthly",
     subscriptionPlatform: user.subscriptionPlatform || null,
     isAccountTrial,
     currentPeriodStart: paidStart ?? createdAt,

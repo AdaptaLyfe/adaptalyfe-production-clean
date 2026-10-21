@@ -66,6 +66,7 @@ import {
   verifyAppleStorePurchase,
 } from "./apple-store-server";
 import type { AppleSubscriptionEntitlement } from "./apple-subscription-entitlement";
+import { appleSubscriptionPlanForProductId } from "./apple-subscription-entitlement";
 import type { User } from "@shared/schema";
 import {
   createGooglePlayPublisher,
@@ -5986,7 +5987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const planInfo = subscriptionPlanForProductId(productId);
+      const planInfo = appleSubscriptionPlanForProductId(productId);
       if (!planInfo) {
         return res.status(400).json({ message: "Invalid product ID" });
       }

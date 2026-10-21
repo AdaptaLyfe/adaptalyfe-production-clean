@@ -101,3 +101,27 @@ test("Google Play renewal and recovery expose the renewed access period", () => 
   assert.equal(response.features.familyDashboard, true);
   assert.equal(response.currentPeriodEnd?.toISOString(), "2026-11-05T12:00:00.000Z");
 });
+
+test("Apple annual subscription exposes the annual billing cycle", () => {
+  const response = buildSubscriptionResponse(
+    {
+      id: 54,
+      accountType: "user",
+      subscriptionTier: "premium",
+      subscriptionStatus: "active",
+      subscriptionPlatform: "app_store",
+      subscriptionProductId: "adaptalyfe_premium_annual",
+      appleOriginalTransactionId: "2000000123450000",
+      subscriptionExpiresAt: new Date("2027-10-05T12:00:00.000Z"),
+      subscriptionVerifiedAt: new Date("2026-10-05T11:30:00.000Z"),
+      subscriptionAutoRenew: true,
+      createdAt: new Date("2026-09-01T12:00:00.000Z"),
+    },
+    now,
+  );
+
+  assert.equal(response.planType, "premium");
+  assert.equal(response.status, "active");
+  assert.equal(response.billingCycle, "annual");
+  assert.equal(response.currentPeriodEnd?.toISOString(), "2027-10-05T12:00:00.000Z");
+});

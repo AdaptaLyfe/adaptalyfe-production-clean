@@ -42,7 +42,7 @@ const planFeatures: PlanFeatures = {
   basic: {
     name: "Basic Plan",
     description: "Essential features for daily independence",
-    price: { monthly: 4.99, annual: 4.99 },
+    price: { monthly: 4.99, annual: 49.99 },
     features: [
       "Daily task management (up to 50 tasks)",
       "Basic mood tracking",
@@ -56,7 +56,7 @@ const planFeatures: PlanFeatures = {
   premium: {
     name: "Premium Plan",
     description: "Advanced features for enhanced independence",
-    price: { monthly: 12.99, annual: 12.99 },
+    price: { monthly: 12.99, annual: 129.99 },
     features: [
       "Everything in Basic",
       "Unlimited tasks (up to 1,000)",
@@ -74,7 +74,7 @@ const planFeatures: PlanFeatures = {
   family: {
     name: "Family Plan",
     description: "Complete solution for families and care teams",
-    price: { monthly: 24.99, annual: 24.99 },
+    price: { monthly: 24.99, annual: 249.99 },
     features: [
       "Everything in Premium",
       "Up to 5 additional member accounts",
@@ -238,7 +238,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
 
 export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const billingCycle = "monthly";
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentType, setIntentType] = useState<"payment" | "setup">("payment");
   const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
@@ -597,15 +597,42 @@ export default function SubscriptionPage() {
             </div>
           )}
 
-          {/* Monthly billing notice */}
+          {onIOS && (
+            <div className="flex justify-center mb-4" role="group" aria-label="Billing period">
+              <div className="inline-flex rounded-lg border p-1 bg-white">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={billingCycle === "monthly" ? "default" : "ghost"}
+                  aria-pressed={billingCycle === "monthly"}
+                  onClick={() => setBillingCycle("monthly")}
+                >
+                  Monthly
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={billingCycle === "annual" ? "default" : "ghost"}
+                  aria-pressed={billingCycle === "annual"}
+                  onClick={() => setBillingCycle("annual")}
+                >
+                  Yearly
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Billing notice */}
           <div className="flex items-center justify-center mb-4">
-            <Badge variant="secondary" className="text-sm px-4 py-1">Monthly Subscription — auto-renewable, cancel anytime</Badge>
+            <Badge variant="secondary" className="text-sm px-4 py-1">
+              {billingCycle === "annual" && onIOS ? "Annual" : "Monthly"} Subscription — auto-renewable, cancel anytime
+            </Badge>
           </div>
 
           {/* Premium feature notice — required by Apple Guideline 2.3.2 */}
           <div className="max-w-2xl mx-auto mb-4 px-4">
             <p className="text-sm text-gray-600 italic">
-              Some features require an active subscription. All plans are auto-renewing monthly subscriptions.
+              Some features require an active subscription. All plans are auto-renewing {billingCycle === "annual" && onIOS ? "annual" : "monthly"} subscriptions.
             </p>
           </div>
 
@@ -717,8 +744,8 @@ export default function SubscriptionPage() {
                 </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold">${plan.price.monthly}</span>
-                  <span className="text-gray-600">/month</span>
+                  <span className="text-3xl font-bold">${plan.price[billingCycle]}</span>
+                  <span className="text-gray-600">/{billingCycle === "annual" ? "year" : "month"}</span>
                 </div>
               </CardHeader>
               

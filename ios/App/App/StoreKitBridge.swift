@@ -15,7 +15,10 @@ class StoreKitBridge: NSObject, WKScriptMessageHandler {
     private let PRODUCT_IDS: Set<String> = [
         "adaptalyfe_basic_monthly",
         "adaptalyfe_premium_monthly",
-        "adaptalyfe_family_monthly"
+        "adaptalyfe_family_monthly",
+        "adaptalyfe_basic_annual",
+        "adaptalyfe_premium_annual",
+        "adaptalyfe_family_annual"
     ]
 
     override init() {

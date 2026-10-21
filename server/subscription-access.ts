@@ -1,4 +1,5 @@
 import { canUseCachedGooglePlayEntitlement, subscriptionPlanForProductId } from "./google-play-entitlement";
+import { appleSubscriptionPlanForProductId } from "./apple-subscription-entitlement";
 
 export interface SubscriptionAccount {
   id?: number;
@@ -24,7 +25,10 @@ export function paidSubscriptionTier(user: SubscriptionAccount, now = new Date()
   const unexpired = expiry !== null && Number.isFinite(expiry.getTime()) && expiry > now;
   const status = user.subscriptionStatus ?? "";
   if (user.subscriptionPlatform === "google_play" || user.subscriptionPlatform === "app_store") {
-    const plan = subscriptionPlanForProductId(user.subscriptionProductId ?? user.googlePlayProductId);
+    const productId = user.subscriptionProductId ?? user.googlePlayProductId;
+    const plan = user.subscriptionPlatform === "app_store"
+      ? appleSubscriptionPlanForProductId(productId)
+      : subscriptionPlanForProductId(productId);
     if (!plan || !unexpired || !["active", "cancelled", "in_grace_period"].includes(status)) return "free";
     if (user.subscriptionPlatform === "google_play") {
       if (!canUseCachedGooglePlayEntitlement(user, now)) return "free";
