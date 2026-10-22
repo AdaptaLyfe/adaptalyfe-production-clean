@@ -3221,3 +3221,17 @@ mtime_ms = 1791373412394
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/f0c38613-96cf-4ec9-af00-0c36a89c4583/cb63e934-1863-435f-a4fd-12bb233ace51"
 storage_version_token = "1791373422391787"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "DubhbCdWFocy2rg0LkjCs"
+uri = "file://.local/deliverables/adaptalyfe-apple-annual-update.zip"
+type = "unspecified"
+title = "Adaptalyfe Apple annual subscription update"
+description = "ZIP containing the seven relevant source files and one README with instructions for integrating annual subscriptions into the existing Capacitor iOS project."
+logical_id = "40eaf405-7fd7-4137-aec9-c55a00725890"
+content_hash = "sha256:410e9346c6cffdb70b07a1a8c9454572a688f75125c02757d9b7874f38031a92"
+size = 72666
+mtime_ms = 1792670072186
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:f0feebb6-5db0-4265-92fd-0ed04d7aec9a/40eaf405-7fd7-4137-aec9-c55a00725890/01b5a790-9de5-478c-871f-1155a0798e8e"
+storage_version_token = "1792670079178414"
+content_type = "application/octet-stream"
