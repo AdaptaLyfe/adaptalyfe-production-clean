@@ -15346,12 +15346,12 @@ async function registerRoutes(app2) {
         });
       }
       const pricing = {
-        basic: { monthly: 499, annual: 4900 },
-        // $4.99, $49
-        premium: { monthly: 1299, annual: 12900 },
-        // $12.99, $129
-        family: { monthly: 2499, annual: 24900 }
-        // $24.99, $249
+        basic: { monthly: 499, annual: 4999 },
+        // $4.99/month, $49.99/year
+        premium: { monthly: 1299, annual: 12999 },
+        // $12.99/month, $129.99/year
+        family: { monthly: 2499, annual: 24999 }
+        // $24.99/month, $249.99/year
       };
       const amount2 = pricing[planType]?.[billingCycle] || 1299;
       const paymentIntent = await currentStripe.paymentIntents.create({
@@ -15654,12 +15654,12 @@ async function registerRoutes(app2) {
         await storage.updateUser(currentUser.id, { stripeCustomerId: customer.id });
       }
       const pricing = {
-        basic: { monthly: 499, annual: 4900 },
-        // $4.99, $49
-        premium: { monthly: 1299, annual: 12900 },
-        // $12.99, $129
-        family: { monthly: 2499, annual: 24900 }
-        // $24.99, $249
+        basic: { monthly: 499, annual: 4999 },
+        // $4.99/month, $49.99/year
+        premium: { monthly: 1299, annual: 12999 },
+        // $12.99/month, $129.99/year
+        family: { monthly: 2499, annual: 24999 }
+        // $24.99/month, $249.99/year
       };
       const planPricing = pricing[planType];
       if (!planPricing || billingCycle !== "monthly" && billingCycle !== "annual") {
@@ -15681,13 +15681,20 @@ async function registerRoutes(app2) {
       let price;
       const existingPrices = await currentStripe.prices.search({
         query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
-        limit: 1
+        limit: 100
       });
-      if (existingPrices.data.length > 0) {
-        price = existingPrices.data[0];
+      const expectedInterval = billingCycle === "annual" ? "year" : "month";
+      price = existingPrices.data.find(
+        (candidate2) => candidate2.active && candidate2.unit_amount === amount2 && candidate2.currency === "usd" && candidate2.recurring?.interval === expectedInterval && candidate2.recurring?.interval_count === 1
+      );
+      if (price) {
         console.log(`Reusing existing Stripe price ${price.id} for ${planLabel}`);
       } else {
-        const product = await currentStripe.products.create({
+        const existingProducts = await currentStripe.products.search({
+          query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
+          limit: 1
+        });
+        const product = existingProducts.data[0] ?? await currentStripe.products.create({
           name: `Adaptalyfe ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
           description: `${billingCycle} subscription to Adaptalyfe ${planType} features`,
           metadata: { plan_key: planLabel }
@@ -15696,7 +15703,7 @@ async function registerRoutes(app2) {
           currency: "usd",
           product: product.id,
           unit_amount: amount2,
-          recurring: { interval: billingCycle === "annual" ? "year" : "month" },
+          recurring: { interval: expectedInterval },
           metadata: { plan_key: planLabel }
         });
         console.log(`Created new Stripe price ${price.id} for ${planLabel}`);

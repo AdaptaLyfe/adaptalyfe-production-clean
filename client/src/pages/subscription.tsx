@@ -257,6 +257,15 @@ export default function SubscriptionPage() {
   const onNative = onAndroid || onIOS;
 
   useEffect(() => {
+    const requestedCycle = new URLSearchParams(window.location.search).get("billingCycle");
+    if (onAndroid) {
+      setBillingCycle("monthly");
+    } else if (requestedCycle === "annual" || requestedCycle === "monthly") {
+      setBillingCycle(requestedCycle);
+    }
+  }, [onAndroid]);
+
+  useEffect(() => {
     if (onAndroid) {
       initGooglePlayBilling().then((available) => {
         setGooglePlayAvailable(available);
@@ -568,7 +577,12 @@ export default function SubscriptionPage() {
                 <div>
                   <p className="font-semibold text-gray-900 mb-1">Get full access to Adaptalyfe</p>
                   <p className="text-sm text-gray-600">
-                    Adaptalyfe helps individuals with daily tasks, finances, mood tracking, appointments, and connecting with their support network. Choose a plan below to unlock all features. Your subscription is billed monthly through your Apple ID and can be cancelled anytime from your device settings.
+                    Adaptalyfe helps individuals with daily tasks, finances, mood tracking, appointments, and connecting with their support network. Choose a plan below to unlock all features.{" "}
+                    {onIOS
+                      ? `Your ${billingCycle} subscription is billed through your Apple ID and managed in your Apple account settings.`
+                      : onAndroid
+                        ? "Your monthly subscription is billed through Google Play and managed in your Google Play account."
+                        : `Your ${billingCycle} subscription is billed by Stripe and renews automatically at the selected interval.`}
                   </p>
                 </div>
               </div>
@@ -597,7 +611,7 @@ export default function SubscriptionPage() {
             </div>
           )}
 
-          {onIOS && (
+          {!onAndroid && (
             <div className="flex justify-center mb-4" role="group" aria-label="Billing period">
               <div className="inline-flex rounded-lg border p-1 bg-white">
                 <Button
@@ -625,14 +639,14 @@ export default function SubscriptionPage() {
           {/* Billing notice */}
           <div className="flex items-center justify-center mb-4">
             <Badge variant="secondary" className="text-sm px-4 py-1">
-              {billingCycle === "annual" && onIOS ? "Annual" : "Monthly"} Subscription — auto-renewable, cancel anytime
+              {billingCycle === "annual" ? "Annual" : "Monthly"} Subscription — auto-renewable, cancel anytime
             </Badge>
           </div>
 
           {/* Premium feature notice — required by Apple Guideline 2.3.2 */}
           <div className="max-w-2xl mx-auto mb-4 px-4">
             <p className="text-sm text-gray-600 italic">
-              Some features require an active subscription. All plans are auto-renewing {billingCycle === "annual" && onIOS ? "annual" : "monthly"} subscriptions.
+              Some features require an active subscription. All plans are auto-renewing {billingCycle === "annual" ? "annual" : "monthly"} subscriptions.
             </p>
           </div>
 
@@ -926,25 +940,33 @@ export default function SubscriptionPage() {
           </div>
         </div>
 
-        {/* Apple-required legal disclosure block — Guideline 3.1.2(c) */}
+        {/* Platform-specific subscription terms and renewal disclosure */}
         <div className="mt-12 max-w-3xl mx-auto p-6 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700 leading-relaxed">
           <h3 className="font-semibold text-gray-900 mb-3">Subscription Terms</h3>
           <ul className="space-y-2 list-disc pl-5 mb-4">
-            <li><strong>Basic Plan:</strong> $4.99 per month (auto-renewable)</li>
-            <li><strong>Premium Plan:</strong> $12.99 per month (auto-renewable)</li>
-            <li><strong>Family / Care Team Plan:</strong> $24.99 per month (auto-renewable)</li>
+            <li><strong>Basic Plan:</strong> ${planFeatures.basic.price[billingCycle]} per {billingCycle === "annual" ? "year" : "month"} (auto-renewable)</li>
+            <li><strong>Premium Plan:</strong> ${planFeatures.premium.price[billingCycle]} per {billingCycle === "annual" ? "year" : "month"} (auto-renewable)</li>
+            <li><strong>Family / Care Team Plan:</strong> ${planFeatures.family.price[billingCycle]} per {billingCycle === "annual" ? "year" : "month"} (auto-renewable)</li>
           </ul>
           <p className="mb-2">
-            Payment will be charged to your Apple ID account at confirmation of purchase.
+            {onIOS
+              ? "Payment will be charged to your Apple ID account at confirmation of purchase."
+              : onAndroid
+                ? "Payment will be charged through your Google Play account at confirmation of purchase."
+                : "Stripe will charge your selected payment method for the plan and billing interval shown above."}
           </p>
           <p className="mb-2">
-            Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current period.
+            Subscriptions automatically renew at the end of each {billingCycle === "annual" ? "yearly" : "monthly"} billing period unless cancelled before renewal.
           </p>
           <p className="mb-2">
-            Your account will be charged for renewal within 24 hours prior to the end of the current period at the same monthly price.
+            The renewal charge will be the listed {billingCycle === "annual" ? "annual" : "monthly"} price for your plan.
           </p>
           <p className="mb-4">
-            You can manage and cancel your subscription by going to your account settings on the App Store after purchase.
+            {onIOS
+              ? "You can manage or cancel your subscription in your Apple account subscription settings."
+              : onAndroid
+                ? "You can manage or cancel your subscription in your Google Play subscriptions settings."
+                : "For Stripe subscriptions, contact Adaptalyfe support to manage or cancel before the next renewal."}
           </p>
           <div className="flex flex-wrap gap-4 pt-3 border-t border-gray-300">
             <a
@@ -956,15 +978,21 @@ export default function SubscriptionPage() {
             >
               Privacy Policy
             </a>
-            <a
-              href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline font-medium"
-              data-testid="link-terms-of-use"
-            >
-              Terms of Use (EULA)
-            </a>
+            {onIOS ? (
+              <a
+                href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline font-medium"
+                data-testid="link-terms-of-use"
+              >
+                Terms of Use (EULA)
+              </a>
+            ) : (
+              <a href="/terms" className="text-blue-600 hover:underline font-medium" data-testid="link-terms-of-use">
+                Terms of Service
+              </a>
+            )}
           </div>
         </div>
       </div>

@@ -19,7 +19,7 @@ export default function Pricing() {
       
       // The subscription page is the only supported web billing flow. It
       // creates a recurring Stripe subscription rather than a one-time charge.
-      window.location.href = `/subscription`;
+      window.location.href = `/subscription?billingCycle=${billingCycle}`;
       
     } catch (error) {
       console.error("Payment error:", error);
@@ -37,7 +37,7 @@ export default function Pricing() {
     {
       name: "Basic",
       description: "Essential tools for independent living",
-      price: { monthly: 4.99, annual: 49 },
+      price: { monthly: 4.99, annual: 49.99 },
       badge: null,
       features: [
         "Basic daily tasks and mood tracking",
@@ -58,7 +58,7 @@ export default function Pricing() {
     {
       name: "Premium", 
       description: "Complete independence toolkit",
-      price: { monthly: 12.99, annual: 129 },
+      price: { monthly: 12.99, annual: 129.99 },
       badge: "Most Popular",
       features: [
         "All Basic features included",
@@ -87,7 +87,7 @@ export default function Pricing() {
     {
       name: "Family/Care Team",
       description: "Multi-user support for families and care teams", 
-      price: { monthly: 24.99, annual: 249 },
+      price: { monthly: 24.99, annual: 249.99 },
       badge: "Best Value",
       features: [
         "All premium features included",

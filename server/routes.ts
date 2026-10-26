@@ -5345,9 +5345,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Define pricing based on plan
       const pricing = {
-        basic: { monthly: 499, annual: 4900 }, // $4.99, $49
-        premium: { monthly: 1299, annual: 12900 }, // $12.99, $129
-        family: { monthly: 2499, annual: 24900 } // $24.99, $249
+        basic: { monthly: 499, annual: 4999 }, // $4.99/month, $49.99/year
+        premium: { monthly: 1299, annual: 12999 }, // $12.99/month, $129.99/year
+        family: { monthly: 2499, annual: 24999 } // $24.99/month, $249.99/year
       };
       
       const amount = pricing[planType as keyof typeof pricing]?.[billingCycle as keyof typeof pricing.basic] || 1299;
@@ -5736,9 +5736,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Define pricing
       const pricing = {
-        basic: { monthly: 499, annual: 4900 }, // $4.99, $49
-        premium: { monthly: 1299, annual: 12900 }, // $12.99, $129
-        family: { monthly: 2499, annual: 24900 } // $24.99, $249
+        basic: { monthly: 499, annual: 4999 }, // $4.99/month, $49.99/year
+        premium: { monthly: 1299, annual: 12999 }, // $12.99/month, $129.99/year
+        family: { monthly: 2499, annual: 24999 } // $24.99/month, $249.99/year
       };
       
       const planPricing = pricing[planType as keyof typeof pricing];
@@ -5768,13 +5768,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let price: any;
       const existingPrices = await currentStripe.prices.search({
         query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
-        limit: 1,
+        limit: 100,
       });
-      if (existingPrices.data.length > 0) {
-        price = existingPrices.data[0];
+      const expectedInterval = billingCycle === 'annual' ? 'year' : 'month';
+      price = existingPrices.data.find((candidate) =>
+        candidate.active &&
+        candidate.unit_amount === amount &&
+        candidate.currency === 'usd' &&
+        candidate.recurring?.interval === expectedInterval &&
+        candidate.recurring?.interval_count === 1
+      );
+      if (price) {
         console.log(`Reusing existing Stripe price ${price.id} for ${planLabel}`);
       } else {
-        const product = await currentStripe.products.create({
+        const existingProducts = await currentStripe.products.search({
+          query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
+          limit: 1,
+        });
+        const product = existingProducts.data[0] ?? await currentStripe.products.create({
           name: `Adaptalyfe ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
           description: `${billingCycle} subscription to Adaptalyfe ${planType} features`,
           metadata: { plan_key: planLabel },
@@ -5783,7 +5794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currency: 'usd',
           product: product.id,
           unit_amount: amount,
-          recurring: { interval: billingCycle === 'annual' ? 'year' : 'month' },
+          recurring: { interval: expectedInterval },
           metadata: { plan_key: planLabel },
         });
         console.log(`Created new Stripe price ${price.id} for ${planLabel}`);
