@@ -583,3 +583,23 @@ body.ios-native .main-content-with-header {
     background-color: hsl(173, 80%, 30%);
   }
 }
+
+/* Handwritten accent font for landing page notes (Caveat, SIL OFL 1.1, self-hosted) */
+@font-face {
+  font-family: "Caveat";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/caveat-latin-600.woff2") format("woff2");
+}
+
+/* Landing page: gentle floating motion for hero detail cards */
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.landing-float { animation: landing-float 6s ease-in-out infinite; }
+.landing-float-delay { animation-delay: -3s; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-float { animation: none; }
+}

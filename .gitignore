@@ -48,6 +48,9 @@ Thumbs.db
 .cache/
 .local/
 
+# Embedded local Postgres (DBeaver / local dump)
+.local-pg/
+
 # Local env
 .env
 .env.local
