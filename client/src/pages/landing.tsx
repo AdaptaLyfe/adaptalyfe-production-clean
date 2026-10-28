@@ -121,7 +121,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#f7f8fe]">
       {/* Header */}
-      <header className="android-header fixed inset-x-0 top-0 z-50 border-b border-white/60 bg-white/70 backdrop-blur-xl">
+      <header className="android-header fixed inset-x-0 top-0 z-50 border-b border-white/60 bg-white/70 backdrop-blur-xl"
+        style={{ background: "rgba(255, 255, 255, 0.72)" }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -215,9 +216,11 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative isolate overflow-hidden pt-24 sm:pt-28 lg:pt-32 pb-14 sm:pb-16 lg:pb-20">
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(55%_60%_at_0%_100%,rgba(196,181,253,0.45),transparent_70%),radial-gradient(45%_55%_at_100%_0%,rgba(165,243,252,0.55),transparent_70%),radial-gradient(40%_40%_at_60%_40%,rgba(224,231,255,0.7),transparent_75%),linear-gradient(180deg,#e9f8fd_0%,#eef3ff_55%,#f3efff_100%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(50%_55%_at_0%_75%,rgba(196,181,253,0.40),transparent_70%),radial-gradient(45%_55%_at_100%_0%,rgba(165,243,252,0.55),transparent_70%),radial-gradient(40%_40%_at_60%_40%,rgba(224,231,255,0.7),transparent_75%),linear-gradient(180deg,#e9f8fd_0%,#eef3ff_50%,#f3f1ff_80%,#f7f8fe_100%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-[#f7f8fe]" />
         <svg aria-hidden viewBox="0 0 1440 120" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-16 w-full sm:h-24">
-          <path d="M0 70C240 20 480 110 760 80s520-70 680-30v70H0z" fill="#f7f8fe" />
+          <path d="M0 70C240 20 480 110 760 80s520-70 680-30v70H0z" fill="#ffffff" opacity="0.55" />
+          <path d="M0 92C260 52 520 122 800 98s480-56 640-28v50H0z" fill="#f7f8fe" />
         </svg>
         <div className="mx-auto grid max-w-[1320px] items-center gap-12 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.25fr)] lg:gap-14 lg:px-8">
           {/* Copy */}
@@ -308,14 +311,14 @@ export default function Landing() {
       {/* Support roles */}
       <section className="pt-10 pb-14 sm:pt-12 sm:pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
             <span className="inline-flex rounded-full bg-indigo-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-600">
               For every support role
             </span>
-            <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-[2.6rem] sm:leading-tight">
               One shared view. A more connected support team.
             </h3>
-            <p className="mt-3 text-base text-slate-500 sm:text-lg">
+            <p className="mx-auto mt-3 max-w-3xl text-base text-slate-500 sm:text-lg">
               Keep everyone in sync and focused on what matters most: the individual&apos;s growth, wellbeing and independence.
             </p>
           </div>
@@ -323,19 +326,19 @@ export default function Landing() {
             {[
               {
                 Icon: Users,
-                tile: "bg-gradient-to-br from-violet-100 to-fuchsia-100 text-violet-600",
+                tile: "bg-violet-100/80 text-violet-600",
                 title: "Parents & guardians",
                 text: "Stay informed, track progress and support routines at home.",
               },
               {
                 Icon: GraduationCap,
-                tile: "bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600",
+                tile: "bg-blue-100/80 text-blue-600",
                 title: "Teachers & educators",
                 text: "Coordinate schedules, track goals and share updates from school.",
               },
               {
                 Icon: HeartHandshake,
-                tile: "bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-600",
+                tile: "bg-emerald-100/80 text-emerald-600",
                 title: "Caregivers & support professionals",
                 text: "Manage daily tasks, communicate securely and provide consistent support.",
               },
@@ -343,16 +346,16 @@ export default function Landing() {
               <Link
                 key={title}
                 href="/register"
-                className="group flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_12px_30px_-12px_rgba(15,23,42,0.18)]"
+                className="group flex items-center gap-4 rounded-3xl border border-slate-200/70 bg-gradient-to-br from-white to-slate-50/70 px-5 py-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-1 hover:border-slate-200 hover:bg-white hover:shadow-[0_22px_44px_-20px_rgba(15,23,42,0.25)]"
               >
-                <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full shadow-inner ring-4 ring-white ${tile}`}>
-                  <Icon className="h-7 w-7" />
+                <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${tile}`}>
+                  <Icon className="h-7 w-7" strokeWidth={1.8} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-slate-900">{title}</span>
-                  <span className="mt-1 block text-sm leading-snug text-slate-500">{text}</span>
+                  <span className="block text-[17px] font-semibold leading-snug text-slate-900">{title}</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-slate-500">{text}</span>
                 </span>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-colors group-hover:border-violet-200 group-hover:bg-violet-50 group-hover:text-violet-600">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors group-hover:border-violet-200 group-hover:bg-violet-50 group-hover:text-violet-600">
                   <ArrowRight className="h-4 w-4" />
                 </span>
               </Link>
@@ -364,47 +367,47 @@ export default function Landing() {
       {/* Features */}
       <section id="features" className="scroll-mt-20 pb-14 sm:pb-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
             <span className="inline-flex rounded-full bg-fuchsia-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-fuchsia-600">
               Powerful features
             </span>
-            <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <h3 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-[2.6rem] sm:leading-tight">
               Comprehensive Support for{" "}
               <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">Daily Living</span>
             </h3>
-            <p className="mt-3 text-base text-slate-500 sm:text-lg">
+            <p className="mx-auto mt-3 max-w-3xl text-base text-slate-500 sm:text-lg">
               Every feature is thoughtfully designed with accessibility, independence, and personal growth in mind.
             </p>
           </div>
 
           {(() => {
             const features = [
-              { Icon: CheckCircle, tile: "bg-emerald-50 text-emerald-600", title: "Daily Task Management", text: "Visual routines, step-by-step guidance and progress tracking." },
-              { Icon: Smile, tile: "bg-rose-50 text-rose-500", title: "Mood & Wellbeing", text: "Daily check-ins, mood insights and personalized support." },
-              { Icon: FileText, tile: "bg-blue-50 text-blue-600", title: "Personal Records & Notes", text: "Store important information, medications and care notes." },
-              { Icon: CalendarDays, tile: "bg-violet-50 text-violet-600", title: "Calendar & Appointments", text: "Keep track of school, therapy and daily schedules." },
-              { Icon: DollarSign, tile: "bg-amber-50 text-amber-600", title: "Financial Management", text: "Bill tracking, budgeting tools and payment reminders." },
-              { Icon: Users, tile: "bg-teal-50 text-teal-600", title: "Secure Support Network", text: "Connect with family, caregivers and trusted professionals." },
-              { Icon: Brain, tile: "bg-purple-50 text-purple-600", title: "AI Guidance, Goals & Achievements", text: "Personalized recommendations, goal tracking and rewards to build confidence." },
+              { Icon: CheckCircle, tile: "bg-emerald-100/70 text-emerald-600", title: "Daily Task Management", text: "Visual routines, step-by-step guidance and progress tracking." },
+              { Icon: Smile, tile: "bg-rose-100/70 text-rose-500", title: "Mood & Wellbeing", text: "Daily check-ins, mood insights and personalized support." },
+              { Icon: FileText, tile: "bg-blue-100/70 text-blue-600", title: "Personal Records & Notes", text: "Store important information, medications and care notes." },
+              { Icon: CalendarDays, tile: "bg-violet-100/70 text-violet-600", title: "Calendar & Appointments", text: "Keep track of school, therapy and daily schedules." },
+              { Icon: DollarSign, tile: "bg-orange-100/70 text-orange-500", title: "Financial Management", text: "Bill tracking, budgeting tools and payment reminders." },
+              { Icon: Users, tile: "bg-teal-100/70 text-teal-600", title: "Secure Support Network", text: "Connect with family, caregivers and trusted professionals." },
+              { Icon: Brain, tile: "bg-purple-100/70 text-purple-600", title: "AI Guidance, Goals & Achievements", text: "Personalized recommendations, goal tracking and rewards to build confidence." },
             ];
             const card = ({ Icon, tile, title, text }: (typeof features)[number]) => (
               <div
                 key={title}
-                className="group flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_34px_-16px_rgba(15,23,42,0.22)]"
+                className="group flex items-center gap-4 rounded-3xl border border-slate-200/70 bg-white px-5 py-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_22px_44px_-20px_rgba(15,23,42,0.25)]"
               >
-                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ring-4 ring-white transition-transform duration-200 group-hover:scale-105 ${tile}`}>
-                  <Icon className="h-7 w-7" />
+                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105 ${tile}`}>
+                  <Icon className="h-7 w-7" strokeWidth={1.8} />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[15px] font-semibold leading-snug text-slate-900">{title}</span>
-                  <span className="mt-1 block text-sm leading-snug text-slate-500">{text}</span>
+                  <span className="block text-base font-semibold leading-snug text-slate-900">{title}</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-slate-500">{text}</span>
                 </span>
               </div>
             );
             return (
-              <div className="mt-10 space-y-4 md:space-y-5">
-                <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">{features.slice(0, 4).map(card)}</div>
-                <div className="grid gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3">{features.slice(4).map(card)}</div>
+              <div className="mt-10 space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{features.slice(0, 4).map(card)}</div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{features.slice(4).map(card)}</div>
               </div>
             );
           })()}
@@ -467,7 +470,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="mx-auto grid max-w-5xl items-stretch gap-5 md:grid-cols-3 md:gap-6">
+          <div className="relative mx-auto grid max-w-5xl items-stretch gap-5 md:grid-cols-3 md:gap-6">
             {[
               {
                 id: "basic",
@@ -476,9 +479,9 @@ export default function Landing() {
                 Icon: Target,
                 popular: false,
                 accent: {
-                  iconBg: "bg-gradient-to-br from-sky-500 to-blue-600",
-                  check: "text-sky-500",
-                  cta: "border-2 border-blue-500 bg-white text-blue-600 hover:bg-blue-50",
+                  iconBg: "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/30",
+                  check: "text-emerald-500",
+                  cta: "border-2 border-indigo-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50",
                   ctaSolid: false,
                   ring: "border border-slate-200 shadow-sm",
                 },
@@ -499,8 +502,8 @@ export default function Landing() {
                 Icon: Star,
                 popular: true,
                 accent: {
-                  iconBg: "bg-gradient-to-br from-violet-500 to-purple-600",
-                  check: "text-violet-500",
+                  iconBg: "bg-gradient-to-br from-pink-500 to-fuchsia-600 shadow-pink-500/30",
+                  check: "text-emerald-500",
                   cta: "border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/30 hover:brightness-110",
                   ctaSolid: true,
                   ring: "border-2 border-violet-300 shadow-[0_20px_45px_-18px_rgba(109,40,217,0.35)]",
@@ -522,9 +525,9 @@ export default function Landing() {
                 Icon: Users,
                 popular: false,
                 accent: {
-                  iconBg: "bg-gradient-to-br from-orange-400 to-orange-600",
-                  check: "text-orange-500",
-                  cta: "border-2 border-blue-500 bg-white text-blue-600 hover:bg-blue-50",
+                  iconBg: "bg-gradient-to-br from-amber-400 to-orange-500 shadow-orange-500/30",
+                  check: "text-emerald-500",
+                  cta: "border-2 border-indigo-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50",
                   ctaSolid: false,
                   ring: "border border-slate-200 shadow-sm",
                 },
@@ -548,21 +551,21 @@ export default function Landing() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative flex flex-col overflow-hidden rounded-2xl bg-white transition-shadow duration-200 ${plan.accent.ring} ${plan.popular ? "md:-my-3 md:z-10" : "hover:shadow-md"}`}
+                  className={`relative flex flex-col overflow-hidden rounded-3xl bg-white transition-shadow duration-200 ${plan.accent.ring} ${plan.popular ? "md:-my-3 md:z-10" : "hover:shadow-md"}`}
                 >
                   {plan.popular && (
-                    <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-fuchsia-500 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
-                      <Star className="h-3.5 w-3.5 fill-white" />
+                    <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 py-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-white">
+                      <Sparkles className="h-3.5 w-3.5" />
                       Most Popular
                     </div>
                   )}
 
-                  <div className="flex flex-1 flex-col p-6">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-1 flex-col p-7">
+                    <div className="flex items-center gap-4">
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white ${plan.accent.iconBg}`}
+                        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg ring-1 ring-white/30 ${plan.accent.iconBg}`}
                       >
-                        <PlanIcon className="h-5 w-5" />
+                        <PlanIcon className="h-7 w-7" strokeWidth={2} />
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-lg font-bold text-slate-900">{plan.name}</h4>
@@ -578,24 +581,25 @@ export default function Landing() {
                         </span>
                         <span className="text-sm font-medium text-slate-500">/{period}</span>
                       </div>
-                      <p className="mt-1.5 text-sm text-slate-500">
-                        or <span className="font-semibold text-slate-700">{altPrice}</span>/{altPeriod}
-                        {isYearly ? (
-                          <span className="ml-1.5 font-medium text-emerald-600">· {plan.save} with yearly</span>
-                        ) : (
-                          <span className="ml-1 font-medium text-emerald-600">({plan.save.toLowerCase()})</span>
-                        )}
-                      </p>
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                        <span>
+                          or <span className="font-semibold text-slate-800">{altPrice}</span>
+                          <span className="text-slate-400">/{altPeriod}</span>
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200/70">
+                          {isYearly ? `You save ${plan.save.replace(/^Save /, "")}` : `${plan.save} yearly`}
+                        </span>
+                      </div>
                     </div>
 
-                    <ul className="mt-6 flex-1 space-y-2.5">
+                    <ul className="mt-6 flex-1 space-y-3">
                       {plan.features.map((item) => (
                         <li key={item} className="flex items-start gap-2.5">
                           <Check
                             className={`mt-0.5 h-4 w-4 shrink-0 ${plan.accent.check}`}
                             strokeWidth={3}
                           />
-                          <span className="text-sm leading-snug text-slate-700">{item}</span>
+                          <span className="text-[15px] leading-snug text-slate-700">{item}</span>
                         </li>
                       ))}
                     </ul>
@@ -606,7 +610,7 @@ export default function Landing() {
                     >
                       <Button
                         variant={plan.accent.ctaSolid ? "default" : "outline"}
-                        className={`h-11 w-full rounded-xl text-[15px] font-semibold ${plan.accent.cta}`}
+                        className={`h-12 w-full rounded-xl text-base font-semibold ${plan.accent.cta}`}
                       >
                         Choose plan
                       </Button>
@@ -615,71 +619,64 @@ export default function Landing() {
                 </div>
               );
             })}
+            {/* Handwritten note beside the cards */}
+            <div aria-hidden className="pointer-events-none absolute left-full top-20 ml-5 hidden w-40 select-none min-[1400px]:block">
+              <p className="-rotate-[8deg] text-center font-['Caveat',cursive] text-[1.75rem] font-semibold leading-[1.15] text-indigo-600">
+                Try free for
+                <br />
+                {FREE_TRIAL_DAYS} days
+              </p>
+              <svg viewBox="0 0 90 70" className="ml-6 mt-1 h-16 w-20 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M62 4c4 30-16 52-52 56" />
+                <path d="M22 48l-12 12 14 6" />
+              </svg>
+            </div>
           </div>
 
 
-          <div aria-hidden className="pointer-events-none absolute bottom-24 right-8 hidden rotate-[-6deg] select-none text-center font-['Caveat',cursive] text-[1.7rem] font-semibold leading-tight text-indigo-500 xl:block">
-            Try free for
-            <br />
-            {FREE_TRIAL_DAYS} days
-            <svg viewBox="0 0 60 40" className="mx-auto mt-1 h-9 w-14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M52 4C50 22 36 32 10 32" />
-              <path d="M18 25l-8 7 9 5" />
-            </svg>
-          </div>
         </div>
       </section>
 
       {/* Closing CTA */}
-      <section className="px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-[linear-gradient(120deg,#ede9fe_0%,#eef2ff_45%,#e0f7fb_100%)] px-6 py-12 sm:px-12 sm:py-14">
-          <svg aria-hidden viewBox="0 0 1200 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full">
-            <path d="M0 110c120-60 260-70 380-30s220 60 340 20 300-90 480-40v100H0z" fill="#ffffff" opacity="0.55" />
-            <path d="M0 130c160-40 300-30 420 0s260 30 400 0 260-50 380-20v50H0z" fill="#ddd6fe" opacity="0.35" />
-          </svg>
-          <div aria-hidden className="absolute -left-10 -top-16 h-56 w-56 rounded-full bg-violet-200/50 blur-3xl" />
-          <div aria-hidden className="absolute -bottom-20 -right-10 h-56 w-56 rounded-full bg-cyan-200/50 blur-3xl" />
-
+      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 sm:pb-16 lg:px-8">
+        <div className="relative overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-[linear-gradient(100deg,#e7ecfc_0%,#ebe9fb_45%,#efe8fb_100%)] px-6 py-9 sm:px-10 sm:py-11">
           {/* Sprout illustration */}
-          <svg aria-hidden viewBox="0 0 220 180" className="absolute bottom-0 left-4 hidden h-44 w-52 lg:block xl:left-12">
+          <svg aria-hidden viewBox="0 0 240 200" className="absolute bottom-0 left-6 hidden h-36 w-44 lg:block xl:left-14">
             <defs>
-              <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#6ee7b7" /><stop offset="1" stopColor="#059669" /></linearGradient>
-              <linearGradient id="leafB" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5eead4" /><stop offset="1" stopColor="#0d9488" /></linearGradient>
-              <linearGradient id="soil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7c3aed" /><stop offset="1" stopColor="#4c1d95" /></linearGradient>
+              <linearGradient id="ctaLeafDark" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#4ade80" stopOpacity="0.85" /><stop offset="1" stopColor="#15803d" stopOpacity="0.85" /></linearGradient>
+              <linearGradient id="ctaLeafLight" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#86efac" /><stop offset="1" stopColor="#34d399" /></linearGradient>
+              <linearGradient id="ctaSoil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8b5cf6" /><stop offset="1" stopColor="#5b21b6" /></linearGradient>
             </defs>
-            <ellipse cx="110" cy="170" rx="80" ry="10" fill="#6d28d9" opacity="0.12" />
-            <path d="M52 172c6-26 30-38 58-38s52 12 58 38z" fill="url(#soil)" />
-            <path d="M74 150c8-6 20-8 30-6" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" opacity="0.6" fill="none" />
-            <path d="M110 138c0-22 2-48 6-74" stroke="#0f766e" strokeWidth="6" strokeLinecap="round" fill="none" />
-            <path d="M112 96C82 98 60 78 60 46c32-2 54 18 52 50z" fill="url(#leafA)" />
-            <path d="M114 78c2-32 28-52 62-48 0 32-26 52-62 48z" fill="url(#leafB)" />
-            <path d="M112 96C94 84 82 68 72 54M114 78c16-12 32-26 48-40" stroke="#064e3b" strokeWidth="2" opacity="0.25" fill="none" />
-            <path d="M164 150c0-10 4-20 10-26 6 6 8 16 4 26z" fill="#99f6e4" opacity="0.9" />
-            <path d="M30 70l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#fbbf24" />
-            <path d="M178 104l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fbbf24" opacity="0.85" />
-            <path d="M150 14l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fbbf24" opacity="0.75" />
-            <circle cx="40" cy="120" r="3" fill="#c4b5fd" />
-            <circle cx="196" cy="60" r="2.5" fill="#a5f3fc" />
+            <ellipse cx="118" cy="194" rx="98" ry="7" fill="#7c3aed" opacity="0.12" />
+            <path d="M24 196c6-30 42-46 94-46s88 16 94 46z" fill="url(#ctaSoil)" />
+            <path d="M116 150c-2-22 0-56 6-86" stroke="#15803d" strokeWidth="6" strokeLinecap="round" fill="none" />
+            <path d="M118 100C86 96 66 70 62 30c34 0 58 28 56 70z" fill="url(#ctaLeafDark)" />
+            <path d="M122 76c4-34 34-58 72-56-4 36-32 58-72 56z" fill="url(#ctaLeafLight)" />
+            <path d="M116 132c-22 2-40-10-48-32 22-4 42 8 48 32z" fill="url(#ctaLeafLight)" opacity="0.9" />
+            <path d="M118 100C100 86 86 66 76 44M122 76c18-14 36-30 56-46M116 132c-14-6-26-16-36-28" stroke="#14532d" strokeWidth="1.5" opacity="0.22" fill="none" />
+            <path d="M160 156c0-10 6-20 12-24 4 8 2 20-6 26z" fill="#99f6e4" />
+            <path d="M188 6l5 13 13 5-13 5-5 13-5-13-13-5 13-5z" fill="#fbbf24" />
+            <path d="M14 76l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#fbbf24" opacity="0.9" />
+            <path d="M226 96l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fbbf24" opacity="0.75" />
           </svg>
 
           <div className="relative mx-auto max-w-2xl text-center">
-            <h3 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">Small steps. Real progress.</h3>
-            <p className="mt-3 text-base leading-relaxed text-slate-600 sm:text-lg">
-              Join families, educators and support teams building brighter, more independent tomorrows with Adaptalyfe.
+            <h3 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-[2.2rem] sm:leading-tight">Small steps. Real progress.</h3>
+            <p className="mx-auto mt-2.5 max-w-xl text-[15px] leading-relaxed text-slate-600 sm:text-base">
+              Join thousands of families, educators and support teams building brighter, more independent tomorrows with Adaptalyfe.
             </p>
-            <Link href="/register" className="mt-7 inline-block">
-              <Button className="group h-12 rounded-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-8 text-base font-semibold text-white shadow-[0_10px_24px_-8px_rgba(79,70,229,0.6)] transition-all hover:-translate-y-px hover:brightness-110">
+            <Link href="/register" className="mt-6 inline-block">
+              <Button className="group h-12 rounded-xl border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 px-8 text-base font-semibold text-white shadow-[0_14px_30px_-10px_rgba(99,62,238,0.6)] transition-all hover:-translate-y-px hover:brightness-110">
                 Start your journey
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Button>
             </Link>
           </div>
 
-          <div aria-hidden className="absolute right-10 top-1/2 hidden -translate-y-1/2 rotate-[-8deg] text-center font-['Caveat',cursive] text-4xl font-semibold leading-tight text-indigo-500/90 lg:block">
-            Grow
-            <br />
-            Together
-            <Heart className="ml-1 inline h-5 w-5" />
+          <div aria-hidden className="absolute right-10 top-1/2 hidden -translate-y-1/2 text-left font-['Caveat',cursive] text-[2.1rem] font-semibold leading-[1.05] text-indigo-600 lg:block xl:right-16">
+            <span className="block -rotate-6">Grow</span>
+            <span className="ml-10 block -rotate-6">Together</span>
+            <Heart className="ml-[5.25rem] mt-1 h-5 w-5 text-violet-500" strokeWidth={2} />
           </div>
         </div>
       </section>
