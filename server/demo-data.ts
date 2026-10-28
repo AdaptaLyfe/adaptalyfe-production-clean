@@ -117,6 +117,24 @@ async function createDemoTasks(userId: number) {
       category: "life-skills",
       frequency: "weekly",
       estimatedMinutes: 30
+    },
+    {
+      userId,
+      title: "Pay monthly bills",
+      description: "Review and pay rent, utilities, and subscriptions",
+      isCompleted: false,
+      category: "organization",
+      frequency: "monthly",
+      estimatedMinutes: 30
+    },
+    {
+      userId,
+      title: "Refill prescriptions",
+      description: "Check medication supply and request refills",
+      isCompleted: false,
+      category: "health",
+      frequency: "monthly",
+      estimatedMinutes: 15
     }
   ];
 

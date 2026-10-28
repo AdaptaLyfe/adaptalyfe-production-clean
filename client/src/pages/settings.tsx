@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getThemePref, setThemePref, type ThemePref } from "@/lib/theme";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +46,7 @@ export default function SettingsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [settings, setSettings] = useState({
-    theme: 'light',
+    theme: getThemePref() as string,
     fontSize: 16,
     highContrast: false,
     voiceEnabled: true,
@@ -117,6 +118,7 @@ export default function SettingsPage() {
 
   const handleReset = () => {
     setPrivacyMode(false);
+    setThemePref('light');
     setSettings({
       theme: 'light',
       fontSize: 16,
@@ -176,6 +178,9 @@ export default function SettingsPage() {
   };
 
   const updateSetting = (key: string, value: any) => {
+    if (key === 'theme' && (value === 'light' || value === 'dark' || value === 'auto')) {
+      setThemePref(value as ThemePref);
+    }
     // Check if setting is locked
     if (lockedSettings[key as keyof typeof lockedSettings]?.isLocked) {
       toast({

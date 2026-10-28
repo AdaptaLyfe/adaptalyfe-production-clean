@@ -216,11 +216,17 @@ function App() {
 
   return (
     <ReactErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100">
+      <div className="min-h-screen bg-[#f4f7fb]">
       {/* Only show navigation for authenticated app routes, not for landing/auth pages */}
        {!["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location) && <SimpleNavigation />}
       
-      <main className="relative z-0 pt-16">
+      <main className={`relative z-0 ${
+        ["", "/", "/login", "/register", "/landing", "/debug-landing.html", "/privacy-policy", "/forgot-password", "/reset-password"].includes(location)
+          ? ""
+          : (location === "/dashboard" || location === "/demo")
+            ? "pt-[var(--app-header-h,4.75rem)] md:pl-64"
+            : "pt-[calc(var(--app-header-h,6.5rem)+0.5rem)] md:pl-64"
+      }`}>
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/landing" component={Landing} />

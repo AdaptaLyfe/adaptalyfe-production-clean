@@ -1,6 +1,6 @@
 /* Only hide Vite development error overlays - DO NOT hide application modals/dialogs */
+/* NOTE: do NOT target [data-vite-dev-id] — Vite puts that on injected CSS <style> tags */
 vite-error-overlay,
-[data-vite-dev-id],
 .vite-error-overlay,
 .runtime-error-plugin,
 [data-runtime-error],

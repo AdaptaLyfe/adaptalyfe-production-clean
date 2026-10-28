@@ -64,9 +64,9 @@
   
   // Only hide Vite error overlays - DO NOT touch application dialogs/modals
   function hideViteErrorsOnly() {
+    // Do NOT include [data-vite-dev-id] — Vite uses that on CSS <style> tags.
     const viteOnlySelectors = [
       'vite-error-overlay',
-      '[data-vite-dev-id]',
       '.vite-error-overlay',
       '[data-plugin*="runtime"]',
       '[data-plugin*="error"]',
@@ -79,6 +79,8 @@
       try {
         const elements = document.querySelectorAll(selector);
         elements.forEach(function(element) {
+          // Never remove stylesheet tags (would strip Tailwind/CSS)
+          if (element && element.tagName === 'STYLE') return;
           if (element && element.parentNode) {
             element.parentNode.removeChild(element);
           }

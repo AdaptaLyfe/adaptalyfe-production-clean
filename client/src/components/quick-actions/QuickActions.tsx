@@ -21,7 +21,10 @@ import { SortableCard } from "./SortableCard";
 import { QuickActionCard } from "./QuickActionCard";
 import { CustomizeDialog } from "./CustomizeDialog";
 import { ALL_QUICK_ACTIONS, DEFAULT_VISIBLE_KEYS, type QuickAction } from "./constants";
-import { GripVertical } from "lucide-react";
+import { GripVertical, LayoutGrid, Crown, ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
+import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 const STORAGE_KEY_ORDER = "quick-actions-order";
@@ -54,6 +57,27 @@ function loadFromStorage(key: string, fallback: string[]): string[] {
 
 export default function QuickActions() {
   const { toast } = useToast();
+  const { data: user } = useQuery<User>({ queryKey: ["/api/user"] });
+  const tier = String(user?.subscriptionTier || "free").toLowerCase();
+  const isFreePlan = tier === "free" || tier === "basic";
+  const planLabel = isFreePlan ? "Basic Plan" : `${tier[0].toUpperCase()}${tier.slice(1)} Plan`;
+
+  const cardShell = "rounded-3xl bg-white/80 border border-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-4 sm:p-5";
+  const title = (
+    <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+      <LayoutGrid className="h-5 w-5 text-slate-700" />
+      Quick Actions <span className="text-sm font-normal text-slate-500">({planLabel})</span>
+    </h3>
+  );
+  const upgradeLink = isFreePlan ? (
+    <Link href="/subscription">
+      <span className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-violet-600 hover:text-violet-700 cursor-pointer whitespace-nowrap">
+        <Crown className="h-4 w-4" />
+        Upgrade for more features
+        <ArrowRight className="h-4 w-4" />
+      </span>
+    </Link>
+  ) : null;
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -210,9 +234,9 @@ export default function QuickActions() {
 
   if (!visibleActions || visibleActions.length === 0) {
     return (
-      <div className="mb-8">
+      <div className={cardShell}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+          {title}
           <CustomizeDialog
             isOpen={isCustomizeOpen}
             onOpenChange={setIsCustomizeOpen}
@@ -220,8 +244,8 @@ export default function QuickActions() {
             onVisibilityChange={handleVisibilityChange}
           />
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-          <p className="text-gray-600">No quick actions selected. Click Customize to add some!</p>
+        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6 text-center">
+          <p className="text-slate-600">No quick actions selected. Click Customize to add some!</p>
         </div>
       </div>
     );
@@ -229,17 +253,18 @@ export default function QuickActions() {
 
   try {
     return (
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
-          <div className="flex gap-3">
+      <div className={cardShell}>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          {title}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {upgradeLink}
             <button 
               onClick={toggleReorderMode}
               data-testid="button-reorder-quick-actions"
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                 isReorderMode 
-                  ? 'bg-blue-500 text-white border-2 border-blue-500' 
-                  : 'text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50'
+                  ? 'bg-violet-600 text-white border-violet-600' 
+                  : 'text-slate-600 bg-white border-slate-200 hover:bg-slate-50'
               }`}
             >
               <GripVertical className="w-4 h-4" />
@@ -256,9 +281,9 @@ export default function QuickActions() {
         </div>
         
         {isReorderMode && (
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-4 flex items-center gap-2 select-none">
-            <GripVertical className="w-5 h-5 text-blue-600" />
-            <p className="text-blue-800 text-sm font-medium">Drag the blue grip or tap arrows to reorder</p>
+          <div className="bg-violet-50 border border-violet-200 rounded-xl p-3 mb-4 flex items-center gap-2 select-none">
+            <GripVertical className="w-5 h-5 text-violet-600" />
+            <p className="text-violet-800 text-sm font-medium">Drag the blue grip or tap arrows to reorder</p>
           </div>
         )}
         
@@ -272,12 +297,9 @@ export default function QuickActions() {
             items={visibleActions.map(a => a.key)}
             strategy={rectSortingStrategy}
           >
-            <div className={`flex flex-wrap gap-4 ${isReorderMode ? 'select-none' : ''}`}>
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3 ${isReorderMode ? 'select-none' : ''}`}>
               {visibleActions.map((action, index) => (
-                <div
-                  key={action.key}
-                  className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]"
-                >
+                <div key={action.key} className="min-w-0">
                   <SortableCard
                     id={action.key}
                     action={action}
@@ -293,7 +315,7 @@ export default function QuickActions() {
           
           <DragOverlay dropAnimation={null}>
             {activeAction ? (
-              <div className="w-[calc(50%-0.5rem)] md:w-[calc(33.333%-0.667rem)] lg:w-[calc(16.666%-0.833rem)]">
+              <div className="w-full">
                 <QuickActionCard
                   action={activeAction}
                   isReorderMode={isReorderMode}
@@ -308,7 +330,7 @@ export default function QuickActions() {
   } catch (error) {
     console.error("Error rendering QuickActions:", error);
     return (
-      <div className="mb-8">
+      <div className={cardShell}>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-600">Error loading Quick Actions. Please refresh the page.</p>
         </div>

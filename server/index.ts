@@ -35,11 +35,13 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://m.stripe.network", "https://js.stripe.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https:", "https://api.stripe.com", "https://m.stripe.network"],
+      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:", "https://api.stripe.com", "https://m.stripe.network"],
       fontSrc: ["'self'", "https://m.stripe.network", "https://js.stripe.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["https://js.stripe.com", "https://hooks.stripe.com", "https://m.stripe.network"],
+      // Helmet enables this by default; it breaks Vite CSS/JS on local http://
+      upgradeInsecureRequests: null,
     },
   },
   crossOriginEmbedderPolicy: false,
@@ -60,6 +62,8 @@ app.use(cors({
       'https://adaptalyfe-5a1d3.firebaseapp.com',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
       'https://localhost',           // Capacitor iOS/Android apps
       'capacitor://localhost',       // Capacitor protocol
       'ionic://localhost',           // Ionic protocol
@@ -71,6 +75,7 @@ app.use(cors({
     // Allowed domain suffixes (must be https and end with suffix)
     const allowedSuffixes = [
       '.replit.dev',
+      '.replit.app',
       '.replit.co',
       '.railway.app',
       '.up.railway.app'
@@ -111,20 +116,23 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Rate limiting - more permissive for development
+// Rate limiting (disabled in local development — Vite HMR alone exceeds 1000/15min)
+const isDev = process.env.NODE_ENV === 'development';
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // Higher limit for development
+  max: isDev ? 100000 : 100,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isDev,
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 login attempts per windowMs
+  max: isDev ? 1000 : 5,
   message: 'Too many login attempts, please try again later.',
   skipSuccessfulRequests: true,
+  skip: () => isDev,
 });
 
 app.use(limiter);
@@ -263,7 +271,8 @@ app.use((req, res, next) => {
   server.listen({
     port: Number(port),
     host: "0.0.0.0",
-    reusePort: true,
+    // macOS does not support SO_REUSEPORT the same way Linux does (ENOTSUP).
+    ...(process.platform === "linux" ? { reusePort: true } : {}),
   }, () => {
     console.log(`🚀 AdaptaLyfe server running on port ${port} in ${process.env.NODE_ENV} mode`);
     log(`serving on port ${port}`);

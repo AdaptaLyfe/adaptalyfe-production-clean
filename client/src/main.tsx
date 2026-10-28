@@ -11,6 +11,11 @@ import { queryClient } from "@/lib/queryClient";
 import App from "./App";
 import "./index.css";
 import "./colors.css";
+import "./theme-dark.css";
+import { initTheme } from "@/lib/theme";
+
+// Apply saved light/dark theme before first paint
+initTheme();
 
 // Inline mobile utilities to avoid import issues in production build
 function isNativeMobile(): boolean {

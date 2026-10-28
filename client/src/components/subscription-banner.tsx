@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Clock, Star, X, Zap } from "lucide-react";
+import { AlertTriangle, ArrowRight, Clock, X } from "lucide-react";
 import type { User } from "@shared/schema";
 
 export default function SubscriptionBanner() {
   const [isDismissed, setIsDismissed] = useState(false);
-  
+
   const { data: user } = useQuery<User>({ queryKey: ["/api/user"] });
   const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"] });
 
   // Don't show banner if dismissed, user not loaded, user has active subscription, or user is admin
-  const isAdmin = user?.accountType === 'admin' || user?.username === 'admin' || user?.name?.toLowerCase().includes('admin');
-  if (isDismissed || !user || !subscription || subscription.status === 'active' || isAdmin) {
+  const isAdmin = user?.accountType === "admin" || user?.username === "admin" || user?.name?.toLowerCase().includes("admin");
+  if (isDismissed || !user || !subscription || subscription.status === "active" || isAdmin) {
     return null;
   }
 
@@ -28,81 +25,62 @@ export default function SubscriptionBanner() {
     return null;
   }
 
+  const daysText = `${trialDaysLeft} ${trialDaysLeft === 1 ? "day" : "days"}`;
+  const tone = isTrialExpired
+    ? { wrap: "bg-rose-50/80 border-rose-100", tile: "bg-rose-100 text-rose-600", title: "text-rose-900", text: "text-rose-700/90", chip: "bg-rose-100 text-rose-700" }
+    : { wrap: "bg-amber-50/80 border-amber-100", tile: "bg-amber-100 text-amber-600", title: "text-slate-900", text: "text-slate-600", chip: "bg-amber-100 text-amber-800" };
+
   return (
-    <Card className={`mx-4 mb-4 border-2 ${
-      isTrialExpired 
-        ? 'border-red-300 bg-red-50' 
-        : 'border-yellow-300 bg-yellow-50'
-    }`}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-3">
-            <div className={`p-2 rounded-full ${
-              isTrialExpired ? 'bg-red-100' : 'bg-yellow-100'
-            }`}>
-              {isTrialExpired ? (
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              ) : (
-                <Clock className="w-5 h-5 text-yellow-600" />
-              )}
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <h3 className={`font-semibold ${
-                  isTrialExpired ? 'text-red-800' : 'text-yellow-800'
-                }`}>
-                  {isTrialExpired ? 'Free Trial Expired' : 'Trial Ending Soon'}
-                </h3>
-                <Badge variant={isTrialExpired ? 'destructive' : 'secondary'}>
-                  {isTrialExpired ? 'Action Required' : `${trialDaysLeft} ${trialDaysLeft === 1 ? 'day' : 'days'} left`}
-                </Badge>
-              </div>
-              
-              <p className={`text-sm mb-3 ${
-                isTrialExpired ? 'text-red-700' : 'text-yellow-700'
-              }`}>
-                {isTrialExpired 
-                  ? 'Your free trial has ended. Subscribe now to continue using Adaptalyfe features.'
-                  : `Your free trial ends in ${trialDaysLeft} ${trialDaysLeft === 1 ? 'day' : 'days'}. Subscribe now to avoid interruption.`
-                }
-              </p>
-              
-              <div className="flex flex-wrap gap-2">
-                <Link href="/subscription">
-                  <Button 
-                    size="sm" 
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-semibold shadow-md border border-white/20"
-                  >
-                    <Star className="w-4 h-4 mr-1" />
-                    View Plans
-                  </Button>
-                </Link>
-                
-                {!isTrialExpired && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setIsDismissed(true)}
-                    className="text-gray-600 hover:text-gray-800"
-                  >
-                    Remind Me Later
-                  </Button>
-                )}
-              </div>
-            </div>
+    <div
+      role="status"
+      className={`rounded-2xl border ${tone.wrap} shadow-[0_8px_30px_rgba(15,23,42,0.04)] px-4 py-3 flex flex-col lg:flex-row lg:items-center gap-3`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <span className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${tone.tile}`}>
+          {isTrialExpired ? <AlertTriangle className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+        </span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className={`text-sm font-semibold ${tone.title}`}>
+              {isTrialExpired ? "Free Trial Expired" : "Trial Ending Soon"}
+            </p>
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${tone.chip}`}>
+              {isTrialExpired ? "Action Required" : `${daysText} left`}
+            </span>
           </div>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsDismissed(true)}
-            className="h-6 w-6 p-0 hover:bg-transparent"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          <p className={`text-sm ${tone.text}`}>
+            {isTrialExpired
+              ? "Your free trial has ended. Subscribe now to continue using Adaptalyfe features."
+              : `Your free trial ends in ${daysText}. Subscribe now to avoid interruption.`}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0 pl-[52px] lg:pl-0">
+        {!isTrialExpired && (
+          <button
+            type="button"
+            onClick={() => setIsDismissed(true)}
+            className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white/70"
+          >
+            Remind Me Later
+          </button>
+        )}
+        <Link href="/subscription">
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2 cursor-pointer transition-colors">
+            View Plans
+            <ArrowRight className="h-4 w-4" />
+          </span>
+        </Link>
+        <button
+          type="button"
+          aria-label="Dismiss"
+          onClick={() => setIsDismissed(true)}
+          className="ml-1 h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white/70"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }

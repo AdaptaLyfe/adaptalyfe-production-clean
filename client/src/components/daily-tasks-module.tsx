@@ -22,9 +22,10 @@ function getLocalCalendarDate(date = new Date()): string {
 export default function DailyTasksModule() {
   const { toast } = useToast();
   
-  const { data: tasks = [], isLoading } = useQuery<DailyTask[]>({
+  const { data: tasksData, isLoading } = useQuery<DailyTask[]>({
     queryKey: ["/api/daily-tasks"],
   });
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
 
   const toggleTaskMutation = useMutation({
     mutationFn: async ({ taskId, isCompleted, date }: { taskId: number; isCompleted: boolean; date: string }) => {

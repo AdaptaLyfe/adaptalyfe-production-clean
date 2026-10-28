@@ -55,7 +55,7 @@ export function CustomizeDialog({
       <DialogTrigger asChild>
         <button 
           data-testid="button-customize-quick-actions"
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-full hover:bg-slate-50 transition-colors"
         >
           <Settings className="w-4 h-4" />
           Customize

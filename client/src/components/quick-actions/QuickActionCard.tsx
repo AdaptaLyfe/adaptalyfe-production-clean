@@ -22,24 +22,21 @@ export function QuickActionCard({ action, isReorderMode, isDragging = false }: Q
       data-testid={`card-quick-action-${action.key}`}
       onClick={handleClick}
       className={`
-        bg-white rounded-2xl shadow-lg p-6 
-        flex flex-col items-center text-center
-        transition-shadow duration-200
+        bg-white rounded-2xl border p-4 shadow-xl
+        flex items-center gap-3 text-left
         ${isReorderMode 
-          ? 'cursor-move border-2 border-blue-300' 
-          : 'cursor-pointer hover:shadow-xl'
+          ? 'cursor-move border-violet-300' 
+          : 'cursor-pointer border-slate-100'
         }
       `}
     >
-      <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
-        <Icon className="text-white w-8 h-8" />
+      <div className={`w-12 h-12 shrink-0 ${action.bgColor} rounded-xl flex items-center justify-center shadow-sm`}>
+        <Icon className="text-white w-6 h-6" />
       </div>
-      <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight line-clamp-1">
-        {action.label}
-      </h4>
-      <p className="text-xs text-gray-600 leading-tight line-clamp-1">
-        {action.description}
-      </p>
+      <div className="min-w-0">
+        <h4 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2">{action.label}</h4>
+        <p className="text-xs text-slate-500 leading-tight truncate mt-1">{action.description}</p>
+      </div>
     </div>
   );
 }

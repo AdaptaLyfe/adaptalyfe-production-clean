@@ -4346,6 +4346,24 @@ export async function initializeDemoMode() {
         estimatedMinutes: 45,
         frequency: "weekly",
         isCompleted: false
+      },
+      {
+        userId: 1,
+        title: "Pay monthly bills",
+        description: "Review and pay rent, utilities, and subscriptions",
+        category: "organization",
+        estimatedMinutes: 30,
+        frequency: "monthly",
+        isCompleted: false
+      },
+      {
+        userId: 1,
+        title: "Refill prescriptions",
+        description: "Check medication supply and request refills",
+        category: "health",
+        estimatedMinutes: 15,
+        frequency: "monthly",
+        isCompleted: false
       }
     ];
 

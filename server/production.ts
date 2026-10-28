@@ -73,6 +73,12 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Allow Replit dev previews and Replit deployments (https only)
+    if (origin && origin.startsWith('https://') &&
+        ['.replit.app', '.replit.dev', '.repl.co'].some((suffix) => origin.endsWith(suffix))) {
+      return callback(null, true);
+    }
+
     // Allow getadaptalyfeapp.com subdomains
     if (origin && origin.includes('.getadaptalyfeapp.com')) {
       console.log('CORS allowing getadaptalyfeapp.com subdomain:', origin);

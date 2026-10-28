@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { trackMoodEntry } from "@/lib/firebase";
 import type { MoodEntry } from "@shared/schema";
 
-const moodMessages: Record<number, { title: string; message: string; tip: string; color: string }> = {
+export const moodMessages: Record<number, { title: string; message: string; tip: string; color: string }> = {
   1: {
     title: "We hear you",
     message: "It's okay to have tough days. You're not alone, and checking in shows real strength.",

@@ -64,11 +64,11 @@ export function SortableCard({ id, action, isReorderMode, index = 0, totalCount 
       data-testid={`card-quick-action-${action.key}`}
       onClick={handleClick}
       className={`
-        bg-white rounded-2xl shadow-lg p-6 relative
-        flex flex-col items-center text-center
+        bg-white rounded-2xl border p-3.5 relative h-full
+        flex items-center gap-3 text-left transition-all
         ${isReorderMode 
-          ? 'border-2 border-blue-300' 
-          : 'cursor-pointer hover:shadow-xl'
+          ? 'border-violet-300 border-dashed pt-12' 
+          : 'border-slate-100 cursor-pointer hover:border-slate-200 hover:shadow-md'
         }
         ${isDragging ? 'scale-105 shadow-2xl' : ''}
       `}
@@ -81,7 +81,7 @@ export function SortableCard({ id, action, isReorderMode, index = 0, totalCount 
             className={`p-1.5 rounded-full transition-colors ${
               index === 0 
                 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+                : 'bg-violet-100 text-violet-600 hover:bg-violet-200 active:bg-violet-300'
             }`}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -90,7 +90,7 @@ export function SortableCard({ id, action, isReorderMode, index = 0, totalCount 
             ref={setActivatorNodeRef}
             {...attributes}
             {...listeners}
-            className="p-2 bg-blue-500 rounded-full cursor-grab active:cursor-grabbing touch-none select-none"
+            className="p-2 bg-violet-600 rounded-full cursor-grab active:cursor-grabbing touch-none select-none"
             style={{ touchAction: 'none' }}
           >
             <GripVertical className="w-5 h-5 text-white" />
@@ -101,22 +101,24 @@ export function SortableCard({ id, action, isReorderMode, index = 0, totalCount 
             className={`p-1.5 rounded-full transition-colors ${
               index === totalCount - 1 
                 ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                : 'bg-blue-100 text-blue-600 hover:bg-blue-200 active:bg-blue-300'
+                : 'bg-violet-100 text-violet-600 hover:bg-violet-200 active:bg-violet-300'
             }`}
           >
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
-      <div className={`w-16 h-16 ${action.bgColor} rounded-xl flex items-center justify-center mb-3 shadow-md pointer-events-none ${isReorderMode ? 'mt-8' : ''}`}>
-        <Icon className="text-white w-8 h-8" />
+      <div className={`w-12 h-12 shrink-0 ${action.bgColor} rounded-xl flex items-center justify-center shadow-sm pointer-events-none`}>
+        <Icon className="text-white w-6 h-6" />
       </div>
-      <h4 className="font-semibold text-gray-900 text-sm mb-1 leading-tight line-clamp-1 pointer-events-none">
-        {action.label}
-      </h4>
-      <p className="text-xs text-gray-600 leading-tight line-clamp-1 pointer-events-none">
-        {action.description}
-      </p>
+      <div className="min-w-0 pointer-events-none">
+        <h4 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-2">
+          {action.label}
+        </h4>
+        <p className="text-xs text-slate-500 leading-tight truncate mt-1">
+          {action.description}
+        </p>
+      </div>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useLocation } from "wouter";
 import {
   ArrowRight,
   CalendarDays,
-  CheckCircle2,
   Clock3,
   Compass,
   ListChecks,
@@ -18,17 +17,10 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatCategoryLabel } from "@/lib/display-labels";
 import { ethanDemoDay } from "./demo-data";
 import {
-  ContextualSuggestion,
-  EncouragementCard,
   GuideCard,
   GuideInsight,
   TransitionPrompt,
 } from "./guide-components";
-import {
-  EventPreparationCard,
-  IndependenceProgressCard,
-  RoutineProgressCard,
-} from "./progress-components";
 
 type TimelineItem = {
   id: string;
@@ -56,10 +48,6 @@ function formatDateContext(date: Date) {
     month: "long",
     day: "numeric",
   });
-}
-
-function formatMinutes(value: number | undefined) {
-  return value ? `${value} min` : undefined;
 }
 
 async function fetchRequired<T>(url: string): Promise<T> {
@@ -180,20 +168,6 @@ function TodaySection({
   );
 }
 
-function TimelineItemRow({ item }: { item: TimelineItem }) {
-  const Icon = item.kind === "task" ? ListChecks : CalendarDays;
-  return (
-    <div className="flex items-start gap-3 rounded-xl bg-slate-50 px-3 py-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-      <div className="min-w-0 flex-1">
-        <p className="break-words text-sm font-medium text-slate-800">{item.title}</p>
-        {item.detail && <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>}
-      </div>
-      {item.time && <Badge variant="outline" className="shrink-0 border-slate-200 text-xs text-slate-600">{item.time}</Badge>}
-    </div>
-  );
-}
-
 export default function TodayFlowCard() {
   const [, setLocation] = useLocation();
   const userQuery = useQuery<User>({
@@ -286,8 +260,6 @@ export default function TodayFlowCard() {
   const displayName = isDemo ? ethanDemoDay.userName : user?.name || "there";
   const now = new Date();
   const pendingTasks = tasks.filter((task) => !task.isCompleted);
-  const completedTasks = tasks.filter((task) => task.isCompleted);
-  const taskProgress = tasks.length ? Math.round((completedTasks.length / tasks.length) * 100) : 0;
   const nextTimelineItem: TimelineItem | undefined = isDemo
     ? {
         id: "demo-school",
@@ -309,25 +281,6 @@ export default function TodayFlowCard() {
       }
     : liveTimeline.filter((item) => item !== nextTimelineItem).find((item) => !item.startsAt || item.startsAt >= now);
   const currentTask = isDemo ? null : pendingTasks[0];
-  const preparationSteps = isDemo
-    ? ethanDemoDay.preparationSteps
-    : pendingTasks.slice(0, 4).map((task) => ({
-        id: `task-${task.id}`,
-        label: task.title,
-        completed: false,
-        detail: formatMinutes(task.estimatedMinutes),
-      }));
-  const routineData = isDemo
-    ? ethanDemoDay.routine
-    : {
-        title: "Today's task progress",
-        currentStep: currentTask?.title,
-        completedSteps: completedTasks.length,
-        totalSteps: tasks.length,
-        estimatedRemainingMinutes: pendingTasks.reduce((total, task) => total + (task.estimatedMinutes || 0), 0) || undefined,
-        state: pendingTasks.length ? ("in-progress" as const) : ("completed" as const),
-        guidance: pendingTasks.length ? "Choose one manageable next step." : "You made space for what matters today.",
-      };
 
   const hasUpcoming = Boolean(nextTimelineItem);
   const guidanceMessage = isDemo
@@ -405,63 +358,6 @@ export default function TodayFlowCard() {
               onAction={() => setLocation(nextTimelineItem.kind === "task" ? "/daily-tasks" : "/calendar")}
             />
           )}
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <EventPreparationCard
-              title={isDemo ? ethanDemoDay.nextEvent.title : nextTimelineItem?.title || "Next activity"}
-              time={isDemo ? ethanDemoDay.nextEvent.time : nextTimelineItem?.time}
-              detail={isDemo ? ethanDemoDay.nextEvent.detail : nextTimelineItem ? "Related tasks and preparation in one place." : "Add an event to start a preparation path."}
-              steps={preparationSteps}
-              actionLabel={preparationSteps.length ? "Continue preparation" : undefined}
-              onAction={() => setLocation("/daily-tasks")}
-            />
-            <RoutineProgressCard {...routineData} />
-          </div>
-
-          <IndependenceProgressCard
-            value={isDemo ? 50 : taskProgress}
-            label={isDemo ? "Building confidence" : "Today's progress"}
-            detail={isDemo ? "Every completed step helps make the next transition feel more familiar." : `${completedTasks.length} of ${tasks.length} tasks complete. Progress is about consistency, not perfection.`}
-          />
-
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ContextualSuggestion
-              title="Your primary next action"
-              message={guidanceMessage}
-              tone="support"
-              action={{
-                id: "today-primary-action",
-                label: isDemo ? "Start preparation" : currentTask ? "Open next task" : "Open tasks",
-                description: "Keep it simple",
-                icon: <CheckCircle2 className="h-4 w-4" aria-hidden="true" />,
-                onClick: () => setLocation("/daily-tasks"),
-              }}
-            />
-            <EncouragementCard
-              message={isDemo ? "You do not have to do everything at once." : completedTasks.length ? "Nice work making progress today." : "A small start still counts."}
-              detail="Adaptalyfe is here to support the next step, not rush the whole day."
-            />
-          </div>
-
-          {liveTimeline.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Your timeline</p>
-                <Button type="button" variant="link" className="h-auto p-0 text-xs text-teal-800" onClick={() => setLocation("/calendar")}>
-                  View calendar
-                </Button>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {liveTimeline.slice(0, 4).map((item) => <TimelineItemRow item={item} key={item.id} />)}
-              </div>
-            </div>
-          )}
-
-          <GuideInsight
-            message={isDemo ? "This demo state is ready to receive real Guide recommendations later." : "This presentation is powered by your existing tasks and schedule. Future Guide intelligence can add richer context without changing the experience."}
-            context="Proactive guidance stays separate from AdaptAI chat."
-            sourceLabel="Future-ready foundation"
-          />
         </div>
       </GuideCard>
     </div>
