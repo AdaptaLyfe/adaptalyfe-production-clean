@@ -11,6 +11,7 @@ import { apiRequest, getSessionToken, isNativeClient, setSessionToken } from "@/
 import { trackSignUp } from "@/lib/firebase";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
+import { AuthHeader } from "@/components/auth-header";
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -154,29 +155,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
       {/* Header - matches main landing page */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/">
-              <div className="flex items-center gap-3 cursor-pointer">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                  <Brain className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Adaptalyfe</h1>
-                  <p className="text-xs text-gray-500">Grow with Guidance. Thrive with Confidence.</p>
-                </div>
-              </div>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AuthHeader backHref="/" backLabel="Back to home" />
 
       <div className="max-w-md mx-auto pt-16 pb-24 px-4">
         <Card className="border-2 shadow-lg">
@@ -278,7 +257,7 @@ export default function Register() {
                     value={formData.invitationCode}
                     onChange={(e) => setFormData({...formData, invitationCode: e.target.value.toUpperCase()})}
                     placeholder="Enter organization or invitation code"
-                    className="mt-1 font-mono"
+                    className="mt-1 uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
                   />
                   {hasInvitation && (
                     <p className="text-sm text-green-600 mt-1">✓ Code detected - will be applied after registration</p>
@@ -295,6 +274,7 @@ export default function Register() {
                   <div className="flex items-start gap-3">
                     <Checkbox 
                       id="ageVerified"
+                      className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
                       checked={formData.ageVerified}
                       onCheckedChange={(checked) => setFormData({...formData, ageVerified: checked as boolean})}
                     />
@@ -315,13 +295,14 @@ export default function Register() {
                 <div className="flex items-start gap-3">
                   <Checkbox 
                     id="terms"
+                    className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
                     checked={formData.agreeToTerms}
                     onCheckedChange={(checked) => setFormData({...formData, agreeToTerms: checked as boolean})}
                   />
                   <div className="text-sm">
                     <Label htmlFor="terms" className="cursor-pointer">
                       I agree to the <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link> and{" "}
-                      <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>
+                      <Link href="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
                     </Label>
                   </div>
                 </div>
@@ -329,11 +310,12 @@ export default function Register() {
                 <div className="flex items-start gap-3">
                   <Checkbox 
                     id="newsletter"
+                    className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
                     checked={formData.subscribeNewsletter}
                     onCheckedChange={(checked) => setFormData({...formData, subscribeNewsletter: checked as boolean})}
                   />
                   <Label htmlFor="newsletter" className="text-sm cursor-pointer">
-                    Subscribe to updates and independence tips (optional)
+                    Subscribe to updates and independence tips <span className="text-slate-400">(optional)</span>
                   </Label>
                 </div>
               </div>
@@ -341,7 +323,7 @@ export default function Register() {
               {/* Submit Button */}
               <Button 
                 type="submit" 
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-colors"
+                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 transition-opacity hover:opacity-95"
                 size="lg"
                 disabled={isSubmitting}
               >

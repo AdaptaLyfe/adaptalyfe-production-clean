@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 
+import { AuthHeader } from "@/components/auth-header";
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
   const [token, setToken] = useState("");
@@ -59,26 +60,7 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/">
-              <div className="flex items-center gap-3 cursor-pointer">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                  <Brain className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">Adaptalyfe</span>
-              </div>
-            </Link>
-            <Link href="/login">
-              <Button variant="ghost">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Login
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <AuthHeader backHref="/login" backLabel="Back to login" />
 
       <div className="max-w-md mx-auto pt-16 pb-24 px-4">
         <Card className="border-2 shadow-lg">
@@ -143,7 +125,7 @@ export default function ResetPassword() {
                 {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
                 <Button
                   type="submit"
-                  className="w-full bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg"
+                  className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 hover:opacity-95"
                   size="lg"
                   disabled={isSubmitting}
                 >

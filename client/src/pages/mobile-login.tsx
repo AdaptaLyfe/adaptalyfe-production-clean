@@ -211,7 +211,7 @@ export default function MobileLogin() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg" 
+                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 hover:opacity-95" 
                 size="lg"
                 disabled={isSubmitting}
               >

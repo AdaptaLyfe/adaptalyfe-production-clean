@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import { Brain, ArrowLeft, LogIn } from "lucide-react";
+import { Brain, ArrowLeft } from "lucide-react";
 import { apiRequest, ApiError, setSessionToken, getSessionToken } from "@/lib/queryClient";
 import { trackLogin } from "@/lib/firebase";
 
+import { AuthHeader } from "@/components/auth-header";
 function isNativeMobile(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -120,35 +121,13 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/">
-              <div className="flex items-center gap-3 cursor-pointer">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                  <Brain className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-gray-900">Adaptalyfe</span>
-              </div>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <AuthHeader backHref="/" backLabel="Back to home" />
 
       <div className="max-w-md mx-auto pt-16 pb-24 px-4">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg w-fit mx-auto mb-4">
-              <LogIn className="h-8 w-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription className="text-base">
+        <Card className="rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
+          <CardHeader className="text-center pt-8">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
+            <CardDescription className="mt-1.5 text-base text-slate-500">
               Sign in to continue your independence journey
             </CardDescription>
           </CardHeader>
@@ -218,7 +197,7 @@ export default function Login() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg" 
+                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 hover:opacity-95" 
                 size="lg"
                 disabled={isSubmitting}
               >

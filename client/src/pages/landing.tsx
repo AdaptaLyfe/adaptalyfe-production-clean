@@ -34,8 +34,14 @@ import {
   DollarSign,
   Smile,
   Check,
-  Crown,
   Sparkles,
+  Smartphone,
+  CreditCard,
+  ListChecks,
+  BarChart3,
+  Tag,
+  Gift,
+  KeyRound,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -49,6 +55,7 @@ export default function Landing() {
   const [joinCodeInput, setJoinCodeInput] = useState<string>("");
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [isCheckingLogin, setIsCheckingLogin] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,8 +117,8 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-1.5 sm:p-2 rounded-lg">
-                <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 shadow-md shadow-violet-500/20 sm:h-10 sm:w-10">
+                <Brain className="h-5 w-5 text-white" />
               </div>
               <div>
                 <h1 className="text-sm sm:text-xl font-bold text-gray-900">Adaptalyfe</h1>
@@ -120,14 +127,17 @@ export default function Landing() {
                 </p>
               </div>
             </div>
-            <div className="flex gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Dialog open={isJoinModalOpen} onOpenChange={setIsJoinModalOpen}>
                 <DialogTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="text-blue-600 hover:text-blue-700 border-2 border-blue-400 hover:border-blue-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
+                    aria-label="Join with code"
+                    className="group h-10 sm:h-11 rounded-full px-3.5 sm:px-5 text-sm font-semibold tracking-[-0.01em] transition-all duration-200 hover:-translate-y-px active:translate-y-0 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 border border-violet-200/80 bg-violet-50/70 text-violet-700 hover:border-violet-300 hover:bg-violet-100 hover:text-violet-800 hover:shadow-sm"
                   >
-                    <Key className="w-4 h-4 sm:mr-2" />
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-violet-600 shadow-sm ring-1 ring-violet-100 sm:mr-2">
+                      <KeyRound className="h-3.5 w-3.5" />
+                    </span>
                     <span className="hidden sm:inline">Join with Code</span>
                   </Button>
                 </DialogTrigger>
@@ -180,13 +190,14 @@ export default function Landing() {
                 variant="ghost"
                 onClick={handleLoginClick}
                 disabled={isCheckingLogin}
-                className="text-gray-700 hover:text-gray-900 border-2 border-gray-400 hover:border-gray-600 shadow-md text-xs sm:text-sm px-2 sm:px-4"
+                className="group h-10 sm:h-11 rounded-full px-3.5 sm:px-5 text-sm font-semibold tracking-[-0.01em] transition-all duration-200 hover:-translate-y-px active:translate-y-0 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 border border-slate-200 bg-white text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:border-slate-300 hover:bg-white hover:text-slate-900 hover:shadow-md"
               >
                 Sign In
               </Button>
               <Link href="/register">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs sm:text-sm px-2 sm:px-4">
+                <Button className="group h-10 sm:h-11 rounded-full px-3.5 sm:px-5 text-sm font-semibold tracking-[-0.01em] transition-all duration-200 hover:-translate-y-px active:translate-y-0 focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 relative overflow-hidden border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-[0_8px_20px_-6px_rgba(109,40,217,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] hover:shadow-[0_12px_26px_-6px_rgba(109,40,217,0.65),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110">
                   Get Started
+                  <ArrowRight className="ml-1.5 hidden h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5 sm:inline" />
                 </Button>
               </Link>
             </div>
@@ -227,7 +238,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section id="features" className="py-16 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-20">
             <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
@@ -348,261 +359,325 @@ export default function Landing() {
       </section>
 
       {/* Pricing Plans Section */}
-      <section id="pricing" className="py-16 sm:py-24 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <section id="pricing" className="py-16 sm:py-20 bg-[#f4f6fb]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 sm:mb-16">
-            <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
-              Choose Your <span className="text-blue-600">Plan</span>
+          <div className="text-center mb-8">
+            <span className="inline-flex items-center rounded-full bg-violet-100 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700 mb-4">
+              Flexible Plans
+            </span>
+            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 mb-3 leading-tight">
+              Choose Your Plan
             </h3>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto">
               Start with a {FREE_TRIAL_DAYS}-day free trial. Cancel anytime. All plans include mobile app access.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-            {/* Basic Plan */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
-              <div className="p-6 sm:p-8 border-b border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2.5 rounded-xl">
-                    <Target className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-gray-900">Basic</h4>
-                    <p className="text-sm text-gray-500">Essential tools</p>
-                  </div>
+          {/* Billing toggle with side hints */}
+          <div className="mb-12 flex items-center justify-center gap-4 lg:mb-14 lg:justify-between">
+            <div className="hidden lg:flex items-center gap-3">
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
+                <Tag className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Monthly</p>
+                  <p className="text-xs text-slate-500">Pay month to month. Cancel anytime.</p>
                 </div>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$4.99</span>
-                  <span className="text-gray-500">/month</span>
-                </div>
-                <p className="text-sm text-gray-500">or $49/year (save 18%)</p>
               </div>
-              <div className="p-6 sm:p-8 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wide">Core Features</p>
-                <ul className="space-y-3 flex-1">
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Daily Task Management – Create and complete daily activities</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Daily Check-ins – Simple 1–5 scale for personal reflection</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Financial Tracking – Bill reminders and due-date alerts</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Appointment Management – Track personal schedules</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Trusted Contacts – Quick access to saved contacts</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Mobile App Access – Full mobile functionality</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Email Support – Standard customer assistance</span>
-                  </li>
-                </ul>
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
-                  <ul className="space-y-1.5 text-xs text-gray-500">
-                    <li>• Up to 50 daily tasks</li>
-                    <li>• 1 caregiver connection</li>
-                    <li>• Basic progress summaries</li>
-                  </ul>
-                </div>
-                <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-xs text-blue-700 font-medium">Best For: Individuals starting with basic organization tools</p>
-                </div>
-                <Link href="/register">
-                  <Button className="w-full mt-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                    Start Free Trial
-                  </Button>
-                </Link>
-              </div>
+              <svg aria-hidden viewBox="0 0 60 30" className="h-7 w-14 text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M2 6c18-4 36 2 52 18" />
+                <path d="M46 23l8 1.5-1-8" />
+              </svg>
             </div>
 
-            {/* Premium Plan */}
-            <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-400 overflow-hidden hover:shadow-2xl transition-all duration-300 relative flex flex-col md:scale-105">
-              <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-pink-500 text-white text-center py-2 text-sm font-bold tracking-wide">
-                <Sparkles className="w-4 h-4 inline mr-1" /> MOST POPULAR
-              </div>
-              <div className="p-6 sm:p-8 border-b border-gray-100 pt-12">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-500 p-2.5 rounded-xl">
-                    <Star className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-gray-900">Premium</h4>
-                    <p className="text-sm text-gray-500">Advanced tools & automation</p>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$12.99</span>
-                  <span className="text-gray-500">/month</span>
-                </div>
-                <p className="text-sm text-gray-500">or $129/year (save 17%)</p>
-              </div>
-              <div className="p-6 sm:p-8 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-purple-700 mb-4 uppercase tracking-wide">Everything in Basic, plus</p>
-                <ul className="space-y-3 flex-1">
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Usage Patterns & Progress Journals</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Personal Records – Notes, medications, sensitivities</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Skill Challenges & Custom Task Templates</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Meal Planning & Shopping Lists</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Data Export & Guided Tutorials</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Unlimited daily tasks & trusted contacts</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Expanded achievements & rewards</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Priority email support</span>
-                  </li>
-                </ul>
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
-                  <ul className="space-y-1.5 text-xs text-gray-500">
-                    <li>• Up to 1,000 daily tasks</li>
-                    <li>• Up to 5 caregiver connections</li>
-                    <li>• Full analytics & progress reports</li>
-                  </ul>
-                </div>
-                <div className="mt-6 p-3 bg-purple-50 rounded-lg">
-                  <p className="text-xs text-purple-700 font-medium">Best For: Users wanting advanced tools, automation & customization</p>
-                </div>
-                <Link href="/register">
-                  <Button className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity text-base">
-                    Start Free Trial
-                  </Button>
-                </Link>
-              </div>
+            <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                aria-pressed={billingCycle === "monthly"}
+                className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-all ${
+                  billingCycle === "monthly"
+                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("yearly")}
+                aria-pressed={billingCycle === "yearly"}
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${
+                  billingCycle === "yearly"
+                    ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                Yearly
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  Save up to 17%
+                </span>
+              </button>
             </div>
 
-            {/* Family / Care Team Plan */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
-              <div className="p-6 sm:p-8 border-b border-gray-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-2.5 rounded-xl">
-                    <Crown className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-bold text-gray-900">Family / Care Team</h4>
-                    <p className="text-sm text-gray-500">Multi-user coordination</p>
-                  </div>
+            <div className="hidden lg:flex items-center gap-3">
+              <svg aria-hidden viewBox="0 0 60 30" className="h-7 w-14 text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M58 6C40 2 22 8 6 24" />
+                <path d="M14 23l-8 1.5 1-8" />
+              </svg>
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 px-4 py-3">
+                <Gift className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Yearly</p>
+                  <p className="text-xs text-slate-500">Save up to 17% and enjoy continuous support.</p>
                 </div>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-gray-900">$24.99</span>
-                  <span className="text-gray-500">/month</span>
-                </div>
-                <p className="text-sm text-gray-500">or $249/year (save 17%)</p>
-              </div>
-              <div className="p-6 sm:p-8 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-amber-700 mb-4 uppercase tracking-wide">Everything in Premium, plus</p>
-                <ul className="space-y-3 flex-1">
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Up to 5 individual user profiles</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Shared dashboards for coordination</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Role-based access controls</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">In-app messaging & video calls</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Granular sharing & security controls</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Activity history & audit views</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Combined progress summaries</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Shared routines, templates & calendars</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Cascading contact alerts</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Family achievements & milestones</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Dedicated account assistance</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Priority email & chat support</span>
-                  </li>
-                  <li className="flex items-start gap-2.5">
-                    <Check className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">Guided onboarding sessions</span>
-                  </li>
-                </ul>
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Plan Limits</p>
-                  <ul className="space-y-1.5 text-xs text-gray-500">
-                    <li>• Unlimited daily tasks</li>
-                    <li>• Up to 5 member accounts included</li>
-                    <li>• Unlimited caregiver connections</li>
-                  </ul>
-                </div>
-                <div className="mt-6 p-3 bg-amber-50 rounded-lg">
-                  <p className="text-xs text-amber-700 font-medium">Best For: Families & support networks coordinating daily activities</p>
-                </div>
-                <Link href="/register">
-                  <Button className="w-full mt-6 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity">
-                    Start Free Trial
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>
 
-          <div className="text-center mt-10">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-white rounded-full shadow-md">
-              <Shield className="w-5 h-5 text-green-500" />
-              <span className="text-sm text-gray-700 font-medium">{FREE_TRIAL_DAYS}-day free trial on all plans • Cancel anytime • Secure payment</span>
+          <div className="grid items-stretch gap-6 md:grid-cols-3 lg:gap-7">
+            {[
+              {
+                id: "basic",
+                name: "Basic",
+                subtitle: "Essential tools to get started",
+                audience: "For individuals",
+                Icon: Target,
+                popular: false,
+                accent: {
+                  iconBg: "bg-gradient-to-br from-sky-500 to-blue-600",
+                  badge: "border-sky-200 bg-sky-50 text-sky-700",
+                  check: "text-sky-600",
+                  cta: "border-2 border-sky-500 bg-white text-sky-700 hover:bg-sky-50",
+                  ctaSolid: false,
+                  ring: "border border-slate-200/80 shadow-[0_12px_32px_rgba(15,23,42,0.06)]",
+                },
+                monthly: "$4.99",
+                yearly: "$49.99",
+                save: "Save 18%",
+                featuresTitle: "What's included",
+                features: [
+                  "Daily task management",
+                  "Visual routines & step-by-step guidance",
+                  "Mood check-ins",
+                  "Calendar & appointments",
+                  "Basic progress tracking",
+                  "Financial reminders (bills & expenses)",
+                  "Mobile app access",
+                  "Email support",
+                ],
+                limits: [
+                  { icon: ListChecks, text: "Up to 50 daily tasks" },
+                  { icon: Users, text: "1 caregiver connection" },
+                  { icon: BarChart3, text: "Basic progress summaries" },
+                ],
+              },
+              {
+                id: "premium",
+                name: "Premium",
+                subtitle: "Advanced tools & personalization",
+                audience: "For active support teams",
+                Icon: Sparkles,
+                popular: true,
+                accent: {
+                  iconBg: "bg-gradient-to-br from-fuchsia-500 to-violet-600",
+                  badge: "border-violet-200 bg-violet-50 text-violet-700",
+                  check: "text-violet-600",
+                  cta: "border-0 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/25 hover:opacity-95",
+                  ctaSolid: true,
+                  ring: "border-2 border-violet-500 shadow-[0_24px_56px_rgba(109,40,217,0.20)]",
+                },
+                monthly: "$12.99",
+                yearly: "$129.99",
+                save: "Save 17%",
+                featuresTitle: "Everything in Basic, plus",
+                features: [
+                  "Personal records (notes, medications, sensitivities)",
+                  "Skill challenges & custom task templates",
+                  "Meal planning & shopping lists",
+                  "Data export & guided tutorials",
+                  "Goal tracking & achievements",
+                  "Unlimited daily tasks",
+                  "Up to 5 caregiver connections",
+                  "Priority email support",
+                ],
+                limits: [
+                  { icon: ListChecks, text: "Up to 1,000 daily tasks" },
+                  { icon: Users, text: "Up to 5 caregiver connections" },
+                  { icon: BarChart3, text: "Full analytics & progress reports" },
+                ],
+              },
+              {
+                id: "family",
+                name: "Family / Care Team",
+                subtitle: "Multi-user coordination",
+                audience: "For families, schools & teams",
+                Icon: Users,
+                popular: false,
+                accent: {
+                  iconBg: "bg-gradient-to-br from-orange-400 to-orange-600",
+                  badge: "border-slate-200 bg-white text-slate-600",
+                  check: "text-orange-500",
+                  cta: "border-2 border-orange-400 bg-white text-orange-600 hover:bg-orange-50",
+                  ctaSolid: false,
+                  ring: "border border-slate-200/80 shadow-[0_12px_32px_rgba(15,23,42,0.06)]",
+                },
+                monthly: "$24.99",
+                yearly: "$249.99",
+                save: "Save 17%",
+                featuresTitle: "Everything in Premium, plus",
+                features: [
+                  "Up to 5 individual user profiles",
+                  "Shared dashboards for coordination",
+                  "Role-based access controls",
+                  "In-app messaging & video calls",
+                  "Granular sharing & security controls",
+                  "Activity history & audit views",
+                  "Combined progress summaries",
+                  "Shared routines, templates & calendars",
+                  "Dedicated account assistance",
+                  "Priority email & chat support",
+                  "Guided onboarding sessions",
+                ],
+                limits: [
+                  { icon: ListChecks, text: "Unlimited daily tasks" },
+                  { icon: Users, text: "Up to 5 member accounts included" },
+                  { icon: BarChart3, text: "Unlimited caregiver connections" },
+                ],
+              },
+            ].map((plan) => {
+              const PlanIcon = plan.Icon;
+              const isMonthly = billingCycle === "monthly";
+              const mainPrice = isMonthly ? plan.monthly : plan.yearly;
+              const mainPeriod = isMonthly ? "month" : "year";
+              const altPrice = isMonthly ? plan.yearly : plan.monthly;
+              const altPeriod = isMonthly ? "year" : "month";
+              const dense = plan.features.length > 8;
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative flex flex-col overflow-hidden rounded-3xl bg-white transition-shadow ${plan.accent.ring} ${
+                    plan.popular ? "md:-mt-6" : ""
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-500 py-2.5 text-xs font-bold uppercase tracking-[0.16em] text-white">
+                      <Star className="h-3.5 w-3.5 fill-white" />
+                      Most Popular
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 flex-col p-6 lg:p-7">
+                    {/* Header */}
+                    <div className="flex items-start gap-3.5">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${plan.accent.iconBg}`}>
+                        <PlanIcon className="h-6 w-6" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="truncate text-xl font-bold leading-tight text-slate-900">{plan.name}</h4>
+                        <p className="mt-0.5 truncate text-sm text-slate-500">{plan.subtitle}</p>
+                        <span className={`mt-2 inline-block whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${plan.accent.badge}`}>
+                          {plan.audience}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="mt-5">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[2.5rem] font-extrabold leading-none tracking-tight text-slate-900">{mainPrice}</span>
+                        <span className="text-sm font-medium text-slate-500">/{mainPeriod}</span>
+                      </div>
+                      <div className="mt-2.5 flex items-center gap-2 text-sm text-slate-500">
+                        <span>
+                          or <span className="font-semibold text-slate-800">{altPrice}</span>/{altPeriod}
+                        </span>
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                          {plan.save}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <Link href="/register" className="mt-6 block">
+                      <Button
+                        variant={plan.accent.ctaSolid ? "default" : "outline"}
+                        className={`h-12 w-full rounded-xl text-[15px] font-semibold ${plan.accent.cta}`}
+                      >
+                        Start {FREE_TRIAL_DAYS}-Day Free Trial
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+
+                    {/* Features */}
+                    <div className="mt-6 flex-1 border-t border-slate-100 pt-5">
+                      <p className="mb-3 text-sm font-semibold text-slate-900">{plan.featuresTitle}</p>
+                      <ul className={dense ? "space-y-1.5" : "space-y-2"}>
+                        {plan.features.map((item) => (
+                          <li key={item} className="flex items-start gap-2.5">
+                            <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.accent.check}`} strokeWidth={3} />
+                            <span className="text-sm leading-snug text-slate-700">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Limits */}
+                    <div className="mt-5 border-t border-slate-100 pt-5">
+                      <p className="mb-3 text-sm font-semibold text-slate-900">Plan limits</p>
+                      <ul className="space-y-2">
+                        {plan.limits.map(({ icon: LimitIcon, text }) => (
+                          <li key={text} className="flex items-center gap-2.5 text-sm text-slate-600">
+                            <LimitIcon className="h-4 w-4 shrink-0 text-slate-400" />
+                            <span>{text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Trust bar */}
+          <div className="mt-10 rounded-3xl border border-slate-200/80 bg-white px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)] sm:px-7">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-slate-100">
+              {[
+                {
+                  icon: Shield,
+                  iconClass: "bg-emerald-50 text-emerald-600",
+                  title: `${FREE_TRIAL_DAYS}-day free trial`,
+                  detail: "No commitment. Cancel anytime.",
+                },
+                {
+                  icon: CreditCard,
+                  iconClass: "bg-violet-50 text-violet-600",
+                  title: "Secure payment",
+                  detail: "Your data is always protected.",
+                },
+                {
+                  icon: Smartphone,
+                  iconClass: "bg-sky-50 text-sky-600",
+                  title: "Mobile app included",
+                  detail: "iOS and Android access.",
+                },
+                {
+                  icon: Users,
+                  iconClass: "bg-rose-50 text-rose-500",
+                  title: "Trusted by families & schools",
+                  detail: "Built for more independent lives.",
+                },
+              ].map(({ icon: Icon, iconClass, title, detail }) => (
+                <div key={title} className="flex items-center gap-3 lg:px-6 lg:first:pl-0 lg:last:pr-0">
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">{title}</p>
+                    <p className="text-xs leading-relaxed text-slate-500">{detail}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -642,34 +717,93 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-2xl">
-              <Brain className="w-8 h-8 text-white" />
-            </div>
-            <div>
-              <h4 className="text-2xl font-bold text-white">Adaptalyfe</h4>
-              <p className="text-gray-300 text-lg">
+      <footer className="bg-[#0f1424] text-slate-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8 lg:py-16">
+            {/* Brand */}
+            <div className="sm:col-span-2 lg:col-span-6">
+              <Link href="/" className="inline-flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 shadow-lg shadow-violet-900/30">
+                  <Brain className="h-6 w-6 text-white" />
+                </span>
+                <span className="text-xl font-bold tracking-tight text-white">Adaptalyfe</span>
+              </Link>
+              <p className="mt-4 text-sm font-medium text-violet-300">
                 Grow with Guidance. Thrive with Confidence.
               </p>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+                Empowering individuals with developmental disabilities to achieve independence through
+                innovative technology, personalized support, and a caring community.
+              </p>
+              <Link href="/register" className="mt-6 inline-block">
+                <Button className="h-10 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 px-5 text-sm font-semibold text-white hover:opacity-95">
+                  Start {FREE_TRIAL_DAYS}-Day Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
+
+            {/* Link columns */}
+            {[
+              {
+                title: "Product",
+                links: [
+                  { label: "Features", href: "#features" },
+                  { label: "Pricing", href: "#pricing" },
+                  { label: "Mobile app", href: "#pricing" },
+                ],
+              },
+              {
+                title: "Account",
+                links: [
+                  { label: "Log in", href: "/login" },
+                  { label: "Create account", href: "/register" },
+                  { label: "Forgot password", href: "/forgot-password" },
+                ],
+              },
+              {
+                title: "Legal & Support",
+                links: [
+                  { label: "Privacy Policy", href: "/privacy-policy" },
+                  { label: "privacy@adaptalyfe.com", href: "mailto:privacy@adaptalyfe.com" },
+                  { label: "security@adaptalyfe.com", href: "mailto:security@adaptalyfe.com" },
+                ],
+              },
+            ].map((col) => (
+              <div key={col.title} className="lg:col-span-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{col.title}</p>
+                <ul className="mt-4 space-y-3">
+                  {col.links.map(({ label, href }) => (
+                    <li key={label}>
+                      {href.startsWith("/") ? (
+                        <Link href={href} className="text-sm text-slate-300 transition-colors hover:text-white">
+                          {label}
+                        </Link>
+                      ) : (
+                        <a href={href} className="break-all text-sm text-slate-300 transition-colors hover:text-white">
+                          {label}
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
-          <p className="text-gray-300 max-w-2xl mx-auto text-lg mb-6">
-            Empowering individuals with developmental disabilities to achieve
-            independence through innovative technology, personalized support,
-            and a caring community.
-          </p>
-          
-          {/* Footer Links */}
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-8 text-sm sm:text-base">
-            <Link href="/privacy-policy">
-              <span className="text-gray-400 hover:text-white transition-colors cursor-pointer">
-                Privacy Policy
+
+          {/* Bottom bar */}
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 py-6 text-xs text-slate-500 sm:flex-row">
+            <p>© {new Date().getFullYear()} Adaptalyfe. All rights reserved.</p>
+            <div className="flex items-center gap-4">
+              <Link href="/privacy-policy" className="transition-colors hover:text-white">
+                Privacy
+              </Link>
+              <span aria-hidden className="h-3 w-px bg-white/15" />
+              <span className="inline-flex items-center gap-1.5">
+                <Heart className="h-3.5 w-3.5 text-rose-400" />
+                Built for more independent lives
               </span>
-            </Link>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-400">© 2025 Adaptalyfe. All rights reserved.</span>
+            </div>
           </div>
         </div>
       </footer>
