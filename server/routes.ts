@@ -57,6 +57,11 @@ import type { GooglePlayEntitlement } from "./google-play-entitlement";
 import { createSubscriptionFeatureGuard, paidSubscriptionTier } from "./subscription-access";
 import { buildSubscriptionResponse } from "./subscription-response";
 import {
+  isStripeBillingCycle,
+  isStripePlanType,
+  resolveStripePlanPrice,
+} from "./stripe-plan-prices";
+import {
   AppleStoreConfigurationError,
   AppleStoreVerificationError,
   refreshAppleStoreSubscription,
@@ -5734,19 +5739,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
          await storage.updateUser(currentUser.id, { stripeCustomerId: customer.id });
       }
       
-      // Define pricing
-      const pricing = {
-        basic: { monthly: 499, annual: 4999 }, // $4.99/month, $49.99/year
-        premium: { monthly: 1299, annual: 12999 }, // $12.99/month, $129.99/year
-        family: { monthly: 2499, annual: 24999 } // $24.99/month, $249.99/year
-      };
-      
-      const planPricing = pricing[planType as keyof typeof pricing];
-      if (!planPricing || (billingCycle !== 'monthly' && billingCycle !== 'annual')) {
+      if (!isStripePlanType(planType) || !isStripeBillingCycle(billingCycle)) {
         return res.status(400).json({ message: "Invalid subscription plan or billing cycle" });
       }
-      const amount = planPricing[billingCycle];
-      
+
       // If this user already has an active Stripe subscription, cancel it first
       // to avoid duplicate subscriptions building up.
       if (currentUser.stripeSubscriptionId) {
@@ -5762,42 +5758,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Look up or create a price for this plan/cycle combination.
-      // We search existing prices first so we don't create duplicate products on every attempt.
-      const planLabel = `adaptalyfe_${planType}_${billingCycle}`;
-      let price: any;
-      const existingPrices = await currentStripe.prices.search({
-        query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
-        limit: 100,
-      });
-      const expectedInterval = billingCycle === 'annual' ? 'year' : 'month';
-      price = existingPrices.data.find((candidate) =>
-        candidate.active &&
-        candidate.unit_amount === amount &&
-        candidate.currency === 'usd' &&
-        candidate.recurring?.interval === expectedInterval &&
-        candidate.recurring?.interval_count === 1
-      );
-      if (price) {
-        console.log(`Reusing existing Stripe price ${price.id} for ${planLabel}`);
-      } else {
-        const existingProducts = await currentStripe.products.search({
-          query: `metadata['plan_key']:'${planLabel}' AND active:'true'`,
-          limit: 1,
+      // Prefer fixed Price IDs from env (staging/production). Dev may fall back
+      // to metadata search/create — see server/stripe-plan-prices.ts.
+      let price: Stripe.Price;
+      try {
+        price = await resolveStripePlanPrice(currentStripe, planType, billingCycle);
+      } catch (priceError: any) {
+        logSanitizedError("subscriptions.stripe.resolve-price", priceError);
+        return res.status(500).json({
+          message: priceError?.message || "Stripe price is not configured for this plan",
         });
-        const product = existingProducts.data[0] ?? await currentStripe.products.create({
-          name: `Adaptalyfe ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
-          description: `${billingCycle} subscription to Adaptalyfe ${planType} features`,
-          metadata: { plan_key: planLabel },
-        });
-        price = await currentStripe.prices.create({
-          currency: 'usd',
-          product: product.id,
-          unit_amount: amount,
-          recurring: { interval: expectedInterval },
-          metadata: { plan_key: planLabel },
-        });
-        console.log(`Created new Stripe price ${price.id} for ${planLabel}`);
       }
 
       // Create a recurring subscription. For a free trial, Stripe returns a
