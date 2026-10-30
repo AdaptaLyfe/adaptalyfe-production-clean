@@ -93,3 +93,74 @@ test("database failures do not fall back to a session's old paid tier", async ()
   );
   assert.equal(status, 503);
 });
+test("Personal Records APIs (health records and documents) require Premium or Family", () => {
+  for (const path of [
+    "/allergies", "/allergies/3", "/medical-conditions", "/adverse-medications/9",
+    "/personal-documents", "/personal-documents/upload", "/personal-documents/category/id",
+  ]) {
+    assert.equal(requiredSubscriptionTierForPath(path), "premium", path);
+  }
+  // Trusted/emergency contacts stay available on every plan (Basic feature).
+  assert.equal(requiredSubscriptionTierForPath("/emergency-contacts"), null);
+  assert.equal(requiredSubscriptionTierForPath("/sleep-entries"), null);
+  assert.equal(requiredSubscriptionTierForPath("/mood-entries"), null);
+});
+
+test("Basic accounts are refused Personal Records APIs; Premium and Family are allowed", async () => {
+  const guard = createSubscriptionFeatureGuard(async (id) => ({
+    id,
+    subscriptionTier: id === 1 ? "basic" : id === 2 ? "premium" : "family",
+    subscriptionStatus: "active",
+    stripeSubscriptionId: `sub_${id}`,
+    subscriptionPlatform: "web",
+  }));
+  const run = async (userId: number) => {
+    let status = 200;
+    let nextCalled = false;
+    const res: any = { status(code: number) { status = code; return this; }, json() { return this; } };
+    await guard({ path: "/personal-documents", session: { userId, user: {} } }, res, () => { nextCalled = true; });
+    return nextCalled ? 200 : status;
+  };
+  assert.equal(await run(1), 403);
+  assert.equal(await run(2), 200);
+  assert.equal(await run(3), 200);
+});
+
+test("plan rules for messaging, skills and rewards APIs", () => {
+  assert.equal(requiredSubscriptionTierForPath("/messages"), "family");
+  assert.equal(requiredSubscriptionTierForPath("/messages/12"), "family");
+  assert.equal(requiredSubscriptionTierForPath("/transition-skills"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/transition-skills/4"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/rewards"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/rewards/redeem"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/rewards/badges"), "premium");
+  // Caregiver-side endpoints and points stay open.
+  assert.equal(requiredSubscriptionTierForPath("/rewards/caregiver"), null);
+  assert.equal(requiredSubscriptionTierForPath("/caregiver/messages"), null);
+  assert.equal(requiredSubscriptionTierForPath("/caregivers"), null);
+  assert.equal(requiredSubscriptionTierForPath("/points/balance"), null);
+  assert.equal(requiredSubscriptionTierForPath("/sleep-entries"), null);
+});
+
+test("messaging needs Family; Premium is refused; caregiver accounts are not blocked", async () => {
+  const accounts: Record<number, any> = {
+    1: { subscriptionTier: "premium", accountType: "user" },
+    2: { subscriptionTier: "family", accountType: "user" },
+    3: { subscriptionTier: "free", accountType: "caregiver" },
+  };
+  const guard = createSubscriptionFeatureGuard(async (id) => ({
+    id, ...accounts[id], subscriptionStatus: "active", stripeSubscriptionId: `sub_${id}`, subscriptionPlatform: "web",
+  }));
+  const run = async (userId: number, path: string) => {
+    let status = 200;
+    let nextCalled = false;
+    const res: any = { status(code: number) { status = code; return this; }, json() { return this; } };
+    await guard({ path, session: { userId, user: {} } }, res, () => { nextCalled = true; });
+    return nextCalled ? 200 : status;
+  };
+  assert.equal(await run(1, "/messages"), 403);
+  assert.equal(await run(2, "/messages"), 200);
+  assert.equal(await run(3, "/messages"), 200);
+  assert.equal(await run(1, "/rewards"), 200);
+  assert.equal(await run(3, "/rewards"), 200);
+});

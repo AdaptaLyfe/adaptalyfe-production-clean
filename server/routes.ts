@@ -44,7 +44,7 @@ import {
 import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
-import { stripeTrialEndForCheckout, type PreviousStripeSubscription } from "./stripe-trial-policy";
+import { isConfirmedPlanSwitch, stripeTrialEndForCheckout, type PreviousStripeSubscription } from "./stripe-trial-policy";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import { logSanitizedError } from "./safe-logging";
 import {
@@ -5715,6 +5715,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel a website (Stripe) subscription at the end of the paid or trial
+  // period. Access continues until then; Stripe's subscription.deleted webhook
+  // ends it. App Store / Google Play subscriptions must be cancelled in the store.
+  app.post("/api/cancel-subscription", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const account = await storage.getUserById(req.session.userId);
+      if (!account) return res.status(401).json({ message: "Please sign in again." });
+      if (account.subscriptionPlatform === 'google_play' || account.subscriptionPlatform === 'app_store') {
+        return res.status(400).json({
+          message: account.subscriptionPlatform === 'google_play'
+            ? "This subscription is billed by Google Play. Cancel it in the Google Play app under Subscriptions."
+            : "This subscription is billed by Apple. Cancel it in your iPhone Settings under Subscriptions.",
+        });
+      }
+      if (!account.stripeSubscriptionId) {
+        return res.status(400).json({ message: "There is no website subscription to cancel." });
+      }
+      const currentStripe = getStripeInstance();
+      if (!currentStripe) return res.status(503).json({ message: "Payment processing unavailable" });
+
+      const updated = await currentStripe.subscriptions.update(account.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+      const endSeconds = updated.cancel_at ?? getStripePeriodEndSeconds(updated);
+      const endsAt = new Date(endSeconds * 1000);
+      await storage.updateUser(account.id, {
+        subscriptionAutoRenew: false,
+        subscriptionExpiresAt: endsAt,
+      });
+      res.json({ cancelled: true, accessUntil: endsAt.toISOString() });
+    } catch (error: any) {
+      logSanitizedError("subscriptions.cancel", error);
+      res.status(500).json({ message: "We couldn't cancel your subscription. Please try again." });
+    }
+  });
+
   // Create Stripe subscription with proper setup
   app.post("/api/create-subscription", async (req: any, res) => {
     try {
@@ -5782,7 +5821,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const existing = await currentStripe.subscriptions.retrieve(currentUser.stripeSubscriptionId);
           previousSubscription = { status: existing.status, trial_end: existing.trial_end };
-          if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
+          // A paying customer switching plans keeps the current subscription until
+          // the new one is confirmed (see /api/confirm-subscription).
+          if (isConfirmedPlanSwitch(currentUser, previousSubscription)) {
+            // keep it for now
+          } else if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
             await currentStripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
             console.log("Previous Stripe subscription cancelled before creating a new one");
           }
@@ -5829,7 +5872,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: {
            userId: currentUser.id.toString(),
           planType,
-          billingCycle
+          billingCycle,
+          ...(isConfirmedPlanSwitch(currentUser, previousSubscription) && currentUser.stripeSubscriptionId
+            ? { replacesSubscriptionId: currentUser.stripeSubscriptionId }
+            : {}),
         }
       });
 
@@ -5861,13 +5907,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Update user subscription info
-       await storage.updateUser(currentUser.id, {
-        stripeSubscriptionId: subscription.id,
-        subscriptionTier: planType,
-        subscriptionStatus: 'pending',
-        subscriptionPlatform: 'web',
-      });
+      // Update user subscription info. During a plan switch the current plan stays
+      // active until the new subscription is confirmed.
+      if (!isConfirmedPlanSwitch(currentUser, previousSubscription)) {
+        await storage.updateUser(currentUser.id, {
+          stripeSubscriptionId: subscription.id,
+          subscriptionTier: planType,
+          subscriptionStatus: 'pending',
+          subscriptionPlatform: 'web',
+          subscriptionAutoRenew: true,
+        });
+      }
 
       console.log('Final subscription setup:', {
         subscriptionId: subscription.id,
@@ -5963,7 +6013,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Remember which Stripe plan/billing period was bought so the app
           // can show "yearly" correctly (see subscription-response.ts).
           subscriptionProductId: `stripe_${confirmedPlan}_${confirmedCycle}`,
+          subscriptionAutoRenew: true,
         });
+
+        // Plan switch: only now that the new subscription is confirmed, cancel the old one.
+        const replacedId = metadata.replacesSubscriptionId;
+        if (replacedId && replacedId !== subscription.id) {
+          try {
+            const old = await currentStripe.subscriptions.retrieve(replacedId);
+            if (old.status !== 'canceled' && old.status !== 'incomplete_expired') {
+              await currentStripe.subscriptions.cancel(replacedId);
+            }
+          } catch (cancelError: any) {
+            if (cancelError?.code !== 'resource_missing') {
+              logSanitizedError("subscriptions.confirm.cancel-replaced", cancelError);
+            }
+          }
+        }
 
         // Refresh session so the user doesn't need to log out/in to see the change
         const updatedUser = await storage.getUserById(user.id);

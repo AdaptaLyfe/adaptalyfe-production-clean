@@ -40,7 +40,7 @@
     "db:push": "drizzle-kit push",
     "db:migrate:assignment-hours": "node scripts/migrate-assignment-hours.mjs",
     "db:migrate:utility-portal": "node scripts/migrate-utility-portal.mjs",
-    "test:subscription-trial": "tsx --test server/subscription-response.test.ts server/stripe-trial-policy.test.ts"
+    "test:subscription-trial": "tsx --test server/subscription-response.test.ts server/stripe-trial-policy.test.ts server/subscription-access.test.ts"
   },
   "dependencies": {
     "@apple/app-store-server-library": "^3.1.0",

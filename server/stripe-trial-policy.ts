@@ -12,6 +12,7 @@ export interface StripeTrialAccount {
   createdAt: Date | string | null | undefined;
   /** Set to "stripe_<plan>_<cycle>" once a web subscription has been confirmed. */
   subscriptionProductId?: string | null;
+  subscriptionStatus?: string | null;
 }
 
 export interface PreviousStripeSubscription {
@@ -67,4 +68,21 @@ export function stripeTrialEndForCheckout(
   if (accountTrialEnd <= minimumEnd) return null;
 
   return Math.floor(accountTrialEnd / 1000);
+}
+
+/**
+ * A plan or billing-period switch by a paying website customer. The current
+ * subscription must stay untouched until the new one is confirmed, so an
+ * abandoned switch never removes access the customer already paid for.
+ */
+export function isConfirmedPlanSwitch(
+  account: StripeTrialAccount,
+  previous: PreviousStripeSubscription | null,
+): boolean {
+  return (
+    hasConfirmedWebSubscription(account) &&
+    account.subscriptionStatus === "active" &&
+    !!previous &&
+    ["active", "trialing", "past_due"].includes(previous.status)
+  );
 }

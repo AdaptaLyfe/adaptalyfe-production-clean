@@ -16,7 +16,7 @@ export default function Pharmacy() {
               description="Keep a personal list of medications for reference and reminders. All information is entered by the user for organizational purposes only."
               feature="medicationManagement"
               requiredPlan="premium"
-              className="max-w-md mx-auto mt-20"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
             />
           </div>
         </main>

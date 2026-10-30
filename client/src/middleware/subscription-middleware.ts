@@ -12,6 +12,10 @@ export interface SubscriptionData {
     wearableDevices: boolean;
     mealPlanning: boolean;
     medicationManagement: boolean;
+    personalRecords: boolean;
+    skillsMilestones: boolean;
+    rewards: boolean;
+    caregiverMessaging: boolean;
     locationSafety: boolean;
     advancedAnalytics: boolean;
     prioritySupport: boolean;
@@ -81,7 +85,12 @@ export function useSubscriptionEnforcement() {
       '/meal-planning',
       '/medication-management',
       '/analytics',
-      '/pharmacy'
+      '/pharmacy',
+      '/medical',
+      '/personal-documents',
+      '/skills-milestones',
+      '/rewards',
+      '/caregiver/messages'
     ];
 
     const isPremiumRoute = premiumRoutes.some(route => location.startsWith(route));
@@ -92,7 +101,12 @@ export function useSubscriptionEnforcement() {
         '/meal-planning': 'mealPlanning',
         '/medication-management': 'medicationManagement',
         '/analytics': 'advancedAnalytics',
-        '/pharmacy': 'medicationManagement'
+        '/pharmacy': 'medicationManagement',
+        '/medical': 'personalRecords',
+        '/personal-documents': 'personalRecords',
+        '/skills-milestones': 'skillsMilestones',
+        '/rewards': 'rewards',
+        '/caregiver/messages': 'caregiverMessaging'
       };
 
       const currentRouteFeature = Object.entries(routeFeatureMap).find(([route]) => 
@@ -134,6 +148,7 @@ export function getPremiumPromptMessage(feature: string): string {
   const messages: Record<string, string> = {
     wearableDevices: "Connect wearable devices to track your health metrics in real-time. Upgrade to Premium to unlock this feature.",
     mealPlanning: "Create personalized meal plans and shopping lists. Upgrade to Premium to access advanced meal planning.",
+    personalRecords: "Keep health records, sensitivities and important personal documents in one place. Upgrade to Premium to unlock Personal Records.",
     medicationManagement: "Track medications, set reminders, and manage your pharmacy information. Upgrade to Premium to unlock medication management.",
     locationSafety: "Set up safe zones and get location-based alerts. Upgrade to Family plan to access advanced safety features.",
     advancedAnalytics: "View detailed analytics and progress reports. Upgrade to Family plan to unlock advanced analytics.",

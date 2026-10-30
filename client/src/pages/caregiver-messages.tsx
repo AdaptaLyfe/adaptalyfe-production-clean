@@ -46,7 +46,9 @@ function getMessageDate(value: Message["sentAt"]): Date | null {
 
 export default function CaregiverMessages() {
   const [, setLocation] = useLocation();
-  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { hasFeature } = useSubscriptionEnforcement();
+  // In-app messaging with caregivers is part of the Family plan.
+  const canMessage = hasFeature("caregiverMessaging");
 
   const {
     data: messagesResponse,
@@ -56,6 +58,7 @@ export default function CaregiverMessages() {
   } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
     queryFn: () => fetchCollection<Message>("/api/messages"),
+    enabled: canMessage,
     retry: retryTransientRequest,
     retryDelay,
   });
@@ -72,7 +75,7 @@ export default function CaregiverMessages() {
     retryDelay,
   });
 
-  if (!isPremiumUser) {
+  if (!canMessage) {
     return (
       <div className="container mx-auto p-6">
         <PremiumFeaturePrompt
@@ -80,7 +83,7 @@ export default function CaregiverMessages() {
           description="Connect with your support network, share updates, and coordinate care. Subscribe to continue using Adaptalyfe's caregiver features."
           feature="caregiver"
           requiredPlan="family"
-          className="max-w-md mx-auto mt-20"
+          className="max-w-md mx-auto mt-6 sm:mt-10"
         />
       </div>
     );

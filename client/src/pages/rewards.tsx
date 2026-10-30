@@ -1,3 +1,5 @@
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -192,7 +194,7 @@ interface PointsTransaction {
   createdAt: string;
 }
 
-export default function RewardsPage() {
+function RewardsPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -1180,4 +1182,27 @@ export default function RewardsPage() {
       </Dialog>
     </div>
   );
+}
+
+/** Plan rule: Premium and Family plans. */
+export default function RewardsPage() {
+  const { hasFeature } = useSubscriptionEnforcement();
+  if (!hasFeature('rewards')) {
+    return (
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <PremiumFeaturePrompt
+              title="Rewards & Points"
+              description="Turn completed tasks into rewards, badges and achievements."
+              feature="rewards"
+              requiredPlan="premium"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+  return <RewardsPageContent />;
 }

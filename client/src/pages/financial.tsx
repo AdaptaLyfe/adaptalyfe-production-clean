@@ -488,8 +488,8 @@ export default function Financial() {
           <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-bright-blue rounded-lg flex items-center justify-center">
-                  <DollarSign className="text-white" size={24} />
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-emerald-50 ring-1 ring-inset ring-emerald-100 flex items-center justify-center">
+                  <DollarSign className="text-emerald-600" size={22} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Income</p>
@@ -502,8 +502,8 @@ export default function Financial() {
           <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-sunny-orange rounded-lg flex items-center justify-center">
-                  <CreditCard className="text-white" size={24} />
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-rose-50 ring-1 ring-inset ring-rose-100 flex items-center justify-center">
+                  <CreditCard className="text-rose-600" size={22} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Total Expenses</p>
@@ -516,8 +516,8 @@ export default function Financial() {
           <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-vibrant-green rounded-lg flex items-center justify-center">
-                  <CheckCircle className="text-white" size={24} />
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-indigo-50 ring-1 ring-inset ring-indigo-100 flex items-center justify-center">
+                  <CheckCircle className="text-indigo-600" size={22} />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Budget Status</p>
@@ -559,7 +559,7 @@ export default function Financial() {
                       <Dialog open={showBudgetDialog} onOpenChange={setShowBudgetDialog}>
                         <DialogTrigger asChild>
                           <Button
-                            className="bg-red-600 hover:bg-red-700 text-white text-sm sm:text-base whitespace-nowrap"
+                            variant="outline" className="rounded-xl border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-sm sm:text-base whitespace-nowrap"
                             onClick={() => openBudgetDialog("expense")}
                           >
                             <Plus size={16} className="mr-1 sm:mr-2" />
@@ -664,7 +664,7 @@ export default function Financial() {
                         </DialogContent>
                       </Dialog>
                       <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base whitespace-nowrap"
+                        className="rounded-xl text-sm sm:text-base whitespace-nowrap"
                         onClick={() => openBudgetDialog("income")}
                       >
                         <Plus size={16} className="mr-1 sm:mr-2" />
@@ -683,16 +683,15 @@ export default function Financial() {
                         {budgetUsed < 80 ? "On track" : budgetUsed < 100 ? "Watch spending" : "Over budget"}
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner">
+                    <div className="w-full bg-slate-100 rounded-full h-2.5">
                       <div 
-                        className={`h-4 rounded-full transition-all duration-500 ${
-                          budgetUsed < 80 ? "bg-gradient-to-r from-green-400 to-green-600" : 
+                        className={`h-2.5 rounded-full transition-all duration-500 ${
+                          budgetUsed < 80 ? "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600" : 
                           budgetUsed < 100 ? "bg-gradient-to-r from-yellow-400 to-orange-500" : 
                           "bg-gradient-to-r from-red-400 to-red-600"
                         }`}
                         style={{ width: `${Math.min(budgetUsed, 100)}%` }}
                       >
-                        <div className="h-full rounded-full opacity-30 bg-white"></div>
                       </div>
                     </div>
                     <div className="flex justify-between items-center mt-3">
@@ -1156,9 +1155,9 @@ export default function Financial() {
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-slate-100 rounded-full h-2">
                             <div 
-                              className="h-2 bg-vibrant-green rounded-full"
+                              className="h-2 bg-gradient-to-r from-blue-600 to-violet-600 rounded-full"
                               style={{ width: `${Math.min(progress, 100)}%` }}
                             />
                           </div>

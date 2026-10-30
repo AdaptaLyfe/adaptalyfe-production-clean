@@ -62,8 +62,8 @@ export default function AcademicPlanner() {
           title="Academic Planner"
           description="Manage classes, assignments, study sessions, and campus navigation. This comprehensive academic tool helps students with developmental disabilities succeed in their educational journey."
           feature="advancedAnalytics"
-          requiredPlan="family"
-          className="max-w-md mx-auto mt-20"
+          requiredPlan="premium"
+          className="max-w-md mx-auto mt-6 sm:mt-10"
         />
       </div>
     );

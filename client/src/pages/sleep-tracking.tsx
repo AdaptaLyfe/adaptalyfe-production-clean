@@ -41,6 +41,8 @@ import {
   getSleepRoutineTimeValidationError,
 } from '@shared/sleep-time-validation';
 import { useToast } from '@/hooks/use-toast';
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 
 interface SleepSession {
   id: number;
@@ -93,7 +95,7 @@ interface SleepGoal {
   targetWakeTime: string; // HH:MM format
 }
 
-export default function SleepTracking() {
+function SleepTrackingContent() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLogging, setIsLogging] = useState(false);
   const [sleepLogMode, setSleepLogMode] = useState<SleepLogMode>('create');
@@ -895,4 +897,27 @@ function formatDuration(minutes: number | null) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours}h ${mins}m`;
+}
+
+/** Plan rule: every plan (Basic, Premium, Family) and the free trial. */
+export default function SleepTracking() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+  if (!isPremiumUser) {
+    return (
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <PremiumFeaturePrompt
+              title="Sleep Routine"
+              description="Monitor your sleep patterns and improve your rest quality."
+              feature="sleep"
+              requiredPlan="premium"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+  return <SleepTrackingContent />;
 }

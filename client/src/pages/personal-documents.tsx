@@ -19,6 +19,8 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 import { z } from "zod";
 import { formatDistanceToNow } from "date-fns";
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 
 const CATEGORIES = [
   { value: "insurance", label: "Insurance", icon: Shield },
@@ -77,7 +79,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function PersonalDocuments() {
+function PersonalDocumentsContent() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<any>(null);
   const [docType, setDocType] = useState<"text" | "image" | "link">("text");
@@ -655,4 +657,28 @@ export default function PersonalDocuments() {
       )}
     </div>
   );
+}
+
+
+/** Personal Documents are part of Personal Records (Premium and Family plans). */
+export default function PersonalDocuments() {
+  const { hasFeature } = useSubscriptionEnforcement();
+  if (!hasFeature("personalRecords")) {
+    return (
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <PremiumFeaturePrompt
+              title="Personal Documents"
+              description="Store important information you need to remember, like IDs, insurance and medical cards."
+              feature="personalRecords"
+              requiredPlan="premium"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+  return <PersonalDocumentsContent />;
 }

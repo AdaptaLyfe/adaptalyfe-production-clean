@@ -45,7 +45,12 @@ export function paidSubscriptionTier(user: SubscriptionAccount, now = new Date()
 
 export function requiredSubscriptionTierForPath(path: string): "premium" | "family" | null {
   if (/^\/family-members(?:\/|$)/.test(path)) return "family";
-  if (/^\/(?:meal-plans|shopping-lists|grocery-stores|medications|refill-orders|academic-classes|assignments|study-sessions|study-groups|campus-locations|campus-transport|class-schedules)(?:\/|$)/.test(path)) return "premium";
+  // In-app messaging (user side). Caregiver endpoints live under /caregiver/... and are not matched.
+  if (/^\/messages(?:\/|$)/.test(path)) return "family";
+  // Skill challenges / milestones and expanded rewards are Premium. /rewards/caregiver (caregiver side) is excluded.
+  if (/^\/transition-skills(?:\/|$)/.test(path)) return "premium";
+  if (/^\/rewards(?:\/(?!caregiver(?:\/|$))|$)/.test(path)) return "premium";
+  if (/^\/(?:allergies|medical-conditions|adverse-medications|personal-documents|meal-plans|shopping-lists|grocery-stores|medications|refill-orders|academic-classes|assignments|study-sessions|study-groups|campus-locations|campus-transport|class-schedules)(?:\/|$)/.test(path)) return "premium";
   return null;
 }
 
@@ -60,6 +65,9 @@ export function createSubscriptionFeatureGuard(
     try {
       const user = await getUser(req.session.userId);
       if (!user) return res.status(401).json({ message: "Please sign in again." });
+      // Caregiver accounts act for the people they support; their access is governed by
+      // caregiver permissions, not by a subscription of their own.
+      if (user.accountType === "caregiver") return next();
       const tier = paidSubscriptionTier(user);
       if (tier === "admin" || tier === "family" || (required === "premium" && tier === "premium")) {
         req.session.user = {

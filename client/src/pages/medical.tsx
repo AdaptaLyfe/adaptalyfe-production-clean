@@ -3,20 +3,20 @@ import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 
 export default function Medical() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { hasFeature } = useSubscriptionEnforcement();
   
-  // Block access if trial expired and no active subscription
-  if (!isPremiumUser) {
+  // Health Records are part of Personal Records (Premium and Family plans).
+  if (!hasFeature('personalRecords')) {
     return (
       <div className="min-h-screen bg-gray-50">
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <PremiumFeaturePrompt
               title="Health Records"
-              description="Store personal health-related details such as sensitivities and trusted contacts for reference."
-              feature="medical"
+              description="Keep your sensitivities, conditions, medication reactions and healthcare contacts in one safe place."
+              feature="personalRecords"
               requiredPlan="premium"
-              className="max-w-md mx-auto mt-20"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
             />
           </div>
         </main>

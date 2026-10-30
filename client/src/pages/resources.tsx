@@ -10,6 +10,8 @@ import PersonalResourcesModule from "@/components/personal-resources-module";
 import EmergencyContacts from "@/components/emergency-contacts";
 import { DataExportBackup } from "@/components/data-export-backup";
 import { EnhancedNotificationSystem } from "@/components/enhanced-notification-system";
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 
 const educationalContent = {
   anxiety: {
@@ -49,7 +51,7 @@ const educationalContent = {
   }
 };
 
-export default function Resources() {
+function ResourcesContent() {
   const [breathingActive, setBreathingActive] = useState(false);
   const [breathingPhase, setBreathingPhase] = useState<"inhale" | "hold" | "exhale">("inhale");
   const [breathingProgress, setBreathingProgress] = useState(0);
@@ -522,4 +524,28 @@ export default function Resources() {
       </div>
     </div>
   );
+}
+
+
+/** Plan rule: every plan (Basic, Premium, Family) and the free trial. */
+export default function Resources() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+  if (!isPremiumUser) {
+    return (
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <PremiumFeaturePrompt
+              title="Helpful Resources"
+              description="Trusted contacts and resources to support your daily wellbeing."
+              feature="resources"
+              requiredPlan="premium"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+  return <ResourcesContent />;
 }

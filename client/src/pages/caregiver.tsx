@@ -31,7 +31,9 @@ const messageSchema = z.object({
 });
 
 export default function Caregiver() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { isPremiumUser, hasFeature } = useSubscriptionEnforcement();
+  // Caregiver connections: every plan. In-app messaging and progress sharing: Family plan.
+  const canMessage = hasFeature('caregiverMessaging');
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showCaregiverDialog, setCaregiverDialog] = useState(false);
@@ -59,6 +61,7 @@ export default function Caregiver() {
 
   const { data: messages = [], isLoading: messagesLoading } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
+    enabled: canMessage,
   });
 
   const { data: user } = useQuery<User>({
@@ -223,11 +226,12 @@ export default function Caregiver() {
             </div>
             <Button
               className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
-              onClick={() => shareProgressMutation.mutate()}
-              disabled={shareProgressMutation.isPending || caregivers.length === 0}
+              onClick={() => canMessage ? shareProgressMutation.mutate() : setLocation('/subscription?plan=family')}
+              disabled={canMessage && (shareProgressMutation.isPending || caregivers.length === 0)}
+              title={canMessage ? undefined : 'Sharing progress with caregivers is part of the Family plan'}
             >
               <Share size={16} className="mr-2" />
-              Share Progress
+              {canMessage ? 'Share Progress' : 'Share Progress · Family'}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -386,7 +390,7 @@ export default function Caregiver() {
                 <MessageCircle className="text-bright-blue" size={24} />
                 <span>Messages</span>
               </div>
-              <Dialog open={showMessageDialog} onOpenChange={setMessageDialog}>
+              {canMessage && (<Dialog open={showMessageDialog} onOpenChange={setMessageDialog}>
                 <DialogTrigger asChild>
                   <Button 
                     className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
@@ -449,10 +453,19 @@ export default function Caregiver() {
                     </form>
                   </Form>
                 </DialogContent>
-              </Dialog>
+              </Dialog>)}
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {!canMessage ? (
+              <div className="flex flex-col items-center gap-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-5 py-8 text-center">
+                <p className="font-semibold text-slate-800">Messaging is part of the Family plan</p>
+                <p className="max-w-sm text-sm text-slate-600">
+                  Message your caregivers and share your progress with them by upgrading to Family.
+                </p>
+                <Button onClick={() => setLocation('/subscription?plan=family')}>See Family plan</Button>
+              </div>
+            ) : (<>
             <div className="space-y-4">
               {recentMessages.length === 0 ? (
                 <p className="text-gray-600 text-center py-8">
@@ -497,6 +510,7 @@ export default function Caregiver() {
                 </Button>
               </div>
             )}
+            </>)}
           </CardContent>
         </Card>
       </div>

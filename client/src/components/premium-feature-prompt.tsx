@@ -1,9 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Lock, Star, Zap, Crown } from "lucide-react";
+import { Check, Crown, Lock, Sparkles } from "lucide-react";
 import { Link } from "wouter";
-import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
 interface PremiumFeaturePromptProps {
   title: string;
@@ -13,60 +10,73 @@ interface PremiumFeaturePromptProps {
   className?: string;
 }
 
-export default function PremiumFeaturePrompt({ 
-  title, 
-  description, 
-  feature, 
+const PLAN_INFO = {
+  premium: {
+    name: "Premium",
+    price: "$12.99/month or $129.99/year",
+    perks: ["Health records & documents", "Meals, medications & student planner", "Life skills & rewards"],
+  },
+  family: {
+    name: "Family",
+    price: "$24.99/month or $249.99/year",
+    perks: ["Everything in Premium", "Caregiver messaging", "Up to 5 family member accounts"],
+  },
+} as const;
+
+/** Shown in place of a page the current plan doesn't include. */
+export default function PremiumFeaturePrompt({
+  title,
+  description,
   requiredPlan,
-  className = "" 
+  className = "",
 }: PremiumFeaturePromptProps) {
-  const planColors = {
-    premium: "from-purple-600 to-pink-600",
-    family: "from-blue-600 to-purple-600"
-  };
-
-  const planIcons = {
-    premium: Star,
-    family: Crown
-  };
-
-  const PlanIcon = planIcons[requiredPlan];
+  const plan = PLAN_INFO[requiredPlan];
+  const PlanIcon = requiredPlan === "family" ? Crown : Sparkles;
 
   return (
-    <Card className={`border-2 border-dashed border-gray-300 bg-gray-50 ${className}`}>
-      <CardHeader className="text-center">
-        <div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-          <Lock className="w-8 h-8 text-gray-500" />
-        </div>
-        <CardTitle className="text-lg text-gray-700">
-          {title}
-        </CardTitle>
-        <Badge 
-          variant="secondary" 
-          className={`bg-gradient-to-r ${planColors[requiredPlan]} text-white`}
-        >
-          <PlanIcon className="w-3 h-3 mr-1" />
-          {requiredPlan === 'premium' ? 'Premium' : 'Family'} Feature
-        </Badge>
-      </CardHeader>
-      <CardContent className="text-center space-y-4">
-        <p className="text-gray-600 text-sm">
-          {description}
-        </p>
-        <div className="space-y-2">
+    <div
+      className={`relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-8 text-center shadow-[0_8px_30px_rgba(15,23,42,0.06)] sm:p-10 ${className}`}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-indigo-50 via-violet-50/40 to-transparent" />
+
+      <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25">
+        <Lock className="h-7 w-7 text-white" />
+      </div>
+
+      <span className="relative inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+        <PlanIcon className="h-3.5 w-3.5" />
+        {plan.name} feature
+      </span>
+
+      <h2 className="relative mt-3 text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
+      <p className="relative mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-600">{description}</p>
+
+      <ul className="relative mx-auto mt-6 max-w-xs space-y-2 text-left">
+        {plan.perks.map((perk) => (
+          <li key={perk} className="flex items-center gap-2.5 text-sm text-slate-700">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+              <Check className="h-3.5 w-3.5" strokeWidth={3} />
+            </span>
+            {perk}
+          </li>
+        ))}
+      </ul>
+
+      <div className="relative mt-7">
+        <Link href={`/subscription?plan=${requiredPlan}`}>
+          <Button className="h-11 w-full rounded-xl text-base font-semibold">
+            Upgrade to {plan.name}
+          </Button>
+        </Link>
+        <div className="mt-4">
           <Link href="/subscription">
-            <Button 
-              className={`w-full bg-gradient-to-r ${planColors[requiredPlan]} hover:opacity-90 text-white`}
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Upgrade to {requiredPlan === 'premium' ? 'Premium' : 'Family'}
-            </Button>
+            <span className="cursor-pointer text-sm font-medium text-indigo-600 hover:text-indigo-700">
+              Compare all plans
+            </span>
           </Link>
-          <p className="text-xs text-gray-500">
-            Start with a {FREE_TRIAL_DAYS}-day free trial
-          </p>
         </div>
-      </CardContent>
-    </Card>
+        <p className="mt-2 text-xs text-slate-500">{plan.price} · Cancel anytime</p>
+      </div>
+    </div>
   );
 }

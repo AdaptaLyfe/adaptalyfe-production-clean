@@ -1,3 +1,5 @@
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,7 +132,7 @@ const categoryConfig = {
   health: { label: "Health & Wellness", icon: Brain, color: "bg-teal-500" },
 };
 
-export default function SkillsMilestones() {
+function SkillsMilestonesContent() {
   const queryClient = useQueryClient();
   const [isAddSkillOpen, setIsAddSkillOpen] = useState(false);
   const [isEditSkillOpen, setIsEditSkillOpen] = useState(false);
@@ -972,4 +974,27 @@ export default function SkillsMilestones() {
       )}
     </div>
   );
+}
+
+/** Plan rule: Premium and Family plans. */
+export default function SkillsMilestones() {
+  const { hasFeature } = useSubscriptionEnforcement();
+  if (!hasFeature('skillsMilestones')) {
+    return (
+      <div className="min-h-screen">
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <PremiumFeaturePrompt
+              title="Skills & Milestones"
+              description="Track life skills, set goals and celebrate milestones with skill challenges."
+              feature="skillsMilestones"
+              requiredPlan="premium"
+              className="max-w-md mx-auto mt-6 sm:mt-10"
+            />
+          </div>
+        </main>
+      </div>
+    );
+  }
+  return <SkillsMilestonesContent />;
 }

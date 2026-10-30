@@ -209,3 +209,34 @@ test("trial never shows more than 7 days, even with a sign-up time in the future
   );
   assert.equal(response.trialDaysLeft, 7);
 });
+
+test("Personal Records: off for the account trial and Basic, on for Premium and Family", () => {
+  const base = { accountType: "user", subscriptionPlatform: "web", stripeSubscriptionId: "sub_x", subscriptionStatus: "active" };
+  const trial = buildSubscriptionResponse({ id: 1, accountType: "user", subscriptionTier: "free", subscriptionStatus: "inactive", subscriptionPlatform: "web", createdAt: now }, now);
+  const basic = buildSubscriptionResponse({ id: 2, ...base, subscriptionTier: "basic", createdAt: now }, now);
+  const premium = buildSubscriptionResponse({ id: 3, ...base, subscriptionTier: "premium", createdAt: now }, now);
+  const family = buildSubscriptionResponse({ id: 4, ...base, subscriptionTier: "family", createdAt: now }, now);
+  assert.equal(trial.features.personalRecords, false);
+  assert.equal(basic.features.personalRecords, false);
+  assert.equal(premium.features.personalRecords, true);
+  assert.equal(family.features.personalRecords, true);
+});
+
+test("Skills, Rewards: Premium and Family; caregiver messaging: Family only", () => {
+  const base = { accountType: "user", subscriptionPlatform: "web", stripeSubscriptionId: "sub_x", subscriptionStatus: "active", createdAt: now };
+  const trial = buildSubscriptionResponse({ id: 1, accountType: "user", subscriptionTier: "free", subscriptionStatus: "inactive", subscriptionPlatform: "web", createdAt: now }, now);
+  const basic = buildSubscriptionResponse({ id: 2, ...base, subscriptionTier: "basic" }, now);
+  const premium = buildSubscriptionResponse({ id: 3, ...base, subscriptionTier: "premium" }, now);
+  const family = buildSubscriptionResponse({ id: 4, ...base, subscriptionTier: "family" }, now);
+  for (const r of [trial, basic]) {
+    assert.equal(r.features.skillsMilestones, false);
+    assert.equal(r.features.rewards, false);
+    assert.equal(r.features.caregiverMessaging, false);
+  }
+  assert.equal(premium.features.skillsMilestones, true);
+  assert.equal(premium.features.rewards, true);
+  assert.equal(premium.features.caregiverMessaging, false);
+  assert.equal(family.features.skillsMilestones, true);
+  assert.equal(family.features.rewards, true);
+  assert.equal(family.features.caregiverMessaging, true);
+});

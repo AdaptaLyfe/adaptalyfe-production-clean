@@ -68,3 +68,15 @@ test("missing or invalid sign-up date: no trial", () => {
   assert.equal(stripeTrialEndForCheckout({ createdAt: null }, null, now), null);
   assert.equal(stripeTrialEndForCheckout({ createdAt: "not a date" }, null, now), null);
 });
+
+import { isConfirmedPlanSwitch } from "./stripe-trial-policy";
+
+test("plan switch by a paying customer keeps the current subscription until confirmed", () => {
+  const paying = { createdAt: now, subscriptionProductId: "stripe_premium_monthly", subscriptionStatus: "active" };
+  assert.equal(isConfirmedPlanSwitch(paying, { status: "trialing", trial_end: 1 }), true);
+  assert.equal(isConfirmedPlanSwitch(paying, { status: "active" }), true);
+  // Not a switch: no confirmed subscription yet, or the old one is already gone.
+  assert.equal(isConfirmedPlanSwitch({ createdAt: now, subscriptionProductId: null, subscriptionStatus: "pending" }, { status: "trialing" }), false);
+  assert.equal(isConfirmedPlanSwitch(paying, { status: "canceled" }), false);
+  assert.equal(isConfirmedPlanSwitch(paying, null), false);
+});

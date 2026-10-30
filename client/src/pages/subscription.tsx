@@ -377,6 +377,22 @@ export default function SubscriptionPage() {
   // Get current user and subscription status
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
   const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"] });
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancelSubscriptionMutation = useMutation({
+    mutationFn: async () => (await apiRequest("POST", "/api/cancel-subscription")).json(),
+    onSuccess: (data: { accessUntil: string }) => {
+      setConfirmCancel(false);
+      toast({
+        title: "Subscription cancelled",
+        description: `You keep full access until ${new Date(data.accessUntil).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}. You won't be charged again.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+    },
+    onError: (error: any) => {
+      toast({ title: "Could not cancel", description: error?.message || "Please try again.", variant: "destructive" });
+    },
+  });
   const hasActiveSubscription = user?.subscriptionStatus === 'active';
   const activeSubscriptionLabel = user?.subscriptionPlatform === 'web'
     ? 'website'
@@ -676,6 +692,53 @@ export default function SubscriptionPage() {
             </div>
           )}
 
+          {/* Manage / cancel a website (Stripe) subscription */}
+          {user?.subscriptionStatus === 'active' && (subscription?.subscriptionPlatform ?? user?.subscriptionPlatform) === 'web' && (() => {
+            const endsAt = subscription?.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : null;
+            const endLabel = endsAt && Number.isFinite(endsAt.getTime())
+              ? endsAt.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+              : null;
+            const willCancel = subscription?.autoRenew === false;
+            return (
+              <div className="max-w-xl mx-auto mb-6 rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-slate-900">Billing</p>
+                    <p className="text-sm text-slate-600">
+                      {willCancel
+                        ? <>Cancelled. Your access ends{endLabel ? <> on <span className="font-medium text-slate-800">{endLabel}</span></> : null} and you won't be charged again.</>
+                        : <>Renews automatically{endLabel ? <> on <span className="font-medium text-slate-800">{endLabel}</span></> : null}.</>}
+                    </p>
+                  </div>
+                  {!willCancel && !confirmCancel && (
+                    <Button variant="outline" className="rounded-xl border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700" onClick={() => setConfirmCancel(true)}>
+                      Cancel subscription
+                    </Button>
+                  )}
+                </div>
+                {confirmCancel && !willCancel && (
+                  <div className="mt-4 rounded-xl border border-rose-100 bg-rose-50/60 p-4">
+                    <p className="text-sm text-slate-700">
+                      Cancel your {user.subscriptionTier} plan? You keep full access{endLabel ? ` until ${endLabel}` : " until the end of the current period"}, and you won't be charged again.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Button
+                        className="rounded-xl bg-rose-600 text-white hover:bg-rose-700"
+                        disabled={cancelSubscriptionMutation.isPending}
+                        onClick={() => cancelSubscriptionMutation.mutate()}
+                      >
+                        {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Yes, cancel"}
+                      </Button>
+                      <Button variant="outline" className="rounded-xl" onClick={() => setConfirmCancel(false)}>
+                        Keep my plan
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {!onAndroid && (
             <div className="flex justify-center mb-4" role="group" aria-label="Billing period">
               <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm">
@@ -864,16 +927,42 @@ export default function SubscriptionPage() {
                 
                 {hasActiveSubscription ? (
                   <div className="space-y-2">
-                    <Button disabled className="w-full h-11 rounded-xl">
-                      {user?.subscriptionTier === planKey ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Current Plan
-                        </>
-                      ) : (
-                        "Subscription Already Active"
-                      )}
-                    </Button>
+                    {(() => {
+                      const isWeb = (subscription?.subscriptionPlatform ?? user?.subscriptionPlatform) === 'web';
+                      const currentCycle = subscription?.billingCycle === 'annual' ? 'annual' : 'monthly';
+                      const isCurrent = user?.subscriptionTier === planKey && (!isWeb || currentCycle === billingCycle);
+                      if (isCurrent) {
+                        return (
+                          <Button disabled className="w-full h-11 rounded-xl">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Current Plan
+                          </Button>
+                        );
+                      }
+                      if (!isWeb) {
+                        return (
+                          <Button disabled className="w-full h-11 rounded-xl">
+                            Subscription Already Active
+                          </Button>
+                        );
+                      }
+                      // Website subscribers can switch plan or billing period. The old
+                      // subscription is cancelled and any running free trial keeps its end date.
+                      return (
+                        <Button
+                          variant="outline"
+                          onClick={() => handlePlanSelect(planKey)}
+                          disabled={createSubscriptionMutation.isPending}
+                          className="w-full h-11 rounded-xl font-semibold border-2 border-indigo-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50"
+                        >
+                          {createSubscriptionMutation.isPending && selectedPlan === planKey
+                            ? "Setting up..."
+                            : user?.subscriptionTier === planKey
+                              ? `Switch to ${billingCycle === 'annual' ? 'yearly' : 'monthly'}`
+                              : `Switch to ${plan.name.replace(' Plan', '')}`}
+                        </Button>
+                      );
+                    })()}
                     {planKey === 'family' && user?.subscriptionTier === planKey && (
                       <Button
                         variant="outline"

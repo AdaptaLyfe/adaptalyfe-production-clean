@@ -17,7 +17,7 @@ export default function MealShopping() {
           description="Create personalized meal plans, manage recipes, and generate smart shopping lists. This premium feature helps you maintain a healthy diet and budget."
           feature="mealPlanning"
           requiredPlan="premium"
-          className="max-w-md mx-auto mt-20"
+          className="max-w-md mx-auto mt-6 sm:mt-10"
         />
       </div>
     );

@@ -142,6 +142,11 @@ export function buildSubscriptionResponse(
       wearableDevices: isPremiumPlan,
       mealPlanning: isPremiumPlan,
       medicationManagement: isPremiumPlan,
+      // Personal Records (Health Records + Personal Documents) are Premium.
+      personalRecords: isPremiumPlan,
+      skillsMilestones: isPremiumPlan,
+      rewards: isPremiumPlan,
+      caregiverMessaging: isFamilyPlan,
       advancedAnalytics: isPremiumPlan,
       voiceCommands: isPremiumPlan,
       academicPlanner: isPremiumPlan,
