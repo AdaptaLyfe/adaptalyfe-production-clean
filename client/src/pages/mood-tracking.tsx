@@ -132,7 +132,7 @@ export default function MoodTracking() {
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Mood Log</h1>
         
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-t-4 border-happy-purple">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-happy-purple rounded-lg flex items-center justify-center">
@@ -148,7 +148,7 @@ export default function MoodTracking() {
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-sunny-orange">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-sunny-orange rounded-lg flex items-center justify-center">
@@ -162,7 +162,7 @@ export default function MoodTracking() {
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-vibrant-green">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-vibrant-green rounded-lg flex items-center justify-center">
@@ -179,7 +179,7 @@ export default function MoodTracking() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <Card className="border-t-4 border-happy-purple">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
           <CardHeader>
             <CardTitle>How are you feeling today?</CardTitle>
           </CardHeader>
@@ -235,7 +235,7 @@ export default function MoodTracking() {
                 </div>
 
                 <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   onClick={handleSubmitMood}
                   disabled={!selectedMood || moodMutation.isPending}
                 >
@@ -246,7 +246,7 @@ export default function MoodTracking() {
           </CardContent>
         </Card>
 
-        <Card className="border-t-4 border-bright-blue">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Check-ins</CardTitle>
           </CardHeader>

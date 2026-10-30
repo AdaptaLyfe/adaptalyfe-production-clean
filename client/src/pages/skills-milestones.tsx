@@ -537,7 +537,7 @@ export default function SkillsMilestones() {
 
         <Dialog open={isAddSkillOpen} onOpenChange={setIsAddSkillOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700 text-white">
+            <Button className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110">
               <Plus size={16} className="mr-2" />
               Add Skill Milestone
             </Button>
@@ -964,7 +964,7 @@ export default function SkillsMilestones() {
               : `No skills found in the ${categoryConfig[selectedCategory as keyof typeof categoryConfig]?.label || selectedCategory} category.`
             }
           </p>
-          <Button onClick={() => setIsAddSkillOpen(true)} className="bg-green-600 hover:bg-green-700 text-white">
+          <Button onClick={() => setIsAddSkillOpen(true)} className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110">
             <Plus size={16} className="mr-2" />
             Add Your First Skill
           </Button>

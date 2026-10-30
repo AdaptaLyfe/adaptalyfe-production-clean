@@ -783,7 +783,7 @@ export default function PharmacyModule() {
                             <Button 
                               size="sm" 
                               onClick={() => window.open(userPharmacy.pharmacy?.refillUrl, '_blank')}
-                              className="flex-1 bg-blue-600 hover:bg-blue-700"
+                              className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                             >
                               <RefreshCw className="w-3 h-3 mr-1" />
                               Order Refills

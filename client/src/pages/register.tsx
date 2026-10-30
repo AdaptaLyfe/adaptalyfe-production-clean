@@ -31,6 +31,24 @@ export default function Register() {
   const [hasInvitation, setHasInvitation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Plan and billing period picked on the landing page (?plan=premium&billing=yearly).
+  // They are carried through to /subscription so the user doesn't have to choose again.
+  const [chosenPlan] = useState<{ plan: "basic" | "premium" | "family"; cycle: "monthly" | "annual" } | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get("plan");
+      const billing = params.get("billing") ?? params.get("billingCycle");
+      if (plan !== "basic" && plan !== "premium" && plan !== "family") return null;
+      const cycle = billing === "yearly" || billing === "annual" ? "annual" : "monthly";
+      return { plan, cycle };
+    } catch {
+      return null;
+    }
+  });
+  const chosenPlanLabel = chosenPlan
+    ? `${chosenPlan.plan === "family" ? "Family / Care Team" : chosenPlan.plan === "premium" ? "Premium" : "Basic"} · ${chosenPlan.cycle === "annual" ? "Yearly" : "Monthly"}`
+    : null;
+
   // Redirect authenticated users to dashboard (prevents back button loop)
   useEffect(() => {
     const sessionToken = getSessionToken();
@@ -138,7 +156,11 @@ export default function Register() {
         }
       } else {
         // Redirect to subscription page so users can choose and activate their plan
-        setLocation("/subscription");
+        setLocation(
+          chosenPlan
+            ? `/subscription?plan=${chosenPlan.plan}&billingCycle=${chosenPlan.cycle}`
+            : "/subscription",
+        );
       }
     } catch (error: any) {
       toast({
@@ -167,6 +189,14 @@ export default function Register() {
             <CardDescription className="text-base">
               Start your independence journey with Adaptalyfe
             </CardDescription>
+            {chosenPlanLabel && (
+              <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
+                Selected plan: {chosenPlanLabel}
+                <Link href="/#pricing" className="text-xs font-semibold text-violet-600 underline underline-offset-2">
+                  Change
+                </Link>
+              </div>
+            )}
           </CardHeader>
           
           <CardContent>

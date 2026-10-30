@@ -464,7 +464,7 @@ export default function Landing() {
                       : "bg-emerald-100 text-emerald-700"
                   }`}
                 >
-                  Save up to 18%
+                  Save up to 17%
                 </span>
               </button>
             </div>
@@ -486,8 +486,8 @@ export default function Landing() {
                   ring: "border border-slate-200 shadow-sm",
                 },
                 monthly: "$4.99",
-                yearly: "$49",
-                save: "Save 18%",
+                yearly: "$49.99",
+                save: "Save 17%",
                 features: [
                   "Daily task management",
                   "Basic progress tracking",
@@ -509,7 +509,7 @@ export default function Landing() {
                   ring: "border-2 border-violet-300 shadow-[0_20px_45px_-18px_rgba(109,40,217,0.35)]",
                 },
                 monthly: "$12.99",
-                yearly: "$129",
+                yearly: "$129.99",
                 save: "Save 17%",
                 features: [
                   "Everything in Basic",
@@ -532,7 +532,7 @@ export default function Landing() {
                   ring: "border border-slate-200 shadow-sm",
                 },
                 monthly: "$24.99",
-                yearly: "$249",
+                yearly: "$249.99",
                 save: "Save 17%",
                 features: [
                   "Everything in Premium",

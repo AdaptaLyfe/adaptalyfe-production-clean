@@ -100,6 +100,36 @@ function SidebarContent({
 }) {
   const isAdmin = user?.accountType === "admin" || user?.username === "admin";
 
+  // Decide what the sidebar upsell card should say (or hide it) from the
+  // user's real subscription, so paying customers aren't asked to upgrade.
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery<{
+    planType?: string;
+    status?: string;
+    isAccountTrial?: boolean;
+    trialDaysLeft?: number | null;
+  }>({
+    queryKey: ["/api/subscription"],
+    enabled: !!user,
+  });
+  const planType = (subscription?.planType ?? "").toLowerCase();
+  const status = (subscription?.status ?? "").toLowerCase();
+  const hasPaidAccess =
+    !subscription?.isAccountTrial && (status === "active" || status === "trialing");
+  const upsell: { title: string; text: string; cta: string } | null =
+    isAdmin || subscriptionLoading || !user
+      ? null
+      : hasPaidAccess && (planType === "premium" || planType === "family" || planType === "lifetime")
+        ? null
+        : hasPaidAccess && planType === "basic"
+          ? { title: "Upgrade to Premium", text: "Add mood tools, personal records and AI guidance.", cta: "Compare plans" }
+          : subscription?.isAccountTrial && typeof subscription.trialDaysLeft === "number" && subscription.trialDaysLeft > 0
+            ? {
+                title: `Free trial · ${subscription.trialDaysLeft} day${subscription.trialDaysLeft === 1 ? "" : "s"} left`,
+                text: "Choose a plan to keep full access after your trial.",
+                cta: "View Plans",
+              }
+            : { title: "Upgrade to Premium", text: "Unlock more features and caregiver tools.", cta: "View Plans" };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
@@ -168,18 +198,20 @@ function SidebarContent({
           </div>
         )}
 
-        <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-purple-100 border border-violet-100 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Crown className="h-4 w-4 text-violet-600" />
-            <p className="text-sm font-semibold text-violet-900">Upgrade to Premium</p>
+        {upsell && (
+          <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-purple-100 border border-violet-100 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown className="h-4 w-4 text-violet-600" />
+              <p className="text-sm font-semibold text-violet-900">{upsell.title}</p>
+            </div>
+            <p className="text-xs text-violet-700/80 mb-3">{upsell.text}</p>
+            <Link href="/subscription" onClick={onNavigate}>
+              <span className="inline-flex w-full items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-2 cursor-pointer transition-colors">
+                {upsell.cta}
+              </span>
+            </Link>
           </div>
-          <p className="text-xs text-violet-700/80 mb-3">Unlock more features and caregiver tools.</p>
-          <Link href="/subscription" onClick={onNavigate}>
-            <span className="inline-flex w-full items-center justify-center rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-2 cursor-pointer transition-colors">
-              View Plans
-            </span>
-          </Link>
-        </div>
+        )}
       </div>
     </div>
   );

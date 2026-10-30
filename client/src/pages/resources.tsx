@@ -259,7 +259,7 @@ export default function Resources() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         {/* Breathing Exercise */}
-        <Card className="border-t-4 border-happy-purple">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
               <Wind className="text-happy-purple" size={20} />
@@ -293,7 +293,7 @@ export default function Resources() {
               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 px-2">
                 {!breathingActive ? (
                   <Button
-                    className="bg-happy-purple hover:bg-happy-purple text-white w-full sm:w-auto"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110 w-full sm:w-auto"
                     onClick={startBreathing}
                   >
                     <Play size={16} className="mr-2" />
@@ -328,7 +328,7 @@ export default function Resources() {
         </Card>
 
         {/* Coping Strategies */}
-        <Card className="border-t-4 border-vibrant-green">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
               <Lightbulb className="text-vibrant-green" size={20} />
@@ -388,7 +388,7 @@ export default function Resources() {
       </div>
 
       {/* Educational Resources */}
-      <Card className="border-t-4 border-sunny-orange mt-6 sm:mt-8">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm mt-6 sm:mt-8">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center space-x-2 sm:space-x-3 text-lg sm:text-xl">
             <BookOpen className="text-sunny-orange" size={20} />

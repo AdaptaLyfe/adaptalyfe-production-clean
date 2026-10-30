@@ -42,9 +42,16 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    // Theme: plain primary buttons get the brand gradient. Buttons that set
+    // their own background colour (e.g. red "Delete", green "Call") keep it.
+    const hasCustomBackground = /(^|\s)bg-(?!opacity)/.test(className ?? "")
+    const themedPrimary =
+      (variant ?? "default") === "default" && !hasCustomBackground
+        ? "border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
+        : undefined
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size }), themedPrimary, className)}
         ref={ref}
         {...props}
       />

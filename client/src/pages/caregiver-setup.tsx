@@ -417,7 +417,7 @@ export default function CaregiverSetup() {
 
                   <Button 
                     type="submit" 
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                     disabled={createInvitationMutation.isPending}
                     onClick={() => {
                       console.log("Create Invitation button clicked");
@@ -448,7 +448,7 @@ export default function CaregiverSetup() {
                   <p className="text-gray-600 mb-4">Create your first caregiver invitation to get started</p>
                   <Button 
                     onClick={() => setActiveTab("create")}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     Create Invitation
                   </Button>
@@ -562,7 +562,7 @@ export default function CaregiverSetup() {
                   <p className="text-gray-600 mb-4">When caregivers accept invitations, they'll appear here</p>
                   <Button 
                     onClick={() => setActiveTab("create")}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     Send First Invitation
                   </Button>
@@ -692,7 +692,7 @@ export default function CaregiverSetup() {
         <CardContent className="p-6 text-center">
           <h3 className="text-lg font-medium text-gray-900 mb-2">Professional Healthcare Positioning</h3>
           <p className="text-gray-600 mb-4">
-            SkillBridge is designed to support individuals with neurodevelopmental disorders in building independence 
+            Adaptalyfe is designed to support individuals with neurodevelopmental disorders in building independence 
             while maintaining strong connections with their care team. Perfect for families, therapists, and healthcare providers.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -733,7 +733,7 @@ export default function CaregiverSetup() {
                 
                 <div className="space-y-3">
                   <Button 
-                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110 font-semibold"
                     onClick={() => {
                       const invitation = invitations?.find((inv: any) => inv.invitationCode === showQrModal);
                       const caregiverName = invitation?.userName || "my caregiver";

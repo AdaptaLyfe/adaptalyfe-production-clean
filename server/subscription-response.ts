@@ -36,10 +36,15 @@ export function buildSubscriptionResponse(
   const createdAt = validDate(user.createdAt);
   const trialEndDate = createdAt ? new Date(createdAt) : null;
   trialEndDate?.setDate(trialEndDate.getDate() + FREE_TRIAL_DAYS);
+  // Capped at FREE_TRIAL_DAYS: a sign-up time read back in the wrong time zone
+  // can otherwise round up to "8 days left" on a 7-day trial.
   const trialDaysLeft =
     trialEndDate && trialEndDate.getTime() > now.getTime()
-      ? Math.ceil(
-          (trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
+      ? Math.min(
+          FREE_TRIAL_DAYS,
+          Math.ceil(
+            (trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000),
+          ),
         )
       : 0;
 
@@ -84,6 +89,15 @@ export function buildSubscriptionResponse(
         ? "trialing"
         : "expired";
 
+  // Website (Stripe) subscriptions store "stripe_<plan>_<monthly|annual>" in
+  // subscriptionProductId when they are confirmed or restored.
+  const stripeCycleMatch =
+    !isStoreSubscription && typeof user.subscriptionProductId === "string"
+      ? /^stripe_(?:basic|premium|family)_(monthly|annual)$/.exec(user.subscriptionProductId)
+      : null;
+  const billingCycle =
+    storeProduct?.billingCycle ?? (stripeCycleMatch?.[1] as "monthly" | "annual" | undefined) ?? "monthly";
+
   const paidExpiry = validDate(user.subscriptionExpiresAt);
   const paidStart = validDate(user.subscriptionStartDate);
 
@@ -91,7 +105,7 @@ export function buildSubscriptionResponse(
     id: user.id,
     planType: displayPlan,
     status,
-    billingCycle: storeProduct?.billingCycle ?? "monthly",
+    billingCycle,
     subscriptionPlatform: user.subscriptionPlatform || null,
     isAccountTrial,
     currentPeriodStart: paidStart ?? createdAt,

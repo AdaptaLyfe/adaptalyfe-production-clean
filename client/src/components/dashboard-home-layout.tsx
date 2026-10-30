@@ -191,20 +191,15 @@ export default function DashboardHomeLayout() {
     : routineDone
       ? `${cap(period)} routine complete`
       : "Open daily tasks";
-  const nextStepText = firstIncomplete
-    ? `Next up: ${firstIncomplete.title}. Want to continue your ${period} routine?`
-    : routineDone
-      ? `Nice work — your ${period} routine is done. Take a look at what's next today.`
-      : `You don't have ${period} steps yet. Add a few to build your routine.`;
 
   const PeriodIcon = periodMeta.icon;
   const ViewIcon = viewMeta.icon;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
+    <div className="space-y-5 lg:flex lg:flex-1 lg:flex-col">
+      <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5 lg:flex-1">
         {/* ── Routine + Schedule ─────────────────────────────── */}
-        <section className="rounded-3xl bg-white/80 border border-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-3 sm:p-4">
+        <section className="flex flex-col rounded-3xl bg-white/80 border border-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] p-3 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
             <div
               className="flex flex-1 flex-wrap gap-1.5"
@@ -277,7 +272,7 @@ export default function DashboardHomeLayout() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid flex-1 grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Routine card */}
             <div className="rounded-2xl border border-slate-100 bg-white p-5 flex flex-col">
               <div className="flex items-center justify-between gap-2">
@@ -307,9 +302,9 @@ export default function DashboardHomeLayout() {
                 </div>
               </div>
 
-              <ul className="mt-4 space-y-2.5 max-h-64 overflow-y-auto pr-0.5">
+              <ul className={`mt-4 space-y-2.5 pr-0.5 ${periodTasks.length === 0 ? "flex flex-1 flex-col" : "max-h-64 overflow-y-auto"}`}>
                 {periodTasks.length === 0 && (
-                  <li className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-500">
+                  <li className="flex min-h-[96px] flex-1 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-4 py-6 text-center text-sm text-slate-500">
                     No {scheduleView} {period} steps yet.
                   </li>
                 )}
@@ -360,7 +355,7 @@ export default function DashboardHomeLayout() {
 
             {/* Schedule column */}
             <div className="flex flex-col gap-4">
-              <div className="rounded-2xl border border-slate-100 bg-white p-5">
+              <div className="flex-1 rounded-2xl border border-slate-100 bg-white p-5">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="h-9 w-9 rounded-xl bg-sky-50 flex items-center justify-center">
                     <ViewIcon className="h-5 w-5 text-sky-600" />
@@ -432,23 +427,6 @@ export default function DashboardHomeLayout() {
                     </li>
                   )}
                 </ol>
-              </div>
-
-              <div className="rounded-2xl bg-violet-50/80 border border-violet-100 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-5 w-5 text-violet-600" />
-                  <p className="font-semibold text-violet-700 whitespace-nowrap">Your next step</p>
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-violet-200 bg-white/70 text-violet-700">
-                    Suggested
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600 mb-3">{nextStepText}</p>
-                <Link href="/daily-tasks">
-                  <span className="flex items-center justify-center gap-2 w-full rounded-xl bg-violet-100 hover:bg-violet-200/80 text-violet-700 font-semibold px-3 py-2.5 cursor-pointer transition-colors">
-                    <span className="truncate">{continueLabel}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                </Link>
               </div>
             </div>
           </div>

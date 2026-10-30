@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw } from "lucide-react";
+import { CheckCircle, Zap, Users, Star, Clock, CreditCard, Smartphone, RotateCcw, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, ApiError } from "@/lib/queryClient";
 import { trackSubscriptionEvent } from "@/lib/firebase";
@@ -91,18 +91,28 @@ function isNoSubscriptionError(error: unknown): error is ApiError {
   return error instanceof ApiError && error.code === "NO_SUBSCRIPTION";
 }
 
-function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuccess }: {
+function PaymentForm({ planType, billingCycle, subscriptionId, intentType, trialEnd, onSuccess }: {
   planType: string;
   billingCycle: string;
   subscriptionId: string;
   intentType: "payment" | "setup";
+  /** Unix seconds when the free trial ends (first charge), or null when charged now. */
+  trialEnd: number | null;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadTimeout, setLoadTimeout] = useState(false);
+  // Keep the last payment error visible inside the form (toasts disappear after a few seconds).
+  const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
+  const isTrial = intentType === "setup";
+  const planPrice = planFeatures[planType]?.price[billingCycle === 'annual' ? 'annual' : 'monthly'];
+  const periodLabel = billingCycle === 'annual' ? 'year' : 'month';
+  const firstChargeDate = trialEnd
+    ? new Date(trialEnd * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+    : null;
 
   console.log('PaymentForm render:', { stripe: !!stripe, elements: !!elements });
 
@@ -123,6 +133,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
     if (!stripe || !elements) return;
 
     setIsProcessing(true);
+    setFormError(null);
 
     try {
       // Preserve only the subscription ID for an off-site 3DS return. On the
@@ -136,6 +147,10 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
         : await stripe.confirmPayment({ elements, confirmParams, redirect: "if_required" });
 
       if (result.error) {
+        setFormError(
+          result.error.message ||
+            (intentType === "setup" ? "We couldn't verify this card. Please try another card." : "Your payment didn't go through. Please try another card."),
+        );
         toast({
           title: intentType === "setup" ? "Could not proceed with payment method" : "Payment Failed",
           description: result.error.message,
@@ -148,6 +163,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
         ? result.setupIntent
         : result.paymentIntent;
       if (!completedIntent || completedIntent.status !== "succeeded") {
+        setFormError("Your payment method is still being confirmed. Please try again shortly.");
         toast({
           title: "Payment confirmation pending",
           description: "Your payment method is still being confirmed. Please try again shortly.",
@@ -174,6 +190,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
       });
       onSuccess();
     } catch (err) {
+      setFormError("Something went wrong while activating your plan. Please try again.");
       toast({
         title: "Payment Error",
         description: "An unexpected error occurred.",
@@ -186,7 +203,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="min-h-[200px] p-4 border-2 border-dashed border-gray-200 rounded-lg">
+      <div className="min-h-[200px] p-4 border border-slate-200 rounded-xl bg-slate-50/40">
 {(() => {
           console.log('PaymentElement render state:', { stripe: !!stripe, elements: !!elements, loadTimeout });
           
@@ -205,7 +222,7 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
             return (
               <div className="flex items-center justify-center h-32">
                 <div className="text-center">
-                  <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                  <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                   <p className="text-gray-600">Loading secure payment form...</p>
                   <p className="text-xs text-gray-400 mt-2">Stripe: {stripe ? '✓' : '✗'} | Elements: {elements ? '✓' : '✗'}</p>
                 </div>
@@ -219,28 +236,71 @@ function PaymentForm({ planType, billingCycle, subscriptionId, intentType, onSuc
                 layout: "tabs"
               }}
               onReady={() => console.log('✓ PaymentElement is ready')}
-              onChange={(event) => console.log('PaymentElement change:', event.complete)}
+              onChange={(event) => {
+                console.log('PaymentElement change:', event.complete);
+                // Stripe fires a change right after a decline; only clear the
+                // message once the user has entered a complete new card.
+                if (formError && event.complete) setFormError(null);
+              }}
               onLoadError={(error) => console.error('PaymentElement error:', error)}
             />
           );
         })()}
       </div>
-      <Button 
-        type="submit"
-        disabled={!stripe || !elements || isProcessing}
-        className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
-      >
-        {isProcessing ? "Processing..." : `Subscribe Now - $${planFeatures[planType]?.price[billingCycle === 'annual' ? 'annual' : 'monthly']}`}
-      </Button>
+      {formError && (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p className="font-semibold">Payment not completed</p>
+          <p className="mt-0.5">{formError}</p>
+        </div>
+      )}
+      <div className="space-y-2">
+        <Button 
+          type="submit"
+          disabled={!stripe || !elements || isProcessing}
+          className="w-full h-12 rounded-xl text-base font-semibold border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
+        >
+          {isProcessing
+            ? "Processing..."
+            : isTrial
+              ? "Start free trial"
+              : `Subscribe Now - $${planPrice}`}
+        </Button>
+        {isTrial ? (
+          <p className="text-center text-sm text-gray-500">
+            No charge today. Your free trial ends{firstChargeDate ? <> on <span className="font-medium text-gray-700">{firstChargeDate}</span></> : null}, then ${planPrice}/{periodLabel}. Cancel anytime before then.
+          </p>
+        ) : (
+          <p className="text-center text-sm text-gray-500">
+            You'll be charged ${planPrice} today, then every {periodLabel}. Your free trial has already been used. Cancel anytime.
+          </p>
+        )}
+      </div>
     </form>
   );
 }
 
 export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  // Plan chosen on the landing page / sign-up (?plan=premium) — highlighted below.
+  const [requestedPlan] = useState<string | null>(() => {
+    try {
+      const plan = new URLSearchParams(window.location.search).get("plan");
+      return plan === "basic" || plan === "premium" || plan === "family" ? plan : null;
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    if (!requestedPlan) return;
+    const timer = setTimeout(() => {
+      document.getElementById(`plan-${requestedPlan}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [requestedPlan]);
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [intentType, setIntentType] = useState<"payment" | "setup">("payment");
+  const [trialEndAt, setTrialEndAt] = useState<number | null>(null);
   const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | null>(null);
   const [loadTimeout, setLoadTimeout] = useState(false);
   const [isGooglePlayPurchasing, setIsGooglePlayPurchasing] = useState(false);
@@ -327,7 +387,11 @@ export default function SubscriptionPage() {
         : 'another platform';
 
   // Calculate trial days remaining
-  const trialDaysLeft = user ? Math.max(0, Math.ceil((new Date(user.createdAt).getTime() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+  // The server computes this from the stored sign-up time; computing it in the
+  // browser misread that time across time zones (showed 8 days for a 7-day trial).
+  const trialDaysLeft = subscription
+    ? Math.min(FREE_TRIAL_DAYS, Math.max(0, Number(subscription.trialDaysLeft) || 0))
+    : 0;
 
   const handleGooglePlayPurchase = async (planType: string) => {
     if (hasActiveSubscription) {
@@ -484,6 +548,7 @@ export default function SubscriptionPage() {
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
         setIntentType(data.intentType === "setup" ? "setup" : "payment");
+        setTrialEndAt(typeof data.trialEnd === "number" ? data.trialEnd : null);
         setStripeSubscriptionId(data.subscriptionId);
       } else if (data.status === 'active' || data.status === 'trialing') {
         trackSubscriptionEvent("upgrade", selectedPlan || "unknown");
@@ -546,13 +611,13 @@ export default function SubscriptionPage() {
   const showTrialWarning = trialDaysLeft <= 2 && user?.subscriptionStatus !== 'active';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-100 via-teal-50 to-blue-100 p-4">
+    <div className="min-h-screen bg-[radial-gradient(60%_40%_at_50%_0%,rgba(224,231,255,0.9),transparent_75%),linear-gradient(180deg,#eef3ff_0%,#f7f8fe_40%,#f7f8fe_100%)] p-4 sm:p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
             {user?.subscriptionStatus === 'active' ? 'Manage Your Subscription' : 'Choose Your Plan'}
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
+          <p className="text-base sm:text-lg text-slate-500 mb-6">
             {user?.subscriptionStatus === 'active'
               ? `You're subscribed to the ${user?.subscriptionTier ? user.subscriptionTier.charAt(0).toUpperCase() + user.subscriptionTier.slice(1) : ''} Plan. You can change plans below or return to your dashboard.`
               : "Unlock your full potential with Adaptalyfe's comprehensive features"}
@@ -560,7 +625,7 @@ export default function SubscriptionPage() {
           {user?.subscriptionStatus === 'active' && (
             <Button
               onClick={() => setLocation('/dashboard')}
-              className="mb-6 bg-teal-600 hover:bg-teal-700 text-white"
+              className="mb-6 h-11 rounded-xl px-6 font-semibold border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
               size="lg"
             >
               Go to Dashboard
@@ -569,13 +634,13 @@ export default function SubscriptionPage() {
 
           {/* Explanation banner for new/unsubscribed users */}
           {user?.subscriptionStatus !== 'active' && (
-            <div className="max-w-2xl mx-auto mb-6 bg-white rounded-2xl shadow-sm border border-teal-100 p-5 text-left">
+            <div className="max-w-2xl mx-auto mb-6 bg-white rounded-2xl shadow-sm border border-indigo-100 p-5 text-left">
               <div className="flex gap-3 items-start">
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-teal-600 text-lg">ℹ️</span>
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 mb-1">Get full access to Adaptalyfe</p>
+                  <p className="font-semibold text-slate-900 mb-1">Get full access to Adaptalyfe</p>
                   <p className="text-sm text-gray-600">
                     Adaptalyfe helps individuals with daily tasks, finances, mood tracking, appointments, and connecting with their support network. Choose a plan below to unlock all features.{" "}
                     {onIOS
@@ -592,7 +657,7 @@ export default function SubscriptionPage() {
           {/* Trial Status */}
           {user?.subscriptionStatus !== 'active' && (
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 ${
-              showTrialWarning ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
+              showTrialWarning ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-violet-50 text-violet-700 border border-violet-200'
             }`}>
               <Clock className="w-4 h-4" />
               {trialDaysLeft > 0 ? (
@@ -613,39 +678,48 @@ export default function SubscriptionPage() {
 
           {!onAndroid && (
             <div className="flex justify-center mb-4" role="group" aria-label="Billing period">
-              <div className="inline-flex rounded-lg border p-1 bg-white">
-                <Button
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1.5 shadow-sm">
+                <button
                   type="button"
-                  size="sm"
-                  variant={billingCycle === "monthly" ? "default" : "ghost"}
                   aria-pressed={billingCycle === "monthly"}
                   onClick={() => setBillingCycle("monthly")}
+                  className={`rounded-full px-6 py-2 text-sm font-semibold transition-all ${
+                    billingCycle === "monthly"
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
                 >
                   Monthly
-                </Button>
-                <Button
+                </button>
+                <button
                   type="button"
-                  size="sm"
-                  variant={billingCycle === "annual" ? "default" : "ghost"}
                   aria-pressed={billingCycle === "annual"}
                   onClick={() => setBillingCycle("annual")}
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all ${
+                    billingCycle === "annual"
+                      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
                 >
                   Yearly
-                </Button>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${billingCycle === "annual" ? "bg-white/20 text-white" : "bg-emerald-100 text-emerald-700"}`}>
+                    Save 17%
+                  </span>
+                </button>
               </div>
             </div>
           )}
 
           {/* Billing notice */}
           <div className="flex items-center justify-center mb-4">
-            <Badge variant="secondary" className="text-sm px-4 py-1">
+            <Badge variant="secondary" className="rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
               {billingCycle === "annual" ? "Annual" : "Monthly"} Subscription — auto-renewable, cancel anytime
             </Badge>
           </div>
 
           {/* Premium feature notice — required by Apple Guideline 2.3.2 */}
           <div className="max-w-2xl mx-auto mb-4 px-4">
-            <p className="text-sm text-gray-600 italic">
+            <p className="text-sm text-slate-500">
               Some features require an active subscription. All plans are auto-renewing {billingCycle === "annual" ? "annual" : "monthly"} subscriptions.
             </p>
           </div>
@@ -680,7 +754,7 @@ export default function SubscriptionPage() {
                      }
                   }
                 }}
-                className="w-full py-2 px-4 rounded-lg border-2 border-orange-400 bg-orange-50 text-orange-800 text-sm font-semibold hover:bg-orange-100 transition-colors"
+                className="w-full rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
               >
                 Already paid? Tap here to restore access
               </button>
@@ -691,11 +765,11 @@ export default function SubscriptionPage() {
 
         {/* Payment Form Modal */}
         {clientSecret && selectedPlan && stripeSubscriptionId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <Card className="w-full max-w-md bg-white shadow-2xl border-2">
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 via-violet-50 to-fuchsia-50">
                 <CardTitle className="flex items-center gap-2 text-gray-900">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <CreditCard className="w-5 h-5 text-indigo-600" />
                   Complete Payment
                 </CardTitle>
                 <CardDescription className="text-gray-700">
@@ -712,6 +786,7 @@ export default function SubscriptionPage() {
                     billingCycle={billingCycle}
                     subscriptionId={stripeSubscriptionId}
                     intentType={intentType}
+                    trialEnd={trialEndAt}
                     onSuccess={handlePaymentSuccess}
                   />
                 </StripeWrapper>
@@ -722,7 +797,7 @@ export default function SubscriptionPage() {
                     setClientSecret(null);
                     setStripeSubscriptionId(null);
                   }}
-                  className="w-full mt-4 bg-gray-50 hover:bg-gray-100"
+                  className="w-full mt-3 h-11 rounded-xl border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 >
                   Cancel
                 </Button>
@@ -736,13 +811,27 @@ export default function SubscriptionPage() {
           {Object.entries(planFeatures).map(([planKey, plan]) => (
             <Card 
               key={planKey}
-              className={`relative ${plan.popular ? 'ring-2 ring-blue-500 scale-105' : 'border-2 border-gray-200'} ${
-                user?.subscriptionTier === planKey && user?.subscriptionStatus === 'active' ? 'bg-green-50 border-green-200' : ''
+              id={`plan-${planKey}`}
+              className={`relative rounded-3xl bg-white transition-shadow ${
+                requestedPlan === planKey
+                  ? 'border-2 border-violet-400 shadow-[0_22px_48px_-20px_rgba(109,40,217,0.45)] md:scale-[1.03]'
+                  : plan.popular && !requestedPlan
+                    ? 'border-2 border-indigo-200 shadow-[0_18px_40px_-20px_rgba(79,70,229,0.35)] md:scale-[1.03]'
+                    : 'border border-slate-200 shadow-sm hover:shadow-md'
+              } ${
+                user?.subscriptionTier === planKey && user?.subscriptionStatus === 'active' ? 'bg-violet-50/60 border-violet-300' : ''
               }`}
             >
-              {plan.popular && (
+              {requestedPlan === planKey ? (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <Badge className="bg-blue-500 text-white">
+                  <Badge className="whitespace-nowrap rounded-full border-0 bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 py-1 text-white shadow-sm">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Your selection
+                  </Badge>
+                </div>
+              ) : plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className="rounded-full border-0 bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-1 text-white shadow-sm">
                     <Star className="w-3 h-3 mr-1" />
                     Most Popular
                   </Badge>
@@ -758,8 +847,8 @@ export default function SubscriptionPage() {
                 </CardTitle>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
-                  <span className="text-3xl font-bold">${plan.price[billingCycle]}</span>
-                  <span className="text-gray-600">/{billingCycle === "annual" ? "year" : "month"}</span>
+                  <span className="text-4xl font-extrabold tracking-tight text-slate-900">${plan.price[billingCycle]}</span>
+                  <span className="text-slate-500">/{billingCycle === "annual" ? "year" : "month"}</span>
                 </div>
               </CardHeader>
               
@@ -767,15 +856,15 @@ export default function SubscriptionPage() {
                 <ul className="space-y-2 mb-6">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <span className="text-sm text-slate-700">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 
                 {hasActiveSubscription ? (
                   <div className="space-y-2">
-                    <Button disabled className="w-full">
+                    <Button disabled className="w-full h-11 rounded-xl">
                       {user?.subscriptionTier === planKey ? (
                         <>
                           <CheckCircle className="w-4 h-4 mr-2" />
@@ -800,8 +889,12 @@ export default function SubscriptionPage() {
                   <Button 
                     onClick={() => handlePlanSelect(planKey)}
                     disabled={createSubscriptionMutation.isPending || isGooglePlayPurchasing || isApplePurchasing}
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
+                    className={`w-full h-11 rounded-xl font-semibold ${
+                      requestedPlan === planKey || (plan.popular && !requestedPlan)
+                        ? 'border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110'
+                        : 'border-2 border-indigo-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50'
+                    }`}
+                    variant={requestedPlan === planKey || (plan.popular && !requestedPlan) ? "default" : "outline"}
                   >
                     {((createSubscriptionMutation.isPending || isGooglePlayPurchasing || isApplePurchasing) && selectedPlan === planKey)
                       ? "Setting up..."
@@ -873,10 +966,10 @@ export default function SubscriptionPage() {
         {/* Already Paid Recovery — always visible */}
         {user?.subscriptionStatus !== 'active' && (
           <div className="mt-10 max-w-lg mx-auto">
-            <Card className="border-2 border-orange-200 bg-orange-50 shadow-md">
+            <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardContent className="p-5 text-center">
-                <p className="font-semibold text-orange-900 mb-1">Already paid but still seeing this page?</p>
-                <p className="text-sm text-orange-700 mb-4">
+                <p className="font-semibold text-slate-900 mb-1">Already paid but still seeing this page?</p>
+                <p className="text-sm text-slate-500 mb-4">
                   Your payment may have gone through but your account wasn't updated. Click below to check and restore access instantly.
                 </p>
                 <Button
@@ -909,7 +1002,8 @@ export default function SubscriptionPage() {
                      }
                     }
                   }}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold"
+                  className="w-full h-11 rounded-xl font-semibold border-2 border-indigo-200 bg-white text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50"
+                  variant="outline"
                 >
                   Restore My Subscription
                 </Button>

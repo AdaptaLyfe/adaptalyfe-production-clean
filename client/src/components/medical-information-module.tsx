@@ -336,11 +336,6 @@ export default function MedicalInformationModule() {
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Health Records</h2>
-        <p className="text-gray-600">Store personal health-related details such as sensitivities and trusted contacts for reference.</p>
-      </div>
-
       <Tabs defaultValue="allergies" className="w-full">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-16 md:h-12 p-1 gap-1">
           <TabsTrigger value="allergies" className="text-xs md:text-sm px-2 py-2 whitespace-nowrap">
@@ -749,7 +744,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={createCondition.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createCondition.isPending ? "Adding..." : "Add Condition"}
                   </Button>
@@ -828,7 +823,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={createAllergy.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createAllergy.isPending ? "Adding..." : "Add Allergy"}
                   </Button>
@@ -925,7 +920,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={createAdverseMed.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createAdverseMed.isPending ? "Adding..." : "Add Adverse Medication"}
                   </Button>
@@ -1066,7 +1061,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={createContact.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createContact.isPending ? "Adding..." : "Add Contact"}
                   </Button>
@@ -1210,7 +1205,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={createProvider.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createProvider.isPending ? "Adding..." : "Add Provider"}
                   </Button>
@@ -1305,7 +1300,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={updateCondition.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {updateCondition.isPending ? "Updating..." : "Update Condition"}
                   </Button>
@@ -1384,7 +1379,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={updateAllergy.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {updateAllergy.isPending ? "Updating..." : "Update Allergy"}
                   </Button>
@@ -1482,7 +1477,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={updateAdverseMed.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {updateAdverseMed.isPending ? "Updating..." : "Update Adverse Medication"}
                   </Button>
@@ -1626,7 +1621,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={updateContact.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {updateContact.isPending ? "Updating..." : "Update Contact"}
                   </Button>
@@ -1772,7 +1767,7 @@ export default function MedicalInformationModule() {
                   <Button 
                     type="submit" 
                     disabled={updateProvider.isPending}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {updateProvider.isPending ? "Updating..." : "Update Provider"}
                   </Button>

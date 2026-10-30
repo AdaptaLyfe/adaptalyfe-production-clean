@@ -372,7 +372,7 @@ export default function DailyTasks() {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">Daily Tasks</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mb-3 sm:mb-4">Daily Tasks</h1>
         <div className="mb-4">
           <TaskJourneySummary
             completedTasks={completedTasks}
@@ -381,26 +381,23 @@ export default function DailyTasks() {
             remainingMinutes={remainingMinutes}
           />
         </div>
-        <Card className="border-t-4 border-vibrant-green">
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-3 sm:mb-4 gap-3">
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Today's Progress</h3>
-                <p className="text-sm sm:text-base text-gray-600">{completedTasks} of {totalTasks} tasks completed</p>
+                <h3 className="text-lg sm:text-xl font-semibold text-slate-900">Today's Progress</h3>
+                <p className="text-sm sm:text-base text-slate-500">{completedTasks} of {totalTasks} tasks completed</p>
               </div>
               <div className="text-right flex-shrink-0">
-                <div className="text-2xl sm:text-3xl font-bold text-green-600">{progressPercentage}%</div>
-                <p className="text-xs sm:text-sm text-gray-600">Complete</p>
+                <div className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">{progressPercentage}%</div>
+                <p className="text-xs sm:text-sm text-slate-500">Complete</p>
               </div>
             </div>
-            <div className="w-full bg-gradient-to-r from-gray-300 to-gray-400 rounded-full h-5 sm:h-6 shadow-inner border border-gray-400">
+            <div className="w-full overflow-hidden rounded-full bg-slate-100 h-3">
               <div 
-                className="bg-gradient-to-r from-green-500 via-green-400 to-emerald-400 h-5 sm:h-6 rounded-full transition-all duration-500 shadow-lg relative overflow-hidden border-2 border-green-600"
+                className="h-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500 transition-all duration-500"
                 style={{ width: `${progressPercentage}%` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-200 to-transparent opacity-50"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-green-600/20 to-transparent"></div>
-              </div>
+              />
             </div>
           </CardContent>
         </Card>
@@ -408,12 +405,12 @@ export default function DailyTasks() {
 
       <div className="grid gap-4 sm:gap-6">
         {Object.entries(tasksByCategory).map(([category, categoryTasks]) => (
-          <Card key={category} className="border-t-4 border-gray-200">
+          <Card key={category} className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <div className={`w-6 h-6 sm:w-8 sm:h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-lg flex-shrink-0`}></div>
-                <span className="text-base sm:text-lg">{formatCategoryLabel(category)} Tasks</span>
-                <span className="text-xs sm:text-sm font-normal text-gray-600">
+                <div className={`w-6 h-6 sm:w-8 sm:h-8 ${categoryColors[category as keyof typeof categoryColors] || 'bg-gray-400'} rounded-xl flex-shrink-0`}></div>
+                <span className="text-base sm:text-lg font-semibold text-slate-900">{formatCategoryLabel(category)} Tasks</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                   ({categoryTasks.filter(t => t.isCompleted).length}/{categoryTasks.length})
                 </span>
               </CardTitle>
@@ -421,14 +418,14 @@ export default function DailyTasks() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="space-y-3 sm:space-y-4">
                 {categoryTasks.map((task) => (
-                  <div key={task.id} className="flex items-start gap-2 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                  <div key={task.id} className={`flex items-start gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-colors ${task.isCompleted ? "bg-slate-50 border-slate-100" : "bg-white border-slate-200 hover:border-violet-200"}`}>
                     <Button
                       variant="ghost"
                       size="sm"
                       className={`w-11 h-11 sm:w-12 sm:h-12 p-0 rounded-full flex items-center justify-center flex-shrink-0 ${
                         task.isCompleted
-                          ? "bg-vibrant-green hover:bg-vibrant-green"
-                          : "bg-green-500 hover:bg-vibrant-green"
+                          ? "bg-emerald-500 hover:bg-emerald-600"
+                          : "border-2 border-slate-300 bg-white hover:border-violet-400 hover:bg-violet-50"
                       }`}
                       onClick={() => toggleTaskMutation.mutate({ 
                         taskId: task.id, 
@@ -442,15 +439,15 @@ export default function DailyTasks() {
                       {task.isCompleted ? (
                         <CheckCircle className="text-white" size={20} />
                       ) : (
-                        <Circle className="text-white" size={20} />
+                        <Circle className="text-transparent" size={20} />
                       )}
                     </Button>
                     <div className="flex-1 min-w-0">
-                      <h4 className={`font-medium text-gray-900 text-sm sm:text-base ${task.isCompleted ? 'line-through' : ''}`}>
+                      <h4 className={`font-semibold text-sm sm:text-base ${task.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                         {task.title}
                       </h4>
                       {task.description && (
-                        <p className="text-xs sm:text-sm text-gray-600 mt-0.5">{task.description}</p>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{task.description}</p>
                       )}
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                         <div className="flex items-center gap-1">
@@ -458,12 +455,12 @@ export default function DailyTasks() {
                           <span className="text-[10px] sm:text-xs text-gray-500 whitespace-nowrap">{task.estimatedMinutes} min</span>
                         </div>
                         {task.frequency && task.frequency !== 'daily' && (
-                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-medium whitespace-nowrap">
+                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-100 rounded-full font-medium whitespace-nowrap">
                             {task.frequency}
                           </span>
                         )}
                         {task.scheduledTime && (
-                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full font-medium whitespace-nowrap">
+                          <span className="text-[10px] sm:text-xs px-2 py-0.5 bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-100 rounded-full font-medium whitespace-nowrap">
                             {new Date(`2000-01-01T${task.scheduledTime}`).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                           </span>
                         )}
@@ -484,7 +481,7 @@ export default function DailyTasks() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-red-100 rounded-lg"
+                        className="w-11 h-11 sm:w-12 sm:h-12 p-0 hover:bg-red-50 rounded-xl"
                         onClick={() => {
                           if (window.confirm("Are you sure you want to delete this task?")) {
                             deleteTaskMutation.mutate(task.id);
@@ -498,8 +495,8 @@ export default function DailyTasks() {
                         <Trash2 className="text-red-600" size={18} />
                       </Button>
                       {task.isCompleted && (
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 bg-sunny-orange rounded-full flex items-center justify-center">
-                          <Star className="text-white" size={18} />
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                          <Star className="text-amber-500 fill-amber-400" size={18} />
                         </div>
                       )}
                     </div>
@@ -514,29 +511,29 @@ export default function DailyTasks() {
       <div className="mt-6 sm:mt-8 text-center pb-4">
         <Button 
           onClick={() => setIsAddDialogOpen(true)} 
-          className="bg-vibrant-green hover:bg-green-600 text-black font-bold shadow-lg border border-green-700 w-full sm:w-auto"
+          className="h-11 rounded-xl px-6 font-semibold w-full sm:w-auto border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
           data-testid="button-add-task"
         >
-          <Plus size={18} className="mr-2 text-black" />
-          <span className="text-black font-bold">Add New Task</span>
+          <Plus size={18} className="mr-2" />
+          <span>Add New Task</span>
         </Button>
       </div>
 
       {/* Add Task Dialog */}
       {isAddDialogOpen && typeof document !== "undefined" && createPortal(
         <div
-          className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-black bg-opacity-50"
+          className="responsive-modal-backdrop fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
           style={{ paddingTop: "calc(5rem + var(--safe-area-inset-top))" }}
           onClick={() => setIsAddDialogOpen(false)}
         >
           <div
-            className="responsive-modal-panel rounded-lg bg-white shadow-xl"
+            className="responsive-modal-panel rounded-2xl bg-white shadow-2xl"
             style={{ maxHeight: "calc(100dvh - 6rem - var(--safe-area-inset-top) - var(--safe-area-inset-bottom))" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Add New Daily Task</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900">Add New Daily Task</h2>
                 <button
                   onClick={() => setIsAddDialogOpen(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold -mt-1 w-11 h-11 flex items-center justify-center"
@@ -634,14 +631,14 @@ export default function DailyTasks() {
                 <Button 
                   onClick={handleCreateTask} 
                   disabled={createTaskMutation.isPending}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white h-11"
+                  className="flex-1 h-11 rounded-xl font-semibold border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                 >
                   {createTaskMutation.isPending ? "Creating..." : "Create Task"}
                 </Button>
                 <Button 
                   onClick={() => setIsAddDialogOpen(false)} 
                   variant="outline"
-                  className="flex-1 h-11"
+                  className="flex-1 h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
                 >
                   Cancel
                 </Button>
@@ -655,11 +652,11 @@ export default function DailyTasks() {
 
       {/* Edit Task Dialog */}
       {isEditDialogOpen && (
-        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setIsEditDialogOpen(false)}>
-          <div className="responsive-modal-panel rounded-lg bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="responsive-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsEditDialogOpen(false)}>
+          <div className="responsive-modal-panel rounded-2xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 sticky top-0 bg-white">
               <div className="flex items-start justify-between">
-                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Task</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900">Edit Task</h2>
                 <button
                   onClick={() => setIsEditDialogOpen(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl font-bold -mt-1 w-11 h-11 flex items-center justify-center"
@@ -756,7 +753,7 @@ export default function DailyTasks() {
               <div className="flex gap-2 sm:gap-3 pt-2">
                 <Button 
                   onClick={handleUpdateTask} 
-                  className="flex-1 bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg h-11"
+                  className="flex-1 h-11 rounded-xl font-semibold border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   disabled={updateTaskMutation.isPending}
                 >
                   {updateTaskMutation.isPending ? "Updating..." : "Update Task"}
@@ -764,7 +761,7 @@ export default function DailyTasks() {
                 <Button 
                   variant="outline" 
                   onClick={() => setIsEditDialogOpen(false)}
-                  className="flex-1 h-11"
+                  className="flex-1 h-11 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
                 >
                   Cancel
                 </Button>

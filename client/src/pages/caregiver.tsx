@@ -214,7 +214,7 @@ export default function Caregiver() {
       </div>
 
       {/* Progress Overview */}
-      <Card className="border-t-4 border-calm-teal mb-8">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm mb-8">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -222,7 +222,7 @@ export default function Caregiver() {
               <span>Your Progress Today</span>
             </div>
             <Button
-              className="bg-calm-teal hover:bg-calm-teal text-white"
+              className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
               onClick={() => shareProgressMutation.mutate()}
               disabled={shareProgressMutation.isPending || caregivers.length === 0}
             >
@@ -251,7 +251,7 @@ export default function Caregiver() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Caregivers List */}
-        <Card className="border-t-4 border-vibrant-green h-[32rem] flex flex-col overflow-hidden">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm h-[32rem] flex flex-col overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -260,7 +260,7 @@ export default function Caregiver() {
               </div>
               <Dialog open={showCaregiverDialog} onOpenChange={setCaregiverDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-vibrant-green hover:bg-vibrant-green text-white">
+                  <Button className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110">
                     <Plus size={16} className="mr-2" />
                     Add Caregiver
                   </Button>
@@ -379,7 +379,7 @@ export default function Caregiver() {
         </Card>
 
         {/* Messages */}
-        <Card className="border-t-4 border-bright-blue">
+        <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -389,7 +389,7 @@ export default function Caregiver() {
               <Dialog open={showMessageDialog} onOpenChange={setMessageDialog}>
                 <DialogTrigger asChild>
                   <Button 
-                    className="bg-bright-blue hover:bg-bright-blue text-white"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                     disabled={caregivers.length === 0}
                   >
                     <Send size={16} className="mr-2" />
@@ -502,7 +502,7 @@ export default function Caregiver() {
       </div>
 
       {/* Help Section */}
-      <Card className="border-t-4 border-sunny-orange mt-8">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm mt-8">
         <CardHeader>
           <CardTitle className="flex items-center space-x-3">
             <UserCheck className="text-sunny-orange" size={24} />

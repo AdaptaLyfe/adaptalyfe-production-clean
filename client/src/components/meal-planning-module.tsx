@@ -292,7 +292,7 @@ export default function MealPlanningModule() {
               <Button 
                 type="submit" 
                 disabled={createMealPlanMutation.isPending} 
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                 onClick={() => console.log("Button clicked, form values:", form.getValues())}
               >
                 <Plus className="w-4 h-4 mr-2" />

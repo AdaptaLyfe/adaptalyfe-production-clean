@@ -960,7 +960,7 @@ export default function AcademicPlanner() {
                     console.log("setIsAddStudySessionOpen(true) called");
                     console.log("Dialog should be opening now...");
                   }}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Start New Study Session

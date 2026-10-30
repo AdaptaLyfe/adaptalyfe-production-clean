@@ -15,9 +15,10 @@ This is the **final checklist** of everything created for payment / subscription
 | A | **3** | Full integration guide (`.md` + `.pdf` + `.docx`) |
 | B | **3** | Short product recommendation (`.md` + `.pdf` + `.docx`) |
 | C | **3** | This index (`.md` + `.pdf` + `.docx`) |
+| F | **2** | Local setup write-up + `.env.stripe.example` |
 | D | **2** | Code: fixed Stripe Price IDs helper + unit tests |
 | E | **1** | App change: `create-subscription` uses env Price IDs |
-| | **12** | **Total new/updated deliverables in this package** |
+| | **14** | **Total new/updated deliverables in this package** |
 
 *(Related existing doc, not created in this package: `mobile_flutter/GOOGLE_PLAY_SUBSCRIPTIONS_SETUP.md`)*
 
@@ -108,6 +109,14 @@ Also keep: `STRIPE_SECRET_KEY`, `VITE_STRIPE_PUBLIC_KEY`, `STRIPE_WEBHOOK_SECRET
 | Ecommerce as core | **Not recommended** |
 
 ---
+
+
+## F) Local setup (product decision written for localhost)
+
+| File | Purpose |
+|------|---------|
+| [`PAYMENT_LOCAL_SETUP.md`](./PAYMENT_LOCAL_SETUP.md) | Local write-up: SaaS + Freemium · plans · `STRIPE_PRICE_*` · no DB changes |
+| [`.env.stripe.example`](./.env.stripe.example) | Safe template for Stripe test Price IDs (no secrets) |
 
 ## Reading order
 

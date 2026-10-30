@@ -458,7 +458,7 @@ export default function ShoppingListModule() {
               <Button 
                 type="submit" 
                 disabled={createItemMutation.isPending} 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                 onClick={() => console.log("Button clicked, form values:", form.getValues())}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -601,7 +601,7 @@ export default function ShoppingListModule() {
                   <h3 className="text-lg font-medium">Your Stores</h3>
                   <Button 
                     onClick={() => setShowAddForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                     data-testid="button-add-new-store"
                   >
                     Add New Store
@@ -941,7 +941,7 @@ function StoreFormDialog({ open, onClose, store }: StoreFormDialogProps) {
               <Button 
                 type="submit" 
                 disabled={isLoading} 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                className="flex-1 border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                 data-testid="button-submit-store"
               >
                 {isLoading ? "Saving..." : store ? "Update Store" : "Add Store"}

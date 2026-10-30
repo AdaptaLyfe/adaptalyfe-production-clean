@@ -315,11 +315,11 @@ export default function SleepTracking() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Recent Sleep Sessions</CardTitle>
-                <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow">
+                <div className="inline-flex">
                   <Button 
                      onClick={openCreateSleepLog}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110 font-semibold"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Log Sleep
@@ -395,8 +395,8 @@ export default function SleepTracking() {
                   <div className="text-center py-8 text-gray-500">
                     <Moon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No sleep sessions recorded yet</p>
-                    <div className="p-2 border-2 border-blue-300 rounded-lg bg-blue-50 shadow-sm hover:shadow-md transition-shadow mt-4 inline-block">
-                      <Button onClick={openCreateSleepLog} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                    <div className="mt-4 inline-block">
+                      <Button onClick={openCreateSleepLog} className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110 font-semibold">
                         Log your first sleep session
                       </Button>
                     </div>
@@ -729,7 +729,7 @@ function SleepLoggingForm({
           </div>
 
           <div className="p-3 border-2 border-green-300 rounded-lg bg-green-50 shadow-sm hover:shadow-md transition-shadow">
-            <Button type="submit" disabled={isLoading} className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-lg">
+            <Button type="submit" disabled={isLoading} className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110 font-semibold py-3 text-lg">
               {isLoading ? 'Saving...' : 'Save Sleep Session'}
             </Button>
           </div>

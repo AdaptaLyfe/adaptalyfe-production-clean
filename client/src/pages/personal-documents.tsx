@@ -523,7 +523,7 @@ export default function PersonalDocuments() {
                     type="submit"
                     disabled={createMutation.isPending}
                     data-testid="button-save-document"
-                    className="w-full sm:w-auto min-w-[120px] bg-blue-600 hover:bg-blue-700"
+                    className="w-full sm:w-auto min-w-[120px] border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                   >
                     {createMutation.isPending 
                       ? (editingDoc ? "Updating..." : "Saving...") 

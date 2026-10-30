@@ -44,6 +44,7 @@ import {
 import { getSleepDateValidationError } from "@shared/sleep-date-validation";
 import { getSleepRoutineTimeValidationError } from "@shared/sleep-time-validation";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
+import { stripeTrialEndForCheckout, type PreviousStripeSubscription } from "./stripe-trial-policy";
 import { buildNextAction, isNextActionRequest } from "./next-action";
 import { logSanitizedError } from "./safe-logging";
 import {
@@ -948,6 +949,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const userId = req.session.userId;
       console.log("Account deletion started");
+
+      // Stop website billing first, so a deleted account can never be charged
+      // again. If Stripe cannot confirm the cancellation, keep the account and
+      // ask the user to retry rather than deleting it while billing continues.
+      const accountToDelete = await storage.getUserById(userId);
+      if (accountToDelete?.stripeSubscriptionId) {
+        const stripeForDeletion = getStripeInstance();
+        if (!stripeForDeletion) {
+          return res.status(503).json({
+            message: "We couldn't cancel your subscription right now. Please try again in a few minutes.",
+          });
+        }
+        try {
+          const existing = await stripeForDeletion.subscriptions.retrieve(accountToDelete.stripeSubscriptionId);
+          if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
+            await stripeForDeletion.subscriptions.cancel(accountToDelete.stripeSubscriptionId);
+          }
+          console.log("Account deletion: Stripe subscription cancelled");
+        } catch (stripeError: any) {
+          if (stripeError?.code !== 'resource_missing') {
+            logSanitizedError("auth.account-deletion.stripe-cancel", stripeError);
+            return res.status(502).json({
+              message: "We couldn't cancel your subscription, so your account was not deleted. Please try again.",
+            });
+          }
+        }
+      }
 
       // Delete all user data from various tables
       // Order matters due to foreign key constraints
@@ -5476,7 +5504,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUserSubscription(userId, {
         subscriptionTier,
         subscriptionStatus: 'active',
-        subscriptionExpiresAt: expiresAt
+        subscriptionExpiresAt: expiresAt,
+        // Only tag website subscriptions; app-store accounts keep their store product ID.
+        ...(user?.subscriptionPlatform === 'google_play' || user?.subscriptionPlatform === 'app_store'
+          ? {}
+          : { subscriptionProductId: `stripe_${subscriptionTier}_${billingCycle === 'annual' ? 'annual' : 'monthly'}` }),
       });
 
       const updatedUser = await storage.getUserById(userId);
@@ -5745,9 +5777,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If this user already has an active Stripe subscription, cancel it first
       // to avoid duplicate subscriptions building up.
+      let previousSubscription: PreviousStripeSubscription | null = null;
       if (currentUser.stripeSubscriptionId) {
         try {
           const existing = await currentStripe.subscriptions.retrieve(currentUser.stripeSubscriptionId);
+          previousSubscription = { status: existing.status, trial_end: existing.trial_end };
           if (existing.status !== 'canceled' && existing.status !== 'incomplete_expired') {
             await currentStripe.subscriptions.cancel(currentUser.stripeSubscriptionId);
             console.log("Previous Stripe subscription cancelled before creating a new one");
@@ -5772,17 +5806,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a recurring subscription. For a free trial, Stripe returns a
       // pending SetupIntent so the card is saved for the first renewal.
+      // One free trial per account: only what is left of the sign-up trial
+      // (or the running trial when switching plans). Otherwise charge now.
+      const trialEnd = stripeTrialEndForCheckout(currentUser, previousSubscription);
       const subscription = await currentStripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: price.id }],
-        trial_period_days: FREE_TRIAL_DAYS,
+        ...(trialEnd
+          ? {
+              trial_end: trialEnd,
+              trial_settings: {
+                end_behavior: { missing_payment_method: 'cancel' as const },
+              },
+            }
+          : {}),
         payment_behavior: 'default_incomplete',
         payment_settings: {
           save_default_payment_method: 'on_subscription',
           payment_method_types: ['card']
-        },
-        trial_settings: {
-          end_behavior: { missing_payment_method: 'cancel' },
         },
         expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
         metadata: {
@@ -5842,7 +5883,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         intentType,
         intentId,
         status: subscription.status,
-        requiresPayment: !!clientSecret
+        requiresPayment: !!clientSecret,
+        trialEnd: subscription.trial_end ?? null,
       });
       
     } catch (error: any) {
@@ -5907,6 +5949,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use Stripe's authoritative period end, not a calculated date
         const expiresAt = new Date(getStripePeriodEndSeconds(subscription) * 1000);
         
+        const confirmedPlan = ['basic', 'premium', 'family'].includes(metadata.planType)
+          ? metadata.planType
+          : 'premium';
+        const confirmedCycle = metadata.billingCycle === 'annual' ? 'annual' : 'monthly';
         await storage.updateUserSubscription(user.id, {
           subscriptionTier: metadata.planType || 'premium',
           subscriptionStatus: 'active',
@@ -5914,6 +5960,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stripeSubscriptionId: subscription.id,
           stripeCustomerId: subscriptionCustomerId,
           subscriptionPlatform: 'web',
+          // Remember which Stripe plan/billing period was bought so the app
+          // can show "yearly" correctly (see subscription-response.ts).
+          subscriptionProductId: `stripe_${confirmedPlan}_${confirmedCycle}`,
         });
 
         // Refresh session so the user doesn't need to log out/in to see the change

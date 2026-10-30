@@ -1,12 +1,12 @@
 /* AdaptaLyfe Color Overrides - Modern, Accessible Colors */
 :root {
-  /* Primary brand colors - vibrant green theme */
-  --primary: hsl(142, 76%, 36%);
+  /* Primary brand colors - indigo/violet theme (matches landing & dashboard) */
+  --primary: hsl(243, 75%, 59%);
   --primary-foreground: hsl(0, 0%, 100%);
   
   /* Accent colors for different modules */
-  --accent: hsl(142, 76%, 90%);
-  --accent-foreground: hsl(142, 76%, 20%);
+  --accent: hsl(226, 100%, 97%);
+  --accent-foreground: hsl(244, 55%, 41%);
   
   /* Secondary colors - calm blue */
   --secondary: hsl(217, 91%, 95%);
@@ -20,7 +20,7 @@
   /* Border and input refinements */
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --ring: hsl(142, 76%, 36%);
+  --ring: hsl(243, 75%, 59%);
   
   /* Custom module colors */
   --task-color: hsl(142, 76%, 36%);
@@ -32,8 +32,8 @@
 }
 
 .dark {
-  --primary: hsl(142, 76%, 45%);
-  --accent: hsl(142, 76%, 25%);
+  --primary: hsl(234, 89%, 74%);
+  --accent: hsl(244, 47%, 25%);
   --background: hsl(222, 84%, 5%);
   --card: hsl(222, 84%, 5%);
   --muted: hsl(217, 33%, 18%);

@@ -519,7 +519,7 @@ export default function RewardsPage() {
           <div className="flex gap-2">
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-green-600 hover:bg-green-700">
+                <Button className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Reward
                 </Button>
@@ -667,7 +667,7 @@ export default function RewardsPage() {
                     <Button 
                       type="submit" 
                       disabled={createRewardMutation.isPending}
-                      className="bg-vibrant-green hover:bg-green-600 text-black font-bold border-2 border-green-700 shadow-lg"
+                      className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110600 text-black font-bold border-2 border-green-700 shadow-lg"
                     >
                       {createRewardMutation.isPending ? "Creating..." : "Create Reward"}
                     </Button>
@@ -824,7 +824,7 @@ export default function RewardsPage() {
                         type="button"
                         onClick={onEditSubmit}
                         disabled={editRewardMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                       >
                         {editRewardMutation.isPending ? "Updating..." : "Update Reward"}
                       </Button>
@@ -940,7 +940,7 @@ export default function RewardsPage() {
                       <Button 
                         onClick={() => handleRedeem(reward)}
                         disabled={!canAfford || redeemMutation.isPending}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                         variant={canAfford ? "default" : "secondary"}
                         data-testid={`button-redeem-reward-${reward.id}`}
                       >

@@ -125,3 +125,87 @@ test("Apple annual subscription exposes the annual billing cycle", () => {
   assert.equal(response.billingCycle, "annual");
   assert.equal(response.currentPeriodEnd?.toISOString(), "2027-10-05T12:00:00.000Z");
 });
+test("a website (Stripe) yearly subscription reports an annual billing cycle", () => {
+  const expires = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const response = buildSubscriptionResponse(
+    {
+      id: 43,
+      accountType: "user",
+      subscriptionTier: "premium",
+      subscriptionStatus: "active",
+      subscriptionPlatform: "web",
+      stripeSubscriptionId: "sub_test_annual",
+      subscriptionProductId: "stripe_premium_annual",
+      subscriptionExpiresAt: expires,
+      createdAt: now,
+    },
+    now,
+  );
+
+  assert.equal(response.planType, "premium");
+  assert.equal(response.billingCycle, "annual");
+});
+
+test("a website subscription without a stored cycle still defaults to monthly", () => {
+  const expires = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const response = buildSubscriptionResponse(
+    {
+      id: 44,
+      accountType: "user",
+      subscriptionTier: "basic",
+      subscriptionStatus: "active",
+      subscriptionPlatform: "web",
+      stripeSubscriptionId: "sub_test_monthly",
+      subscriptionExpiresAt: expires,
+      createdAt: now,
+    },
+    now,
+  );
+
+  assert.equal(response.billingCycle, "monthly");
+});
+
+test("trial countdown: 7 → 1 day left, then expired exactly at 7 days", () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const at = (agoMs: number) =>
+    buildSubscriptionResponse(
+      {
+        id: 7,
+        accountType: "user",
+        subscriptionTier: "free",
+        subscriptionStatus: "inactive",
+        subscriptionPlatform: "web",
+        createdAt: new Date(now.getTime() - agoMs),
+      },
+      now,
+    );
+
+  assert.equal(at(60 * 60 * 1000).trialDaysLeft, 7);
+  assert.equal(at(1 * DAY).trialDaysLeft, 6);
+  assert.equal(at(6 * DAY).trialDaysLeft, 1);
+  assert.equal(at(7 * DAY - 60 * 1000).trialDaysLeft, 1);
+  assert.equal(at(7 * DAY - 60 * 1000).status, "trialing");
+
+  for (const ago of [7 * DAY, 7 * DAY + 60 * 1000, 30 * DAY]) {
+    const expired = at(ago);
+    assert.equal(expired.status, "expired");
+    assert.equal(expired.planType, "free");
+    assert.equal(expired.isAccountTrial, false);
+    assert.equal(expired.trialDaysLeft, null);
+  }
+});
+
+test("trial never shows more than 7 days, even with a sign-up time in the future", () => {
+  const response = buildSubscriptionResponse(
+    {
+      id: 8,
+      accountType: "user",
+      subscriptionTier: "free",
+      subscriptionStatus: "inactive",
+      subscriptionPlatform: "web",
+      createdAt: new Date(now.getTime() + 5.5 * 60 * 60 * 1000),
+    },
+    now,
+  );
+  assert.equal(response.trialDaysLeft, 7);
+});

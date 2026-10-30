@@ -2,11 +2,15 @@
 
 One document for:
 
-1. **All common business models** + clear **Adaptalyfe recommendation**  
-2. **Subscription vs ecommerce** (and freemium, usage, license, marketplace, hybrid)  
+1. **All common business models** + clear **Adaptalyfe recommendation**
+2. **Subscription vs ecommerce** (and freemium, usage, license, marketplace, hybrid)
 3. **End-to-end integration** (Stripe, Apple, Google Play, keys, plan IDs)
 
 Related:
+
+|                       |
+| --------------------- |
+| **Subscription SaaS** |
 
 - [`mobile_flutter/GOOGLE_PLAY_SUBSCRIPTIONS_SETUP.md`](./mobile_flutter/GOOGLE_PLAY_SUBSCRIPTIONS_SETUP.md)
 - [`server/stripe-plan-prices.ts`](./server/stripe-plan-prices.ts) — fixed Stripe Price IDs
@@ -155,8 +159,8 @@ Entitlement is on the **user**, not a cart order.
 
 ### Optional later (hybrid, separate modules)
 
-1. **Ecommerce** — merch / physical kits (own `orders` flow; do not change `subscription_tier`).  
-2. **Usage / metered** — overages (extra seats, AI) on top of a base plan.  
+1. **Ecommerce** — merch / physical kits (own `orders` flow; do not change `subscription_tier`).
+2. **Usage / metered** — overages (extra seats, AI) on top of a base plan.
 3. **Family seat packs** — still subscription/entitlement, not a shopping cart.
 
 ### One-line decision
@@ -175,19 +179,19 @@ Entitlement is on the **user**, not a cart order.
 | 2 | **Apple App Store** | iOS | basic, premium, family | Monthly + Annual |
 | 3 | **Google Play** | Android | basic, premium, family | **Monthly only** (annual not wired yet) |
 
-| Plan key | Display | Monthly | Annual |
-|----------|---------|---------|--------|
-| `basic` | Basic | **$4.99** (499¢) | **$49.99** (4999¢) |
-| `premium` | Premium | **$12.99** (1299¢) | **$129.99** (12999¢) |
-| `family` | Family / Care Team | **$24.99** (2499¢) | **$249.99** (24999¢) |
+| Plan key  | Display            | Monthly                                     | Annual               |
+| --------- | ------------------ | ------------------------------------------- | -------------------- |
+| `basic`   | Basic              | **$4.99** (499¢)                            | **$49.99** (4999¢)   |
+| `premium` | Premium            | **$12.99** (12subscriptionsubscription99¢) | **$129.99** (12999¢) |
+| `family`  | Family / Care Team | **$24.99** (2499¢)                          | **$249.99** (24999¢) |
 
 - Free trial: **7 days** (`FREE_TRIAL_DAYS`).  
-- Package / bundle: **`com.adaptalyfe.app`**.
+- Package / bundle: `com.adaptalyfe.app`.
 
 ## B2. Preferred catalog IDs
 
 API cycle name: `monthly` | `annual`  
-(Landing may say “yearly” → map to **`annual`** for Stripe.)
+(Landing may say “yearly” → map to `annual` for Stripe.)
 
 | Plan | Monthly product ID | Annual product ID |
 |------|--------------------|-------------------|
@@ -201,7 +205,7 @@ Stripe metadata `plan_key`: same strings (e.g. `adaptalyfe_premium_annual`).
 
 ## B3. Entitlement (source of truth)
 
-Table: **`users`**
+Table: `users`
 
 | Column | Meaning |
 |--------|---------|
@@ -214,7 +218,7 @@ Table: **`users`**
 
 **App reads:** `GET /api/subscription` → plan, status, features, limits.
 
-*(Ecommerce would use `orders` / line items instead — we do not use that for core plan access.)*
+*(Ecommerce would use* `orders` */ line items instead — we do not use that for core plan access.)*
 
 ### Do we need database column changes?
 
@@ -230,7 +234,7 @@ Table: **`users`**
 | Per-user Stripe subscription | **No** | Existing `stripe_subscription_id` |
 | Apple / Play purchases | **No** | Existing Apple / Play columns on `users` |
 
-`users` already has the entitlement columns the app uses. The `subscriptions` table exists in schema but **runtime entitlement uses `users`**, not that table.
+`users` already has the entitlement columns the app uses. The `subscriptions` table exists in schema but **runtime entitlement uses** `users`, not that table.
 
 **Only add columns/tables later if you build something new**, for example:
 
@@ -398,7 +402,7 @@ Package: `com.adaptalyfe.app` (hardcoded).
 
 ### B) Per-user / per-customer IDs (different for every user)
 
-Created when that person pays or restores. Stored on **`users`**.
+Created when that person pays or restores. Stored on `users`.
 
 | Field on `users` | Who has it | Meaning |
 |------------------|------------|---------|
@@ -423,9 +427,9 @@ Same company `STRIPE_SECRET_KEY`, but **three different** customer/subscription 
 
 How they get created:
 
-1. User logs in (session is per user).  
-2. `POST /api/create-subscription` → Stripe creates/retrieves **that user’s** `cus_…`, then `sub_…`.  
-3. Server saves IDs on **that** `users` row.  
+1. User logs in (session is per user).
+2. `POST /api/create-subscription` → Stripe creates/retrieves **that user’s** `cus_…`, then `sub_…`.
+3. Server saves IDs on **that** `users` row.
 4. `GET /api/subscription` reads **that** row (and may refresh Play/Apple for that user only).
 
 ---
@@ -449,14 +453,14 @@ How they get created:
 
 ### D) Practical management checklist
 
-1. **Create 2 Stripe accounts/modes:** Test + Live (or one account with Test/Live toggles).  
-2. **Put company keys only in env** for that environment — not in the database, not in git.  
-3. **Put 6 Price IDs in env** (staging test prices / production live prices).  
-4. **Never create a new Stripe secret per customer** — create a Customer object instead.  
-5. **On signup/subscribe**, persist `stripe_customer_id` (and later `stripe_subscription_id`) on that user.  
-6. **On mobile verify**, persist Apple/Play tokens on that user.  
-7. **Support lookups:** find user by email → read their `cus_` / `sub_` / store ids → check Stripe or store dashboard.  
-8. **Rotate company keys** if leaked; user Customer IDs stay the same in Stripe.  
+1. **Create 2 Stripe accounts/modes:** Test + Live (or one account with Test/Live toggles).
+2. **Put company keys only in env** for that environment — not in the database, not in git.
+3. **Put 6 Price IDs in env** (staging test prices / production live prices).
+4. **Never create a new Stripe secret per customer** — create a Customer object instead.
+5. **On signup/subscribe**, persist `stripe_customer_id` (and later `stripe_subscription_id`) on that user.
+6. **On mobile verify**, persist Apple/Play tokens on that user.
+7. **Support lookups:** find user by email → read their `cus_` / `sub_` / store ids → check Stripe or store dashboard.
+8. **Rotate company keys** if leaked; user Customer IDs stay the same in Stripe.
 9. Rebuild frontend after changing `VITE_STRIPE_PUBLIC_KEY`.
 
 ### E) Ecommerce note (if you add a shop later)
@@ -472,11 +476,11 @@ Same pattern:
 
 Per mode (Test, then Live):
 
-1. Keep **6 Prices** (3 plans × monthly/annual) at the amounts above.  
-2. Metadata `plan_key` = `adaptalyfe_{plan}_{cycle}`.  
-3. Copy `price_…` → `STRIPE_PRICE_*` env.  
-4. Webhook → `/api/stripe/webhook`.  
-5. Archive duplicate Basic/Premium/Family products.  
+1. Keep **6 Prices** (3 plans × monthly/annual) at the amounts above.
+2. Metadata `plan_key` = `adaptalyfe_{plan}_{cycle}`.
+3. Copy `price_…` → `STRIPE_PRICE_*` env.
+4. Webhook → `/api/stripe/webhook`.
+5. Archive duplicate Basic/Premium/Family products.
 6. Redeploy.
 
 ---
@@ -503,7 +507,7 @@ Exact flags: `server/subscription-response.ts`, `server/subscription-access.ts`.
 | Do we need cart/SKU for core plans? | **No** |
 | Minimum IDs for web-only? | 3 plans × 2 cycles → **6 Stripe Price IDs** |
 | Why more IDs? | iOS + Android require **store product IDs** |
-| Prefer fixed Stripe Prices? | **Yes** (`STRIPE_PRICE_*`) |
+| Prefer fixed Stripe Prices? | **Yes** (`STRIPE_PRICE_`*) |
 | Optional later | Separate **ecommerce** (merch) or **usage** add-ons — never mixed into plan entitlement |
 | Official recommendation | See **Part A5** |
 

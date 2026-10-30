@@ -485,7 +485,7 @@ export default function Financial() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Financial Management</h1>
         
         <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-t-4 border-bright-blue">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-bright-blue rounded-lg flex items-center justify-center">
@@ -499,7 +499,7 @@ export default function Financial() {
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-sunny-orange">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-sunny-orange rounded-lg flex items-center justify-center">
@@ -513,7 +513,7 @@ export default function Financial() {
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-vibrant-green">
+          <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-vibrant-green rounded-lg flex items-center justify-center">
@@ -551,7 +551,7 @@ export default function Financial() {
 
           <TabsContent value="overview" className="mt-6">
             <div className="space-y-6">
-              <Card className="border-t-4 border-bright-blue">
+              <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <span>Monthly Budget Overview</span>
@@ -656,7 +656,7 @@ export default function Financial() {
                                   </FormItem>
                                 )}
                               />
-                              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={createBudgetMutation.isPending}>
+                              <Button type="submit" className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110" disabled={createBudgetMutation.isPending}>
                                 {createBudgetMutation.isPending ? "Adding..." : "Add Entry"}
                               </Button>
                             </form>
@@ -792,7 +792,7 @@ export default function Financial() {
           </TabsContent>
 
           <TabsContent value="bills" className="mt-6">
-            <Card className="border-t-4 border-sunny-orange">
+            <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -808,7 +808,7 @@ export default function Financial() {
                   }}>
                     <DialogTrigger asChild>
                       <Button
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                         onClick={openAddBillDialog}
                       >
                         <Plus size={16} className="mr-2" />
@@ -888,7 +888,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={billMutation.isPending}>
+                          <Button type="submit" className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110" disabled={billMutation.isPending}>
                             {billMutation.isPending ? "Saving..." : 
                              editingBill ? "Update Bill" : "Add Bill"}
                           </Button>
@@ -962,7 +962,7 @@ export default function Financial() {
                                 />
                                 <Button 
                                   size="sm" 
-                                  className="bg-bright-blue hover:bg-blue-600"
+                                  className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110600"
                                   onClick={() => {
                                     // For now, show a helpful message about bill payment
                                     toast({
@@ -986,7 +986,7 @@ export default function Financial() {
           </TabsContent>
 
           <TabsContent value="savings" className="mt-6">
-            <Card className="border-t-4 border-vibrant-green">
+            <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -996,7 +996,7 @@ export default function Financial() {
                   <Dialog open={showSavingsDialog} onOpenChange={handleSavingsDialogOpenChange}>
                     <Button
                       type="button"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                       onClick={openAddSavingsGoalDialog}
                     >
                       <Plus size={16} className="mr-2" />
@@ -1114,7 +1114,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={savingsGoalMutation.isPending}>
+                          <Button type="submit" className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110" disabled={savingsGoalMutation.isPending}>
                             {savingsGoalMutation.isPending ? "Saving..." : 
                              editingSavingsGoal ? "Update Goal" : "Create Goal"}
                           </Button>
@@ -1180,7 +1180,7 @@ export default function Financial() {
           </TabsContent>
 
           <TabsContent value="categories" className="mt-6">
-            <Card className="border-t-4 border-bright-blue">
+            <Card className="rounded-2xl border border-slate-200/80 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -1193,7 +1193,7 @@ export default function Financial() {
                   >
                     <DialogTrigger asChild>
                       <Button
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                         onClick={openAddCategoryDialog}
                       >
                         <Plus size={16} className="mr-2" />
@@ -1281,7 +1281,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={categoryMutation.isPending}>
+                          <Button type="submit" className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110" disabled={categoryMutation.isPending}>
                             {categoryMutation.isPending ? "Saving..." : 
                              editingCategory ? "Update Category" : "Add Category"}
                           </Button>
@@ -1344,7 +1344,7 @@ export default function Financial() {
                   <Dialog open={showBankDialog} onOpenChange={handleBankDialogOpenChange}>
                     <Button
                       type="button"
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110"
                       data-testid="button-add-bank"
                       onClick={openAddBankDialog}
                     >
@@ -1446,7 +1446,7 @@ export default function Financial() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={bankMutation.isPending} data-testid="button-save-bank">
+                          <Button type="submit" className="w-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 hover:brightness-110" disabled={bankMutation.isPending} data-testid="button-save-bank">
                             {bankMutation.isPending ? "Saving..." : 
                              editingBank ? "Update Account" : "Add Account"}
                           </Button>

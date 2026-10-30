@@ -653,9 +653,9 @@ html.dark {
   --accent-foreground: #e6ebf5;
   --border: #22304b;
   --input: #22304b;
-  --primary: hsl(142, 70%, 45%);
+  --primary: hsl(234, 89%, 74%);
   --primary-foreground: #0b1120;
-  --ring: #2dd4bf;
+  --ring: #818cf8;
   --destructive: hsl(0, 75%, 55%);
   --destructive-foreground: #e6ebf5;
 }

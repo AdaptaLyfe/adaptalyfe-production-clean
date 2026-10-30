@@ -54,16 +54,29 @@ These 4 files were changed so the app can run on **macOS localhost** (port `3000
 ## How to start locally
 
 ```bash
-# .env from untitled.env (Neon DATABASE_URL, OPENAI_API_KEY, etc.)
-# set PORT=3000 and NODE_ENV=development
-npm run dev
+# 1) Local Postgres (keep this terminal open)
+cd .local-pg && node start.mjs
+
+# 2) App — .env DATABASE_URL should be local (see below)
+# PORT=3000 NODE_ENV=development
+npx tsx -r dotenv/config server/index.ts
 ```
 
 Then open **http://127.0.0.1:3000** (hard refresh if needed: Cmd+Shift+R).
 
-### DBeaver (local dump, optional)
+### Local vs Neon `.env`
 
-If using the restored dump (not Neon):
+```bash
+# Active (local embedded Postgres)
+DATABASE_URL="postgresql://adaptalyfe:adaptalyfe@127.0.0.1:5432/adaptalyfe"
+
+# Backup of Neon — switch back by copying this into DATABASE_URL
+NEON_DATABASE_URL="postgresql://…@….neon.tech/neondb?sslmode=require"
+```
+
+`server/db.ts` picks **node-postgres** for local and **Neon serverless** when the URL contains `neon.tech`.
+
+### DBeaver (local)
 
 - Host: `127.0.0.1`
 - Port: `5432`
