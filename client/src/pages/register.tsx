@@ -6,12 +6,32 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import { Brain, ArrowLeft, Shield, Heart } from "lucide-react";
+import { Brain, ArrowLeft, Shield, Heart, UserPlus, User, Mail, AtSign, Ticket, Lock, Eye, EyeOff, Sparkles, ShieldCheck, CalendarCheck, CreditCard } from "lucide-react";
 import { apiRequest, getSessionToken, isNativeClient, setSessionToken } from "@/lib/queryClient";
 import { trackSignUp } from "@/lib/firebase";
 import { FREE_TRIAL_DAYS } from "@shared/subscription";
 
-import { AuthHeader } from "@/components/auth-header";
+import { AuthShell } from "@/components/auth-shell";
+/** Simple 0–4 password strength score shown under the password field. */
+function passwordStrength(value: string) {
+  if (!value) return { score: 0, label: "", color: "" };
+  let score = 0;
+  if (value.length >= 8) score++;
+  if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+  if (/\d/.test(value)) score++;
+  if (/[^A-Za-z0-9]/.test(value)) score++;
+  const levels = [
+    { label: "Too short", color: "bg-rose-400" },
+    { label: "Weak", color: "bg-rose-400" },
+    { label: "Fair", color: "bg-amber-400" },
+    { label: "Good", color: "bg-indigo-500" },
+    { label: "Strong", color: "bg-emerald-500" },
+  ];
+  return { score, ...levels[score] };
+}
+
+const FIELD_ICON = "pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-500";
+
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -30,6 +50,8 @@ export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasInvitation, setHasInvitation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Plan and billing period picked on the landing page (?plan=premium&billing=yearly).
   // They are carried through to /subscription so the user doesn't have to choose again.
@@ -175,208 +197,232 @@ export default function Register() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
-      {/* Header - matches main landing page */}
-      <AuthHeader backHref="/" backLabel="Back to home" />
-
-      <div className="max-w-md mx-auto pt-16 pb-24 px-4">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg w-fit mx-auto mb-4">
-              <Heart className="h-8 w-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Create Your Account</CardTitle>
-            <CardDescription className="text-base">
-              Start your independence journey with Adaptalyfe
-            </CardDescription>
-            {chosenPlanLabel && (
-              <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
-                Selected plan: {chosenPlanLabel}
-                <Link href="/#pricing" className="text-xs font-semibold text-violet-600 underline underline-offset-2">
-                  Change
-                </Link>
-              </div>
-            )}
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Personal Information</h3>
-                
+    <AuthShell
+      backHref="/"
+      backLabel="Back to home"
+      icon={UserPlus}
+      size="wide"
+      eyebrow={
+        <span className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-gradient-to-r from-blue-50 via-indigo-50 to-violet-50 px-3.5 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-violet-600">
+            <Sparkles className="h-3 w-3 text-white" />
+          </span>
+          Free for {FREE_TRIAL_DAYS} days · No card needed to start
+        </span>
+      }
+      title="Create your account"
+      subtitle="Start your independence journey with Adaptalyfe"
+      headerExtra={chosenPlanLabel ? (
+        <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">
+          Selected plan: {chosenPlanLabel}
+          <Link href="/#pricing" className="text-xs font-semibold text-indigo-600 underline underline-offset-2">
+            Change
+          </Link>
+        </div>
+      ) : null}
+    >
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="grid gap-x-5 gap-y-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="name">Full Name</Label>
-                  <Input
+                  <div className="group relative mt-1">
+                    <User className={FIELD_ICON} />
+                    <Input
                     id="name"
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Enter your full name"
+                    placeholder="Your full name"
                     required
-                    className="mt-1"
+                    className="pl-11"
                   />
+                  </div>
                 </div>
-
                 <div>
                   <Label htmlFor="email">Email Address</Label>
-                  <Input
+                  <div className="group relative mt-1">
+                    <Mail className={FIELD_ICON} />
+                    <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="Enter your email"
+                    placeholder="you@example.com"
                     required
-                    className="mt-1"
+                    className="pl-11"
                   />
+                  </div>
                 </div>
-              </div>
-
-              {/* Account Setup */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Account Setup</h3>
-                
                 <div>
                   <Label htmlFor="username">Username</Label>
-                  <Input
+                  <div className="group relative mt-1">
+                    <AtSign className={FIELD_ICON} />
+                    <Input
                     id="username"
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({...formData, username: e.target.value})}
                     placeholder="Choose a username"
                     required
-                    className="mt-1"
+                    className="pl-11"
                     autoComplete="new-username"
                   />
+                  </div>
                 </div>
-
                 <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    placeholder="Create a strong password"
-                    required
-                    className="mt-1"
-                    autoComplete="new-password"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                    placeholder="Confirm your password"
-                    required
-                    className="mt-1"
-                    autoComplete="new-password"
-                  />
-                </div>
-
-                {/* Invitation Code Section */}
-                <div>
-                  <Label htmlFor="invitationCode">Organization or Invitation Code (Optional)</Label>
-                  <Input
+                  <Label htmlFor="invitationCode">
+                    Invitation Code <span className="font-normal text-slate-400">(optional)</span>
+                  </Label>
+                  <div className="group relative mt-1">
+                    <Ticket className={FIELD_ICON} />
+                    <Input
                     id="invitationCode"
                     type="text"
                     value={formData.invitationCode}
                     onChange={(e) => setFormData({...formData, invitationCode: e.target.value.toUpperCase()})}
-                    placeholder="Enter organization or invitation code"
-                    className="mt-1 uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
+                    placeholder="Enter code"
+                    className="pl-11 uppercase tracking-wider placeholder:normal-case placeholder:tracking-normal"
                   />
-                  {hasInvitation && (
-                    <p className="text-sm text-green-600 mt-1">✓ Code detected - will be applied after registration</p>
-                  )}
-                </div>
-              </div>
-
-
-              {/* Age Verification */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Age Verification</h3>
-                
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <Checkbox 
-                      id="ageVerified"
-                      className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
-                      checked={formData.ageVerified}
-                      onCheckedChange={(checked) => setFormData({...formData, ageVerified: checked as boolean})}
-                    />
-                    <div className="text-sm">
-                      <Label htmlFor="ageVerified" className="cursor-pointer font-medium text-gray-900">
-                        I confirm that I am 13 years of age or older
-                      </Label>
-                      <p className="text-amber-700 mt-1">
-                        Adaptalyfe is not available to children under 13.
-                      </p>
-                    </div>
                   </div>
                 </div>
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <div className="group relative mt-1">
+                    <Lock className={FIELD_ICON} />
+                    <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    placeholder="Create a password"
+                    required
+                    className="pl-11 pr-10"
+                    autoComplete="new-password"
+                  />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-indigo-600"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {(() => {
+                    const strength = passwordStrength(formData.password);
+                    return (
+                      <div className="mt-1.5 flex items-center gap-2" aria-live="polite">
+                        <div className="flex flex-1 gap-1">
+                          {[1, 2, 3, 4].map((step) => (
+                            <span
+                              key={step}
+                              className={`h-1 flex-1 rounded-full transition-colors ${strength.score >= step ? strength.color : "bg-slate-200"}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="w-14 text-right text-[11px] font-medium text-slate-500">{strength.label}</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="group relative mt-1">
+                    <Lock className={FIELD_ICON} />
+                    <Input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                    placeholder="Repeat password"
+                    required
+                    className="pl-11 pr-11"
+                    autoComplete="new-password"
+                  />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition-colors hover:text-indigo-600"
+                      aria-label={showConfirm ? "Hide password" : "Show password"}
+                    >
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className={`mt-1.5 h-4 text-[11px] font-medium ${formData.confirmPassword && formData.confirmPassword === formData.password ? "text-emerald-600" : formData.confirmPassword ? "text-rose-500" : "text-transparent"}`}>
+                    {formData.confirmPassword && formData.confirmPassword === formData.password ? "✓ Passwords match" : "Passwords don't match yet"}
+                  </p>
+                </div>
               </div>
+              {hasInvitation && (
+                <p className="mt-2 text-sm text-emerald-600">✓ Code detected - will be applied after registration</p>
+              )}
 
-              {/* Agreements */}
-              <div className="space-y-4">
+              <div className="mt-5 space-y-2.5 text-sm">
                 <div className="flex items-start gap-3">
-                  <Checkbox 
+                  <Checkbox
+                    id="ageVerified"
+                    className="h-5 w-5 rounded-md border-slate-300 transition-colors data-[state=checked]:border-transparent data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-600 data-[state=checked]:to-violet-600 data-[state=checked]:text-white"
+                    checked={formData.ageVerified}
+                    onCheckedChange={(checked) => setFormData({...formData, ageVerified: checked as boolean})}
+                  />
+                  <Label htmlFor="ageVerified" className="cursor-pointer leading-5 text-slate-800">
+                    I confirm I am 13 or older{" "}
+                    <span className="font-normal text-amber-700">(not available to children under 13)</span>
+                  </Label>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Checkbox
                     id="terms"
-                    className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
+                    className="h-5 w-5 rounded-md border-slate-300 transition-colors data-[state=checked]:border-transparent data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-600 data-[state=checked]:to-violet-600 data-[state=checked]:text-white"
                     checked={formData.agreeToTerms}
                     onCheckedChange={(checked) => setFormData({...formData, agreeToTerms: checked as boolean})}
                   />
-                  <div className="text-sm">
-                    <Label htmlFor="terms" className="cursor-pointer">
-                      I agree to the <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link> and{" "}
-                      <Link href="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
-                    </Label>
-                  </div>
+                  <Label htmlFor="terms" className="cursor-pointer leading-5 text-slate-800">
+                    I agree to the <Link href="/terms" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">Terms of Service</Link> and{" "}
+                    <Link href="/privacy-policy" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">Privacy Policy</Link>
+                  </Label>
                 </div>
-
                 <div className="flex items-start gap-3">
-                  <Checkbox 
+                  <Checkbox
                     id="newsletter"
-                    className="mt-0.5 h-5 w-5 rounded-md border-slate-300 data-[state=checked]:border-violet-600 data-[state=checked]:bg-violet-600 data-[state=checked]:text-white"
+                    className="h-5 w-5 rounded-md border-slate-300 transition-colors data-[state=checked]:border-transparent data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-600 data-[state=checked]:to-violet-600 data-[state=checked]:text-white"
                     checked={formData.subscribeNewsletter}
                     onCheckedChange={(checked) => setFormData({...formData, subscribeNewsletter: checked as boolean})}
                   />
-                  <Label htmlFor="newsletter" className="text-sm cursor-pointer">
-                    Subscribe to updates and independence tips <span className="text-slate-400">(optional)</span>
+                  <Label htmlFor="newsletter" className="cursor-pointer leading-5 font-normal text-slate-700">
+                    Send me updates and independence tips <span className="text-slate-400">(optional)</span>
                   </Label>
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <Button 
-                type="submit" 
-                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 transition-opacity hover:opacity-95"
+              <Button
+                type="submit"
+                className="group mt-5 h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/35"
                 size="lg"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating Account..." : "Create Account"}
+                {isSubmitting ? "Creating your account..." : "Create my free account"}
               </Button>
 
-              <div className="text-center text-sm text-gray-600">
+              <p className="mt-4 text-center text-sm text-slate-600">
                 Already have an account?{" "}
-                <Link href="/login" className="text-blue-600 hover:underline">
-                  Sign in here
+                <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+                  Sign in
                 </Link>
-              </div>
-
-              <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg">
-                <Shield className="h-5 w-5 text-blue-600" />
-                <p className="text-sm text-blue-800">
-                  {FREE_TRIAL_DAYS}-day free trial • Cancel anytime • Secure payment processing
-                </p>
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+                {[
+                  { icon: CalendarCheck, label: `${FREE_TRIAL_DAYS}-day free trial` },
+                  { icon: CreditCard, label: "Cancel anytime" },
+                  { icon: ShieldCheck, label: "Secure & private" },
+                ].map(({ icon: BadgeIcon, label }) => (
+                  <div key={label} className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-500 sm:text-xs">
+                    <BadgeIcon className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
+                    {label}
+                  </div>
+                ))}
               </div>
             </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Brain, KeyRound } from "lucide-react";
+import { ArrowLeft, Brain, KeyRound, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 
-import { AuthHeader } from "@/components/auth-header";
+import { AuthShell } from "@/components/auth-shell";
+import { AuthField } from "@/components/auth-field";
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
   const [token, setToken] = useState("");
@@ -59,21 +60,13 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
-      <AuthHeader backHref="/login" backLabel="Back to login" />
-
-      <div className="max-w-md mx-auto pt-16 pb-24 px-4">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg w-fit mx-auto mb-4">
-              <KeyRound className="h-8 w-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Create a new password</CardTitle>
-            <CardDescription>
-              Choose a new password with at least 8 characters.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <AuthShell
+      backHref="/login"
+      backLabel="Back to login"
+      icon={KeyRound}
+      title="Create a new password"
+      subtitle="Choose a new password with at least 8 characters."
+    >
             {isChecking ? (
               <p className="text-center text-gray-600">Checking your reset link...</p>
             ) : message ? (
@@ -88,40 +81,38 @@ export default function ResetPassword() {
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                   This reset link is invalid, expired, or has already been used.
                 </div>
-                <Link href="/forgot-password" className="text-blue-600 hover:underline text-sm">
+                <Link href="/forgot-password" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline text-sm">
                   Request a new reset link
                 </Link>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <Label htmlFor="new-password">New password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    autoComplete="new-password"
-                    minLength={8}
-                    maxLength={128}
-                    required
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="confirm-new-password">Confirm new password</Label>
-                  <Input
-                    id="confirm-new-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    autoComplete="new-password"
-                    minLength={8}
-                    maxLength={128}
-                    required
-                    className="mt-1"
-                  />
-                </div>
+                <AuthField
+                  id="new-password"
+                  label="New password"
+                  icon={Lock}
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={128}
+                  required
+                />
+                <AuthField
+                  id="confirm-new-password"
+                  label="Confirm new password"
+                  icon={Lock}
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Repeat new password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  maxLength={128}
+                  required
+                />
                 {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
                 <Button
                   type="submit"
@@ -133,9 +124,6 @@ export default function ResetPassword() {
                 </Button>
               </form>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

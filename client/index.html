@@ -32,7 +32,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 40%, #a7f3d0 100%);
+        background: radial-gradient(60% 50% at 50% 0%, #e0e7ff 0%, rgba(224,231,255,0) 70%), #f7f8fe;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         transition: opacity 0.4s ease;
       }
@@ -41,18 +41,18 @@
         pointer-events: none;
       }
       #app-loading .logo-circle {
-        width: 88px;
-        height: 88px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #10b981, #059669);
+        width: 72px;
+        height: 72px;
+        border-radius: 22px;
+        background: linear-gradient(135deg, #2563eb, #4f46e5 50%, #7c3aed);
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 20px;
-        box-shadow: 0 8px 32px rgba(16,185,129,0.35);
+        box-shadow: 0 10px 30px rgba(79,70,229,0.3);
       }
       #app-loading .logo-text {
-        font-size: 38px;
+        font-size: 32px;
         font-weight: 900;
         color: white;
         line-height: 1;
@@ -60,13 +60,13 @@
       #app-loading h1 {
         font-size: 26px;
         font-weight: 800;
-        color: #065f46;
+        color: #0f172a;
         margin: 0 0 6px;
         letter-spacing: -0.5px;
       }
       #app-loading p {
         font-size: 13px;
-        color: #6b7280;
+        color: #64748b;
         margin: 0 0 36px;
         text-align: center;
         padding: 0 24px;
@@ -74,8 +74,8 @@
       #app-loading .spinner {
         width: 40px;
         height: 40px;
-        border: 3px solid #d1fae5;
-        border-top-color: #10b981;
+        border: 3px solid #e0e7ff;
+        border-top-color: #4f46e5;
         border-radius: 50%;
         animation: spin 0.85s linear infinite;
         margin-bottom: 20px;
@@ -85,14 +85,14 @@
         display: none;
         margin-top: 16px;
         padding: 12px 28px;
-        background: #10b981;
+        background: linear-gradient(90deg, #2563eb, #7c3aed);
         color: white;
         border: none;
         border-radius: 50px;
         font-size: 15px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 14px rgba(16,185,129,0.4);
+        box-shadow: 0 4px 14px rgba(79,70,229,0.35);
       }
       #app-loading .slow-msg {
         display: none;

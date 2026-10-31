@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/queryClient";
 
-import { AuthHeader } from "@/components/auth-header";
+import { AuthShell } from "@/components/auth-shell";
+import { AuthField } from "@/components/auth-field";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,62 +31,46 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50">
-      <AuthHeader backHref="/login" backLabel="Back to login" />
-
-      <div className="max-w-md mx-auto pt-16 pb-24 px-4">
-        <Card className="border-2 shadow-lg">
-          <CardHeader className="text-center">
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-lg w-fit mx-auto mb-4">
-              <KeyRound className="h-8 w-8 text-blue-600" />
-            </div>
-            <CardTitle className="text-2xl">Forgot your password?</CardTitle>
-            <CardDescription>
-              Enter your email and we&apos;ll send instructions to reset it.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <AuthShell
+      backHref="/login"
+      backLabel="Back to login"
+      icon={KeyRound}
+      title="Forgot your password?"
+      subtitle="Enter your email and we'll send instructions to reset it."
+    >
             {submitted ? (
               <div className="space-y-4 text-center">
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
                   If an account with that email exists, we sent password reset instructions. Check your inbox and spam folder.
                 </div>
-                <Link href="/login" className="text-blue-600 hover:underline text-sm">
+                <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline text-sm">
                   Return to login
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <Label htmlFor="reset-email">Email address</Label>
-                  <div className="relative mt-1">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      required
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <AuthField
+                  id="reset-email"
+                  label="Email address"
+                  icon={Mail}
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                />
                 {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
                 <Button
                   type="submit"
-                  className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 hover:opacity-95"
+                  className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/35"
                   size="lg"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Sending..." : "Send reset instructions"}
+                  {isSubmitting ? "Sending..." : "Send reset link"}
                 </Button>
               </form>
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

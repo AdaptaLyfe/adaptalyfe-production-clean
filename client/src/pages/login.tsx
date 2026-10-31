@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import { Brain, ArrowLeft } from "lucide-react";
+import { Brain, ArrowLeft, LogIn, AtSign, Lock, Ticket } from "lucide-react";
 import { apiRequest, ApiError, setSessionToken, getSessionToken } from "@/lib/queryClient";
 import { trackLogin } from "@/lib/firebase";
 
-import { AuthHeader } from "@/components/auth-header";
+import { AuthShell } from "@/components/auth-shell";
+import { AuthField } from "@/components/auth-field";
 function isNativeMobile(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -30,6 +31,7 @@ export default function Login() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasInvitationCode, setHasInvitationCode] = useState(false);
+  const [showInviteField, setShowInviteField] = useState(false);
 
   // Redirect authenticated users to dashboard (prevents back button loop)
   useEffect(() => {
@@ -119,103 +121,95 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-      {/* Navigation */}
-      <AuthHeader backHref="/" backLabel="Back to home" />
+    <AuthShell
+      backHref="/"
+      backLabel="Back to home"
+      icon={LogIn}
+      title="Welcome back"
+      subtitle="Sign in to continue your independence journey"
+    >
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <AuthField
+                id="username"
+                label="Username"
+                icon={AtSign}
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({...formData, username: e.target.value})}
+                placeholder="Enter your username"
+                autoComplete="username"
+                required
+              />
 
-      <div className="max-w-md mx-auto pt-16 pb-24 px-4">
-        <Card className="rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
-          <CardHeader className="text-center pt-8">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
-            <CardDescription className="mt-1.5 text-base text-slate-500">
-              Sign in to continue your independence journey
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  placeholder="Enter your username"
-                  required
-                  className="mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  placeholder="Enter your password"
-                  required
-                  className="mt-1"
-                />
-                <div className="text-right mt-2">
-                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+              <AuthField
+                id="password"
+                label="Password"
+                icon={Lock}
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+                labelRight={
+                  <Link href="/forgot-password" className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
                     Forgot password?
                   </Link>
-                </div>
-              </div>
+                }
+              />
 
-              {hasInvitationCode && (
-                <div className="bg-blue-50 p-3 rounded-lg border">
-                  <Label htmlFor="invitationCode" className="text-blue-700 font-medium">Caregiver Invitation Code</Label>
-                  <Input
+              {hasInvitationCode ? (
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+                  <AuthField
                     id="invitationCode"
+                    label="Caregiver invitation code"
+                    icon={Ticket}
                     type="text"
                     value={formData.invitationCode}
                     onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
-                    placeholder="Enter invitation code"
-                    className="mt-1 bg-white"
-                    readOnly={true}
-                  />
-                  <p className="text-xs text-blue-600 mt-1">You'll become a caregiver after logging in</p>
-                </div>
-              )}
-
-              {!hasInvitationCode && (
-                <div>
-                  <Label htmlFor="invitationCode">Have a Caregiver Invitation Code? (Optional)</Label>
-                  <Input
-                    id="invitationCode"
-                    type="text"
-                    value={formData.invitationCode}
-                    onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
-                    placeholder="Enter invitation code to become a caregiver"
-                    className="mt-1"
+                    readOnly
+                    hint={<p className="mt-1.5 text-xs text-indigo-700">You'll become a caregiver after signing in.</p>}
                   />
                 </div>
-              )}
+              ) : showInviteField ? (
+                <AuthField
+                  id="invitationCode"
+                  label={<>Caregiver invitation code <span className="font-normal text-slate-400">(optional)</span></>}
+                  icon={Ticket}
+                  type="text"
+                  value={formData.invitationCode}
+                  onChange={(e) => setFormData({...formData, invitationCode: e.target.value})}
+                  placeholder="Enter your code"
+                />
+              ) : null}
 
-              <Button 
-                type="submit" 
-                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-violet-500/25 hover:opacity-95" 
+              <Button
+                type="submit"
+                className="h-12 w-full rounded-xl border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-[15px] font-semibold text-white shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/35"
                 size="lg"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Signing In..." : "Sign In"}
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
 
-              <div className="text-center space-y-4">
-                <div className="text-sm text-gray-600">
-                  Don't have an account?{" "}
-                  <Link href="/register" className="text-blue-600 hover:underline">
-                    Create one here
-                  </Link>
-                </div>
+              {!hasInvitationCode && !showInviteField && (
+                <button
+                  type="button"
+                  onClick={() => setShowInviteField(true)}
+                  className="mx-auto flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-indigo-600"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Have a caregiver invitation code?
+                </button>
+              )}
+
+              <div className="border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+                New to Adaptalyfe?{" "}
+                <Link href="/register" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+                  Create a free account
+                </Link>
               </div>
             </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </AuthShell>
   );
 }
