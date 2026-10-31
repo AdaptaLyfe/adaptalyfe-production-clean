@@ -13,6 +13,8 @@ export interface StripeTrialAccount {
   /** Set to "stripe_<plan>_<cycle>" once a web subscription has been confirmed. */
   subscriptionProductId?: string | null;
   subscriptionStatus?: string | null;
+  stripeSubscriptionId?: string | null;
+  subscriptionPlatform?: string | null;
 }
 
 export interface PreviousStripeSubscription {
@@ -33,8 +35,19 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 export function hasConfirmedWebSubscription(account: StripeTrialAccount): boolean {
-  return typeof account.subscriptionProductId === "string" &&
-    /^stripe_(?:basic|premium|family)_(?:monthly|annual)$/.test(account.subscriptionProductId);
+  if (
+    typeof account.subscriptionProductId === "string" &&
+    /^stripe_(?:basic|premium|family)_(?:monthly|annual)$/.test(account.subscriptionProductId)
+  ) {
+    return true;
+  }
+  // Customers who subscribed before the "stripe_<plan>_<cycle>" tag existed:
+  // an active website subscription with a Stripe ID is also confirmed.
+  return (
+    account.subscriptionStatus === "active" &&
+    !!account.stripeSubscriptionId &&
+    (account.subscriptionPlatform ?? "web") === "web"
+  );
 }
 
 /**

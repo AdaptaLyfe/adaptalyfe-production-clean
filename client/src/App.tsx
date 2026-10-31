@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import React from "react";
 import SimpleNavigation from "@/components/simple-navigation";
 import MobileBottomNavigation from "@/components/mobile-bottom-navigation";
@@ -25,6 +25,7 @@ import SettingsPage from "@/pages/settings";
 import Calendar from "@/pages/calendar";
 import Features from "@/pages/features";
 import Subscription from "@/pages/subscription";
+import WearableDevicesPage from "@/pages/wearable-devices";
 import FamilyMembers from "@/pages/family-members";
 import DirectPayment from "@/pages/direct-payment";
 import LifeSkillsModule from "@/components/life-skills-module";
@@ -396,6 +397,13 @@ function App() {
         </Route>
         <Route path="/features">
           <Features />
+        </Route>
+        {/* Old links to /pricing open the plans page. */}
+        <Route path="/pricing">
+          <Redirect to="/subscription" />
+        </Route>
+        <Route path="/wearable-devices">
+          <AuthCheck><WearableDevicesPage /></AuthCheck>
         </Route>
         <Route path="/subscription">
           <Subscription />

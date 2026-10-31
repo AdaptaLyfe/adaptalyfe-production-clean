@@ -51,9 +51,15 @@ const addClassDialogStyle = {
 };
 
 export default function AcademicPlanner() {
-  const { hasFeature } = useSubscriptionEnforcement();
-  const { toast } = useToast();
-  
+  const { hasFeature, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
+
   // Check if user has access to academic planner features
   if (!hasFeature('advancedAnalytics')) {
     return (
@@ -68,6 +74,11 @@ export default function AcademicPlanner() {
       </div>
     );
   }
+  return <AcademicPlannerContent />;
+}
+
+function AcademicPlannerContent() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("schedule");
   const [isAddAssignmentOpen, setIsAddAssignmentOpen] = useState(false);
   const [isAddClassOpen, setIsAddClassOpen] = useState(false);

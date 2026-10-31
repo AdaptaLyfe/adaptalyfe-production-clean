@@ -275,7 +275,15 @@ body.ios-native .main-content-with-header {
   html { font-size: 16px; }
 }
 
-/* High contrast mode styles */
+/* High contrast mode styles.
+   Most screens use fixed Tailwind colours, so the variables below are not
+   enough on their own; the filter makes text, borders and buttons stand out
+   on every page. (A filter on the root element does not break fixed headers.) */
+html.high-contrast {
+  filter: contrast(1.25) saturate(1.1);
+}
+
+
 .high-contrast {
   --background: 0 0% 100%;
   --foreground: 0 0% 0%;

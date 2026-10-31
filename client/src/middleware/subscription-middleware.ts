@@ -16,6 +16,7 @@ export interface SubscriptionData {
     skillsMilestones: boolean;
     rewards: boolean;
     caregiverMessaging: boolean;
+    aiAssistant: boolean;
     locationSafety: boolean;
     advancedAnalytics: boolean;
     prioritySupport: boolean;
@@ -63,7 +64,10 @@ export function useSubscriptionEnforcement() {
     // subscriptionExpiresAt, because those fields can be null/stale for perfectly
     // valid subscribers (e.g. subscriptionExpiresAt not refreshed after monthly
     // renewal, or a manually-activated account with no Stripe record).
-    const userHasActiveSub = (user as any).subscriptionStatus === 'active';
+    // "past_due" = a renewal payment failed and is being retried; access continues
+    // during the grace period (the server decides when it ends).
+    const userHasActiveSub = (user as any).subscriptionStatus === 'active' ||
+      ((user as any).subscriptionStatus === 'past_due' && subscription.status === 'past_due');
 
     if (userHasActiveSub) {
       // Active subscriber — never redirect them away from any route.
@@ -72,7 +76,7 @@ export function useSubscriptionEnforcement() {
 
     // If trial expired and no active subscription, block ALL app routes
     const trialExpired = subscription.status === 'expired' ||
-        (subscription.status !== 'active' && subscription.status !== 'trialing');
+        (subscription.status !== 'active' && subscription.status !== 'trialing' && subscription.status !== 'past_due');
 
     if (trialExpired && !isAlwaysAccessible) {
       setLocation('/subscription');
@@ -81,7 +85,6 @@ export function useSubscriptionEnforcement() {
 
     // For users still in trial or with active subscription, check premium-specific features
     const premiumRoutes = [
-      '/wearable-devices',
       '/meal-planning',
       '/medication-management',
       '/analytics',
@@ -97,7 +100,6 @@ export function useSubscriptionEnforcement() {
     
     if (isPremiumRoute) {
       const routeFeatureMap: Record<string, keyof SubscriptionData['features']> = {
-        '/wearable-devices': 'wearableDevices',
         '/meal-planning': 'mealPlanning',
         '/medication-management': 'medicationManagement',
         '/analytics': 'advancedAnalytics',
@@ -125,7 +127,10 @@ export function useSubscriptionEnforcement() {
   return {
     subscription,
     orgMembership,
-    isPremiumUser: isAdmin || hasOrgAccess || subscription?.status === 'active' || 
+    // True until the account, plan and organization access have loaded, so
+    // pages don't flash an "upgrade" card (or change their hooks) mid-load.
+    isLoading: !isAuthPage && (user === undefined || subscription === undefined || orgMembership === undefined),
+    isPremiumUser: isAdmin || hasOrgAccess || subscription?.status === 'active' || subscription?.status === 'past_due' ||
                    (subscription?.status === 'trialing' && (subscription?.trialDaysLeft || 0) > 0),
     hasFeature: (feature: keyof SubscriptionData['features']) => 
       isAdmin || hasOrgAccess || subscription?.features[feature] || false

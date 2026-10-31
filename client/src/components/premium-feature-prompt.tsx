@@ -6,11 +6,16 @@ interface PremiumFeaturePromptProps {
   title: string;
   description: string;
   feature: string;
-  requiredPlan: 'premium' | 'family';
+  requiredPlan: 'basic' | 'premium' | 'family';
   className?: string;
 }
 
 const PLAN_INFO = {
+  basic: {
+    name: "Basic",
+    price: "$4.99/month or $49.99/year",
+    perks: ["Daily tasks & reminders", "Money, mood & calendar", "1 caregiver connection"],
+  },
   premium: {
     name: "Premium",
     price: "$12.99/month or $129.99/year",

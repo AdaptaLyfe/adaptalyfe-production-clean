@@ -1,3 +1,4 @@
+import { forgetSubscriptionAccess } from "./subscription-access";
 import {
   users, subscriptionNotificationEvents, dailyTasks, dailyTaskCompletions, bills, bankAccounts, moodEntries, achievements, caregivers, messages, budgetEntries, appointments,
   budgetCategories, savingsGoals, savingsTransactions, userPreferences,
@@ -415,6 +416,7 @@ export interface IStorage {
   // Daily Tasks
   getDailyTasksByUser(userId: number, completionDate?: string): Promise<DailyTask[]>;
   getTaskById(taskId: number): Promise<DailyTask | undefined>;
+  countDailyTasksByUser(userId: number): Promise<number>;
   createDailyTask(task: InsertDailyTask): Promise<DailyTask>;
   updateDailyTask(taskId: number, updates: Partial<DailyTask>): Promise<DailyTask | undefined>;
   updateTaskCompletion(
@@ -499,6 +501,8 @@ export interface IStorage {
   getAppointmentsByDate(userId: number, date: string): Promise<Appointment[]>;
   getNextAppointment(userId: number, fromDate: string): Promise<Appointment | undefined>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  getAppointmentById(appointmentId: number): Promise<Appointment | undefined>;
+  deleteAppointment(appointmentId: number): Promise<boolean>;
   updateAppointmentCompletion(appointmentId: number, isCompleted: boolean): Promise<Appointment | undefined>;
   getUpcomingAppointments(userId: number): Promise<Appointment[]>;
   
@@ -704,6 +708,7 @@ export interface IStorage {
   createCalendarEvent(eventData: InsertCalendarEvent): Promise<CalendarEvent>;
   updateCalendarEvent(id: number, eventData: Partial<InsertCalendarEvent>): Promise<CalendarEvent>;
   deleteCalendarEvent(id: number): Promise<boolean>;
+  getCalendarEventById(id: number): Promise<CalendarEvent | undefined>;
 
   // Sleep Tracking
   getSleepSessionsByUser(userId: number): Promise<SleepSession[]>;
@@ -867,6 +872,7 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(users.id, userId))
       .returning();
+    forgetSubscriptionAccess(userId);
     return user || undefined;
   }
 
@@ -1014,6 +1020,8 @@ export class DatabaseStorage implements IStorage {
       .set(subscriptionData)
       .where(eq(users.id, userId))
       .returning();
+    // A plan change takes effect on the next request (no cached "allowed").
+    forgetSubscriptionAccess(userId);
     return user || undefined;
   }
 
@@ -1275,6 +1283,14 @@ export class DatabaseStorage implements IStorage {
 
       return task;
     });
+  }
+
+  async countDailyTasksByUser(userId: number): Promise<number> {
+    const [row] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(dailyTasks)
+      .where(eq(dailyTasks.userId, userId));
+    return Number(row?.count ?? 0);
   }
 
   async getTaskById(taskId: number): Promise<DailyTask | undefined> {
@@ -1942,6 +1958,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(appointments.appointmentDate)
       .limit(1);
     return appointment;
+  }
+
+  async getAppointmentById(appointmentId: number): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, appointmentId));
+    return appointment || undefined;
+  }
+
+  async deleteAppointment(appointmentId: number): Promise<boolean> {
+    const deleted = await db.delete(appointments).where(eq(appointments.id, appointmentId)).returning({ id: appointments.id });
+    return deleted.length > 0;
   }
 
   async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
@@ -3141,22 +3167,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async lockUserSetting(setting: InsertLockedUserSetting): Promise<LockedUserSetting> {
-    const [newSetting] = await db
-      .insert(lockedUserSettings)
-      .values(setting)
-      .onConflictDoUpdate({
-        target: [lockedUserSettings.userId, lockedUserSettings.settingKey],
-        set: {
-          settingValue: setting.settingValue,
-          isLocked: setting.isLocked,
-          lockedBy: setting.lockedBy,
-          lockReason: setting.lockReason,
-          canUserView: setting.canUserView,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return newSetting;
+    // The table has no unique (user_id, setting_key) constraint, so an
+    // ON CONFLICT upsert fails with "no unique constraint" (42P10) and no
+    // setting could ever be locked. Update the existing row, or insert one.
+    return await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select()
+        .from(lockedUserSettings)
+        .where(and(
+          eq(lockedUserSettings.userId, setting.userId),
+          eq(lockedUserSettings.settingKey, setting.settingKey),
+        ))
+        .limit(1);
+      if (existing) {
+        const [updated] = await tx
+          .update(lockedUserSettings)
+          .set({
+            settingValue: setting.settingValue,
+            isLocked: setting.isLocked ?? true,
+            lockedBy: setting.lockedBy,
+            lockReason: setting.lockReason,
+            canUserView: setting.canUserView ?? existing.canUserView,
+            updatedAt: new Date(),
+          })
+          .where(eq(lockedUserSettings.id, existing.id))
+          .returning();
+        return updated;
+      }
+      const [created] = await tx.insert(lockedUserSettings).values(setting).returning();
+      return created;
+    });
   }
 
   async unlockUserSetting(userId: number, settingKey: string, caregiverId: number): Promise<boolean> {
@@ -3691,6 +3731,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(calendarEvents.id, id))
       .returning();
     return event;
+  }
+
+  async getCalendarEventById(id: number): Promise<CalendarEvent | undefined> {
+    const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, id));
+    return event || undefined;
   }
 
   async deleteCalendarEvent(id: number): Promise<boolean> {

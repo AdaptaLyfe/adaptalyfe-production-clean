@@ -119,6 +119,8 @@ export function buildSubscriptionResponse(
     trialDaysLeft:
       isAccountTrial && trialDaysLeft > 0 ? trialDaysLeft : null,
     autoRenew: user.subscriptionAutoRenew ?? null,
+    // A renewal payment failed; access continues while the card is retried.
+    paymentFailed: !isStoreSubscription && user.subscriptionStatus === "past_due" && verifiedPaidTier !== "free",
     usageStats: {
       tasks: {
         count: 0,
@@ -130,7 +132,7 @@ export function buildSubscriptionResponse(
       },
       caregivers: {
         count: 0,
-        limit: isFamilyPlan || featurePlan === "premium" ? 5 : 1,
+        limit: isFamilyPlan ? null : featurePlan === "premium" ? 5 : 1,
       },
       dataExports: { count: 0, limit: featurePlan === "free" ? 0 : null },
     },
@@ -148,6 +150,8 @@ export function buildSubscriptionResponse(
       rewards: isPremiumPlan,
       caregiverMessaging: isFamilyPlan,
       advancedAnalytics: isPremiumPlan,
+      // AdaptAI chat assistant.
+      aiAssistant: isPremiumPlan,
       voiceCommands: isPremiumPlan,
       academicPlanner: isPremiumPlan,
       prioritySupport: isPremiumPlan,

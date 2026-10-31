@@ -10,10 +10,21 @@ export function isDailyTaskCompletedForDate(
   dateKey: string,
 ): boolean {
   const completionDates = task.completionDates ?? [];
-  if (completionDates.length > 0) {
-    return completionDates.includes(dateKey);
-  }
-  return task.isCompleted === true;
+  if (completionDates.includes(dateKey)) return true;
+  if (task.isCompleted !== true) return false;
+  // Older completions have no per-date record. "isCompleted" then only means
+  // "done today", so show it on the day it was completed — not on every day.
+  const completedAt = task.completedAt ? new Date(task.completedAt) : null;
+  const completedKey = completedAt && Number.isFinite(completedAt.getTime())
+    ? localDateKey(completedAt)
+    : localDateKey(new Date());
+  return completedKey === dateKey;
+}
+
+function localDateKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 export function updateDailyTaskCompletionDates(

@@ -17,14 +17,12 @@ test("uses the matching date from completion records", () => {
   assert.equal(isDailyTaskCompletedForDate(task, "2026-09-24"), false);
 });
 
-test("falls back to isCompleted for legacy responses without date records", () => {
-  assert.equal(
-    isDailyTaskCompletedForDate(
-      { isCompleted: true, completionDates: [] },
-      "2026-09-24",
-    ),
-    true,
-  );
+test("older completions without date records show only on the day they were done", () => {
+  const completedAt = new Date(2026, 8, 24, 10, 30);
+  const task = { isCompleted: true, completedAt, completionDates: [] };
+  assert.equal(isDailyTaskCompletedForDate(task, "2026-09-24"), true);
+  assert.equal(isDailyTaskCompletedForDate(task, "2026-09-23"), false);
+  assert.equal(isDailyTaskCompletedForDate(task, "2026-09-10"), false);
   assert.equal(
     isDailyTaskCompletedForDate({ isCompleted: false }, "2026-09-24"),
     false,

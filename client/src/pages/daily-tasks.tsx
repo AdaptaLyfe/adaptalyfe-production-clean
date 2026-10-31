@@ -82,7 +82,7 @@ function TimePicker({ value, onChange }: { value: string; onChange: (v: string) 
     </div>
   );
 }
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ApiError, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
 import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
@@ -93,7 +93,14 @@ import { formatCategoryLabel } from "@/lib/display-labels";
 
 
 export default function DailyTasks() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
 
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
@@ -103,12 +110,19 @@ export default function DailyTasks() {
           title="Daily Task Management"
           description="Organize and track your daily tasks with reminders, categories, and progress tracking. Subscribe to continue using Adaptalyfe's core task management features."
           feature="tasks"
-          requiredPlan="premium"
+          requiredPlan="basic"
           className="max-w-md mx-auto mt-20"
         />
       </div>
     );
   }
+  return <DailyTasksContent />;
+}
+
+function DailyTasksContent() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -154,10 +168,12 @@ export default function DailyTasks() {
         description: "New task added to your daily list",
       });
     },
-    onError: () => {
+    onError: (error: unknown) => {
+      // The plan's task limit (Basic 50, Premium 1,000) comes back as a 403 with a clear message.
+      const limitMessage = error instanceof ApiError && error.status === 403 ? error.message : null;
       toast({
-        title: "Error",
-        description: "Failed to create task. Please try again.",
+        title: limitMessage ? "Task limit reached" : "Error",
+        description: limitMessage || "Failed to create task. Please try again.",
         variant: "destructive",
       });
     },

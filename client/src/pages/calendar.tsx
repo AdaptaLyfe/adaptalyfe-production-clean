@@ -20,9 +20,11 @@ import {
   Circle,
   AlertTriangle,
   Plus,
-  MapPin
+  MapPin,
+  Trash2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   getCalendarEventDateKey,
   formatLocalCalendarDate,
@@ -64,8 +66,15 @@ type CalendarDailyTask = DailyTask & {
 };
 
 export default function Calendar() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
-  
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
+
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
     return (
@@ -74,12 +83,19 @@ export default function Calendar() {
           title="Calendar & Scheduling"
           description="View and manage all your appointments, tasks, and events in one integrated calendar. Subscribe to continue using Adaptalyfe's scheduling features."
           feature="calendar"
-          requiredPlan="premium"
+          requiredPlan="basic"
           className="max-w-md mx-auto mt-20"
         />
       </div>
     );
   }
+  return <CalendarContent />;
+}
+
+function CalendarContent() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+  
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
@@ -151,6 +167,26 @@ export default function Calendar() {
     },
   });
 
+  // Delete an appointment or a calendar event (asks for confirmation in the row first).
+  const { toast } = useToast();
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const deleteItemMutation = useMutation({
+    mutationFn: async (item: { type: 'appointment' | 'event'; recordId: number }) => {
+      const url = item.type === 'appointment'
+        ? `/api/appointments/${item.recordId}`
+        : `/api/calendar-events/${item.recordId}`;
+      return apiRequest("DELETE", url);
+    },
+    onSuccess: (_data, item) => {
+      setPendingDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: [item.type === 'appointment' ? "/api/appointments" : "/api/calendar-events"] });
+      toast({ title: item.type === 'appointment' ? "Appointment deleted" : "Event deleted" });
+    },
+    onError: () => {
+      toast({ title: "Couldn't delete", description: "Please try again.", variant: "destructive" });
+    },
+  });
+
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     
@@ -183,6 +219,7 @@ export default function Calendar() {
       if (display.dateKey === dateStr) {
         events.push({
           id: `event-${event.id}`,
+          recordId: event.id,
           type: 'event',
           title: event.title,
           time: display.time,
@@ -260,6 +297,7 @@ export default function Calendar() {
     dayAppointments.forEach(appointment => {
       events.push({
         id: `appointment-${appointment.id}`,
+        recordId: appointment.id,
         type: 'appointment',
         title: appointment.title,
         time: safeTimeLabel(appointment.appointmentDate),
@@ -462,10 +500,9 @@ export default function Calendar() {
                         <div
                           key={event.id}
                           onClick={() => {
-                            if (event.type === 'event') {
-                              setCurrentDate(day);
-                              setView('day');
-                            }
+                            // Open the day to see details, mark done or delete.
+                            setCurrentDate(day);
+                            setView('day');
                           }}
                           className={`p-4 rounded-xl text-white font-medium cursor-pointer hover:opacity-90 transition-all hover:-translate-y-0.5 shadow-sm border-l-4 ${
                             event.type === 'task' ? 'bg-indigo-600 border-indigo-300' :
@@ -579,6 +616,33 @@ export default function Calendar() {
                     )}
                   </div>
                 </div>
+                {(event.type === 'appointment' || event.type === 'event') && typeof event.recordId === 'number' && (
+                  pendingDeleteId === event.id ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-600">Delete?</span>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={deleteItemMutation.isPending}
+                        onClick={() => deleteItemMutation.mutate({ type: event.type, recordId: event.recordId })}
+                      >
+                        Yes
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setPendingDeleteId(null)}>No</Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-slate-400 hover:text-red-600"
+                      aria-label={`Delete ${event.title}`}
+                      title="Delete"
+                      onClick={() => setPendingDeleteId(event.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )
+                )}
               </div>
             ))
           )}

@@ -31,13 +31,15 @@ const messageSchema = z.object({
 });
 
 export default function Caregiver() {
-  const { isPremiumUser, hasFeature } = useSubscriptionEnforcement();
-  // Caregiver connections: every plan. In-app messaging and progress sharing: Family plan.
-  const canMessage = hasFeature('caregiverMessaging');
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
-  const [showCaregiverDialog, setCaregiverDialog] = useState(false);
-  
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
+
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
     return (
@@ -46,12 +48,24 @@ export default function Caregiver() {
           title="Caregiver Communication"
           description="Connect with your support network, share updates, and coordinate care. Subscribe to continue using Adaptalyfe's caregiver features."
           feature="caregiver"
-          requiredPlan="family"
+          requiredPlan="basic"
           className="max-w-md mx-auto mt-20"
         />
       </div>
     );
   }
+  return <CaregiverContent />;
+}
+
+function CaregiverContent() {
+  const { isPremiumUser, hasFeature } = useSubscriptionEnforcement();
+  // Caregiver connections: every plan. In-app messaging and progress sharing: Family plan.
+  const canMessage = hasFeature('caregiverMessaging');
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [showCaregiverDialog, setCaregiverDialog] = useState(false);
+  
+
   const [showMessageDialog, setMessageDialog] = useState(false);
   const [selectedCaregiver, setSelectedCaregiver] = useState<number | null>(null);
 

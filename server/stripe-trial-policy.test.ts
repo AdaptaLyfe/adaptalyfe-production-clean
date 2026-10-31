@@ -80,3 +80,22 @@ test("plan switch by a paying customer keeps the current subscription until conf
   assert.equal(isConfirmedPlanSwitch(paying, { status: "canceled" }), false);
   assert.equal(isConfirmedPlanSwitch(paying, null), false);
 });
+
+test("subscribers from before the product tag existed are still treated as confirmed", () => {
+  const legacy = {
+    createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+    subscriptionProductId: null,
+    subscriptionStatus: "active",
+    stripeSubscriptionId: "sub_legacy",
+    subscriptionPlatform: "web",
+  };
+  // A switch keeps the old plan until the new one is confirmed …
+  assert.equal(isConfirmedPlanSwitch(legacy, { status: "trialing", trial_end: 1 }), true);
+  // … and keeps the running trial end instead of starting a new one.
+  const trialEnd = Math.floor(now.getTime() / 1000) + 3 * 24 * 60 * 60;
+  assert.equal(stripeTrialEndForCheckout(legacy, { status: "trialing", trial_end: trialEnd }, now), trialEnd);
+  // A pending (never confirmed) checkout is not a subscriber.
+  assert.equal(isConfirmedPlanSwitch({ ...legacy, subscriptionStatus: "pending" }, { status: "trialing" }), false);
+  // Store subscriptions are not website subscriptions.
+  assert.equal(isConfirmedPlanSwitch({ ...legacy, subscriptionPlatform: "google_play" }, { status: "active" }), false);
+});

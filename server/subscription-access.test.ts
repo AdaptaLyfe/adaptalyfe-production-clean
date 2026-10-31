@@ -164,3 +164,71 @@ test("messaging needs Family; Premium is refused; caregiver accounts are not blo
   assert.equal(await run(1, "/rewards"), 200);
   assert.equal(await run(3, "/rewards"), 200);
 });
+
+// ---- Fixes 31 Oct: payment grace, expired accounts, org access, plan limits ----
+import { accessPlanFor, accountTrialActive, isAllowedWithoutSubscription, planLimits, PAST_DUE_GRACE_DAYS } from "./subscription-access";
+
+const DAY = 24 * 3_600_000;
+const web = (over: Record<string, unknown> = {}) => ({
+  id: 9, accountType: "user", subscriptionTier: "premium", subscriptionStatus: "active",
+  subscriptionPlatform: "web", stripeSubscriptionId: "sub_test",
+  subscriptionExpiresAt: new Date(now.getTime() + 10 * DAY), createdAt: new Date(now.getTime() - 40 * DAY),
+  ...over,
+});
+
+test("a failed renewal keeps access during the retry grace period, then ends", () => {
+  const justFailed = web({ subscriptionStatus: "past_due", subscriptionExpiresAt: new Date(now.getTime() - DAY) });
+  assert.equal(paidSubscriptionTier(justFailed, now), "premium");
+  const longFailed = web({ subscriptionStatus: "past_due", subscriptionExpiresAt: new Date(now.getTime() - (PAST_DUE_GRACE_DAYS + 1) * DAY) });
+  assert.equal(paidSubscriptionTier(longFailed, now), "free");
+});
+
+test("trial and plan used for limits", () => {
+  assert.equal(accountTrialActive({ createdAt: new Date(now.getTime() - 2 * DAY) }, now), true);
+  assert.equal(accountTrialActive({ createdAt: new Date(now.getTime() - 8 * DAY) }, now), false);
+  assert.equal(accessPlanFor({ createdAt: new Date(now.getTime() - 2 * DAY) }, false, now), "basic");
+  assert.equal(accessPlanFor({ createdAt: new Date(now.getTime() - 8 * DAY) }, false, now), "expired");
+  assert.equal(accessPlanFor({ createdAt: new Date(now.getTime() - 8 * DAY) }, true, now), "family");
+  assert.equal(accessPlanFor(web(), false, now), "premium");
+  assert.deepEqual(planLimits("basic"), { tasks: 50, caregivers: 1 });
+  assert.deepEqual(planLimits("premium"), { tasks: 1000, caregivers: 5 });
+  assert.deepEqual(planLimits("family"), { tasks: null, caregivers: null });
+});
+
+test("AI chat and wearables APIs are Premium; the daily guide is not", () => {
+  assert.equal(requiredSubscriptionTierForPath("/chat"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/ai/actions/execute"), "premium");
+  assert.equal(requiredSubscriptionTierForPath("/ai/daily-guide"), null);
+  assert.equal(requiredSubscriptionTierForPath("/wearable-devices"), "premium");
+});
+
+async function runGuard(account: any, path: string, org = false) {
+  let status = 200; let passed = false;
+  const res: any = { status(code: number) { status = code; return this; }, json() { return this; } };
+  await createSubscriptionFeatureGuard(async () => account, async () => org)(
+    { path, session: { userId: account?.id ?? 99, user: {} } }, res, () => { passed = true; });
+  return passed ? 200 : status;
+}
+
+test("expired accounts are refused app APIs on the server but can still pay and sign out", async () => {
+  const expired = { id: 501, accountType: "user", createdAt: new Date(Date.now() - 9 * DAY) };
+  assert.equal(await runGuard(expired, "/daily-tasks"), 402);
+  assert.equal(await runGuard(expired, "/mood-entries"), 402);
+  for (const p of ["/user", "/user/delete-account", "/subscription", "/create-subscription", "/logout", "/org-codes/redeem", "/stripe/webhook"]) {
+    assert.equal(isAllowedWithoutSubscription(p), true, p);
+    assert.equal(await runGuard(expired, p), 200, p);
+  }
+  assert.equal(isAllowedWithoutSubscription("/user-summary"), false);
+  const trial = { id: 502, accountType: "user", createdAt: new Date(Date.now() - 2 * DAY) };
+  assert.equal(await runGuard(trial, "/daily-tasks"), 200);
+  const caregiver = { id: 503, accountType: "caregiver", createdAt: new Date(Date.now() - 90 * DAY) };
+  assert.equal(await runGuard(caregiver, "/daily-tasks"), 200);
+});
+
+test("organization members get full access on the server too", async () => {
+  const orgMember = { id: 504, accountType: "user", createdAt: new Date(Date.now() - 30 * DAY) };
+  assert.equal(await runGuard(orgMember, "/daily-tasks", true), 200);
+  assert.equal(await runGuard(orgMember, "/personal-documents", true), 200);
+  assert.equal(await runGuard(orgMember, "/messages", true), 200);
+  assert.equal(await runGuard(orgMember, "/personal-documents", false), 403);
+});

@@ -12,8 +12,15 @@ import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import type { MoodEntry } from "@shared/schema";
 
 export default function MoodTracking() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
-  
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
+
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
     return (
@@ -22,12 +29,19 @@ export default function MoodTracking() {
           title="Mood Check-ins"
           description="Monitor your emotional well-being with daily mood check-ins and progress tracking. Subscribe to continue using Adaptalyfe's mood management features."
           feature="mood"
-          requiredPlan="premium"
+          requiredPlan="basic"
           className="max-w-md mx-auto mt-20"
         />
       </div>
     );
   }
+  return <MoodTrackingContent />;
+}
+
+function MoodTrackingContent() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+  
+
   const { toast } = useToast();
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [notes, setNotes] = useState("");

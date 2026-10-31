@@ -901,7 +901,14 @@ function formatDuration(minutes: number | null) {
 
 /** Plan rule: every plan (Basic, Premium, Family) and the free trial. */
 export default function SleepTracking() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
   if (!isPremiumUser) {
     return (
       <div className="min-h-screen">

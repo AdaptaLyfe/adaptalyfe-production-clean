@@ -55,7 +55,9 @@ import {
   subscriptionPlanForProductId,
 } from "./google-play-entitlement";
 import type { GooglePlayEntitlement } from "./google-play-entitlement";
-import { createSubscriptionFeatureGuard, paidSubscriptionTier } from "./subscription-access";
+import { pool as recordPool } from "./db";
+import { createRecordOwnershipGuard } from "./record-ownership";
+import { accessPlanFor, createSubscriptionFeatureGuard, paidSubscriptionTier, planLimits } from "./subscription-access";
 import { buildSubscriptionResponse } from "./subscription-response";
 import {
   isStripeBillingCycle,
@@ -608,7 +610,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Middleware to ensure user is logged in for protected routes
-  app.use("/api", createSubscriptionFeatureGuard((id) => storage.getUserById(id)));
+  app.use("/api", createSubscriptionFeatureGuard(
+    (id) => storage.getUserById(id),
+    async (id) => Boolean(await storage.getActiveOrgMembershipByUser(id)),
+  ));
+
+  // Plain parameterised query (works with both the local pg pool and Neon's pool).
+  const queryDb = (text: string, params: unknown[]) =>
+    (recordPool as unknown as { query: (t: string, p: unknown[]) => Promise<{ rows: any[] }> }).query(text, params);
+
+  // Only the owner (or their active caregiver) may read, change or delete a record by id.
+  app.use("/api", createRecordOwnershipGuard({
+    ownerOf: async (table, id) => {
+      // table comes from a fixed allow-list in record-ownership.ts, never from the request.
+      const result = await queryDb(`SELECT user_id FROM "${table}" WHERE id = $1`, [id]);
+      return result.rows.length ? Number(result.rows[0].user_id) : null;
+    },
+    caresFor: async (caregiverId, userId) => {
+      const result = await queryDb(
+        "SELECT 1 FROM care_relationships WHERE caregiver_id = $1 AND user_id = $2 AND is_active = true LIMIT 1",
+        [caregiverId, userId],
+      );
+      return result.rows.length > 0;
+    },
+  }));
+
+  // Plan limits (tasks / caregivers) for an account, read from the database.
+  const limitsForUser = async (userId: number) => {
+    const account = await storage.getUserById(userId);
+    if (!account) return { plan: "expired" as const, limits: planLimits("expired") };
+    const org = await storage.getActiveOrgMembershipByUser(userId).catch(() => undefined);
+    const plan = accessPlanFor(account, Boolean(org));
+    return { plan, limits: planLimits(plan) };
+  };
+  const planName = (plan: string) => plan === "premium" ? "Premium" : plan === "family" ? "Family" : "Basic";
 
   // Supports both cookie-based (desktop) and header-based (mobile) auth
   const requireAuth = async (req: any, res: any, next: any) => {
@@ -1238,6 +1273,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (taskData.scheduledTime === '') taskData.scheduledTime = null;
       
       const data = insertDailyTaskSchema.parse(taskData);
+      const { plan, limits } = await limitsForUser(user.id);
+      if (limits.tasks !== null && (await storage.countDailyTasksByUser(user.id)) >= limits.tasks) {
+        return res.status(403).json({
+          message: `Your ${planName(plan)} plan includes up to ${limits.tasks} tasks. Delete a task or upgrade your plan to add more.`,
+          limitReached: "tasks",
+          limit: limits.tasks,
+          subscriptionRequired: true,
+        });
+      }
       const task = await storage.createDailyTask(data);
       res.json(task);
     } catch (error) {
@@ -1689,6 +1733,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      const caregiverLimit = await limitsForUser(req.user.id);
+      const activeCaregivers = new Set(
+        existingRelationships.filter((r) => r.isActive).map((r) => r.caregiverId),
+      ).size;
+      if (caregiverLimit.limits.caregivers !== null && activeCaregivers >= caregiverLimit.limits.caregivers) {
+        const n = caregiverLimit.limits.caregivers;
+        return res.status(403).json({
+          error: `Your ${planName(caregiverLimit.plan)} plan includes ${n} caregiver connection${n === 1 ? "" : "s"}. Remove a caregiver or upgrade your plan to add more.`,
+          limitReached: "caregivers",
+          limit: n,
+          subscriptionRequired: true,
+        });
+      }
+
       const data = insertCaregiverSchema.parse({
         ...req.body,
         userId: req.user.id,
@@ -2048,9 +2106,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/appointments/upcoming", async (req, res) => {
+  app.get("/api/appointments/upcoming", async (req: any, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -2076,10 +2134,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/appointments/:id/complete", async (req, res) => {
+  app.delete("/api/appointments/:id", async (req: any, res) => {
     try {
+      if (!req.session.userId || !req.session.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const appointmentId = parseInt(req.params.id);
+      const existing = Number.isFinite(appointmentId) ? await storage.getAppointmentById(appointmentId) : undefined;
+      if (!existing || existing.userId !== req.session.userId) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
+      await storage.deleteAppointment(appointmentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Failed to delete appointment:", error);
+      res.status(500).json({ message: "Failed to delete appointment" });
+    }
+  });
+
+  app.patch("/api/appointments/:id/complete", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
       const appointmentId = parseInt(req.params.id);
       const { isCompleted } = req.body;
+      const owned = Number.isFinite(appointmentId) ? await storage.getAppointmentById(appointmentId) : undefined;
+      if (!owned || owned.userId !== req.session.userId) {
+        return res.status(404).json({ message: "Appointment not found" });
+      }
       const appointment = await storage.updateAppointmentCompletion(appointmentId, isCompleted);
       if (!appointment) {
         return res.status(404).json({ message: "Appointment not found" });
@@ -2540,6 +2623,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       const eventId = parseInt(req.params.id);
+      const ownedEvent = Number.isFinite(eventId) ? await storage.getCalendarEventById(eventId) : undefined;
+      if (!ownedEvent || ownedEvent.userId !== user.id) {
+        return res.status(404).json({ message: "Event not found" });
+      }
       
       const updateData = normalizeCalendarEventWriteInput(req.body, true);
       
@@ -2561,6 +2648,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       const eventId = parseInt(req.params.id);
+      const ownedEvent = Number.isFinite(eventId) ? await storage.getCalendarEventById(eventId) : undefined;
+      if (!ownedEvent || ownedEvent.userId !== user.id) {
+        return res.status(404).json({ message: "Event not found" });
+      }
       const deleted = await storage.deleteCalendarEvent(eventId);
       if (deleted) {
         res.json({ success: true });
@@ -2661,9 +2752,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/meal-plans/date/:date", async (req, res) => {
+  app.get("/api/meal-plans/date/:date", async (req: any, res) => {
     try {
-      const user = storage.getCurrentUser();
+      const user = req.session?.user;
       if (!user) {
         return res.status(401).json({ message: "Authentication required" });
       }
@@ -3283,10 +3374,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Rewards API Routes - REMOVED DUPLICATES (better versions exist below around line 4391)
 
   // Caregiver Permission Management Routes
-  app.get("/api/caregiver-permissions/:userId/:caregiverId", async (req, res) => {
+  // Whether the signed-in account may see or manage another account's care
+  // settings: itself, an active caregiver of that account, or an admin.
+  const canManageCareSettings = async (req: any, userId: number) => {
+    const me = req.session?.userId;
+    if (!me || !Number.isFinite(userId)) return false;
+    if (me === userId || req.session?.user?.accountType === "admin") return true;
+    const result = await queryDb(
+      "SELECT 1 FROM care_relationships WHERE caregiver_id = $1 AND user_id = $2 AND is_active = true LIMIT 1",
+      [me, userId],
+    );
+    return result.rows.length > 0;
+  };
+  const isCaregiverOf = async (req: any, userId: number) => {
+    const me = req.session?.userId;
+    if (!me) return false;
+    if (req.session?.user?.accountType === "admin") return true;
+    const result = await queryDb(
+      "SELECT 1 FROM care_relationships WHERE caregiver_id = $1 AND user_id = $2 AND is_active = true LIMIT 1",
+      [me, userId],
+    );
+    return result.rows.length > 0;
+  };
+
+  app.get("/api/caregiver-permissions/:userId/:caregiverId", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const caregiverId = parseInt(req.params.caregiverId);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const permissions = await storage.getCaregiverPermissions(userId, caregiverId);
       res.json(permissions);
     } catch (error) {
@@ -3295,8 +3411,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/caregiver-permissions", async (req, res) => {
+  app.post("/api/caregiver-permissions", async (req: any, res) => {
     try {
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await canManageCareSettings(req, Number(req.body?.userId)))) return res.status(403).json({ message: "Access denied" });
       const permission = await storage.setCaregiverPermission(req.body);
       res.json(permission);
     } catch (error) {
@@ -3305,9 +3423,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/caregiver-permissions/:userId/:caregiverId/:permissionType", async (req, res) => {
+  app.delete("/api/caregiver-permissions/:userId/:caregiverId/:permissionType", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const caregiverId = parseInt(req.params.caregiverId);
       const { permissionType } = req.params;
       const success = await storage.removeCaregiverPermission(userId, caregiverId, permissionType);
@@ -3324,11 +3444,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Locked User Settings Routes
-  app.get("/api/locked-settings/:userId", async (req, res) => {
+  app.get("/api/locked-settings/:userId", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const settings = await storage.getLockedUserSettings(userId);
-      res.json(settings);
+      // Add the caregiver's name so the person can see who locked each setting.
+      const names = new Map<number, string>();
+      for (const id of Array.from(new Set(settings.map((s) => s.lockedBy)))) {
+        const caregiver = await storage.getUserById(id).catch(() => undefined);
+        names.set(id, caregiver?.name || caregiver?.username || "Your caregiver");
+      }
+      res.json(settings.map((s) => ({ ...s, lockedByName: names.get(s.lockedBy) ?? "Your caregiver" })));
     } catch (error) {
       logSanitizedError("care.settings.list", error);
       res.status(500).json({ message: "Failed to fetch locked settings" });
@@ -3458,6 +3586,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "The invitation must be accepted by the signed-in user" });
       }
 
+      // The invitation was created by the person being cared for (stored as
+      // "caregiverId" on the invitation); the signed-in account is the caregiver
+      // accepting it. The care recipient's plan decides how many caregivers they can have.
+      const pendingInvitation = await storage.getCaregiverInvitation(invitationCode).catch(() => undefined);
+      if (pendingInvitation) {
+        const recipientId = pendingInvitation.caregiverId;
+        const invitationLimit = await limitsForUser(recipientId);
+        if (invitationLimit.limits.caregivers !== null) {
+          const relationships = await storage.getCareRelationshipsByUser(recipientId);
+          const active = new Set(relationships.filter((r) => r.isActive).map((r) => r.caregiverId));
+          if (!active.has(userId) && active.size >= invitationLimit.limits.caregivers) {
+            const n = invitationLimit.limits.caregivers;
+            return res.status(403).json({
+              message: `This person's ${planName(invitationLimit.plan)} plan includes ${n} caregiver connection${n === 1 ? "" : "s"}. They need to remove a caregiver or upgrade before you can join.`,
+              limitReached: "caregivers",
+              limit: n,
+            });
+          }
+        }
+      }
+
       const acceptedInvitation = await storage.acceptCaregiverInvitation(invitationCode, userId);
       
       if (!acceptedInvitation) {
@@ -3577,9 +3726,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/locked-settings/:userId/:settingKey", async (req, res) => {
+  app.get("/api/locked-settings/:userId/:settingKey", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const { settingKey } = req.params;
       const setting = await storage.getLockedUserSetting(userId, settingKey);
       if (!setting) {
@@ -3592,9 +3743,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/locked-settings", async (req, res) => {
+  app.post("/api/locked-settings", async (req: any, res) => {
     try {
-      const setting = await storage.lockUserSetting(req.body);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      // Only a caregiver of that person (or an admin) can lock their settings.
+      if (!(await isCaregiverOf(req, Number(req.body?.userId)))) return res.status(403).json({ message: "Only a caregiver can lock settings" });
+      const setting = await storage.lockUserSetting({ ...req.body, lockedBy: req.session.userId });
       res.json(setting);
     } catch (error) {
       logSanitizedError("care.settings.lock", error);
@@ -3602,11 +3756,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/locked-settings/:userId/:settingKey", async (req, res) => {
+  app.delete("/api/locked-settings/:userId/:settingKey", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const { settingKey } = req.params;
-      const caregiverId = parseInt(req.body.caregiverId || req.query.caregiverId as string);
+      if (!req.session?.userId) return res.status(401).json({ message: "Authentication required" });
+      if (!(await isCaregiverOf(req, userId))) return res.status(403).json({ message: "Only a caregiver can unlock settings" });
+      const caregiverId = req.session.userId;
       
       if (!caregiverId) {
         return res.status(400).json({ message: "Caregiver ID is required" });
@@ -3625,9 +3781,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/settings-check/:userId/:settingKey/locked", async (req, res) => {
+  app.get("/api/settings-check/:userId/:settingKey/locked", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const { settingKey } = req.params;
       const isLocked = await storage.isSettingLocked(userId, settingKey);
       res.json({ isLocked });
@@ -3637,9 +3794,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/settings-check/:userId/:settingKey/modifiable", async (req, res) => {
+  app.get("/api/settings-check/:userId/:settingKey/modifiable", async (req: any, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      if (!(await canManageCareSettings(req, userId))) return res.status(403).json({ message: "Access denied" });
       const { settingKey } = req.params;
       const canModify = await storage.canUserModifySetting(userId, settingKey);
       res.json({ canModify });
@@ -3876,9 +4034,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Medical Information Routes
   
   // Allergies
-  app.get("/api/allergies", async (req, res) => {
+  app.get("/api/allergies", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const allergies = await storage.getAllergiesByUser(userId);
       res.json(allergies);
     } catch (error) {
@@ -3887,9 +4048,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/allergies", async (req, res) => {
+  app.post("/api/allergies", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const allergyData = { ...req.body, userId };
       const allergy = await storage.createAllergy(allergyData);
       res.status(201).json(allergy);
@@ -4270,9 +4434,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency Contacts
-  app.get("/api/emergency-contacts", async (req, res) => {
+  app.get("/api/emergency-contacts", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const contacts = await storage.getEmergencyContactsByUser(userId);
       res.json(contacts);
     } catch (error) {
@@ -4281,9 +4448,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/emergency-contacts", async (req, res) => {
+  app.post("/api/emergency-contacts", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const contactData = insertEmergencyContactSchema.parse({ ...req.body, userId });
       const contact = await storage.createEmergencyContact(contactData);
       res.status(201).json(contact);
@@ -4326,9 +4496,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Primary Care Providers
-  app.get("/api/primary-care-providers", async (req, res) => {
+  app.get("/api/primary-care-providers", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const providers = await storage.getPrimaryCareProvidersByUser(userId);
       res.json(providers);
     } catch (error) {
@@ -4337,9 +4510,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/primary-care-providers", async (req, res) => {
+  app.post("/api/primary-care-providers", async (req: any, res) => {
     try {
-      const userId = 1; // Hardcoded for demo
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const providerData = insertPrimaryCareProviderSchema.parse({ ...req.body, userId });
       const provider = await storage.createPrimaryCareProvider(providerData);
       res.status(201).json(provider);
@@ -4594,9 +4770,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bus Schedule Routes
-  app.get("/api/bus-schedules", async (req, res) => {
+  app.get("/api/bus-schedules", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const schedules = await storage.getBusSchedulesByUser(userId);
       res.json(schedules);
     } catch (error) {
@@ -4605,9 +4784,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bus-schedules/day/:day", async (req, res) => {
+  app.get("/api/bus-schedules/day/:day", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const { day } = req.params;
       const schedules = await storage.getBusSchedulesByDay(userId, day);
       res.json(schedules);
@@ -4617,9 +4799,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/bus-schedules/frequent", async (req, res) => {
+  app.get("/api/bus-schedules/frequent", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const schedules = await storage.getFrequentBusRoutes(userId);
       res.json(schedules);
     } catch (error) {
@@ -4628,9 +4813,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/bus-schedules", async (req, res) => {
+  app.post("/api/bus-schedules", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const data = insertBusScheduleSchema.parse({ ...req.body, userId });
       const schedule = await storage.createBusSchedule(data);
       res.json(schedule);
@@ -4674,9 +4862,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Emergency Treatment Plan Routes
-  app.get("/api/emergency-treatment-plans", async (req, res) => {
+  app.get("/api/emergency-treatment-plans", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const plans = await storage.getEmergencyTreatmentPlansByUser(userId);
       res.json(plans);
     } catch (error) {
@@ -4685,9 +4876,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/emergency-treatment-plans/active", async (req, res) => {
+  app.get("/api/emergency-treatment-plans/active", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const plans = await storage.getActiveEmergencyTreatmentPlans(userId);
       res.json(plans);
     } catch (error) {
@@ -4696,9 +4890,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/emergency-treatment-plans", async (req, res) => {
+  app.post("/api/emergency-treatment-plans", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const data = insertEmergencyTreatmentPlanSchema.parse({ ...req.body, userId });
       const plan = await storage.createEmergencyTreatmentPlan(data);
       res.json(plan);
@@ -4863,9 +5060,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User Preferences Routes
-  app.get("/api/user-preferences", async (req, res) => {
+  app.get("/api/user-preferences", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId: number = req.session.userId;
       const preferences = await storage.getUserPreferences(userId);
       
       // Return default preferences if none exist
@@ -4890,9 +5090,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/user-preferences", async (req, res) => {
+  app.post("/api/user-preferences", async (req: any, res) => {
     try {
-      const userId = 1; // TODO: Get from auth
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const userId = req.session.userId;
       const preferencesData = req.body;
       const preferences = await storage.upsertUserPreferences(userId, preferencesData);
       res.json(preferences);
@@ -5670,10 +5873,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const user = await storage.getUserByStripeSubscriptionId(sub.id);
           if (user) {
             const periodEnd = getStripePeriodEndSeconds(sub);
+            // Cancelling (or un-cancelling) in the Stripe dashboard or customer
+            // portal arrives here, so keep the app's "renews / ends on" in step.
+            const willCancel = Boolean(sub.cancel_at_period_end || sub.cancel_at);
+            const endSeconds = sub.cancel_at ?? periodEnd;
             await storage.updateUserSubscription(user.id, {
               subscriptionStatus: statusMap[appStatusForStripeSubscription(sub)] || appStatusForStripeSubscription(sub),
-              subscriptionExpiresAt: new Date(periodEnd * 1000),
+              subscriptionExpiresAt: new Date(endSeconds * 1000),
             });
+            await storage.updateUser(user.id, { subscriptionAutoRenew: !willCancel && sub.status !== 'canceled' });
             console.log("Stripe webhook: subscription status synchronized");
           }
           break;
@@ -5686,6 +5894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               subscriptionStatus: 'cancelled',
               subscriptionTier: 'free',
             });
+            await storage.updateUser(user.id, { subscriptionAutoRenew: false });
             console.log("Stripe webhook: subscription cancelled");
           }
           break;
@@ -5751,6 +5960,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       logSanitizedError("subscriptions.cancel", error);
       res.status(500).json({ message: "We couldn't cancel your subscription. Please try again." });
+    }
+  });
+
+  // Undo a cancellation before the end date: turn auto-renew back on.
+  app.post("/api/resume-subscription", async (req: any, res) => {
+    try {
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      const account = await storage.getUserById(req.session.userId);
+      if (!account) return res.status(401).json({ message: "Please sign in again." });
+      if (account.subscriptionPlatform === 'google_play' || account.subscriptionPlatform === 'app_store') {
+        return res.status(400).json({ message: "Store subscriptions are managed in the App Store or Google Play." });
+      }
+      if (!account.stripeSubscriptionId) {
+        return res.status(400).json({ message: "There is no website subscription to resume." });
+      }
+      const currentStripe = getStripeInstance();
+      if (!currentStripe) return res.status(503).json({ message: "Payment processing unavailable" });
+
+      const existing = await currentStripe.subscriptions.retrieve(account.stripeSubscriptionId);
+      if (existing.status !== 'active' && existing.status !== 'trialing') {
+        return res.status(409).json({
+          message: "This subscription has already ended. Please choose a plan to subscribe again.",
+        });
+      }
+      const updated = existing.cancel_at_period_end
+        ? await currentStripe.subscriptions.update(account.stripeSubscriptionId, { cancel_at_period_end: false })
+        : existing;
+      const renewsAt = new Date(getStripePeriodEndSeconds(updated) * 1000);
+      await storage.updateUser(account.id, {
+        subscriptionAutoRenew: true,
+        subscriptionExpiresAt: renewsAt,
+      });
+      res.json({ resumed: true, renewsOn: renewsAt.toISOString() });
+    } catch (error: any) {
+      logSanitizedError("subscriptions.resume", error);
+      res.status(500).json({ message: "We couldn't resume your subscription. Please try again." });
     }
   });
 
@@ -7312,7 +7559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = req.session.user || storage.getCurrentUser();
+      const user = req.session.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -7331,7 +7578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = req.session.user || storage.getCurrentUser();
+      const user = req.session.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -7350,7 +7597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = req.session.user || storage.getCurrentUser();
+      const user = req.session.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -7370,7 +7617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = req.session.user || storage.getCurrentUser();
+      const user = req.session.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
@@ -7400,7 +7647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const user = req.session.user || storage.getCurrentUser();
+      const user = req.session.user;
       if (!user) {
         return res.status(401).json({ message: "Not authenticated" });
       }

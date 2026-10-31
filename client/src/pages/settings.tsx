@@ -1,23 +1,31 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { getThemePref, setThemePref, type ThemePref } from "@/lib/theme";
-import { useQuery } from "@tanstack/react-query";
+import {
+  DEFAULT_DISPLAY_SETTINGS,
+  getDisplaySettings,
+  setDisplaySettings,
+  type DisplaySettings,
+  type TextSize,
+} from "@/lib/display-settings";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Settings, Palette, Volume2, Bell, Shield, Zap, Star, HelpCircle, Save, RotateCcw, Lock, MapPin, AlertTriangle, Heart, Phone, Eye, Trash2, LogOut, Building2, CheckCircle, CreditCard, Crown } from "lucide-react";
+import {
+  AlertTriangle, Bell, BookOpen, Building2, CheckCircle, CreditCard, Crown, Eye, HelpCircle, LifeBuoy,
+  Lock, Mail, Palette, RotateCcw, Settings, Shield, Trash2, Users,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
 import { ApiError, apiRequest, queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { FieldLabel } from "@/components/ui/field-label";
 import { getSubscriptionManagementMessage } from "@/lib/subscription-management";
+import { hasActivePaidSubscription } from "@/lib/subscription-state";
 import { usePrivacyMode } from "@/components/privacy-mode-provider";
 
 const INVALID_INVITATION_CODE_MESSAGE =
@@ -39,42 +47,143 @@ function getInvitationCodeErrorMessage(error: unknown): string {
   return GENERIC_INVITATION_CODE_ERROR;
 }
 
+/** Friendly names for settings a caregiver can lock (keys from the caregiver control panel). */
+const LOCKED_SETTING_LABELS: Record<string, string> = {
+  location_sharing: "Location sharing",
+  locationTracking: "Location sharing",
+  safety_alerts: "Safety alerts",
+  emergencyAlerts: "Safety alerts",
+  emergency_contacts: "Emergency contacts",
+  medication_reminders: "Medication reminders",
+  appointment_notifications: "Appointment notifications",
+  financial_monitoring: "Financial monitoring",
+  medicalDataSharing: "Medical data sharing",
+  caregiverAccess: "Caregiver dashboard access",
+  automaticCheckIns: "Automatic check-ins",
+};
+
+function lockedSettingLabel(key: string): string {
+  return LOCKED_SETTING_LABELS[key] ?? key.replace(/[_-]+/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+interface LockedSetting {
+  id: number;
+  settingKey: string;
+  isLocked: boolean | null;
+  lockReason?: string | null;
+  canUserView?: boolean | null;
+  lockedByName?: string;
+}
+
+interface UserPreferences {
+  notificationSettings?: Record<string, unknown> | null;
+  reminderTiming?: Record<string, unknown> | null;
+}
+
+function SettingRow({ icon, title, description, children }: {
+  icon: ReactNode;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="font-medium text-slate-900">{title}</p>
+          {description && <p className="text-sm text-slate-500">{description}</p>}
+        </div>
+      </div>
+      <div className="flex-shrink-0">{children}</div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
   const { enabled: privacyMode, setEnabled: setPrivacyMode } = usePrivacyMode();
   const [, setLocation] = useLocation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [settings, setSettings] = useState({
-    theme: getThemePref() as string,
-    fontSize: 16,
-    highContrast: false,
-    voiceEnabled: true,
-    voiceSpeed: 1.0,
-    notificationsEnabled: true,
-    reminderTiming: '15',
-    quickActionsEnabled: true,
-    premiumFeatures: false,
-    autoSave: true,
-    privacyMode: false,
-    locationTracking: true,
-    emergencyAlerts: true,
-    caregiverAccess: true,
-    medicalDataSharing: true,
-    automaticCheckIns: true
-  });
-
+  const [theme, setTheme] = useState<ThemePref>(getThemePref());
+  const [display, setDisplay] = useState<DisplaySettings>(getDisplaySettings());
   const [orgCodeInput, setOrgCodeInput] = useState("");
 
-  // Get current user for locked settings checks
   const { data: user } = useQuery<any>({ queryKey: ["/api/user"] });
-  const { data: subscription } = useQuery<{ subscriptionPlatform?: string | null }>({
-    queryKey: ["/api/subscription"],
-  });
+  const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"] });
   const { data: orgMembership } = useQuery<any>({ queryKey: ["/api/org-codes/my"] });
+  const { data: preferences } = useQuery<UserPreferences>({ queryKey: ["/api/user-preferences"] });
+  const { data: lockedSettingsData } = useQuery<LockedSetting[]>({
+    queryKey: [`/api/locked-settings/${user?.id}`],
+    enabled: Boolean(user?.id),
+  });
+  const lockedSettings = Array.isArray(lockedSettingsData)
+    ? lockedSettingsData.filter((s) => s.isLocked !== false && s.canUserView !== false)
+    : [];
+
+  const isSubscribed = hasActivePaidSubscription(user, subscription);
   const subscriptionManagementMessage = getSubscriptionManagementMessage(
     subscription?.subscriptionPlatform ?? user?.subscriptionPlatform
   );
+
+  // ---- Display (saved on this device, applied straight away) ----
+  const saveDisplay = (next: DisplaySettings) => {
+    setDisplay(next);
+    if (!setDisplaySettings(next)) {
+      toast({
+        title: "Applied for now",
+        description: "This browser couldn't save the setting, so it may reset when you reload.",
+        variant: "destructive",
+      });
+    }
+  };
+  const changeTheme = (value: string) => {
+    if (value === "light" || value === "dark" || value === "auto") {
+      setTheme(value);
+      setThemePref(value);
+    }
+  };
+  const resetDisplay = () => {
+    changeTheme("light");
+    saveDisplay({ ...DEFAULT_DISPLAY_SETTINGS });
+    toast({ title: "Display reset", description: "Theme, text size and contrast are back to normal." });
+  };
+
+  // ---- Reminders (saved to the account; the same settings as Task Reminders) ----
+  const pushEnabled = preferences?.notificationSettings?.pushEnabled !== false;
+  const reminderMinutes = typeof preferences?.reminderTiming?.taskReminders === "number"
+    ? String(preferences.reminderTiming.taskReminders)
+    : preferences?.reminderTiming?.taskReminders === false ? "off" : "5";
+
+  const savePreferencesMutation = useMutation({
+    mutationFn: async (update: UserPreferences) => {
+      const res = await apiRequest("PUT", "/api/user-preferences", update);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user-preferences"] });
+      toast({ title: "Saved", description: "Your reminder settings were updated." });
+    },
+    onError: () => {
+      toast({ title: "Not saved", description: "Your reminder settings couldn't be saved. Please try again.", variant: "destructive" });
+    },
+  });
+  const setPushEnabled = (checked: boolean) => {
+    savePreferencesMutation.mutate({
+      notificationSettings: { ...(preferences?.notificationSettings ?? {}), pushEnabled: checked },
+    });
+  };
+  const setReminderMinutes = (value: string) => {
+    savePreferencesMutation.mutate({
+      reminderTiming: {
+        ...(preferences?.reminderTiming ?? {}),
+        taskReminders: value === "off" ? false : Number(value),
+      },
+    });
+  };
 
   const redeemOrgCodeMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -95,53 +204,6 @@ export default function SettingsPage() {
       });
     },
   });
-  
-  // Mock locked settings data - in real app this would come from API
-  const lockedSettings = {
-    locationTracking: { isLocked: true, lockedBy: "Mom (Primary Caregiver)", reason: "Safety - Elopement Risk" },
-    emergencyAlerts: { isLocked: true, lockedBy: "Dr. Sarah Johnson", reason: "Medical Supervision Required" },
-    caregiverAccess: { isLocked: false, lockedBy: "", reason: "" },
-    medicalDataSharing: { isLocked: true, lockedBy: "Case Manager", reason: "Treatment Coordination" },
-    automaticCheckIns: { isLocked: false, lockedBy: "", reason: "" }
-  };
-
-  const handleSave = () => {
-    localStorage.setItem(
-      'user-settings',
-      JSON.stringify({ ...settings, privacyMode }),
-    );
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been saved successfully.",
-    });
-  };
-
-  const handleReset = () => {
-    setPrivacyMode(false);
-    setThemePref('light');
-    setSettings({
-      theme: 'light',
-      fontSize: 16,
-      highContrast: false,
-      voiceEnabled: true,
-      voiceSpeed: 1.0,
-      notificationsEnabled: true,
-      reminderTiming: '15',
-      quickActionsEnabled: true,
-      premiumFeatures: false,
-      autoSave: true,
-      privacyMode: false,
-      locationTracking: true,
-      emergencyAlerts: true,
-      caregiverAccess: true,
-      medicalDataSharing: true,
-      automaticCheckIns: true
-    });
-    toast({
-      title: "Settings Reset",
-      description: "All settings have been reset to defaults.",
-    });
-  };
 
   const deleteAccountMutation = useMutation({
     mutationFn: async () => {
@@ -177,377 +239,153 @@ export default function SettingsPage() {
     }
   };
 
-  const updateSetting = (key: string, value: any) => {
-    if (key === 'theme' && (value === 'light' || value === 'dark' || value === 'auto')) {
-      setThemePref(value as ThemePref);
-    }
-    // Check if setting is locked
-    if (lockedSettings[key as keyof typeof lockedSettings]?.isLocked) {
-      toast({
-        title: "Setting Locked",
-        description: `This setting has been locked by ${lockedSettings[key as keyof typeof lockedSettings]?.lockedBy} for your safety and wellbeing.`,
-        variant: "destructive"
-      });
-      return;
-    }
-    setSettings(prev => ({ ...prev, [key]: value }));
-  };
-
-  const renderLockedSetting = (settingKey: string, label: string, icon: React.ReactNode, isEnabled: boolean, onToggle: () => void) => {
-    const lockInfo = lockedSettings[settingKey as keyof typeof lockedSettings];
-    const isLocked = lockInfo?.isLocked;
-
-    return (
-      <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-        isEnabled && !isLocked
-          ? 'bg-white border-green-400 shadow-md' 
-          : isLocked
-            ? 'bg-gray-100 border-gray-400 opacity-75'
-            : 'bg-white border-gray-300 opacity-75'
-      }`}>
-        <Label htmlFor={settingKey} className="flex items-center gap-2">
-          {icon}
-          {label}
-          {isEnabled && !isLocked && (
-            <Badge variant="secondary" className="bg-green-200 text-green-900 text-xs font-bold px-2 py-1">
-              ACTIVE
-            </Badge>
-          )}
-          {isLocked && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    <Lock className="w-3 h-3 mr-1" />
-                    LOCKED
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="text-sm">
-                    <div className="font-semibold">Locked by: {lockInfo?.lockedBy}</div>
-                    <div className="text-muted-foreground">{lockInfo?.reason}</div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </Label>
-        <Switch
-          id={settingKey}
-          checked={isEnabled}
-          onCheckedChange={onToggle}
-          disabled={isLocked}
-          className={`scale-125 ${
-            isLocked 
-              ? "opacity-60 cursor-not-allowed bg-gray-400" 
-              : isEnabled 
-                ? 'data-[state=checked]:bg-green-600 shadow-lg shadow-green-200' 
-                : 'bg-gray-300 opacity-60'
-          }`}
-        />
-      </div>
-    );
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <Settings className="w-8 h-8 text-purple-600" />
-          Settings & Customization
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+          <Settings className="w-8 h-8 text-indigo-600" />
+          Settings
         </h1>
-        <p className="text-gray-600">
-          Personalize your AdaptaLyfe experience with accessibility options, themes, and feature preferences.
+        <p className="text-slate-600">
+          Changes are saved as soon as you make them.
         </p>
       </div>
 
-      {/* Subscription Banner — shown only when not subscribed */}
-      {user?.subscriptionStatus !== 'active' && (
-        <div className="mb-6 rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-600 p-5 text-white shadow-md">
+      {/* Subscription */}
+      {isSubscribed ? (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 p-4 text-white shadow-md flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 flex-shrink-0" />
+            <div>
+              <p className="font-semibold capitalize">{subscription?.planType ?? user?.subscriptionTier} plan — active</p>
+              <p className="text-sm text-white/80">
+                {(subscription?.subscriptionPlatform ?? user?.subscriptionPlatform) === "web"
+                  ? subscription?.autoRenew === false
+                    ? "Cancelled — your access continues until the end date."
+                    : "Renews automatically. You can change or cancel it any time."
+                  : subscriptionManagementMessage}
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => setLocation("/subscription")}
+            className="bg-white text-emerald-700 hover:bg-white/90 font-semibold rounded-xl flex-shrink-0"
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Manage subscription
+          </Button>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 p-5 text-white shadow-md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                 <Crown className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-lg leading-tight">Activate Your Subscription</p>
+                <p className="font-semibold text-lg leading-tight">
+                  {subscription?.isAccountTrial && subscription?.trialDaysLeft
+                    ? `Free trial — ${subscription.trialDaysLeft} day${subscription.trialDaysLeft === 1 ? "" : "s"} left`
+                    : "Choose a plan"}
+                </p>
                 <p className="text-sm text-white/80 mt-0.5">
-                  Unlock all features — daily tasks, finance, mood tracking, appointments &amp; more.
+                  Keep your tasks, money, mood and appointments in one place.
                 </p>
-                <p className="text-xs text-white/60 mt-1">
-                  Plans from $4.99/month · Billed through Apple ID · Cancel anytime
-                </p>
+                <p className="text-xs text-white/70 mt-1">Plans from $4.99/month · Cancel anytime</p>
               </div>
             </div>
             <Button
               onClick={() => setLocation('/subscription')}
-              className="bg-white text-teal-700 hover:bg-white/90 font-semibold px-6 py-2 rounded-xl flex-shrink-0 flex items-center gap-2"
+              className="bg-white text-indigo-700 hover:bg-white/90 font-semibold px-6 py-2 rounded-xl flex-shrink-0 flex items-center gap-2"
             >
               <CreditCard className="w-4 h-4" />
-              View Plans
+              View plans
             </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Active subscription badge — shown only when subscribed */}
-      {user?.subscriptionStatus === 'active' && (
-        <div className="mb-6 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 p-4 text-white shadow-md flex items-center gap-3">
-          <CheckCircle className="w-6 h-6 flex-shrink-0" />
-          <div>
-            <p className="font-semibold capitalize">{user.subscriptionTier} Plan — Active</p>
-            <p className="text-sm text-white/80">{subscriptionManagementMessage}</p>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Appearance Settings */}
+        {/* Appearance */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5 text-blue-600" />
+              <Palette className="w-5 h-5 text-indigo-600" />
               Appearance
             </CardTitle>
-            <CardDescription>Customize the look and feel of your dashboard</CardDescription>
+            <CardDescription>Saved on this device</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="theme">Theme</Label>
-              <Select value={settings.theme} onValueChange={(value) => updateSetting('theme', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={theme} onValueChange={changeTheme}>
+                <SelectTrigger id="theme"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Light</SelectItem>
                   <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="auto">Auto</SelectItem>
+                  <SelectItem value="auto">Match my device</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label>Font Size: {settings.fontSize}px</Label>
-              <Slider
-                value={[settings.fontSize]}
-                onValueChange={(value) => updateSetting('fontSize', value[0])}
-                min={12}
-                max={24}
-                step={1}
-                className="w-full"
-              />
+              <Label htmlFor="text-size">Text size</Label>
+              <Select
+                value={display.textSize}
+                onValueChange={(value) => saveDisplay({ ...display, textSize: value as TextSize })}
+              >
+                <SelectTrigger id="text-size"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="small">Small</SelectItem>
+                  <SelectItem value="default">Normal</SelectItem>
+                  <SelectItem value="large">Large</SelectItem>
+                  <SelectItem value="x-large">Extra large</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.highContrast 
-                ? 'bg-yellow-100 border-yellow-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="high-contrast" className="flex items-center gap-2">
-                <Eye className={`w-4 h-4 ${settings.highContrast ? 'text-yellow-600' : 'text-gray-400'}`} />
-                High Contrast Mode
-                {settings.highContrast && (
-                  <Badge variant="secondary" className="bg-yellow-200 text-yellow-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
+            <SettingRow icon={<Eye className="w-4 h-4" />} title="High contrast" description="Stronger text and borders">
               <Switch
                 id="high-contrast"
-                checked={settings.highContrast}
-                onCheckedChange={(checked) => updateSetting('highContrast', checked)}
-                className={`scale-125 ${
-                  settings.highContrast 
-                    ? 'data-[state=checked]:bg-yellow-600 shadow-lg shadow-yellow-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
+                aria-label="High contrast"
+                checked={display.highContrast}
+                onCheckedChange={(checked) => saveDisplay({ ...display, highContrast: checked })}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Safety & Emergency Settings */}
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-red-600" />
-              Safety & Emergency Settings
-            </CardTitle>
-            <CardDescription>Critical safety features managed by your care team</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {renderLockedSetting(
-              'locationTracking',
-              'Location Tracking',
-              <MapPin className="w-4 h-4 text-red-500" />,
-              settings.locationTracking,
-              () => updateSetting('locationTracking', !settings.locationTracking)
-            )}
-
-            {renderLockedSetting(
-              'emergencyAlerts',
-              'Emergency Alerts',
-              <AlertTriangle className="w-4 h-4 text-red-500" />,
-              settings.emergencyAlerts,
-              () => updateSetting('emergencyAlerts', !settings.emergencyAlerts)
-            )}
-
-            {renderLockedSetting(
-              'automaticCheckIns',
-              'Automatic Check-ins',
-              <Heart className="w-4 h-4 text-red-500" />,
-              settings.automaticCheckIns,
-              () => updateSetting('automaticCheckIns', !settings.automaticCheckIns)
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Privacy & Access Settings */}
-        <Card className="border-purple-200 bg-purple-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-purple-600" />
-              Privacy & Caregiver Access
-            </CardTitle>
-            <CardDescription>Control what information caregivers can access</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {renderLockedSetting(
-              'medicalDataSharing',
-              'Medical Data Sharing',
-              <Heart className="w-4 h-4 text-purple-500" />,
-              settings.medicalDataSharing,
-              () => updateSetting('medicalDataSharing', !settings.medicalDataSharing)
-            )}
-
-            {renderLockedSetting(
-              'caregiverAccess',
-              'Caregiver Dashboard Access',
-              <Phone className="w-4 h-4 text-purple-500" />,
-              settings.caregiverAccess,
-              () => updateSetting('caregiverAccess', !settings.caregiverAccess)
-            )}
-
-            <div className="bg-white p-4 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 mb-2">
-                <HelpCircle className="w-4 h-4 text-purple-600" />
-                <span className="font-medium text-sm">Why are some settings locked?</span>
-              </div>
-              <p className="text-xs text-gray-600">
-                Your caregivers have locked certain safety-critical settings to ensure your wellbeing. 
-                This is especially important for individuals who may be at risk of wandering or have medical conditions requiring supervision.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Voice & Audio Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Volume2 className="w-5 h-5 text-green-600" />
-              Voice & Audio
-            </CardTitle>
-            <CardDescription>Configure speech and audio preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.voiceEnabled 
-                ? 'bg-green-100 border-green-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="voice-enabled" className="flex items-center gap-2">
-                <Volume2 className={`w-4 h-4 ${settings.voiceEnabled ? 'text-green-600' : 'text-gray-400'}`} />
-                Enable Voice Commands
-                {settings.voiceEnabled && (
-                  <Badge variant="secondary" className="bg-green-200 text-green-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
-              <Switch
-                id="voice-enabled"
-                checked={settings.voiceEnabled}
-                onCheckedChange={(checked) => updateSetting('voiceEnabled', checked)}
-                className={`scale-125 ${
-                  settings.voiceEnabled 
-                    ? 'data-[state=checked]:bg-green-600 shadow-lg shadow-green-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Voice Speed: {settings.voiceSpeed}x</Label>
-              <Slider
-                value={[settings.voiceSpeed]}
-                onValueChange={(value) => updateSetting('voiceSpeed', value[0])}
-                min={0.5}
-                max={2.0}
-                step={0.1}
-                className="w-full"
-              />
-            </div>
-
-            <Button 
-              onClick={() => {
-                if ('speechSynthesis' in window) {
-                  const utterance = new SpeechSynthesisUtterance("This is a test of the voice settings at the current speed.");
-                  utterance.rate = settings.voiceSpeed;
-                  speechSynthesis.speak(utterance);
-                }
-              }}
-              variant="outline"
-              className="w-full"
-            >
-              Test Voice Settings
+            </SettingRow>
+            <Button variant="outline" className="w-full" onClick={resetDisplay}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset display
             </Button>
           </CardContent>
         </Card>
 
-        {/* Notification Settings */}
-        <Card className="border-orange-200 bg-orange-50">
+        {/* Reminders */}
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-orange-600" />
-              Notifications
+              <Bell className="w-5 h-5 text-indigo-600" />
+              Reminders
             </CardTitle>
-            <CardDescription>Manage alerts and reminders</CardDescription>
+            <CardDescription>Saved to your account</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.notificationsEnabled 
-                ? 'bg-green-100 border-green-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="notifications" className="flex items-center gap-2">
-                <Bell className={`w-4 h-4 ${settings.notificationsEnabled ? 'text-green-600' : 'text-gray-400'}`} />
-                Enable Notifications
-                {settings.notificationsEnabled && (
-                  <Badge variant="secondary" className="bg-green-200 text-green-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
+          <CardContent className="space-y-5">
+            <SettingRow icon={<Bell className="w-4 h-4" />} title="Notifications" description="Reminders and check-ins from Adaptalyfe">
               <Switch
                 id="notifications"
-                checked={settings.notificationsEnabled}
-                onCheckedChange={(checked) => updateSetting('notificationsEnabled', checked)}
-                className={`scale-125 ${
-                  settings.notificationsEnabled 
-                    ? 'data-[state=checked]:bg-green-600 shadow-lg shadow-green-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
+                aria-label="Notifications"
+                checked={pushEnabled}
+                disabled={!preferences || savePreferencesMutation.isPending}
+                onCheckedChange={setPushEnabled}
               />
-            </div>
-
+            </SettingRow>
             <div className="space-y-2">
-              <Label htmlFor="reminder-timing">Default Reminder Time</Label>
-              <Select value={settings.reminderTiming} onValueChange={(value) => updateSetting('reminderTiming', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Label htmlFor="reminder-timing">Remind me about tasks</Label>
+              <Select
+                value={reminderMinutes}
+                onValueChange={setReminderMinutes}
+                disabled={!preferences || savePreferencesMutation.isPending}
+              >
+                <SelectTrigger id="reminder-timing"><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="off">No task reminders</SelectItem>
                   <SelectItem value="5">5 minutes before</SelectItem>
                   <SelectItem value="15">15 minutes before</SelectItem>
                   <SelectItem value="30">30 minutes before</SelectItem>
@@ -555,128 +393,66 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <Button variant="outline" className="w-full" onClick={() => setLocation("/task-reminders")}>
+              More reminder options
+            </Button>
           </CardContent>
         </Card>
 
-        {/* Feature Settings */}
-        <Card className="border-indigo-200 bg-indigo-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-indigo-600" />
-              Features
-            </CardTitle>
-            <CardDescription>Enable or disable specific features</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.quickActionsEnabled 
-                ? 'bg-blue-100 border-blue-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="quick-actions" className="flex items-center gap-2">
-                <Zap className={`w-4 h-4 ${settings.quickActionsEnabled ? 'text-blue-600' : 'text-gray-400'}`} />
-                Quick Actions Bar
-                {settings.quickActionsEnabled && (
-                  <Badge variant="secondary" className="bg-blue-200 text-blue-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
-              <Switch
-                id="quick-actions"
-                checked={settings.quickActionsEnabled}
-                onCheckedChange={(checked) => updateSetting('quickActionsEnabled', checked)}
-                className={`scale-125 ${
-                  settings.quickActionsEnabled 
-                    ? 'data-[state=checked]:bg-blue-600 shadow-lg shadow-blue-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
-              />
-            </div>
-
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.premiumFeatures 
-                ? 'bg-purple-100 border-purple-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="premium-features" className="flex items-center gap-2">
-                <Star className={`w-4 h-4 ${settings.premiumFeatures ? 'text-purple-600' : 'text-gray-400'}`} />
-                Premium Features
-                {settings.premiumFeatures && (
-                  <Badge variant="secondary" className="bg-purple-200 text-purple-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
-              <Switch
-                id="premium-features"
-                checked={settings.premiumFeatures}
-                onCheckedChange={(checked) => updateSetting('premiumFeatures', checked)}
-                className={`scale-125 ${
-                  settings.premiumFeatures 
-                    ? 'data-[state=checked]:bg-purple-600 shadow-lg shadow-purple-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
-              />
-            </div>
-
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              settings.autoSave 
-                ? 'bg-emerald-100 border-emerald-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="auto-save" className="flex items-center gap-2">
-                <Save className={`w-4 h-4 ${settings.autoSave ? 'text-emerald-600' : 'text-gray-400'}`} />
-                Auto-save Changes
-                {settings.autoSave && (
-                  <Badge variant="secondary" className="bg-emerald-200 text-emerald-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
-              <Switch
-                id="auto-save"
-                checked={settings.autoSave}
-                onCheckedChange={(checked) => updateSetting('autoSave', checked)}
-                className={`scale-125 ${
-                  settings.autoSave 
-                    ? 'data-[state=checked]:bg-emerald-600 shadow-lg shadow-emerald-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Privacy Settings */}
+        {/* Caregiver controls (real locks only) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-red-600" />
-              Privacy & Security
+              <Users className="w-5 h-5 text-indigo-600" />
+              Caregiver controls
             </CardTitle>
-            <CardDescription>Control your privacy and data settings</CardDescription>
+            <CardDescription>Settings your caregivers manage for your safety</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-              privacyMode
-                ? 'bg-red-100 border-red-300 shadow-md' 
-                : 'bg-white border-gray-300 opacity-75'
-            }`}>
-              <Label htmlFor="privacy-mode" className="flex items-center gap-2">
-                <Shield className={`w-4 h-4 ${privacyMode ? 'text-red-600' : 'text-gray-400'}`} />
-                Privacy Mode
-                {privacyMode && (
-                  <Badge variant="secondary" className="bg-red-200 text-red-900 text-xs font-bold px-2 py-1">
-                    ACTIVE
-                  </Badge>
-                )}
-              </Label>
+          <CardContent className="space-y-3">
+            {lockedSettings.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                None of your settings are locked by a caregiver.
+              </p>
+            ) : (
+              lockedSettings.map((setting) => (
+                <div key={setting.id} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-500" />
+                  <div className="text-sm">
+                    <p className="font-medium text-slate-900">{lockedSettingLabel(setting.settingKey)}</p>
+                    <p className="text-slate-500">
+                      Locked by {setting.lockedByName ?? "your caregiver"}
+                      {setting.lockReason ? ` · ${setting.lockReason}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+            <Button variant="outline" className="w-full" onClick={() => setLocation("/caregiver")}>
+              Manage my support team
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Privacy */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-600" />
+              Privacy
+            </CardTitle>
+            <CardDescription>Saved on this device</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <SettingRow
+              icon={<Shield className="w-4 h-4" />}
+              title="Privacy mode"
+              description="Hides personal, health and money details on screen"
+            >
               <Switch
                 id="privacy-mode"
+                aria-label="Privacy mode"
                 checked={privacyMode}
                 onCheckedChange={(checked) => {
-                  updateSetting('privacyMode', checked);
                   if (!setPrivacyMode(checked)) {
                     toast({
                       title: `Privacy Mode is ${checked ? "on" : "off"} for this session`,
@@ -686,54 +462,39 @@ export default function SettingsPage() {
                     });
                   }
                 }}
-                className={`scale-125 ${
-                  privacyMode
-                    ? 'data-[state=checked]:bg-red-600 shadow-lg shadow-red-200' 
-                    : 'bg-gray-300 opacity-60'
-                }`}
               />
-            </div>
-
-            <div className="text-sm text-gray-600">
-              Masks supported personal, health, and financial details on this
-              browser for screenshots and screen sharing. It does not change
-              stored data, sharing permissions, or what the service can access.
-            </div>
-
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => setLocation("/privacy-policy")}
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              View Privacy Policy
+            </SettingRow>
+            <p className="text-xs text-slate-500">
+              Useful for screenshots and screen sharing. It doesn't change your saved data or what caregivers can see.
+            </p>
+            <Button variant="outline" className="w-full" onClick={() => setLocation("/privacy-policy")}>
+              View privacy policy
             </Button>
           </CardContent>
         </Card>
 
         {/* Help & Support */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-purple-600" />
-              Help & Support
+              <HelpCircle className="w-5 h-5 text-indigo-600" />
+              Help & support
             </CardTitle>
-            <CardDescription>Get help and learn about features</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Button variant="outline" className="w-full justify-start">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              View User Guide
+          <CardContent className="grid gap-3 sm:grid-cols-3">
+            <Button variant="outline" className="justify-start" onClick={() => setLocation("/features")}>
+              <BookOpen className="w-4 h-4 mr-2" />
+              Feature guide
             </Button>
-            
-            <Button variant="outline" className="w-full justify-start">
-              <Volume2 className="w-4 h-4 mr-2" />
-              Accessibility Tutorial
+            <Button variant="outline" className="justify-start" onClick={() => setLocation("/resources")}>
+              <LifeBuoy className="w-4 h-4 mr-2" />
+              Help & resources
             </Button>
-            
-            <Button variant="outline" className="w-full justify-start">
-              <Star className="w-4 h-4 mr-2" />
-              Feature Walkthrough
+            <Button variant="outline" className="justify-start" asChild>
+              <a href="mailto:support@adaptalyfe.com?subject=Adaptalyfe%20help">
+                <Mail className="w-4 h-4 mr-2" />
+                Email support
+              </a>
             </Button>
           </CardContent>
         </Card>
@@ -743,7 +504,7 @@ export default function SettingsPage() {
       <Card className="mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" />
+            <Building2 className="w-5 h-5 text-indigo-600" />
             Organization Access
           </CardTitle>
           <CardDescription>
@@ -772,7 +533,7 @@ export default function SettingsPage() {
               <Button
                 onClick={() => orgCodeInput && redeemOrgCodeMutation.mutate(orgCodeInput)}
                 disabled={!orgCodeInput || redeemOrgCodeMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-indigo-600 hover:bg-indigo-700"
               >
                 {redeemOrgCodeMutation.isPending ? "Redeeming..." : "Redeem Code"}
               </Button>
@@ -782,7 +543,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-red-200 bg-red-50 mt-8">
+      <Card className="border-red-200 bg-red-50 mt-8 mb-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-600">
             <AlertTriangle className="w-5 h-5" />
@@ -841,8 +602,8 @@ export default function SettingsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="flex gap-2 mt-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setDeleteDialogOpen(false);
                       setDeleteConfirmText("");
@@ -850,7 +611,7 @@ export default function SettingsPage() {
                   >
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     variant="destructive"
                     onClick={handleDeleteAccount}
                     disabled={deleteConfirmText.toLowerCase() !== "delete my account" || deleteAccountMutation.isPending}
@@ -863,19 +624,6 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Action Buttons */}
-      <div className="mt-8 flex justify-between pb-24">
-        <Button onClick={handleReset} variant="outline" className="flex items-center gap-2">
-          <RotateCcw className="w-4 h-4" />
-          Reset to Defaults
-        </Button>
-        
-        <Button onClick={handleSave} className="flex items-center gap-2">
-          <Save className="w-4 h-4" />
-          Save Settings
-        </Button>
-      </div>
     </div>
   );
 }

@@ -23,6 +23,8 @@ import {
   getLocalDateKey,
 } from "@/lib/chatbot-greeting";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscriptionEnforcement } from "@/middleware/subscription-middleware";
+import PremiumFeaturePrompt from "@/components/premium-feature-prompt";
 import { ChatInput } from "@/components/chat-input";
 import {
   ArrowRight,
@@ -295,6 +297,13 @@ export default function AIChatbot({
   const { data: user } = useQuery({
     queryKey: ["/api/user"],
   }) as { data: any };
+  // AdaptAI chat is a Premium feature. Caregivers use it for the people they support.
+  const { hasFeature, isLoading: accessLoading } = useSubscriptionEnforcement();
+  const aiLocked =
+    !careRecipientId &&
+    user?.accountType !== "caregiver" &&
+    !accessLoading &&
+    !hasFeature("aiAssistant");
   const dailyGreeting = getChatbotGreeting(
     getDisplayName(
       user?.username,
@@ -762,6 +771,55 @@ export default function AIChatbot({
       </div>
     </div>
   );
+
+  if (aiLocked) {
+    if (fullPage) {
+      return (
+        <div className="container mx-auto p-6">
+          <PremiumFeaturePrompt
+            title="AdaptAI chat"
+            description="Ask AdaptAI about your day, get step-by-step help, and add tasks just by chatting."
+            feature="aiAssistant"
+            requiredPlan="premium"
+            className="max-w-md mx-auto mt-10"
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-4 z-50 md:bottom-4">
+        {!isOpen ? (
+          <Button
+            onClick={openChat}
+            className="h-14 w-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 p-0 shadow-lg shadow-emerald-900/20 transition hover:from-emerald-600 hover:to-teal-700"
+            title="Open AdaptAI Chat"
+            aria-label="Open AdaptAI Chat"
+          >
+            <Sparkles className="h-6 w-6 text-white" />
+          </Button>
+        ) : (
+          <Card className="w-[min(20rem,calc(100vw-2rem))] rounded-2xl shadow-xl">
+            <CardContent className="space-y-3 p-5 text-center">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white">
+                <Lock className="h-5 w-5" />
+              </div>
+              <p className="font-semibold text-slate-900">AdaptAI chat is part of Premium</p>
+              <p className="text-sm text-slate-500">Get step-by-step help and add tasks just by chatting.</p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsOpen(false)}>Not now</Button>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-violet-600 text-white"
+                  onClick={() => { setIsOpen(false); setLocation("/subscription?plan=premium"); }}
+                >
+                  Upgrade
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   if (fullPage) {
     return (

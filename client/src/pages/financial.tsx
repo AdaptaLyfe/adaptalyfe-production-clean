@@ -82,10 +82,15 @@ const bankAccountSchema = z.object({
 });
 
 export default function Financial() {
-  const { isPremiumUser } = useSubscriptionEnforcement();
-  const { toast } = useToast();
-  const [showBillDialog, setShowBillDialog] = useState(false);
-  
+  const { isPremiumUser, isLoading } = useSubscriptionEnforcement();
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center" role="status" aria-label="Loading">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+      </div>
+    );
+  }
+
   // Block access if trial expired and no active subscription
   if (!isPremiumUser) {
     return (
@@ -94,12 +99,21 @@ export default function Financial() {
           title="Financial Management"
           description="Track bills, manage budgets, and monitor your financial health. Subscribe to continue using Adaptalyfe's financial management tools."
           feature="financial"
-          requiredPlan="premium"
+          requiredPlan="basic"
           className="max-w-md mx-auto mt-20"
         />
       </div>
     );
   }
+  return <FinancialContent />;
+}
+
+function FinancialContent() {
+  const { isPremiumUser } = useSubscriptionEnforcement();
+  const { toast } = useToast();
+  const [showBillDialog, setShowBillDialog] = useState(false);
+  
+
   const [showBudgetDialog, setShowBudgetDialog] = useState(false);
   const [showSavingsDialog, setShowSavingsDialog] = useState(false);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);

@@ -13,9 +13,11 @@ import "./index.css";
 import "./colors.css";
 import "./theme-dark.css";
 import { initTheme } from "@/lib/theme";
+import { initDisplaySettings } from "@/lib/display-settings";
 
-// Apply saved light/dark theme before first paint
+// Apply saved light/dark theme, text size and contrast before first paint
 initTheme();
+initDisplaySettings();
 
 // Inline mobile utilities to avoid import issues in production build
 function isNativeMobile(): boolean {
