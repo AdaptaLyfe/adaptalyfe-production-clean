@@ -36,7 +36,7 @@ interface GooglePlayLineItem {
 
 export interface StoreSubscriptionPlan {
   planType: "basic" | "premium" | "family";
-  billingCycle: "monthly";
+  billingCycle: "monthly" | "annual";
   amount: number;
 }
 
@@ -55,6 +55,21 @@ const STORE_SUBSCRIPTION_PLANS: Record<string, StoreSubscriptionPlan> = {
     planType: "family",
     billingCycle: "monthly",
     amount: 2499,
+  },
+  adaptalyfe_basic_annual: {
+    planType: "basic",
+    billingCycle: "annual",
+    amount: 4999,
+  },
+  adaptalyfe_premium_annual: {
+    planType: "premium",
+    billingCycle: "annual",
+    amount: 12999,
+  },
+  adaptalyfe_family_annual: {
+    planType: "family",
+    billingCycle: "annual",
+    amount: 24999,
   },
 };
 
